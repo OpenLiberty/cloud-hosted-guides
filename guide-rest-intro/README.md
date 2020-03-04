@@ -7,12 +7,12 @@ the JVM's system properties. The REST service will respond to **GET** requests m
 
 The service responds to a **GET** request with a JSON representation of the system properties, where
 each property is a field in a JSON object like this:
-
-> {
->   "os.name":"Mac",
->   "java.version": "1.8"
-> }
-
+```
+{
+  "os.name":"Mac",
+  "java.version": "1.8"
+}
+```
 ### Introduction
 
 When you create a new REST application, the design of the API is important. The JAX-RS APIs can be
