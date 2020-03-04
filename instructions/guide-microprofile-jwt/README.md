@@ -1,14 +1,18 @@
-# The Title of the quicklab
+# Securing microservices with JSON Web Tokens
 
 ### What you will learn
 
-Some text talking about what the user will learn from doing this quick lab
+You will add MicroProfile JWT to validate security tokens in the **system** and **inventory** microservices. You will use a token-based authentication mechanism to authenticate, authorize, and verify user identities based on a security token.
 
-### Introduction
+In addition, you will learn how to verify token claims through getters with MicroProfile JWT.
 
-Introduction to the technology they will use
+For microservices, a token-based authentication mechanism offers a lightweight way for security controls and security tokens to propagate user identities across different services. JSON Web Token (JWT) is becoming the most common token format because it follows well-defined and known standards.
 
-## Getting Started
+MicroProfile JWT standards define the required format of JWT for authentication and authorization. The standards also map JWT token claims to various Java EE container APIs and make the set of claims available through getters.
+
+The application that you will be working with is an **inventory** service, which stores the information about various JVMs that run on different systems. Whenever a request is made to the **inventory** service to retrieve the JVM system properties of a particular host, the **inventory** service communicates with the **system** service on that host to get these system properties. The JWT token gets propagated and verified during the communication between two services.
+
+# Getting Started
 
 As an example:
 If a terminal window does not open navigate:
