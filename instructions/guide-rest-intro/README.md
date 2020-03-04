@@ -17,7 +17,7 @@ When you create a new REST application, the design of the API is important. The 
 
 The service responds to **GET** requests to the **/System/properties** path. The **GET** request should return a **200 OK** response that contains all of the JVM's system properties.
 
-## Getting Started
+# Getting Started
 
 As an example:
 If a terminal window does not open navigate:
