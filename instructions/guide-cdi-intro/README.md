@@ -402,9 +402,9 @@ Results :
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-To see whether the tests detect a failure, change the endpoint for the inventory service in the src/main/java/io/openliberty/guides/inventory/InventoryResource.java file to something else. Then, run the tests again to see that a test failure occurs.
+To see whether the tests detect a failure, change the endpoint for the inventory service in the **src/main/java/io/openliberty/guides/inventory/InventoryResource.java** file to something else. Then, run the tests again to see that a test failure occurs.
 
-When you are done checking out the service, exit development mode by typing q in the shell session where you ran the server, and then press the enter/return key.
+When you are done checking out the service, exit development mode by typing **q** in the shell session where you ran the server, and then press the **enter/return** key.
 # Summary
 
 ## Well Done
