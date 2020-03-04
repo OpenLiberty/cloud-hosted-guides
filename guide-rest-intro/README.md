@@ -1,12 +1,30 @@
-# The Title of the quicklab
+# Creating a RESTful web service
 
 ### What you will learn
 
-Some text talking about what the user will learn from doing this quick lab
+You will learn how to build and test a simple REST service with JAX-RS and JSON-B, which will expose
+the JVM's system properties. The REST service will respond to **GET** requests made to the **\http://localhost:9080/LibertyProject/System/properties** URL.
+
+The service responds to a **GET** request with a JSON representation of the system properties, where
+each property is a field in a JSON object like this:
+
+[source,json]
+----
+{
+  "os.name":"Mac",
+  "java.version": "1.8"
+}
+----
 
 ### Introduction
 
-Introduction to the technology they will use
+When you create a new REST application, the design of the API is important. The JAX-RS APIs can be
+used to create JSON-RPC, or XML-RPC APIs, but it wouldn't be a RESTful service. A good RESTful service
+is designed around the resources that are exposed, and on how to create, read, update, and delete the
+resources.
+
+The service responds to **GET** requests to the **/System/properties** path. The **GET** request should
+return a **200 OK** response that contains all of the JVM's system properties.
 
 ## Getting Started
 
