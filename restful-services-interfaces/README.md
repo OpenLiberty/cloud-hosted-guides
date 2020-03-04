@@ -6,7 +6,7 @@ You will learn how to build a MicroProfile Rest Client to access remote RESTful 
 
 The application that you will be working with is an **inventory** service, which fetches and stores the system property information for different hosts. Whenever a request is made to retrieve the system properties of a particular host, the **inventory** service will create a client to invoke the **system** service on that host. The **system** service simulates a remote service in the application.
 
-You will instantiate the client and use it in the **inventory** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://google.com) with the help of MicroProfile Config or the [RestClientBuilder](https://google.com) method. In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
+You will instantiate the client and use it in the **inventory** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/ref/general/#contexts_dependency_injection.html) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method. In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
 
 * When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with CDI method.
 
