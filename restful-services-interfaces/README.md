@@ -1,4 +1,4 @@
-## Consuming RESTful services with template interfaces
+# Consuming RESTful services with template interfaces
 
 ### What you’ll learn
 
@@ -12,7 +12,7 @@ You will instantiate the client and use it in the **inventory** service. You can
 
 * When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose **RestClientBuilder** method.
 
-## Getting started
+# Getting started
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
@@ -48,7 +48,7 @@ After you are finished checking out the application, stop the Open Liberty serve
 
 `mvn liberty:stop`
 
-## Writing the RESTful client interface
+# Writing the RESTful client interface
 
 Now, navigate to the start directory to begin.
 
@@ -175,7 +175,7 @@ public class UnknownUriExceptionMapper
 ```
 The **handles()** method inspects the HTTP response code to determine whether an exception is thrown for the specific response, and the **toThrowable()** method returns the mapped exception.
 
-## Injecting the client with dependency injection
+# Injecting the client with dependency injection
 
 Now, instantiate the **SystemClient** interface and use it in the **inventory** service. If you want to connect only with the default host name, you can easily instantiate the **SystemClient** with CDI annotations. CDI injection simplifies the process of bootstrapping the client.
 
@@ -213,7 +213,7 @@ Because the **InventoryManager** class is **@ApplicationScoped**, and the **Syst
 
 If the **hostname** parameter is **localhost**, the service runs the **getPropertiesWithDefaultHostName()** helper function to fetch system properties. The helper function invokes the system service by calling the **defaultRestClient.getProperties()** method.
 
-## Building the client with RestClientBuilder
+# Building the client with RestClientBuilder
 
 The **inventory** service can also connect with a host other than the default **localhost** host, but you cannot configure a base URL that is not yet known. In this case, set the host name as a variable and build the client by using the **RestClientBuilder** method. You can customize the base URL from the host name attribute.
 
@@ -223,7 +223,7 @@ The host name is provided as a parameter. This method first assembles the base U
 
 Similarly, call the **customRestClient.getProperties()** method to invoke the system service.
 
-## Running the application
+# Running the application
 
 The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
 
@@ -233,7 +233,7 @@ When the server is running, select either approach to fetch your system properti
 
 * Get your FQDN first. Then, visit the http://localhost:9080/inventory/systems/{your_hostname} URL by replacing {your_hostname} with your FQDN, which retrieves your system properties by invoking the http://{your_hostname}:9080/system/properties service.
 
-## Testing the application
+# Testing the application
 
 Create the RestClientIT class.
 
