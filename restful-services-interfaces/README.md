@@ -20,13 +20,15 @@ The fastest way to work through this guide is to clone the Git repository and us
 
 `cd guide-microprofile-rest-client`
 
-The start directory contains the starting project that you will build upon.
+The **start** directory contains the starting project that you will build upon.
 
-The finish directory contains the finished project that you will build.
+The **finish** directory contains the finished project that you will build.
 
 ### Try what you’ll build
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+`cd finish`
 
 To try out the application, first go to the **finish** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
