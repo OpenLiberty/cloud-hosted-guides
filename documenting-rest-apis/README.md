@@ -611,7 +611,11 @@ Refresh the http://localhost:9080/openapi URL to see the updated OpenAPI tree:
 
 # Testing the service
 
-No automated tests are provided to verify the correctness of the generated OpenAPI document. Manually verify the document by visiting the http://localhost:9080/openapi or the http://localhost:9080/openapi/ui URL.
+No automated tests are provided to verify the correctness of the generated OpenAPI document. 
+
+Manually verify the document by visiting  
+
+`curl http://localhost:9080/openapi` or `curl http://localhost:9080/openapi/ui URL`.
 
 A few tests are included for you to test the basic functionality of the inventory service. If a test failure occurs, then you might have introduced a bug into the code. These tests will run automatically as a part of the integration test suite.
 
@@ -634,4 +638,4 @@ Results :
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ````
 
-When you are done checking out the service, exit development mode by pressing CTRL+C in the shell session where you ran the server, or by typing q and then pressing the enter/return key.
+When you are done checking out the service, exit development mode by pressing `CTRL+C` in the shell session where you ran the server, or by typing `q` and then pressing the enter/return key.
