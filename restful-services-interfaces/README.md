@@ -2,6 +2,8 @@
 
 ### What you’ll learn
 
+You will learn how to Consume RESTful services with template interfaces files by.
+
 You will learn how to build a MicroProfile Rest Client to access remote RESTful services. You will create a template interface that maps to the remote service that you want to call. MicroProfile Rest Client automatically generates a client instance based on what is defined and annotated in the template interface. Thus, you don’t have to worry about all of the boilerplate code, such as setting up a client class, connecting to the remote server, or invoking the correct URI with the correct parameters.
 
 The application that you will be working with is an **inventory** service, which fetches and stores the system property information for different hosts. Whenever a request is made to retrieve the system properties of a particular host, the **inventory** service will create a client to invoke the **system** service on that host. The **system** service simulates a remote service in the application.
@@ -40,11 +42,23 @@ After you see the following message, your application server is ready.
 
 You can access the following microservices:
 
-* The http://localhost:9080/system/properties microservice simulates the remote system service that retrieves the system property information for a specific host. In this case, localhost is a specific host name.
+* The `system/properties` microservice simulates the remote system service that retrieves the system property information for a specific host. In this case, localhost is a specific host name.
 
-* The http://localhost:9080/inventory/systems/localhost microservice is the inventory service that invokes the http://localhost:9080/system/properties microservice to retrieves the system property information.
+`curl http://localhost:9080/system/properties`
 
-* The http://localhost:9080/inventory/systems/{your_hostname} microservice is the inventory service that invokes the http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering hostname from your terminal. Visit the URL by replacing {your_hostname} with your FQDN. You will see the same system property information, but the process of getting the information is different.
+* The `/inventory/systems/localhost` microservice is the inventory service that invokes the http://localhost:9080/system/properties microservice to retrieves the system property information.
+
+`curl http://localhost:9080/inventory/systems/localhost`
+
+`curl http://localhost:9080/system/properties`
+
+* The `inventory/systems/{your_hostname}` microservice is the inventory service that invokes the `http://{your_hostname}:9080/system/properties microservice`. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering `hostname` from your terminal. 
+
+Visit the URL by replacing `{your_hostname}` with your FQDN. You will see the same system property information, but the process of getting the information is different.
+
+`http://localhost:9080/inventory/systems/{your_hostname}`
+
+`curl http://{your_hostname}:9080/system/properties microservice`
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C** in the shell session where you ran the server. Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another shell session:
 
@@ -271,3 +285,7 @@ Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
 To see whether the tests detect a failure, change the base URL in the configuration file so that when the **inventory** service tries to access the invalid URL, an **UnknownUriException** is thrown. Rerun the tests to see a test failure occur.
 
 When you are done checking out the service, exit development mode by pressing **CTRL+C** in the shell session where you ran the server, or by typing q and then pressing the **enter/return** key.
+
+# Finished
+
+Well done you have finished Consuming RESTful services with template interfaces. 
