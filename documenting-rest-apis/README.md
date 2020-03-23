@@ -639,3 +639,7 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ````
 
 When you are done checking out the service, exit development mode by pressing `CTRL+C` in the shell session where you ran the server, or by typing `q` and then pressing the enter/return key.
+
+# Finished
+
+Well done, you have finished learning about documenting and filtering RESTful APIs from annotations.
