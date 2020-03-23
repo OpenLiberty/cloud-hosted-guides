@@ -2,9 +2,11 @@
 
 ### What you’ll learn
 
-You will learn how to Consume RESTful services with template interfaces files by.
+Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
 
-You will learn how to build a MicroProfile Rest Client to access remote RESTful services. You will create a template interface that maps to the remote service that you want to call. MicroProfile Rest Client automatically generates a client instance based on what is defined and annotated in the template interface. Thus, you don’t have to worry about all of the boilerplate code, such as setting up a client class, connecting to the remote server, or invoking the correct URI with the correct parameters.
+You will learn how to build a MicroProfile Rest Client to access remote RESTful services. You will create a template interface that maps to the remote service that you want to call. 
+
+MicroProfile Rest Client automatically generates a client instance based on what is defined and annotated in the template interface. Thus, you don’t have to worry about all of the boilerplate code, such as setting up a client class, connecting to the remote server, or invoking the correct URI with the correct parameters. 
 
 The application that you will be working with is an **inventory** service, which fetches and stores the system property information for different hosts. Whenever a request is made to retrieve the system properties of a particular host, the **inventory** service will create a client to invoke the **system** service on that host. The **system** service simulates a remote service in the application.
 
