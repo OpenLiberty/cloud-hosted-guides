@@ -24,7 +24,7 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-### Try what you’ll build
+### Try what you’ll build
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
