@@ -2,12 +2,9 @@
 
 ### What you will learn
 
-You'll start with an existing REST application that runs on Open Liberty and use https://microshed.org/microshed-testing/[MicroShed Testing] 
-to write tests for the application that exercise the application inside of a Docker container.
+You'll start with an existing REST application that runs on Open Liberty and use [MicroShed Testing](https://microshed.org/microshed-testing/) to write tests for the application that exercise the application inside of a Docker container.
 
-Sometimes tests might pass in development and testing (dev/test) environments, but fail in production because the application is
-running differently in production than it is in dev/test. Fortunately, you can minimize these parity issues between development and production
-by testing your application in the same Docker container that you'll use in production.
+Sometimes tests might pass in development and testing (dev/test) environments, but fail in production because the application is running differently in production than it is in dev/test. Fortunately, you can minimize these parity issues between development and production by testing your application in the same Docker container that you'll use in production.
 
 ### Introduction
 
