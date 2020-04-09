@@ -117,15 +117,22 @@ In another terminal, run the following command to call the microservice URL:
 
 `curl http://localhost:9080/health/ready`
 
-Save your changes to the **PersonServiceIT** class and press the `enter/return key` in your console window to rerun the tests. You still see only one test running, but the output is different. Notice that MicroShed Testing is using a **hollow** configuration mode. This configuration mode means that MicroShed Testing is reusing an existing application runtime for the test, not starting up a new application instance each time you initiate a test run.
+Save your changes to the **PersonServiceIT** class and press the **enter/return key** in your console window to rerun the tests. You still see only one test running, but the output is different. Notice that MicroShed Testing is using a **hollow** configuration mode. This configuration mode means that MicroShed Testing is reusing an existing application runtime for the test, not starting up a new application instance each time you initiate a test run.
 
 ## Talking to your application with a REST client
 
 With MicroShed Testing, applications are exercised in a black box fashion. Black box means the tests cannot access the application internals. Instead, the application is exercised from the outside, usually with HTTP requests. To simplify the HTTP interactions, inject a REST client into the tests.
 
-Import the **org.microshed.testing.jaxrs.RESTClient** annotation, create a PersonService REST client, and annotate the REST client with **@RESTClient**.
+Import the **org.microshed.testing.jaxrs.RESTClient** annotation, create a PersonService REST client, and annotate the REST client with **@RESTClient**. Add the following line after line 22 of the **PersonServiceIT.java** file:
 
-`import org.microshed.testing.testcontainers.ApplicationContainer;`
+`import org.microshed.testing.jaxrs.RESTClient;`
+
+Add the following on line 26 of the **PersonServiceIT.java** file:
+
+```
+@RESTClient
+    public static PersonService personSvc;
+```
 
 ## Writing your first test
 
@@ -153,6 +160,62 @@ Next, use the following Maven goal to run the tests from a cold start:
 `mvn verify`
 
 Running tests from a cold start takes a little longer than running tests from development mode because the application runtime needs to start each time. However, tests that are run from a cold start use a clean instance on each run to ensure consistent results. These tests also automatically hook into existing build pipelines that are set up to run the **integration-test** phase.
+
+## Sharing configuration across multiple classes
+
+Typically, projects have multiple test classes that all use the same type of application deployment. For these cases, it is useful to reuse an existing configuration and application lifecycle across multiple test classes.
+
+First, create another test class.
+
+```
+package io.openliberty.guides.testing;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+
+import org.junit.jupiter.api.Test;
+import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.microshed.testing.jaxrs.RESTClient;
+
+@MicroShedTest
+public class ErrorPathIT {
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
+    @RESTClient
+    public static PersonService personSvc;
+
+    @Test
+    public void testGetUnknownPerson() {
+        assertThrows(NotFoundException.class, () -> personSvc.getPerson(-1L));
+    }
+
+    @Test
+    public void testCreateBadPersonNullName() {
+        assertThrows(BadRequestException.class, () -> personSvc.createPerson(null, 5));
+    }
+
+    @Test
+    public void testCreateBadPersonNegativeAge() {
+        assertThrows(BadRequestException.class, () ->
+          personSvc.createPerson("NegativeAgePersoN", -1));
+    }
+
+    @Test
+    public void testCreateBadPersonNameTooLong() {
+        assertThrows(BadRequestException.class, () ->
+          personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson",
+          5));
+    }
+}
+```
 
 # Summary
 
