@@ -34,7 +34,7 @@ The fastest way to work through this guide is to clone the Git repository and us
 
 # Try what you'll build
 
-The `finish` directory in the root of this guide contains the finished application. Give it a try before you proceed.
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
 First, review the **PersonServiceIT** class to see what the tests look like:
 
@@ -54,14 +54,13 @@ The previous example shows how you can run integration tests from a cold start. 
 
 `mvn liberty:dev`
 
-After the Open Liberty server starts and you see the `Press the Enter key to run tests on demand.` message, you can press the 
-`enter/return` key to run the integration tests. After the tests finish, you can press the `enter/return` key to run the tests again, or you can make code changes to the application or tests. Development mode automatically recompiles and updates any application or test code changes that you make.
+After the Open Liberty server starts and you see the **Press the Enter key to run tests on demand.** message, you can press the **enter/retur** key to run the integration tests. After the tests finish, you can press the `enter/return` key to run the tests again, or you can make code changes to the application or tests. Development mode automatically recompiles and updates any application or test code changes that you make.
 
-After you are finished running tests, stop the Open Liberty server by typing `q` in the shell session where you ran the server, and then press the `enter/return` key. 
+After you are finished runn **enter/return** key. 
 
 # Bootstrapping your application for testing
 
-Navigate to the `start` directory to begin.
+Navigate to the **start** directory to begin.
 
 `cd ../start`
 
@@ -69,7 +68,7 @@ Start Open Liberty in development mode, which starts the Open Liberty server and
 
 `mvn liberty:dev`
 
-Wait for the `Press the Enter key to run tests on demand.` message, and then press the `enter/return` key to run the tests. You see that one test runs:
+Wait for the **Press the Enter key to run tests on demand.** message, and then press the **enter/return** key to run the tests. You see that one test runs:
 
 ```
  Running integration tests...
@@ -89,19 +88,20 @@ Wait for the `Press the Enter key to run tests on demand.` message, and then pre
 
 To begin bootstrapping, annotate the **src/test/java/io/openliberty/guides/testing/PersonServiceIT.java** class with the **@MicroShedTest** annotation. This annotation indicates that the test class uses MicroShed Testing.
 
-> [File -> Open] src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> [File -> Open] start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
-Insert the following in line 22 of PersonServiceIT.java: 
+Insert the following in line 20 of **PersonServiceIT.java**: 
 
+`import org.microshed.testing.jupiter.MicroShedTest;`
 
-`import org.microshed.testing.jupiter.MicroShedTest`;
-
+Insert the following in line 22 of **PersonServiceIT.java**:
 `@MicroShedTest`
 
-Next, the **PersonServiceIT* class outlines some basic information that informs how MicroShed Testing starts the application runtime and at which URL path the application will be available. Import the `ApplicationContainer` class and the `Container` annotation, create the `ApplicationContainer` application, and annotate the application with @Container by adding the following after line 24 of `PersonServiceIT.java` file:
+Next, the **PersonServiceIT** class outlines some basic information that informs how MicroShed Testing starts the application runtime and at which URL path the application will be available. Import the **ApplicationContainer** class and the **Container** annotation, create the **ApplicationContainer** application, and annotate the application with @Container by adding the following after line 21 of the **PersonServiceIT.java** file:
 
-`import org.microshed.testing.testcontainers.ApplicationContainer`;
+`import org.microshed.testing.testcontainers.ApplicationContainer;`
 
+Add the following on line 28 of the **PersonServiceIT.java** file:
 ```
  @Container
     public static ApplicationContainer app = new ApplicationContainer()
@@ -127,7 +127,7 @@ Import the **org.microshed.testing.jaxrs.RESTClient** annotation, create a Perso
 
 `import org.microshed.testing.testcontainers.ApplicationContainer;`
 
-# Writing your first test
+## Writing your first test
 
 Now that the setup is complete, you can write your first test case. Start by testing the basic "create person" use case for your REST-based application. To test this use case, use the REST client that’s injected by MicroShed Testing to make the HTTP POST request to the application and read the response.
 
@@ -142,7 +142,7 @@ Long createId = personSvc.createPerson("Hank", 42);
         
 Save the changes. Then, press the enter/return key in your console window to run the test. You see that the test ran again and exercised the REST endpoint of your application, including the response of your application’s endpoint:
 
-# Testing outside of development mode
+## Testing outside of development mode
 
 Running tests in development mode is convenient for local development, but it can be tedious to test against a running Open Liberty server in non-development scenarios such as CI/CD pipelines. For this reason, MicroShed Testing can start and stop the application runtime before and after the tests are run. This process is primarily accomplished by using Docker and Testcontainers.
 
