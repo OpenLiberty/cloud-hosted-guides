@@ -13,14 +13,14 @@ can think of Docker as a virtual machine that runs various applications. However
 machine, you can run these applications simultaneously on a single system and independent of
 one another.
 
-Learn more about Docker on the https://www.docker.com/what-docker[official Docker website^].
+Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
 
 ## Getting Started
 
 As an example:
 If a terminal window does not open navigate:
 
-`Terminal -> New Terminal`
+> Terminal -> New Terminal
 
 Check you are in the **home/project** folder:
 
