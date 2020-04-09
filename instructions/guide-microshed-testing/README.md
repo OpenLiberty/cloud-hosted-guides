@@ -54,7 +54,7 @@ The previous example shows how you can run integration tests from a cold start. 
 
 `mvn liberty:dev`
 
-After the Open Liberty server starts and you see the **Press the Enter key to run tests on demand.** message, you can press the **enter/retur** key to run the integration tests. After the tests finish, you can press the `enter/return` key to run the tests again, or you can make code changes to the application or tests. Development mode automatically recompiles and updates any application or test code changes that you make.
+After the Open Liberty server starts and you see the **Press the Enter key to run tests on demand.** message, you can press the **enter/return** key to run the integration tests. After the tests finish, you can press the `enter/return` key to run the tests again, or you can make code changes to the application or tests. Development mode automatically recompiles and updates any application or test code changes that you make.
 
 After you are finished runn **enter/return** key. 
 
