@@ -146,7 +146,9 @@ However, you can also completely disable the caching of intermediate layers by r
 
 Now that your image is built, execute the Docker **run** command with the absolute path to this guide:
 
-`docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v $(pwd)/target/liberty/wlp/usr/servers:/servers -u `id -u` ol-runtime`
+```
+docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v $(pwd)/target/liberty/wlp/usr/servers:/servers -u `id -u` ol-runtime
+```
 
 ### The flags
 
@@ -158,7 +160,7 @@ Now that your image is built, execute the Docker **run** command with the absolu
 
 **-v** | This flag mounts a directory or file to the file system of the container.
 
-You can pass in an optional server name at the end of the **run** command to override the **defaultServer** server in the **CMD** instruction. For example, if your servers directory also contains a server called testServer, then it can be started as shown in the following example:
+As an insight you can pass in an optional server name at the end of the **run** command to override the **defaultServer** server in the **CMD** instruction. For example, if your servers directory also contains a server called testServer, then it can be started as shown in the following example:
 
 `docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v <absolute path to guide>/start/target/liberty/wlp/usr/servers:/servers ol-runtime testServer`
 
