@@ -260,3 +260,11 @@ To stop your container, run:
 
 `docker stop rest-app`
 
+# Well done
+
+Congratulations, you have successfully completed the lab. 
+
+From this lab you should now have an understanding of: what Docker is, why you would use containers, what a **dockerfile** is, creating a dockerfile, building the image and also running the container to see the JVM output and updating the container. 
+
+Well done.
+
