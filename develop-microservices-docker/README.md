@@ -203,7 +203,7 @@ Curl the `/System/properties`, where you can see a JSON file that contains the s
 
 [File -> Open] `src/main/java/io/openliberty/guides/rest/PropertiesResource.java`
 
-Change the endpoint of your application from **properties** to **properties-new** by changing the **@Path** annotation to **"properties-new"**.
+Note the endpoint of your application is going to change from **properties** to **properties-new**. This has been updated by the **@Path** annotation being changed.
 
 Replace the existing code with:
 
@@ -225,7 +225,7 @@ import javax.json.JsonArray;
 import javax.json.Json;
 import javax.json.JsonNumber;
 
-@Path("properties")
+@Path("properties-new")
 public class PropertiesResource {
 
     @GET
