@@ -79,12 +79,20 @@ USER 1001
 ENTRYPOINT ["/opt/ol/wlp/bin/server", "run"]
 CMD ["defaultServer"]
 ```
-The **FROM** instruction initializes a new build stage and indicates the parent image from which your image is built. 
-(Maybe delete this bit)If you don’t need a parent image, then use **FROM scratch**, which makes your image a base image.
+
+### A breakdown of the dockerfile
+
+#### FROM
+
+This instruction initializes a new build stage and indicates the parent image from which your image is built. 
 
 In this case, you’re using the **openliberty/open-liberty:javaee8** image as your parent image, which comes with the latest Open Liberty runtime.
 
+#### RUN
+
 The **RUN** instruction executes various shell commands in a new layer on top of the current image. In this case, you create a symlink between the **/opt/ol/wlp/usr/servers** directory and the **/servers** directory. This way, you can mount your servers more easily because you don’t need to use long path names. Note that since the Open Liberty Docker image runs by default with user 1001 (which is a non-root user), you must temporarily switch to the **root** user to create the symlink. This is done by using the **USER** instruction.
+
+#### ENTRYPOINT
 
 The ****ENTRYPOINT**** and **CMD** instructions define a default command that executes when the image runs as a container. These two instructions function the same way, except that the **CMD** instruction is overridden with any arguments that are passed at the end of the docker run command. In contrast, the **ENTRYPOINT** instruction requires the --entrypoint flag to be overridden. In this case, you use the **ENTRYPOINT** instruction to start an Open Liberty server and the **CMD** instruction to indicate which server to start. Because the **CMD** instruction is easily overridden, starting any server is convenient.
 
@@ -150,7 +158,7 @@ Now that your image is built, execute the Docker **run** command with the absolu
 docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v $(pwd)/target/liberty/wlp/usr/servers:/servers -u `id -u` ol-runtime
 ```
 
-### The flags
+### A breakdown of the flags
 
 **-d** | Flag tells Docker to run the container in the background. Without this flag, Docker runs the container in the foreground.
 
