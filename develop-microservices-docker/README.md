@@ -136,9 +136,9 @@ Successfully tagged ol-runtime:latest
 ```
 Each step of the build has a unique ID, which represents the ID of an intermediate image. For example, step 2 has the ID **937183f8460b**, and step 4 has the ID **8fdcad065d25**, which is also the ID of the final image. During the first build of your image, Docker caches every new layer as a separate image and reuses them for future builds for layers that didn’t change. For example, if you run the build again, Docker reuses the images that it cached for steps 2 - 4. However, if you make a change in your Dockerfile, Docker would need to rebuild the subsequent layer since this layer also changed.
 
-However, you can also completely disable the caching of intermediate layers by running the build with the **--no-cache=true flag**
-
 ### Try building with the **no-cache=true flag**
+
+However, you can also completely disable the caching of intermediate layers by running the build with the **--no-cache=true flag**
 
 `docker build -t ol-runtime --no-cache=true .`
 
