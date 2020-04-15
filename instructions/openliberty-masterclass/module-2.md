@@ -1,6 +1,6 @@
 ## Module 2: Application APIs & Configuration
 
-## Application APIs
+# Application APIs
 
 Open Liberty has support for many standard APIs out of the box, including all the latest Java EE 8 APIs and the latest MicroProfile APIs.  To lead in the delivery of new APIs, a new version of Liberty is released every 4 weeks and aims to provide MicroProfile implementations soon after they are finalized.
 
@@ -73,7 +73,7 @@ Rebuild the project:
 mvn install
 ```
 
-## Server Configuration
+# Server Configuration
 
 In the previous module you added the `mpMetrics-2.0` feature to the Liberty build.  This makes the feature available for use by the Liberty runtime, but as we saw with the `mpOpenAPI` feature loading the feature at runtime is a separate explicit choice.
 
@@ -163,7 +163,7 @@ Reload the metrics page and at the bottom of the metrics results you should see:
 application:com_sebastian_daschner_coffee_shop_boundary_orders_resource_order 3
 ```
 
-## Externalizing Configuration
+# Externalizing Configuration
 
 If you're familiar with the concept of 12-factor applications (see http://12factor.net) you'll know that factor III states that an applications configuration should be stored in the environment.  Config here is referring to things which vary between development, staging and production. In doing so you can build the deployment artefact once and deploy it in the different environments unchanged.
 

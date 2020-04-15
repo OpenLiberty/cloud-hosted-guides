@@ -1,6 +1,6 @@
 ## Module 4: Testing with Containers & Support Licensing
 
-## Testing in Containers
+# Testing in Containers
 
 We saw in an earlier module, how to perform Integration Tests against the application running in the server.  We then showed how to package the application and server and run them inside a Docker container.  Assuming we're going to deploy our application in production inside Containers it would be a good idea to actually performs tests against that configuration.  The more we can make our development and test environments the same as production, the less likely we are to encounter issues in production.  MicroShed Testing (microshed.org) is a project that enables us to do just that.
 

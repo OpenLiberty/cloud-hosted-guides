@@ -1,6 +1,6 @@
 ## Module 1: Build & Feature-based Build
 
-## Build
+# Build
 
 Liberty has support for building and deploying applications using Maven and Gradle.  The source and documentation for these plugins can be found here:
 * https://github.com/wasdev/ci.maven
@@ -41,7 +41,7 @@ Click on `Execute`
 Scroll down and you should see the server response code of `201`.  This says that the barista request to make an `ESPRESSO` was successfully `Created`.
 
 
-## Feature-based Build
+# Feature-based Build
 
 The `liberty-maven-plugin` lets you specify which Liberty features you want to build against.
 

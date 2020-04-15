@@ -1,6 +1,6 @@
 ## Module 3: Integration Testing & Docker
 
-## Integration Testing
+# Integration Testing
 
 Tests are essential for developing maintainable code.  Developing your application using bean-based component models like CDI makes your code easily unit-testable. Integration Tests are a little more challenging.  In this section you'll add a `barista` service integration test using the `maven-failsafe-plugin`.  During the build, the Liberty server will be started along with the `barista` application deployed, the test will be run and then the server will be stopped.  The starting and stopping of the Liberty server is configured by the Liberty parent pom (see https://search.maven.org/artifact/net.wasdev.wlp.maven.parent/liberty-maven-app-parent/2.6.3/pom), which is configured as the parent of the Masterclass poms.
 
@@ -160,7 +160,7 @@ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 
-## Docker
+# Docker
 
 We're now going to dockerize the two services and show how we can override the defaults to re-wire the two services.  We're going to use a Docker user-defined network (see https://docs.docker.com/network/network-tutorial-standalone/#use-user-defined-bridge-networks) because we'll be running them on the same host and it keeps things simple.  For real-world production deployments you would use a Kubernetes environment, such as IBM Cloud Private or the IBM Cloud Kubernetes Service.
 
@@ -275,7 +275,7 @@ docker container rm <container name>
 ```
 You should now be able to load the `coffee-shop` service's Open API page and call the service.  Give it a try.
 
-### Overriding Dev Server Configuration
+# Overriding Dev Server Configuration
 
 The above works fine, but still has a metrics endpoint with authentication turned off.  We'll now show how `configDropins/overrides` can be used to override existing, or add new, server configuration.  For example, this can be used to add server configuration in a production environment.  The approach we're going to take is to use a Docker volume, but in a real-world scenario you would use Kubernetes ConfigMaps and secrets to include the production server configuration, security configuration and environment variables.  
 
