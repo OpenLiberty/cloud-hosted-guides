@@ -156,7 +156,7 @@ However, you can also completely disable the caching of intermediate layers by r
 
 # Running your application in Docker container
 
-Now that your image is built, execute the Docker **run** command with the absolute path to this guide:
+Now that your image is built, execute the Docker **run** command
 
 ```
 docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v $(pwd)/target/liberty/wlp/usr/servers:/servers -u `id -u` ol-runtime
@@ -174,7 +174,7 @@ docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v $(pwd)/target/liberty
 
 As an insight you can pass in an optional server name at the end of the **run** command to override the **defaultServer** server in the **CMD** instruction. For example, if your servers directory also contains a server called testServer, then it can be started as shown in the following example:
 
-`docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v <absolute path to guide>/start/target/liberty/wlp/usr/servers:/servers ol-runtime testServer`
+`docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v /home/project/guide-docker/start/target/liberty/wlp/usr/servers:/servers ol-runtime testServer`
 
 # Testing the container
 
@@ -189,23 +189,25 @@ CONTAINER ID        IMAGE               COMMAND                  CREATED        
 ff0209191be9        ol-runtime          "/opt/ol/wlp/bin/ser…"   2 minutes ago       Up 2 minutes        0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   rest-app
 ```
 
-As well, you can view the logs and see the Open Liberty server starting. This is important because if it does not start or errors occur, thats one the first places to look.
+As well, you can view the logs and see the Open Liberty server starting. This is important because if it does not start or errors occur, thats one the first places to look. Replace <Container ID> with the container ID from your output.
 
-`docker logs <Container ID> (ff0209101be9)`
+`docker logs <Container ID> ` (ff0209101be9)
 
 ```
 [AUDIT   ] CWWKF0013I: The server removed the following features: [el-3.0, jsp-2.3, servlet-3.1].
 [AUDIT   ] CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 4.371 seconds.
 ```
 
-Curl the `/System/properties`, where you can see a JSON file that contains the system properties of the JVM in your container.
+Curl the **/System/properties**, where you can see a JSON file that contains the system properties of the JVM in your container.
 
 `curl http://localhost:9080/LibertyProject/System/properties`
 
 
 ### Update the PropertiesResource class.
 
-[File -> Open] `src/main/java/io/openliberty/guides/rest/PropertiesResource.java`
+To open the file click the the file button in the top left hand corner
+
+[File -> Open] **src/main/java/io/openliberty/guides/rest/PropertiesResource.java**
 
 Note the endpoint of your application is going to change from **properties** to **properties-new**. This has been updated by the **@Path** annotation being changed.
 
@@ -250,7 +252,7 @@ public class PropertiesResource {
 ```
 Rebuild the application 
 
-Ensure you are in `/home/project/guide-docker/start`
+Ensure you are in **/home/project/guide-docker/start**
 
 Run `mvn package`
 
