@@ -37,15 +37,18 @@ The fastest way to work through this guide is to clone the Git repository and us
 Navigate into the guide
 
 `cd guide-microprofile-reactive-messaging`
+
 The **start** directory contains the starting project that you will build upon.
+
+`cd start`
 
 # MicroProfile Reactive Messaging Key Concepts
 
 MicroProfile Reactive Messaging recommends a design to build reactive applications based on the following main concepts:
 
-Channel
+**Channel**
 
-A channel is a bridge for transporting messages between different parts of the reactive system. This can be between the service and a messaging-broker, or between two components within the same service.
+A **channel** is a bridge for transporting messages between different parts of the reactive system. This can be between the service and a messaging-broker, or between two components within the same service.
 
 **@Outgoing**
 
@@ -55,7 +58,7 @@ A channel is a bridge for transporting messages between different parts of the r
 
 **@Incoming** is an annotation indicating that the method consumes a channel. The name of the channel is given as attribute. For example, **@Incoming**("systemLoad").
 
-Connector
+**Connector**
 
 MicroProfile Reactive Messaging uses connectors to attach one end of a channel to another messaging technology and are configured using MicroProfile Config. Open Liberty includes the liberty-kafka connector for sending and receiving messages from Apache Kafka.
 
@@ -63,7 +66,7 @@ MicroProfile Reactive Messaging uses connectors to attach one end of a channel t
 
 The **system** microservice uses the MicroProfile Reactive Messaging to send CPU usage messages to the **inventory** microservice over Kafka.
 
-Replace the existing code in the **SystemService class**.
+Replace the existing code in the **SystemService** class.
 
 > [File -> Open]system/src/main/java/io/openliberty/guides/system/SystemService.java
 
@@ -278,7 +281,7 @@ Open **InventoryResource.java**
 
 [File -> Open]inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
-Replace the existing code with
+Replace the existing code with:
 
 ```java
 package io.openliberty.guides.inventory;
@@ -372,11 +375,11 @@ The **inventory** microservice receives the message from the **system** microser
 
 MicroProfile Reactive Messaging uses connectors to send and receive messages from different systems. In order to configure the MicroProfile Reactive Messaging connectors, you need to format the configuration keys as follows :
 
-* **`mp.messaging.connector.liberty-kafka.<property name>`** : Applies to all channels using the liberty-kafka connector
+1. **mp.messaging.connector.liberty-kafka.<property name>** : Applies to all channels using the liberty-kafka connector
 
-* **`mp.messaging.[incoming|outgoing].<channel name>.<property name>`** : Applies to a particular channel
+2. **mp.messaging.[incoming|outgoing].<channel name>.<property name>** : Applies to a particular channel
 
-* Each channel which is to be connected using a connector must have the connector property defined to say which **connector** to use
+3. Each channel which is to be connected using a connector must have the connector property defined to say which **connector** to use
 
 Both the **system** and **inventory** microservices use connectors to connect certain channels to Apache Kafka and these connectors are configured by setting properties using MicroProfile Config. This is done by setting the required properties inside the **microprofile-config.properties** file included in each microservice.
 
@@ -385,7 +388,7 @@ Navigate to **META-INF** directory
 
 `cd system/src/main/resources/META-INF/`
 
-Create the **system microprofile-config.properties**
+Create the **system** **microprofile-config.properties**
 
 `touch microprofile-config.properties`
 
@@ -436,7 +439,7 @@ To use MicroProfile Reactive Messaging, you must enable the feature in the **ser
 
 Open the **server.xml** file
 
-[File -> Open] system/src/main/liberty/config/server.xml
+>[File -> Open] system/src/main/liberty/config/server.xml
 
 Replace the **system server.xml** configuration file.
 
