@@ -17,7 +17,6 @@ Learn more about Docker on the [official Docker website](https://www.docker.com/
 
 ## Getting Started
 
-As an example:
 If a terminal window does not open navigate:
 
 > Terminal -> New Terminal
@@ -90,22 +89,24 @@ To begin bootstrapping, annotate the **src/test/java/io/openliberty/guides/testi
 
 > [File -> Open] start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
-Insert the following in line 20 of **PersonServiceIT.java**: 
+Import the MicroShedTest annotation by inserting the following line in to the **PersonServiceIT.java** file below the existing **import** statement: 
 
 `import org.microshed.testing.jupiter.MicroShedTest;`
 
-Insert the following in line 22 of **PersonServiceIT.java**:
+Add the following to **PersonServiceIT.java** above **PersonServiceIT** declaration:
 
 `@MicroShedTest`
 
-Next, the **PersonServiceIT** class outlines some basic information that informs how MicroShed Testing starts the application runtime and at which URL path the application will be available. Import the **ApplicationContainer** class and the **Container** annotation, create the **ApplicationContainer** application, and annotate the application with @Container by adding the following after line 21 of the **PersonServiceIT.java** file:
+Next, the **PersonServiceIT** class outlines some basic information that informs how MicroShed Testing starts the application runtime and at which URL path the application will be available. Import the **ApplicationContainer** class and the **Container** annotation, create the **ApplicationContainer** application, and annotate the application with **@Container**. 
+
+To do this, add the following after the existing **import** statements in the **PersonServiceIT.java** file:
 
 ```
 import org.microshed.testing.testcontainers.ApplicationContainer;
 import org.testcontainers.junit.jupiter.Container;
 ```
 
-Add the following on line 29 of the **PersonServiceIT.java** file:
+Add the following to the **PersonServiceIT** class:
 
 ```
  @Container
@@ -113,6 +114,8 @@ Add the following on line 29 of the **PersonServiceIT.java** file:
                     .withAppContextRoot("/guide-microshed-testing")
                     .withReadinessPath("/health/ready");
 ```
+
+Save your changes to the **PersonServiceIT.java** file. 
 
 The **withAppContextRoot(String)** method indicates the base path of the application. The app context root is the portion of the URL after the hostname and port. In this case, the application is deployed at the **http://localhost:9080/guide-microshed-testing** URL, so the app context root is /guide-microshed-testing.
 
@@ -130,11 +133,13 @@ Save your changes to the **PersonServiceIT** class and press the **enter/return 
 
 With MicroShed Testing, applications are exercised in a black box fashion. Black box means the tests cannot access the application internals. Instead, the application is exercised from the outside, usually with HTTP requests. To simplify the HTTP interactions, inject a REST client into the tests.
 
-Import the **org.microshed.testing.jaxrs.RESTClient** annotation, create a PersonService REST client, and annotate the REST client with **@RESTClient**. Add the following line after line 22 of the **PersonServiceIT.java** file:
+Import the **org.microshed.testing.jaxrs.RESTClient** annotation, create a PersonService REST client, and annotate the REST client with **@RESTClient**.
+
+To do this, add the following line after the existing imports in the **PersonServiceIT.java** file:
 
 `import org.microshed.testing.jaxrs.RESTClient;`
 
-Add the following on line 30 of the **PersonServiceIT.java** file:
+Add the following to the **PersonServiceIT** class:
 
 ```
 @RESTClient
@@ -155,9 +160,10 @@ Now that the setup is complete, you can write your first test case. Start by tes
 
 Import the **assertNotNull** static method and write the test logic in the **testCreatePerson()** method. To do this, add the following 
 
-Add the following after line 21 of the **PersonServiceIT.java** file:
+To do this, add the following line after the existing imports in the **PersonServiceIT.java** file:
 
 `import static org.junit.jupiter.api.Assertions.assertNotNull;`
+
 
 Add the test logic in the **PersonServiceIT.java** file in the **testCreatePerson** method:
 
@@ -176,7 +182,7 @@ INFO org.microshed.testing.jaxrs.RestClientBuilder  - Building rest client for c
 INFO org.microshed.testing.jaxrs.JsonBProvider  - Response from server: 1809686877352335426
 ```
 
-Next, add more tests after line 40 of the **PersonServiceIT.java** file:
+Next, add more tests to the **PersonServiceIT** class:
 
 ```
 @Test
@@ -240,7 +246,7 @@ Next, add more tests after line 40 of the **PersonServiceIT.java** file:
 
 Save the changes, and press the **enter/return** key in your console window to run the tests.
 
-## Testing outside of development mode
+# Testing outside of development mode
 
 Running tests in development mode is convenient for local development, but it can be tedious to test against a running Open Liberty server in non-development scenarios such as CI/CD pipelines. For this reason, MicroShed Testing can start and stop the application runtime before and after the tests are run. This process is primarily accomplished by using Docker and Testcontainers.
 
@@ -252,7 +258,7 @@ Next, use the following Maven goal to run the tests from a cold start:
 
 Running tests from a cold start takes a little longer than running tests from development mode because the application runtime needs to start each time. However, tests that are run from a cold start use a clean instance on each run to ensure consistent results. These tests also automatically hook into existing build pipelines that are set up to run the **integration-test** phase.
 
-## Sharing configuration across multiple classes
+# Sharing configuration across multiple classes
 
 Typically, projects have multiple test classes that all use the same type of application deployment. For these cases, it is useful to reuse an existing configuration and application lifecycle across multiple test classes.
 
@@ -318,9 +324,26 @@ Now, run the tests again outside of development mode:
 
 Notice that tests for both the **PersonServiceIT** and **ErrorPathIT** classes run, but a new server starts for each test class, resulting in a longer test runtime.
 
-To solve this issue, common configuration can be placed in a class that implements **SharedContainerConfiguration**. Create the AppDeploymentConfig class.
+To solve this issue, common configuration can be placed in a class that implements **SharedContainerConfiguration**. Create the **AppDeploymentConfig** class.
 
 > [File -> New File] src/test/java/io/openliberty/guides/testing/`AppDeploymentConfig.java`
+
+```
+package io.openliberty.guides.testing;
+
+import org.microshed.testing.SharedContainerConfiguration;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
+
+public class AppDeploymentConfig implements SharedContainerConfiguration {
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
+}
+```
 
 After the common configuration is created, the test classes can be updated to reference this shared configuration.
 
@@ -344,11 +367,11 @@ import org.testcontainers.junit.jupiter.Container;
 
 Annotate the **PersonServiceIT** class with the **@SharedContainerConfig** annotation that references the **AppDeploymentConfig** shared configuration class.
 
-Add the following line to the **PersonServiceIT.java** file:
+To do this, add the following line below the existing **import** statements in the **PersonServiceIT.java** file:
 
 `import org.microshed.testing.SharedContainerConfig;`
 
-Next add the following after line 25 of the **PersonServiceIT.java** file:
+Add the following to the **PersonServiceIT.java** file above the **PersonServiceIT** declaration:
 
 `@SharedContainerConfig(AppDeploymentConfig.class)`
 
@@ -368,15 +391,14 @@ import org.testcontainers.junit.jupiter.Container;
     public static ApplicationContainer app = new ApplicationContainer()
                     .withAppContextRoot("/guide-microshed-testing")
                     .withReadinessPath("/health/ready");
-```
+``
+Annotate the **ErrorPathIT** class with the **@SharedContainerConfig** annotation.
 
-Annotate the **ErrorPathIT** class with the **@SharedContainerConfig**. 
-
-Add the following line to the **ErrorPathIT.java** file: 
+To do this, start by adding the following line after the existing import statements in the **ErrorPathIT.java** file: 
 
 `import org.microshed.testing.SharedContainerConfig;`
 
-Add the following after line 24 of the **ErrorPathIT.java** file: 
+Add the following to the **ErrorPathIT.java** file before the **ErrorPathIT** declaration: 
 
 `@SharedContainerConfig(AppDeploymentConfig.class)`
 
