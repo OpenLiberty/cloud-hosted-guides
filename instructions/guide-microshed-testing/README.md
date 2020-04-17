@@ -119,9 +119,11 @@ Save your changes to the **PersonServiceIT.java** file.
 
 The **withAppContextRoot(String)** method indicates the base path of the application. The app context root is the portion of the URL after the hostname and port. In this case, the application is deployed at the **http://localhost:9080/guide-microshed-testing** URL, so the app context root is /guide-microshed-testing.
 
-The **withReadinessPath(String)** method indicates what path is polled by HTTP to determine application readiness. MicroShed Testing automatically starts the ApplicationContainer application and waits for it to be ready before the tests start running. In this case, you are using the default application readiness check at the http://localhost:9080/health/ready URL, which is enabled by the MicroProfile Health feature in our **server.xml** configuration file. When the readiness URL returns **HTTP 200**, the application is considered ready and the tests begin running.
+The **withReadinessPath(String)** method indicates what path is polled by HTTP to determine application readiness. MicroShed Testing automatically starts the ApplicationContainer application and waits for it to be ready before the tests start running. In this case, you are using the default application readiness check at the **http://localhost:9080/health/ready** URL, which is enabled by the MicroProfile Health feature in our **server.xml** configuration file. When the readiness URL returns **HTTP 200**, the application is considered ready and the tests begin running.
 
-In another terminal, run the following command to call the microservice URL:
+Open a new Terminal by pressing the window button the top right hand corner of the terminal pane.
+
+Run the following command to call the microservice URL:
 
 `curl http://localhost:9080/health/ready`
 
@@ -144,7 +146,9 @@ Add the following to the **PersonServiceIT** class:
     public static PersonService personSvc;
 ```
 
-In this example, the **PersonService** injected type is the same **io.openliberty.guides.testing.PersonService** class that is used in your application. However, the instance that gets injected is a REST client proxy. So, if you call **personSvc.createPerson("Bob", 42)**, the REST client makes an HTTP POST request to the application that is running at http://localhost:9080/guide-microshed-testing/people, which triggers the corresponding Java method in the application. In the other terminal, run the following command to access this endpoint: 
+In this example, the **PersonService** injected type is the same **io.openliberty.guides.testing.PersonService** class that is used in your application. However, the instance that gets injected is a REST client proxy. So, if you call **personSvc.createPerson("Bob", 42)**, the REST client makes an HTTP POST request to the application that is running at **http://localhost:9080/guide-microshed-testing/people**, which triggers the corresponding Java method in the application. 
+
+In the other terminal, run the following command to access this endpoint: 
 
 `curl http://localhost:9080/guide-microshed-testing/people`
 
@@ -152,17 +156,23 @@ In this example, the **PersonService** injected type is the same **io.openlibert
 
 Now that the setup is complete, you can write your first test case. Start by testing the basic "create person" use case for your REST-based application. To test this use case, use the REST client that’s injected by MicroShed Testing to make the HTTP POST request to the application and read the response.
 
-Import the `assertNotNull` static method and write the test logic in the `testCreatePerson()` method.
+> [File -> Open] start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+
+Import the **assertNotNull** static method and write the test logic in the **testCreatePerson()** method. To do this, add the following 
 
 To do this, add the following line after the existing imports in the **PersonServiceIT.java** file:
 
 `import static org.junit.jupiter.api.Assertions.assertNotNull;`
 
-Add the test logic in the **testCreatePerson()** in the **PersonServiceIT** method:
+
+Add the test logic in the **PersonServiceIT.java** file in the **testCreatePerson** method:
 
 ```
-Long createId = personSvc.createPerson("Hank", 42);
+@Test
+    public void testCreatePerson() {
+         Long createId = personSvc.createPerson("Hank", 42);
         assertNotNull(createId);
+    }
 ```
 
 Save the changes. Then, press the **enter/return** key in your console window to run the test. You see that the test ran again and exercised the REST endpoint of your application, including the response of your application’s endpoint:
@@ -257,7 +267,7 @@ First, create another test class.
 > [File -> New File] src/test/java/io/openliberty/guides/testing/`ErrorPathIT.java`
 
 ```
-package io.openliberty.guides.testing;
+package test.java.io.openliberty.guides.testing;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -369,7 +379,7 @@ Similarly, update the ErrorPathIT class to remove the container code.
 
 > [File -> Open] src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
-Remove the following pieces of code: 
+Remove the **import** statements and **@Container** annotation code: 
 
 ```
 import org.microshed.testing.testcontainers.ApplicationContainer;
@@ -381,8 +391,7 @@ import org.testcontainers.junit.jupiter.Container;
     public static ApplicationContainer app = new ApplicationContainer()
                     .withAppContextRoot("/guide-microshed-testing")
                     .withReadinessPath("/health/ready");
-```
-
+``
 Annotate the **ErrorPathIT** class with the **@SharedContainerConfig** annotation.
 
 To do this, start by adding the following line after the existing import statements in the **ErrorPathIT.java** file: 
