@@ -66,9 +66,20 @@ MicroProfile Reactive Messaging uses connectors to attach one end of a channel t
 
 The **system** microservice uses the MicroProfile Reactive Messaging to send CPU usage messages to the **inventory** microservice over Kafka.
 
-Replace the existing code in the **SystemService** class.
+Create the in the **SystemService** class.
 
-> [File -> Open]system/src/main/java/io/openliberty/guides/system/SystemService.java
+Navigate to the **system** directory
+> `cd system/src/main/java/io/openliberty/guides/system/`
+
+Create the `SystemService.java`
+
+`touch SystemService.java`
+
+Open **SystemService.java** by navigating to 
+
+>[File -> Open]draft-guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system
+
+Double click on SystemService.java to open.
 
 ```java
 package io.openliberty.guides.system;
@@ -119,9 +130,19 @@ The **system** microservice calculates the average system load for the last minu
 
 The **sendSystemLoad()** method creates CPU system load statistics for a host system every fifteen seconds. The **rxJava** library is used to generate those CPU system load message events that are sent to Kafka every fifteen seconds. The **Flowable.interval()** from **rxJava** is used to create a **Publisher**. The **Publisher** is returned from the **@Outgoing("systemLoad")** channel, which will be configured in the **microprofile-config.properties** **systemLoad** stream in the below section. MicroProfile Reactive Messaging takes care of assigning the **Publisher** to the channel.
 
-Replace the **Maven** configuration file.
+Change directories back to the top level **system** folder
 
-> [File -> Open] system/pom.xml
+`cd ../../../../../../..`
+
+Create the **pom.xml** file
+
+`touch pom.xml`
+
+Open the **pom.xml** file 
+
+>[File -> Open] guide-microprofile-reactive-messaging/start/system/pom.xml
+
+Add the **Maven** dependencies
 
 ```xml
 <?xml version='1.0' encoding='utf-8'?>
@@ -277,11 +298,17 @@ In order to develop the MicroProfile Reactive Messaging application using Maven,
 
 The **inventory** microservice consumes the events produced by the system microservice and stores the information about the CPU usage that runs on different systems.
 
-Open **InventoryResource.java**
+Navigate to the bottom **inventory** directory
+
+`cd ../inventory/src/main/java/io/openliberty/guides/inventory/`
+
+Create **InventoryResource.java**
+
+`touch InventoryResource.java`
 
 [File -> Open]inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
-Replace the existing code with:
+Add the code:
 
 ```java
 package io.openliberty.guides.inventory;
@@ -386,11 +413,17 @@ Both the **system** and **inventory** microservices use connectors to connect ce
 
 Navigate to **META-INF** directory
 
-`cd system/src/main/resources/META-INF/`
+`cd ../../../../../../../../system/src/main/resources/META-INF/`
 
 Create the **system** **microprofile-config.properties**
 
 `touch microprofile-config.properties`
+
+Open **microprofile-config.properties**
+
+[File -> Open]system/src/main/resources/META-INF/microprofile-config.properties
+
+Add the **configuration properties**
 
 ```
 # Liberty Kafka connector
@@ -407,13 +440,19 @@ The **mp.messaging.connector.liberty-kafka.bootstrap.servers** property configur
 
 The **system** microservice uses an outgoing connector to send messages from the **systemLoad** channel to the **systemLoadTopic** topic in the Kafka messaging-broker, so that the inventory microservices can consume the messages. The **key.serializer** and **value.serializer** properties characterize how to serialize the messages. The class **SystemLoadSerializer** implements the logic for turning a **SystemLoad** object into json and is configured as the **value.serializer**.
 
-The **inventory** microservices uses a similar **microprofile-config.properties** configuration to define its required incoming stream.
+Navigate to the **inventory** directory to create the config properties for the **inventory**
 
-> [Navigate to] `cd inventory/src/main/resources/META-INF/`
+`cd ../../../../../inventory/src/main/resources/META-INF/`
+
+The **inventory** microservices uses a similar **microprofile-config.properties** configuration to define its required incoming stream.
 
 Create the inventory **microprofile-config.properties** file.
 
 `touch microprofile-config.properties`
+
+Open **microprofile-config.properties**
+
+[File -> Open]inventory/src/main/resources/META-INF/microprofile-config.properties
 
 ```
 # Liberty Kafka connector
@@ -437,11 +476,17 @@ All these properties are required by the Apache Kafka Producer Configs and Apach
 
 To use MicroProfile Reactive Messaging, you must enable the feature in the **server.xml** file for each service.
 
-Open the **server.xml** file
+Create the **server.xml** file
+
+Navigate back to **system** **config** directory to create the **server.xml**
+
+` cd ../../../../../system/src/main/liberty/config/`
+
+Open the **server.xml** file 
 
 >[File -> Open] system/src/main/liberty/config/server.xml
 
-Replace the **system server.xml** configuration file.
+Add the contents for the **server.xml** which contains the features and the **endpoint** configuring it to listen on **port 9083**
 
 ```xml
 <server description="System Service">
@@ -452,7 +497,9 @@ Replace the **system server.xml** configuration file.
     <feature>jsonb-1.0</feature>
     <feature>mpHealth-2.1</feature>
     <feature>mpConfig-1.3</feature>
+    <!-- tag::featureMP[] -->
     <feature>mpReactiveMessaging-1.0</feature>
+    <!-- end::featureMP[] -->
   </featureManager>
 
   <variable name="default.http.port" defaultValue="9083"/>
@@ -465,8 +512,6 @@ Replace the **system server.xml** configuration file.
 </server>
 ```
 
-Configure the server to enable MicroProfile Reactive Messaging by adding **mpReactiveMessaging-1.0** feature element to the **server.xml.**
-
 The **inventory** microservice has **server.xml** already configured.
 
 # Building the application
@@ -475,28 +520,30 @@ You will build and run the **system** and **inventory** microservices in Docker 
 
 The **Dockerfiles** are already provided for use.
 
-Check you are in the **start** directory
+Navigate back to the **start** directory 
 
-`pwd`
+`cd ../../../../`
 
-To build the application, run the Maven install and package goals in the **start directory**
+To build the application, run Maven install:
 
-```
-mvn -pl models install
-mvn package
-```
+
+`mvn -pl models install`
+
+Package the application 
+
+`mvn package`
 
 Update to the latest **open-liberty** Docker image.
 
 `docker pull open-liberty`
 
-Now you can containerize the microservices:
+### Containerize the microservices:
 
-### Build the **system** docker image
+Build the **system** docker image
 
 `docker build -t system:1.0-SNAPSHOT system/.`
 
-### Build the **inventory** docker image
+Build the **inventory** docker image
 
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 
