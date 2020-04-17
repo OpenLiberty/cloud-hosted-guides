@@ -79,7 +79,7 @@ Open **SystemService.java** by navigating to
 
 >[File -> Open]draft-guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system
 
-Double click on SystemService.java to open.
+Double click on SystemService.java to open and add the Java code.
 
 ```java
 package io.openliberty.guides.system;
@@ -142,7 +142,7 @@ Open the **pom.xml** file
 
 >[File -> Open] guide-microprofile-reactive-messaging/start/system/pom.xml
 
-Add the **Maven** dependencies
+Add the **maven** dependencies, **properties**, **plugins**, **packaging method**, war, **name** system, and the **version** 1.0-SNAPSHOT.
 
 ```xml
 <?xml version='1.0' encoding='utf-8'?>
@@ -308,7 +308,7 @@ Create **InventoryResource.java**
 
 [File -> Open]inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
-Add the code:
+Add the Java code:
 
 ```java
 package io.openliberty.guides.inventory;
@@ -402,9 +402,9 @@ The **inventory** microservice receives the message from the **system** microser
 
 MicroProfile Reactive Messaging uses connectors to send and receive messages from different systems. In order to configure the MicroProfile Reactive Messaging connectors, you need to format the configuration keys as follows :
 
-1. **mp.messaging.connector.liberty-kafka.<property name>** : Applies to all channels using the liberty-kafka connector
+1. mp.messaging.connector.liberty-kafka.<property name>: Applies to all channels using the liberty-kafka connector
 
-2. **mp.messaging.[incoming|outgoing].<channel name>.<property name>** : Applies to a particular channel
+2. mp.messaging.[incoming|outgoing].<channel name>.<property name> : Applies to a particular channel
 
 3. Each channel which is to be connected using a connector must have the connector property defined to say which **connector** to use
 
