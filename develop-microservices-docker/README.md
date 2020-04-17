@@ -64,6 +64,10 @@ Create the Dockerfile.
 
 `touch dockerfile`
 
+Open the **dockerfile**
+
+> [File -> open] start/dockerfile
+
 Add the contents into the **dockerfile**
 
 ```
@@ -176,7 +180,7 @@ As an insight you can pass in an optional server name at the end of the **run** 
 
 Check the container is running:
 
-`Docker ps`
+`docker ps`
 
 Output:
 ```
