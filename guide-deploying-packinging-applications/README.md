@@ -449,4 +449,4 @@ At this point, you can stop the server by pressing **CTRL+C** in the shell sessi
 
 ## Well done
 
-Well done you have learned the basics of deploying and updating an application on an Open Liberty server.
+Well done you have learned the basics of packaging, deploying and updating an application on Open Liberty
