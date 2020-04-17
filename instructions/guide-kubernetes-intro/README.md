@@ -26,7 +26,7 @@ To learn about the various Kubernetes resources that you can configure, see the 
 
 You will learn how to deploy two microservices in Open Liberty containers to a local Kubernetes cluster. You will then manage your deployed microservices using the **kubectl** command line interface for Kubernetes. The **kubectl** CLI is your primary tool for communicating with and managing your Kubernetes cluster.
 
-The two microservices you will deploy are called **system** and **inventory**. The **system** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The **inventor** microservice adds the properties from the `system` microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster.
+The two microservices you will deploy are called **system** and **inventory**. The **system** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The **inventor** microservice adds the properties from the **system** microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster.
 
 You will use a local single-node kubernetes cluster.
 
@@ -42,7 +42,7 @@ Check you are in the **home/project** folder:
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone hhttps://github.com/openliberty/guide-kubernetes-intro.git`
+`git clone https://github.com/openliberty/guide-kubernetes-intro.git`
 
 `cd guide-kubernetes-intro`
 
@@ -79,18 +79,9 @@ REPOSITORY                                                       TAG
 inventory                                                        1.0-SNAPSHOT
 system                                                           1.0-SNAPSHOT
 open-liberty                                                     latest
-k8s.gcr.io/kube-proxy-amd64                                      v1.10.3
-k8s.gcr.io/kube-scheduler-amd64                                  v1.10.3
-k8s.gcr.io/kube-controller-manager-amd64                         v1.10.3
-k8s.gcr.io/kube-apiserver-amd64                                  v1.10.3
-k8s.gcr.io/etcd-amd64                                            3.1.12
-k8s.gcr.io/k8s-dns-dnsmasq-nanny-amd64                           1.14.8
-k8s.gcr.io/k8s-dns-sidecar-amd64                                 1.14.8
-k8s.gcr.io/k8s-dns-kube-dns-amd64                                1.14.8
-k8s.gcr.io/pause-amd64                                           3.1
 ```
 
-If you don’t see the **system:1.0-SNAPSHOT** and **inventory:1.0-SNAPSHOT** images, then check the Maven build log for any potential errors. In addition, if you are using Minikube, make sure your Docker CLI is configured to use Minikube’s Docker daemon and not your host’s as described in the previous section.
+If you don’t see the **system:1.0-SNAPSHOT** and **inventory:1.0-SNAPSHOT** images, then check the Maven build log for any potential errors. 
 
 # Deploying the microservices
 
@@ -100,7 +91,7 @@ A Kubernetes resource definition is a yaml file that contains a description of a
 
 Create the Kubernetes configuration file.
 
-> File -> New File `kubernetes.yaml`
+> File -> New File start/`kubernetes.yaml`
 
 ```
 apiVersion: apps/v1
@@ -291,8 +282,11 @@ When you no longer need your deployed microservices, you can delete all Kubernet
 
 `kubectl delete -f kubernetes.yaml`
 
+
 # Summary
 
 ## Well Done
 
 Nice work! You have just deployed two microservices running in Open Liberty to Kubernetes. You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
+
+Please log out in the top right so that your environment is cleaned up and ready for the next lab!
