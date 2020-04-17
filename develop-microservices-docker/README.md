@@ -202,6 +202,10 @@ Curl the **/System/properties**, where you can see a JSON file that contains the
 
 `curl http://localhost:9080/LibertyProject/System/properties`
 
+Also, you can see that the docker container is running by accessing Open Liberty via the web browser.
+To view this click on **Launch Application** and type in the **port number**.
+
+The Open Liberty server runs on `9080`.
 
 ### Update the PropertiesResource class.
 
