@@ -14,12 +14,10 @@ You can perform lengthy operations, such as input/output (I/O), without blocking
 In the context of REST clients, HTTP request calls can be time consuming. The network might be slow, or maybe the upstream service is overwhelmed and can’t respond quickly. These lengthy operations can block the execution of your thread when it’s in use and prevent other work from being completed.
 
 ### What is reactive programming?
-Reactive programming is a programming paradigm that is designed around asynchronous data streams and its propagation of change. It encourages non-blocking and event-driven outlook for data processing. Reactive microservices are single function modules that are loosely coupled and message-driven.
+Reactive programming is a method for writing code based on react‐ing to changes. In technical terms, this is a paradigm in which declarative code is used to construct asynchronous processing pipelines. Translated, this is essentially the same process our minds perform when we try to multitask. Rather than true parallel tasking, we actually switch tasks and split those tasks during their duration. This enables us to use our time efficiently instead of having to wait for the previous task to complete. This is exactly what reactive programming was created to do. It is an event-based model in which data is pushed to a consumer as it becomes available, turning it into an asynchronous sequence of events. Reactive programming is a useful implementation technique for managing internal logic and data flow transformation locally within components (intercomponents), through asynchronous and non-blocking execution.
 
 ### What is MicroProfile Reactive Messaging?
-The degree of association between the services is called coupling. Decoupling of services can be accomplished by means of asynchronous communication in a microservice-based architecture. The coupling of services may bring about a fragile framework in an architecture based on microservice, with flexibility and scaling properties than might be worse than a monolith. One way to save you this is to embody asynchronous communication as much as possible.
-
-MicroProfile Reactive Messaging provides a very easy-to-use way to send, receive, and process messages asynchronously and is well-suited to writing applications that process streams of events. With MicroProfile Reactive Messaging, you annotate application beans' methods and, under the covers, Liberty converts these to reactive streams-compatible publishers, subscribers and processors and connects them up to each other. It also provides a Connector API to allow your methods to be connected to external messaging systems.
+The degree of association between the microservices within a system is called coupling. In order to ensure all microservices within the system are reactive, they must be decoupled from each other. This is important, because if services are not decoupled it can result in a fragile framework, resulting in potential flexibility, scaling and resilience problems. Decoupling of services can be accomplished by means of asynchronous communication. This is where MicroProfile Reactive Messaging can help.
 
 ### What is Kafka?
 Apache Kafka is a stream-processing platform that manages communication in distributed systems. Communication is message-oriented, and follows the publish-subscribe model. Kafka allows for real-time stream processing and distributed, replicated storage of streams and messages. A Kafka producer is a client or a program, which produces the message and pushes them to a topic. A Kafka consumer is a client or a program, which consumes the published messages from a topic.
@@ -30,7 +28,7 @@ You’ll update the **system** and **inventory** microservices to use MicroProfi
 
 ### Getting started
 
-The fastest way to work through this guide is to clone the Git repository and use the project thats inside:
+The fastest way to work through this guide is to clone the Git repository and use the project that's inside:
 
 `git clone https://github.com/openliberty/guide-microprofile-reactive-messaging.git`
 
@@ -71,13 +69,13 @@ Create the in the **SystemService** class.
 Navigate to the **system** directory
 > `cd system/src/main/java/io/openliberty/guides/system/`
 
-Create the `SystemService.java`
+Create the **SystemService.java**
 
 `touch SystemService.java`
 
 Open **SystemService.java** by navigating to 
 
->[File -> Open]draft-guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system
+>[File -> Open]draft-guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 
 Double click on SystemService.java to open and add the Java code.
 
