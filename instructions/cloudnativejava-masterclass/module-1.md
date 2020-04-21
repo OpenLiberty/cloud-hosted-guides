@@ -1,4 +1,4 @@
-## Get started developing Java microservices with Open Liberty
+# Get started developing Java microservices with Open Liberty
 
 ### What you will learn
 
@@ -11,7 +11,9 @@ Maven is an automation build tool that provides an efficient way to develop Java
 You’ll also explore how to package your application with the server runtime so that it can be deployed anywhere in one go. You will then make server configuration and code changes and see how they are picked up by a running server.
 Finally, you will package the application along with the server configuration into a Docker image and run that image as a container.
 
-## Building and running the application
+# Building and running the application
+
+### Getting started
 
 Ensure you are running the Quick Lab in Google Chrome for the full experience.
 
@@ -76,7 +78,7 @@ The Open Liberty Maven plug-in includes a dev goal that listens for any changes 
 
 The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
 
-## Start Open Liberty Server in dev mode
+# Start Open Liberty Server in dev mode
 
 Navigate back to the terminal window where you started the Open Liberty Server and stop it.
 
@@ -132,7 +134,7 @@ You see the following JSON output:
 ```
 You now have a means of verifying if your server is up and running.
 
-## Updating the source code without restarting the server
+# Updating the source code without restarting the server
 
 The JAX-RS application that contains your **system** microservice is configured as a loose application, meaning that it runs in a server from its **.class** file and other artifacts. Open Liberty automatically monitors these artifacts, and whenever they're updated, it updates the running server without the need for the server to be restarted.
 
@@ -292,7 +294,7 @@ Similarily, access the /health/live endpoint by visiting or running the Liveness
 
 `curl http://localhost:9080/health/live` 
 
-## Checking the Open Liberty server logs
+# Checking the Open Liberty server logs
 
 Go back to the second shell session
 
@@ -355,7 +357,7 @@ To stop the server in **dev** mode navigate to the terminal and quit the server 
 **q + enter**
 
 
-## Running the application in a Docker container
+# Running the application in a Docker container
 
 To run the application in a container, you need to have Docker installed. For installation instructions, see the Official Docker Docs.
 
@@ -447,6 +449,6 @@ Access your application that is now running out of the minimal runnable JAR.
 
 At this point, you can stop the server by pressing **CTRL+C** in the shell session that the server runs in.
 
-## Well done
+# Well done
 
-Well done you have learned the basics of packaging, deploying and updating an application on Open Liberty
+Well done you have learned the basics of packaging, deploying and updating an application on Open Liberty.
