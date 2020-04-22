@@ -589,4 +589,4 @@ Finally, use the following script to stop the application:
 
 # Well done
 
-You have experienced building reactive microservices using MicroProfile Reactive Messaging, and also sending messages between the microservices using Apache Kafka
+You have experienced building reactive microservices using MicroProfile Reactive Messaging, and also sending messages between the microservices using Apache Kafka.
