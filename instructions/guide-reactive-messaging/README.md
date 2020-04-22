@@ -14,7 +14,7 @@ You can perform lengthy operations, such as input/output (I/O), without blocking
 In the context of REST clients, HTTP request calls can be time consuming. The network might be slow, or maybe the upstream service is overwhelmed and can’t respond quickly. These lengthy operations can block the execution of your thread when it’s in use and prevent other work from being completed.
 
 ### What is reactive programming?
-Reactive programming is a method for writing code based on react‐ing to changes. In technical terms, this is a paradigm in which declarative code is used to construct asynchronous processing pipelines. Translated, this is essentially the same process our minds perform when we try to multitask. Rather than true parallel tasking, we actually switch tasks and split those tasks during their duration. This enables us to use our time efficiently instead of having to wait for the previous task to complete. This is exactly what reactive programming was created to do. It is an event-based model in which data is pushed to a consumer as it becomes available, turning it into an asynchronous sequence of events. Reactive programming is a useful implementation technique for managing internal logic and data flow transformation locally within components (intercomponents), through asynchronous and non-blocking execution.
+Reactive programming is a method for writing code based on reacting to changes. In technical terms, this is a paradigm in which declarative code is used to construct asynchronous processing pipelines. Translated, this is essentially the same process our minds perform when we try to multitask. Rather than true parallel tasking, we actually switch tasks and split those tasks during their duration. This enables us to use our time efficiently instead of having to wait for the previous task to complete. This is exactly what reactive programming was created to do. It is an event-based model in which data is pushed to a consumer as it becomes available, turning it into an asynchronous sequence of events. Reactive programming is a useful implementation technique for managing internal logic and data flow transformation locally within components (intracomponents), through asynchronous and non-blocking execution.
 
 ### What is MicroProfile Reactive Messaging?
 The degree of association between the microservices within a system is called coupling. In order to ensure all microservices within the system are reactive, they must be decoupled from each other. This is important, because if services are not decoupled it can result in a fragile framework, resulting in potential flexibility, scaling and resilience problems. Decoupling of services can be accomplished by means of asynchronous communication. This is where MicroProfile Reactive Messaging can help.
@@ -24,7 +24,7 @@ Apache Kafka is a stream-processing platform that manages communication in distr
 
 The application that you will be working with consists of two microservices, **system** and **inventory**. The system microservice sends the average **system** load data to the **inventory** microservice every 15 seconds. The **inventory** microservice keeps an updated list of all the **system** hostnames and their CPU data.
 
-You’ll update the **system** and **inventory** microservices to use MicroProfile Reactive Messaging for message passing. These microservices run on Open Liberty.
+You’ll update the **system** and **inventory** microservices to use MicroProfile Reactive Messaging for message passing. These microservices run on Open Liberty. The system microservice sends the average system load data, via the kafka topic, to the **inventory** microservice every 15 seconds.
 
 ### Getting started
 
@@ -64,7 +64,7 @@ MicroProfile Reactive Messaging uses connectors to attach one end of a channel t
 
 The **system** microservice uses the MicroProfile Reactive Messaging to send CPU usage messages to the **inventory** microservice over Kafka.
 
-Create the in the **SystemService** class.
+Create the **SystemService** class.
 
 Navigate to the **system** directory
 > `cd system/src/main/java/io/openliberty/guides/system/`
@@ -294,7 +294,7 @@ In order to develop the MicroProfile Reactive Messaging application using Maven,
 
 # Building the Consumer in the inventory microservice
 
-The **inventory** microservice consumes the events produced by the system microservice and stores the information about the CPU usage that runs on different systems.
+The **inventory** microservice consumes the events produced by the **system** microservice and stores the information about the CPU usage that runs on different systems.
 
 Navigate to the bottom **inventory** directory
 
@@ -404,7 +404,7 @@ MicroProfile Reactive Messaging uses connectors to send and receive messages fro
 
 2. mp.messaging.[incoming|outgoing].<channel name>.<property name> : Applies to a particular channel
 
-3. Each channel which is to be connected using a connector must have the connector property defined to say which **connector** to use
+3. Each channel which is to be connected using a connector must have the connector property defined to say which connector to use
 
 Both the **system** and **inventory** microservices use connectors to connect certain channels to Apache Kafka and these connectors are configured by setting properties using MicroProfile Config. This is done by setting the required properties inside the **microprofile-config.properties** file included in each microservice.
 
@@ -556,7 +556,7 @@ Start the application
 
 Once the application is up and running, you can access the application by making a **@GET** request to the **inventory** endpoint.
 
-To access the **inventory** microservice, use the **inventory/systems** URL, and you see the CPU systemLoad property for all the systems.
+To access the **inventory** microservice, use the **inventory/systems** URL, and you see the CPU **systemLoad** property for all the systems.
 
 `curl http://localhost:9085/inventory/systems`
 
@@ -586,3 +586,7 @@ In this example the **hostId = 30bec2b63a96**
 Finally, use the following script to stop the application:
 
 `./scripts/stopContainers.sh`
+
+# Well done
+
+You have experienced building reactive microservices using MicroProfile Reactive Messaging, and also sending messages between the microservices using Apache Kafka
