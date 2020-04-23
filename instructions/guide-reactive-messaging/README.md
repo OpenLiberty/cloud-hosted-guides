@@ -102,7 +102,7 @@ The messages are transported between the service and the Kafka messaging system 
 
 # Creating the consumer in the inventory microservice
 
-The **inventory** microservice records in its inventory the average system load information that it received from potentially multiple instances of the system service.
+The **inventory** microservice records in its inventory the average system load information that it received from potentially multiple instances of the **system** service.
 
 Navigate to the bottom **inventory** directory
 
