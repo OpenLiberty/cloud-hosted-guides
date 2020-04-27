@@ -170,7 +170,10 @@ Each step of the build has a unique ID, which represents the ID of an intermedia
 
 However, you can also completely disable the caching of intermediate layers by running the build with the **--no-cache=true flag**
 
-`docker build -t ol-runtime --no-cache=true .`
+```
+docker build -t ol-runtime --no-cache=true .
+```
+{: codeblock}
 
 # Running your application in Docker container
 
@@ -193,7 +196,10 @@ docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v $(pwd)/target/liberty
 
 As an insight you can pass in an optional server name at the end of the **run** command to override the **defaultServer** server in the **CMD** instruction. For example, if your servers directory also contains a server called testServer, then it can be started as shown in the following example:
 
-`docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v /home/project/guide-docker/start/target/liberty/wlp/usr/servers:/servers ol-runtime testServer`
+```
+docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v /home/project/guide-docker/start/target/liberty/wlp/usr/servers:/servers ol-runtime testServer
+```
+{: codeblock}
 
 # Testing the container
 
