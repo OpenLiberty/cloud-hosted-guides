@@ -32,13 +32,21 @@ If a terminal window does not open navigate:
 
 Check you are in the **home/project** folder:
 
-`pwd`
+```
+pwd
+```
+{: codeblock}
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/openliberty/guide-docker.git`
+```git clone https://github.com/openliberty/guide-docker.git
+```
+{: codeblock}
 
-`cd guide-docker`
+```
+cd guide-docker
+```
+{: codeblock}
 
 The **start** directory contains the starting project that you will build upon.
 
@@ -46,9 +54,14 @@ The **start** directory contains the starting project that you will build upon.
 
 Navigate to the **start** directory and run the Maven install goal to build your application:
 
-`cd start`
+```
+cd start
+```
+{: codeblock}
 
-`mvn install`
+```
+mvn install
+```
 
 Your **pom.xml** file is already configured to add your REST application to the **defaultServer.** But you can tweak this configuration or add your own for another server by updating the **<execution/>** element.
 
@@ -62,7 +75,10 @@ A Dockerfile is a collection of instructions for building a Docker image that ca
 
 Create the Dockerfile.
 
-`touch dockerfile`
+```
+touch dockerfile
+```
+{: codeblock}
 
 Open the **dockerfile**
 
@@ -83,6 +99,7 @@ USER 1001
 ENTRYPOINT ["/opt/ol/wlp/bin/server", "run"]
 CMD ["defaultServer"]
 ```
+{: codeblock}
 
 ### A breakdown of the dockerfile
 
@@ -113,12 +130,18 @@ A **.dockerignore** file is available to you in the **start** directory. This fi
 src/
 pom.xml
 ```
+{: codeblock}
 
 # Building the image
 
 If you execute your build from the same directory as your Dockerfile, (which you are) you can use the period character (.) notation to specify the location for the build context. Otherwise, (if you weren't you could) use the **-f** flag to point to your Dockerfile.
 
-Run `docker build -t ol-runtime .`
+Run 
+
+```
+docker build -t ol-runtime .
+```
+{: codeblock}
 
 Use the **-t** flag to give the image an optional name. In this case, **ol-runtime** is the name of your image.
 
@@ -146,6 +169,7 @@ Removing intermediate container 1a543a9e37d8
 Successfully built 8fdcad065d25
 Successfully tagged ol-runtime:latest
 ```
+
 Each step of the build has a unique ID, which represents the ID of an intermediate image. For example, step 2 has the ID **937183f8460b**, and step 4 has the ID **8fdcad065d25**, which is also the ID of the final image. During the first build of your image, Docker caches every new layer as a separate image and reuses them for future builds for layers that didn’t change. For example, if you run the build again, Docker reuses the images that it cached for steps 2 - 4. However, if you make a change in your Dockerfile, Docker would need to rebuild the subsequent layer since this layer also changed.
 
 ### The '**no-cache=true flag**'
@@ -161,6 +185,7 @@ Now that your image is built, execute the Docker **run** command
 ```
 docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v $(pwd)/target/liberty/wlp/usr/servers:/servers -u `id -u` ol-runtime
 ```
+{: codeblock}
 
 ### A breakdown of the flags
 
@@ -200,7 +225,10 @@ As well, you can view the logs and see the Open Liberty server starting. This is
 
 Curl the **/System/properties**, where you can see a JSON file that contains the system properties of the JVM in your container.
 
-`curl http://localhost:9080/LibertyProject/System/properties`
+```
+curl http://localhost:9080/LibertyProject/System/properties
+```
+{: codeblock}
 
 Also, you can see that the docker container is running by accessing Open Liberty via the web browser.
 To view this click on **Launch Application** and type in the **port number**.
@@ -254,21 +282,34 @@ public class PropertiesResource {
     }
 }
 ```
+{: codeblock}
+
 Rebuild the application 
 
 Ensure you are in **/home/project/guide-docker/start**
 
-Run `mvn package`
+Run: 
+
+```
+mvn package
+```
+{: codeblock}
 
 View the changes reflected in the container, and point your browser to `/System/properties-new`.
 
-`curl http://localhost:9080/LibertyProject/System/properties-new`
+```
+curl http://localhost:9080/LibertyProject/System/properties-new
+```
+{: codeblock}
 
 You see the same JSON file that you saw previously.
 
 To stop your container, run:
 
-`docker stop rest-app`
+```
+docker stop rest-app
+```
+{: codeblock}
 
 # Well done
 

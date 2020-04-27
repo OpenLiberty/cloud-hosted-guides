@@ -38,13 +38,18 @@ If a terminal window does not open navigate:
 
 Check you are in the **home/project** folder:
 
-`pwd`
+```
+pwd
+```
+{: codeblock}
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/openliberty/guide-kubernetes-intro.git`
-
-`cd guide-kubernetes-intro`
+```
+git clone https://github.com/openliberty/guide-kubernetes-intro.git
+cd guide-kubernetes-intro
+```
+{: codeblock}
 
 The **start** directory contains the starting project that you will build upon.
 
@@ -58,19 +63,27 @@ The starting Java project, which you can find in the **start** directory, is a m
 
 Navigate to the **start** directory and run the following command to build the applications:
 
-`mvn clean package`
+```
+mvn clean package
+```
+{: codeblock}
 
 Next, run the docker build commands to build container images for your application:
 
-`docker build -t system:1.0-SNAPSHOT system/.`
-
-`docker build -t inventory:1.0-SNAPSHOT inventory/.`
+```
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+{: codeblock}
 
 The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. The tag for an image describes the specific image version. If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
 
 During the build, you’ll see various Docker messages describing what images are being downloaded and built. When the build finishes, run the following command to list all local Docker images:
 
-`docker images`
+```
+docker images
+```
+{: codeblock}
 
 Verify that the **system:1.0-SNAPSHOT** and **inventory:1.0-SNAPSHOT** images are listed among them, for example:
 
@@ -165,16 +178,23 @@ spec:
     targetPort: 9080
     nodePort: 32000
 ```
+{: codeblock}
 
 This file defines four Kubernetes resources. It defines two deployments and two services. A Kubernetes deployment is a resource responsible for controlling the creation and management of pods. A service exposes your deployment so that you can make requests to your containers. Three key items to look at when creating the deployments are the **labels**, **image**, and **containerPort** fields. The **labels** is a way for a Kubernetes service to reference specific deployments. The **image** is the name and tag of the Docker image that you want to use for this container. Finally, the **containerPort** is the port that your container exposes for purposes of accessing your application. For the services, the key point to understand is that they expose your deployments. The binding between deployments and services is specified by the use of labels — in this case the **app** label. You will also notice the service has a type of **NodePort**. This means you can access these services from outside of your cluster via a specific port. In this case, the ports will be **31000** and **32000**, but it can also be randomized if the nodePort field is not used.
 
 Run the following commands to deploy the resources as defined in kubernetes.yaml:
 
-`kubectl apply -f kubernetes.yaml`
+```
+kubectl apply -f kubernetes.yaml
+```
+{: codeblock}
 
 When the apps are deployed, run the following command to check the status of your pods:
 
-`kubectl get pods`
+```
+kubectl get pods
+```
+{: codeblock}
 
 You’ll see an output similar to the following if all the pods are healthy and running:
 
@@ -186,7 +206,10 @@ inventory-deployment-645767664f-nbtd9   1/1       Running   0          15s
 
 You can also inspect individual pods in more detail by running the following command:
 
-`kubectl describe pods`
+```
+kubectl describe pods
+```
+{: codeblock}
 
 You can also issue the **kubectl get** and **kubectl describe** commands on other Kubernetes resources, so feel free to inspect all other resources.
 
@@ -206,11 +229,17 @@ We can consider doing that. This post is particularly long and detailed (it surp
 
 As an example, scale the **system** deployment to three pods by running the following command:
 
-`kubectl scale deployment/system-deployment --replicas=3`
+```
+kubectl scale deployment/system-deployment --replicas=3
+```
+{: codeblock}
 
 Use the following command to verify that two new pods have been created.
 
-`kubectl get pods`
+```
+kubectl get pods
+```
+{: codeblock}
 
 ```
 NAME                                    READY     STATUS    RESTARTS   AGE
@@ -220,7 +249,12 @@ system-deployment-6bd97d9bf6-x4zth      1/1       Running   0          25s
 inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
 ```
 
-Wait for your two new pods to be in the ready state, then enter `curl http://localhost:31000/system/properties`. 
+Wait for your two new pods to be in the ready state, then enter 
+
+```
+curl http://localhost:31000/system/properties
+```
+{: codeblock} 
 
 You’ll notice that the X-Pod-Name header will have a different value when you call it multiple times. This is because there are now three pods running all serving the **system** application. Similarly, to descale your deployments you can use the same scale command with fewer replicas.
 
@@ -229,6 +263,7 @@ mvn clean package
 kubectl delete -f kubernetes.yaml
 kubectl apply -f kubernetes.yaml
 ```
+{: codeblock}
 
 This is not how you would want to update your applications when running in production, but in a development environment this is fine. If you want to deploy an updated image to a production cluster, you can update the container in your deployment with a new image. Then, Kubernetes will automate the creation of a new container and decommissioning of the old one once the new container is ready.
 
@@ -280,7 +315,10 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 
 When you no longer need your deployed microservices, you can delete all Kubernetes resources by running the **kubectl delete** command:
 
-`kubectl delete -f kubernetes.yaml`
+```
+kubectl delete -f kubernetes.yaml
+```
+{: codeblock}
 
 
 # Summary
