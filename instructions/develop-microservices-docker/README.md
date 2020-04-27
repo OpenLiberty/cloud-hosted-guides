@@ -39,11 +39,8 @@ pwd
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-```git clone https://github.com/openliberty/guide-docker.git
 ```
-{: codeblock}
-
-```
+git clone https://github.com/openliberty/guide-docker.git
 cd guide-docker
 ```
 {: codeblock}
@@ -56,12 +53,9 @@ Navigate to the **start** directory and run the Maven install goal to build your
 
 ```
 cd start
-```
-{: codeblock}
-
-```
 mvn install
 ```
+{: codeblock}
 
 Your **pom.xml** file is already configured to add your REST application to the **defaultServer.** But you can tweak this configuration or add your own for another server by updating the **<execution/>** element.
 
@@ -205,7 +199,10 @@ As an insight you can pass in an optional server name at the end of the **run** 
 
 Check the container is running:
 
-`docker ps`
+```
+docker ps
+```
+{: codeblock}
 
 Output:
 ```
