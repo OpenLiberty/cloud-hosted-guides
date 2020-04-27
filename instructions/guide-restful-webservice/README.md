@@ -26,30 +26,50 @@ If a terminal window does not open navigate:
 
 Check you are in the **home/project** folder:
 
-`pwd`
+```
+pwd
+```
+{: codeblock}
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/openliberty/guide-rest-intro.git`
-`cd guide-rest-intro`
+```
+git clone https://github.com/openliberty/guide-rest-intro.git
+```
+{: codeblock}
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+To try out the application, navigate to the **finish** directory
 
-To try out the application, first go to the **finish** directory and run the following Maven  goal to build the application and deploy it to Open Liberty:
+```
+cd guide-rest-intro/finish
+```
+{: codeblock}
+
+Run the following Maven goal to build the application and deploy it to Open Liberty:
 
 `mvn liberty:run`
 
-Check out the service in another shell:
+In another terminal, run the following command check out the service:
 
-`curl http://localhost:9080/LibertyProject/System/properties`
+```
+curl http://localhost:9080/LibertyProject/System/properties
+```
+{: codeblock}
 
-After you are done checking out the application, stop the Open Liberty server by pressing **CTRL+C** in the shell session where you ran the server. Alternatively, you can run the **liberty:stop** goal  from the **finish** directory in another shell session:
+After you are done checking out the application, stop the Open Liberty server. 
+In the shell session where you ran the server press:
 
-`mvn liberty:stop`
+**CTRL+C**
 
 # Creating a JAX-RS application
 
 Navigate to the **start** directory to begin.
+
+```
+cd ../start
+```
+{: codeblock}
 
 Start Open Liberty in development mode, which starts the Open Liberty server and listens 
 for file changes:
@@ -58,9 +78,9 @@ for file changes:
 
 JAX-RS has two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modelled as a class. The second is a JAX-RS application, which groups all exposed resources under a common path. You can think of the JAX-RS application as a wrapper for all of your resources.
 
-Replace the `SystemApplication` class:
+Replace the `SystemApplication.java` file:
 
-> [File -> Open]src/main/java/io/openliberty/guides/rest/SystemApplication.java
+> [File -> Open] guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
 
 ```java
 package io.openliberty.guides.rest;
@@ -73,17 +93,30 @@ public class SystemApplication extends Application {
 
 }
 ```
+{: codeblock}
 
 The **SystemApplication** class extends the **Application** class, which in turn associates all JAX-RS resource classes in the WAR file with this JAX-RS application, making them available under the common path specified in the **SystemApplication** class. The **@ApplicationPath** annotation has a value that indicates the path within the WAR that the JAX-RS application accepts requests from.
+
+Close and save the `SystemApplication.java` file by pressing the 'x' button and click 'save'.
+
+You should see the application automatically update.
 
 # Creating the JAX-RS resource
 
 In JAX-RS, a single class should represent a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. It is easy to have a single class handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability in the long run.
 
-Create the `PropertiesResource` class.
-> [File -> New File]src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+Open up a new terminal to easily create a new file.
 
-Add the following:
+Create the **PropertiesResource.java** class.
+
+```
+touch guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+```
+{: codeblock}
+
+Open the **PropertiesResource.java** 
+
+[File->Open]guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 ```java
 package io.openliberty.guides.rest;
@@ -106,6 +139,8 @@ public class PropertiesResource {
 
 }
 ```
+{: codeblock}
+
 This resource class has quite a bit of code in it, so let's break it down into manageable chunks.
 
 The **@Path** annotation on the class indicates that this resource responds to the **properties** path in the JAX-RS application. The **@ApplicationPath** annotation in the **SystemApplication** class together with the **@Path** annotation in this class indicates that the resource is available at the **System/properties** path.
@@ -121,12 +156,19 @@ The method body returns the result of **System.getProperties()** that is of type
 is annotated with **@Produces(MediaType.APPLICATION_JSON)**, JAX-RS uses JSON-B to automatically convert the returned object
 to JSON data in the HTTP response.
 
+Close and save the `PropertiesResource.java` file by pressing the 'x' button and click 'save'.
+
+Navigate back to the terminal where the server is running and you will see the server has updated.
+
 # Configuring the server
 
 To get the service running, the Liberty server needs to be correctly configured. 
 
-Replace the server configuration file.
-> [File -> Open]src/main/liberty/config/server.xml
+Open the **server.xml** file:
+
+> [File -> Open]guide-rest-intro/start/src/main/liberty/config/server.xml
+
+Replace the server configuration file:
 
 ```source
 <server description="Intro REST Guide Liberty server">
@@ -140,37 +182,52 @@ Replace the server configuration file.
   <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
 </server>
 ```
+{: codeblock}
+
 The configuration does the following actions:
 
-. Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
-. Configures the server to resolve the HTTP port numbers from variables, which are then specified in the Maven **pom.xml** file. This is specified in the **<httpEndpoint/>** element. Variables use the **${variableName}** syntax. 
-. Configures the server to run the produced web application on a context root specified in the **pom.xml** file. This is specified in the **<webApplication/>** element.
+* Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
+* Configures the server to resolve the HTTP port numbers from variables, which are then specified in the Maven **pom.xml** file. This is specified in the **<httpEndpoint/>** element. Variables use the **${variableName}** syntax. 
+* Configures the server to run the produced web application on a context root specified in the **pom.xml** file. This is specified in the **<webApplication/>** element.
+
+Close and save the `server.xml` file by pressing the 'x' button and click 'save'.
+
+You will see the server automatically updating.
 
 Take a look at the **pom.xml** file. 
-> [File -> Open]pom.xml
+> [File->Open]guide-rest-intro/start/pom.xml
 
 The variables that are being used in the **server.xml** file are provided by the properties set in the Maven **pom.xml** file. The properties must be formatted as **liberty.var.variableName**.
+
+Close the `pom.xml` file.
 
 ## Building and running the application
 
 The Open Liberty server was started in development mode at the beginning of the guide and all the 
 changes were automatically picked up.
 
-Check out the service that you created at the
-http://localhost:9080/LibertyProject/System/properties[^] URL. 
+Check out the service that you created at the **System/properties** URL
+```
+curl http://localhost:9080/LibertyProject/System/properties 
+```
+{: codeblock}
 
 ## Testing the service
-
-You can test this service manually by using the following command in another shell:
-`curl http://localhost:9080/LibertyProject/System/properties`
 
 Automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS Client API provide a simple environment to test the application.
 
 You can write tests for the individual units of code outside of a running application server, or they can be written to call the application server directly. In this example, you will create a test that does the latter.
 
-Create the `EndpointIT` class
+Create the `EndpointIT.java` file
 
-> [File -> New File]src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+```
+touch guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+```
+{: codeblock}
+
+Open the **EndpointIT.java** class
+
+> [File->Open] guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
 Add the following to the class: 
 
@@ -218,6 +275,11 @@ public class EndpointIT {
     }
 }
 ```
+{: codeblock}
+
+
+Navigate back to the Open Liberty terminal and you will see "Test compilation was successfull".
+The **bold** text corresponds to the code in the **EndpointIT.java** file
 
 This test class has more lines of code than the resource implementation. This situation is common. The test method is indicated with the **@Test** annotation.
 
@@ -255,8 +317,22 @@ assertion to a constant value that doesn't match the **os.name** system property
 When you are done checking out the service, exit development mode by typing **q** in the shell session where
 you ran the server and then pressing the **enter/return** key.
 
+
 # Summary
+
+### Clean up your environment 
+
+Delete the **guide-restful-webservice** project by navigating to the **/home/project/** directory
+
+```
+rm -r guide-rest-intro
+```
+{: codeblock}
+
+and hit **y** and **enter**.
 
 ## Well Done
 
 Nice work! You developed a REST service in Open Liberty by using JAX-RS and JSON-B.
+
+

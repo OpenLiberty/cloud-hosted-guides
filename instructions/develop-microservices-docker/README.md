@@ -59,9 +59,9 @@ mvn install
 
 Your **pom.xml** file is already configured to add your REST application to the **defaultServer.** But you can tweak this configuration or add your own for another server by updating the **<execution/>** element.
 
-The install-apps goal copies the application into the specified directory of the specified server. In this case, the goal copies the rest.war file into the apps directory of the defaultServer server.
+The install-apps goal copies the application into the specified directory of the specified server. In this case, the goal copies the **rest.war** file into the apps directory of the **defaultServer** server.
 
-Learn more about this goal on the official [Maven Liberty plug-in repository.](https://github.com/OpenLiberty/ci.maven/blob/2.x/docs/install-apps.md)
+To learn more about this goal on the official [Maven Liberty plug-in repository.](https://github.com/OpenLiberty/ci.maven/blob/2.x/docs/install-apps.md)
 
 # Creating the Dockerfile
 
@@ -76,7 +76,7 @@ touch dockerfile
 
 Open the **dockerfile**
 
-> [File -> open] start/dockerfile
+> [File -> open] guide-docker/start/dockerfile
 
 Add the contents into the **dockerfile**
 
@@ -94,6 +94,8 @@ ENTRYPOINT ["/opt/ol/wlp/bin/server", "run"]
 CMD ["defaultServer"]
 ```
 {: codeblock}
+
+Close and save **dockerfile** by pressing the 'x' button and pressing 'save'.
 
 ### A breakdown of the dockerfile
 
@@ -194,7 +196,7 @@ docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v $(pwd)/target/liberty
 
 **-v** | This flag mounts a directory or file to the file system of the container.
 
-As an insight you can pass in an optional server name at the end of the **run** command to override the **defaultServer** server in the **CMD** instruction. For example, if your servers directory also contains a server called testServer, then it can be started as shown in the following example:
+As an insight you can pass in an optional server name at the end of the **run** command to override the **defaultServer** server in the **CMD** instruction. For example, if your servers directory also contains a server called **testServer**, then it can be started as shown in the following example:
 
 ```
 docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v /home/project/guide-docker/start/target/liberty/wlp/usr/servers:/servers ol-runtime testServer
@@ -242,7 +244,7 @@ The Open Liberty server runs on `9080`.
 
 To open the file click the the file button in the top left hand corner
 
-[File -> Open] **src/main/java/io/openliberty/guides/rest/PropertiesResource.java**
+[File -> Open] guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 Note the endpoint of your application is going to change from **properties** to **properties-new**. This has been updated by the **@Path** annotation being changed.
 
@@ -287,6 +289,8 @@ public class PropertiesResource {
 ```
 {: codeblock}
 
+Close and save **PropertiesResource** by pressing the 'x' button and pressing 'save'.
+
 Rebuild the application 
 
 Ensure you are in **/home/project/guide-docker/start**
@@ -314,11 +318,22 @@ docker stop rest-app
 ```
 {: codeblock}
 
-# Well done
+# Summary 
+
+### Clean up your environment 
+
+Delete the **guide-restful-webservice** project by navigating to the **/home/project/** directory
+
+```
+rm -r guide-docker
+```
+{: codeblock}
+
+and hit **y** and **enter**.
+
+### Well done
 
 Congratulations, you have successfully completed the lab. 
 
 From this lab you should now have an understanding of: what Docker is, why you would use containers, what a **dockerfile** is, creating a dockerfile, building the image and also running the container to see the JVM output and updating the container. 
-
-Well done.
 
