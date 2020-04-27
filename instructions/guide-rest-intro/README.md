@@ -22,7 +22,8 @@ The service responds to **GET** requests to the **/System/properties** path. The
 As an example:
 If a terminal window does not open navigate:
 
-`Terminal -> New Terminal {: codeblock }` 
+`Terminal -> New Terminal ` 
+{: codeblock }
 
 Check you are in the **home/project** folder:
 
@@ -36,8 +37,10 @@ The fastest way to work through this guide is to clone the Git repository and us
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
 To try out the application, first go to the **finish** directory and run the following Maven  goal to build the application and deploy it to Open Liberty:
+```
+mvn liberty:run
+```
 
-`mvn liberty:run`
 
 Check out the service in another shell:
 
