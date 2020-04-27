@@ -254,7 +254,7 @@ Wait for your two new pods to be in the ready state, then enter
 ```
 curl http://localhost:31000/system/properties
 ```
-{: codeblock} 
+{: codeblock}
 
 You’ll notice that the X-Pod-Name header will have a different value when you call it multiple times. This is because there are now three pods running all serving the **system** application. Similarly, to descale your deployments you can use the same scale command with fewer replicas.
 
@@ -283,7 +283,10 @@ Navigate back to the **start** directory.
 
 Run the integration tests against a cluster running with a host name of localhost:
 
-`mvn failsafe:integration-test`
+```
+mvn failsafe:integration-test
+```
+{: codeblock}
 
 If the tests pass, you’ll see an output similar to the following for each service respectively:
 
