@@ -101,9 +101,9 @@ Wait for the **Press the Enter key to run tests on demand.** message, and then p
  Integration tests finished.
 ```
 
-To begin bootstrapping, annotate the **src/test/java/io/openliberty/guides/testing/PersonServiceIT.java** class with the **@MicroShedTest** annotation. This annotation indicates that the test class uses MicroShed Testing.
+To begin bootstrapping, annotate the **PersonServiceIT.java** class with the **@MicroShedTest** annotation. This annotation indicates that the test class uses MicroShed Testing.
 
-> [File -> Open] start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> [File->Open] guide-start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 Import the MicroShedTest annotation by inserting the following line in to the **PersonServiceIT.java** file below the existing **import** statement: 
 
@@ -153,6 +153,8 @@ Run the following command to call the microservice URL:
 curl http://localhost:9080/health/ready
 ```
 {: codeblock}
+
+
 
 Save your changes to the **PersonServiceIT** class and press the **enter/return key** in your console window to rerun the tests. You still see only one test running, but the output is different. Notice that MicroShed Testing is using a **hollow** configuration mode. This configuration mode means that MicroShed Testing is reusing an existing application runtime for the test, not starting up a new application instance each time you initiate a test run.
 
@@ -204,11 +206,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 Add the test logic in the **PersonServiceIT.java** file in the **testCreatePerson** method:
 
 ```
-@Test
-    public void testCreatePerson() {
-         Long createId = personSvc.createPerson("Hank", 42);
-        assertNotNull(createId);
-    }
+    Long createId = personSvc.createPerson("Hank", 42);
+    assertNotNull(createId);
+
 ```
 {: codeblock}
 
@@ -218,10 +218,19 @@ Save the changes. Then, press the **enter/return** key in your console window to
 INFO org.microshed.testing.jaxrs.RestClientBuilder  - Building rest client for class io.openliberty.guides.testing.PersonService with base path: http://localhost:9080/guide-microshed-testing/ and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
 INFO org.microshed.testing.jaxrs.JsonBProvider  - Response from server: 1809686877352335426
 ```
+Add **assertEquals**, **assertTrue** and **java.util.Collection** for the next set of test cases to work
+
+```java
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Collection;
+```
+
+
 
 Next, add more tests to the **PersonServiceIT** class:
 
-```
+```java
 @Test
     public void testMinSizeName() {
         Long minSizeNameId = personSvc.createPerson("Ha", 42);
@@ -305,9 +314,12 @@ Typically, projects have multiple test classes that all use the same type of app
 
 First, create another test class.
 
-> [File -> New File] src/test/java/io/openliberty/guides/testing/`ErrorPathIT.java`
-
 ```
+touch src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+```
+
+Add the additional tests
+```java
 package test.java.io.openliberty.guides.testing;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -371,7 +383,11 @@ Notice that tests for both the **PersonServiceIT** and **ErrorPathIT** classes r
 
 To solve this issue, common configuration can be placed in a class that implements **SharedContainerConfiguration**. Create the **AppDeploymentConfig** class.
 
-> [File -> New File] src/test/java/io/openliberty/guides/testing/`AppDeploymentConfig.java`
+```
+touch src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
+```
+
+Add 
 
 ```
 package io.openliberty.guides.testing;
@@ -427,9 +443,9 @@ Add the following to the **PersonServiceIT.java** file above the **PersonService
 ```
 {: codeblock}
 
-Similarly, update the ErrorPathIT class to remove the container code.
+Similarly, update the **ErrorPathIT** class to remove the container code.
 
-> [File -> Open] src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+> [File->Open] src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
 Remove the **import** statements and **@Container** annotation code: 
 
