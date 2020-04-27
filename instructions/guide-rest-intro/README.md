@@ -22,8 +22,8 @@ The service responds to **GET** requests to the **/System/properties** path. The
 As an example:
 If a terminal window does not open navigate:
 
-`Terminal -> New Terminal ` 
-{: codeblock }
+
+`Terminal -> New Terminal` {: codeblock}
 
 Check you are in the **home/project** folder:
 
