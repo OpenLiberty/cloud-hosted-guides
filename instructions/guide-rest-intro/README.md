@@ -23,11 +23,14 @@ As an example:
 If a terminal window does not open navigate:
 
 
-`Terminal -> New Terminal` {: codeblock}
+`Terminal -> New Terminal` 
 
 Check you are in the **home/project** folder:
 
-`pwd`
+```
+pwd
+```
+{: codeblock}
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
