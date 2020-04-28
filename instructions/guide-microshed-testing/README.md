@@ -65,7 +65,12 @@ mvn liberty:dev
 
 After the Open Liberty server starts and you see the **Press the Enter key** to run tests on demand. message, you can press the **enter/return** key to run the integration tests. After the tests finish, you can press the **enter/return** key to run the tests again, or you can make code changes to the application or tests. Development mode automatically recompiles and updates any application or test code changes that you make.
 
-After you are finished running tests, stop the Open Liberty server by typing `q` in the shell session where you ran the server, and then press the **enter/return** key.
+Exit development mode:
+
+```
+Type **q** in the shell session where you ran the server.
+Press the **enter/return** key to stop the server.
+```
 
 # Bootstrapping your application for testing
 
@@ -153,8 +158,6 @@ Run the following command to call the microservice URL:
 curl http://localhost:9080/health/ready
 ```
 {: codeblock}
-
-Save your changes to the **PersonServiceIT** class
 
 The response output should return back with:
 
@@ -349,7 +352,12 @@ Save the changes, and press the **enter/return** key in your console window to r
 
 Running tests in development mode is convenient for local development, but it can be tedious to test against a running Open Liberty server in non-development scenarios such as CI/CD pipelines. For this reason, MicroShed Testing can start and stop the application runtime before and after the tests are run. This process is primarily accomplished by using Docker and Testcontainers.
 
-To test outside of development mode, exit development mode by typing **q** in the shell session where you ran the server, and then press the **enter/return** key.
+To test outside of development mode, exit development mode:
+
+```
+Type **q** in the shell session where you ran the server.
+Press the **enter/return** key to stop the server.
+```
 
 Next, use the following Maven goal to run the tests from a cold start:
 
@@ -382,7 +390,8 @@ touch src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
 The **ErrorPathIT** test class has the same **@Container** configuration and **PersonService** REST client as the **PersonServiceIT** class.
 
-Add the additional tests
+Add the additional tests:
+
 ```java
 package io.openliberty.guides.testing;
 
@@ -447,13 +456,13 @@ Notice that tests for both the **PersonServiceIT** and **ErrorPathIT** classes r
 
 To solve this issue, common configuration can be placed in a class that implements **SharedContainerConfiguration**. 
 
-Create the **AppDeploymentConfig** class.
+Create the **AppDeploymentConfig** class:
 
 ```
 touch src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
 ```
 
-Add 
+Add the **AppDeplyomentConfig** logic which implements the **SharedContainerConfiguration** interface:
 
 ```
 package io.openliberty.guides.testing;
@@ -477,7 +486,7 @@ After the common configuration is created, the test classes can be updated to re
 
 Remove the container code from the **PersonServiceIT** class. 
 
-> [File -> Open] src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> [File->Open] src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 Remove the following parts of code:
 
@@ -568,7 +577,18 @@ mvn verify
 
 # Summary
 
-## Well Done
+### Clean up your environment
+
+Delete the **guide-microshed-testing** project by navigating to the **/home/project/** directory
+
+```
+rm -r guide-microshed-testing
+```
+{: codeblock}
+
+Hit **y** + **enter**.
+
+### Well Done
 
 Nice work! You developed automated tests for a REST service in Open Liberty by using MicroShed Testing and Open Liberty development mode.
 
