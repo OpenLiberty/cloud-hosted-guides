@@ -509,6 +509,15 @@ Add the following to the **PersonServiceIT.java** file above the **PersonService
 ```
 {: codeblock}
 
+Your declaration should look like:
+
+```java
+@MicroShedTest
+@SharedContainerConfig(AppDeploymentConfig.class)
+public class PersonServiceIT {
+```
+
+
 Similarly, update the **ErrorPathIT** class to remove the container code.
 
 > [File->Open] src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
@@ -541,6 +550,14 @@ Add the following to the **ErrorPathIT.java** file before the **ErrorPathIT** de
 @SharedContainerConfig(AppDeploymentConfig.class)
 ```
 {: codeblock}
+
+Your declaration should look like:
+
+```java
+@MicroShedTest
+@SharedContainerConfig(AppDeploymentConfig.class)
+public class ErrorPathIT {
+```
 
 If you rerun the tests now, they run in about half the time because the same server instance is being used for both test classes:
 
