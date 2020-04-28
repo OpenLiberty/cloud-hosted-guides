@@ -112,7 +112,7 @@ import org.microshed.testing.jupiter.MicroShedTest;
 ```
 {: codeblock}
 
-Add the following to **PersonServiceIT.java** above **PersonServiceIT** declaration:
+Add the **MicroShedTest** annotation above **PersonServiceIT** declaration:
 
 ```
 @MicroShedTest
@@ -154,17 +154,26 @@ curl http://localhost:9080/health/ready
 ```
 {: codeblock}
 
+Save your changes to the **PersonServiceIT** class
 
+The response output should return back with:
 
-Save your changes to the **PersonServiceIT** class and press the **enter/return key** in your console window to rerun the tests. You still see only one test running, but the output is different. Notice that MicroShed Testing is using a **hollow** configuration mode. This configuration mode means that MicroShed Testing is reusing an existing application runtime for the test, not starting up a new application instance each time you initiate a test run.
+```
+{"checks":[],"status":"UP"}
+```
+Navigate back to the Open Liberty terminal window to rerun the tests.
+
+```
+Press **enter/return key** in your console window
+```
+
+ You still see only one test running, but the output is different. Notice that MicroShed Testing is using a **hollow** configuration mode. This configuration mode means that MicroShed Testing is reusing an existing application runtime for the test, not starting up a new application instance each time you initiate a test run.
 
 # Talking to your application with a REST client
 
-With MicroShed Testing, applications are exercised in a black box fashion. Black box means the tests cannot access the application internals. Instead, the application is exercised from the outside, usually with HTTP requests. To simplify the HTTP interactions, inject a REST client into the tests.
+With MicroShed Testing, applications are exercised in a black-box fashion. Black-box means the tests cannot access the application internals. Instead, the application is exercised from the outside, usually with HTTP requests. To simplify the HTTP interactions, inject a REST client into the tests.
 
-Import the **org.microshed.testing.jaxrs.RESTClient** annotation, create a PersonService REST client, and annotate the REST client with **@RESTClient**.
-
-To do this, add the following line after the existing imports in the **PersonServiceIT.java** file:
+Import the **RESTClient** annotation after the existing imports in the **PersonServiceIT.java** file:
 
 ```
 import org.microshed.testing.jaxrs.RESTClient;
