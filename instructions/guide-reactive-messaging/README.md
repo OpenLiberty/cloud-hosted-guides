@@ -47,7 +47,7 @@ touch system/src/main/java/io/openliberty/guides/system/SystemService.java
 
 Open **SystemService.java** by navigating to 
 
->[File -> Open]draft-guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+>[File -> Open]guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 
 Add the Java code:
 
