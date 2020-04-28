@@ -201,6 +201,8 @@ curl http://localhost:9080/guide-microshed-testing/people
 
 Now that the setup is complete, you can write your first test case. Start by testing the basic "create person" use case for your REST-based application. To test this use case, use the REST client that’s injected by MicroShed Testing to make the HTTP POST request to the application and read the response.
 
+If you closed the **PersonServiceIT.java** re-open it:
+
 > [File -> Open] start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 Import the **assertNotNull** static method and write the test logic in the **testCreatePerson()** method. To do this, add the following 
@@ -221,7 +223,24 @@ Add the test logic in the **PersonServiceIT.java** file in the **testCreatePerso
 ```
 {: codeblock}
 
-Save the changes. Then, press the **enter/return** key in your console window to run the test. You see that the test ran again and exercised the REST endpoint of your application, including the response of your application’s endpoint:
+Your first test case should look like:
+
+```java
+ @Test
+    public void testCreatePerson() {
+        Long createId = personSvc.createPerson("Hank", 42);
+        assertNotNull(createId);
+    }
+```
+Save the changes. 
+
+Run the tests in the Open Liberty terminal window:
+
+```
+Press the **enter/return** key in your console window to 
+```
+
+You see that the test ran again and exercised the REST endpoint of your application,including the response of your application’s endpoint:
 
 ```
 INFO org.microshed.testing.jaxrs.RestClientBuilder  - Building rest client for class io.openliberty.guides.testing.PersonService with base path: http://localhost:9080/guide-microshed-testing/ and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
@@ -316,6 +335,14 @@ mvn verify
 {: codeblock}
 
 Running tests from a cold start takes a little longer than running tests from development mode because the application runtime needs to start each time. However, tests that are run from a cold start use a clean instance on each run to ensure consistent results. These tests also automatically hook into existing build pipelines that are set up to run the **integration-test** phase.
+
+Once the tests have completed successfully you should see:
+
+```
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
+```
 
 # Sharing configuration across multiple classes
 
