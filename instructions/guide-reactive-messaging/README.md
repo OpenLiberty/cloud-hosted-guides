@@ -20,15 +20,17 @@ The application in this guide consists of two microservices, **system** and **in
 
 The fastest way to work through this guide is to clone the Git repository and use the project that's inside:
 
-`git clone https://github.com/openliberty/guide-microprofile-reactive-messaging.git`
+```
+git clone https://github.com/openliberty/guide-microprofile-reactive-messaging.git
+```
+{: codeblock}
 
-Navigate into the guide
+Navigate into the guide's **start** directory which containers the starting project that you will build upon.
 
-`cd guide-microprofile-reactive-messaging`
-
-The **start** directory contains the starting project that you will build upon.
-
-`cd start`
+```
+cd guide-microprofile-reactive-messaging/start
+```
+{: codeblock}
 
 The **finish** directory contains the finished project that you will build.
 
@@ -36,23 +38,22 @@ The **finish** directory contains the finished project that you will build.
 
 The **system** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of events. Every 15 seconds, the **system** microservice publishes an event that contains its calculation of the average system load (its CPU usage) for the last minute.
 
-Create the **SystemService** class.
+Create the **SystemService.java file**
 
-Navigate to the **system** directory
-> `cd system/src/main/java/io/openliberty/guides/system/` 
-
-Create the **SystemService.java**
-
-`touch SystemService.java`
+```
+touch system/src/main/java/io/openliberty/guides/system/SystemService.java
+```
+{: codeblock}
 
 Open **SystemService.java** by navigating to 
 
 >[File -> Open]draft-guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 
-Double click on **SystemService.java** to open and add the Java code.
+Add the Java code:
+
 
 ```java
-package io.openliberty.guides.system;
+package main.java.io.openliberty.guides.system;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -95,6 +96,7 @@ public class SystemService {
 
 }
 ```
+{: codeblock}
 
 The **SystemService** class contains a **Publisher** method that is called **sendSystemLoad()**, which calculates and returns the average system load. The **@Outgoing** annotation on the **sendSystemLoad()** method indicates that the method publishes its calculation as a message on a topic in the Kafka messaging system. The **Flowable.interval()** method from **rxJava** is used to set the frequency of how often the system service publishes the calculation to the event stream.
 
@@ -104,15 +106,15 @@ The messages are transported between the service and the Kafka messaging system 
 
 The **inventory** microservice records in its inventory the average system load information that it received from potentially multiple instances of the **system** service.
 
-Navigate to the bottom **inventory** directory
-
-`cd ../../../../../../../../inventory/src/main/java/io/openliberty/guides/inventory/` 
-
 Create **InventoryResource.java**
 
-`touch InventoryResource.java`
+```
+touch inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+```
 
-[File -> Open]inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+{: codeblock}
+
+>[File -> Open]inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 Add the Java code:
 
@@ -189,18 +191,19 @@ public class InventoryResource {
     }
 
     @Incoming("systemLoad")
-    public void updateStatus(SystemLoad s)  {
-        String hostId = s.hostId;
-        if (manager.getSystem(hostId).isPresent()) {
-            manager.updateCpuStatus(hostId, s.loadAverage);
-            logger.info("Host " + hostId + " was updated: " + s);
+    public void updateStatus(SystemLoad sl)  {
+        String hostname = sl.hostname;
+        if (manager.getSystem(hostname).isPresent()) {
+            manager.updateCpuStatus(hostname, sl.loadAverage);
+            logger.info("Host " + hostname + " was updated: " + sl);
         } else {
-            manager.addSystem(hostId, s.loadAverage);
-            logger.info("Host " + hostId + " was added: " + s);
+            manager.addSystem(hostname, sl.loadAverage);
+            logger.info("Host " + hostname + " was added: " + sl);
         }
     }
 }
 ```
+{: codeblock}
 
 The **inventory** microservice receives the message from the **system** microservice over the **@Incoming("systemLoad")** channel. The properties of this channel are defined in the **microprofile-config.properties** file. The **inventory** microservice is also a RESTful service that is served at the **/inventory** endpoint.
 
@@ -213,17 +216,16 @@ The **system** and **inventory** services exchange messages with the external me
 The system and inventory microservices each have a MicroProfile Config properties file to define the properties of their outgoing and incoming streams.
 
 
-Navigate to **META-INF** directory
+Create the **system** **microprofile-config.properties** in the **META-INF** directory
 
-`cd ../../../../../../../../system/src/main/resources/META-INF/`
-
-Create the **system** **microprofile-config.properties**
-
-`touch microprofile-config.properties`
+```
+touch system/src/main/resources/META-INF/microprofile-config.properties
+```
+{: codeblock}
 
 Open **microprofile-config.properties**
 
-[File -> Open]system/src/main/resources/META-INF/microprofile-config.properties
+>[File -> Open]system/src/main/resources/META-INF/microprofile-config.properties
 
 Add the **configuration properties**
 
@@ -237,24 +239,20 @@ mp.messaging.outgoing.systemLoad.topic=systemLoadTopic
 mp.messaging.outgoing.systemLoad.key.serializer=org.apache.kafka.common.serialization.StringSerializer
 mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.SystemLoad$SystemLoadSerializer
 ```
+{: codeblock}
 
 The **mp.messaging.connector.liberty-kafka.bootstrap.servers** property configures the hostname and port for connecting to the Kafka server. The **system** microservice uses an outgoing connector to send messages through the **systemLoad** channel to the **systemLoadTopic** topic in the Kafka messaging-broker so that the **inventory** microservices can consume the messages. The **key.serializer** and **value.serializer** properties characterize how to serialize the messages. The **SystemLoadSerializer** class implements the logic for turning a **SystemLoad** object into JSON and is configured as the **value.serializer**.
 
-The **inventory** microservice uses a similar **microprofile-config.properties** configuration to define its required incoming stream.
+The **inventory** microservices uses a similar **microprofile-config.properties** configuration to define its required incoming stream. Create the inventory **microprofile-config.properties** file.
 
-Navigate to the **inventory** directory to create the config properties for the **inventory**
-
-`cd ../../../../../inventory/src/main/resources/META-INF/`
-
-The **inventory** microservices uses a similar **microprofile-config.properties** configuration to define its required incoming stream.
-
-Create the inventory **microprofile-config.properties** file.
-
-`touch microprofile-config.properties`
+```
+touch inventory/src/main/resources/META-INF/microprofile-config.properties
+```
+{: codeblock}
 
 Open **microprofile-config.properties**
 
-[File -> Open]inventory/src/main/resources/META-INF/microprofile-config.properties
+>[File -> Open]inventory/src/main/resources/META-INF/microprofile-config.properties
 
 ```
 # Liberty Kafka connector
@@ -267,6 +265,7 @@ mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serial
 mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
 mp.messaging.incoming.systemLoad.group.id=system-load-status
 ```
+{: codeblock}
 
 The **inventory** microservice uses an incoming connector to receive messages through the **systemLoad** channel. The messages were published by the system microservice to the **systemLoadTopic** in the Kafka message broker. The **key.deserializer** and **value.deserializer** properties define how to deserialize the messages. The **SystemLoadDeserializer** class implements the logic for turning JSON into a **SystemLoad** object and is configured as the **value.deserializer**. The **group.id** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) and [Apache Kafka Consumer Configs.](https://kafka.apache.org/documentation/#consumerconfigs)
 
@@ -279,13 +278,10 @@ To run the services, the Open Liberty server on which each service runs needs to
 
 Create the **server.xml** file
 
-Navigate back to **system** **config** directory 
-
-` cd ../../../../../system/src/main/liberty/config/`
-
-Create the **server.xml**
-
-`touch server.xml`
+```
+touch system/src/main/liberty/config/server.xml
+```
+{: codeblock}
 
 Open the **server.xml** file 
 
@@ -316,20 +312,20 @@ Add the contents for the **server.xml**.
   <webApplication location="system.war" contextRoot="/"/>
 </server>
 ```
+{: codeblock}
 
 The **server.xml** file is already configured for the **inventory** microservice.
 
 # Building and running the application
 
-Change directories back to the top level **system** folder
-
-`cd ../../../../../system/` 
-
 Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
 
 Create the **pom.xml** file
 
-`touch pom.xml`
+```
+touch system/pom.xml
+```
+{: codeblock}
 
 Open the **pom.xml** file 
 
@@ -487,39 +483,55 @@ Add the **maven** dependencies, **properties**, **plugins**, **packaging method*
     </build>
 </project>
 ```
-
+{: codeblock}
 
 The **Dockerfiles** are already provided for use.
 
-To build the application, run the Maven **install** and **package** goals from the command line 
+To build the application, run the Maven **install** and **package** goals from the command line:
 
-`mvn -pl models install`
+```
+mvn -pl models install
+```
+{: codeblock}
 
-Package the application 
+Package the application:
 
-`mvn package`
+```
+mvn package
+```
+{: codeblock}
 
 Update to the latest **open-liberty** Docker image.
 
-`docker pull open-liberty`
+```
+docker pull open-liberty
+```
+{: codeblock}
 
 ### Containerize the microservices:
 
 Build the **system** docker image
 
-`docker build -t system:1.0-SNAPSHOT system/.`
+```
+docker build -t system:1.0-SNAPSHOT system/.
+```
+{: codeblock}
 
 Build the **inventory** docker image
 
+```
 docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+{: codeblock}
 
 Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the project. For simplicity, the script starts one instance of the system service.
 
 Start the application
 
-`cd ../scripts/`
-
-`./scripts/startContainers.sh`
+```
+./scripts/startContainers.sh
+```
+{: codeblock}
 
 # Testing the application
 
@@ -527,7 +539,10 @@ After the application is up and running, you can access the application by makin
 
 To access the **inventory** microservice, use the **inventory/systems** URL, and you see the CPU **systemLoad** property for all the systems.
 
-`curl http://localhost:9085/inventory/systems`
+```
+curl http://localhost:9085/inventory/systems
+```
+{: codeblock}
 
 The output should contain the **hostname** and **systemLoad**
 
@@ -537,16 +552,22 @@ The output should contain the **hostname** and **systemLoad**
    "systemLoad":2.25927734375
 }
 ```
+{: codeblock}
 
 You can revisit the **/inventory/systems** URL after a while, and you will notice the **CPU systemLoad** property for all the systems have changed.
 
-`curl http://localhost:9085/inventory/systems`
-
+```
+curl http://localhost:9085/inventory/systems
+```
+{: codeblock}
 use the **hostId** URL to see the CPU systemLoad property for one particular system.
 
 In this example the **hostId = 30bec2b63a96**
 
-`curl @GET http://localhost:9085/inventory/system/`**hostId**
+```
+curl @GET http://localhost:9085/inventory/system/HOST_ID
+```
+{: codeblock}
 
 **Example** URL = curl http://localhost:9085/inventory/system/30bec2b63a96
 
@@ -554,7 +575,326 @@ In this example the **hostId = 30bec2b63a96**
 
 Finally, use the following script to stop the application:
 
-`./scripts/stopContainers.sh`
+```
+./scripts/stopContainers.sh
+```
+{: codeblock}
+
+# Deploying the application on OpenShift
+
+### Pushing your images
+
+You can push the Docker images for the **system** and **inventory** services to your provided container registry so you can deploy these on OpenShift. Find the name of your namespace with the following command: 
+
+```
+bx cr namespace-list
+```
+
+You'll see an output similar to the following: 
+
+```
+Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
+
+Namespace   
+sn-labs-johndoe
+```
+
+
+In this case, the namespace is **sn-labs-johndoe**. Store your namespace in a variable: 
+
+```
+NAMESPACE_NAME=YOUR_NAME
+```
+{: codeblock}
+
+E.g. **NAMESPACE_NAME=sn-labs-johndoe**
+
+Verify that the variable contains your namepsace name correctly: 
+
+```
+echo $NAMESPACE_NAME
+```
+{: codeblock}
+
+Login to the given registry with the following command:
+
+```
+bx cr login
+```
+{: codeblock}
+
+Run the following commands to push the inventory images to your container registry namespace: 
+
+```
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory-reactive:1.0-SNAPSHOT
+
+docker push us.icr.io/$NAMESPACE_NAME/inventory-reactive:1.0-SNAPSHOT
+```
+
+{: codeblock}
+
+Do the same for the system images: 
+
+```
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system-reactive:1.0-SNAPSHOT
+
+docker push us.icr.io/$NAMESPACE_NAME/system-reactive:1.0-SNAPSHOT
+```
+
+{: codeblock}
+
+### Deploy the application 
+
+Create the configuration file:
+
+> File -> New File start/openshift.yaml
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  selector:
+    matchLabels:
+      app: system
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: us.icr.io/sn-labs-yasminaumeer/system-reactive:1.0-SNAPSHOT
+        env:
+        - name: MP_MESSAGING_CONNECTOR_LIBERTY_KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka-service:9092"
+        ports:
+        - containerPort: 9083
+      imagePullSecrets:
+      - name: icr
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: us.icr.io/sn-labs-yasminaumeer/inventory-reactive:1.0-SNAPSHOT
+        env:
+        - name: MP_MESSAGING_CONNECTOR_LIBERTY_KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka-service:9092"
+        ports:
+        - containerPort: 9085
+      imagePullSecrets:
+      - name: icr
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-deployment
+  labels:
+    app: kafka
+spec:
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+      - name: kafka-container
+        image: bitnami/kafka:2
+        env:
+        - name: KAFKA_CFG_ZOOKEEPER_CONNECT
+          value: "zookeeper-service:2181"
+        - name: ALLOW_PLAINTEXT_LISTENER
+          value: "yes"
+        - name: KAFKA_ADVERTISED_HOST_NAME
+          value: "kafka-service"
+        - name: KAFKA_ADVERTISED_PORT
+          value: "9092"
+        - name: KAFKA_CFG_ADVERTISED_LISTENERS
+          value: PLAINTEXT://kafka-service:9092
+        ports:
+        - containerPort: 9092
+      imagePullSecrets:
+      - name: icr
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper-deployment
+  labels:
+    app: zookeeper
+spec:
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      containers:
+      - name: zookeeper-container
+        image: bitnami/zookeeper:3
+        env:
+        - name: ALLOW_ANONYMOUS_LOGIN
+          value: "yes"
+        ports:
+        - containerPort: 2182
+      imagePullSecrets:
+      - name: icr
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9083
+    targetPort: 9083
+    nodePort: 31000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service
+spec:
+  type: NodePort
+  selector:
+    app: kafka
+  ports:
+  - protocol: TCP
+    port: 9092
+    targetPort: 9092
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9085
+    targetPort: 9085
+    nodePort: 32000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-service
+spec:
+  type: NodePort
+  selector:
+    app: zookeeper
+  ports:
+  - protocol: TCP
+    port: 2181
+    targetPort: 218
+---
+apiVersion: v1
+kind: Route
+metadata:
+  name: inventory-route
+spec:
+  to:
+    kind: Service
+    name: inventory-service
+
+```
+{: codeblock}
+
+Correct the image names so they are pulled from your namespace using the following command:
+
+```
+sed -i 's=$NAMESPACE_NAME='"$NAMESPACE_NAME"'=g' openshift.yaml
+```
+{: codeblock}
+
+Run the following command to deploy the resources as defined in openshift.yaml:
+
+```
+oc apply -f openshift.yaml
+```
+{: codeblock}
+
+### Access your services
+
+Run the following command to retrieve your URL: 
+
+```
+oc get routes
+```
+{: codeblock}
+
+Your app URL will be something like this: inventory-route-sn-labs-<your-userID>.sn-labs-user-sandbox-pr-a45631dc5778dc6371c67d206ba9ae5c-0000.tor01.containers.appdomain.cloud
+  
+Append **"/inventory/systems"** after the URL and you should see an output with the **hostname** and **systemLoad**.
+
+## Troubleshooting (optional)
+
+If your application on OpenShift is not running as expected, you can run the following commands to view the logs of pods.
+
+```
+oc get pods
+```
+{: codeblock}
+
+The above command should output four pods like the following : 
+
+```
+NAME                                    READY   STATUS    RESTARTS   AGE
+inventory-deployment-7bdd56d97d-htp2s   1/1     Running   0          7m11s
+kafka-deployment-7c65bf9898-kwwcg       1/1     Running   0          7m11s
+system-deployment-59df68697c-7lxtz      1/1     Running   0          7m12s
+zookeeper-deployment-6b6d546fff-4zx4p   1/1     Running   0          7m10s
+```
+
+The following command will display the logs from your application pod and the output should give you information on what might be wrong.
+
+```
+oc logs -f inventory-deployment-7bdd56d97d-htp2s
+```
+{: codeblock}
+
+Note: The name of your application pod might be different.
+
+## Cleaning up
+
+Let's clean up the resources we just created. You can execute the following commands:
+
+```
+oc delete deployments --all
+
+oc delete services --all
+
+oc delete routes --all
+```
+{: codeblock}
 
 # Well done
-Congratulations, you now have experienced building a reactive microservice-based application using MicroProfile Reactive messaging, and experienced sending and receiving messaging between microservices within this application using Apache Kafka
+Congratulations, you now have experienced building a reactive microservice-based application using MicroProfile Reactive messaging, and experienced sending and receiving messaging between microservices within this application using Apache Kafka. You have also deployed the application on OpenShift. 
