@@ -22,30 +22,46 @@ The service responds to **GET** requests to the **/System/properties** path. The
 As an example:
 If a terminal window does not open navigate:
 
-`Terminal -> New Terminal`
+
+`Terminal -> New Terminal` 
 
 Check you are in the **home/project** folder:
 
-`pwd`
+```
+pwd
+```
+{: codeblock}
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/openliberty/guide-rest-intro.git`
-`cd guide-rest-intro`
+`git clone https://github.com/openliberty/guide-rest-intro.git```
+```
+cd guide-rest-intro
+```
+{: codeblock}
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
 To try out the application, first go to the **finish** directory and run the following Maven  goal to build the application and deploy it to Open Liberty:
 
-`mvn liberty:run`
+```
+mvn liberty:run
+```
+{: codeblock}
 
 Check out the service in another shell:
 
-`curl http://localhost:9080/LibertyProject/System/properties`
+```
+curl http://localhost:9080/LibertyProject/System/properties
+```
+{: codeblock}
 
 After you are done checking out the application, stop the Open Liberty server by pressing **CTRL+C** in the shell session where you ran the server. Alternatively, you can run the **liberty:stop** goal  from the **finish** directory in another shell session:
 
-`mvn liberty:stop`
+```
+mvn liberty:stop
+```
+{: codeblock}
 
 # Creating a JAX-RS application
 
@@ -54,11 +70,14 @@ Navigate to the **start** directory to begin.
 Start Open Liberty in development mode, which starts the Open Liberty server and listens 
 for file changes:
 
-`mvn liberty:dev`
+```
+mvn liberty:dev
+```
+{: codeblock}
 
 JAX-RS has two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modelled as a class. The second is a JAX-RS application, which groups all exposed resources under a common path. You can think of the JAX-RS application as a wrapper for all of your resources.
 
-Replace the `SystemApplication` class:
+Replace the **SystemApplication** class:
 
 > [File -> Open]src/main/java/io/openliberty/guides/rest/SystemApplication.java
 
@@ -73,6 +92,7 @@ public class SystemApplication extends Application {
 
 }
 ```
+{: codeblock}
 
 The **SystemApplication** class extends the **Application** class, which in turn associates all JAX-RS resource classes in the WAR file with this JAX-RS application, making them available under the common path specified in the **SystemApplication** class. The **@ApplicationPath** annotation has a value that indicates the path within the WAR that the JAX-RS application accepts requests from.
 
@@ -106,6 +126,8 @@ public class PropertiesResource {
 
 }
 ```
+{: codeblock}
+
 This resource class has quite a bit of code in it, so let's break it down into manageable chunks.
 
 The **@Path** annotation on the class indicates that this resource responds to the **properties** path in the JAX-RS application. The **@ApplicationPath** annotation in the **SystemApplication** class together with the **@Path** annotation in this class indicates that the resource is available at the **System/properties** path.
@@ -140,6 +162,8 @@ Replace the server configuration file.
   <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
 </server>
 ```
+{: codeblock}
+
 The configuration does the following actions:
 
 . Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
@@ -157,12 +181,15 @@ The Open Liberty server was started in development mode at the beginning of the 
 changes were automatically picked up.
 
 Check out the service that you created at the
-http://localhost:9080/LibertyProject/System/properties[^] URL. 
+http://localhost:9080/LibertyProject/System/properties URL. 
 
 ## Testing the service
 
 You can test this service manually by using the following command in another shell:
-`curl http://localhost:9080/LibertyProject/System/properties`
+```
+curl http://localhost:9080/LibertyProject/System/properties
+```
+{: codeblock}
 
 Automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS Client API provide a simple environment to test the application.
 
@@ -218,6 +245,7 @@ public class EndpointIT {
     }
 }
 ```
+{: codeblock}
 
 This test class has more lines of code than the resource implementation. This situation is common. The test method is indicated with the **@Test** annotation.
 

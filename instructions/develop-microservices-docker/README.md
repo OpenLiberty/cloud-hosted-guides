@@ -32,13 +32,18 @@ If a terminal window does not open navigate:
 
 Check you are in the **home/project** folder:
 
-`pwd`
+```
+pwd
+```
+{: codeblock}
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/openliberty/guide-docker.git`
-
-`cd guide-docker`
+```
+git clone https://github.com/openliberty/guide-docker.git
+cd guide-docker
+```
+{: codeblock}
 
 The **start** directory contains the starting project that you will build upon.
 
@@ -46,15 +51,17 @@ The **start** directory contains the starting project that you will build upon.
 
 Navigate to the **start** directory and run the Maven install goal to build your application:
 
-`cd start`
-
-`mvn install`
+```
+cd start
+mvn install
+```
+{: codeblock}
 
 Your **pom.xml** file is already configured to add your REST application to the **defaultServer.** But you can tweak this configuration or add your own for another server by updating the **<execution/>** element.
 
-The install-apps goal copies the application into the specified directory of the specified server. In this case, the goal copies the rest.war file into the apps directory of the defaultServer server.
+The install-apps goal copies the application into the specified directory of the specified server. In this case, the goal copies the **rest.war** file into the apps directory of the **defaultServer** server.
 
-Learn more about this goal on the official [Maven Liberty plug-in repository.](https://github.com/OpenLiberty/ci.maven/blob/2.x/docs/install-apps.md)
+To learn more about this goal on the official [Maven Liberty plug-in repository.](https://github.com/OpenLiberty/ci.maven/blob/2.x/docs/install-apps.md)
 
 # Creating the Dockerfile
 
@@ -62,11 +69,14 @@ A Dockerfile is a collection of instructions for building a Docker image that ca
 
 Create the Dockerfile.
 
-`touch dockerfile`
+```
+touch dockerfile
+```
+{: codeblock}
 
 Open the **dockerfile**
 
-> [File -> open] start/dockerfile
+> [File -> open] guide-docker/start/dockerfile
 
 Add the contents into the **dockerfile**
 
@@ -83,6 +93,9 @@ USER 1001
 ENTRYPOINT ["/opt/ol/wlp/bin/server", "run"]
 CMD ["defaultServer"]
 ```
+{: codeblock}
+
+Close and save **dockerfile** by pressing the 'x' button and pressing 'save'.
 
 ### A breakdown of the dockerfile
 
@@ -113,12 +126,18 @@ A **.dockerignore** file is available to you in the **start** directory. This fi
 src/
 pom.xml
 ```
+{: codeblock}
 
 # Building the image
 
 If you execute your build from the same directory as your Dockerfile, (which you are) you can use the period character (.) notation to specify the location for the build context. Otherwise, (if you weren't you could) use the **-f** flag to point to your Dockerfile.
 
-Run `docker build -t ol-runtime .`
+Run 
+
+```
+docker build -t ol-runtime .
+```
+{: codeblock}
 
 Use the **-t** flag to give the image an optional name. In this case, **ol-runtime** is the name of your image.
 
@@ -146,13 +165,17 @@ Removing intermediate container 1a543a9e37d8
 Successfully built 8fdcad065d25
 Successfully tagged ol-runtime:latest
 ```
+
 Each step of the build has a unique ID, which represents the ID of an intermediate image. For example, step 2 has the ID **937183f8460b**, and step 4 has the ID **8fdcad065d25**, which is also the ID of the final image. During the first build of your image, Docker caches every new layer as a separate image and reuses them for future builds for layers that didn’t change. For example, if you run the build again, Docker reuses the images that it cached for steps 2 - 4. However, if you make a change in your Dockerfile, Docker would need to rebuild the subsequent layer since this layer also changed.
 
 ### The '**no-cache=true flag**'
 
 However, you can also completely disable the caching of intermediate layers by running the build with the **--no-cache=true flag**
 
-`docker build -t ol-runtime --no-cache=true .`
+```
+docker build -t ol-runtime --no-cache=true .
+```
+{: codeblock}
 
 # Running your application in Docker container
 
@@ -161,6 +184,7 @@ Now that your image is built, execute the Docker **run** command
 ```
 docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v $(pwd)/target/liberty/wlp/usr/servers:/servers -u `id -u` ol-runtime
 ```
+{: codeblock}
 
 ### A breakdown of the flags
 
@@ -172,15 +196,21 @@ docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v $(pwd)/target/liberty
 
 **-v** | This flag mounts a directory or file to the file system of the container.
 
-As an insight you can pass in an optional server name at the end of the **run** command to override the **defaultServer** server in the **CMD** instruction. For example, if your servers directory also contains a server called testServer, then it can be started as shown in the following example:
+As an insight you can pass in an optional server name at the end of the **run** command to override the **defaultServer** server in the **CMD** instruction. For example, if your servers directory also contains a server called **testServer**, then it can be started as shown in the following example:
 
-`docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v /home/project/guide-docker/start/target/liberty/wlp/usr/servers:/servers ol-runtime testServer`
+```
+docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v /home/project/guide-docker/start/target/liberty/wlp/usr/servers:/servers ol-runtime testServer
+```
+{: codeblock}
 
 # Testing the container
 
 Check the container is running:
 
-`docker ps`
+```
+docker ps
+```
+{: codeblock}
 
 Output:
 ```
@@ -200,7 +230,10 @@ As well, you can view the logs and see the Open Liberty server starting. This is
 
 Curl the **/System/properties**, where you can see a JSON file that contains the system properties of the JVM in your container.
 
-`curl http://localhost:9080/LibertyProject/System/properties`
+```
+curl http://localhost:9080/LibertyProject/System/properties
+```
+{: codeblock}
 
 Also, you can see that the docker container is running by accessing Open Liberty via the web browser.
 To view this click on **Launch Application** and type in the **port number**.
@@ -211,7 +244,7 @@ The Open Liberty server runs on `9080`.
 
 To open the file click the the file button in the top left hand corner
 
-[File -> Open] **src/main/java/io/openliberty/guides/rest/PropertiesResource.java**
+[File -> Open] guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 Note the endpoint of your application is going to change from **properties** to **properties-new**. This has been updated by the **@Path** annotation being changed.
 
@@ -254,27 +287,53 @@ public class PropertiesResource {
     }
 }
 ```
+{: codeblock}
+
+Close and save **PropertiesResource** by pressing the 'x' button and pressing 'save'.
+
 Rebuild the application 
 
 Ensure you are in **/home/project/guide-docker/start**
 
-Run `mvn package`
+Run: 
+
+```
+mvn package
+```
+{: codeblock}
 
 View the changes reflected in the container, and point your browser to `/System/properties-new`.
 
-`curl http://localhost:9080/LibertyProject/System/properties-new`
+```
+curl http://localhost:9080/LibertyProject/System/properties-new
+```
+{: codeblock}
 
 You see the same JSON file that you saw previously.
 
 To stop your container, run:
 
-`docker stop rest-app`
+```
+docker stop rest-app
+```
+{: codeblock}
 
-# Well done
+# Summary 
+
+### Clean up your environment 
+
+Delete the **guide-docker** project by navigating to the **/home/project/** directory
+
+```
+rm -r guide-docker
+```
+{: codeblock}
+
+Hit **y** + **enter**.
+
+### Well done
 
 Congratulations, you have successfully completed the lab. 
 
 From this lab you should now have an understanding of: what Docker is, why you would use containers, what a **dockerfile** is, creating a dockerfile, building the image and also running the container to see the JVM output and updating the container. 
-
-Well done.
 

@@ -23,13 +23,18 @@ If a terminal window does not open navigate:
 
 Check you are in the **home/project** folder:
 
-`pwd`
+```
+pwd
+```
+{: codeblock}
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/openliberty/guide-microshed-testing.git`
-
-`cd guide-microshed-testing`
+```
+git clone https://github.com/openliberty/guide-microshed-testing.git
+cd guide-microshed-testing
+```
+{: codeblock}
 
 # Try what you'll build
 
@@ -42,30 +47,46 @@ First, review the **PersonServiceIT** class to see what the tests look like:
 To try out the application, go to the **finish** directory and run the following Maven 
 goal to build the application and run the integration tests on an Open Liberty server in a container:
 
-`cd finish`
-
-`mvn verify`
+```
+cd finish
+mvn verify
+```
+{: codeblock}
 
 This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty must download. If you run the same command again, it will be faster.
 
 The previous example shows how you can run integration tests from a cold start. With Open Liberty development mode, you can use MicroShed Testing to run tests on an already running Open Liberty server. Run the following Maven goal to start Open Liberty in development mode:
 
 
-`mvn liberty:dev`
+```
+mvn liberty:dev
+```
+{: codeblock}
 
 After the Open Liberty server starts and you see the **Press the Enter key** to run tests on demand. message, you can press the **enter/return** key to run the integration tests. After the tests finish, you can press the **enter/return** key to run the tests again, or you can make code changes to the application or tests. Development mode automatically recompiles and updates any application or test code changes that you make.
 
-After you are finished running tests, stop the Open Liberty server by typing `q` in the shell session where you ran the server, and then press the **enter/return** key.
+Exit development mode:
+
+```
+Type **q** in the shell session where you ran the server.
+Press the **enter/return** key to stop the server.
+```
 
 # Bootstrapping your application for testing
 
 Navigate to the **start** directory to begin.
 
-`cd ../start`
+```
+cd ../start
+```
+{: codeblock}
 
 Start Open Liberty in development mode, which starts the Open Liberty server and listens for file changes:
 
-`mvn liberty:dev`
+```
+mvn liberty:dev
+```
+{: codeblock}
 
 Wait for the **Press the Enter key to run tests on demand.** message, and then press the **enter/return** key to run the tests. You see that one test runs:
 
@@ -85,17 +106,23 @@ Wait for the **Press the Enter key to run tests on demand.** message, and then p
  Integration tests finished.
 ```
 
-To begin bootstrapping, annotate the **src/test/java/io/openliberty/guides/testing/PersonServiceIT.java** class with the **@MicroShedTest** annotation. This annotation indicates that the test class uses MicroShed Testing.
+To begin bootstrapping, annotate the **PersonServiceIT.java** class with the **@MicroShedTest** annotation. This annotation indicates that the test class uses MicroShed Testing.
 
-> [File -> Open] start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> [File->Open] guide-start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 Import the MicroShedTest annotation by inserting the following line in to the **PersonServiceIT.java** file below the existing **import** statement: 
 
-`import org.microshed.testing.jupiter.MicroShedTest;`
+```
+import org.microshed.testing.jupiter.MicroShedTest;
+```
+{: codeblock}
 
-Add the following to **PersonServiceIT.java** above **PersonServiceIT** declaration:
+Add the **MicroShedTest** annotation above **PersonServiceIT** declaration:
 
-`@MicroShedTest`
+```
+@MicroShedTest
+```
+{: codeblock}
 
 Next, the **PersonServiceIT** class outlines some basic information that informs how MicroShed Testing starts the application runtime and at which URL path the application will be available. Import the **ApplicationContainer** class and the **Container** annotation, create the **ApplicationContainer** application, and annotate the application with **@Container**. 
 
@@ -105,6 +132,7 @@ To do this, add the following after the existing **import** statements in the **
 import org.microshed.testing.testcontainers.ApplicationContainer;
 import org.testcontainers.junit.jupiter.Container;
 ```
+{: codeblock}
 
 Add the following to the **PersonServiceIT** class:
 
@@ -114,6 +142,7 @@ Add the following to the **PersonServiceIT** class:
                     .withAppContextRoot("/guide-microshed-testing")
                     .withReadinessPath("/health/ready");
 ```
+{: codeblock}
 
 Save your changes to the **PersonServiceIT.java** file. 
 
@@ -125,19 +154,34 @@ Open a new Terminal by pressing the window button the top right hand corner of t
 
 Run the following command to call the microservice URL:
 
-`curl http://localhost:9080/health/ready`
+```
+curl http://localhost:9080/health/ready
+```
+{: codeblock}
 
-Save your changes to the **PersonServiceIT** class and press the **enter/return key** in your console window to rerun the tests. You still see only one test running, but the output is different. Notice that MicroShed Testing is using a **hollow** configuration mode. This configuration mode means that MicroShed Testing is reusing an existing application runtime for the test, not starting up a new application instance each time you initiate a test run.
+The response output should return back with:
+
+```
+{"checks":[],"status":"UP"}
+```
+Navigate back to the Open Liberty terminal window to rerun the tests.
+
+```
+Press **enter/return key** in your console window
+```
+
+ You still see only one test running, but the output is different. Notice that MicroShed Testing is using a **hollow** configuration mode. This configuration mode means that MicroShed Testing is reusing an existing application runtime for the test, not starting up a new application instance each time you initiate a test run.
 
 # Talking to your application with a REST client
 
-With MicroShed Testing, applications are exercised in a black box fashion. Black box means the tests cannot access the application internals. Instead, the application is exercised from the outside, usually with HTTP requests. To simplify the HTTP interactions, inject a REST client into the tests.
+With MicroShed Testing, applications are exercised in a black-box fashion. Black-box means the tests cannot access the application internals. Instead, the application is exercised from the outside, usually with HTTP requests. To simplify the HTTP interactions, inject a REST client into the tests.
 
-Import the **org.microshed.testing.jaxrs.RESTClient** annotation, create a PersonService REST client, and annotate the REST client with **@RESTClient**.
+Import the **RESTClient** annotation after the existing imports in the **PersonServiceIT.java** file:
 
-To do this, add the following line after the existing imports in the **PersonServiceIT.java** file:
-
-`import org.microshed.testing.jaxrs.RESTClient;`
+```
+import org.microshed.testing.jaxrs.RESTClient;
+```
+{: codeblock}
 
 Add the following to the **PersonServiceIT** class:
 
@@ -145,16 +189,22 @@ Add the following to the **PersonServiceIT** class:
 @RESTClient
     public static PersonService personSvc;
 ```
+{: codeblock}
 
 In this example, the **PersonService** injected type is the same **io.openliberty.guides.testing.PersonService** class that is used in your application. However, the instance that gets injected is a REST client proxy. So, if you call **personSvc.createPerson("Bob", 42)**, the REST client makes an HTTP POST request to the application that is running at **http://localhost:9080/guide-microshed-testing/people**, which triggers the corresponding Java method in the application. 
 
 In the other terminal, run the following command to access this endpoint: 
 
-`curl http://localhost:9080/guide-microshed-testing/people`
+```
+curl http://localhost:9080/guide-microshed-testing/people
+```
+{: codeblock}
 
 # Writing your first test
 
 Now that the setup is complete, you can write your first test case. Start by testing the basic "create person" use case for your REST-based application. To test this use case, use the REST client that’s injected by MicroShed Testing to make the HTTP POST request to the application and read the response.
+
+If you closed the **PersonServiceIT.java** re-open it:
 
 > [File -> Open] start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
@@ -162,30 +212,80 @@ Import the **assertNotNull** static method and write the test logic in the **tes
 
 To do this, add the following line after the existing imports in the **PersonServiceIT.java** file:
 
-`import static org.junit.jupiter.api.Assertions.assertNotNull;`
-
+```
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+```
+{: codeblock}
 
 Add the test logic in the **PersonServiceIT.java** file in the **testCreatePerson** method:
 
 ```
-@Test
+    Long createId = personSvc.createPerson("Hank", 42);
+    assertNotNull(createId);
+
+```
+{: codeblock}
+
+Your first test case should look like:
+
+```java
+ @Test
     public void testCreatePerson() {
-         Long createId = personSvc.createPerson("Hank", 42);
+        Long createId = personSvc.createPerson("Hank", 42);
         assertNotNull(createId);
     }
 ```
+Save the changes. 
 
-Save the changes. Then, press the **enter/return** key in your console window to run the test. You see that the test ran again and exercised the REST endpoint of your application, including the response of your application’s endpoint:
+Run the tests in the Open Liberty terminal window:
+
+```
+Press the **enter/return** key in your console window to 
+```
+
+You see that the test ran again and exercised the REST endpoint of your application,including the response of your application’s endpoint:
 
 ```
 INFO org.microshed.testing.jaxrs.RestClientBuilder  - Building rest client for class io.openliberty.guides.testing.PersonService with base path: http://localhost:9080/guide-microshed-testing/ and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
 INFO org.microshed.testing.jaxrs.JsonBProvider  - Response from server: 1809686877352335426
 ```
+Next, add more tests to the **PersonServiceIT** class. The following tests are added: **testMinSizeName()**, **testMinAge()**, **testGetPerson()**, **testGetAllPeople()**, and **testUpdateAge()**.
 
-Next, add more tests to the **PersonServiceIT** class:
+Replace the PersonServiceIT class with:
 
-```
-@Test
+```java
+package io.openliberty.guides.testing;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Collection;
+
+import org.junit.jupiter.api.Test;
+import org.microshed.testing.jaxrs.RESTClient;
+import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
+
+@MicroShedTest
+public class PersonServiceIT {
+
+    @RESTClient
+    public static PersonService personSvc;
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
+    @Test
+    public void testCreatePerson() {
+        Long createId = personSvc.createPerson("Hank", 42);
+        assertNotNull(createId);
+    }
+
+    @Test
     public void testMinSizeName() {
         Long minSizeNameId = personSvc.createPerson("Ha", 42);
         assertEquals(new Person("Ha", 42, minSizeNameId),
@@ -242,7 +342,9 @@ Next, add more tests to the **PersonServiceIT** class:
         assertEquals(2, updatedPerson.age);
         assertEquals(personId, Long.valueOf(updatedPerson.id));
     }
+}
 ```
+{: codeblock}
 
 Save the changes, and press the **enter/return** key in your console window to run the tests.
 
@@ -250,13 +352,29 @@ Save the changes, and press the **enter/return** key in your console window to r
 
 Running tests in development mode is convenient for local development, but it can be tedious to test against a running Open Liberty server in non-development scenarios such as CI/CD pipelines. For this reason, MicroShed Testing can start and stop the application runtime before and after the tests are run. This process is primarily accomplished by using Docker and Testcontainers.
 
-To test outside of development mode, exit development mode by typing **q** in the shell session where you ran the server, and then press the **enter/return** key.
+To test outside of development mode, exit development mode:
+
+```
+Type **q** in the shell session where you ran the server.
+Press the **enter/return** key to stop the server.
+```
 
 Next, use the following Maven goal to run the tests from a cold start:
 
-`mvn verify`
+```
+mvn verify
+```
+{: codeblock}
 
 Running tests from a cold start takes a little longer than running tests from development mode because the application runtime needs to start each time. However, tests that are run from a cold start use a clean instance on each run to ensure consistent results. These tests also automatically hook into existing build pipelines that are set up to run the **integration-test** phase.
+
+Once the tests have completed successfully you should see:
+
+```
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
+```
 
 # Sharing configuration across multiple classes
 
@@ -264,10 +382,18 @@ Typically, projects have multiple test classes that all use the same type of app
 
 First, create another test class.
 
-> [File -> New File] src/test/java/io/openliberty/guides/testing/`ErrorPathIT.java`
+Create the **ErrorPathIT** class:
 
 ```
-package test.java.io.openliberty.guides.testing;
+touch src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+```
+
+The **ErrorPathIT** test class has the same **@Container** configuration and **PersonService** REST client as the **PersonServiceIT** class.
+
+Add the additional tests:
+
+```java
+package io.openliberty.guides.testing;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -315,18 +441,28 @@ public class ErrorPathIT {
     }
 }
 ```
+{: codeblock}
 
 The **ErrorPathIT** test class has the same **@Container** configuration and **PersonService** REST client as the **PersonServiceIT** class.
 
 Now, run the tests again outside of development mode:
 
-`mvn verify`
+```
+mvn verify
+```
+{: codeblock}
 
 Notice that tests for both the **PersonServiceIT** and **ErrorPathIT** classes run, but a new server starts for each test class, resulting in a longer test runtime.
 
-To solve this issue, common configuration can be placed in a class that implements **SharedContainerConfiguration**. Create the **AppDeploymentConfig** class.
+To solve this issue, common configuration can be placed in a class that implements **SharedContainerConfiguration**. 
 
-> [File -> New File] src/test/java/io/openliberty/guides/testing/`AppDeploymentConfig.java`
+Create the **AppDeploymentConfig** class:
+
+```
+touch src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
+```
+
+Add the **AppDeplyomentConfig** logic which implements the **SharedContainerConfiguration** interface:
 
 ```
 package io.openliberty.guides.testing;
@@ -344,12 +480,13 @@ public class AppDeploymentConfig implements SharedContainerConfiguration {
 
 }
 ```
+{: codeblock}
 
 After the common configuration is created, the test classes can be updated to reference this shared configuration.
 
 Remove the container code from the **PersonServiceIT** class. 
 
-> [File -> Open] src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> [File->Open] src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 Remove the following parts of code:
 
@@ -369,15 +506,30 @@ Annotate the **PersonServiceIT** class with the **@SharedContainerConfig** annot
 
 To do this, add the following line below the existing **import** statements in the **PersonServiceIT.java** file:
 
-`import org.microshed.testing.SharedContainerConfig;`
+```
+import org.microshed.testing.SharedContainerConfig;
+```
+{: codeblock}
 
 Add the following to the **PersonServiceIT.java** file above the **PersonServiceIT** declaration:
 
-`@SharedContainerConfig(AppDeploymentConfig.class)`
+```
+@SharedContainerConfig(AppDeploymentConfig.class)
+```
+{: codeblock}
 
-Similarly, update the ErrorPathIT class to remove the container code.
+Your declaration should look like:
 
-> [File -> Open] src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+```java
+@MicroShedTest
+@SharedContainerConfig(AppDeploymentConfig.class)
+public class PersonServiceIT {
+```
+
+
+Similarly, update the **ErrorPathIT** class to remove the container code.
+
+> [File->Open] src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
 Remove the **import** statements and **@Container** annotation code: 
 
@@ -391,24 +543,52 @@ import org.testcontainers.junit.jupiter.Container;
     public static ApplicationContainer app = new ApplicationContainer()
                     .withAppContextRoot("/guide-microshed-testing")
                     .withReadinessPath("/health/ready");
-``
+```
 Annotate the **ErrorPathIT** class with the **@SharedContainerConfig** annotation.
 
 To do this, start by adding the following line after the existing import statements in the **ErrorPathIT.java** file: 
 
-`import org.microshed.testing.SharedContainerConfig;`
+```
+import org.microshed.testing.SharedContainerConfig;
+```
+{: codeblock}
 
 Add the following to the **ErrorPathIT.java** file before the **ErrorPathIT** declaration: 
 
-`@SharedContainerConfig(AppDeploymentConfig.class)`
+```
+@SharedContainerConfig(AppDeploymentConfig.class)
+```
+{: codeblock}
+
+Your declaration should look like:
+
+```java
+@MicroShedTest
+@SharedContainerConfig(AppDeploymentConfig.class)
+public class ErrorPathIT {
+```
 
 If you rerun the tests now, they run in about half the time because the same server instance is being used for both test classes:
 
-`mvn verify`
+```
+mvn verify
+```
+{: codeblock}
 
 # Summary
 
-## Well Done
+### Clean up your environment
+
+Delete the **guide-microshed-testing** project by navigating to the **/home/project/** directory
+
+```
+rm -r guide-microshed-testing
+```
+{: codeblock}
+
+Hit **y** + **enter**.
+
+### Well Done
 
 Nice work! You developed automated tests for a REST service in Open Liberty by using MicroShed Testing and Open Liberty development mode.
 
