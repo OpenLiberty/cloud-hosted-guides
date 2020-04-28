@@ -582,11 +582,9 @@ mvn verify
 Delete the **guide-microshed-testing** project by navigating to the **/home/project/** directory
 
 ```
-rm -r guide-microshed-testing
+rm -r -f guide-microshed-testing
 ```
 {: codeblock}
-
-Hit **y** + **enter**.
 
 ### Well Done
 

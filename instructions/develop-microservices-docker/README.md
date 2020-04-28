@@ -325,11 +325,9 @@ docker stop rest-app
 Delete the **guide-docker** project by navigating to the **/home/project/** directory
 
 ```
-rm -r guide-docker
+rm -r -f guide-docker
 ```
 {: codeblock}
-
-Hit **y** + **enter**.
 
 ### Well done
 

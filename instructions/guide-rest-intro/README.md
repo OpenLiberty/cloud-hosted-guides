@@ -285,6 +285,15 @@ you ran the server and then pressing the **enter/return** key.
 
 # Summary
 
-## Well Done
+### Clean up your environment
+
+Delete the **guide-rest-intro** project by navigating to the **/home/project/** directory
+
+```
+rm -r -f guide-rest-intro
+```
+{: codeblock}
+
+### Well Done
 
 Nice work! You developed a REST service in Open Liberty by using JAX-RS and JSON-B.
