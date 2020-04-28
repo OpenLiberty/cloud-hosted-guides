@@ -325,11 +325,9 @@ you ran the server and then pressing the **enter/return** key.
 Delete the **guide-restful-webservice** project by navigating to the **/home/project/** directory
 
 ```
-rm -r guide-rest-intro
+rm -r -f guide-rest-intro
 ```
 {: codeblock}
-
-and hit **y** and **enter**.
 
 ## Well Done
 
