@@ -290,11 +290,9 @@ you ran the server and then pressing the **enter/return** key.
 Delete the **guide-rest-intro** project by navigating to the **/home/project/** directory
 
 ```
-rm -r guide-rest-intro
+rm -r -f guide-rest-intro
 ```
 {: codeblock}
-
-Hit **y** + **enter**.
 
 ### Well Done
 
