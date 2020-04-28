@@ -246,20 +246,43 @@ You see that the test ran again and exercised the REST endpoint of your applicat
 INFO org.microshed.testing.jaxrs.RestClientBuilder  - Building rest client for class io.openliberty.guides.testing.PersonService with base path: http://localhost:9080/guide-microshed-testing/ and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
 INFO org.microshed.testing.jaxrs.JsonBProvider  - Response from server: 1809686877352335426
 ```
-Add **assertEquals**, **assertTrue** and **java.util.Collection** for the next set of test cases to work
+Next, add more tests to the **PersonServiceIT** class. The following tests are added: **testMinSizeName()**, **testMinAge()**, **testGetPerson()**, **testGetAllPeople()**, and **testUpdateAge()**.
+
+Replace the PersonServiceIT class with:
 
 ```java
+package io.openliberty.guides.testing;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Collection;
-```
 
+import org.junit.jupiter.api.Test;
+import org.microshed.testing.jaxrs.RESTClient;
+import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
 
+@MicroShedTest
+public class PersonServiceIT {
 
-Next, add more tests to the **PersonServiceIT** class:
+    @RESTClient
+    public static PersonService personSvc;
 
-```java
-@Test
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
+    @Test
+    public void testCreatePerson() {
+        Long createId = personSvc.createPerson("Hank", 42);
+        assertNotNull(createId);
+    }
+
+    @Test
     public void testMinSizeName() {
         Long minSizeNameId = personSvc.createPerson("Ha", 42);
         assertEquals(new Person("Ha", 42, minSizeNameId),
@@ -316,6 +339,7 @@ Next, add more tests to the **PersonServiceIT** class:
         assertEquals(2, updatedPerson.age);
         assertEquals(personId, Long.valueOf(updatedPerson.id));
     }
+}
 ```
 {: codeblock}
 
@@ -350,13 +374,17 @@ Typically, projects have multiple test classes that all use the same type of app
 
 First, create another test class.
 
+Create the **ErrorPathIT** class:
+
 ```
 touch src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 ```
 
+The **ErrorPathIT** test class has the same **@Container** configuration and **PersonService** REST client as the **PersonServiceIT** class.
+
 Add the additional tests
 ```java
-package test.java.io.openliberty.guides.testing;
+package io.openliberty.guides.testing;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -417,7 +445,9 @@ mvn verify
 
 Notice that tests for both the **PersonServiceIT** and **ErrorPathIT** classes run, but a new server starts for each test class, resulting in a longer test runtime.
 
-To solve this issue, common configuration can be placed in a class that implements **SharedContainerConfiguration**. Create the **AppDeploymentConfig** class.
+To solve this issue, common configuration can be placed in a class that implements **SharedContainerConfiguration**. 
+
+Create the **AppDeploymentConfig** class.
 
 ```
 touch src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
