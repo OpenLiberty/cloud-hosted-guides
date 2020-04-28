@@ -667,7 +667,7 @@ spec:
     spec:
       containers:
       - name: system-container
-        image: us.icr.io/sn-labs-yasminaumeer/system-reactive:1.0-SNAPSHOT
+        image: us.icr.io/$NAMESPACE_NAME/system-reactive:1.0-SNAPSHOT
         env:
         - name: MP_MESSAGING_CONNECTOR_LIBERTY_KAFKA_BOOTSTRAP_SERVERS
           value: "kafka-service:9092"
@@ -693,7 +693,7 @@ spec:
     spec:
       containers:
       - name: inventory-container
-        image: us.icr.io/sn-labs-yasminaumeer/inventory-reactive:1.0-SNAPSHOT
+        image: us.icr.io/$NAMESPACE_NAME/inventory-reactive:1.0-SNAPSHOT
         env:
         - name: MP_MESSAGING_CONNECTOR_LIBERTY_KAFKA_BOOTSTRAP_SERVERS
           value: "kafka-service:9092"
