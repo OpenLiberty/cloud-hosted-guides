@@ -322,14 +322,14 @@ docker stop rest-app
 
 ### Clean up your environment 
 
-Delete the **guide-restful-webservice** project by navigating to the **/home/project/** directory
+Delete the **guide-docker** project by navigating to the **/home/project/** directory
 
 ```
 rm -r guide-docker
 ```
 {: codeblock}
 
-and hit **y** and **enter**.
+Hit **y** + **enter**.
 
 ### Well done
 
