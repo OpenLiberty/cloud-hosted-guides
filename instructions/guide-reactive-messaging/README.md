@@ -114,7 +114,7 @@ touch inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.
 
 {: codeblock}
 
->[File -> Open]inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+>[File -> Open]guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 Add the Java code:
 
@@ -225,7 +225,7 @@ touch system/src/main/resources/META-INF/microprofile-config.properties
 
 Open **microprofile-config.properties**
 
->[File -> Open]system/src/main/resources/META-INF/microprofile-config.properties
+>[File -> Open]guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
 
 Add the **configuration properties**
 
@@ -252,7 +252,7 @@ touch inventory/src/main/resources/META-INF/microprofile-config.properties
 
 Open **microprofile-config.properties**
 
->[File -> Open]inventory/src/main/resources/META-INF/microprofile-config.properties
+>[File -> Open]guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
 
 ```
 # Liberty Kafka connector
@@ -285,7 +285,7 @@ touch system/src/main/liberty/config/server.xml
 
 Open the **server.xml** file 
 
->[File -> Open] system/src/main/liberty/config/server.xml
+>[File -> Open] guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
 
 Add the contents for the **server.xml**.
 
@@ -552,7 +552,6 @@ The output should contain the **hostname** and **systemLoad**
    "systemLoad":2.25927734375
 }
 ```
-{: codeblock}
 
 You can revisit the **/inventory/systems** URL after a while, and you will notice the **CPU systemLoad** property for all the systems have changed.
 
@@ -560,12 +559,13 @@ You can revisit the **/inventory/systems** URL after a while, and you will notic
 curl http://localhost:9085/inventory/systems
 ```
 {: codeblock}
-use the **hostId** URL to see the CPU systemLoad property for one particular system.
+
+Use the **hostId** URL to see the CPU systemLoad property for one particular system.
 
 In this example the **hostId = 30bec2b63a96**
 
 ```
-curl @GET http://localhost:9085/inventory/system/HOST_ID
+curl http://localhost:9085/inventory/system/HOST_ID
 ```
 {: codeblock}
 
@@ -589,6 +589,7 @@ You can push the Docker images for the **system** and **inventory** services to 
 ```
 bx cr namespace-list
 ```
+{: codeblock}
 
 You'll see an output similar to the following: 
 
@@ -630,7 +631,6 @@ docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory-reactive:1
 
 docker push us.icr.io/$NAMESPACE_NAME/inventory-reactive:1.0-SNAPSHOT
 ```
-
 {: codeblock}
 
 Do the same for the system images: 
@@ -640,14 +640,13 @@ docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system-reactive:1.0-SNA
 
 docker push us.icr.io/$NAMESPACE_NAME/system-reactive:1.0-SNAPSHOT
 ```
-
 {: codeblock}
 
 ### Deploy the application 
 
 Create the configuration file:
 
-> File -> New File start/openshift.yaml
+> [File -> New File] guide-microprofile-reactive-messaging/start/openshift.yaml
 
 ```
 apiVersion: apps/v1
