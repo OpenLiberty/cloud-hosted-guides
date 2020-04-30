@@ -773,7 +773,6 @@ spec:
   - protocol: TCP
     port: 9083
     targetPort: 9083
-    nodePort: 31000
 ---
 apiVersion: v1
 kind: Service
@@ -800,7 +799,6 @@ spec:
   - protocol: TCP
     port: 9085
     targetPort: 9085
-    nodePort: 32000
 ---
 apiVersion: v1
 kind: Service
@@ -813,7 +811,7 @@ spec:
   ports:
   - protocol: TCP
     port: 2181
-    targetPort: 218
+    targetPort: 2181
 ---
 apiVersion: v1
 kind: Route
