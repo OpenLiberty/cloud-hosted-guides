@@ -21,6 +21,7 @@ Let's create a new Integration Test that will perform the same test, but inside 
             <scope>test</scope>
         </dependency>
 ```
+{: codeblock}
 
 Add the following `<repository>` element to the `pom.xml`.  This should be as a peer of the `<properties>` element:
 
@@ -33,6 +34,7 @@ Add the following `<repository>` element to the `pom.xml`.  This should be as a 
         </repository>
     </repositories>
 ```
+{: codeblock}
 
 The MicroShed Testing project is not released to Maven Central at the moment and so this entries tells maven about the repository from where it can be downloaded.
 
@@ -86,6 +88,7 @@ public class BaristaContainerIT {
     }
 }
 ```
+{: codeblock}
 
 You'll see that the class is marked as a MicroShed test with the `@MicroShedTest` annotation.
 
@@ -116,12 +119,14 @@ log4j.appender.stdout.layout.ConversionPattern=%r %p %c %x - %m%n
 
 log4j.logger.org.microshed=DEBUG
 ```
+{: codeblock}
 
 Build and run the test:
 
 ```
 mvn install
 ```
+{: codeblock}
 
 You should see the following output:
 
@@ -189,11 +194,14 @@ To:
                         <groupId>com.ibm.websphere.appserver.runtime</groupId>
                         <artifactId>wlp-kernel</artifactId>
 ```
+{: codeblock}
+
 Rebuild and re-start the `coffee-shop` service:
 
 ```
 mvn install liberty:run
 ```
+{: codeblock}
 
 Try the service out using the Open API Web page and you should see the behavior is identical.  Not surprising since the code is identical, from the same build, just built into WebSphere Liberty.
 

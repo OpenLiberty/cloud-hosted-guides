@@ -14,35 +14,55 @@ Kubernetes provides liveness and readiness probes that are used to check the hea
 
 If a terminal window does not open navigate:
 
-`Terminal -> New Terminal`
+```
+Terminal -> New Terminal
+```
+
 
 Let's begin by ensuring your Kubernetes environment is set up by running by executing the following command in the terminal:
 
-`kubectl version`
+```
+kubectl version
+```
+{: codeblock}
 
 Check you are in the **home/project** folder:
 
-`pwd`
+```
+pwd
+```
+{: codeblock}
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/yasmin-aumeeruddy/snl-kube-health.git`
+```
+git clone https://github.com/yasmin-aumeeruddy/snl-kube-health.git
+```
 
-`cd snl-kube-health/finish`
+```
+cd snl-kube-health/finish
+```
+{: codeblock}
 
 # Deploy Java microservices
 
 Build the applications by running the following command:
 
-`mvn clean package`
+```
+mvn clean package
+```
+{: codeblock}
 
 Now that you have your Kubernetes cluster up and running, you can deploy your microservices using the following command:
 
-`kubectl apply -f kubernetes.yaml`
+```
+kubectl apply -f kubernetes.yaml
+```
+{: codeblock}
 
 While you are waiting for your services to start up, take a look at the provided kubernetes.yaml file that you have used to deploy your two Java microservices. 
 
-> [File -> Open] snl-kube-health/kubernetes.yaml
+> [File->Open] snl-kube-health/kubernetes.yaml
 
 Here you can see configuration for two deployments and two services. The first deployment **name-deployment** has two replicas which means it will have two pods running. We also specify the Docker image name and the container ports we would like to map outside the container, **9080**. This deployment contains a simple Java microservice that displays a brief greeting and the name of the container it runs in.
 
@@ -58,25 +78,36 @@ The microservices are fully deployed and ready for requests when the **READY** c
 
 Firstly check the node ports by running the following command in the terminal:
 
-`kubectl get services` 
+```
+kubectl get services
+``` 
+{: codeblock}
 
 There are two ports specified under the **Port(s)** collumn for each service and they are shown as **{target port}/{node port}/TCP**, for example, **9080:31006/TCP** where 9080 is the target port and 31006 is the node port. Take note of each node port shown from the command.
 
 Set the **namePort** and **pingPort** variables to the correct node ports for each service:
 
-`namePort={port}`
+```
+namePort={port}
 and 
-`pingPort={port}`
+pingPort={port}
+```
 
 Check that they have been set correctly: 
 
-`echo $namePort && echo $pingPort`
+```
+echo $namePort && echo $pingPort
+```
+{: codeblock}
 
 You should see an output consisting of both node ports. 
 
 To find the IP addresses required to access the services, use the following command:
 
-`kubectl describe pods`
+```
+kubectl describe pods
+```
+{: codeblock}
 
 *Note: to make your terminal full screen, double click the terminal heading
 
@@ -99,57 +130,90 @@ Start Time:     Tue, 18 Feb 2020 14:15:42 +0000
 
 Like you did with the node ports, set the **nameIP** and **pingIP** variables to the right IP addresses for the services:
 
-`nameIP={IP address}`
-`pingIP={IP address}`
+```
+nameIP={IP address}
+pingIP={IP address}
+```
 
 Check that they have been set correctly: 
 
-`echo $nameIP && echo $pingIP`
+```
+echo $nameIP && echo $pingIP
+```
+{: codeblock}
 
 You should see an output consisting of both IP addresses.
 
 When you run the following command it will use the IP address of your cluster (This may take several minutes).
 
-`curl http://$nameIP:$namePort/api/name`
+```
+curl http://$nameIP:$namePort/api/name
+```
+{: codeblock}
 
 You should see a response similar to the following:
 
 `Hello! I'm container [container name]`
 
-Similarly, navigate to `curl http://$pingIP:$pingPort/api/ping/name-service` and observe a response with the content pong.
+Similarly observe a response with the content pong:
+
+```
+curl http://$pingIP:$pingPort/api/ping/name-service
+```
+{: codeblock}
 
 # Turn one of your Microservices Unhealthy
 
 Now that your microservices are up and running and you have made sure that your requests are working, we can monitor the microservices’ health. Let’s start by making one of our microservices unhealthy. To do this, you need to make a POST request to a specific URL endpoint provided by the MicroProfile specification, which allows you to make a service unhealthy:
 
-`curl -X POST http://$nameIP:$namePort/api/name/unhealthy`
+```
+curl -X POST http://$nameIP:$namePort/api/name/unhealthy
+```
+{: codeblock}
 
 If you now check the health of your pods you should notice it is not ready as shown by **0/1**.
 
-`kubectl get pods`
+```
+kubectl get pods
+```
+{: codeblock}
 
 Now if you send a request to the endpoint again you will notice it will not fail as your other microservice will now handle the request:
 
-`curl http://$nameIP:$namePort/api/name`
+```
+curl http://$nameIP:$namePort/api/name
+```
+{: codeblock}
 
 # Test out the readiness Probe
 
 The unhealthy deployment should automatically recover after about 30 seconds. Run the following command until you see the **READY** state return to **1/1**.
 
-`kubectl get pods`
-
+```
+kubectl get pods
+```
+{: codeblock}
 
 Once it has recovered you are going to make both demo pods unhealthy by making a POST request to each deployment.
 
-`curl -X POST http://$nameIP:$namePort/api/name/unhealthy`
+```
+curl -X POST http://$nameIP:$namePort/api/name/unhealthy
+```
+{: codeblock}
 
-`curl -X POST http://$nameIP:$namePort/api/name/unhealthy`
+```
+curl -X POST http://$nameIP:$namePort/api/name/unhealthy
+```
+{: codeblock}
 
  If the response from the second request has the same pod name as the first, wait 5 seconds and run the command again. This is because the readiness probe has not noticed the microservice has become unhealthy.
 
  Now check that both pods are no longer in a ready state:
 
- `kubectl get pods`
+ ```
+ kubectl get pods
+ ```
+ {: codeblock}
 
  You should soon notice that the ping microservice has also changed state. This is because the readiness probe for that pod has realized the demo pod is no longer receiving requests and as such the ping microservice no longer works.
 
@@ -157,9 +221,21 @@ After a small amount of time, if you keep running the previous command you will 
  
 Clean up the cluster by running the following command:
 
-`kubectl delete -f kubernetes.yaml`
+```
+kubectl delete -f kubernetes.yaml
+```
+{: codeblock}
 
 # Summary
+
+## Clean up your environment
+
+Delete the **snl-kube-health** project by navigating to the **/home/project/** directory
+
+```
+rm -r -f guide-microshed-testing
+```
+{: codeblock}
 
 ## Well Done
 

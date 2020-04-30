@@ -15,12 +15,14 @@ Go to the barista project:
 ```
 cd open-liberty-masterclass/start/barista
 ```
+{: codeblock}
 
 Build and run the barista service:
 
 ```
 mvn install liberty:run
 ```
+{: codeblock}
 
 Visit: http://localhost:9081/openapi/ui
 
@@ -91,6 +93,8 @@ Add the following dependency to the `coffee-shop/pom.xml`
             <scope>provided</scope>
         </dependency> 
 ```
+{: codeblock}
+
 The above dependency will cause the feature to be installed during the build, but we also need to tell the server to load it at runtime.
 
 Open the file `open-liberty-masterclass/start/coffee-shop/src/main/liberty/config/server.xml`
@@ -116,12 +120,14 @@ This entry lists all the features to be loaded by the server.  Add the following
 ```XML
         <feature>mpOpenAPI-1.1</feature>
 ```
+{: codeblock}
 
 Build and run the coffee-shop service:
 
 ```
 mvn install liberty:run
 ```
+{: codeblock}
 
 Visit: http://localhost:9080/openapi/ui
 
