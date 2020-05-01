@@ -406,18 +406,11 @@ inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
 Wait for your two new pods to be in the ready state, then enter:
 
 ```
-curl http://$SYSTEM_HOST:$SYSTEM_PORT/system/propertiea
+curl http://$SYSTEM_HOST:$SYSTEM_PORT/system/properties
 ```
 {: codeblock}
+
 You’ll notice that the X-Pod-Name header will have a different value when you call it multiple times. This is because there are now three pods running all serving the **system** application. Similarly, to descale your deployments you can use the same scale command with fewer replicas.
-
-```
-mvn clean package
-kubectl delete -f kubernetes.yaml
-kubectl apply -f kubernetes.yaml
-```
-{: codeblock}
-
 
 This is not how you would want to update your applications when running in production, but in a development environment this is fine. If you want to deploy an updated image to a production cluster, you can update the container in your deployment with a new image. Then, Kubernetes will automate the creation of a new container and decommissioning of the old one once the new container is ready.
 
@@ -435,7 +428,18 @@ A few tests are included for you to test the basic functionality of the microser
 
 Navigate back to the **start** directory.
 
-Run the integration tests against a cluster running with a host name of localhost:
+Run the following commands to replace the above variables in your pom.xml's that you are using to build & test this application.
+
+```
+sed -i 's=31000='"$SYSTEM_PORT"'=g'  system/pom.xml
+sed -i 's=31000='"$SYSTEM_PORT"'=g'  inventory/pom.xml 
+sed -i 's=32000='"$INVENTORY_PORT"'=g'  inventory/pom.xml 
+sed -i 's=localhost='"$INVENTORY_HOST"'=g'  inventory/pom.xml
+sed -i 's=localhost='"$SYSTEM_HOST"'=g'  system/pom.xml
+```
+{: codeblock}
+
+Run the integration tests against a cluster:
 
 ```
 mvn failsafe:integration-test
