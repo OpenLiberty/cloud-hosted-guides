@@ -22,13 +22,18 @@ If a terminal window does not open navigate:
 
 Check you are in the **home/project** folder:
 
-`pwd`
+```
+pwd
+```
+{: codeblock}
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/openliberty/guide-cdi-intro.git`
-
-`cd guide-cdi-intro`
+```
+git clone https://github.com/openliberty/guide-cdi-intro.git
+cd guide-cdi-intro
+```
+{: codeblock}
 
 The **start** directory contains the starting project that you will build upon.
 
@@ -40,29 +45,44 @@ The **finish** directory in the root of this guide contains the finished invento
 
 To try out the application, first go to the **finish** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
-`mvn liberty:run`
+```
+cd finish
+mvn liberty:run
+```
+{: codeblock}
 
-In another shell, run the following command:
+Open another shell and run the following command:
 
-`curl http://localhost:9080/inventory/systems` 
+```
+curl http://localhost:9080/inventory/systems
+```
+{: codeblock} 
 
 This is the starting point of the **inventory** service and it displays the current contents of the inventory. As you might expect, these are empty since nothing is stored in the inventory yet. 
 
 Next, run the following command:
 
-`curl http://localhost:9080/inventory/systems/localhost`
+```
+curl http://localhost:9080/inventory/systems/localhost
+```
+{: codeblock}
 
 You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. 
 
-Go back to http://localhost:9080/inventory/systems and you see a new entry for **localhost**:
+Go back to inventory/systems URL and you see a new entry for **localhost**:
 
-`curl http://localhost:9080/inventory/systems`
+```
+curl http://localhost:9080/inventory/systems
+```
+{: codeblock}
 
 For simplicity, only the OS name and username are shown here for each host. You can repeat this process for your own hostname or any other machine that is running the **system** service.
 
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C** in the shell session where you ran the server. Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server. In the shell session where you ran the server:
 
-`mvn liberty:stop`
+```
+ Press **CTRL+C** 
+```
 
 # Handling dependencies in the application
 
@@ -72,13 +92,28 @@ You will use CDI to inject dependencies into the inventory manager application a
 
 Navigate to the **start** directory to begin. 
 
+```
+cd ../start
+```
+{: codeblock}
+
 Start Open Liberty in development mode, which starts the Open Liberty server and listens for file changes:
 
-`mvn liberty:dev`
+```
+mvn liberty:dev
+```
+{: codeblock}
 
 Create the **InventoryManager** class:
 
-[File -> New File]src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+```
+touch src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+```
+{: codeblock}
+
+Open the **InventoryManager**:
+
+> [File->Open] guide-cdi-intro/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 Add the following:
 
@@ -114,6 +149,7 @@ public class InventoryManager {
   }
 }
 ```
+{: codeblock}
 
 This bean contains two simple functions. The **add()** function is for adding entries to the inventory. The **list()** function is for listing all the entries currently stored in the inventory.
 
@@ -123,7 +159,12 @@ This annotation indicates that this particular bean is to be initialized once pe
 
 Create the **InventoryResource** class:
 
-> [File -> New File]src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+```
+touch src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+```
+{: codeblock}
+
+> [File->Open] guide-cdi-intro/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 Add the following: 
 
@@ -177,6 +218,8 @@ public class InventoryResource {
   }
 }
 ```
+{: codeblock}
+
 The inventory resource is a RESTful service that is served at the **inventory/systems** endpoint.
 
 Annotating a class with the **@ApplicationScoped** annotation indicates that the bean is initialized once and is shared between all requests while the application runs.
@@ -199,9 +242,15 @@ The Open Liberty server was started in development mode at the beginning of the 
 
 You can find the **inventory** and **system** services at the following URLs:
 
-`curl http://localhost:9080/inventory/systems`
+```
+curl http://localhost:9080/inventory/systems
+```
+{: codeblock}
 
-`curl http://localhost:9080/system/properties`
+```
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
 
 # Testing the inventory application
 
@@ -209,7 +258,14 @@ While you can test your application manually, you should rely on automated tests
 
 Create the **InventoryEndpointIT** class.
 
-> [File -> New File]src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+```
+touch src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+```
+{: codeblock}
+
+Open the **InventoryEndpointIT**
+
+> [File->Open] start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 Add the following:
 
@@ -365,6 +421,7 @@ public class InventoryEndpointIT {
   }
 }
 ```
+{: codeblock}
 
 The **@BeforeAll** annotation is placed on a method that runs before any of the test cases. In this case, the **oneTimeSetup()** method retrieves the port number for the Open Liberty server and builds a base URL string that is used throughout the tests.
 
@@ -372,11 +429,11 @@ The **@BeforeEach** and **@AfterEach** annotations are placed on methods that ru
 
 See the following descriptions of the test cases:
 
-.**testHostRegistration()** verifies that a host is correctly added to the inventory.
+1. **testHostRegistration()** verifies that a host is correctly added to the inventory.
 
-.**testSystemPropertiesMatch()** verifies that the JVM system properties returned by the system service match the ones stored in the **inventory** service.
+2. **testSystemPropertiesMatch()** verifies that the JVM system properties returned by the system service match the ones stored in the **inventory** service.
 
-.**testUnknownHost()** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled as an error.
+3. **testUnknownHost()** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled as an error.
 
 To force these test cases to run in a particular order, annotate your **InventoryEndpointIT** test class with the **@TestMethodOrder(OrderAnnotation.class)** annotation. **OrderAnnotation.class** runs test methods in numerical order, according to the values specified in the **@Order** annotation. You can also create a custom **MethodOrderer** class or use built-in **MethodOrderer** implementations, such as **OrderAnnotation.class**, **Alphanumeric.class**, or **Random.class**. Label your test cases with the **@Test** annotation so that they automatically run when your test class runs.
 
@@ -405,7 +462,16 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 To see whether the tests detect a failure, change the endpoint for the inventory service in the **src/main/java/io/openliberty/guides/inventory/InventoryResource.java** file to something else. Then, run the tests again to see that a test failure occurs.
 
 When you are done checking out the service, exit development mode by typing **q** in the shell session where you ran the server, and then press the **enter/return** key.
+
 # Summary
+
+## Clean up your environment
+Delete the **guide-cdi-intro** project by navigating to the **/home/project/** directory
+
+```
+rm -r -f guide-cdi-intro
+```
+{: codeblock}
 
 ## Well Done
 Nice work! You just used CDI services in Open Liberty to build a simple inventory application.

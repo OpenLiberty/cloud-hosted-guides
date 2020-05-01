@@ -12,17 +12,25 @@ Cloud-native doesn't change the principles around which solutions are chosen and
 
 If a terminal window does not open navigate:
 
-`Terminal -> New Terminal`
+```
+Terminal -> New Terminal
+```
 
 Check you are in the **home/project** folder:
 
-`pwd`
+```
+pwd
+```
+{: codeblock}
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/yasmin-aumeeruddy/SkillsNetworkLabs.git`
+```
+git clone https://github.com/yasmin-aumeeruddy/SkillsNetworkLabs.git
+cd SkillsNetworkLabs
+```
+{: codeblock}
 
-`cd SkillsNetworkLabs`
 
 # A look at OpenJ9 and AdoptOpenJDK
 
@@ -31,9 +39,19 @@ low footprint, fast startup and high throughput characteristics make it an ideal
 
 Every JVM needs a class library, and most people don't want to build their own Java distribution.  The best place to get a build of OpenJ9 is <a href="https://adoptopenjdk.net/">AdoptOpenJDK</a>.  This provides pre-built binaries of the OpenJDK class libraries with different JVMs.  The OpenJ9 + OpenJDK builds can be found here: https://adoptopenjdk.net/?variant=openjdk8-openj9 . 
 
-In a terminal, type: `which java`
+In a terminal, type: 
 
-To find out more about the Java you have installed, type: `java -version`
+```
+which java
+```
+{: codeblock}
+
+To find out more about the Java you have installed, type: 
+
+```
+java -version
+```
+{: codeblock}
 
 You should see something like the following:
 
@@ -54,11 +72,17 @@ Inside this directory, you'll see a **pom.xml** file for the maven build, a **Do
 
 Build and run the microservice application:
 
-`mvn liberty:run`
+```
+mvn liberty:run
+```
+{: codeblock}
 
 In another terminal, run the following command to call the microservice URL: 
 
-`curl http://localhost:9080/mpservice/greeting/hello/John%20Doe`
+```
+curl http://localhost:9080/mpservice/greeting/hello/John%20Doe`
+```
+{: codeblock}
 
 The response should look like:
 
@@ -80,7 +104,10 @@ The tutorial code shows example use of MicroProfile Health and Metrics.
 
 Start the server again with the following command:
 
-`mvn liberty:dev`
+```
+mvn liberty:dev
+```
+{: codeblock}
 
 The goal, dev, invokes the create, install-feature, and deploy goals before starting the server. Note: This goal is designed to be executed directly from the Maven command line. To exit dev mode, type **q** and press **Enter**.
 
@@ -88,7 +115,10 @@ Dev mode provides three key features. Code changes are detected, recompiled, and
 
 When you started Open Liberty, it wrote out a number of available endpoints.  One of those is the health endpoint for the application:
 
-`curl http://localhost:9080/health/`
+```
+curl http://localhost:9080/health/
+```
+{: codeblock}
 
 You should see:
 
@@ -133,6 +163,7 @@ public class GreetingReadinessCheck implements HealthCheck {
     }
 }
 ```
+{: codeblock}
 
 MicroProfile supports two types of health checks: readiness and liveness.  These match the health checks supported by deployment environments like Kubernetes and, indeed, the MicroProfile Health APIs have been designed to integrate perfectly and Kubernetes liveness and readiness probes.
 
@@ -142,17 +173,29 @@ You can implement many checks as part of your service and their outcomes are agg
 
 Feel free to try each of these endpoints.  You'll see there's a default **/health/live** endpoint that always reports as **UP**.
 
-`curl http://localhost:9080/health/ready`
+```
+curl http://localhost:9080/health/ready
+```
+{: codeblock}
 
-`curl http://localhost:9080/health/live`
+```
+curl http://localhost:9080/health/live
+```
+{: codeblock}
 
-`curl http://localhost:9080/health`
+```
+curl http://localhost:9080/health
+```
+{: codeblock}
 
 ### MicroProfile Metrics
 
 When you started Open Liberty it wrote out an endpoint for MicroProfile Metrics:
 
-`curl http://localhost:9080/metrics/`
+```
+curl http://localhost:9080/metrics/
+```
+{: codeblock}
 
 If you tried to access the endpoint you will have found that it requires security configuration to work.  The Metrics endpoint is only available over https and, by default, also requires an authorized user in order to prevent disclosing potentially sensitive information.
 
@@ -160,13 +203,14 @@ The MicroProfile Metrics feature allows you to turn off the security requirement
 
 Edit the **server.xml**:
 
-> [File -> Open] SkillsNetworkLabs/src/main/liberty/config/server.xml
+> [File->Open] SkillsNetworkLabs/src/main/liberty/config/server.xml
 
 Add the following line:
 
 ```XML
     <mpMetrics authentication="false" /> 
 ```
+{: codeblock}
 
 Now when you access the metrics endpoint you will be able to access it over http and not be asked to authenticate.
 
@@ -186,7 +230,7 @@ The tutorial application also shows a MicroProfile application metrics in the mi
 
 Open the **GreetingService.java**:
 
-> [File -> Open] SkillsNetworkLabs/src/main/java/my/demo/GreetingService.java
+> [File->Open] SkillsNetworkLabs/src/main/java/my/demo/GreetingService.java
 
 ```Java
 @Path("/hello")
@@ -209,16 +253,23 @@ public class GreetingService {
 
 }
 ```
+{: codeblock}
 
 The **@Timed** annotation is an example of one of a number of MicroProfile metric types.  This metric produces timing information for the execution of the **sayHello** service method.  Other metrics include counting method access to measure load, or gauges for custom measurement. 
 
 Access the service endpoint to cause some application measurements to be recorded: 
 
-`curl http://localhost:9080/mpservice/greeting/hello/John%20Doe`
+```
+curl http://localhost:9080/mpservice/greeting/hello/John%20Doe
+```
+{: codeblock}
 
 These measurements will be available at the `/metrics` endpoint, but you can also just see the application metrics at: 
 
-`curl --insecure https://localhost:9443/metrics/application`
+```
+curl --insecure https://localhost:9443/metrics/application
+```
+{: codeblock}
 
 ### MicroProfile Config
 
@@ -251,13 +302,18 @@ Edit line 100 of the pom.xml file which is situated in the SkillsNetworkLabs fol
     <greetingServiceGreeting>Bonjour</greetingServiceGreeting>
 </bootstrapProperties>
 ```
+{: codeblock}
+
 Stop the server by entering **q** in the terminal and start it again: `mvn liberty:dev`.
 
 *Note: if you trigger a rebuild, the integration test will fail as it's expecting the response message to be "Hello". However, the server will still build and run.*
 
 Call the service again to see the greeting change:
 
-`curl http://localhost:9080/mpservice/greeting/hello/John%20Doe`
+```
+curl http://localhost:9080/mpservice/greeting/hello/John%20Doe
+```
+{: codeblock}
 
 You should now see:
 
@@ -274,7 +330,10 @@ This example shows static config injection, where the configuration is read at s
 
 When you started Open Liberty it wrote out two endpoints for MicroProfile OpenAPI:
 
-`curl http://localhost:9080/openapi/` and `curl http://localhost:9080/openapi/ui/`
+```
+curl http://localhost:9080/openapi/` and `curl http://localhost:9080/openapi/ui/
+```
+{: codeblock}
 
 Clicking on the first link displays a machine-readable yaml description of the service, the format of which is defined by the <a href="https://www.openapis.org/">OpenAPI Initiative</a>.  
 
@@ -337,16 +396,21 @@ Edit the **src/main/java/my/demo/GreetingService.java** to add documentation for
     }
     ...
 ```
+{: codeblock}
 
 You'll also need to add the package import for the annotation:
 
 ```Java
 import org.eclipse.microprofile.openapi.annotations.Operation;
 ```
+{: codeblock}
 
 Browse the OpenAPI endpoint:
 
-`curl http://localhost:9080/openapi/`
+```
+curl http://localhost:9080/openapi/
+```
+{: codeblock}
 
 You'll see that your API now has additional documentation:
 
@@ -360,6 +424,7 @@ You'll see that your API now has additional documentation:
       parameters:
 ...
 ```
+
 Stop the server by entering **q** in the terminal. 
 
 There are additional annotations available to help you document the parameters and more.
@@ -382,7 +447,10 @@ Change the value of line 100 in the **pom.xml** file back to "hello".
 
 The project's maven pom file includes a maven profile for building a usr package, which isn't built by default.  Build the usr server package with: 
 
-`mvn -P usr-package install`
+```
+mvn -P usr-package install
+```
+{: codeblock}
 
 This results in a server zip package: **target/defaultServer.zip**.  In the **usr-package** build we also use the name **defaultServer** for the server because this is the name of the server the base Liberty Docker images automatically runs when the container is started.
 
@@ -390,35 +458,70 @@ This results in a server zip package: **target/defaultServer.zip**.  In the **us
 
 In the directory where the **Dockerfile* is located run:
 
-`docker build -t my-demo:mpservice .`
+```
+docker build -t my-demo:mpservice .
+```
+{: codeblock}
 
 To see the image that you created, run the following command:
-`docker images`
 
-If the server is already running, stop it: `mvn liberty:stop` or enter `q` in the terminal.
+```
+docker images
+```
+{: codeblock}
+
+If the server is already running, stop it: 
+
+```
+Enter `q` + `enter` in the terminal.
+```
 
 Run the docker image: 
 
-`docker run -d --name mpservice -p 9080:9080 -p 9443:9443 my-demo:mpservice`
+```
+docker run -d --name mpservice -p 9080:9080 -p 9443:9443 my-demo:mpservice
+```
+{: codeblock}
 
 To see the docker container that is running, use the following command in another terminal: 
 
-`docker ps`
+```
+docker ps
+```
+{: codeblock}
 
-Access it with `curl localhost:9080/mpservice/greeting/hello/John%20Doe`
+Access it with 
 
+```
+curl localhost:9080/mpservice/greeting/hello/John%20Doe
+```
+{: codeblock}
 
 Note: the **open-liberty** image referenced in the Dockerfile is based on IBM Java (built on Open J9) because we wanted to re-use the official Open Liberty Docker image. Creating an image based on Open J9 would be relatively straightforward.
 
 To stop and remove the container, run the following command:
 
-`docker stop mpservice && docker rm mpservice`
+```
+docker stop mpservice && docker rm mpservice
+```
+{: codeblock}
 
 To remove the image, run the following command:
 
-`docker rmi my-demo:mpservice`
+```
+docker rmi my-demo:mpservice
+```
+{: codeblock}
 
 # Summary
+
+## Clean up your environment
+Delete the **SkillsNetworkLabs** project by navigating to the **/home/project/** directory
+
+```
+rm -r -f SkillsNetworkLabs
+```
+{: codeblock}
 
 ## Well Done
 Congratulations, you have built, a cloud-native application, seen how you can monitor it for health and metrics, change its configuration, and package and run it in Docker, ready for deployment to your cloud of choice.  I recommend IBM Cloud or IBM Cloud Private, of course ;)

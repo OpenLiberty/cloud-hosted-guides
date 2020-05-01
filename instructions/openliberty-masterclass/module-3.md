@@ -27,6 +27,7 @@ Because we're going to be testing a REST `POST` request, we need JAX-RS client s
             <scope>test</scope>
         </dependency>
 ```
+{: codeblock}
 
 Note, the later `Testing in Containers` module requires the JUnit 5 Jupiter API so we're using the same API here.
 
@@ -66,6 +67,8 @@ Next add `maven-failsafe-plugin` configuration at the end of the `<plugins/>` se
             </plugin>                        
         </plugins>
 ```
+{: codeblock}
+
 Note, this configuration makes the port of the server available to the test as a system property called `liberty.test.port`.
 
 Finally, add the test code.  Create a file called, `open-liberty-masterclass/start/barista/src/test/java/com/sebastian-daschner/barista/it/BaristaIT.java` and add the following:
@@ -136,6 +139,7 @@ public class BaristaIT {
 }
 
 ```
+{: codeblock}
 
 This test sends a `json` request to the `barista` service and checks for a `200 OK` response. 
 
@@ -144,6 +148,7 @@ Re-build and run the tests:
 ```
 mvn install
 ```
+{: codeblock}
 
 In the output of the build, you should see:
 
@@ -197,17 +202,22 @@ Let's build the docker image.  In the `open-liberty-masterclass/start/coffee-sho
 ```
 docker build -t masterclass:coffee-shop .
 ```
+{: codeblock}
 
 In the `open-liberty-masterclass/start/barista` directory, run (note the period (`.`) at the end of the line is important):
 
 ```
 docker build -t masterclass:barista .
 ```
+{: codeblock}
+
 Next, create the user-defined bridge network:
 
 ```
 docker network create --driver bridge masterclass-net
 ```
+{: codeblock}
+
 You can now run the two Docker containers and get them to join the same bridge network.  Providing names to the containers makes those names available for DNS resolution within the bridge network so there's no need to use ip addresses.
 
 Run the `barista` container:
@@ -215,6 +225,7 @@ Run the `barista` container:
 ```
 docker run --network=masterclass-net --name=barista masterclass:barista
 ```
+{: codeblock}
 
 Note, we don't need map the `barista` service ports outside the container because the bridge network gives access to the other containers on the same network.
 
@@ -223,12 +234,15 @@ Next, we're going to run the `coffee-shop` container.  For it to work we'll need
 ```
 docker run -p 9080:9080 -p 9445:9443 --network=masterclass-net --name=coffee-shop -e default_barista_base_url='http://barista:9081' -e default_http_port=9080 -e default_https_port=9443 masterclass:coffee-shop
 ```
+{: codeblock}
 
 You can take a look at the bridge network using:
 
 ```
 docker network inspect masterclass-net
 ```
+{: codeblock}
+
 You'll see something like:
 
 ```JSON
@@ -312,6 +326,8 @@ If you're on a unix-based OS, in the `open-liberty-masterclass/start/coffee-shop
 ```
 docker run -p 9080:9080 -p 9445:9443 --network=masterclass-net --name=coffee-shop -e default_barista_base_url='http://barista:9081' -e default_http_port=9080 -e default_https_port=9443 -v $(pwd)/configDropins/overrides:/opt/ol/wlp/usr/servers/defaultServer/configDropins/overrides  masterclass:coffee-shop
 ```
+{: codeblock}
+
 The above relies on `pwd` to fill in the docker volume source path.  If you're on Windows, replace `$(pwd)` with the absolute path to the `open-liberty-masterclass/start/coffee-shop` directory in the above command.
 
 You should see the following message as the server is starting:
