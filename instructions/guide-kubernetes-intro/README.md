@@ -185,10 +185,16 @@ spec:
       containers:
       - name: system-container
         image: us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+        resources:
+          requests:
+            ephemeral-storage: "1Gi"
+          limits:
+            ephemeral-storage: "1Gi"
         ports:
         - containerPort: 9080
       imagePullSecrets:
       - name: icr
+      
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -208,6 +214,11 @@ spec:
       containers:
       - name: inventory-container
         image: us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+        resources:
+          requests:
+            ephemeral-storage: "1Gi"
+          limits:
+            ephemeral-storage: "1Gi"
         ports:
         - containerPort: 9080
       imagePullSecrets:
