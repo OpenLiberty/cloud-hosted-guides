@@ -64,6 +64,7 @@ The starting Java project, which you can find in the **start** directory, is a m
 Navigate to the **start** directory and run the following command to build the applications:
 
 ```
+cd start
 mvn clean package
 ```
 {: codeblock}
@@ -88,13 +89,66 @@ docker images
 Verify that the **system:1.0-SNAPSHOT** and **inventory:1.0-SNAPSHOT** images are listed among them, for example:
 
 ```
-REPOSITORY                                                       TAG
-inventory                                                        1.0-SNAPSHOT
-system                                                           1.0-SNAPSHOT
-open-liberty                                                     latest
+REPOSITORY                                       TAG
+inventory                                        1.0-SNAPSHOT
+system                                           1.0-SNAPSHOT
+open-liberty                                     latest
 ```
 
 If you don’t see the **system:1.0-SNAPSHOT** and **inventory:1.0-SNAPSHOT** images, then check the Maven build log for any potential errors. 
+
+You now need to push these images to your givern container registry in **ibmcloud** so you can deploy these Kubernetes. Find the name of your namespace with the following command: 
+
+```
+bx cr namespace-list
+```
+{: codeblock}
+
+You'll see an output similar to the following: 
+
+```
+Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
+
+Namespace   
+sn-labs-johndoe
+```
+
+In this case, the namespace is **sn-labs-johndoe**. Store your namespace in a variable, e.g. NAMESPACE_NAME=sn-labs-johndoe: 
+
+```
+NAMESPACE_NAME=
+```
+{: codeblock}
+
+Verify that the variable contains your namepsace name correctly: 
+
+```
+echo $NAMESPACE_NAME
+```
+{: codeblock}
+
+Login to the given registry with the following command:
+
+```
+bx cr login
+```
+{: codeblock}
+
+Run the following commands to push the inventory images to your container registry namespace: 
+
+```
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+```
+{: codeblock}
+
+Do the same for the system images: 
+
+```
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+```
+{: codeblock}
 
 # Deploying the microservices
 
@@ -102,9 +156,15 @@ Now that your Docker images are built, deploy them using a Kubernetes resource d
 
 A Kubernetes resource definition is a yaml file that contains a description of all your deployments, services, or any other resources that you want to deploy. All resources can also be deleted from the cluster by using the same yaml file that you used to deploy them.
 
-Create the Kubernetes configuration file.
+Create the Kubernetes configuration file:
 
-> File -> New File start/`kubernetes.yaml`
+```
+touch kubernetes.yaml
+```
+{: codeblock}
+
+
+> [File -> Open] guide-kubernetes-intro/start/kubernetes.yaml
 
 ```
 apiVersion: apps/v1
@@ -124,9 +184,17 @@ spec:
     spec:
       containers:
       - name: system-container
-        image: system:1.0-SNAPSHOT
+        image: us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+        resources:
+          requests:
+            ephemeral-storage: "1Gi"
+          limits:
+            ephemeral-storage: "1Gi"
         ports:
         - containerPort: 9080
+      imagePullSecrets:
+      - name: icr
+      
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -145,9 +213,16 @@ spec:
     spec:
       containers:
       - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
+        image: us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+        resources:
+          requests:
+            ephemeral-storage: "1Gi"
+          limits:
+            ephemeral-storage: "1Gi"
         ports:
         - containerPort: 9080
+      imagePullSecrets:
+      - name: icr
 ---
 apiVersion: v1
 kind: Service
@@ -161,8 +236,6 @@ spec:
   - protocol: TCP
     port: 9080
     targetPort: 9080
-    nodePort: 31000
-
 ---
 apiVersion: v1
 kind: Service
@@ -176,13 +249,19 @@ spec:
   - protocol: TCP
     port: 9080
     targetPort: 9080
-    nodePort: 32000
 ```
 {: codeblock}
 
-This file defines four Kubernetes resources. It defines two deployments and two services. A Kubernetes deployment is a resource responsible for controlling the creation and management of pods. A service exposes your deployment so that you can make requests to your containers. Three key items to look at when creating the deployments are the **labels**, **image**, and **containerPort** fields. The **labels** is a way for a Kubernetes service to reference specific deployments. The **image** is the name and tag of the Docker image that you want to use for this container. Finally, the **containerPort** is the port that your container exposes for purposes of accessing your application. For the services, the key point to understand is that they expose your deployments. The binding between deployments and services is specified by the use of labels — in this case the **app** label. You will also notice the service has a type of **NodePort**. This means you can access these services from outside of your cluster via a specific port. In this case, the ports will be **31000** and **32000**, but it can also be randomized if the nodePort field is not used.
+This file defines four Kubernetes resources. It defines two deployments and two services. A Kubernetes deployment is a resource responsible for controlling the creation and management of pods. A service exposes your deployment so that you can make requests to your containers. Three key items to look at when creating the deployments are the **labels**, **image**, and **containerPort** fields. The **labels** is a way for a Kubernetes service to reference specific deployments. The **image** is the name and tag of the Docker image that you want to use for this container. Finally, the **containerPort** is the port that your container exposes for purposes of accessing your application. For the services, the key point to understand is that they expose your deployments. The binding between deployments and services is specified by the use of labels — in this case the **app** label. You will also notice the service has a type of **NodePort**. This means you can access these services from outside of your cluster via a specific port.
 
-Run the following commands to deploy the resources as defined in kubernetes.yaml:
+Correct the image names so they are pulled from your namespace using the following command: 
+
+```
+sed -i 's=$NAMESPACE_NAME='"$NAMESPACE_NAME"'=g'  kubernetes.yaml
+```
+{: codeblock}
+
+Run the following command to deploy the resources as defined in kubernetes.yaml:
 
 ```
 kubectl apply -f kubernetes.yaml
@@ -211,17 +290,92 @@ kubectl describe pods
 ```
 {: codeblock}
 
+This output shows the node IP which you will use to access the services. For example:
+
+```
+Name:         system-deployment-c5667f8dc-tpnff
+Namespace:    sn-labs-johndoe
+Priority:     0
+Node:         10.114.85.172/10.114.85.172
+Start Time:   Fri, 24 Apr 2020 07:45:43 +0000
+Labels:       app=system
+              pod-template-hash=c5667f8dc
+Annotations:  kubernetes.io/limit-ranger:
+                LimitRanger plugin set: cpu, ephemeral-storage, memory request for container system-container; cpu, ephemeral-storage, memory limit for co...
+              kubernetes.io/psp: ibm-privileged-psp
+Status:       Running
+```
+
+In this case, the node IP is 10.114.85.172 for the system service. Find the IP for each service and store them in variables, e.g. **SYSTEM_HOST=10.114.85.172**: 
+
+```
+SYSTEM_HOST=
+```
+{: codeblock}
+
+```
+INVENTORY_HOST=
+```
+{: codeblock}
+
+Verify that they have stored correctly with the following command: 
+
+```
+echo $SYSTEM_HOST && echo $INVENTORY_HOST
+```
+{: codeblock}
+
+To find the node ports that you need to access your services, run the following command: 
+
+```
+kubectl get services
+```
+{: codeblock}
+
+You will see an output similar to the following:
+
+```
+NAME                TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+inventory-service   NodePort   172.21.208.199   <none>        9080:30065/TCP   24h
+system-service      NodePort   172.21.3.206     <none>        9080:32554/TCP   24h
+```
+
+You will see the node port listed under the heading "PORT(S)", next to "9080:". In this case, the node port for the **inventory-service** is 30065 and the node port for the **system-service** is 32554. Store these in variables, e.g. **INVENTORY_PORT=30065**:
+
+```
+INVENTORY_PORT=
+```
+{: codeblock}
+
+```
+SYSTEM_PORT=
+```
+{: codeblock}
+
+Verify that they have stored correctly with the following command: 
+
+```
+echo $SYSTEM_PORT && echo $INVENTORY_PORT
+```
+{: codeblock}
+
 You can also issue the **kubectl get** and **kubectl describe** commands on other Kubernetes resources, so feel free to inspect all other resources.
 
 Next you will make requests to your services.
 
 Then curl or visit the following URLs to access your microservices, substituting the appropriate host name:
 
-http://localhost:31000/system/properties
+```
+curl http://$SYSTEM_HOST:$SYSTEM_PORT/system/properties
+```
+{: codeblock}
 
-http://localhost:32000/inventory/systems/system-service
+```
+curl http://$INVENTORY_HOST:$INVENTORY_PORT/inventory/systems/system-service
+```
+{: codeblock}
 
-The first URL returns system properties and the name of the pod in an HTTP header called X-Pod-Name. To view the header, you may use the -I option in the curl when making a request to **http://localhost:31000/system/properties**. The second URL adds properties from system-service to the inventory Kubernetes Service. Visiting **http://localhost:32000/inventory/systems/** in general adds to the inventory depending on whether kube-service is a valid Kubernetes Service that can be accessed.
+The first URL returns system properties and the name of the pod in an HTTP header called X-Pod-Name. To view the header, you may use the -I option in the curl when making a request to **http://$SYSTEM_HOST:$SYSTEM_PORT/system/properties**. The second URL adds properties from system-service to the inventory Kubernetes Service. Visiting **http://$INVENTORY_HOST:$INVENTORY_PORT/inventory/systems/** in general adds to the inventory depending on whether kube-service is a valid Kubernetes Service that can be accessed.
 
 ## Scaling a deployment
 
@@ -249,13 +403,12 @@ system-deployment-6bd97d9bf6-x4zth      1/1       Running   0          25s
 inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
 ```
 
-Wait for your two new pods to be in the ready state, then enter 
+Wait for your two new pods to be in the ready state, then enter:
 
 ```
-curl http://localhost:31000/system/properties
+curl http://$SYSTEM_HOST:$SYSTEM_PORT/system/propertiea
 ```
 {: codeblock}
-
 You’ll notice that the X-Pod-Name header will have a different value when you call it multiple times. This is because there are now three pods running all serving the **system** application. Similarly, to descale your deployments you can use the same scale command with fewer replicas.
 
 ```
@@ -264,6 +417,7 @@ kubectl delete -f kubernetes.yaml
 kubectl apply -f kubernetes.yaml
 ```
 {: codeblock}
+
 
 This is not how you would want to update your applications when running in production, but in a development environment this is fine. If you want to deploy an updated image to a production cluster, you can update the container in your deployment with a new image. Then, Kubernetes will automate the creation of a new container and decommissioning of the old one once the new container is ready.
 
