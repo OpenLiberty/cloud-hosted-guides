@@ -331,7 +331,6 @@ Open the **pom.xml** file
 
 >[File -> Open] guide-microprofile-reactive-messaging/start/system/pom.xml
 
-
 The **pom.xml** file lists the **microprofile-reactive-messaging-api**, **kafka-clients**, and **rxjava** dependencies.
 
 The **microprofile-reactive-messaging-api** dependency is needed to enable the use of MicroProfile Reactive Messaging API. The **kafka-clients** dependency is added because the application needs a Kafka client to connect to the Kafka broker. The **rxjava** dependency is used for creating events at regular intervals.
@@ -537,7 +536,7 @@ Start the application
 
 After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint of the **inventory** service.
 
-To access the **inventory** microservice, use the **inventory/systems** URL, and you see the CPU **systemLoad** property for all the systems.
+To access the **inventory** microservice, use the **inventory/systems** URL, and you see the CPU **systemLoad** property for all the systems. Be aware that it will take a couple of minutes for all of the services to start up so you may have to wait to recieve the expected output. 
 
 ```
 curl http://localhost:9085/inventory/systems
@@ -646,7 +645,9 @@ docker push us.icr.io/$NAMESPACE_NAME/system-reactive:1.0-SNAPSHOT
 
 Create the configuration file:
 
-> [File -> New File] guide-microprofile-reactive-messaging/start/openshift.yaml
+`touch openshift.yaml`
+
+> [File -> Open] guide-microprofile-reactive-messaging/start/openshift.yaml
 
 ```
 apiVersion: apps/v1
@@ -850,7 +851,7 @@ oc get routes
 
 Your app URL will be something like this: inventory-route-sn-labs-<your-userID>.sn-labs-user-sandbox-pr-a45631dc5778dc6371c67d206ba9ae5c-0000.tor01.containers.appdomain.cloud
   
-Append **"/inventory/systems"** after the URL and you should see an output with the **hostname** and **systemLoad**.
+Append **"/inventory/systems"** after the URL and you should see an output with the **hostname** and **systemLoad**. Be aware that it will take a couple of minutes for all of the services to start up so you may have to wait to recieve the expected output. 
 
 ## Troubleshooting (optional)
 
@@ -885,11 +886,7 @@ Note: The name of your application pod might be different.
 Let's clean up the resources we just created. You can execute the following commands:
 
 ```
-oc delete deployments --all
-
-oc delete services --all
-
-oc delete routes --all
+oc delete -f openshift.yaml
 ```
 {: codeblock}
 
