@@ -19,14 +19,11 @@ The service responds to **GET** requests to the **/System/properties** path. The
 
 # Getting Started
 
-As an example:
 If a terminal window does not open navigate:
-
 
 ```
 Terminal -> New Terminal
 ```
-
 
 Check you are in the **home/project** folder:
 
@@ -37,8 +34,8 @@ pwd
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/openliberty/guide-rest-intro.git```
 ```
+git clone https://github.com/openliberty/guide-rest-intro.gi
 cd guide-rest-intro
 ```
 {: codeblock}
@@ -48,6 +45,7 @@ The **finish** directory in the root of this guide contains the finished applica
 To try out the application, first go to the **finish** directory and run the following Maven  goal to build the application and deploy it to Open Liberty:
 
 ```
+cd finish
 mvn liberty:run
 ```
 {: codeblock}
@@ -74,6 +72,7 @@ Start Open Liberty in development mode, which starts the Open Liberty server and
 for file changes:
 
 ```
+cd ../start
 mvn liberty:dev
 ```
 {: codeblock}

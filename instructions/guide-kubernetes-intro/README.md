@@ -481,6 +481,13 @@ kubectl delete -f kubernetes.yaml
 ```
 {: codeblock}
 
+Delete the guide-docker project by navigating to the /home/project/ directory
+
+```
+rm -r -f guide-kubernetes-intro
+```
+{: codeblock}
+
 
 # Summary
 

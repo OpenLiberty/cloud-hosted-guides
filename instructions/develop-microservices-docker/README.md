@@ -25,7 +25,6 @@ To iteratively develop your application in a container, first build it with Mave
 
 ## Getting Started
 
-As an example:
 If a terminal window does not open navigate:
 
 > Terminal -> New Terminal
@@ -126,7 +125,6 @@ A **.dockerignore** file is available to you in the **start** directory. This fi
 src/
 pom.xml
 ```
-{: codeblock}
 
 # Building the image
 
@@ -244,7 +242,7 @@ The Open Liberty server runs on `9080`.
 
 To open the file click the the file button in the top left hand corner
 
-[File -> Open] guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+> [File -> Open] guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 Note the endpoint of your application is going to change from **properties** to **properties-new**. This has been updated by the **@Path** annotation being changed.
 
