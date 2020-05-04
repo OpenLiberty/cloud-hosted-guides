@@ -125,7 +125,6 @@ A **.dockerignore** file is available to you in the **start** directory. This fi
 src/
 pom.xml
 ```
-{: codeblock}
 
 # Building the image
 
