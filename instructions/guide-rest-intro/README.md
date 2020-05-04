@@ -19,14 +19,11 @@ The service responds to **GET** requests to the **/System/properties** path. The
 
 # Getting Started
 
-As an example:
 If a terminal window does not open navigate:
-
 
 ```
 Terminal -> New Terminal
 ```
-
 
 Check you are in the **home/project** folder:
 
@@ -37,8 +34,8 @@ pwd
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/openliberty/guide-rest-intro.git```
 ```
+git clone https://github.com/openliberty/guide-rest-intro.gi
 cd guide-rest-intro
 ```
 {: codeblock}
