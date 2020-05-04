@@ -72,6 +72,7 @@ Start Open Liberty in development mode, which starts the Open Liberty server and
 for file changes:
 
 ```
+cd ../start
 mvn liberty:dev
 ```
 {: codeblock}
