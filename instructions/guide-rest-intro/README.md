@@ -45,6 +45,7 @@ The **finish** directory in the root of this guide contains the finished applica
 To try out the application, first go to the **finish** directory and run the following Maven  goal to build the application and deploy it to Open Liberty:
 
 ```
+cd finish
 mvn liberty:run
 ```
 {: codeblock}
