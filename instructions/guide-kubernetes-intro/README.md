@@ -20,7 +20,7 @@ A pod is a basic building block in a Kubernetes cluster. It represents a single 
 
 A pod or a group of replicated pods are abstracted through Kubernetes objects called services that define a set of rules by which the pods can be accessed. In a basic scenario, a Kubernetes service exposes a node port that can be used together with the cluster IP address to access the pods encapsulated by the service.
 
-To learn about the various Kubernetes resources that you can configure, see the [https://kubernetes.io/docs/concepts/](official Kubernetes documentation).
+To learn about the various Kubernetes resources that you can configure, see the [official Kubernetes documentation.](https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/)
 
 ## What you'll learn
 
@@ -97,7 +97,7 @@ open-liberty                                     latest
 
 If you don’t see the **system:1.0-SNAPSHOT** and **inventory:1.0-SNAPSHOT** images, then check the Maven build log for any potential errors. 
 
-You now need to push these images to your givern container registry in **ibmcloud** so you can deploy these Kubernetes. Find the name of your namespace with the following command: 
+You now need to push these images to your given container registry on **ibmcloud** so you can deploy these Kubernetes. Find the name of your namespace with the following command: 
 
 ```
 bx cr namespace-list
