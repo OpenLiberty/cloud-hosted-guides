@@ -7,7 +7,7 @@ You will learn how to set up, run, and iteratively develop a simple REST applica
 ### What is Docker?
 Docker is a tool that you can use to deploy and run applications with containers. You can think of Docker like a virtual machine that runs various applications. However, unlike a typical virtual machine, you can run these applications simultaneously on a single system and independent of one another.
 
-If you are interested learn more about Docker on the [official Docker website.](https://www.docker.com/why-docker)
+If you are interested, learn more about Docker on the [official Docker website.](https://www.docker.com/why-docker)
 
 ### What is a container?
 A container is a lightweight, stand-alone package that contains a piece of software that is bundled together with the entire environment that it needs to run. Containers are small compared to regular images and can run on any environment where Docker is set up. Moreover, you can run multiple containers on a single machine at the same time in isolation from each other.
@@ -19,9 +19,9 @@ Consider a scenario where you need to deploy your application on another environ
 
 To solve the problem, you can containerize your application by bundling it together with the entire environment that it needs to run. You can then run this container on any machine that is running Docker regardless of how that machine’s environment is set up. You can also run multiple containers on a single machine in isolation from one another so that two containers that have different versions of Java do not interfere with each other. Containers are quick to run compared to individual VMs, and they take up only a fraction of the memory of a single virtual machine image.
 
-The implementation of the REST application can be found in the **start/src** directory. To learn more about this application and how to build it, read Creating a [RESTful web service](https://openliberty.io/guides/rest-intro.html).
+The implementation of this REST application can be found in the **finish/src** directory. To learn more about this application and how to build it, read Creating a [RESTful web service](https://openliberty.io/guides/rest-intro.html).
 
-To iteratively develop your application in a container, first build it with Maven and add it to the servers of your choice. Second, create a Docker image that contains an Open Liberty runtime. Third, run this image and mount a single server directory or the directory that contains all of your servers to the container’s file system. Finally, run one of the mounted servers inside of a container.
+To iteratively develop your application in a container, first build it with Maven and add it to the server of your choice. Second, create a Docker image that contains an Open Liberty runtime. Third, run this image and mount a single server directory or the directory that contains all of your servers to the container’s file system. Finally, run one of the mounted servers inside of a container.
 
 ## Getting Started
 
@@ -94,7 +94,7 @@ CMD ["defaultServer"]
 ```
 {: codeblock}
 
-Close and save **dockerfile** by pressing the 'x' button and pressing 'save'.
+Save the **dockerfile**.
 
 ### A breakdown of the dockerfile
 
@@ -118,13 +118,7 @@ For a complete list of available instructions, see the [Docker documentation.](h
 
 When Docker runs a build, it sends all of the files and directories that are located in the same directory as the Dockerfile to its build context, making them available for use in instructions like **ADD** and **COPY**. To make image building faster, add all files and directories that aren’t necessary for building your image to a **.dockerignore** file. This excludes them from the build context.
 
-A **.dockerignore** file is available to you in the **start** directory. This file includes the **src** directory, the **pom.xml** file, and some system files. Feel free to add anything else that you want to exclude.
-
-```
-.DS_Store
-src/
-pom.xml
-```
+A **.dockerignore** file is available to you in the **start** directory. This file includes the **src** directory, the **pom.xml** file, and some system files. 
 
 # Building the image
 
@@ -137,7 +131,7 @@ docker build -t ol-runtime .
 ```
 {: codeblock}
 
-Use the **-t** flag to give the image an optional name. In this case, **ol-runtime** is the name of your image.
+Using the **-t** flag gives the image an optional name. In this case, **ol-runtime** is the name of your image.
 
 The first build usually takes much longer to complete than subsequent builds because Docker needs to download all dependencies that your image requires, including the parent image.
 
@@ -164,7 +158,7 @@ Successfully built 8fdcad065d25
 Successfully tagged ol-runtime:latest
 ```
 
-Each step of the build has a unique ID, which represents the ID of an intermediate image. For example, step 2 has the ID **937183f8460b**, and step 4 has the ID **8fdcad065d25**, which is also the ID of the final image. During the first build of your image, Docker caches every new layer as a separate image and reuses them for future builds for layers that didn’t change. For example, if you run the build again, Docker reuses the images that it cached for steps 2 - 4. However, if you make a change in your Dockerfile, Docker would need to rebuild the subsequent layer since this layer also changed.
+Each step of the build has a unique ID, which represents the ID of an intermediate image. For example, step 2 has the ID **937183f8460b**, and step 4 has the ID **8fdcad065d25**, which is also the ID of the final image. During the first build of your image, Docker caches every new layer as a separate image and uses them for future builds for layers that didn’t change. For example, if you run the build again, Docker uses the images that are cached for steps 2 - 4. However, if you make a change in your Dockerfile, Docker would need to rebuild the subsequent layer since this layer also changed.
 
 ### The '**no-cache=true flag**'
 
@@ -199,7 +193,6 @@ As an insight you can pass in an optional server name at the end of the **run** 
 ```
 docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v /home/project/guide-docker/start/target/liberty/wlp/usr/servers:/servers ol-runtime testServer
 ```
-{: codeblock}
 
 # Testing the container
 
@@ -217,26 +210,24 @@ CONTAINER ID        IMAGE               COMMAND                  CREATED        
 ff0209191be9        ol-runtime          "/opt/ol/wlp/bin/ser…"   2 minutes ago       Up 2 minutes        0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   rest-app
 ```
 
-As well, you can view the logs and see the Open Liberty server starting. This is important because if it does not start or errors occur, thats one the first places to look. Replace <Container ID> with the container ID from your output.
+You can view the logs and see the Open Liberty server starting to identify any errors when starting the container. Replace <Container ID> with the container ID from your output.
 
-`docker logs <Container ID> ` (ff0209101be9)
+```
+docker logs <Container ID>
+```
+{: codeblock}
 
 ```
 [AUDIT   ] CWWKF0013I: The server removed the following features: [el-3.0, jsp-2.3, servlet-3.1].
 [AUDIT   ] CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 4.371 seconds.
 ```
 
-Curl the **/System/properties**, where you can see a JSON file that contains the system properties of the JVM in your container.
+Access the **/System/properties** endpoint where you can see a JSON file containing the system properties of the JVM in your container.
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
 ```
 {: codeblock}
-
-Also, you can see that the docker container is running by accessing Open Liberty via the web browser.
-To view this click on **Launch Application** and type in the **port number**.
-
-The Open Liberty server runs on `9080`.
 
 ### Update the PropertiesResource class.
 
@@ -287,7 +278,7 @@ public class PropertiesResource {
 ```
 {: codeblock}
 
-Close and save **PropertiesResource** by pressing the 'x' button and pressing 'save'.
+Save the **PropertiesResource.jacva ** by pressing the 'x' button and pressing 'save'.
 
 Rebuild the application 
 
@@ -323,7 +314,9 @@ docker stop rest-app
 Delete the **guide-docker** project by navigating to the **/home/project/** directory
 
 ```
+cd ../..
 rm -r -f guide-docker
+rmdir guide-docker
 ```
 {: codeblock}
 
@@ -331,5 +324,5 @@ rm -r -f guide-docker
 
 Congratulations, you have successfully completed the lab. 
 
-From this lab you should now have an understanding of: what Docker is, why you would use containers, what a **dockerfile** is, creating a dockerfile, building the image and also running the container to see the JVM output and updating the container. 
+From this lab you should now have an understanding of: what Docker is, why you would use containers and  what a **dockerfile** is, creating a dockerfile, building the image, running the container to see the JVM output and updating the container. 
 
