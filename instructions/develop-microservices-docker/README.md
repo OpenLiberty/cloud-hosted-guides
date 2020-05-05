@@ -118,7 +118,7 @@ For a complete list of available instructions, see the [Docker documentation.](h
 
 When Docker runs a build, it sends all of the files and directories that are located in the same directory as the Dockerfile to its build context, making them available for use in instructions like **ADD** and **COPY**. To make image building faster, add all files and directories that aren’t necessary for building your image to a **.dockerignore** file. This excludes them from the build context.
 
-A **.dockerignore** file is available to you in the **start** directory. This file includes the **src** directory, the **pom.xml** file, and some system files. Feel free to add anything else that you want to exclude.
+A **.dockerignore** file is available to you in the **start** directory. This file includes the **src** directory, the **pom.xml** file, and some system files. 
 
 # Building the image
 
