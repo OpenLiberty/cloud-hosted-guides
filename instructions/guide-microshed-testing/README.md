@@ -384,7 +384,7 @@ The **ErrorPathIT** test class has the same **@Container** configuration and **P
 
 Add the additional tests:
 
-> [File->Open] guide-microhed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+> [File->Open] guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
 ```java
 package io.openliberty.guides.testing;
