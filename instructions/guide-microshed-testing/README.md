@@ -387,6 +387,7 @@ Create the **ErrorPathIT** class:
 ```
 touch src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 ```
+{: codeblock}
 
 The **ErrorPathIT** test class has the same **@Container** configuration and **PersonService** REST client as the **PersonServiceIT** class.
 
