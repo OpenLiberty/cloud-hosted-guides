@@ -324,5 +324,5 @@ rmdir guide-docker
 
 Congratulations, you have successfully completed the lab. 
 
-From this lab you should now have an understanding of: what Docker is, why you would use containers and  what a **dockerfile** is, creating a dockerfile, building the imag, running the container to see the JVM output and updating the container. 
+From this lab you should now have an understanding of: what Docker is, why you would use containers and  what a **dockerfile** is, creating a dockerfile, building the image, running the container to see the JVM output and updating the container. 
 
