@@ -183,13 +183,6 @@ Add the following to the **PersonServiceIT.java** file within the **PersonServic
 
 In this example, the **PersonService** injected type is the same **io.openliberty.guides.testing.PersonService** class that is used in your application. However, the instance that gets injected is a REST client proxy. So, if you call **personSvc.createPerson("Bob", 42)**, the REST client makes an HTTP POST request to the application that is running at **http://localhost:9080/guide-microshed-testing/people**, which triggers the corresponding Java method in the application. 
 
-In the other terminal, run the following command to access this endpoint: 
-
-```
-curl http://localhost:9080/guide-microshed-testing/people
-```
-{: codeblock}
-
 # Writing your first test
 
 Now that the setup is complete, you can write your first test case. Start by testing the basic "create person" use case for your REST-based application. To test this use case, use the REST client that’s injected by MicroShed Testing to make the HTTP POST request to the application and read the response.
