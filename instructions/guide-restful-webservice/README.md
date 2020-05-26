@@ -234,7 +234,7 @@ Add the following to the class:
 ```java
 package it.io.openliberty.guides.rest;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Properties;
 
@@ -245,7 +245,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EndpointIT {
 
@@ -262,15 +262,14 @@ public class EndpointIT {
         WebTarget target = client.target(url + "System/properties");
         Response response = target.request().get();
 
-        assertEquals("Incorrect response code from " + url,
-                     Response.Status.OK.getStatusCode(), response.getStatus());
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
+                     "Incorrect response code from " + url);
 
         String json = response.readEntity(String.class);
         Properties sysProps = jsonb.fromJson(json, Properties.class);
 
-        assertEquals("The system property for the local and remote JVM should match",
-                     System.getProperty("os.name"),
-                     sysProps.getProperty("os.name"));
+        assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
+                     "The system property for the local and remote JVM should match");
         response.close();
     }
 }
