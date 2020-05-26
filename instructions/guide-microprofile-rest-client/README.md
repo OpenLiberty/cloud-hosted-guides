@@ -133,7 +133,7 @@ The template interface describes the remote service that you want to access. The
 ```
 touch src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 ```
-
+{: codeblock}
 ​
 >[File -> Open] guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 ​
@@ -188,6 +188,8 @@ Implement the actual exception class and the mapper class to see how this mechan
 ```
 touch src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 ```
+{: codeblock}
+
 >[File -> Open] guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 
 ```
@@ -257,12 +259,14 @@ Configure the default base URL with the MicroProfile Config feature. This featur
 ```
 touch src/main/webapp/META-INF/microprofile-config.properties
 ```
+{: codeblock}
 
 >[File -> Open] guide-microprofile-config/start/src/main/webapp/META-INF/microprofile-config.properties
 
 ```
 systemClient/mp-rest/uri=http://localhost:9080/system
 ```
+{: codeblock}
 
 The **mp-rest/uri** base URL config property is configured to the default **\http://localhost:9080/system** URL.
 
@@ -392,6 +396,8 @@ public class InventoryManager {
 
 }
 ```
+{: codeblock}
+
 Because the **InventoryManager** class is **@ApplicationScoped**, and the **SystemClient** CDI bean maintains the same scope through the default dependent scope, the client is initialized once per application.
 
 If the **hostname** parameter is **localhost**, the service runs the **getPropertiesWithDefaultHostName()** helper function to fetch system properties.
@@ -418,6 +424,7 @@ The Open Liberty server was started in development mode at the beginning of the 
 When the server is running, select either approach to fetch your system properties:
 
 Visit the following URL: 
+
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
