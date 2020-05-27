@@ -10,20 +10,28 @@ Introduction to the technology they will use
 
 ## Getting Started
 
-As an example:
 If a terminal window does not open navigate:
 
-`Terminal -> New Terminal`
+>[Terminal -> New Terminal]
 
 Check you are in the **home/project** folder:
 
-`pwd`
+```
+pwd
+```
+{: codeblock}
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/yasmin-aumeeruddy/SkillsNetworkLabs.git`
+```
+git clone https://github.com/openliberty/guide-microprofile-config.git
+cd guide-docker
+```
+{: codeblock}
 
-`cd SkillsNetworkLabs`
+The **start** directory contains the starting project that you will build upon. 
+
+The **finish** directory contains the finished project that you will build. 
 
 # Title for Step 1
 
@@ -52,6 +60,7 @@ public class GreetingReadinessCheck implements HealthCheck {
     }
 }
 ```
+{: codeblock}
 
 ### Sub Heading 2
 
