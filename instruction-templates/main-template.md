@@ -107,7 +107,17 @@ Have as many steps as you want. They are all seperated via the h1 heading such a
 
 # Summary
 
+## Clean up your environment
+
+Delete the **guide-microprofile-rest-client** project by navigating to the **/home/project/** directory
+
+```
+cd ../..
+rm -r -f guide-microprofile-rest-client
+rmdir guide-microprofile-rest-client
+```
+{: codeblock}
+
 ## Well Done
 
-Example:
-Congratulations, you have built, a cloud-native application, seen how you can monitor it for health and metrics, change its configuration, and package and run it in Docker, ready for deployment to your cloud of choice.  I recommend IBM Cloud or IBM Cloud Private, of course ;)
+Nice work! You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
