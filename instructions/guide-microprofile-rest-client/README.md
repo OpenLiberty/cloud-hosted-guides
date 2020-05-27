@@ -35,7 +35,7 @@ The fastest way to work through this guide is to clone the Git repository and us
 
 ```
 git clone https://github.com/openliberty/guide-microprofile-rest-client.git
-cd guide-rest-client
+cd guide-microprofile-rest-client
 ```
 {: codeblock}
 
