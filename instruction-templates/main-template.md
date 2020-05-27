@@ -39,6 +39,17 @@ The **finish** directory contains the finished project that you will build.
 
 ### Sub Heading 1
 
+File creation example
+
+Create the **ErrorPathIT** class:
+
+```
+touch src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+```
+{: codeblock}
+
+> [File -> Open] guide-microprofile-rest-client/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+
 Java Code Example
 ```Java
 @Readiness
