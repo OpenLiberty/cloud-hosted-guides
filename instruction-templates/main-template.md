@@ -25,7 +25,7 @@ The fastest way to work through this guide is to clone the Git repository and us
 
 ```
 git clone https://github.com/openliberty/guide-microprofile-config.git
-cd guide-docker
+cd guide-microprofile-config
 ```
 {: codeblock}
 
