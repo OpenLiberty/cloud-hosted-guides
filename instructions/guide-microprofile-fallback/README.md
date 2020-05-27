@@ -14,19 +14,26 @@ You will also see the application metrics for the fault tolerance methods that a
 
 ## Getting Started
 
+If a terminal window does not open navigate:
+
+> Terminal -> New Terminal
+
+Check you are in the **home/project** folder:
+
+```
+pwd
+```
+{: codeblock}
+
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/openliberty/guide-microprofile-fallback.git`
-
-Navigate into project
-
-`cd guide-microprofile-fallback`
+```
+git clone https://github.com/openliberty/guide-microprofile-fallback.git
+cd guide-microprofile-fallback
+```
+{: codeblock}
 
 The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-If you want to dive straight into it, head to **Enable Fault Tolerance** part
 
 ### Try what you'll build 
 
@@ -34,13 +41,18 @@ The **finish** directory in the root of this guide contains the finished impleme
 
 To try out the application, go to the **finish** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
-`cd finish`
-
-`mvn liberty:run`
+```
+cd finish
+mvn liberty:run
+```
+{: codeblock}
 
 Access the **inventory** service with a localhost hostname. You see the system properties for this host. When you visit this URL, some of these system properties, such as the OS name and user name, are automatically stored in the inventory. Open up a new terminal by clicking on the window icon in the top right corner of the terminal and run the following command: 
 
-`curl http://localhost:9080/inventory/systems/localhost`
+```
+curl http://localhost:9080/inventory/systems/localhost
+```
+{: codeblock}
 
 Update the **CustomConfigSource** configuration file.
 
@@ -53,14 +65,18 @@ Navigate to **resources/CustomConfigSource.json** and Change the **io_openlibert
 {"config_ordinal":500,
 "io_openliberty_guides_system_inMaintenance":true}
 ```
+{: codeblock}
 
 Save the file [CMD + S]
 
 The fallback mechanism is triggered because the system service is now in maintenance. You see the cached properties for this localhost.
 
-`curl http://localhost:9080/inventory/systems/localhost`
+```
+curl http://localhost:9080/inventory/systems/localhost
+```
+{: codeblock}
 
-The folloing output should be:
+The output should be:
 
 ```
 {"os.name":"Linux","user.name":"theia"}
@@ -74,11 +90,17 @@ Stop the Open Liberty server by pressing **CTRL+C** in the shell session where y
 
 Navigate to the **start** directory to begin from the **Open Liberty Server Terminal**.
 
-`cd ../start`
+```
+cd ../start
+```
+{: codeblock}
 
 Start Open Liberty in development mode, which starts the Open Liberty server and listens for file changes:
 
-`mvn liberty:dev`
+```
+mvn liberty:dev
+```
+{: codeblock}
 
 The MicroProfile Fault Tolerance API is included in the MicroProfile dependency that is specified in your **pom.xml** file. Look for the dependency with the **microprofile** artifact ID. This dependency provides a library that allows you to use fault tolerance policies in your microservices.
 
@@ -160,6 +182,7 @@ public class InventoryManager {
   }
 }
 ```
+{: codeblock}
 
 The **@Fallback** annotation dictates a method to call when the original method encounters a failed execution. In this example, use the **fallbackForGet()** method.
 
@@ -181,24 +204,33 @@ The Open Liberty server started in **development mode** at the beginning of the 
 
 Go back to the second terminal window you opened and view the the system properties of your local JVM from the **inventory** service:
 
-`curl http://localhost:9080/inventory/systems/localhost`
+```
+curl http://localhost:9080/inventory/systems/localhost
+```
+{: codeblock}
 
 Also, point your browser to the **system**  service URL to retrieve the system properties for the specific localhost. Notice that the results from the two URLs are identical because the inventory service gets its results from calling the system service:
 
-`curl http://localhost:9080/system/properties`
+```
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
 
 To see the application metrics Log in as the **admin** user, and use **adminpwd** as the password. See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
 
-`curl -k -u admin:adminpwd -D - https://localhost:9443/metrics/application`
+```
+curl -k -u admin:adminpwd -D - https://localhost:9443/metrics/application
+```
+{: codeblock}
 
-````
+```
 # TYPE application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total counter
 application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total 1
 # TYPE application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_failed_total counter
 application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_failed_total 0
 # TYPE application:ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total counter
 application:ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total 0
-````
+```
 
 You can test the fault tolerance mechanism of your microservices by dynamically changing the **io_openliberty_guides_system_inMaintenance** property value to true in the **resources/CustomConfigSource.json** file, which turns the **system** service in maintenance.
 
@@ -219,18 +251,28 @@ Save the file [CMD + S]
 {"config_ordinal":500,
 "io_openliberty_guides_system_inMaintenance":true}
 ```
+{: codeblock}
 
 After saving re-curl to view the cached version of the properties. The **fallbackForGet()** method, which is the designated fallback method, is called when the **system** service is not available. The cached system properties contain only the OS name and user name key and value pairs.
 
-`curl http://localhost:9080/inventory/systems/localhost`
+```
+curl http://localhost:9080/inventory/systems/localhost
+```
+{: codeblock}
 
 To see that the **system** service is down, point your browser to the **system/properties** URL. You see that the service displays a 503 HTTP response code.
 
-`curl http://localhost:9080/system/properties`
+```
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
 
 Go to **metrics/application** to see the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
 
-`curl -k -u admin:adminpwd -D - https://localhost:9443/metrics/application`
+```
+curl -k -u admin:adminpwd -D - https://localhost:9443/metrics/application
+```
+{: codeblock}
 
 ```
 # TYPE application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total counter
@@ -249,17 +291,20 @@ Change the **io_openliberty_guides_system_inMaintenance** property value back to
 {"config_ordinal":500,
 "io_openliberty_guides_system_inMaintenance":false}
 ```
+{: codeblock}
+
 ## Testing the application 
 
 You can test your application manually, but automated tests ensure code quality because they trigger a failure whenever a code change introduces a defect. JUnit and the JAX-RS Client API provide a simple environment for you to write tests.
 
-On the termainl:
-
-> Go to src/test/java/it/io/openliberty/guides/faulttolerance/
-
 Create the **FaultToleranceIT** class
 
-`touch FaultToleranceIT.java`
+```
+touch src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+```
+{: codeblock}
+
+> [File -> Open] guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
 
 ```java
 package it.io.openliberty.guides.faulttolerance;
@@ -323,6 +368,7 @@ public class FaultToleranceIT {
     }
 }
 ```
+{: codeblock}
 
 The **@BeforeEach** and **@AfterEach** annotations indicate that this method runs either before or after the other test case. These methods are generally used to perform any setup and teardown tasks. In this case, the setup method creates a JAX-RS client, which makes HTTP requests to the **inventory** service. This client must also be registered with a JSON-P provider to process JSON resources. The teardown method simply destroys this client instance as well as the HTTP responses.
 
@@ -356,3 +402,19 @@ To see if the tests detect a failure, comment out the **changeSystemProperty()**
 
 When you are done checking out the service, exit development mode by typing q in the shell session where you ran the server, and then press the **enter/return** key.
 
+# Summary
+
+## Clean up your environment
+
+Delete the **guide-microprofile-fallback** project by navigating to the **/home/project/** directory
+
+```
+cd ../..
+rm -r -f guide-microprofile-fallback
+rmdir guide-microprofile-fallback
+```
+{: codeblock}
+
+## Well Done
+
+Nice work! You just learned how to build a fallback mechanism for a microservice with MicroProfile Fault Tolerance in Open Liberty and wrote a test to validate it.
