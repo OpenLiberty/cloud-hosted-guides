@@ -121,9 +121,9 @@ This dependency provides a library that is required to implement the MicroProfil
 The **src/main/liberty/config/server.xml** file. This feature enables your Open Liberty server to use MicroProfile Rest Client to invoke RESTful microservices.
 
 ​
->[File -> Open] guide-microprofile-config/start/pom.xml
+>[File -> Open] guide-microprofile-rest-client/start/pom.xml
 ​
->[File -> Open] guide-microprofile-config/start/src/main/liberty/config/server.xml
+>[File -> Open] guide-microprofile-rest-client/start/src/main/liberty/config/server.xml
 
 The code for the **system** service in the **src/main/java/io/openliberty/guides/system** directory is provided for you. It simulates a remote RESTful service that the **inventory** service invokes.
 
@@ -131,11 +131,11 @@ Create a RESTful client interface for the **system** service. Write a template i
 The template interface describes the remote service that you want to access. The interface defines the resource to access as a method by mapping its annotations, return type, list of arguments, and exception declarations.
 
 ```
-touch src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 ```
 {: codeblock}
 ​
->[File -> Open] guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+>[File -> Open] guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 ​
 
 ```
@@ -186,11 +186,11 @@ An exception mapper maps various response codes from the remote service to throw
 Implement the actual exception class and the mapper class to see how this mechanism works.
 
 ```
-touch src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 ```
 {: codeblock}
 
->[File -> Open] guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
+>[File -> Open] guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 
 ```
 package io.openliberty.guides.inventory.client;
@@ -213,11 +213,11 @@ public class UnknownUriException extends Exception {
 Now, link the **UnknownUriException** class with the corresponding response code through a **ResponseExceptionMapper** mapper class.
 
 ```
-touch src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
 ```
 {: codeblock}
 
->[File -> Open] guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+>[File -> Open] guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
 
 ```
 package io.openliberty.guides.inventory.client;
@@ -257,7 +257,7 @@ First, you need to define the base URL of the **SystemClient** instance.
 Configure the default base URL with the MicroProfile Config feature. This feature is enabled for you in the **server.xml** file.
 
 ```
-touch src/main/webapp/META-INF/microprofile-config.properties
+touch /home/project/guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
 ```
 {: codeblock}
 
@@ -274,7 +274,7 @@ This configuration is automatically picked up by the MicroProfile Config API.
 
 Look at the annotations in the **SystemClient** interface again.
 
->[File -> Open] guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+>[File -> Open] guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 
 The **@RegisterRestClient** annotation registers the interface as a RESTful client. The runtime creates a CDI managed bean for every interface that is annotated with the **@RegisterRestClient** annotation.
 
@@ -289,7 +289,7 @@ The **@RegisterRestClient** annotation, which is a bean defining annotation impl
 Inject the **InventoryManager** class, which is another CDI managed bean. Replace the **InventoryManager** class.
 
 
->[File -> Open] guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+>[File -> Open] guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 ```
 package io.openliberty.guides.inventory;
@@ -410,7 +410,7 @@ In this case, set the host name as a variable and build the client by using the 
 
 Look at the **src/main/java/io/openliberty/guides/inventory/InventoryManager.java** file.
 
->[File -> Open] guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+>[File -> Open] guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 The host name is provided as a parameter. This method first assembles the base URL that consists of the new host name.
 Then, the method instantiates a **RestClientBuilder** builder with the new URL, registers the response exception mapper, and builds the **SystemClient** instance.
@@ -443,12 +443,100 @@ curl http://localhost:9080/inventory/systems/{your_hostname}
 ## Testing the application
 
 ```
-touch src/test/java/it/io/openliberty/guides/client/RestClientIT.java
+touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 ```
 {:codeblock}
 
->[File -> Open] guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
+>[File -> Open] guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 
+```
+package it.io.openliberty.guides.client;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import javax.json.JsonObject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.client.WebTarget;
+import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+public class RestClientIT {
+
+  private static String port;
+
+  private Client client;
+
+  private final String INVENTORY_SYSTEMS = "inventory/systems";
+
+  @BeforeAll
+  public static void oneTimeSetup() {
+    port = System.getProperty("http.port");
+  }
+
+  @BeforeEach
+  public void setup() {
+    client = ClientBuilder.newClient();
+    client.register(JsrJsonpProvider.class);
+  }
+
+  @AfterEach
+  public void teardown() {
+    client.close();
+  }
+
+  @Test
+  public void testSuite() {
+    this.testDefaultLocalhost();
+    this.testRestClientBuilder();
+  }
+
+  public void testDefaultLocalhost() {
+    String hostname = "localhost";
+
+    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
+
+    JsonObject obj = fetchProperties(url);
+
+    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
+                 "The system property for the local and remote JVM should match");
+  }
+
+  public void testRestClientBuilder() {
+    String hostname = null;
+    try{
+      hostname = InetAddress.getLocalHost().getHostAddress();
+    } catch (UnknownHostException e) {
+      System.err.println("Unknown Host.");
+    }
+
+    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
+
+    JsonObject obj = fetchProperties(url);
+
+    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
+                 "The system property for the local and remote JVM should match");
+  }
+
+  private JsonObject fetchProperties(String url) {
+    WebTarget target = client.target(url);
+    Response response = target.request().get();
+
+    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+
+    JsonObject obj = response.readEntity(JsonObject.class);
+    response.close();
+    return obj;
+  }
+
+}
+```
+{: codeblock}
 Each test case tests one of the methods for instantiating a RESTful client.
 
 The **testDefaultLocalhost()** test fetches and compares system properties from the \http://localhost:9080/inventory/systems/localhost URL.
