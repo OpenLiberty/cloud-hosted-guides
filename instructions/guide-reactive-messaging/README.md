@@ -524,16 +524,16 @@ You see the CPU **systemLoad** property for all the systems:
 }
 ```
 
-You can revisit the http://localhost:9085/inventory/systems URL after a while, and you will notice the CPU **systemLoad** property for the systems changed.
+You can revisit the **http://localhost:9085/inventory/systems** URL after a while, and you will notice the CPU **systemLoad** property for the systems changed.
 
-You can use the **\http://localhost:9085/inventory/systems/{hostname}** URL to see the CPU **systemLoad** property for one particular system.
+You can use the **http://localhost:9085/inventory/systems/{hostname}** URL to see the CPU **systemLoad** property for one particular system.
 
 ```
 curl http://localhost:9085/inventory/systems/{hostname}
 ```
 {: codeblock}
 
-In the following example, the **30bec2b63a96** value is the **hostname**. If you go to the **\http://localhost:9085/inventory/systems/30bec2b63a96** URL, you can see the CPU **systemLoad** property only for the **30bec2b63a96** **hostname**:
+In the following example, the **30bec2b63a96** value is the **hostname**. If you go to the **http://localhost:9085/inventory/systems/30bec2b63a96** URL, you can see the CPU **systemLoad** property only for the **30bec2b63a96** **hostname**:
 
 ```
 {
