@@ -515,7 +515,7 @@ curl http://localhost:9085/inventory/systems
 ```
 {: codeblock}
 
-You see the CPU **systemLoad** property for all the systems:
+You should see the CPU **systemLoad** property for all the systems:
 
 ```
 {
