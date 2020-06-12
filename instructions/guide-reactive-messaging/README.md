@@ -15,7 +15,7 @@ MicroProfile Reactive Messaging provides an easy way to asynchronously send, rec
 
 The application in this guide consists of two microservices, **system** and **inventory**. Every 15 seconds, the **system** microservice calculates and publishes an event that contains its current average system load. The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. The current inventory of systems can be accessed via the **/systems** REST endpoint. You'll create the **system** and **inventory** microservices using MicroProfile Reactive Messaging.
 
-## Getting Started
+# Getting Started
 
 If a terminal window does not open navigate:
 
@@ -110,7 +110,7 @@ The **SystemService** class contains a **Publisher** method that is called **Flo
 
 The messages are transported between the service and the Kafka messaging system through a channel called **systemLoadTopic**.
 
-## Creating the consumer in the inventory microservice
+# Creating the consumer in the inventory microservice
 
 The **inventory** microservice records in its inventory the average system load information that it received from potentially multiple instances of the **system** service.
 
@@ -216,7 +216,7 @@ The **inventory** microservice receives the message from the **system** microser
 
 The **InventoryResource** class contains a method called **systemLoadTopic**.
 
-## Configuring the MicroProfile Reactive Messaging connectors for Kafka
+# Configuring the MicroProfile Reactive Messaging connectors for Kafka
 
 The **system** and **inventory** services exchange messages with the external messaging system through a channel. The MicroProfile Reactive Messaging Connector API makes it easy to connect each service to the channel. You just need to add configuration keys in a properties file for each of the services. These configuration keys define properties such as the name of the channel and the topic in the Kafka messaging system. Open Liberty includes theÂ **liberty-kafka** connector for sending and receiving messages from Apache Kafka.
 
@@ -268,7 +268,7 @@ mp.messaging.incoming.systemLoad.group.id=system-load-status
 ```
 {: codeblock}
 
-## Configuring the server
+# Configuring the server
 
 To run the services, the Open Liberty server on which each service runs needs to be correctly configured. Relevant features, including the [MicroProfile Reactive Messaging feature](https://openliberty.io/docs/ref/feature/#mpReactiveMessaging-1.0.html), must be enabled for the **system** and **inventory** services.
 
@@ -308,7 +308,7 @@ touch system/src/main/liberty/config/server.xml
 
 The **server.xml** file is already configured for the **inventory** microservice.
 
-## Building and running the application
+# Building and running the application
 
 Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
 
@@ -504,7 +504,7 @@ Next, use the provided script to start the application in Docker containers. The
 ```
 {: codeblock}
 
-## Testing the application
+# Testing the application
 
 After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint of the **inventory** service. 
 
