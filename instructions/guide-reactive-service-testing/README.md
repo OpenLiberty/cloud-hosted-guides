@@ -358,8 +358,9 @@ Open up a new terminal and create the `InventoryServiceIT` class.
 
 > Terminal -> New Terminal
 
+
 ```
-cd guide-reactive-service-testing/start/syste
+cd guide-reactive-service-testing/start/system
 touch src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
 ```
 {: codeblock}
