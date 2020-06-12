@@ -128,13 +128,6 @@ mvn -pl models install
 ```
 {: codeblock}
 
-If you don't have the latest Docker image, pull it by running the following command:
-
-```
-docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
-```
-{: codeblock}
-
 With Open Liberty development mode, known as dev mode, you can use MicroShed Testing to run tests on an already running
 Open Liberty server. Navigate to the **start/system** directory.
 
