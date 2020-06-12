@@ -1,4 +1,3 @@
-
 # Testing reactive Java microservices
 ## What you'll learn
 
@@ -15,8 +14,8 @@ Tests sometimes pass during the development and testing stages of an application
 because of differences between your development and production environments. While you can create mock objects and custom
 setups to minimize differences between environments, it is difficult to mimic a production system for an application
 that uses an external messaging system. MicroShed Testing addresses this problem by enabling the testing of applications
-in the same Docker containers that youâ€™ll use in production. As a result, your environment remains the same throughout
-the applicationâ€™s lifecycle â€“ from development, through testing, and into production.
+in the same Docker containers that you'll use in production. As a result, your environment remains the same throughout
+the application's lifecycle from development, through testing, and into production.
 You can learn more about MicroShed Testing in the
 [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html) guide.
 
@@ -125,13 +124,6 @@ so it can be used later by the **system** and **inventory** services:
 
 ```
 mvn -pl models install
-```
-{: codeblock}
-
-If you don't have the latest Docker image, pull it by running the following command:
-
-```
-docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
 ```
 {: codeblock}
 
@@ -361,9 +353,13 @@ mvn liberty:dev
 
 Now you can create your integrated test.
 
-Create the `InventoryServiceIT` class.
+Open up a new terminal and create the `InventoryServiceIT` class.
+
+> Terminal -> New Terminal
+
 
 ```
+cd guide-reactive-service-testing/start/system
 touch src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
 ```
 {: codeblock}
