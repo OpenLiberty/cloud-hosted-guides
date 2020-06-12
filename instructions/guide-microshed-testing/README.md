@@ -6,15 +6,6 @@ You'll start with an existing REST application that runs on Open Liberty and use
 
 Sometimes tests might pass in development and testing (dev/test) environments, but fail in production because the application is running differently in production than it is in dev/test. Fortunately, you can minimize these parity issues between development and production by testing your application in the same Docker container that you'll use in production.
 
-### Introduction
-
-Docker is a tool that you can use to deploy and run applications with containers. You
-can think of Docker as a virtual machine that runs various applications. However, unlike with a typical virtual
-machine, you can run these applications simultaneously on a single system and independent of
-one another.
-
-Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
-
 ## Getting Started
 
 If a terminal window does not open navigate:
@@ -42,7 +33,7 @@ The **finish** directory in the root of this guide contains the finished applica
 
 First, review the **PersonServiceIT** class to see what the tests look like:
 
-> [File -> Open] finish/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> [File -> Open] guide-microshed-testing/finish/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 To try out the application, go to the **finish** directory and run the following Maven 
 goal to build the application and run the integration tests on an Open Liberty server in a container:
@@ -57,13 +48,12 @@ This command might take some time to run the first time because the dependencies
 
 The previous example shows how you can run integration tests from a cold start. With Open Liberty development mode, you can use MicroShed Testing to run tests on an already running Open Liberty server. Run the following Maven goal to start Open Liberty in development mode:
 
-
 ```
 mvn liberty:dev
 ```
 {: codeblock}
 
-After the Open Liberty server starts and you see the **Press the Enter key** to run tests on demand. message, you can press the **enter/return** key to run the integration tests. After the tests finish, you can press the **enter/return** key to run the tests again, or you can make code changes to the application or tests. Development mode automatically recompiles and updates any application or test code changes that you make.
+After the Open Liberty server starts and you see the "**Press the Enter key** to run tests on demand" message, you can press the **enter/return** key to run the integration tests. After the tests finish, you can press the **enter/return** key to run the tests again, or you can make code changes to the application or tests. Development mode automatically recompiles and updates any application or test code changes that you make.
 
 Exit development mode:
 
@@ -117,7 +107,7 @@ import org.microshed.testing.jupiter.MicroShedTest;
 ```
 {: codeblock}
 
-Add the **MicroShedTest** annotation above **PersonServiceIT** declaration:
+Add the **MicroShedTest** annotation above **PersonServiceIT** class declaration:
 
 ```
 @MicroShedTest
@@ -134,7 +124,7 @@ import org.testcontainers.junit.jupiter.Container;
 ```
 {: codeblock}
 
-Add the following to the **PersonServiceIT** class:
+Add the following to the **PersonServiceIT.java** file within the **PersonServiceIT** class:
 
 ```
  @Container
@@ -183,7 +173,7 @@ import org.microshed.testing.jaxrs.RESTClient;
 ```
 {: codeblock}
 
-Add the following to the **PersonServiceIT** class:
+Add the following to the **PersonServiceIT.java** file within the **PersonServiceIT** class:
 
 ```
 @RESTClient
@@ -192,13 +182,6 @@ Add the following to the **PersonServiceIT** class:
 {: codeblock}
 
 In this example, the **PersonService** injected type is the same **io.openliberty.guides.testing.PersonService** class that is used in your application. However, the instance that gets injected is a REST client proxy. So, if you call **personSvc.createPerson("Bob", 42)**, the REST client makes an HTTP POST request to the application that is running at **http://localhost:9080/guide-microshed-testing/people**, which triggers the corresponding Java method in the application. 
-
-In the other terminal, run the following command to access this endpoint: 
-
-```
-curl http://localhost:9080/guide-microshed-testing/people
-```
-{: codeblock}
 
 # Writing your first test
 
@@ -249,7 +232,8 @@ You see that the test ran again and exercised the REST endpoint of your applicat
 INFO org.microshed.testing.jaxrs.RestClientBuilder  - Building rest client for class io.openliberty.guides.testing.PersonService with base path: http://localhost:9080/guide-microshed-testing/ and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
 INFO org.microshed.testing.jaxrs.JsonBProvider  - Response from server: 1809686877352335426
 ```
-Next, add more tests to the **PersonServiceIT** class. The following tests are added: **testMinSizeName()**, **testMinAge()**, **testGetPerson()**, **testGetAllPeople()**, and **testUpdateAge()**.
+
+Next, we will add more tests to the **PersonServiceIT** class: **testMinSizeName()**, **testMinAge()**, **testGetPerson()**, **testGetAllPeople()**, and **testUpdateAge()**.
 
 Replace the PersonServiceIT class with:
 
@@ -387,10 +371,13 @@ Create the **ErrorPathIT** class:
 ```
 touch src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 ```
+{: codeblock}
 
 The **ErrorPathIT** test class has the same **@Container** configuration and **PersonService** REST client as the **PersonServiceIT** class.
 
 Add the additional tests:
+
+> [File->Open] guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
 ```java
 package io.openliberty.guides.testing;
@@ -461,8 +448,11 @@ Create the **AppDeploymentConfig** class:
 ```
 touch src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
 ```
+{: codeblock}
 
 Add the **AppDeplyomentConfig** logic which implements the **SharedContainerConfiguration** interface:
+
+> [File->Open]guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
 
 ```
 package io.openliberty.guides.testing;
@@ -486,7 +476,7 @@ After the common configuration is created, the test classes can be updated to re
 
 Remove the container code from the **PersonServiceIT** class. 
 
-> [File->Open] src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> [File->Open] guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 Remove the following parts of code:
 
@@ -529,7 +519,7 @@ public class PersonServiceIT {
 
 Similarly, update the **ErrorPathIT** class to remove the container code.
 
-> [File->Open] src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+> [File->Open] guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
 Remove the **import** statements and **@Container** annotation code: 
 
@@ -582,7 +572,9 @@ mvn verify
 Delete the **guide-microshed-testing** project by navigating to the **/home/project/** directory
 
 ```
+cd ../..
 rm -r -f guide-microshed-testing
+rmdir guide-microshed-testing
 ```
 {: codeblock}
 

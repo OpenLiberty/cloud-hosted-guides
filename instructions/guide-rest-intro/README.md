@@ -11,6 +11,7 @@ The service responds to a **GET** request with a JSON representation of the syst
   "java.version": "1.8"
 }
 ```
+
 ### Introduction
 
 When you create a new REST application, the design of the API is important. The JAX-RS APIs can be used to create JSON-RPC, or XML-RPC APIs, but it wouldn't be a RESTful service. A good RESTful service is designed around the resources that are exposed, and on how to create, read, update, and delete the resources.
@@ -19,14 +20,11 @@ The service responds to **GET** requests to the **/System/properties** path. The
 
 # Getting Started
 
-As an example:
 If a terminal window does not open navigate:
-
 
 ```
 Terminal -> New Terminal
 ```
-
 
 Check you are in the **home/project** folder:
 
@@ -37,8 +35,8 @@ pwd
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/openliberty/guide-rest-intro.git```
 ```
+git clone https://github.com/openliberty/guide-rest-intro.gi
 cd guide-rest-intro
 ```
 {: codeblock}
@@ -48,6 +46,7 @@ The **finish** directory in the root of this guide contains the finished applica
 To try out the application, first go to the **finish** directory and run the following Maven  goal to build the application and deploy it to Open Liberty:
 
 ```
+cd finish
 mvn liberty:run
 ```
 {: codeblock}
@@ -74,6 +73,7 @@ Start Open Liberty in development mode, which starts the Open Liberty server and
 for file changes:
 
 ```
+cd ../start
 mvn liberty:dev
 ```
 {: codeblock}
@@ -82,7 +82,7 @@ JAX-RS has two key concepts for creating REST APIs. The most obvious one is the 
 
 Replace the **SystemApplication** class:
 
-> [File -> Open]src/main/java/io/openliberty/guides/rest/SystemApplication.java
+> [File -> Open] guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
 
 ```java
 package io.openliberty.guides.rest;
@@ -103,8 +103,15 @@ The **SystemApplication** class extends the **Application** class, which in turn
 
 In JAX-RS, a single class should represent a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. It is easy to have a single class handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability in the long run.
 
-Create the `PropertiesResource` class.
-> [File -> New File]src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+Create the `PropertiesResource` class: 
+
+```
+touch src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+```
+{: codeblock}
+
+> [File -> Open] guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+
 
 Add the following:
 
@@ -151,7 +158,7 @@ to JSON data in the HTTP response.
 To get the service running, the Liberty server needs to be correctly configured. 
 
 Replace the server configuration file.
-> [File -> Open]src/main/liberty/config/server.xml
+> [File -> Open]guide-rest-intro/start/src/main/liberty/config/server.xml
 
 ```source
 <server description="Intro REST Guide Liberty server">
@@ -200,7 +207,12 @@ You can write tests for the individual units of code outside of a running applic
 
 Create the `EndpointIT` class
 
-> [File -> New File]src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+```
+touch src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+```
+{: codeblock}
+
+> [File -> Open File]guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
 Add the following to the class: 
 
@@ -293,6 +305,7 @@ you ran the server and then pressing the **enter/return** key.
 Delete the **guide-rest-intro** project by navigating to the **/home/project/** directory
 
 ```
+cd ../..
 rm -r -f guide-rest-intro
 ```
 {: codeblock}

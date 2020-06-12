@@ -10,26 +10,45 @@ Introduction to the technology they will use
 
 ## Getting Started
 
-As an example:
 If a terminal window does not open navigate:
 
-`Terminal -> New Terminal`
+>[Terminal -> New Terminal]
 
 Check you are in the **home/project** folder:
 
-`pwd`
+```
+pwd
+```
+{: codeblock}
 
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
-`git clone https://github.com/yasmin-aumeeruddy/SkillsNetworkLabs.git`
+```
+git clone https://github.com/openliberty/guide-microprofile-config.git
+cd guide-microprofile-config
+```
+{: codeblock}
 
-`cd SkillsNetworkLabs`
+The **start** directory contains the starting project that you will build upon. 
+
+The **finish** directory contains the finished project that you will build. 
 
 # Title for Step 1
 
 ## Summary of Step 1
 
 ### Sub Heading 1
+
+File creation example
+
+Create the **ErrorPathIT** class:
+
+```
+touch src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+```
+{: codeblock}
+
+> [File -> Open] guide-microprofile-rest-client/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
 Java Code Example
 ```Java
@@ -52,6 +71,7 @@ public class GreetingReadinessCheck implements HealthCheck {
     }
 }
 ```
+{: codeblock}
 
 ### Sub Heading 2
 
@@ -98,7 +118,17 @@ Have as many steps as you want. They are all seperated via the h1 heading such a
 
 # Summary
 
+## Clean up your environment
+
+Delete the **guide-microprofile-rest-client** project by navigating to the **/home/project/** directory
+
+```
+cd ../..
+rm -r -f guide-microprofile-rest-client
+rmdir guide-microprofile-rest-client
+```
+{: codeblock}
+
 ## Well Done
 
-Example:
-Congratulations, you have built, a cloud-native application, seen how you can monitor it for health and metrics, change its configuration, and package and run it in Docker, ready for deployment to your cloud of choice.  I recommend IBM Cloud or IBM Cloud Private, of course ;)
+Nice work! You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
