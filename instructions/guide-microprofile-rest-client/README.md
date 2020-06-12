@@ -11,7 +11,7 @@ The application that you will be working with is an **inventory** service, which
 Whenever a request is made to retrieve the system properties of a particular host, the **inventory** service will create a client to invoke the **system**
 service on that host. The **system** service simulates a remote service in the application.
 
-You will instantiate the client and use it in the **inventory** service. You can choose from two different approaches, [CDI](https://openliberty.io/docs/ref/general/#contexts_dependency_injection.html[Context and Dependency Injection) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method.
+You will instantiate the client and use it in the **inventory** service. You can choose from two different approaches, [CDI][[Context and Dependency Injection](https://openliberty.io/docs/ref/general/#contexts_dependency_injection.html) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method.
 In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
 
  - When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with CDI method.
@@ -41,7 +41,7 @@ cd guide-microprofile-rest-client
 
 The **start** directory contains the starting project that you will build upon.
 
-## Try what you'll build 
+# Try what you'll build 
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -58,42 +58,32 @@ After you see the following message, your application server is ready.
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
-You can access the following microservices:
 
+Open a new Terminal by pressing the window button the top right hand corner of the terminal pane.
 
-* This simulates the remote **system** service that retrieves the system property information for a specific host. In this case, **localhost** is a specific host name: 
+* This simulates the remote **system** service that retrieves the system property information for a specific host. In this case, **localhost** is a specific host name.
+
+Run the following command to call the microservice URL:
 
 ```
 curl http://localhost:9080/system/properties 
 ```
 {: codeblock}
 
-* This microservice is the **inventory** service that invokes the http://localhost:9080/system/properties microservice to retrieves the system property information: 
+* The **inventory** microservice invokes the http://localhost:9080/system/properties microservice to retrieve the system property information: 
 
 ```
 curl http://localhost:9080/inventory/systems/localhost 
 ```
 {: codeblock}
 
-* This microservice is the **inventory** service that invokes the \http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering **hostname** from your terminal. Visit the URL by replacing **{your_hostname}** with your FQDN: 
-
-```
-http://localhost:9080/inventory/systems/{your_hostname}
-```
-{: codeblock}
-
 You will see the same system property information, but the process of getting the information is different.
 
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C** in the shell session where you ran the server. Alternatively, you can run the **liberty:stop** goal from the finish directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C** in the shell session where you ran the server. 
 
-```
-mvn liberty:stop
-```
-{: codeblock}
+# Writing the RESTful client interface
 
-## Writing the RESTful client interface
-
-Now, navigate to the **start** directory to begin.
+Navigate to the **start** directory to begin:
 
 ```
 cd ../start
@@ -249,7 +239,7 @@ public class UnknownUriExceptionMapper
 
 The **handles()** method inspects the HTTP response code to determine whether an exception is thrown for the specific response, and the **toThrowable()** method returns the mapped exception.
 
-## Injecting the client with dependency injection
+# Injecting the client with dependency injection
 
 Now, instantiate the **SystemClient** and use it in the **inventory** service. If you want to connect only with the default host name, you can easily instantiate the **SystemClient** with CDI annotations. CDI injection simplifies the process of bootstrapping the client.
 
@@ -403,7 +393,7 @@ Because the **InventoryManager** class is **@ApplicationScoped**, and the **Syst
 If the **hostname** parameter is **localhost**, the service runs the **getPropertiesWithDefaultHostName()** helper function to fetch system properties.
 The helper function invokes the **system** service by calling the **defaultRestClient.getProperties()** method.
 
-## Building the client with RestClientBuilder
+# Building the client with RestClientBuilder
 
 The **inventory** service can also connect with a host other than the default **localhost** host, but you cannot configure a base URL that is not yet known.
 In this case, set the host name as a variable and build the client by using the **RestClientBuilder** method. You can customize the base URL from the host name attribute.
@@ -417,7 +407,7 @@ Then, the method instantiates a **RestClientBuilder** builder with the new URL, 
 
 Similarly, call the **customRestClient.getProperties()** method to invoke the **system** service.
 
-## Running the application 
+# Running the application 
 
 The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
 
@@ -440,7 +430,7 @@ curl http://localhost:9080/inventory/systems/{your_hostname}
 {: codeblock}
 
 
-## Testing the application
+# Testing the application
 
 ```
 touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
