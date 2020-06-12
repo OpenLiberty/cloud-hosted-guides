@@ -48,7 +48,10 @@ cd guide-rest-intro/finish
 
 Run the following Maven goal to build the application and deploy it to Open Liberty:
 
-`mvn liberty:run`
+```
+mvn liberty:run
+```
+{: codeblock}
 
 In another terminal, run the following command check out the service:
 
@@ -74,7 +77,10 @@ cd ../start
 Start Open Liberty in development mode, which starts the Open Liberty server and listens 
 for file changes:
 
-`mvn liberty:dev`
+```
+mvn liberty:dev
+```
+{: codeblock}
 
 JAX-RS has two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modelled as a class. The second is a JAX-RS application, which groups all exposed resources under a common path. You can think of the JAX-RS application as a wrapper for all of your resources.
 
