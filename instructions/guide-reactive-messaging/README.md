@@ -478,13 +478,14 @@ mvn package
 {: codeblock}
 
 
-Run the following command to download or update to the latest **openliberty/open-liberty:kernel-java8-openj9-ubi** Docker image:
+Run the following commands to download or update to the latest **openliberty/open-liberty:kernel-java8-openj9-ubi** Docker image and the required images for Kafka:
 
 ```
 docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
+docker pull bitnami/kafka:2
+docker pull bitnami/zookeeper:3
 ```
 {: codeblock}
-
 
 
 Run the following commands to containerize the microservices:
@@ -561,7 +562,6 @@ Delete the **guide-microprofile-reactive-messaging** project by navigating to th
 ```
 cd ../..
 rm -r -f guide-microprofile-reactive-messaging
-rmdir guide-microprofile-reactive-messaging
 ```
 {: codeblock}
 
