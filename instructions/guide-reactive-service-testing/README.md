@@ -361,9 +361,12 @@ mvn liberty:dev
 
 Now you can create your integrated test.
 
-Create the `InventoryServiceIT` class.
+Open up a new terminal and create the `InventoryServiceIT` class.
+
+> Terminal -> New Terminal
 
 ```
+cd guide-reactive-service-testing/start/syste
 touch src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
 ```
 {: codeblock}
