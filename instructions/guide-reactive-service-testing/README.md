@@ -26,7 +26,7 @@ You need to have Docker installed. For installation instructions, refer to the o
 You will build and run the microservices in Docker containers. An installation of Apache Kafka is provided in another Docker container.
 
 
-## Getting Started
+# Getting Started
 
 If a terminal window does not open navigate:
 
@@ -49,7 +49,7 @@ cd guide-reactive-service-testing
 
 The **start** directory contains the starting project that you will build upon.
 
-### Try what you'll build
+# Try what you'll build
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -74,6 +74,7 @@ Next, navigate to the **finish/system** directory and run the following Maven go
 the integration tests on an Open Liberty server in a container:
 
 ```
+cd system
 mvn verify
 ```
 {: codeblock}
@@ -102,10 +103,10 @@ must download. If you run the same command again, it will be faster.
 
 You can also try out the **inventory** integration tests by repeating the same commands in the **finish/inventory** directory.
 
-## Testing with the Kafka consumer client
+# Testing with the Kafka consumer client
 
 ```
-cd ../start
+cd ../../start
 ```
 {: codeblock}
 
@@ -140,6 +141,7 @@ Open Liberty server. Navigate to the **start/system** directory.
 When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start in dev mode:
 
 ```
+cd system
 mvn liberty:dev
 ```
 {: codeblock}
@@ -158,7 +160,7 @@ The running **system** service searches for a Kafka topic to push its messages t
 services, the **system** service throws errors. Later in the guide, you will write and run tests that start a Kafka
 Testcontainer that can communicate with the **system** service. This will resolve the errors that you see now.
 
-### Configuring your containers
+# Configuring your containers
 
 Create a class to externalize your container configurations.
 
@@ -166,7 +168,7 @@ Create a class to externalize your container configurations.
 Create the `AppContainerConfig` class.
 
 ```
-touch system/src/test/java/it/io/openliberty/guides/system/AppContainerConfig.java
+touch src/test/java/it/io/openliberty/guides/system/AppContainerConfig.java
 ```
 {: codeblock}
 
@@ -218,7 +220,7 @@ Now you can start writing the test that uses the configured containers.
 Create the `SystemServiceIT` class.
 
 ```
-touch system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
+touch src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
 ```
 {: codeblock}
 
@@ -331,14 +333,19 @@ You will see the following output:
  ------------------------------------------------------------------------
 ```
 
-## Testing with the Kafka producer client
+# Testing with the Kafka producer client
 
 The **inventory** service is tested in the same way as the **system** service. The only difference is that the **inventory** service
 consumes messages, which means that tests are written to use the Kafka producer client.
 
-### Configuring your containers
+## Configuring your containers
 
 Navigate to the **start/inventory** directory.
+
+```
+cd ../inventory
+```
+{: codeblock}
 
 The **AppContainerConfig** class is provided, and it is configured in the same way as it was for the **system** service. The two
 containers that are configured for use in the **inventory** service integration test are the **kafka** and **inventory** containers.
@@ -357,7 +364,7 @@ Now you can create your integrated test.
 Create the `InventoryServiceIT` class.
 
 ```
-touch inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
+touch src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
 ```
 {: codeblock}
 
@@ -365,7 +372,6 @@ touch inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServic
 > [File -> Open]guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
 
 ```
-
 package it.io.openliberty.guides.inventory;
 
 import java.math.BigDecimal;
@@ -493,7 +499,7 @@ You will see the following output:
 Delete the **guide-reactive-service-testing** project by navigating to the **/home/project/** directory
 
 ```
-cd ../..
+cd ../../..
 rm -r -f guide-reactive-service-testing
 rmdir guide-reactive-service-testing
 ```
