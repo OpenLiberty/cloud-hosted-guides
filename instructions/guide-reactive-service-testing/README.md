@@ -196,7 +196,7 @@ public class AppContainerConfig implements SharedContainerConfiguration {
 ```
 {: codeblock}
 
-you can use the same application containers across multiple tests.The **@Container**
+You can use the same application containers across multiple tests.The **@Container**
 annotation denotes an application container that is started up and used in the tests.
 
 Two containers are used for testing the **system** service: the **system** container, which you built,
@@ -285,7 +285,7 @@ test method **polls** a record from Kafka every 3 seconds until the timeout limi
 **verifies** that the record polled matches the expected record.
 
 
-You will see the following output:
+Press **enter** in the **liberty.dev** terminal and you will see the following output:
 
 ```
  Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.674 s - in it.io.openliberty.guides.system.SystemServiceIT
@@ -498,7 +498,6 @@ Delete the **guide-reactive-service-testing** project by navigating to the **/ho
 ```
 cd ../../..
 rm -r -f guide-reactive-service-testing
-rmdir guide-reactive-service-testing
 ```
 {: codeblock}
 
