@@ -104,7 +104,7 @@ mvn liberty:dev
 ```
 {: codeblock}
 
-Create the **InventoryManager** class:
+In another terminal navigate to the **start** directory and create the **InventoryManager** class:
 
 ```
 touch src/main/java/io/openliberty/guides/inventory/InventoryManager.java
@@ -113,7 +113,7 @@ touch src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 Open the **InventoryManager**:
 
-> [File->Open] guide-cdi-intro/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> [File->Open] guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 Add the following:
 
@@ -164,7 +164,7 @@ touch src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 ```
 {: codeblock}
 
-> [File->Open] guide-cdi-intro/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> [File->Open] guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 Add the following: 
 
@@ -201,8 +201,9 @@ public class InventoryResource {
     Properties props = systemClient.getProperties(hostname);
     if (props == null) {
       return Response.status(Response.Status.NOT_FOUND)
-                     .entity("ERROR: Unknown hostname or the system service may not be "
-                             + "running on " + hostname)
+                     .entity("{ \"error\" : \"Unknown hostname " + hostname
+                             + " or the inventory service may not be running "
+                             + "on the host machine \" }")
                      .build();
     }
 
@@ -243,12 +244,12 @@ The Open Liberty server was started in development mode at the beginning of the 
 You can find the **inventory** and **system** services at the following URLs:
 
 ```
-curl http://localhost:9080/inventory/systems
+curl http://localhost:9080/inventory/systems | jq
 ```
 {: codeblock}
 
 ```
-curl http://localhost:9080/system/properties
+curl http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
@@ -385,9 +386,12 @@ public class InventoryEndpointIT {
     Response badResponse = client.target(baseUrl + INVENTORY_SYSTEMS + "/"
         + "badhostname").request(MediaType.APPLICATION_JSON).get();
 
+    assertEquals(404, badResponse.getStatus(),
+        "BadResponse expected status: 404. Response code not as expected.");
+
     String obj = badResponse.readEntity(String.class);
 
-    boolean isError = obj.contains("ERROR");
+    boolean isError = obj.contains("error");
     assertTrue(isError,
               "badhostname is not a valid host but it didn't raise an error");
 
