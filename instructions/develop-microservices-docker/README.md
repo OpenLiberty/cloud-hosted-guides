@@ -316,7 +316,6 @@ Delete the **guide-docker** project by navigating to the **/home/project/** dire
 ```
 cd ../..
 rm -r -f guide-docker
-rmdir guide-docker
 ```
 {: codeblock}
 
