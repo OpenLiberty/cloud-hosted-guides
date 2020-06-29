@@ -19,11 +19,6 @@ the application's lifecycle from development, through testing, and into producti
 You can learn more about MicroShed Testing in the
 [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html) guide.
 
-## Additional prerequisites
-
-You need to have Docker installed. For installation instructions, refer to the official [Docker documentation](https://docs.docker.com/get-docker/).
-You will build and run the microservices in Docker containers. An installation of Apache Kafka is provided in another Docker container.
-
 
 # Getting Started
 

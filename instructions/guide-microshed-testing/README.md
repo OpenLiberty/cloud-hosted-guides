@@ -226,7 +226,7 @@ Run the tests in the Open Liberty terminal window:
 Press the **enter/return** key in your console window to 
 ```
 
-You see that the test ran again and exercised the REST endpoint of your application,including the response of your application’s endpoint:
+You see that the test ran again and exercised the REST endpoint of your application, including the response of your application’s endpoint:
 
 ```
 INFO org.microshed.testing.jaxrs.RestClientBuilder  - Building rest client for class io.openliberty.guides.testing.PersonService with base path: http://localhost:9080/guide-microshed-testing/ and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
@@ -572,9 +572,8 @@ mvn verify
 Delete the **guide-microshed-testing** project by navigating to the **/home/project/** directory
 
 ```
-cd ../..
+cd ../../
 rm -r -f guide-microshed-testing
-rmdir guide-microshed-testing
 ```
 {: codeblock}
 

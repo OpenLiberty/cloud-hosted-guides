@@ -37,9 +37,6 @@ The fastest way to work through this guide is to clone the Git repository and us
 
 ```
 git clone https://github.com/yasmin-aumeeruddy/snl-kube-health.git
-```
-
-```
 cd snl-kube-health/finish
 ```
 {: codeblock}
@@ -62,7 +59,7 @@ kubectl apply -f kubernetes.yaml
 
 While you are waiting for your services to start up, take a look at the provided kubernetes.yaml file that you have used to deploy your two Java microservices. 
 
-> [File->Open] snl-kube-health/kubernetes.yaml
+> [File->Open] snl-kube-health/finish/kubernetes.yaml
 
 Here you can see configuration for two deployments and two services. The first deployment **name-deployment** has two replicas which means it will have two pods running. We also specify the Docker image name and the container ports we would like to map outside the container, **9080**. This deployment contains a simple Java microservice that displays a brief greeting and the name of the container it runs in.
 
@@ -82,6 +79,7 @@ Firstly check the node ports by running the following command in the terminal:
 kubectl get services
 ``` 
 {: codeblock}
+
 
 There are two ports specified under the **Port(s)** collumn for each service and they are shown as **{target port}/{node port}/TCP**, for example, **9080:31006/TCP** where 9080 is the target port and 31006 is the node port. Take note of each node port shown from the command.
 
@@ -233,7 +231,7 @@ kubectl delete -f kubernetes.yaml
 Delete the **snl-kube-health** project by navigating to the **/home/project/** directory
 
 ```
-rm -r -f guide-microshed-testing
+rm -r -f snl-kube-health
 ```
 {: codeblock}
 

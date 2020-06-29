@@ -1,4 +1,4 @@
-## Building fault-tolerant microservices with the **@Fallback** annotation
+# Building fault-tolerant microservices with the **@Fallback** annotation
 
 ### What you’ll learn
 
@@ -35,7 +35,7 @@ cd guide-microprofile-fallback
 
 The **start** directory contains the starting project that you will build upon.
 
-### Try what you'll build 
+# Try what you'll build 
 
 The **finish** directory in the root of this guide contains the finished implementation for the application. Give it a try before you proceed with building your own.
 
@@ -86,7 +86,7 @@ Once you have finished checking it out, change **io_openliberty_guides_system_in
 
 Stop the Open Liberty server by pressing **CTRL+C** in the shell session where you ran the server. 
 
-## Enabling fault tolerance
+# Enabling fault tolerance
 
 Navigate to the **start** directory to begin from the **Open Liberty Server Terminal**.
 
@@ -190,7 +190,7 @@ The **fallbackForGet()** method, which is the designated fallback method for the
 
 You successfully set up your microservice to have fault tolerance capability.
 
-## Enabling metrics for the fault tolerance methods
+# Enabling metrics for the fault tolerance methods
 
 MicroProfile Fault Tolerance integrates with MicroProfile Metrics to provide metrics for the annotated fault tolerance methods. When both the **mpFaultTolerance** and the **mpMetrics** features are included in the **server.xml** configuration file, the **@Fallback** fault tolerance annotation provides metrics that count the following things: the total number of annotated method invocations, the total number of failed annotated method invocations, and the total number of the fallback method calls.
 
@@ -198,7 +198,7 @@ The **mpMetrics** feature requires SSL and the configuration is provided for you
 
 In your spare time you can learn more about MicroProfile Metrics in the [Providing metrics from a microservice guide](https://openliberty.io/guides/microprofile-metrics.html). You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [MicroProfile Fault Tolerance specification](https://github.com/eclipse/microprofile-fault-tolerance/releases).
 
-## Building and running the application
+# Building and running the application
 
 The Open Liberty server started in **development mode** at the beginning of the guide and all the changes were automatically picked up.
 

@@ -20,7 +20,7 @@ A pod is a basic building block in a Kubernetes cluster. It represents a single 
 
 A pod or a group of replicated pods are abstracted through Kubernetes objects called services that define a set of rules by which the pods can be accessed. In a basic scenario, a Kubernetes service exposes a node port that can be used together with the cluster IP address to access the pods encapsulated by the service.
 
-To learn about the various Kubernetes resources that you can configure, see the [https://kubernetes.io/docs/concepts/](official Kubernetes documentation).
+To learn about the various Kubernetes resources that you can configure, see the [official Kubernetes documentation.](https://kubernetes.io/docs/concepts/)
 
 ## What you'll learn
 
@@ -348,7 +348,7 @@ kubectl delete -f kubernetes.yaml
 Delete the **guide-kubernetes-intro** project by navigating to the **/home/project/** directory
 
 ```
-rm -r -f guide-microshed-testing
+rm -r -f guide-kubernetes-intro
 ```
 {: codeblock}
 
@@ -356,4 +356,3 @@ rm -r -f guide-microshed-testing
 
 Nice work! You have just deployed two microservices running in Open Liberty to Kubernetes. You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
 
-Please log out in the top right so that your environment is cleaned up and ready for the next lab!

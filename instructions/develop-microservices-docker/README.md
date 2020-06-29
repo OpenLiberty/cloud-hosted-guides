@@ -110,7 +110,7 @@ The **RUN** instruction executes various shell commands in a new layer on top of
 
 #### ENTRYPOINT
 
-The ****ENTRYPOINT**** and **CMD** instructions define a default command that executes when the image runs as a container. These two instructions function the same way, except that the **CMD** instruction is overridden with any arguments that are passed at the end of the docker run command. In contrast, the **ENTRYPOINT** instruction requires the --entrypoint flag to be overridden. In this case, you use the **ENTRYPOINT** instruction to start an Open Liberty server and the **CMD** instruction to indicate which server to start. Because the **CMD** instruction is easily overridden, starting any server is convenient.
+The ****ENTRYPOINT**** and **CMD** instructions define a default command that executes when the image runs as a container. These two instructions function the same way, except that the **CMD** instruction is overridden with any arguments that are passed at the end of the docker run command. In contrast, the **ENTRYPOINT** instruction requires the **--entrypoint flag** to be overridden. In this case, you use the **ENTRYPOINT** instruction to start an Open Liberty server and the **CMD** instruction to indicate which server to start. Because the **CMD** instruction is easily overridden, starting any server is convenient.
 
 For a complete list of available instructions, see the [Docker documentation.](https://docs.docker.com/engine/reference/builder/)
 
@@ -316,7 +316,6 @@ Delete the **guide-docker** project by navigating to the **/home/project/** dire
 ```
 cd ../..
 rm -r -f guide-docker
-rmdir guide-docker
 ```
 {: codeblock}
 
