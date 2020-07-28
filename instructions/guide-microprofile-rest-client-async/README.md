@@ -278,13 +278,13 @@ To build the application, run the Maven **install** and **package** goals from t
 ```
 mvn -pl models install
 ```
-{codeblock}
+{: codeblock}
 
 
 ```
 mvn package
 ```
-{codeblock}
+{: codeblock}
 
 
 
