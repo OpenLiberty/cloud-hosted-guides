@@ -278,13 +278,13 @@ To build the application, run the Maven **install** and **package** goals from t
 ```
 mvn -pl models install
 ```
-{codeblock}
+{: codeblock}
 
 
 ```
 mvn package
 ```
-{codeblock}
+{: codeblock}
 
 
 
@@ -478,7 +478,7 @@ Navigate to the **query** directory, then verify that the tests pass by using th
 ```
 mvn verify
 ```
-{codeblock}
+{: codeblock}
 
 
 
