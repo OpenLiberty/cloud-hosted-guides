@@ -478,7 +478,7 @@ Navigate to the **query** directory, then verify that the tests pass by using th
 ```
 mvn verify
 ```
-{codeblock}
+{: codeblock}
 
 
 
