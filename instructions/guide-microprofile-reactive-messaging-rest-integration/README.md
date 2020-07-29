@@ -7,8 +7,7 @@ Messaging. RESTful Java microservices don't use reactive concepts, so you will l
 two using the RxJava library. In this guide, you will modify two microservices in an application so that when a user
 hits the RESTful endpoint, the microservice generates producer events.
 
-The application in this guide consists of two microservices, **system** and **inventory**. The following diagram illustrates
-the application:
+The application in this guide consists of two microservices, **system** and **inventory**. 
 
 Every 15 seconds, the **system** microservice calculates and publishes events that contain its current average system load.
 The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems and
