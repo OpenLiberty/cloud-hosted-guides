@@ -35,12 +35,6 @@ It communicates with the **inventory** service to determine which system has the
 The **system** and **inventory** microservices use MicroProfile Reactive Messaging to send and receive the system load events. 
 If you want to learn more about reactive messaging, see the [Creating Reactive Java Microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-# Additional prerequisites
-
-Before you begin, Docker needs to be installed. For installation instructions, refer to the official [Docker documentation](https://docs.docker.com/get-docker/). You will build and run the microservices in Docker containers. An installation of Apache Kafka is provided in another Docker container.
-
-
-
 # Getting Started
 
 If a terminal window does not open navigate:
@@ -119,11 +113,7 @@ public interface InventoryClient extends AutoCloseable {
 {: codeblock}
 
 
-
-
-
-The changes involve the **getSystem** method. 
-Change the return type to **CompletionStage<Properties>** to make the method asynchronous.
+The changes involve the **getSystem** method by changing the return type to **CompletionStage<Properties>** to make the method asynchronous.
 Since the method now has the return type of **CompletionStage<Properties>**, you aren't able to directly manipulate the **Properties** inner type. 
 As you will see in the next section, you're able to indirectly use the **Properties** by chaining callbacks.
 
@@ -252,7 +242,7 @@ When the requests return, the **thenAcceptAsync()** method processes the returne
 The **CompletionStage<Properties>** interface represents a unit of computation.
 After a computation is complete, it can either be finished or it can be chained with more **CompletionStage<Properties>** interfaces using the **thenAcceptAsync()** method. 
 Exceptions are handled in a callback that is provided to the **exceptionally()** method, which behaves like a catch block.
-When you return a **CompletionStage<Properties>** type in the resource, it doesnâ€™t necessarily mean that the computation completed and the response was built.
+When you return a **CompletionStage<Properties>** type in the resource, it doesn't necessarily mean that the computation completed and the response was built.
 JAX-RS responds to the caller after the computation completes.
 
 In the **systemLoad()** method a **CountDownLatch** object is used to track asynchronous requests. 
@@ -480,9 +470,7 @@ mvn verify
 ```
 {: codeblock}
 
-
-
-When the tests succeed, you see output similar to the following example:
+Be aware that this may take a few minutes but when the tests succeed, you see output similar to the following example:
 
 ```
 -------------------------------------------------------
