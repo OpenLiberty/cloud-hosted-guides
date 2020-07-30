@@ -20,13 +20,6 @@ produced by the new endpoint. You will configure new channels to handle the even
 To learn more about how the reactive Java services that are used in this guide work, check out the
 [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-# Additional prerequisites
-
-You need to have Docker installed. For installation instructions, refer to the official
-[Docker documentation](https://docs.docker.com/get-docker/). You will build and run the microservices in Docker containers.
-An installation of Apache Kafka is provided in another Docker container.
-
-
 # Getting Started
 
 If a terminal window does not open navigate:
@@ -500,6 +493,15 @@ curl http://localhost:9085/inventory/systems
 }
 ```
 
+# Running multiple system instances
+
+
+This application has only one instance of the **system** service. The **inventory** service collects system properties of
+all **system** services in the application. As an exercise, start multiple **system** services to see how the application
+handles it. When you start the **system** instances, you must provide a unique **group.id**
+through the **MP_MESSAGING_INCOMING_PROPERTYREQUEST_GROUP_ID** environment variable.
+
+
 # Tearing down the environment
 
 Run the following script to stop the application:
@@ -508,15 +510,6 @@ Run the following script to stop the application:
 ./scripts/stopContainers.sh
 ```
 {: codeblock}
-
-# Running multiple system instances
-
-
-
-This application has only one instance of the **system** service. The **inventory** service collects system properties of
-all **system** services in the application. As an exercise, start multiple **system** services to see how the application
-handles it. When you start the **system** instances, you must provide a unique **group.id**
-through the **MP_MESSAGING_INCOMING_PROPERTYREQUEST_GROUP_ID** environment variable.
 
 # Summary
 
