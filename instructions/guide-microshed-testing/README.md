@@ -98,7 +98,7 @@ Wait for the **Press the Enter key to run tests on demand.** message, and then p
 
 To begin bootstrapping, annotate the **PersonServiceIT.java** class with the **@MicroShedTest** annotation. This annotation indicates that the test class uses MicroShed Testing.
 
-> [File->Open] guide-start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> [File->Open] guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 Import the MicroShedTest annotation by inserting the following line in to the **PersonServiceIT.java** file below the existing **import** statement: 
 

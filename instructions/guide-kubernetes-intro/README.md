@@ -379,12 +379,101 @@ The first URL returns system properties and the name of the pod in an HTTP heade
 
 ## Scaling a deployment
 
-We can consider doing that. This post is particularly long and detailed (it surprised me how much info people had given). In general, they shouldn’t be this long but we can look at breaking them out maybe.
+As an example, scale the **system** deployment to three pods by changing the replicas to 3 in `kubernetes.yaml`:
 
-As an example, scale the **system** deployment to three pods by running the following command:
+> [File -> Open] guide-kubernetes-intro/start/kubernetes.yaml
 
 ```
-kubectl scale deployment/system-deployment --replicas=3
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: system
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+        resources:
+          requests:
+            ephemeral-storage: "1Gi"
+          limits:
+            ephemeral-storage: "1Gi"
+        ports:
+        - containerPort: 9080
+      imagePullSecrets:
+      - name: icr
+      
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+        resources:
+          requests:
+            ephemeral-storage: "1Gi"
+          limits:
+            ephemeral-storage: "1Gi"
+        ports:
+        - containerPort: 9080
+      imagePullSecrets:
+      - name: icr
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+```
+{: codeblock}
+
+Apply the new changes: 
+
+```
+kubectl apply -f kubernetes.yaml
 ```
 {: codeblock}
 
