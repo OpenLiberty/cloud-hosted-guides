@@ -218,7 +218,7 @@ The **InventoryResource** class contains a method called **systemLoadTopic**.
 
 # Configuring the MicroProfile Reactive Messaging connectors for Kafka
 
-The **system** and **inventory** services exchange messages with the external messaging system through a channel. The MicroProfile Reactive Messaging Connector API makes it easy to connect each service to the channel. You just need to add configuration keys in a properties file for each of the services. These configuration keys define properties such as the name of the channel and the topic in the Kafka messaging system. Open Liberty includes theÂ **liberty-kafka** connector for sending and receiving messages from Apache Kafka.
+The **system** and **inventory** services exchange messages with the external messaging system through a channel. The MicroProfile Reactive Messaging Connector API makes it easy to connect each service to the channel. You just need to add configuration keys in a properties file for each of the services. These configuration keys define properties such as the name of the channel and the topic in the Kafka messaging system. Open Liberty includes the **liberty-kafka** connector for sending and receiving messages from Apache Kafka.
 
 The system and inventory microservices each have a MicroProfile Config properties file to define the properties of their outgoing and incoming streams.
 
@@ -243,7 +243,7 @@ mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.S
 {: codeblock}
 
 
-The **value.serializer**.
+The **mp.messaging.connector.liberty-kafka.bootstrap.servers** property configures the hostname and port for connecting to the Kafka server. The system microservice uses an outgoing connector to send messages through the **systemLoad** channel to the **systemLoadTopic** topic in the Kafka message broker so that the inventory microservices can consume the messages. The **key.serializer** and **value.serializer** properties characterize how to serialize the messages. The **SystemLoadSerializer** class implements the logic for turning a **SystemLoad** object into JSON and is configured as the **value.serializer**.
 
 The **inventory** microservice uses a similar **microprofile-config.properties** configuration to define its required incoming stream.
 
@@ -267,6 +267,9 @@ mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models
 mp.messaging.incoming.systemLoad.group.id=system-load-status
 ```
 {: codeblock}
+
+
+The **inventory** microservice uses an incoming connector to receive messages through the **systemLoad** channel. The messages were published by the **system** microservice to the **systemLoadTopic** in the Kafka message broker. The **key.deserializer** and ]**value.deserializer** properties define how to deserialize the messages. The **SystemLoadDeserializer** class implements the logic for turning JSON into a **SystemLoad** object and is configured as the **value.deserializer**. The **group.id** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs_) and [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs).
 
 # Configuring the server
 
@@ -463,9 +466,9 @@ touch system/pom.xml
 ```
 {: codeblock}
 
-The **rxjava** dependencies.
+The **pom.xml** file lists the **microprofile-reactive-messaging-api**, **kafka-clients**, and **rxjava** dependencies.
 
-The **rxjava** dependency is used for creating events at regular intervals.
+The **microprofile-reactive-messaging-api dependency** is needed to enable the use of MicroProfile Reactive Messaging API. The kafka-clients dependency is added because the application needs a Kafka client to connect to the Kafka broker. The **rxjava** dependency is used for creating events at regular intervals.
 
 Start your Docker environment. Dockerfiles are provided for you to use.
 
