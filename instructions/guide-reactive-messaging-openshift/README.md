@@ -354,28 +354,21 @@ Add the **maven** dependencies, **properties**, **plugins**, **packaging method*
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Plugins -->
-        <version.liberty-maven-plugin>3.2</version.liberty-maven-plugin>
-        <version.maven-war-plugin>3.2.3</version.maven-war-plugin>
-        <version.maven-surefire-plugin>2.22.2</version.maven-surefire-plugin>
-        <version.maven-failsafe-plugin>2.22.2</version.maven-failsafe-plugin>
-        <!-- Liberty configuration -->
         <liberty.var.default.http.port>9083</liberty.var.default.http.port>
         <liberty.var.default.https.port>9446</liberty.var.default.https.port>
     </properties>
 
     <dependencies>
-        <!-- Provided dependencies -->
         <dependency>
             <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-web-api</artifactId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
             <version>8.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>3.2</version>
+            <version>3.3</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -385,7 +378,6 @@ Add the **maven** dependencies, **properties**, **plugins**, **packaging method*
             <version>1.0</version>
             <scope>provided</scope>
         </dependency>
-        <!-- Required dependencies -->
         <dependency>
             <groupId>io.openliberty.guides</groupId>
             <artifactId>models</artifactId>
@@ -401,11 +393,10 @@ Add the **maven** dependencies, **properties**, **plugins**, **packaging method*
             <artifactId>rxjava</artifactId>
             <version>3.0.0</version>
         </dependency>
-        <!-- For tests -->
         <dependency>
             <groupId>org.microshed</groupId>
             <artifactId>microshed-testing-liberty</artifactId>
-            <version>0.8</version>
+            <version>0.9</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -417,13 +408,7 @@ Add the **maven** dependencies, **properties**, **plugins**, **packaging method*
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.5.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.30</version>
+            <version>5.6.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -434,32 +419,28 @@ Add the **maven** dependencies, **properties**, **plugins**, **packaging method*
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>${version.maven-war-plugin}</version>
+                <version>3.2.3</version>
                 <configuration>
-                    <failOnMissingWebXml>false</failOnMissingWebXml>
                     <packagingExcludes>pom.xml</packagingExcludes>
                 </configuration>
             </plugin>
 
-            <!-- Liberty plugin -->
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>${version.liberty-maven-plugin}</version>
+                <version>3.2.1</version>
             </plugin>
 
-            <!-- Plugin to run unit tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${version.maven-surefire-plugin}</version>
+                <version>2.22.2</version>
             </plugin>
 
-            <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>${version.maven-failsafe-plugin}</version>
+                <version>2.22.2</version>
                 <executions>
                     <execution>
                         <id>integration-test</id>
@@ -481,6 +462,7 @@ Add the **maven** dependencies, **properties**, **plugins**, **packaging method*
         </plugins>
     </build>
 </project>
+
 ```
 {: codeblock}
 
@@ -645,7 +627,10 @@ docker push us.icr.io/$NAMESPACE_NAME/system-reactive:1.0-SNAPSHOT
 
 Create the configuration file:
 
-`touch openshift.yaml`
+```
+touch openshift.yaml
+```
+{: codeblock}
 
 > [File -> Open] guide-microprofile-reactive-messaging/start/openshift.yaml
 
