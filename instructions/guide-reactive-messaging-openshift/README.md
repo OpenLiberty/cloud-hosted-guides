@@ -354,13 +354,11 @@ Add the **maven** dependencies, **properties**, **plugins**, **packaging method*
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Liberty configuration -->
         <liberty.var.default.http.port>9083</liberty.var.default.http.port>
         <liberty.var.default.https.port>9446</liberty.var.default.https.port>
     </properties>
 
     <dependencies>
-        <!-- Provided dependencies -->
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
@@ -374,35 +372,27 @@ Add the **maven** dependencies, **properties**, **plugins**, **packaging method*
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
-        <!-- tag::reactiveMessaging[] -->
         <dependency>
             <groupId>org.eclipse.microprofile.reactive.messaging</groupId>
             <artifactId>microprofile-reactive-messaging-api</artifactId>
             <version>1.0</version>
             <scope>provided</scope>
         </dependency>
-        <!-- end::reactiveMessaging[] -->
-        <!-- Required dependencies -->
         <dependency>
             <groupId>io.openliberty.guides</groupId>
             <artifactId>models</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-        <!-- tag::kafka[] -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
             <version>2.4.0</version>
         </dependency>
-        <!-- end::kafka[] -->
-        <!-- tag::rxjava[] -->
         <dependency>
             <groupId>io.reactivex.rxjava3</groupId>
             <artifactId>rxjava</artifactId>
             <version>3.0.0</version>
         </dependency>
-        <!-- end::rxjava[] -->
-        <!-- For tests -->
         <dependency>
             <groupId>org.microshed</groupId>
             <artifactId>microshed-testing-liberty</artifactId>
@@ -435,21 +425,18 @@ Add the **maven** dependencies, **properties**, **plugins**, **packaging method*
                 </configuration>
             </plugin>
 
-            <!-- Liberty plugin -->
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
                 <version>3.2.1</version>
             </plugin>
 
-            <!-- Plugin to run unit tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
             </plugin>
 
-            <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
