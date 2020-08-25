@@ -106,7 +106,7 @@ In JAX-RS, a single class should represent a single resource, or a group of reso
 Create the `PropertiesResource` class: 
 
 ```
-touch src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 ```
 {: codeblock}
 
@@ -208,7 +208,7 @@ You can write tests for the individual units of code outside of a running applic
 Create the `EndpointIT` class
 
 ```
-touch src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 ```
 {: codeblock}
 

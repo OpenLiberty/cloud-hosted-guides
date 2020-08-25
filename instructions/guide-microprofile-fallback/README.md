@@ -128,6 +128,7 @@ Replace the **InventoryManager** class.
 package io.openliberty.guides.inventory;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.Properties;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -139,47 +140,57 @@ import io.openliberty.guides.inventory.model.*;
 @ApplicationScoped
 public class InventoryManager {
 
-  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-  private InventoryUtils invUtils = new InventoryUtils();
+    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+    private InventoryUtils invUtils = new InventoryUtils();
 
-  @Fallback(fallbackMethod = "fallbackForGet")
-  public Properties get(String hostname) throws IOException {
-    return invUtils.getProperties(hostname);
-  }
+    @Fallback(fallbackMethod = "fallbackForGet",
+            applyOn = {IOException.class},
+            skipOn = {UnknownHostException.class})
 
-  public Properties fallbackForGet(String hostname) {
-    Properties properties = findHost(hostname);
-    if (properties == null) {
-      Properties msgProp = new Properties();
-      msgProp.setProperty(hostname, "System is not found in the inventory");
-      return msgProp;
+    public Properties get(String hostname) throws IOException {
+        return invUtils.getProperties(hostname);
+	}
+	
+    public Properties fallbackForGet(String hostname) {
+        Properties properties = findHost(hostname);
+        if (properties == null) {
+            Properties msgProp = new Properties();
+            msgProp.setProperty(hostname,
+                    "System is not found in the inventory or system is in maintenance");
+            return msgProp;
+        }
+        return properties;
     }
-    return properties;
-  }
 
-  public void add(String hostname, Properties systemProps) {
-    Properties props = new Properties();
-    props.setProperty("os.name", systemProps.getProperty("os.name"));
-    props.setProperty("user.name", systemProps.getProperty("user.name"));
+    public void add(String hostname, Properties systemProps) {
+        Properties props = new Properties();
 
-    SystemData system = new SystemData(hostname, props);
-    if (!systems.contains(system)) {
-      systems.add(system);
+        String osName = systemProps.getProperty("os.name");
+        if (osName == null) {
+            return;
+        }
+
+        props.setProperty("os.name", systemProps.getProperty("os.name"));
+        props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+        SystemData system = new SystemData(hostname, props);
+        if (!systems.contains(system)) {
+            systems.add(system);
+        }
     }
-  }
 
-  public InventoryList list() {
-    return new InventoryList(systems);
-  }
-
-  private Properties findHost(String hostname) {
-    for (SystemData system : systems) {
-      if (system.getHostname().equals(hostname)) {
-        return system.getProperties();
-      }
+    public InventoryList list() {
+        return new InventoryList(systems);
     }
-    return null;
-  }
+
+    private Properties findHost(String hostname) {
+        for (SystemData system : systems) {
+            if (system.getHostname().equals(hostname)) {
+                return system.getProperties();
+            }
+        }
+        return null;
+    }
 }
 ```
 {: codeblock}
@@ -300,7 +311,7 @@ You can test your application manually, but automated tests ensure code quality 
 Create the **FaultToleranceIT** class
 
 ```
-touch src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+touch /home/project/guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
 ```
 {: codeblock}
 
@@ -410,10 +421,11 @@ Delete the **guide-microprofile-fallback** project by navigating to the **/home/
 
 ```
 cd ../..
-rm -r -f guide-microprofile-fallback
-rmdir guide-microprofile-fallback
+rm -R guide-microprofile-fallback
 ```
 {: codeblock}
+
+After using the command **rm -R** you will have to answer **y** and press **enter/return** in the terminal. 
 
 ## Well Done
 

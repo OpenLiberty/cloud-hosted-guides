@@ -116,7 +116,7 @@ Open up a new terminal to easily create a new file.
 Create the **PropertiesResource.java** class.
 
 ```
-touch guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 ```
 {: codeblock}
 
@@ -227,7 +227,7 @@ You can write tests for the individual units of code outside of a running applic
 Create the `EndpointIT.java` file
 
 ```
-touch guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 ```
 {: codeblock}
 
@@ -254,7 +254,7 @@ import javax.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
 public class EndpointIT {
-
+    
     private static final Jsonb jsonb = JsonbBuilder.create();
 
     @Test
@@ -275,7 +275,8 @@ public class EndpointIT {
         Properties sysProps = jsonb.fromJson(json, Properties.class);
 
         assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
-                     "The system property for the local and remote JVM should match");
+                     "The system property for the local and 
+                     remote JVM should match");
         response.close();
     }
 }
