@@ -124,6 +124,7 @@ The template interface describes the remote service that you want to access. The
 touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 ```
 {: codeblock}
+
 ​
 >[File -> Open] guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 ​
@@ -250,6 +251,8 @@ Configure the default base URL with the MicroProfile Config feature. This featur
 touch /home/project/guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
 ```
 {: codeblock}
+
+Go to microprofile-config.properties.
 
 >[File -> Open] guide-microprofile-config/start/src/main/webapp/META-INF/microprofile-config.properties
 
@@ -422,7 +425,14 @@ curl http://localhost:9080/inventory/systems/localhost
 
 The URL retrieves the system property information for **localhost** host name by invoking the http://localhost:9080/system/properties service.
 
-Get your FQDN first. Then, visit the \http://localhost:9080/inventory/systems/{your_hostname} URL by replacing **{your_hostname}** with your FQDN, which retrieves your system properties by invoking the \http://{your_hostname}:9080/system/properties service: 
+Get your FQDN first. Then, visit the \http://localhost:9080/inventory/systems/{your_hostname} URL by replacing **{your_hostname}** with your FQDN. You can get your FQDN using the this command:
+
+```
+hostname --fqdn
+```
+{: codeblock}
+
+Your FQDN retrieves your system properties by invoking the \http://{your_hostname}:9080/system/properties service: 
 
 ```
 curl http://localhost:9080/inventory/systems/{your_hostname}
@@ -523,10 +533,10 @@ public class RestClientIT {
     response.close();
     return obj;
   }
-
 }
 ```
 {: codeblock}
+
 Each test case tests one of the methods for instantiating a RESTful client.
 
 The **testDefaultLocalhost()** test fetches and compares system properties from the \http://localhost:9080/inventory/systems/localhost URL.
@@ -560,6 +570,10 @@ Rerun the tests to see a test failure occur.
 # Summary
 
 ## Clean up your environment
+
+When you are done checking out the service, exit development mode by pressing **CTRL+C** in the command-line session where you ran the server, or by typing **q** and then pressing the **enter/return** key.
+
+
 
 Delete the **guide-microprofile-rest-client** project by navigating to the **/home/project/** directory
 
