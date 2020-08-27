@@ -36,7 +36,7 @@ pwd
 The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-rest-intro.gi
+git clone https://github.com/openliberty/guide-rest-intro.git
 cd guide-rest-intro
 ```
 {: codeblock}
