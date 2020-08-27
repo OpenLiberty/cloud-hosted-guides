@@ -425,7 +425,7 @@ curl http://localhost:9080/inventory/systems/localhost
 
 The URL retrieves the system property information for **localhost** host name by invoking the http://localhost:9080/system/properties service.
 
-Get your FQDN first. Then, visit the \http://localhost:9080/inventory/systems/{your_hostname} URL by replacing **{your_hostname}** with your FQDN. You can get your FQDN using the this command:
+Get your FQDN first. Then, visit the \http://localhost:9080/inventory/systems/{your_hostname} URL by replacing **{your_hostname}** with your FQDN. You can get your FQDN using this command:
 
 ```
 hostname --fqdn
@@ -445,7 +445,7 @@ curl http://localhost:9080/inventory/systems/{your_hostname}
 ```
 touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 ```
-{:codeblock}
+{: codeblock}
 
 >[File -> Open] guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 
