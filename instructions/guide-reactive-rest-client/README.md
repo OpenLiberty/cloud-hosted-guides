@@ -72,6 +72,7 @@ JAX-RS provides a default reactive provider that you can use to create a reactiv
 Create an **InventoryClient** class, which is used to retrieve inventory data, and a **QueryResource** class, which queries data from the **inventory** service.
 
 Create the `InventoryClient` interface.
+
 ```
 touch query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
 ```
@@ -79,8 +80,11 @@ touch query/src/main/java/io/openliberty/guides/query/client/InventoryClient.jav
 
 
 > [File -> Open]guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
-```
 
+
+
+
+```
 package io.openliberty.guides.query.client;
 
 import java.util.List;
@@ -147,8 +151,10 @@ touch query/src/main/java/io/openliberty/guides/query/QueryResource.java
 
 
 > [File -> Open]guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
-```
 
+
+
+```
 package io.openliberty.guides.query;
 
 import java.math.BigDecimal;
@@ -299,9 +305,9 @@ docker build -t query:1.0-SNAPSHOT query/.
 Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It creates containers for Kafka, Zookeeper, and all of the microservices in the project.
 
 
---
+```
 ./scripts/startContainers.sh
---
+```
 
 
 The services will take some time to become available.
@@ -334,10 +340,10 @@ The JSON output for each of these attributes contains the **hostname** and **sys
 When you are done checking out the application, run the following command to stop the **query** microservice. 
 Leave the **system** and **inventory** services running because they will be used when the application is rebuilt later in the guide:
 
---
+```
 docker stop query
---
-
+```
+{: codeblock}
 
 # Updating the web client to use an alternative reactive provider
 
@@ -725,10 +731,10 @@ docker build -t query:1.0-SNAPSHOT query/.
 Next, use the provided script to restart the query service in a Docker container. 
 
 
---
+```
 ./scripts/startQueryContainer.sh
---
-
+```
+{: codeblock}
 
 You can access the application by making requests to the `query/systemLoad` endpoint at the http://localhost:9080/query/systemLoad[http://localhost:9080/query/systemLoad^] URL 
 ```
@@ -744,10 +750,10 @@ While the client request is being handled, the thread can handle other work.
 When you are done checking out the application, run the following script to stop the application:
 
 
---
+```
 ./scripts/stopContainers.sh
---
-
+```
+{: codeblock}
 
 
 # Testing the query microservice
