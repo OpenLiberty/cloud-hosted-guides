@@ -769,8 +769,10 @@ touch query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
 
 
 > [File -> Open]guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
-```
 
+
+
+```
 package it.io.openliberty.guides.query;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
