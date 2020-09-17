@@ -12,8 +12,8 @@ The request to the application and response from the application are decoupled s
 Because reactive applications can run faster than synchronous applications, they provide a much smoother user experience.
 
 The application in this guide demonstrates how the JAX-RS client accesses remote RESTful services by using asynchronous method calls. 
-You`ll first look at the supplied client application that uses the JAX-RS default **CompletionStage**-based provider. 
-Then, you`ll modify the client application to use Jersey`s RxJava provider, which is an alternative JAX-RS reactive provider. 
+You'll first look at the supplied client application that uses the JAX-RS default **CompletionStage**-based provider. 
+Then, you'll modify the client application to use Jersey's RxJava provider, which is an alternative JAX-RS reactive provider. 
 Both Jersey and Apache CXF provide third-party reactive libraries for RxJava and were tested for use in Open Liberty.
 
 The application that you will be working with consists of three microservices, **system**, **inventory**, and **query**. 
@@ -28,11 +28,6 @@ to determine which system has the highest system load and which system has the l
 The **system** and **inventory** microservices use MicroProfile Reactive Messaging to send and receive the system load events.
 If you want to learn more about reactive messaging, see the 
 [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
-
-# Additional prerequisites
-
-You need to have Docker installed. For installation instructions, refer to the official [Docker documentation](https://docs.docker.com/get-docker/). You will build and run the microservices in Docker containers. An installation of Apache Kafka is provided in another Docker container.
-
 
 
 # Getting Started
@@ -61,7 +56,7 @@ The **start** directory contains the starting project that you will build upon.
 
 # Creating a web client using the default JAX-RS API
 
-InventoryClient.java
+
 
 Navigate to the **start** directory to begin.
 
@@ -249,12 +244,12 @@ public class QueryResource {
 
 
 
-QueryResource.java
+
 
 The **systemLoad** endpoint asynchronously processes the data that is retrieved by the **InventoryClient** interface and serves that data after all of the services respond. 
 The **thenAcceptAsync()** and **exceptionally()** methods together behave like an asynchronous try-catch block. 
 The data is processed in the **thenAcceptAsync()** method only after the **CompletionStage** interface finishes retrieving it. 
-When you return a **CompletionStage** type in the resource, it doesn`t necessarily mean that the computation completed and the response was built.
+When you return a **CompletionStage** type in the resource, it doesn't necessarily mean that the computation completed and the response was built.
 
 A **CountDownLatch** object is used to track how many asynchronous requests are being waited on. 
 After each thread is completed, the **countdown()** method counts the **CountDownLatch** object down towards **0**. 
@@ -310,13 +305,13 @@ Next, use the provided script to start the application in Docker containers. The
 
 
 The services will take some time to become available.
-You can access the application by making requests to the `query/systemLoad` endpoint at the 
+You can access the application by making requests to the `query/systemLoad` endpoint at the http://localhost:9080/query/systemLoad[http://localhost:9080/query/systemLoad^] URL 
 ```
 curl http://localhost:9080/query/systemLoad
 ```
 {: codeblock}
 
- URL. 
+
 
 When the service is ready, you see an output similar to the following example. 
 This example was formatted for readability:
@@ -324,11 +319,11 @@ This example was formatted for readability:
 { 
     "highest": {
         "hostname":"30bec2b63a96",       
-        �?systemLoad": 6.1
+        "systemLoad": 6.1
     },     
     "lowest": { 
         "hostname":"55ec2b63a96",    
-        �?systemLoad": 0.1
+        "systemLoad": 0.1
     }
 }
 
@@ -346,7 +341,7 @@ docker stop query
 
 # Updating the web client to use an alternative reactive provider
 
-pom.xml
+
 
 Although JAX-RS provides the default reactive provider that returns `CompletionStage` types, you can alternatively use another provider that supports other reactive frameworks like [RxJava](https://github.com/ReactiveX/RxJava). 
 The Apache CXF and Eclipse Jersey projects produce such providers.
@@ -582,7 +577,7 @@ public class InventoryClient {
 
 
 
-InventoryClient.java
+
 
 The return type of the **getSystem()** method is now an **Observable** object instead of a **CompletionStage** interface. 
 [Observable](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html) is a collection of data that waits to be subscribed to before it can release any data and is part of RxJava. 
@@ -596,7 +591,7 @@ To learn more about RxJava and backpressure, see [JAX-RS reactive extensions wit
 
 # Updating the REST resource to support the reactive JAX-RS client
 
-QueryResource.java
+
 
 Now that the client methods return the **Observable** class, you must update the resource to accommodate these changes.
 
@@ -735,13 +730,13 @@ Next, use the provided script to restart the query service in a Docker container
 --
 
 
-You can access the application by making requests to the `query/systemLoad` endpoint at the 
+You can access the application by making requests to the `query/systemLoad` endpoint at the http://localhost:9080/query/systemLoad[http://localhost:9080/query/systemLoad^] URL 
 ```
 curl http://localhost:9080/query/systemLoad
 ```
 {: codeblock}
 
- URL. 
+
 
 Switching to a reactive programming model freed up the thread that was handling your request to **query/systemLoad**. 
 While the client request is being handled, the thread can handle other work.
@@ -869,7 +864,7 @@ public class QueryServiceIT {
 
 The **testSystemLoad()** test case verifies that the **query** service can correctly calculate the highest and lowest system loads. 
 
-QueryServiceIT.java
+
 
 
 
