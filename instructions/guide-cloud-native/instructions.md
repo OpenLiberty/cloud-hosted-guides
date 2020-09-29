@@ -139,7 +139,7 @@ You should see:
 
 The MicroProfile health for this application has an overall "outcome" which is determined by the outcome of any available individual health "checks".  If any of those checks are "DOWN" then the overall outcome is considered to be "DOWN".
 
-As well as returning a JSON description of the health outcome, the health endpoint also reflects the outcome in the http response code.  An outcome of "UP" returns a 200 OK, whereas an outcome of "DOWN" returns a 503 Service Unavailable.  This means the endpoint can be hooked up to Kubernetes liveness or readiness probes to reflect the service availability.
+As well as returning a JSON description of the health outcome, the health endpoint also reflects the outcome in the HTTP response code.  An outcome of "UP" returns a 200 OK, whereas an outcome of "DOWN" returns a 503 Service Unavailable.  This means the endpoint can be hooked up to Kubernetes liveness or readiness probes to reflect the service availability.
 
 The tutorial application health has one "check".  This is implemented in **src/main/java/my/demo/health/GreetingReadinessCheck.java**, the main code of which looks like:
 
@@ -197,7 +197,7 @@ curl http://localhost:9080/metrics/
 ```
 {: codeblock}
 
-If you tried to access the endpoint you will have found that it requires security configuration to work.  The Metrics endpoint is only available over https and, by default, also requires an authorized user in order to prevent disclosing potentially sensitive information.
+If you tried to access the endpoint you will have found that it requires security configuration to work.  The Metrics endpoint is only available over HTTPS and, by default, also requires an authorized user in order to prevent disclosing potentially sensitive information.
 
 The MicroProfile Metrics feature allows you to turn off the security requirements.  This makes it easier to test out Metrics, but is not intended for production systems.
 
@@ -212,7 +212,7 @@ Add the following line:
 ```
 {: codeblock}
 
-Now when you access the metrics endpoint you will be able to access it over http and not be asked to authenticate.
+Now when you access the metrics endpoint you will be able to access it over HTTP and not be asked to authenticate.
 
 You should now see metrics data like this:
 
@@ -224,7 +224,7 @@ base:classloader_total_loaded_class_count 8807
 ...
 ```
 
-The MicroProfile system metrics, for example, JVM heap, cpu, and garbage collection information, don't require any additional coding - they're produced automatically from the JVM.  The metrics data is in <a href="https://prometheus.io">Prometheus</a> format, the default for MicroProfile.  Using an `Accept` header on the request, you can also receive json format (not shown in this tutorial).
+The MicroProfile system metrics, for example, JVM heap, CPU, and garbage collection information, don't require any additional coding - they're produced automatically from the JVM.  The metrics data is in <a href="https://prometheus.io">Prometheus</a> format, the default for MicroProfile.  Using an `Accept` header on the request, you can also receive JSON format (not shown in this tutorial).
 
 The tutorial application also shows a MicroProfile application metrics in the microservice implementation. 
 
@@ -335,7 +335,7 @@ curl http://localhost:9080/openapi/` and `curl http://localhost:9080/openapi/ui/
 ```
 {: codeblock}
 
-Clicking on the first link displays a machine-readable yaml description of the service, the format of which is defined by the <a href="https://www.openapis.org/">OpenAPI Initiative</a>.  
+Clicking on the first link displays a machine-readable YAML description of the service, the format of which is defined by the <a href="https://www.openapis.org/">OpenAPI Initiative</a>.  
 
 ```YAML
 openapi: 3.0.0
@@ -373,7 +373,7 @@ components:
           type: string
 ```
 
-This yaml form of the API can be used by API Gateways or generators for clients to work with your service - for example, to generate client code to call your service.  A number of generators are available for a variety of languages.
+This YAML form of the API can be used by API Gateways or generators for clients to work with your service - for example, to generate client code to call your service.  A number of generators are available for a variety of languages.
 
 The second link is to a web page that gives a human-readable representation of the API and also allows you to browse and call the API.  
 

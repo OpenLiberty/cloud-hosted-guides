@@ -334,7 +334,7 @@ Save the changes, and press the **enter/return** key in your console window to r
 
 # Testing outside of development mode
 
-Running tests in development mode is convenient for local development, but it can be tedious to test against a running Open Liberty server in non-development scenarios such as CI/CD pipelines. For this reason, MicroShed Testing can start and stop the application runtime before and after the tests are run. This process is primarily accomplished by using Docker and Testcontainers.
+Running tests in development mode is convenient for local development, but it can be tedious to test against a running Open Liberty server in non-development scenarios such as CI/CD pipelines. For this reason, MicroShed Testing can start and stop the application runtime before and after the tests are run. This process is primarily accomplished by using Docker and Test containers.
 
 To test outside of development mode, exit development mode:
 
@@ -362,7 +362,7 @@ Once the tests have completed successfully you should see:
 
 # Sharing configuration across multiple classes
 
-Typically, projects have multiple test classes that all use the same type of application deployment. For these cases, it is useful to reuse an existing configuration and application lifecycle across multiple test classes.
+Typically, projects have multiple test classes that all use the same type of application deployment. For these cases, it is useful to reuse an existing configuration and application life-cycle across multiple test classes.
 
 First, create another test class.
 

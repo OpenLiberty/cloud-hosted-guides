@@ -278,7 +278,7 @@ public class PropertiesResource {
 ```
 {: codeblock}
 
-Save the **PropertiesResource.jacva ** by pressing the 'x' button and pressing 'save'.
+Save the **PropertiesResource.java ** by pressing the 'x' button and pressing 'save'.
 
 Rebuild the application 
 

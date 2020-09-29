@@ -78,7 +78,7 @@ mvn liberty:dev
 ```
 {: codeblock}
 
-JAX-RS has two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modelled as a class. The second is a JAX-RS application, which groups all exposed resources under a common path. You can think of the JAX-RS application as a wrapper for all of your resources.
+JAX-RS has two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modeled as a class. The second is a JAX-RS application, which groups all exposed resources under a common path. You can think of the JAX-RS application as a wrapper for all of your resources.
 
 Replace the **SystemApplication** class:
 
@@ -264,7 +264,7 @@ public class EndpointIT {
 
 This test class has more lines of code than the resource implementation. This situation is common. The test method is indicated with the **@Test** annotation.
 
-The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the server configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven **pom.xml** file. Refer to the **pom.xml** file to see how the application information such as the **default.http.port**, **default.https.port** and **app.context.root** elements are provided in the file.
+The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the server configuration. While this information can be hard-coded, it is better to specify it in a single place like the Maven **pom.xml** file. Refer to the **pom.xml** file to see how the application information such as the **default.http.port**, **default.https.port** and **app.context.root** elements are provided in the file.
 
 These Maven properties are then passed to the Java test program as the **<systemPropertyVariables/>** element in the **pom.xml** file.
 

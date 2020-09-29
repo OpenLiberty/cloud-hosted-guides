@@ -10,12 +10,12 @@ between services so that requests are non-blocking and decoupled from responses.
 services that use an external message broker to manage communications in the
 [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-Tests sometimes pass during the development and testing stages of an application's lifecycle but then fail in production
+Tests sometimes pass during the development and testing stages of an application's life-cycle but then fail in production
 because of differences between your development and production environments. While you can create mock objects and custom
 setups to minimize differences between environments, it is difficult to mimic a production system for an application
 that uses an external messaging system. MicroShed Testing addresses this problem by enabling the testing of applications
 in the same Docker containers that you'll use in production. As a result, your environment remains the same throughout
-the application's lifecycle from development, through testing, and into production.
+the application's life-cycle from development, through testing, and into production.
 You can learn more about MicroShed Testing in the
 [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html) guide.
 
@@ -269,7 +269,7 @@ To learn more about Kafka APIs and how to use them, check out the
 [official Kafka Documentation](https://kafka.apache.org/documentation/#api).
 
 To consume messages from a stream, the messages need to be deserialized from bytes. Kafka has its own default deserializer,
-but a custom deserializer is provided for you. The deserializer is configured to the consumerâ€™s
+but a custom deserializer is provided for you. The deserializer is configured to the consumer's
 **valueDeserializer** and is implemented in the
 **SystemLoad** class.
 

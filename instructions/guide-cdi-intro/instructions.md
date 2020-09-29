@@ -12,7 +12,7 @@ The implementation of the application and its services are provided for you in t
 
 ### Introduction
 
-Contexts and Dependency Injection (CDI) defines a rich set of complementary services that improve the application structure. The most fundamental services that are provided by CDI are contexts that bind the lifecycle of stateful components to well-defined contexts, and dependency injection that is the ability to inject components into an application in a typesafe way. With CDI, the container does all the daunting work of instantiating dependencies, and controlling exactly when and how these components are instantiated and destroyed.
+Contexts and Dependency Injection (CDI) defines a rich set of complementary services that improve the application structure. The most fundamental services that are provided by CDI are contexts that bind the life-cycle of stateful components to well-defined contexts, and dependency injection that is the ability to inject components into an application in a typesafe way. With CDI, the container does all the daunting work of instantiating dependencies, and controlling exactly when and how these components are instantiated and destroyed.
 
 # Getting Started
 
@@ -429,7 +429,7 @@ public class InventoryEndpointIT {
 
 The **@BeforeAll** annotation is placed on a method that runs before any of the test cases. In this case, the **oneTimeSetup()** method retrieves the port number for the Open Liberty server and builds a base URL string that is used throughout the tests.
 
-The **@BeforeEach** and **@AfterEach** annotations are placed on methods that run before and after every test case. These methods are generally used to perform any setup and teardown tasks. In this case, the **setup()** method creates a JAX-RS client, which makes HTTP requests to the **inventory** service. This client must also be registered with a JSON-P provider (**JsrJsonpProvider**) to process JSON resources. The **teardown()** method simply destroys this client instance.
+The **@BeforeEach** and **@AfterEach** annotations are placed on methods that run before and after every test case. These methods are generally used to perform any setup and tear-down tasks. In this case, the **setup()** method creates a JAX-RS client, which makes HTTP requests to the **inventory** service. This client must also be registered with a JSON-P provider (**JsrJsonpProvider**) to process JSON resources. The **teardown()** method simply destroys this client instance.
 
 See the following descriptions of the test cases:
 
@@ -441,7 +441,7 @@ See the following descriptions of the test cases:
 
 To force these test cases to run in a particular order, annotate your **InventoryEndpointIT** test class with the **@TestMethodOrder(OrderAnnotation.class)** annotation. **OrderAnnotation.class** runs test methods in numerical order, according to the values specified in the **@Order** annotation. You can also create a custom **MethodOrderer** class or use built-in **MethodOrderer** implementations, such as **OrderAnnotation.class**, **Alphanumeric.class**, or **Random.class**. Label your test cases with the **@Test** annotation so that they automatically run when your test class runs.
 
-Finally, the **src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.jav** file is included for you to test the basic functionality of the **system** service. If a test failure occurs, then you might have introduced a bug into the code.
+Finally, the **src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java** file is included for you to test the basic functionality of the **system** service. If a test failure occurs, then you might have introduced a bug into the code.
 
 ### Running the tests
 

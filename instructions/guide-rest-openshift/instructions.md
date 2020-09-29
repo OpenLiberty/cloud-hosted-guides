@@ -54,7 +54,7 @@ The **finish** directory in the root of this guide contains the finished applica
 
 ### Understanding a JAX-RS application
 
-JAX-RS has two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modelled as a class. The second is a JAX-RS application, which groups all exposed resources under a common path. You can think of the JAX-RS application as a wrapper for all of your resources.
+JAX-RS has two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modeled as a class. The second is a JAX-RS application, which groups all exposed resources under a common path. You can think of the JAX-RS application as a wrapper for all of your resources.
 
 Click on **File**-->**Open**-->**guide-rest-intro**-->**finish**-->**src**/**main**/**java**/**io**/**openliberty**/**guides**/**rest**/**SystemApplication.java**
 
@@ -138,7 +138,7 @@ ctrl+c
 
 # Deploying the application on OpenShift
 
-(Assuming you have already cloned the repositoty and are under **guide-rest-intro/finish** folder)
+(Assuming you have already cloned the repository and are under **guide-rest-intro/finish** folder)
 
 Step 1: Generate the *.war file
 ```

@@ -73,7 +73,7 @@ The output follows:
 ````
 {"awt.toolkit":"sun.awt.X11.XToolkit","file.encoding.pkg":"sun.io","java.specification.version":"11","jdk.extensions.version":"11.0.6.1","sun.jnu.encoding":"ANSI_X3.4-1968"
 ````
-Some of the **properties** from the ouput include:
+Some of the **properties** from the output include:
 
 ```JSON
 {
@@ -332,7 +332,7 @@ curl http://localhost:9080/health/ready
 ```
 {: codeblock} 
 
-Similarily, access the /health/live endpoint by visiting or running the Liveness health check URLto view the data:
+Similarly, access the /health/live endpoint by visiting or running the Liveness health check URL to view the data:
 
 ```
 curl http://localhost:9080/health/live
@@ -407,7 +407,7 @@ To stop the server in **dev** mode navigate to the terminal and quit the server 
 
 To run the application in a container, you need to have Docker installed. For installation instructions, see the Official Docker Docs.
 
-To containerize the application, you need a **Dockerfile**. This file contains a collection of instructions that define how a Docker image is built, what files are packaged into it, what commands run when the image runs as a container, and so on. You can find a complete **Dockerfile** in the **start** directory. This **Dockerfile** packages the **usr** server package into a Docker image that contains a preconfigured Open Liberty server.
+To containerize the application, you need a **Dockerfile**. This file contains a collection of instructions that define how a Docker image is built, what files are packaged into it, what commands run when the image runs as a container, and so on. You can find a complete **Dockerfile** in the **start** directory. This **Dockerfile** packages the **usr** server package into a Docker image that contains a pre-configured Open Liberty server.
 
 Run the **mvn package** command from the **start** directory so that the .war file resides in the target directory.
 

@@ -91,7 +91,7 @@ cd ../start
 ```
 {: codeblock}
 
-When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start in dev mode:
+When you run Open Liberty in dev mode, the server listens for file changes and automatically re-compiles and deploys your updates whenever you save a new change. Run the following goal to start in dev mode:
 
 ```
 mvn liberty:dev

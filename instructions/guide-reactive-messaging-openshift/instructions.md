@@ -518,7 +518,7 @@ Start the application
 
 After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint of the **inventory** service.
 
-To access the **inventory** microservice, use the **inventory/systems** URL, and you see the CPU **systemLoad** property for all the systems. Be aware that it will take a couple of minutes for all of the services to start up so you may have to wait to recieve the expected output. 
+To access the **inventory** microservice, use the **inventory/systems** URL, and you see the CPU **systemLoad** property for all the systems. Be aware that it will take a couple of minutes for all of the services to start up so you may have to wait to receive the expected output. 
 
 ```
 curl http://localhost:9085/inventory/systems
@@ -591,7 +591,7 @@ NAMESPACE_NAME=YOUR_NAME
 
 E.g. **NAMESPACE_NAME=sn-labs-johndoe**
 
-Verify that the variable contains your namepsace name correctly: 
+Verify that the variable contains your namespace name correctly: 
 
 ```
 echo $NAMESPACE_NAME
@@ -836,7 +836,7 @@ oc get routes
 
 Your app URL will be something like this: inventory-route-sn-labs-<your-userID>.sn-labs-user-sandbox-pr-a45631dc5778dc6371c67d206ba9ae5c-0000.tor01.containers.appdomain.cloud
   
-Append **"/inventory/systems"** after the URL and you should see an output with the **hostname** and **systemLoad**. Be aware that it will take a couple of minutes for all of the services to start up so you may have to wait to recieve the expected output. 
+Append **"/inventory/systems"** after the URL and you should see an output with the **hostname** and **systemLoad**. Be aware that it will take a couple of minutes for all of the services to start up so you may have to wait to receive the expected output. 
 
 ## Troubleshooting (optional)
 
