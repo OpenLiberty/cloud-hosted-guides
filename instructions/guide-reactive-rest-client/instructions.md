@@ -308,6 +308,7 @@ Next, use the provided script to start the application in Docker containers. The
 ```
 ./scripts/startContainers.sh
 ```
+{: codeblock}
 
 
 The services will take some time to become available.
