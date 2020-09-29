@@ -98,7 +98,7 @@ Json Code Example
 ### Sub Heading 1
 
 ### Sub Heading 2
-Have as many steps as you want. They are all seperated via the h1 heading such as one with one #
+Have as many steps as you want. They are all separated via the h1 heading such as one with one #
 
 # Summary
 

@@ -8,7 +8,7 @@ Over the years, Kubernetes has become a major tool in containerized environments
 
 ### Why use Kubernetes
 
-Managing individual containers can be challenging. A few containers used for development by a small team might not pose a problem, but managing hundreds of containers can give even a large team of experienced developers a headache. Kubernetes is a primary tool for deployment in containerized environments. It handles scheduling, deployment, as well as mass deletion and creation of containers. It provides update rollout abilities on a large scale that would otherwise prove extremely tedious to do. Imagine that you updated a Docker image, which now needs to propagate to a dozen containers. While you could destroy and then re-create these containers, you can also run a short one-line command to have Kubernetes make all those updates for you. Of course, this is just a simple example. Kubernetes has a lot more to offer.
+Managing individual containers can be challenging. A few containers used for development by a small team might not pose a problem, but managing hundreds of containers can give even a large team of experienced developers a headache. Kubernetes is a primary tool for deployment in containerized environments. It handles scheduling, deployment, as well as mass deletion and creation of containers. It provides update roll-out abilities on a large scale that would otherwise prove extremely tedious to do. Imagine that you updated a Docker image, which now needs to propagate to a dozen containers. While you could destroy and then re-create these containers, you can also run a short one-line command to have Kubernetes make all those updates for you. Of course, this is just a simple example. Kubernetes has a lot more to offer.
 
 ### Architecture
 
@@ -16,7 +16,7 @@ Deploying an application to Kubernetes means deploying an application to a Kuber
 
 A typical Kubernetes cluster is a collection of physical or virtual machines called nodes that run containerized applications. A cluster is made up of one master node that manages the cluster, and many worker nodes that run the actual application instances inside Kubernetes objects called pods.
 
-A pod is a basic building block in a Kubernetes cluster. It represents a single running process that encapsulates a container or in some scenarios many closely coupled containers. Pods can be replicated to scale applications and handle more traffic. From the perspective of a cluster, a set of replicated pods is still one application instance, although it might be made up of dozens of instances of itself. A single pod or a group of replicated pods are managed by Kubernetes objects called controllers. A controller handles replication, self-healing, rollout of updates, and general management of pods. One example of a controller that you will use in this guide is a deployment.
+A pod is a basic building block in a Kubernetes cluster. It represents a single running process that encapsulates a container or in some scenarios many closely coupled containers. Pods can be replicated to scale applications and handle more traffic. From the perspective of a cluster, a set of replicated pods is still one application instance, although it might be made up of dozens of instances of itself. A single pod or a group of replicated pods are managed by Kubernetes objects called controllers. A controller handles replication, self-healing, roll-out of updates, and general management of pods. One example of a controller that you will use in this guide is a deployment.
 
 A pod or a group of replicated pods are abstracted through Kubernetes objects called services that define a set of rules by which the pods can be accessed. In a basic scenario, a Kubernetes service exposes a node port that can be used together with the cluster IP address to access the pods encapsulated by the service.
 
@@ -120,7 +120,7 @@ NAMESPACE_NAME=
 ```
 {: codeblock}
 
-Verify that the variable contains your namepsace name correctly: 
+Verify that the variable contains your namespace name correctly: 
 
 ```
 echo $NAMESPACE_NAME
@@ -582,6 +582,6 @@ rm -r -f guide-kubernetes-intro
 
 ## Well Done
 
-Nice work! You have just deployed two microservices running in Open Liberty to Kubernetes. You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
+Nice work! You have just deployed two microservices running in Open Liberty to Kubernetes. You then scaled a microservice and ran integration tests against microservices that are running in a Kubernetes cluster.
 
 Please log out in the top right so that your environment is cleaned up and ready for the next lab!

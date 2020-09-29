@@ -354,5 +354,5 @@ rm -r -f guide-kubernetes-intro
 
 ## Well Done
 
-Nice work! You have just deployed two microservices running in Open Liberty to Kubernetes. You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
+Nice work! You have just deployed two microservices running in Open Liberty to Kubernetes. You then scaled a microservice and ran integration tests against microservices that are running in a Kubernetes cluster.
 
