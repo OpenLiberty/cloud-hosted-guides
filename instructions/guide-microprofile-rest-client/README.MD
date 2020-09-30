@@ -1,8 +1,5 @@
-# quick-labs
-A temp repo to store instructions and other artifacts in regards to our Quick Labs and Workshops
-
-# Mirror to Gitlab
-All of the folders under `instructions/` have a matching Gitlab repository used for SkillsNetwork labs.
+# Mirror Instructions
+All of the folders under `https://github.com/OpenLiberty/quick-labs/tree/master/instructions/` have a matching Gitlab repository used for SkillsNetwork labs.
 When creating a new quick-labs guide some steps must be taken to ensure that future changes will be mirrored.
 
 1. Add the repository names to the `mirror.yml` file
