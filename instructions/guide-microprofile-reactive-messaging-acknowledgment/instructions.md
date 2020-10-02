@@ -1,3 +1,4 @@
+
 # Acknowledging messages using MicroProfile Reactive Messaging
 ## What you'll learn
 
@@ -10,7 +11,6 @@ The application in this guide consists of two microservices, **system** and **in
 microservice calculates and publishes events that contain its current average system load. The **inventory** microservice
 subscribes to that information so that it can keep an updated list of all the systems and their current system loads.
 You can get the current inventory of systems by accessing the **/systems** REST endpoint.
-
 
 You will explore the acknowledgment strategies that are available with MicroProfile Reactive Messaging, and you'll implement
 your own manual acknowledgment strategy. To learn more about how the reactive Java services used in this guide work, check
@@ -38,11 +38,12 @@ cd guide-microprofile-reactive-messaging-acknowledgment
 ```
 {: codeblock}
 
-The **finish** directory in the root of this guide contains the finished application.
-
 The **start** directory contains the starting project that you will build upon.
 
+
 # Choosing an acknowledgment strategy
+
+
 
 Messages must be acknowledged in reactive applications. Messages are either acknowledged explicitly, or messages are acknowledged
 implicitly by MicroProfile Reactive Messaging. Acknowledgment for incoming messages is controlled by the **@Acknowledgment**
@@ -52,20 +53,20 @@ and are annotated with the **@Incoming** annotation must acknowledge messages. M
 **@Outgoing** annotation don't need to acknowledge messages because messages aren't being received and MicroProfile Reactive
 Messaging requires only that _received_ messages are acknowledged.
 
-Almost all of the methods in this application that require message acknowledgment are assigned the **POST\_PROCESSING** strategy
-by default. If the acknowledgment strategy is set to **POST\_PROCESSING**, then MicroProfile Reactive Messaging acknowledges
+Almost all of the methods in this application that require message acknowledgment are assigned the **POST_PROCESSING** strategy
+by default. If the acknowledgment strategy is set to **POST_PROCESSING**, then MicroProfile Reactive Messaging acknowledges
 the message based on whether the annotated method emits data:
 
-- If the method emits data, the incoming message is acknowledged after the outgoing message is acknowledged.
-- If the method doesn't emit data, the incoming message is acknowledged after the method or processing completes.
+    - If the method emits data, the incoming message is acknowledged after the outgoing message is acknowledged.
+    - If the method doesn't emit data, the incoming message is acknowledged after the method or processing completes.
 
-It is important that the methods use the **POST\_PROCESSING** strategy because it fulfills the requirement that a message isn't
+It's important that the methods use the **POST_PROCESSING** strategy because it fulfills the requirement that a message isn't
 acknowledged until after the message is fully processed. This processing strategy is beneficial in situations where messages
-must reliably not get lost. When the **POST\_PROCESSING** acknowledgment strategy can`t be used, the **MANUAL** strategy can
+must reliably not get lost. When the **POST_PROCESSING** acknowledgment strategy can't be used, the **MANUAL** strategy can
 be used to fulfill the same requirement. In situations where message acknowledgment reliability isn't important and losing
-messages is acceptable, the **PRE\_PROCESSING** strategy might be appropriate.
+messages is acceptable, the **PRE_PROCESSING** strategy might be appropriate.
 
-The only method in the guide that doesn't default to the **POST\_PROCESSING** strategy is the
+The only method in the guide that doesn't default to the **POST_PROCESSING** strategy is the
 **sendProperty()** method in the **system** service. The **sendProperty()**
 method receives property requests from the **inventory** service. For each property request, if the property that's being
 requested is valid, then the method **returns** a property response with the value of the property.
@@ -75,13 +76,15 @@ is **returned**.
 A key difference exists between when a property response is returned and when a property response isn't returned. In the
 case where a property response is returned, the request doesn't finish processing until the response is sent and safely
 stored by the Kafka broker. Only then is the incoming message acknowledged. However, in the case where the requested
-property doesn`t exist and a property response isn't returned, the method finishes processing the request message so the
+property doesn't exist and a property response isn't returned, the method finishes processing the request message so the
 message must be acknowledged immediately.
 
 This case where a message either needs to be acknowledged immediately or some time later is one of the situations where
 the **MANUAL** acknowledgment strategy would be beneficial
 
 # Implementing the MANUAL acknowledgment strategy
+
+
 
 Navigate to the **start** directory to begin.
 
@@ -93,11 +96,13 @@ cd start
 
 
 Update the **SystemService.sendProperty** method to use the **MANUAL** acknowledgment strategy, which fits the method processing
-requirements better than the default **PRE\_PROCESSING** strategy.
+requirements better than the default **PRE_PROCESSING** strategy.
 
 Replace the `SystemService` class.
 
 > [File -> Open]guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+
+
 
 
 
@@ -187,10 +192,16 @@ the method parameter is updated to receive and return a **Message** of type **St
 than just a **String**. Then, the message **payload** is extracted and checked for validity.
 One of the following outcomes occurs:
 
-- If the system property **isn't valid**, the method **acknowledges** the incoming message and **returns** an empty reactive stream. The processing is complete.
-- If the system property is valid, the method creates a **message** with the value of the requested system property and sends it to the proper channel. The method acknowledges the incoming message only after the sent message is acknowledged.
+    - If the system property **isn't valid**, the method **acknowledges**
+        the incoming message and **returns** an empty reactive stream. The processing is
+        complete.
+    - If the system property is valid, the method creates a **message** with the value of the
+        requested system property and sends it to the proper channel. The method acknowledges the incoming message only
+        after the sent message is acknowledged.
 
 # Waiting for a message to be acknowledged
+
+
 
 The **inventory** service contains an endpoint that accepts **PUT** requests. When a **PUT** request that contains a system property
 is made to the **inventory** service, the **inventory** service sends a message to the **system** service. The message from the
@@ -201,6 +212,8 @@ response only after the outgoing message is acknowledged.
 Replace the `InventoryResource` class.
 
 > [File -> Open]guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+
+
 
 
 
@@ -284,18 +297,27 @@ public class InventoryResource {
     @Path("/data")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
+        complete until the message is acknowledged. */
     public CompletionStage<Response> updateSystemProperty(String propertyName) {
         logger.info("updateSystemProperty: " + propertyName);
         CompletableFuture<Void> result = new CompletableFuture<>();
+
         Message<String> message = Message.of(
                 propertyName,
                 () -> {
+                        message is acknowledged. After the outgoing message is
+                        acknowledged, complete the "result" CompletableFuture. */
                     result.complete(null);
+                        when it's complete. Asynchronous processing isn't necessary 
+                        so a completed CompletionStage is returned to indicate that 
+                        the work here is done. */
                     return CompletableFuture.completedFuture(null);
                 }
         );
 
         propertyNameEmitter.onNext(message);
+            CompletableFuture is completed. When "result" completes, the Response 
+            object is created with the status code and message. */
         return result.thenApply(a -> Response
                 .status(Response.Status.OK)
                 .entity("Request successful for the " + propertyName + " property\n")
@@ -393,16 +415,9 @@ docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
 
 
 Run the following commands to containerize the microservices:
-```
+
 docker build -t system:1.0-SNAPSHOT system/.
-```
-{: codeblock}
-
-```
 docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-{: codeblock}
-
 
 Next, use the provided script to start the application in Docker containers. The script creates a network for the
 containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the
@@ -412,6 +427,8 @@ project. For simplicity, the script starts one instance of the **system** servic
 ```
 ./scripts/startContainers.sh
 ```
+{: codeblock}
+
 
 
 # Testing the application
@@ -419,14 +436,13 @@ project. For simplicity, the script starts one instance of the **system** servic
 After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint
 of the **inventory** service.
 
-Go to the http://localhost:9085/inventory/systems URL to access the inventory microservice. You see the CPU systemLoad property for all the systems.
-
+Go to the http://localhost:9085/inventory/systems[^] URL to access the inventory microservice You see the CPU `systemLoad`
 ```
 curl http://localhost:9085/inventory/systems
 ```
 {: codeblock}
 
- URL to access the inventory microservice. You see the CPU `systemLoad`
+
 property for all the systems:
 
 {
@@ -437,21 +453,24 @@ property for all the systems:
 The **system** service sends messages to the **inventory** service every 15 seconds. The **inventory** service processes and
 acknowledges each incoming message, ensuring that no **system** message is lost.
 
-If you revisit the URL after a while, you notice that the CPU `systemLoad`
-property for the systems changed.
+If you revisit the 
 ```
 curl http://localhost:9085/inventory/systems
 ```
 {: codeblock}
 
+ URL after a while, you notice that the CPU `systemLoad`
+property for the systems changed.
 
 Make a **PUT** request to the **\http://localhost:9085/inventory/data** URL to add the value of a particular system property
 to the set of existing properties. For example, run the following **curl** command:
 
 
 ```
-curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-Type:text/plain"
+curl -X PUT -d "os.name" http://localhost:9085/inventory/data ```header "Content-Type:text/plain"
 ```
+{: codeblock}
+
 
 URL adds the **os.name** system property for your system. The **inventory** service sends a message that contains the requested
 system property to the **system** service. The **inventory** service then waits until the message is acknowledged before it
@@ -463,13 +482,13 @@ Request successful for the os.name property
 
 The previous example response is confirmation that the sent request message was acknowledged.
 
-You can revisit the 
+You can revisit the http://localhost:9085/inventory/systems[^] URL and see the `osname` system property value is now
 ```
 curl http://localhost:9085/inventory/systems
 ```
 {: codeblock}
 
- URL and see the `os.name` system property value is now
+
 included with the previous values:
 
 {
@@ -486,6 +505,8 @@ Finally, run the following script to stop the application:
 ```
 ./scripts/stopContainers.sh
 ```
+{: codeblock}
+
 
 
 # Summary
@@ -514,4 +535,4 @@ Learn more about MicroProfile.
 
 [View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/apidocs/)
 
-[View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
+[View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
