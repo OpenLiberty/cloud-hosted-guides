@@ -229,7 +229,10 @@ public class GuideConverter {
                         inputLine = inputLine.replaceAll("`", "\'");
                         inputLine = inputLine.replaceAll("�", "\"");
                         inputLine = inputLine.replaceAll("â€", "");
-                        inputLine = inputLine.replaceAll("--", "```");
+                        
+                        if (inputLine.equals("--")) {
+                            inputLine = inputLine.replaceAll("--", "```");
+                        }
 
                         if (inputLine.equals("******")) {
                             inputLine = "```";
