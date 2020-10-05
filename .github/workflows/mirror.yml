@@ -24,6 +24,7 @@ jobs:
           - {"github":"guide-microprofile-config","gitlab":"configuring-java-microservices"}
           - {"github":"guide-microprofile-fallback","gitlab":"fault-tolerant-microservices-with-ol-and-microprofile"}
           - {"github":"guide-microprofile-jwt","gitlab":"securing-microservices-with-json-web-token"}
+          - {"github":"guide-microprofile-opentracing","gitlab":"enabling-distributed-tracing-in-microservices-with-zipkin"}
           - {"github":"guide-microprofile-reactive-messaging-acknowledgment","gitlab":"Acknowledging-messages-using-MicroProfile-Reactive-Messaging"}
           - {"github":"guide-microprofile-reactive-messaging-rest-integration","gitlab":"Integrating-RESTful-services-with-a-reactive-system"}
           - {"github":"guide-microprofile-rest-client","gitlab":"consuming-restful-services-with-template-interfaces-with-ol"}
