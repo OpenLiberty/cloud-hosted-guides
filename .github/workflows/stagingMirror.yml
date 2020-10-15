@@ -1,0 +1,61 @@
+name: Mirror to Staging Quicklab
+ 
+# Triggers the workflow on push events but only for the master branch.
+on:
+  push:
+    branches: [ staging ]
+
+jobs:
+  deploy:
+    name: Staging Mirror
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: # Uses an array of Json variables to pass the repo names.
+              # The names differ between Github and Gitlab so this is necessary.
+              # Add new quick-labs here to add them to the mirror process.
+              # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
+        repo: 
+          - {"github":"develop-microservices-docker","gitlab":"using-docker-to-develop-java-microservices"}
+          - {"github":"guide-cdi-intro","gitlab":"injecting-dependencies-into-a-java-microservices"}
+          - {"github":"guide-cloud-native","gitlab":"get-started-with-cloud-native-on-the-open-java-stack"}
+          - {"github":"guide-deploying-and-packinging-applications","gitlab":"packaging-and-deploying-applications-with-open-liberty"}
+          - {"github":"guide-kube-health","gitlab":"configuing-a-readiness-probe-for-a-java-microservice"}
+          - {"github":"guide-kubernetes-intro","gitlab":"deploying-a-java-microservices-to-kubernetes"}
+          - {"github":"guide-microprofile-config","gitlab":"configuring-java-microservices"}
+          - {"github":"guide-microprofile-fallback","gitlab":"fault-tolerant-microservices-with-ol-and-microprofile"}
+          - {"github":"guide-microprofile-jwt","gitlab":"securing-microservices-with-json-web-token"}
+          - {"github":"guide-microprofile-reactive-messaging-acknowledgment","gitlab":"Acknowledging-messages-using-MicroProfile-Reactive-Messaging"}
+          - {"github":"guide-microprofile-reactive-messaging-rest-integration","gitlab":"Integrating-RESTful-services-with-a-reactive-system"}
+          - {"github":"guide-microprofile-rest-client","gitlab":"consuming-restful-services-with-template-interfaces-with-ol"}
+          - {"github":"guide-microprofile-rest-client-async","gitlab":"Consuming-RESTful-services-asynchronously-with-template-interfaces"}
+          - {"github":"guide-microshed-testing","gitlab":"learn-how-to-use-microshed-testing"}
+          - {"github":"guide-reactive-messaging","gitlab":"creating-reactive-microservices-using-microprofile-reactive-messaging-with-docker"}
+          - {"github":"guide-reactive-messaging-openshift","gitlab":"creating-reactive-microservices-using-microprofile-reactive-messaging"}
+          - {"github":"guide-reactive-rest-client","gitlab":"consuming-restful-services-using-the-reactive-jax-rs-client"}
+          - {"github":"guide-reactive-service-testing","gitlab":"testing-reactive-java-microservices"}
+          - {"github":"guide-rest-openshift","gitlab":"java-on-openshift"}
+          - {"github":"guide-restful-webservice","gitlab":"creating-a-restful-web-service-with-open-liberty"}
+
+    steps:
+
+    # Any prerequisite steps
+    - uses: actions/checkout@master
+      with: 
+        ref: staging
+
+    # Mirror to Gitlab repo
+    - name: Mirror
+      uses: s0/git-publish-subdir-action@develop
+      env:
+        REPO: git@gitlab.com:ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}.git
+        BRANCH: staging
+        FOLDER: instructions/${{matrix.repo.github}}
+        MESSAGE: "{msg}" # Sets the commit message on gitlab to be the same as on github.
+        SSH_PRIVATE_KEY: ${{secrets.DEPLOY_KEY_QUICK_LABS}}
+        KNOWN_HOSTS_FILE: .github/workflows/known_hosts # Needed if target repo is not on github.com.
+        SKIP_EMPTY_COMMITS: "true"
+    
+    # Output link to staged files
+    - name: Print staging lab URL
+      run: echo "Staging quicklab available at https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https://cf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud/${{matrix.repo.gitlab}}/instructions.md"
+      shell: bash
