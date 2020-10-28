@@ -25,10 +25,10 @@ jobs:
           - {"github":"guide-microprofile-fallback","gitlab":"fault-tolerant-microservices-with-ol-and-microprofile"}
           - {"github":"guide-microprofile-jwt","gitlab":"securing-microservices-with-json-web-token"}
           - {"github":"guide-microprofile-opentracing","gitlab":"enabling-distributed-tracing-in-microservices-with-zipkin"}
-          - {"github":"guide-microprofile-reactive-messaging-acknowledgment","gitlab":"Acknowledging-messages-using-MicroProfile-Reactive-Messaging"}
-          - {"github":"guide-microprofile-reactive-messaging-rest-integration","gitlab":"Integrating-RESTful-services-with-a-reactive-system"}
+          - {"github":"guide-microprofile-reactive-messaging-acknowledgment","gitlab":"acknowledging-messages-using-microprofile-reactive-messaging"}
+          - {"github":"guide-microprofile-reactive-messaging-rest-integration","gitlab":"integrating-restful-services-with-a-reactive-system"}
           - {"github":"guide-microprofile-rest-client","gitlab":"consuming-restful-services-with-template-interfaces-with-ol"}
-          - {"github":"guide-microprofile-rest-client-async","gitlab":"Consuming-RESTful-services-asynchronously-with-template-interfaces"}
+          - {"github":"guide-microprofile-rest-client-async","gitlab":"consuming-restful-services-asynchronously-with-template-interfaces"}
           - {"github":"guide-microshed-testing","gitlab":"learn-how-to-use-microshed-testing"}
           - {"github":"guide-reactive-messaging","gitlab":"creating-reactive-microservices-using-microprofile-reactive-messaging-with-docker"}
           - {"github":"guide-reactive-messaging-openshift","gitlab":"creating-reactive-microservices-using-microprofile-reactive-messaging"}
