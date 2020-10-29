@@ -24,7 +24,7 @@ jobs:
   convertMaster:
     name: Make PR to Master
     runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch, 'master')
+    if: contains(github.event.inputs.branch, 'sn-automation-testing-master')
   
     steps:
 
@@ -63,7 +63,7 @@ jobs:
   convertStaging:
     name: Output message
     runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch, 'qa')
+    if: contains(github.event.inputs.branch, 'sn-automation-testing-qa')
   
     steps:
 
