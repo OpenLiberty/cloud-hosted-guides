@@ -96,7 +96,7 @@ public class functions {
             y = i + x;
             check.add(listOfLines.get(y));
             if (check.get(x).startsWith("```")) {
-                if (listOfLines.get(y + 1) = null) {
+                if (listOfLines.get(y + 1).isBlank()) {
                     listOfLines.set(y + 1, "{: codeblock}\n\n");
                 }
             }
