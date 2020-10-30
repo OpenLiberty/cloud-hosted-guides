@@ -2,9 +2,17 @@
 All of the folders under `https://github.com/OpenLiberty/quick-labs/tree/master/instructions/` have a matching Gitlab repository used for SkillsNetwork labs.
 When creating a new quick-labs guide some steps must be taken to ensure that future changes will be mirrored.
 
-1. Add the repository names to the `mirror.yml` file
+1. Create the Quicklab 
 
-In the following section of mirror.yml, under the `repo:` tag, you must add both the Github folder and Gitlab repository names.
+Create the neccessary Quicklab repository on Gitlab via the SkillsNetwork Author page: https://www.skills.network/become-an-author/
+
+2. Add the OpenLiberty Guides group
+
+Once your Quicklab repository has been created navigate to it on Gitlab and select the "Members" tab. From here select the "Invite Group" tab and invite the "[OpenLiberty Guides](https://gitlab.com/openliberty-guides)" group as a `maintainer`. If you are not yet a member of the OpenLiberty Guides group then tag @austin0, @jamiecoleman92, or @jakub-pomykala on Github.
+
+3. Add the repository names to the `mirror.yml` file
+
+In the following section of mirror.yml, under the `repo:` tag, you must add both the Github folder and Gitlab repository (URL) names.
 ```
 jobs:
   deploy:
@@ -22,7 +30,7 @@ jobs:
 ```
 
 
-2. Apply Gitlab deploy key
+4. Apply Gitlab deploy key
 
 Once the Gitlab repository has been created the owner/maintainer must assign the correct deploy key.
 This can be done by going to `https://gitlab.com/ibm/skills-network/quicklabs/<repo-name>/settings/repository`, scrolling down to the `Deploy Keys` section and enabling the `DEPLOY_KEY_QUICK_LABS` key. 

@@ -1,3 +1,4 @@
+
 # Consuming RESTful services using the reactive JAX-RS client
 ## What you'll learn
 
@@ -72,7 +73,6 @@ JAX-RS provides a default reactive provider that you can use to create a reactiv
 Create an **InventoryClient** class, which is used to retrieve inventory data, and a **QueryResource** class, which queries data from the **inventory** service.
 
 Create the `InventoryClient` interface.
-
 ```
 touch query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
 ```
@@ -83,25 +83,23 @@ touch query/src/main/java/io/openliberty/guides/query/client/InventoryClient.jav
 
 
 
-
 ```
+
 package io.openliberty.guides.query.client;
 
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CompletionStage;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.glassfish.jersey.client.rx.rxjava.RxObservableInvoker;
-import org.glassfish.jersey.client.rx.rxjava.RxObservableInvokerProvider;
-
-import rx.Observable;
 
 @RequestScoped
 public class InventoryClient {
@@ -109,7 +107,6 @@ public class InventoryClient {
     @Inject
     @ConfigProperty(name = "INVENTORY_BASE_URI", defaultValue = "http://localhost:9085")
     private String baseUri;
-
 
     public List<String> getSystems() {
         return ClientBuilder.newClient()
@@ -120,16 +117,15 @@ public class InventoryClient {
                             .get(new GenericType<List<String>>(){});
     }
 
-    public Observable<Properties> getSystem(String hostname) {
+    public CompletionStage<Properties> getSystem(String hostname) {
         return ClientBuilder.newClient()
                             .target(baseUri)
-                            .register(RxObservableInvokerProvider.class)
                             .path("/inventory/systems")
                             .path(hostname)
                             .request()
                             .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                            .rx(RxObservableInvoker.class)
-                            .get(new GenericType<Properties>(){});
+                            .rx()
+                            .get(Properties.class);
     }
 }
 ```
@@ -155,6 +151,7 @@ touch query/src/main/java/io/openliberty/guides/query/QueryResource.java
 
 
 ```
+
 package io.openliberty.guides.query;
 
 import java.math.BigDecimal;
@@ -298,9 +295,12 @@ docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
 
 Run the following commands to containerize the microservices:
 
+```
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 docker build -t query:1.0-SNAPSHOT query/.
+```
+{: codeblock}
 
 Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It creates containers for Kafka, Zookeeper, and all of the microservices in the project.
 
@@ -309,6 +309,7 @@ Next, use the provided script to start the application in Docker containers. The
 ./scripts/startContainers.sh
 ```
 {: codeblock}
+
 
 
 The services will take some time to become available.
@@ -323,6 +324,7 @@ curl http://localhost:9080/query/systemLoad
 When the service is ready, you see an output similar to the following example. 
 This example was formatted for readability:
 
+```
 { 
     "highest": {
         "hostname":"30bec2b63a96",       
@@ -333,6 +335,8 @@ This example was formatted for readability:
         "systemLoad": 0.1
     }
 }
+```
+
 
 The JSON output contains a **highest** attribute that represents the system with the highest load.
 Similarly, the **lowest** attribute represents the system with the lowest load. 
@@ -345,6 +349,8 @@ Leave the **system** and **inventory** services running because they will be use
 docker stop query
 ```
 {: codeblock}
+
+
 
 # Updating the web client to use an alternative reactive provider
 
@@ -359,6 +365,8 @@ These custom objects provide a simpler and faster way for you to create scalable
 Replace the Maven configuration file.
 
 > [File -> Open]guide-reactive-rest-client/start/query/pom.xml
+
+
 
 
 
@@ -531,6 +539,8 @@ Replace the `InventoryClient` interface.
 
 
 
+
+
 ```
 package io.openliberty.guides.query.client;
 
@@ -605,6 +615,8 @@ Now that the client methods return the **Observable** class, you must update the
 Replace the `QueryResource` class.
 
 > [File -> Open]guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
+
+
 
 
 
@@ -727,7 +739,10 @@ mvn -pl query package
 
 Run the following command to containerize the **query** microservice:
 
+```
 docker build -t query:1.0-SNAPSHOT query/.
+```
+{: codeblock}
 
 Next, use the provided script to restart the query service in a Docker container. 
 
@@ -736,6 +751,8 @@ Next, use the provided script to restart the query service in a Docker container
 ./scripts/startQueryContainer.sh
 ```
 {: codeblock}
+
+
 
 You can access the application by making requests to the `query/systemLoad` endpoint at the http://localhost:9080/query/systemLoad[http://localhost:9080/query/systemLoad^] URL 
 ```
@@ -757,6 +774,8 @@ When you are done checking out the application, run the following script to stop
 {: codeblock}
 
 
+
+
 # Testing the query microservice
 
 A few tests are included for you to test the basic functionality of the **query** microservice. 
@@ -774,6 +793,7 @@ touch query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
 
 
 ```
+
 package it.io.openliberty.guides.query;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -881,11 +901,15 @@ The **testSystemLoad()** test case verifies that the **query** service can corre
 
 Navigate to the **query** directory, then verify that the tests pass by running the Maven **verify** goal:
 
+```
 cd query
 mvn verify
+```
+{: codeblock}
 
 When the tests succeed, you see output similar to the following example:
 
+```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
@@ -895,6 +919,8 @@ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.88 s - in it.i
 Results:
 
 Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+```
+{: codeblock}
 
 # Summary
 
