@@ -58,7 +58,7 @@ jobs:
         name: Create Pull Request
 
   convertStaging:
-    name: Output message
+    name: Make PR to Staging
     runs-on: ubuntu-latest
     if: contains(github.event.inputs.branch, 'sn-automation-testing-qa')
   
