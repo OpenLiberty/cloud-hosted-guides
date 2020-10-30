@@ -5,11 +5,11 @@ on:
       branch:
         description: 'Branch pushed to'     
         required: true
-        default: 'defaulted'
+        default: 'qa'
       guide_name:
         description: 'Guide changed'
         required: true
-        default: 'not given'
+        default: 'guide-rest-into'
         
 jobs:
   printBranch:
@@ -21,6 +21,7 @@ jobs:
         run: |
           echo "${{ github.event.inputs.branch }}"
           echo "${{ github.event.inputs.guide_name }}"
+
   convertMaster:
     name: Make PR to Master
     runs-on: ubuntu-latest
@@ -31,11 +32,7 @@ jobs:
       # Any prerequisite steps
       - uses: actions/checkout@master
 
-      # Print message
-      - name: Message
-        run: |
-          echo "${{ github.event.inputs.branch }}"
-          echo "${{ github.event.inputs.guide_name }}"
+      
       - name: Run Converter
         run: |
           git init
@@ -56,7 +53,7 @@ jobs:
         with:
             title: "Change to ${{ github.event.inputs.guide_name }}"
             body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
-            branch: "${{ github.event.inputs.guide_name }}/actions"
+            branch: "${{ github.event.inputs.guide_name }}/master"
             base: "master" 
         name: Create Pull Request
 
@@ -70,11 +67,6 @@ jobs:
       # Any prerequisite steps
       - uses: actions/checkout@master
 
-      # Print message
-      - name: Message
-        run: |
-          echo "${{ github.event.inputs.branch }}"
-          echo "${{ github.event.inputs.guide_name }}"
       - name: Run Converter
         run: |
           git init
@@ -95,6 +87,6 @@ jobs:
         with:
             title: "Change to ${{ github.event.inputs.guide_name }}"
             body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
-            branch: "${{ github.event.inputs.guide_name }}/actions"
+            branch: "${{ github.event.inputs.guide_name }}/staging"
             base: "staging" 
         name: Create Pull Request
