@@ -49,6 +49,7 @@ jobs:
           rm -f importFunctions.class
           rm -f functions.class
           rm -f GuideConverterV2.class
+          rm -f work.class
           mv ${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
