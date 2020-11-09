@@ -1,247 +1,665 @@
-# Configuring a Readiness Probe for a Java Microservice
 
-### What you will learn
+# Checking the health of microservices on Kubernetes
 
-You will learn how to create health check endpoints for your microservices. Then, you will configure Kubernetes to use these endpoints to keep your microservices running smoothly.
 
-### Introduction
+Learn how to check the health of microservices on Kubernetes by setting up readiness and liveness probes to inspect MicroProfile Health Check endpoints.
 
-MicroProfile Health allows services to report their health, and it publishes the overall health status to defined endpoints. If a service reports `UP`, then it’s available. If the service reports `DOWN`, then it’s unavailable. MicroProfile Health reports an individual service status at the endpoint and indicates the overall status as `UP` if all the services are `UP`. A service orchestrator can then use the health statuses to make decisions.
 
-Kubernetes provides liveness and readiness probes that are used to check the health of your containers. These probes can check certain files in your containers, check a TCP socket, or make HTTP requests. MicroProfile Health exposes readiness and liveness endpoints on your microservices. Kubernetes polls these endpoints as specified by the probes to react appropriately to any change in the microservice’s status. 
 
-## Getting Started
+## What you'll learn
 
-If a terminal window does not open navigate:
+You will learn how to create health check endpoints for your microservices. Then, you 
+will configure {kube} to use these endpoints to keep your microservices running smoothly.
+
+MicroProfile Health allows services to report their health, and it publishes the overall 
+health status to defined endpoints. If a service reports `UP`, then it's available. If 
+the service reports `DOWN`, then it's unavailable. MicroProfile Health reports an individual 
+service status at the endpoint and indicates the overall status as `UP` if all the services 
+are `UP`. A service orchestrator can then use the health statuses to make decisions.
+
+{kube} provides liveness and readiness probes that are used to check the health of your 
+containers. These probes can check certain files in your containers, check a TCP socket, 
+or make HTTP requests. MicroProfile Health exposes readiness and liveness endpoints on 
+your microservices. {kube} polls these endpoints as specified by the probes to react 
+appropriately to any change in the microservice's status. Read the 
+[Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) 
+guide to learn more about MicroProfile Health.
+
+The two microservices you will work with are called `system` and `inventory`. The `system` microservice
+returns the JVM system properties of the running container and it returns the pod's name in the HTTP header
+making replicas easy to distinguish from each other. The `inventory` microservice
+adds the properties from the `system` microservice to the inventory. This demonstrates
+how communication can be established between pods inside a cluster.
+
+
+ Copyright (c) 2018, 2019 IBM Corporation and others.
+ Licensed under Creative Commons Attribution-NoDerivatives
+ 4.0 International (CC BY-ND 4.0)
+   https://creativecommons.org/licenses/by-nd/4.0/
+ Contributors:
+     IBM Corporation
+# Additional prerequisites
+
+Before you begin, you need a containerization software for building containers. kube supports various container runtimes. You will use `Docker` in this guide. For Docker installation instructions, refer to the official [Docker documentation](https://docs.docker.com/install/).
+
+`*WINDOWS*`
+`*MAC*`
+`*LINUX*`
+
+
+After you complete the Docker setup instructions for your operating system, ensure that {kube} (not Swarm) is selected as the orchestrator in Docker Preferences.
+
+Use Docker Desktop, where a local {kube} environment is pre-installed and enabled. If you do not see the _{kube}_ tab, then upgrade to the latest version of Docker Desktop.
+
+Complete the setup for your operating system:
+
+ - Set up [Docker for Mac](https://docs.docker.com/docker-for-mac/#kubernetes).
+
+After you complete the Docker setup instructions for your operating system, ensure that {kube} (not Swarm) is selected as the orchestrator in Docker Preferences.
+
+You will use `Minikube` as a single-node {kube} cluster that runs locally in a virtual machine.
+Make sure you have `kubectl` installed. If you need to install `kubectl`, see the [kubectl installation instructions](https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-kubectl-on-linux).
+For Minikube installation instructions, see the [Minikube documentation](https://github.com/kubernetes/minikube#installation).
+
+
+
+# Getting started
+
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/master.git) and use the projects that are provided inside:
 
 ```
-Terminal -> New Terminal
-```
-
-
-Let's begin by ensuring your Kubernetes environment is set up by running by executing the following command in the terminal:
-
-```
-kubectl version
+git clone https://github.com/openliberty/master.git
+cd master
 ```
 {: codeblock}
 
-Check you are in the **home/project** folder:
+
+The `start` directory contains the starting project that you will build upon.
+
+The `finish` directory contains the finished project that you will build.
+
+
+ Copyright (c) 2018, 2019 IBM Corporation and others.
+ Licensed under Creative Commons Attribution-NoDerivatives
+ 4.0 International (CC BY-ND 4.0)
+   https://creativecommons.org/licenses/by-nd/4.0/
+ Contributors:
+     IBM Corporation
+
+# Starting and preparing your cluster for deployment
+
+Start your {kube} cluster.
+
+`*WINDOWS*`
+`*MAC*`
+`*LINUX*`
+
+Start your Docker Desktop environment.
+
+ifdef::docker-desktop-description[]
+{docker-desktop-description}
+endif::[]
+
+Ensure that Kubernetes is running on Docker Desktop and that the context is set to `docker-desktop`.
+
+[.linux_section]
+Run the following command from a command-line session:
+
+[subs="attributes"]
 
 ```
-pwd
+ifdef::minikube-start[]
+{minikube-start}
+endif::[]
+ifndef::minikube-start[]
+minikube start
+endif::[]
+```
+[.linux_section]
+ifdef::minikube-description[]
+{minikube-description}
+endif::[]
+
+
+
+Next, validate that you have a healthy {kube} environment by running the following command from the active command-line session.
+
+```
+kubectl get nodes
+```
+
+This command should return a `Ready` status for the master node.
+
+`*WINDOWS*`
+`*MAC*`
+`*LINUX*`
+
+You do not need to do any other step.
+
+Run the following command to configure the Docker CLI to use Minikube's Docker daemon.
+After you run this command, you will be able to interact with Minikube's Docker daemon and build new
+images directly to it from your host machine:
+
+```
+eval $(minikube docker-env)
+```
+
+
+# Adding health checks to the inventory microservice
+
+Navigate to `start` directory to begin.
+
+The `inventory` microservice should be healthy only when `system` is available. To add this 
+check to the `/health/ready` endpoint, you will create a class that is annotated with the
+`@Readiness` annotation and implements the `HealthCheck` interface.
+
+Create the `InventoryReadinessCheck` class.
+
+
+> [File -> Open]master/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+
+
+
+```
+package io.openliberty.guides.inventory;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Readiness
+@ApplicationScoped
+public class InventoryReadinessCheck implements HealthCheck {
+    
+    private static final String readinessCheck = InventoryResource.class.getSimpleName() 
+                                                 + " Readiness Check";
+
+    @Inject
+    @ConfigProperty(name = "SYS_APP_HOSTNAME")
+    private String hostname;
+
+    public HealthCheckResponse call() {
+        if (isSystemServiceReachable()) {
+            return HealthCheckResponse.up(readinessCheck);
+        } else {
+            return HealthCheckResponse.down(readinessCheck);
+        }
+    }
+    
+    private boolean isSystemServiceReachable() {
+        try {
+            Client client = ClientBuilder.newClient();
+            client
+                .target("http://" + hostname + ":9080/system/properties")
+                .request()
+                .post(null);
+
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+}
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
+
+This health check verifies that the `system` microservice is available at 
+`\http://system-service:9080/`. The `system-service` host name is only accessible from 
+inside the cluster, you can't access it yourself. If it's available, then it returns an 
+`UP` status. Similarly, if it's unavailable then it returns a `DOWN` status. When the 
+status is `DOWN`, the microservice is considered to be unhealthy.
+
+Create the `InventoryLivenessCheck` class.
+
+
+> [File -> Open]master/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+
+
 
 ```
-git clone https://github.com/yasmin-aumeeruddy/snl-kube-health.git
-cd snl-kube-health/finish
+package io.openliberty.guides.inventory;
+
+import javax.enterprise.context.ApplicationScoped;
+
+import java.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
+
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class InventoryLivenessCheck implements HealthCheck {
+ 
+  @Override
+  public HealthCheckResponse call() {
+      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+      long memUsed = memBean.getHeapMemoryUsage().getUsed();
+      long memMax = memBean.getHeapMemoryUsage().getMax();
+
+      return HealthCheckResponse.named(InventoryResource.class.getSimpleName() 
+                                      + " Liveness Check")
+                                .withData("memory used", memUsed)
+                                .withData("memory max", memMax)
+                                .state(memUsed < memMax * 0.9).build();
+  }
+}
 ```
 {: codeblock}
 
-# Deploy Java microservices
 
-Build the applications by running the following command:
+This liveness check verifies that the heap memory usage is below 90% of the maximum memory.
+If more than 90% of the maximum memory is used, a status of `DOWN` will be returned. 
+
+The health checks for the `system` microservice were already been implemented. The `system`
+microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. 
+This endpoint has been provided for you to observe the results of an unhealthy pod and how 
+{kube} reacts.
+
+# Configuring readiness and liveness probes
+
+You will configure {kube} readiness and liveness probes. Readiness probes are responsible for 
+determining that your application is ready to accept requests. If it's not ready, traffic 
+won't be routed to the container. Liveness probes are responsible for determining when a 
+container needs to be restarted. 
+
+Create the kubernetes configuration file.
+
+
+> [File -> Open]master/start/kubernetes.yaml
+
+
 
 ```
-mvn clean package
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: system
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        # system probes
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+        # inventory probe
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 31000
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 32000
 ```
 {: codeblock}
 
-Now that you have your Kubernetes cluster up and running, you can deploy your microservices using the following command:
+kubernetes.yaml
+
+The readiness and liveness probes are configured for the containers running the `system` 
+and `inventory` microservices.
+
+The readiness probes are configured to poll the `/health/ready` endpoint. The readiness probe 
+determines the READY status of the container as seen in the `kubectl get pods` output. The 
+`initialDelaySeconds` field defines how long the probe should wait before it 
+starts to poll so the probe does not start making requests before the server has started. 
+The `failureThreshold` option defines how many times the probe should fail 
+before the state should be changed from ready to not ready. The `timeoutSeconds` 
+option defines how many seconds before the probe times out. The `periodSeconds` 
+option defines how often the probe should poll the given endpoint.
+
+The liveness probes are configured to poll the `/health/live` endpoint. 
+The liveness probes determine when a container needs to be restarted. Similar to the readiness
+probes, the liveness probes also define `initialDelaySeconds`, 
+`failureThreshold`, `timeoutSeconds`,
+and `periodSeconds`.
+
+# Deploying the microservices
+
+To build these microservices, navigate to the `start` directory and run the following 
+command.
+
+```
+mvn package
+```
+{: codeblock}
+
+Run the following command to download or update to the latest `openliberty/open-liberty:kernel-java8-openj9-ubi` Docker image:
+
+```
+docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
+```
+{: codeblock}
+
+Next, run the `docker build` commands to build container images for your application:
+```
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+{: codeblock}
+
+The `-t` flag in the `docker build` command allows the Docker image to be labeled (tagged) in the `name[:tag]` format. 
+The tag for an image describes the specific image version. If the optional `[:tag]` tag is not specified, the `latest` tag is created by default.
+
+When the builds succeed, run the following command to deploy the necessary {kube} 
+resources to serve the applications.
 
 ```
 kubectl apply -f kubernetes.yaml
 ```
 {: codeblock}
 
-While you are waiting for your services to start up, take a look at the provided kubernetes.yaml file that you have used to deploy your two Java microservices. 
-
-> [File->Open] snl-kube-health/finish/kubernetes.yaml
-
-Here you can see configuration for two deployments and two services. The first deployment **name-deployment** has two replicas which means it will have two pods running. We also specify the Docker image name and the container ports we would like to map outside the container, **9080**. This deployment contains a simple Java microservice that displays a brief greeting and the name of the container it runs in.
-
-The second deployment **ping-deployment** does not specify any replicas as we only require one pod for this tutorial. This deployment pings the Kubernetes service that encapsulates the pod running the name microservice. This demonstrates how communication can be established between pods in your cluster.
-
-For each deployment, you can find information relating to the readiness probe, provided by Kubernetes, underneath the **readinessProbe** attribute. We have specified a delay of 15 seconds that will give the deployment sufficient time to start up. The polling period is set to 5 seconds so it will check the pods health every 5 seconds and if it gets one bad request it will mark that pod as unhealthy.
-
-The Kubernetes readiness probes in these services are implemented using MicroProfile health. The two Docker images that are being used for this tutorial have classes annotated with **@Health** that are integrated with CDI. Run the following command to have a look inside one of the classes used in this tutorial. This is just a simple class that contains a method **setUnhealthy()** that will make the service unhealthy for 60 seconds that allows the tutorial to demonstrate how useful this can be with Kubernetes. Once you have had a look at the code behind the service please move on to the next step.
-
-> [File -> Open] snl-kube-health/finish/system/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
-
-The microservices are fully deployed and ready for requests when the **READY** column indicates 1/1 for each deployment. Repeat the previous command until all deployments are ready before continuing. Now that your microservices are deployed and running, you are ready to send some requests.
-
-Firstly check the node ports by running the following command in the terminal:
-
-```
-kubectl get services
-``` 
-{: codeblock}
-
-
-There are two ports specified under the **Port(s)** column for each service and they are shown as **{target port}/{node port}/TCP**, for example, **9080:31006/TCP** where 9080 is the target port and 31006 is the node port. Take note of each node port shown from the command.
-
-Set the **namePort** and **pingPort** variables to the correct node ports for each service:
-
-```
-namePort={port}
-and 
-pingPort={port}
-```
-
-Check that they have been set correctly: 
-
-```
-echo $namePort && echo $pingPort
-```
-{: codeblock}
-
-You should see an output consisting of both node ports. 
-
-To find the IP addresses required to access the services, use the following command:
-
-```
-kubectl describe pods
-```
-{: codeblock}
-
-*Note: to make your terminal full screen, double click the terminal heading
-
-This command shows the details for both pods. The IP addresses for the nodes that the pods are deployed on are listed in the output. Look for the IP address that is stated next to the label **Node:** for each pod. For example, in the following case, the IP address would be **10.114.85.172** for the name deployment and **10.114.85.161** for the ping deployment. 
-
-```
-Name:           name-deployment-855f7d4b98-77qgl
-Namespace:      sn-labs-yasminaumeer
-Priority:       0
-Node:           10.114.85.172/10.114.85.172
-Start Time:     Tue, 18 Feb 2020 14:15:42 +0000
-...
-Name:           ping-deployment-5bb7ff78cf-s88w4
-Namespace:      sn-labs-yasminaumeer
-Priority:       0
-Node:           10.114.85.161/10.114.85.161
-Start Time:     Tue, 18 Feb 2020 14:15:42 +0000
-...
-```
-
-Like you did with the node ports, set the **nameIP** and **pingIP** variables to the right IP addresses for the services:
-
-```
-nameIP={IP address}
-pingIP={IP address}
-```
-
-Check that they have been set correctly: 
-
-```
-echo $nameIP && echo $pingIP
-```
-{: codeblock}
-
-You should see an output consisting of both IP addresses.
-
-When you run the following command it will use the IP address of your cluster (This may take several minutes).
-
-```
-curl http://$nameIP:$namePort/api/name
-```
-{: codeblock}
-
-You should see a response similar to the following:
-
-`Hello! I'm container [container name]`
-
-Similarly observe a response with the content pong:
-
-```
-curl http://$pingIP:$pingPort/api/ping/name-service
-```
-{: codeblock}
-
-# Turn one of your Microservices Unhealthy
-
-Now that your microservices are up and running and you have made sure that your requests are working, we can monitor the microservices’ health. Let’s start by making one of our microservices unhealthy. To do this, you need to make a POST request to a specific URL endpoint provided by the MicroProfile specification, which allows you to make a service unhealthy:
-
-```
-curl -X POST http://$nameIP:$namePort/api/name/unhealthy
-```
-{: codeblock}
-
-If you now check the health of your pods you should notice it is not ready as shown by **0/1**.
+Use the following command to view the status of the pods. There will be two `system` pods 
+and one `inventory` pod, later you'll observe their behavior as the `system` pods become unhealthy.
 
 ```
 kubectl get pods
 ```
 {: codeblock}
 
-Now if you send a request to the endpoint again you will notice it will not fail as your other microservice will now handle the request:
-
 ```
-curl http://$nameIP:$namePort/api/name
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          59s
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          59s
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          59s
 ```
-{: codeblock}
 
-# Test out the readiness Probe
+Wait until the pods are ready. After the pods are ready, you will make requests to your 
+services.
 
-The unhealthy deployment should automatically recover after about 30 seconds. Run the following command until you see the **READY** state return to **1/1**.
+
+The default host name for Docker Desktop is `localhost`.
+
+The default host name for minikube is {minikube-ip}. Otherwise it can be found using the 
+`minikube ip` command.
+
+Navigate to `{system-api}/properties` and observe a response
+containing JVM system properties. Replace `[hostname]` with the 
+IP address or host name of your {kube} cluster. The readiness probe ensures the READY 
+state won't be `1/1` until the container is available to accept requests. Without a 
+readiness probe, you may notice an unsuccessful response from the server. This scenario 
+can occur when the container has started, but the application server hasn't fully 
+initialized. With the readiness probe, you can be certain the pod will only accept 
+traffic when the microservice has fully started.
+
+Similarly, navigate to `{inventory-api}/system-service` and observe that the request is successful.
+
+# Changing the ready state of the system microservice
+
+An endpoint has been provided under the `system` microservice to set it to an unhealthy 
+state in the health check. The unhealthy state will cause the readiness probe to fail. 
+Use the `curl` command to invoke this endpoint by making a POST request to 
+`{system-api}/unhealthy` -- if `curl` is unavailable then use a tool such as 
+[Postman](https://www.getpostman.com/).
+
+[subs="attributes", role=command]
+```
+curl -X POST {system-api}/unhealthy
+```
+
+Run the following command to view the state of the pods:
 
 ```
 kubectl get pods
 ```
 {: codeblock}
 
-Once it has recovered you are going to make both demo pods unhealthy by making a POST request to each deployment.
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          1m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          1m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
+```
+
+You will notice that one of the two `system` pods is no longer in the ready state. Navigate 
+to `{system-api}/properties`. Observe that your request will still be successful because you have two 
+replicas and one is still healthy.
+
+### Observing the effects on the inventory microservice
+
+Wait until the `system` pod is ready again. Make two POST requests to `{system-api}/unhealthy`.
+ If you see the same pod name twice, make the request again until you see that the second 
+ pod has been made unhealthy. You may see the same pod twice because there's a delay 
+ between a pod becoming unhealthy and the readiness probe noticing it. Therefore, traffic 
+ may still be routed to the unhealthy service for approximately 5 seconds. Continue to 
+ observe the output of `kubectl get pods`. You will see both pods are no longer ready. 
+ During this process, the readiness probe for the `inventory` microservice will also fail. 
+ Observe it's no longer in the ready state either.
+
+First, both `system` pods will no longer be ready because the readiness probe failed.
 
 ```
-curl -X POST http://$nameIP:$namePort/api/name/unhealthy
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     0/1       Running   0          5m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          5m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          5m
+```
+
+Next, the `inventory` pod is no longer ready because the readiness probe failed. The probe 
+failed because `system-service` is now unavailable.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     0/1       Running   0          6m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          6m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          6m
+```
+
+Then, the `system` pods will start to become healthy again after 60 seconds.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          7m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
+```
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          7m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
+```
+
+Finally, you will see all of the pods have recovered.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          8m
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          8m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
+```
+
+
+# Testing the microservices
+
+Run the tests by running the following command and appropriately substituting `[hostname]` 
+for the correct value.
+
+```
+mvn failsafe:integration-test -Dcluster.ip=[hostname]
 ```
 {: codeblock}
 
+A few tests are included for you to test the basic functions of the microservices. If a test failure
+occurs, then you might have introduced a bug into the code. To run the tests, wait for all pods to be
+in the ready state before proceeding further.
+
+When the tests succeed, you should see output similar to the following in your console.
+
 ```
-curl -X POST http://$nameIP:$namePort/api/name/unhealthy
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.65 s - in it.io.openliberty.guides.system.SystemEndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 ```
-{: codeblock}
 
- If the response from the second request has the same pod name as the first, wait 5 seconds and run the command again. This is because the readiness probe has not noticed the microservice has become unhealthy.
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
- Now check that both pods are no longer in a ready state:
+Results:
 
- ```
- kubectl get pods
- ```
- {: codeblock}
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+```
 
- You should soon notice that the ping microservice has also changed state. This is because the readiness probe for that pod has realized the demo pod is no longer receiving requests and as such the ping microservice no longer works.
+# Tearing down the environment
 
-After a small amount of time, if you keep running the previous command you will notice the demo pods recover and change state to ready. Following this, the ping microservice will also become available after a short amount of time.
- 
-Clean up the cluster by running the following command:
+To remove all of the resources created during this guide, run the following command to 
+delete all of the resources that you created.
 
 ```
 kubectl delete -f kubernetes.yaml
 ```
 {: codeblock}
 
-# Summary
+ Copyright (c) 2018, 2019 IBM Corporation and others.
+ Licensed under Creative Commons Attribution-NoDerivatives
+ 4.0 International (CC BY-ND 4.0)
+   https://creativecommons.org/licenses/by-nd/4.0/
 
-## Clean up your environment
+ Contributors:
+     IBM Corporation
 
-Delete the **snl-kube-health** project by navigating to the **/home/project/** directory
+`*WINDOWS*`
+`*MAC*`
+`*LINUX*`
 
+Nothing more needs to be done for Docker Desktop.
+
+Perform the following steps to return your environment to a clean state.
+
+. Point the Docker daemon back to your local machine:
++
 ```
-rm -r -f snl-kube-health
+eval $(minikube docker-env -u)
+```
+. Stop your Minikube cluster:
++
+```
+minikube stop
 ```
 {: codeblock}
 
-## Well Done
+. Delete your cluster:
++
+```
+minikube delete
+```
+{: codeblock}
 
-You have used MicroProfile Health to create an endpoint that reports on your Java microservice’s status. Then, you observed how Kubernetes uses the /health endpoint with the readiness probe to keep your microservices running smoothly.
 
-If you would like to look at the code for these microservices follow the link to the GitHub repository. For more information about the MicroProfile specification used in this tutorial, visit the MicroProfile website with the link below.
 
-[GitHub repository](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health)
-[MicroProfile.io](https://microprofile.io)
+
+
+
+
+
+
+# Great work! You're done!
+
+You have used MicroProfile Health and Open Liberty to create endpoints that report on 
+your microservice's status. Then, you observed how {kube} uses the `/health/ready` and
+`/health/live` endpoints to keep your microservices running smoothly.
 
 
