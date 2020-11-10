@@ -19,10 +19,10 @@ jobs:
           - {"github":"guide-cdi-intro","gitlab":"injecting-dependencies-into-a-java-microservices"}
           - {"github":"guide-cloud-native","gitlab":"get-started-with-cloud-native-on-the-open-java-stack"}
           - {"github":"guide-deploying-and-packinging-applications","gitlab":"packaging-and-deploying-applications-with-open-liberty"}
-          - {"github":"guide-kube-health","gitlab":"configuing-a-readiness-probe-for-a-java-microservice"}
           - {"github":"guide-kubernetes-intro","gitlab":"deploying-a-java-microservices-to-kubernetes"}
           - {"github":"guide-microprofile-config","gitlab":"configuring-java-microservices"}
           - {"github":"guide-microprofile-fallback","gitlab":"fault-tolerant-microservices-with-ol-and-microprofile"}
+          - {"github":"guide-microprofile-health","gitlab":"configuing-a-readiness-probe-for-a-java-microservice"}
           - {"github":"guide-microprofile-jwt","gitlab":"securing-microservices-with-json-web-token"}
           - {"github":"guide-microprofile-reactive-messaging-acknowledgment","gitlab":"acknowledging-messages-using-microprofile-reactive-messaging"}
           - {"github":"guide-microprofile-reactive-messaging-rest-integration","gitlab":"integrating-restful-services-with-a-reactive-system"}
