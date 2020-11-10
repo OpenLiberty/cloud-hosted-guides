@@ -54,12 +54,14 @@ mvn -pl models install
 ```
 {: codeblock}
 
+
 Run the following command to download or update to the latest `openliberty/open-liberty:kernel-java8-openj9-ubi` Docker image:
 
 ```
 docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
 ```
 {: codeblock}
+
 
 Next, navigate to the `finish/system` directory and run the following Maven goal to build the `system` service and run
 the integration tests on an Open Liberty server in a container:
@@ -69,6 +71,7 @@ cd system
 mvn verify
 ```
 {: codeblock}
+
 
 You will see the following output:
 
@@ -120,12 +123,14 @@ mvn -pl models install
 ```
 {: codeblock}
 
+
 If you don't have the latest Docker image, pull it by running the following command:
 
 ```
 docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
 ```
 {: codeblock}
+
 
 With Open Liberty development mode, known as dev mode, you can use MicroShed Testing to run tests on an already running
 Open Liberty server. Navigate to the `start/system` directory.
@@ -137,6 +142,7 @@ deploys your updates whenever you save a new change. Run the following goal to s
 mvn liberty:dev
 ```
 {: codeblock}
+
 
 After you see the following message, your application server in dev mode is ready:
 
@@ -191,6 +197,7 @@ public class AppContainerConfig implements SharedContainerConfiguration {
 }
 ```
 {: codeblock}
+
 
 The `AppContainerConfig` class externalizes test container setup and configuration, so
 you can use the same application containers across multiple tests.The `@Container`
@@ -263,6 +270,7 @@ public class SystemServiceIT {
 {: codeblock}
 
 
+
 The test uses the `KafkaConsumer` client API and
 is configured by using the `@KafkaConsumerConfig` annotation. The consumer client is configured
 to consume messages from the `systemLoadTopic` topic in the `kafka` container.
@@ -304,6 +312,7 @@ If you aren't running in dev mode, you can run the tests by running the followin
 mvn verify
 ```
 {: codeblock}
+
 
 You will see the following output:
 
@@ -347,6 +356,7 @@ As you did with the `system` service, run Open Liberty in dev mode to listen for
 mvn liberty:dev
 ```
 {: codeblock}
+
 
 Now you can create your integrated test.
 
@@ -422,6 +432,7 @@ public class InventoryServiceIT {
 ```
 {: codeblock}
 
+
 The `InventoryServiceIT` class uses the `KafkaProducer`
 client API to produce messages in the test environment for the `inventory` service container to consume. The
 `@KafkaProducerConfig` annotation configures the producer to use the custom serializer provided in
@@ -462,6 +473,7 @@ If you aren't running in dev mode, you can run the tests by running the followin
 mvn verify
 ```
 {: codeblock}
+
 
 You will see the following output:
 
