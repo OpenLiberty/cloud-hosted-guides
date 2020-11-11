@@ -520,7 +520,6 @@ Delete the **guide-microprofile-reactive-messaging-rest-integration** project by
 ```
 cd ../..
 rm -r -f guide-microprofile-reactive-messaging-rest-integration
-rmdir guide-microprofile-reactive-messaging-rest-integration
 ```
 {: codeblock}
 
