@@ -251,7 +251,7 @@ In this lab, you learned:
 
 ## Clean up your environment
 
-Delete the **guide-microprofile-reactive-messaging-acknowledgment** project by navigating to the **/home/project/** directory
+Delete the **guide-rest-intro** project by navigating to the **/home/project/** directory
 ```
 cd ../..
 rm -r -f guide-rest-intro
