@@ -4,9 +4,11 @@
 
 Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
 
+Try this guide in skill network by clicking this https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https://cf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud/acknowledging-messages-using-microprofile-reactive-messaging/instructions.md[link^].
+
 ## What you'll learn
 
-THIS IS A AUSTIN'S CHANGE TO QA 123
+Testing guide convertor #1.
 
 MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive
 Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged
