@@ -4,7 +4,7 @@
 
 Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
 
-Try this guide in skill network by clicking this https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https://cf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud/acknowledging-messages-using-microprofile-reactive-messaging/instructions.md[link^].
+Try this guide in skill network by clicking this [link](https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https:%2F%2Fcf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud%2Facknowledging-messages-using-microprofile-reactive-messaging%2Finstructions.md)
 
 ## What you'll learn
 
