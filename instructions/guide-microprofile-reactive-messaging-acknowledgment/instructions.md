@@ -4,11 +4,9 @@
 
 Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
 
-Try this guide in skill network by clicking this [link](https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https:%2F%2Fcf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud%2Facknowledging-messages-using-microprofile-reactive-messaging%2Finstructions.md)
-
 ## What you'll learn
 
-Testing guide convertor #1.
+This is a test
 
 MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive
 Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged
@@ -24,7 +22,13 @@ You will explore the acknowledgment strategies that are available with MicroProf
 your own manual acknowledgment strategy. To learn more about how the reactive Java services used in this guide work, check
 out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-## Getting started
+# Additional prerequisites
+
+You need to have Docker installed. For installation instructions, refer to the official
+[Docker documentation](https://docs.docker.com/get-docker/). You will build and run the microservices in Docker containers.
+An installation of Apache Kafka is provided in another Docker container.
+
+# Getting started
 
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git) and use the projects that are provided inside:
 
@@ -39,7 +43,6 @@ The `start` directory contains the starting project that you will build upon.
 
 The `finish` directory contains the finished project that you will build.
 
-## Choosing an acknowledgment strategy
 
 
 Messages must be acknowledged in reactive applications. Messages are either acknowledged explicitly, or messages are acknowledged
@@ -79,7 +82,6 @@ message must be acknowledged immediately.
 This case where a message either needs to be acknowledged immediately or some time later is one of the situations where
 the `MANUAL` acknowledgment strategy would be beneficial
 
-## Implementing the MANUAL acknowledgment strategy
 
 
 Navigate to the **start** directory to begin.
@@ -371,7 +373,7 @@ with the requested property name as the `payload` and an acknowledgment
 `CompletableFuture` variable that returns a `200` response
 code after the variable is completed in the `callback` function.
 
-## Building and running the application
+# Building and running the application
 
 Build the `system` and `inventory` microservices using Maven and then run them in Docker containers.
 
@@ -412,7 +414,7 @@ project. For simplicity, the script starts one instance of the `system` service.
 
 
 
-## Testing the application
+# Testing the application
 
 After the application is up and running, you can access the application by making a GET request to the `/systems` endpoint
 of the `inventory` service.
@@ -496,20 +498,7 @@ Finally, run the following script to stop the application:
 
 
 
-# Summary
-
-## Clean up your environment
-
-Delete the **guide-microprofile-reactive-messaging-acknowledgment** project by navigating to the **/home/project/** directory
-
-```
-cd ../..
-rm -r -f guide-microprofile-reactive-messaging-acknowledgment
-rmdir guide-microprofile-reactive-messaging-acknowledgment
-```
-{: codeblock}
-
-## Great work! You're done!
+# Great work! You're done!
 
 You developed an application by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
@@ -522,4 +511,6 @@ Learn more about MicroProfile.
 [View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/apidocs/)
 
 [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
+
+This is a test for the link. https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https://cf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud/acknowledging-messages-using-microprofile-reactive-messaging/instructions.md[Click this link^].
 
