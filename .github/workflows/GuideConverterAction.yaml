@@ -38,12 +38,14 @@ jobs:
           git init
           mkdir -p instructions/${{ github.event.inputs.guide_name }}/
           rm -f instructions/${{ github.event.inputs.guide_name }}/README.md
+          cd GuideConverter
           javac GuideConverterV2.java
           java GuideConverterV2 ${{ github.event.inputs.guide_name }} master
           rm -f importFunctions.class
           rm -f functions.class
           rm -f GuideConverterV2.class
-          mv ${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
+          cd ..
+          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
