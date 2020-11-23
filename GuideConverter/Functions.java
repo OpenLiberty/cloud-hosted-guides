@@ -1,11 +1,13 @@
-//  Copyright (c) 2020 IBM Corporation and others.
-// Licensed under Creative Commons Attribution-NoDerivatives
-// 4.0 International (CC BY-ND 4.0)
-//   https://creativecommons.org/licenses/by-nd/4.0/
-//
-// Contributors:
-//     IBM Corporation
-//
+/*******************************************************************************
+ * Copyright (c) 2017 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - Initial implementation
+ *******************************************************************************/
 
 import java.io.IOException;
 import java.net.URL;
@@ -13,11 +15,11 @@ import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Scanner;
 
-class work {
+class OverridingEquals {
 
     private String inArray;
 
-    public work(String inArray) {
+    public OverridingEquals(String inArray) {
         this.inArray = inArray;
     }
 
@@ -32,22 +34,19 @@ class work {
 
         /* Check if o is an instance of Complex or not
           "null instanceof [type]" also returns false */
-        if (!(o instanceof work)) {
+        if (!(o instanceof OverridingEquals)) {
             return false;
         }
 
         // typecast o to Complex so that we can compare data members
-        work c = (work) o;
+        OverridingEquals c = (OverridingEquals) o;
 
         // Compare the data members and return accordingly
         return CharSequence.compare(inArray, c.inArray) == 1;
     }
 }
 
-public class functions {
-
-    public static final ArrayList <String> mainArray = new ArrayList<>();
-
+public class Functions {
 
     public static final String codes = "----";
 
@@ -55,23 +54,19 @@ public class functions {
     public static void replaceCodeBlocks(ArrayList<String> listOfLines, int i) {
         listOfLines.get(i).replaceAll("----", "```");
 //        listOfLines.set(i,"```\n");
-
-        mainArray.add(listOfLines.get(i));
     }
 
-    public static void removingIrreleant(ArrayList<String> listOfLines, int i, String[] str, int h) {
+    public static void removingIrrelevant(ArrayList<String> listOfLines, int i, String[] str, int h) {
 
         if (listOfLines.get(i).startsWith(str[h])) {
             listOfLines.set(i, "");
         }
-        mainArray.add(listOfLines.get(i));
     }
 
     public static void removeDiagramReference(ArrayList<String> listOfLines, int i) {
         ArrayList<String> list = new ArrayList<String>();
-        for (int x = 0; x <= 5; x++) {
-            String temp = new String();
-            temp = listOfLines.get(i + x);
+        for (int x = 0; x <= 7; x++) {
+            String temp = listOfLines.get(i + x);
 
             list.add(temp);
         }
@@ -85,24 +80,20 @@ public class functions {
                 }
             }
         }
-
-        mainArray.add(listOfLines.get(i));
     }
 
     public static void insertCopyButton(ArrayList<String> listOfLines, int i) {
         ArrayList<String> check = new ArrayList<>();
         int y = 0;
-        for (int x = 0; x <= 10; x++) {
+        for (int x = 0; x <= 7; x++) {
             y = i + x;
             check.add(listOfLines.get(y));
             if (check.get(x).startsWith("```")) {
                 if (listOfLines.get(y + 1).isBlank()) {
-                    listOfLines.set(y + 1, "{: codeblock}\n\n");
+                    listOfLines.set(y + 1, "{: codeblock}\n\n\n");
                 }
             }
         }
-
-        mainArray.add(listOfLines.get(i));
     }
 
     public static void removeWindowsCommand(ArrayList<String> listOfLines, int i) {
@@ -111,26 +102,21 @@ public class functions {
             int y = x + i;
             if (listOfLines.get(y).startsWith("--")) {
                 counter++;
-                System.out.println(counter);
             }
             if (counter != 2) {
                 listOfLines.set(y, "");
                 listOfLines.set(y + 1, "");
             }
         }
-
-        mainArray.add(listOfLines.get(i));
     }
 
     public static void replaceDashes(ArrayList<String> listOfLines, int i) {
         if (!listOfLines.get(i).startsWith("--------")) {
             listOfLines.set(i, "```\n");
         }
-
-        mainArray.add(listOfLines.get(i));
     }
 
-    public static void codeReplacement(ArrayList<String> listOfLines, String branch, String guideName, int i, String position) {
+    public static void codeInsert(String atIndex, ArrayList<String> listOfLines, String guideName, String branch, int i, String position) {
         listOfLines.set(i, listOfLines.get(i).replaceAll("#", ""));
         for (int x = 0; x < 10; x++) {
             int y = x + i;
@@ -139,44 +125,20 @@ public class functions {
             }
         }
         int g = i + 1;
-        replace(listOfLines, branch,  guideName, g, position);
-
-        mainArray.add(listOfLines.get(i));
-    }
-
-    public static void codeCreate(ArrayList<String> listOfLines, String branch, String guideName, int i, String position) {
-        listOfLines.set(i, listOfLines.get(i).replaceAll("#", ""));
-        for (int x = 0; x < 10; x++) {
-            int y = x + i;
-            if (listOfLines.get(y).startsWith("----")) {
-                listOfLines.set(y, "");
-            }
+        if (atIndex.startsWith("#Create")) {
+            touch(listOfLines, guideName, branch, g, position);
         }
-        int g = i + 1;
-        touch(listOfLines, branch, guideName, g, position);
-
-        mainArray.add(listOfLines.get(i));
-    }
-
-    public static void codeUpdate(ArrayList<String> listOfLines, String branch, String guideName, int i, String position) {
-        listOfLines.set(i, listOfLines.get(i).replaceAll("#", ""));
-        for (int x = 0; x < 10; x++) {
-            int y = x + i;
-            if (listOfLines.get(y).startsWith("----")) {
-                listOfLines.set(y, "");
-            }
+        if (atIndex.startsWith("#Update")) {
+            update(listOfLines, guideName, branch, g, position);
+        } else if (atIndex.startsWith("#Replace")) {
+            replace(listOfLines, guideName, branch, g, position);
         }
-        int g = i + 1;
-        update(listOfLines, branch, guideName, g, position);
-
-        mainArray.add(listOfLines.get(i));
     }
 
     public static void removeAdditionalpres(ArrayList<String> listOfLines, int i) {
         while (!listOfLines.get(i).startsWith("[role='command']")) {
             listOfLines.remove(i);
         }
-        mainArray.add(listOfLines.get(i));
     }
 
     //Don't know what this does
@@ -198,122 +160,68 @@ public class functions {
     }
 
     public static void commons(ArrayList<String> listOfLines, String guideName, int i) {
-        // The next 8 if statements detect parts in the original adoc that are meant to be substituted with things from guides-commons, This then passes info to the imports class which finds can either insert a pre set string of pull it
-        // from the guide-commons repo on GitHub
-        if (listOfLines.get(i).startsWith("include::{common-includes}/ol-kernel-docker-pull.adoc[]")) {
-            importFunctions.kernelPull(listOfLines, guideName, i);
+        // The 2 following if statements are used to get from Guides-Common
+        String CommonURL = "https://raw.githubusercontent.com/OpenLiberty/guides-common/dev/";
+        String GuidesCommon = null;
 
-            mainArray.add(listOfLines.get(i));
-        }
-
-        if (listOfLines.get(i).startsWith("include::{common-includes}/devmode-start.adoc[]")) {
-            importFunctions.devMode(listOfLines, guideName, i);
-
-            mainArray.add(listOfLines.get(i));
-        }
-
-        if (listOfLines.get(i).startsWith("include::{common-includes}/twyb-end.adoc[]")) {
-            importFunctions.end(listOfLines, guideName, i);
-
-            mainArray.add(listOfLines.get(i));
-        }
 
         if (listOfLines.get(i).startsWith("include::{common-includes}/gitclone.adoc[]")) {
-            importFunctions.clone(listOfLines, guideName, i);
 
-            mainArray.add(listOfLines.get(i));
+            GuidesCommon = listOfLines.get(i).substring(27, listOfLines.get(i).length() - 3);
+
+            CommonURL = CommonURL + GuidesCommon;
+
+            ImportFunctions.clone(listOfLines, guideName, i, CommonURL);
         }
 
-        if (listOfLines.get(i).startsWith("include::{common-includes}/devmode-quit.adoc[]")) {
-            importFunctions.devEnd(listOfLines, guideName, i);
+        if (listOfLines.get(i).startsWith("include::{common-includes}/") && !listOfLines.get(i).startsWith("include::{common-includes}/attribution.adoc[subs=\"attributes\"]") && !listOfLines.get(i).startsWith("include::{common-includes}/gitclone.adoc[]") && !listOfLines.get(i).startsWith("include::{common-includes}/os-tabs.adoc[]")) {
 
-            mainArray.add(listOfLines.get(i));
+            GuidesCommon = listOfLines.get(i).substring(27, listOfLines.get(i).length() - 3);
+
+            CommonURL = CommonURL + GuidesCommon;
+
+            ImportFunctions.OtherGuidesCommon(listOfLines, guideName, i, CommonURL);
         }
-
-        if (listOfLines.get(i).startsWith("include::{common-includes}/twyb-intro.adoc[]")) {
-            importFunctions.tryBuildIntro(listOfLines, guideName, i);
-
-            mainArray.add(listOfLines.get(i));
-        }
-
-        if (listOfLines.get(i).startsWith("include::{common-includes}/devmode-test.adoc[]")) {
-            importFunctions.devTest(listOfLines, guideName, i);
-
-            mainArray.add(listOfLines.get(i));
-        }
-
-        if (listOfLines.get(i).startsWith("include::{common-includes}/devmode-build.adoc[]")) {
-            importFunctions.devmodeBuild(listOfLines, guideName, i);
-
-            mainArray.add(listOfLines.get(i));
-        }
-
-        if (listOfLines.get(i).startsWith("include::{common-includes}/devmode-start-cd.adoc[]")) {
-            importFunctions.devmodeStartCD(listOfLines, guideName, i);
-
-            mainArray.add(listOfLines.get(i));
-        }
-
-        if (listOfLines.get(i).startsWith("include::{common-includes}/trywhatyoubuild-end.adoc[]")) {
-            importFunctions.tryWhatYouBuildBeg(listOfLines, guideName, i);
-
-            mainArray.add(listOfLines.get(i));
-        }
-
-        if (listOfLines.get(i).startsWith("include::{common-includes}/trywhatyoubuild-intro.adoc[]")) {
-            importFunctions.tryWhatYouBuildIntro(listOfLines, guideName, i);
-
-            mainArray.add(listOfLines.get(i));
-        }
-
-        if (listOfLines.get(i).startsWith("Navigate to the `start` directory to begin.")) {
-            importFunctions.start(listOfLines, guideName, i);
-
-            mainArray.add(listOfLines.get(i));
-        }
-
     }
 
     public static void finish(ArrayList<String> listOfLines, String guideName, int i) {
-        String finish = "\n# Summary\n\n## Clean up your environment\n\nDelete the **" + guideName + "** project by navigating to the **/home/project/** directory\n\n```\ncd ../..\nrm -r -f " + guideName + "\nrmdir " + guideName + "\n```\n{: codeblock}\n\n";
-        listOfLines.set(i - 1, finish);
-
-        mainArray.add(listOfLines.get(i));
+        String finish = "\n# Summary\n\n## Clean up your environment\n\nDelete the **" + guideName + "** project by navigating to the **/home/project/** directory\n\n```\ncd ../..\nrm -r -f " + guideName + "\nrmdir " + guideName + "\n```\n{: codeblock}\n\n\n" + "## Great work! You're done!\n\n";
+        listOfLines.set(i, finish);
     }
 
     //configures instructions to replace file
-    public static String replace(ArrayList<String> listOfLines, String branch, String guideName, int i, String position) {
+    public static String replace(ArrayList<String> listOfLines, String guideName, String branch, int i, String position) {
         String str = listOfLines.get(i).replaceAll("`", "");
         listOfLines.set(i, listOfLines.get(i).replaceAll("#", ""));
         listOfLines.set(i, listOfLines.get(i).replaceAll("`", "**"));
         listOfLines.set(i, "\n> [File -> Open]" + guideName + "/start/" + listOfLines.get(i).replaceAll("\\*\\*", "") + "\n\n\n");
         listOfLines.add(i, "\n");
         listOfLines.set(i, listOfLines.get(i).replaceAll("touch ", ""));
-        codeSnippet(listOfLines, branch, guideName, i + 3, str);
+        codeSnippet(listOfLines, guideName, branch, i + 3, str);
         position = "main";
         return position;
     }
 
     //configures instructions to update file
-    public static String update(ArrayList<String> listOfLines, String branch, String guideName, int i, String position) {
+    public static String update(ArrayList<String> listOfLines, String guideName, String branch, int i, String position) {
         String str = listOfLines.get(i).replaceAll("`", "");
         listOfLines.set(i, listOfLines.get(i).replaceAll("#", ""));
         listOfLines.set(i, listOfLines.get(i).replaceAll("`", "**"));
         listOfLines.set(i, "\n> [File -> Open]" + guideName + "/start/" + listOfLines.get(i).replaceAll("\\*\\*", "") + "\n\n\n");
         listOfLines.set(i, listOfLines.get(i).replaceAll("touch ", ""));
         listOfLines.add(i, "\n");
-        codeSnippet(listOfLines, branch, guideName, i + 3, str);
+        codeSnippet(listOfLines, guideName, branch, i + 3, str);
         position = "main";
         return position;
     }
 
     //configures instructions to create file
-    public static String touch(ArrayList<String> listOfLines, String branch, String guideName, int i, String position) {
+    public static String touch(ArrayList<String> listOfLines, String guideName, String branch, int i, String position) {
         String str = listOfLines.get(i).replaceAll("`", "");
         listOfLines.set(i, "```\n" + "touch " + str + "```" + "\n{: codeblock}\n\n\n");
-        listOfLines.set(i , "\n> [File -> Open]" + guideName + "/start/" + str + "\n\n\n");
+        listOfLines.set(i, "\n> [File -> Open]" + guideName + "/start/" + str + "\n\n\n");
         listOfLines.add(i, "\n");
-        codeSnippet(listOfLines, branch, guideName, i + 3, str);
+        codeSnippet(listOfLines, guideName, branch, i + 3, str);
         position = "main";
         return position;
     }
@@ -340,14 +248,14 @@ public class functions {
                 System.out.println(localhostSplit[0]);
                 listOfLines.set(i, listOfLines.get(i).replaceAll(link + "\\[" + description + "\\^\\]", ""));
                 if (localhostSplit.length == 2) {
-                    listOfLines.set(i, localhostSplit[0] + localhostSplit[1] + ("\n```\ncurl " + link + "\n```\n{: codeblock}\n\n"));
+                    listOfLines.set(i, localhostSplit[0] + localhostSplit[1] + ("\n```\ncurl " + link + "\n```\n{: codeblock}\n\n\n"));
                 } else {
-                    listOfLines.set(i, localhostSplit[0] + ("\n```\ncurl " + link + "\n```\n{: codeblock}\n\n"));
+                    listOfLines.set(i, localhostSplit[0] + ("\n```\ncurl " + link + "\n```\n{: codeblock}\n\n\n"));
                 }
 //                    writeToFile(element, guideName);
                 return;
             } else {
-                listOfLines.set(i, listOfLines.get(i).replaceAll(link + "\\[" + description + "\\^\\]", ("\n```\ncurl " + link + "\n```\n{: codeblock}\n\n")));
+                listOfLines.set(i, listOfLines.get(i).replaceAll(link + "\\[" + description + "\\^\\]", ("\n```\ncurl " + link + "\n```\n{: codeblock}\n\n\n")));
             }
         }
         formattedLink = "[" + description + "](" + link + ")";
@@ -381,18 +289,22 @@ public class functions {
                     }
 
                     //Uses replacements.properties to change some more properties in the text
+                    if (listOfLines.get(i).startsWith("= ")) {
+                        listOfLines.set(i, listOfLines.get(i).replaceAll("=", props.getProperty("=")));
+                    }
+
+                    //Uses replacements.properties to change some more properties in the text
                     if (listOfLines.get(i).startsWith("==")) {
                         listOfLines.set(i, listOfLines.get(i).replaceAll("=", props.getProperty("=")));
                     }
                 }
             }
-            mainArray.add(listOfLines.get(i));
         }
     }
 
 
     //inserts code snippet (Finds the right code snippet and inserts it into the text
-    public static ArrayList<String> codeSnippet(ArrayList<String> listOfLines, String branch, String guideName, int i, String path) {
+    public static ArrayList<String> codeSnippet(ArrayList<String> listOfLines, String guideName, String branch, int i, String path) {
         try {
             ArrayList<String> code = new ArrayList<String>();
             URL url = new URL("https://raw.githubusercontent.com/openliberty/" + guideName + "/" + branch + "/finish/" + path);
@@ -412,7 +324,7 @@ public class functions {
                     }
                 }
             }
-            code.add("```\n{: codeblock}\n\n");
+            code.add("```\n{: codeblock}\n\n\n");
             listOfLines.addAll(i, code);
         } catch (IOException ex) {
 
@@ -452,19 +364,18 @@ public class functions {
 
 
     //Main function that runs all the methods
-    public static void second(ArrayList<String> listOfLines, String branch, String guideName, Properties prop, Properties props) throws IOException {
+    public static void ConditionsMethod(ArrayList<String> listOfLines, String guideName, String branch, Properties prop, Properties props) throws IOException {
 
         String position = "";
-        int positionNumber = 0;
-        final String[] startingPhrases = {"//", ":", "[source,", "NOTE:", "include::", "[role=", "[.tab_", "image::", "start/", "finish/"};
+        final String[] startingPhrases = {"//", ":", "[source", "NOTE:", "include::", "[role=", "[.tab_", "image::", "start/", "finish/", "system/", "inventory/"};
         // Main for loop
         for (int i = 0; i < listOfLines.size(); i++) {
 
 
-            work c1 = new work(listOfLines.get(i));
-            work c2 = new work(codes);
+            OverridingEquals c1 = new OverridingEquals(listOfLines.get(i));
+            OverridingEquals c2 = new OverridingEquals(codes);
 
-            // Runs the commons functions
+            // Runs the commons Functions
             commons(listOfLines, guideName, i);
 
             // Changes ---- to ```
@@ -480,10 +391,11 @@ public class functions {
             }
 
             // removes code examples
-            if (listOfLines.get(i).startsWith("[source, Java, linenums, role=\"code_column\"]") || listOfLines.get(i).startsWith("[source,xml,linenums,role=\"code_column\"]") || listOfLines.get(i).startsWith("[source, Java, linenums, role=\'code_column")||listOfLines.get(i).startsWith("[source, xml, linenums, role=\'code_column\']")||listOfLines.get(i).startsWith("[source, xml, linenums, role=\"code_column\"]")) {
-                listOfLines.set(i - 1, "");
-                listOfLines.set(i + 1, "");
-                listOfLines.set(i + 3, "");
+            if (listOfLines.get(i).startsWith("[source, Java, linenums") || listOfLines.get(i).startsWith("[source,java,linenums") || listOfLines.get(i).startsWith("[source, java, linenums,") || listOfLines.get(i).startsWith("[source, xml, linenums,") || listOfLines.get(i).startsWith("[source,xml,linenums")|| listOfLines.get(i).startsWith("[source, XML, linenums,") || listOfLines.get(i).startsWith("[source, Text, linenums") || listOfLines.get(i).startsWith("[source, text, linenums,") || listOfLines.get(i).startsWith("[source, json, linenums,") || listOfLines.get(i).startsWith("[source, JSON, linenums,")) {
+
+                        listOfLines.set(i - 1, "");
+                        listOfLines.set(i + 1, "");
+                        listOfLines.set(i + 3, "");
             }
 
             // Replaces left over ----
@@ -498,18 +410,10 @@ public class functions {
             }
 
             //User is instructed to replace a file
-            if (listOfLines.get(i).startsWith("#Replace")) {
-                codeReplacement(listOfLines, branch, guideName, i, position);
-            }
+            if (listOfLines.get(i).startsWith("#Replace") || listOfLines.get(i).startsWith("#Create") || listOfLines.get(i).startsWith("#Update")) {
+                final String atIndex = listOfLines.get(i);
 
-            //User is instructed to create a file
-            if (listOfLines.get(i).startsWith("#Create")) {
-                codeCreate(listOfLines, branch, guideName, i, position);
-            }
-
-            //User is instructed to update a file
-            if (listOfLines.get(i).startsWith("#Update")) {
-                codeUpdate(listOfLines, branch, guideName, i, position);
+                codeInsert(atIndex, listOfLines, guideName, branch, i, position);
             }
 
             //Removes references to images
@@ -517,9 +421,17 @@ public class functions {
                 removeDiagramReference(listOfLines, i);
             }
 
+            if (listOfLines.get(i).startsWith("image::")) {
+                if (listOfLines.get(i+1).startsWith("*")){
+                    listOfLines.remove(i+1);
+                }
+                else if (listOfLines.get(i+2).startsWith("*")){
+                    listOfLines.remove(i+2);
+                }
+            }
 
             //Removes Additional prerequisites section
-            if (listOfLines.get(i).startsWith("## Additional prerequisites")) {
+            if (listOfLines.get(i).startsWith("## Additional prerequisites")||listOfLines.get(i).startsWith("# Additional prerequisites")) {
                 removeAdditionalpres(listOfLines, i);
             }
 
@@ -530,14 +442,14 @@ public class functions {
 
 
             //Current line is an example output of a mvn test
-            if (position.equals("testBlock")) {
-                if (!listOfLines.get(i).startsWith("[INFO]")) {
-                    listOfLines.set(i, "```\n");
-                    position = "main";
-                } else {
-                    listOfLines.set(i, listOfLines.get(i));
-                }
-            }
+//            if (position.equals("testBlock")) {
+//                if (!listOfLines.get(i).startsWith("[INFO]")) {
+//                    listOfLines.set(i, "```\n");
+//                    position = "main";
+//                } else {
+//                    listOfLines.set(i, listOfLines.get(i));
+//                }
+//            }
 
             //Identifies an instruction for windows only and skips the current line
             if (listOfLines.get(i).startsWith("[.tab_content.windows_section]")) {
@@ -546,15 +458,21 @@ public class functions {
 
 
             //Identifies that line is the start of an example output of a mvn test
-            if (listOfLines.get(i).startsWith("[INFO]")) {
-                position = "testBlock";
-                listOfLines.set(i, "```\n" + listOfLines.get(i));
-            }
+//            if (listOfLines.get(i).startsWith("[INFO]")) {
+//                position = "testBlock";
+//                listOfLines.set(i, "```\n" + listOfLines.get(i));
+//            }
 
 
             //Identifies that line is the start of a table
             if (listOfLines.get(i).startsWith("|===")) {
                 position = "table";
+            }
+
+            if (listOfLines.get(i).startsWith("- ")) {
+                if (listOfLines.get(i + 1).isBlank()) {
+                    listOfLines.set(i,"");
+                }
             }
 
             //Finds title so we skip over irrelevant lines
@@ -578,6 +496,18 @@ public class functions {
 
             //Identifies a link in the file line and configures it
             if (listOfLines.get(i).contains("^]")) {
+                if (listOfLines.get(i).indexOf("https") != -1) {
+                    String link = listOfLines.get(i).substring(listOfLines.get(i).indexOf("https:"), listOfLines.get(i).indexOf("["));
+                    String linkDesc = listOfLines.get(i).substring(listOfLines.get(i).indexOf("[") +1, listOfLines.get(i).indexOf("^"));
+                    String fullLink = "[" + link + "]" + "(" + linkDesc + ")";
+                    if (listOfLines.get(i).indexOf("https:") != -1){
+                        if (listOfLines.get(i).indexOf("[https:") == -1){
+                            String check = listOfLines.get(i).replaceAll("https:(.*?)]", fullLink);
+                            System.out.println(check);
+                            listOfLines.set(i,check);
+                        }
+                    }
+                }
                 link(listOfLines, i);
             }
 
@@ -589,8 +519,7 @@ public class functions {
 
             //compares line with the irrelevant ones in startingPhrases
             for (int h = 0; h < startingPhrases.length; h++) {
-
-                removingIrreleant(listOfLines, i, startingPhrases, h);
+                removingIrrelevant(listOfLines, i, startingPhrases, h);
                 position = "main";
             }
 
@@ -606,6 +535,14 @@ public class functions {
 
             if (listOfLines.get(i).startsWith("Add the")) {
                 listOfLines.set(i, "");
+            }
+
+            if (listOfLines.get(i).startsWith("mvn")) {
+                if (!listOfLines.get(i + 2).startsWith("{: codeblock}")) {
+                    if (!listOfLines.get(i + 3).startsWith("{: codeblock}")) {
+                        listOfLines.set(i + 1, "```\n{: codeblock)\n\n\n");
+                    }
+                }
             }
         }
     }

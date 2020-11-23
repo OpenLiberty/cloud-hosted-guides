@@ -1,11 +1,13 @@
-//  Copyright (c) 2020 IBM Corporation and others.
-// Licensed under Creative Commons Attribution-NoDerivatives
-// 4.0 International (CC BY-ND 4.0)
-//   https://creativecommons.org/licenses/by-nd/4.0/
-//
-// Contributors:
-//     IBM Corporation
-//
+/*******************************************************************************
+ * Copyright (c) 2017 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - Initial implementation
+ *******************************************************************************/
 
 
 import java.io.BufferedWriter;
@@ -31,40 +33,36 @@ public class GuideConverterV2 {
     }
 
     // Reads the adoc from github, and writes it to an arraylist
-    public static void getMD( String guideName, String branch) {
+    public static void getMD( String guideName, String branch) throws IOException {
+        Scanner s = null;
+        FileInputStream ip = null;
+        FileInputStream ips = null;
+
         try {
             //read adoc file from the open liberty guide
             URL url = new URL("https://raw.githubusercontent.com/openliberty/" + guideName + "/" + branch + "/README.adoc");
-            Scanner s = new Scanner(url.openStream());
-            //initialise variables
-            int Counter = 0;
-            int positionNumber = 0;
-            String[] startingPhrases = {"//", ":", "[source", "NOTE:", "include::", "[role=", "[.tab_", "image::"};
+            s = new Scanner(url.openStream());
 //          ArrayList for whole text file
             ArrayList<String> listOfLines = new ArrayList<>();
 
             Properties prop = new Properties();
             Properties props = new Properties();
 
-            FileInputStream ip = new FileInputStream("loopReplacements.properties");
-            FileInputStream ips = new FileInputStream("replacements.properties");
+            ip = new FileInputStream("loopReplacements.properties");
+            ips = new FileInputStream("replacements.properties");
 
             prop.load(ip);
             props.load(ips);
 
 
-//          stores the start of irrelevant lines
-//          String[] startingPhrases = {"//", ":", "[source", "NOTE:", "include::", "[role=", "[.tab_", "image::"};
 //          write each line into the file
             while (s.hasNextLine()) {
                 listOfLines.add(s.nextLine() + "\n");
             }
-            s.close();
-            ip.close();
-            ips.close();
 
-            // Runs the second class
-            functions.second(listOfLines, branch, guideName, prop, props);
+
+            // Runs the Functions.class
+            Functions.ConditionsMethod(listOfLines, guideName, branch, prop, props);
 
             //String builder to format the arraylist
             StringBuilder builder = new StringBuilder();
@@ -78,6 +76,12 @@ public class GuideConverterV2 {
 
         } catch (IOException ex) {
             System.out.println(ex);
+        } finally {
+            if (s != null){
+                s.close();
+                ip.close();
+                ips.close();
+            }
         }
     }
 
