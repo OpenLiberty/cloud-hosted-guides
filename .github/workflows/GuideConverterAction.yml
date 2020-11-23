@@ -21,20 +21,25 @@ jobs:
         run: |
           echo "${{ github.event.inputs.branch }}"
           echo "${{ github.event.inputs.guide_name }}"
-
   convertMaster:
     name: Make PR to Master
     runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch, 'sn-automation-testing-master')
+    if: contains(github.event.inputs.branch, 'master')
   
     steps:
 
       # Any prerequisite steps
       - uses: actions/checkout@master
 
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
       
       - name: Run Converter
         run: |
+          branchName=${{ github.event.inputs.branch }}
           git init
           mkdir -p instructions/${{ github.event.inputs.guide_name }}/
           rm -f instructions/${{ github.event.inputs.guide_name }}/README.md
@@ -62,24 +67,33 @@ jobs:
   convertStaging:
     name: Make PR to Staging
     runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch, 'sn-automation-testing-qa')
+    if: contains(github.event.inputs.branch, 'qa')
   
     steps:
 
       # Any prerequisite steps
       - uses: actions/checkout@master
 
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+
       - name: Run Converter
         run: |
+          branchName=${{ github.event.inputs.branch }}
           git init
           mkdir -p instructions/${{ github.event.inputs.guide_name }}/
           rm -f instructions/${{ github.event.inputs.guide_name }}/README.md
+          cd GuideConverter
           javac GuideConverterV2.java
-          java GuideConverterV2 ${{ github.event.inputs.guide_name }} qa
+          java GuideConverterV2 ${{ github.event.inputs.guide_name }} master
           rm -f importFunctions.class
           rm -f functions.class
           rm -f GuideConverterV2.class
-          mv ${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
+          cd ..
+          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
