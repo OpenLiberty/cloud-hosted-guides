@@ -412,6 +412,7 @@ project. For simplicity, the script starts one instance of the **system** servic
 ```
 ./scripts/startContainers.sh
 ```
+{: codeblock}
 
 
 # Testing the application
@@ -452,6 +453,7 @@ to the set of existing properties. For example, run the following **curl** comma
 ```
 curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-Type:text/plain"
 ```
+{: codeblock}
 
 URL adds the **os.name** system property for your system. The **inventory** service sends a message that contains the requested
 system property to the **system** service. The **inventory** service then waits until the message is acknowledged before it
@@ -468,6 +470,7 @@ You can revisit the
 curl http://localhost:9085/inventory/systems
 ```
 {: codeblock}
+
 
  URL and see the `os.name` system property value is now
 included with the previous values:
@@ -486,6 +489,7 @@ Finally, run the following script to stop the application:
 ```
 ./scripts/stopContainers.sh
 ```
+{: codeblock}
 
 
 # Summary
@@ -497,7 +501,6 @@ Delete the **guide-microprofile-reactive-messaging-acknowledgment** project by n
 ```
 cd ../..
 rm -r -f guide-microprofile-reactive-messaging-acknowledgment
-rmdir guide-microprofile-reactive-messaging-acknowledgment
 ```
 {: codeblock}
 

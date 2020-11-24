@@ -28,23 +28,12 @@ You should see a terminal running. In case a terminal window does not open, navi
 **Terminal -> New Terminal**
 
 Check you are in the **home/project** folder:
-
 ```
 pwd
 ```
 {: codeblock}
 
-To ensure any resource created from previous lab is cleaned up, please type the command **cleanup.sh** (from any directory, the file is added to the path):
-```
-cleanup.sh
-```
-{: codeblock}
-
-
-![](https://ibm.box.com/shared/static/aym3lq2tcs5mms0pgg1nsj0hxy6b7fv2.gif)
-
-The fastest way to work through this guide is to clone [this Git repository](https://github.com/dewan-ahmed/guide-rest-intro.git) and use the maven projects that are provided inside.
-
+The fastest way to work through this guide is to clone the git repository using the command bellow and use the maven projects that are provided inside.
 ```
 git clone https://github.com/dewan-ahmed/guide-rest-intro.git
 ```
@@ -56,7 +45,9 @@ The **finish** directory in the root of this guide contains the finished applica
 
 JAX-RS has two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modeled as a class. The second is a JAX-RS application, which groups all exposed resources under a common path. You can think of the JAX-RS application as a wrapper for all of your resources.
 
-Click on **File**-->**Open**-->**guide-rest-intro**-->**finish**-->**src**/**main**/**java**/**io**/**openliberty**/**guides**/**rest**/**SystemApplication.java**
+Go to:
+
+> [File -> Open]guide-rest-intro/finish/src/main/java/io/openliberty/guides/rest/SystemApplication.java
 
 The **SystemApplication** class extends the **Application** class, which in turn associates all JAX-RS resource classes in the WAR file with this JAX-RS application, making them available under the common path specified in the **SystemApplication** class. The **@ApplicationPath** annotation has a value that indicates the path within the WAR that the JAX-RS application accepts requests from.
 
@@ -66,7 +57,9 @@ The expectation is that when you repeat this lab yourself using the **start** di
 
 In JAX-RS, a single class should represent a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. It is easy to have a single class handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability in the long run.
 
-Click on **File**-->**Open**-->**guide-rest-intro**-->**finish**-->**src**/**main**/**java**/**io**/**openliberty**/**guides**/**rest**/**PropertiesResource.java**
+Go to:
+
+> [File -> Open]guide-rest-intro/finish/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 This resource class has quite a bit of code in it, so let's break it down into manageable chunks.
 
@@ -90,7 +83,9 @@ The expectation is that when you repeat this lab yourself using the **start** di
 
 To get the service running, the Liberty server needs to be correctly configured. 
 
-Click on **File**-->**Open**-->**guide-rest-intro**-->**finish**-->**src**/**main**/**liberty**/**config**/**server.xml**
+Go to:
+
+> [File -> Open]guide-rest-intro/finish/src/main/liberty/config/server.xml
 
 The configuration does the following actions:
 
@@ -98,14 +93,15 @@ The configuration does the following actions:
 2. Configures the server to resolve the HTTP port numbers from variables, which are then specified in the Maven **pom.xml** file. This is specified in the **<httpEndpoint/>** element. Variables use the **${variableName}** syntax. 
 3. Configures the server to run the produced web application on a context root specified in the **pom.xml** file. This is specified in the **<webApplication/>** element.
 
-Take a look at the pom.xml file. Click on File-->Open-->**guide-rest-intro**-->**finish**-->**pom.xml**
+Take a look at the pom.xml file. 
+
+> [File -> Open]guide-rest-intro/finish/pom.xml
 
 The variables that are being used in the **server.xml** file are provided by the properties set in the Maven **pom.xml** file. The properties must be formatted as **liberty.var.variableName**.
 
 # Building and running the application locally
 
 To try out the application locally, run the following Maven goal to build the application and deploy it to Open Liberty:
-
 ```
 cd guide-rest-intro/finish/
 pwd
@@ -113,7 +109,6 @@ pwd
 {: codeblock}
 
 This should show **/home/project/guide-rest-intro/finish** and now execute:
-
 ```
 mvn liberty:run
 ```
@@ -134,47 +129,45 @@ For better readability, install a plug-in for viewing JSON on your browser. Reme
 ```
 ctrl+c
 ```
-{: codeblock}
+
 
 # Deploying the application on OpenShift
 
 (Assuming you have already cloned the repository and are under **guide-rest-intro/finish** folder)
 
-Step 1: Generate the *.war file
+Generate the *.war file
 ```
 mvn package
 ```
 {: codeblock}
 
-Step 2: Create a new binary build
+Create a new binary build
 ```
 oc new-build --name=rest-quicklab --binary --strategy=docker
 ```
 {: codeblock}
 
-Step 3: Start the binary build using current directory as binary input for the build
+Start the binary build using current directory as binary input for the build
 ```
 oc start-build rest-quicklab --from-dir=.
 ```
 {: codeblock}
 
-Step 4: Observe the build
 
-Execute the following command to view the available builds.
+Observe the build by executing the following command to view the available builds.
 ```
 oc get builds
 ```
 {: codeblock}
 
 The output will be something like this:
+```
+NAME              TYPE     FROM             STATUS    STARTED          DURATION
+rest-quicklab-1   Docker   Binary@f9c9544   Running   29 seconds ago   
+```
 
-| NAME  | TYPE  | FROM | STATUS  | STARTED  | DURATION  |
-|---|---|---|---|---|---|
-| rest-quicklab-1  | Docker  | Binary@f9c9544  | Running  | 29 seconds ago  |   |
 
-                                                   
 The following command will show you the logs for this build. Make sure to specify the build name you see from previous command.
-
 ```
 oc logs -f build/rest-quicklab-1
 ```
@@ -182,7 +175,8 @@ oc logs -f build/rest-quicklab-1
 
 This logs-stream should end with **Push successful** message (the build process might take between two to three minutes to complete) and this is the indication that the image was built and has been pushed to OpenShift internal image registry.
 
-Step 5: Create a new OpenShift app from the build
+
+Create a new OpenShift app from the build
 ```
 oc new-app rest-quicklab
 ```
@@ -190,7 +184,8 @@ oc new-app rest-quicklab
 
 This command creates OpenShift DeploymentConfigs and services for your application.
 
-Step 6: Exposing the app by creating a route to your application
+
+Expose the app by creating a route to your application
 ```
 oc expose svc/rest-quicklab
 ```
@@ -198,23 +193,21 @@ oc expose svc/rest-quicklab
 
 This command ensures that your app is accessible from the internet by a public URL.
 
-Step 7: 
 
+the next command outputs the publicly accessible route to your OpenLiberty application.
 ```
 oc get routes
 ```
 {: codeblock}
 
-The above command outputs the publicly accessible route to your OpenLiberty application.
 
 Your app URL will be something like this: rest-quicklab-sn-labs-<your-userID>.sn-labs-user-sandbox-pr-a45631dc5778dc6371c67d206ba9ae5c-0000.tor01.containers.appdomain.cloud
   
 Navigate to that URL (refresh the page if it didn't load on the first try) and you should see the OpenLiberty page that gets generated from the base image. Append "/LibertyProject" after the URL and you should see a page with "Welcome to your Liberty Application" message. Finally, "/LibertyProject/System/properties" subURL should show you a list of system properties from the machine the OpenLiberty server is running on. For best viewing result, you can install a JSON viewer tool to your browser.
 
-Step 8: Troubleshooting (optional)
+Troubleshooting (optional)
 
 If your application on OpenShift is not running as expected, you can run the following commands to view the logs of pods.
-
 ```
 oc get pods
 ```
@@ -231,20 +224,16 @@ oc logs -f rest-quicklab-1-25tgb
 
 Note: Name of your application pod might be different.
 
-Step 9: Cleanup
 
 Let's clean up the resources we just created. You can execute the following commands:
 ```
 oc delete all -l app=rest-quicklab
-
 oc delete builds rest-quicklab-1 
-
 oc delete buildconfigs rest-quicklab
 ```
 {: codeblock}
 
 Note: Your app, buildconfigs and build names might be different. The following commands will help you find the exact names for your builds, buildconfigs and imagestreams.
-
 ```
 oc get builds
 oc get buildconfigs
@@ -252,7 +241,7 @@ oc get imagestreams
 ```
 {: codeblock}
 
-# Summary and next steps
+# Summary
 
 In this lab, you learned:
 
@@ -260,16 +249,18 @@ In this lab, you learned:
 2. How to build and run the app locally
 3. How to build and deploy the app on Red Hat OpenShift 4.X
 
-**Well Done**
+## Clean up your environment
 
-Nice work! You have learned how to develop a REST service in Open Liberty by using JAX-RS and JSON-B and then deployed the application on OpenShift 4.x.
-
-Please run **cleanup.sh** in a terminal to make sure you don't run out of resources in future labs.
+Delete the **guide-rest-intro** project by navigating to the **/home/project/** directory
 ```
-cleanup.sh
+cd ../..
+rm -r -f guide-rest-intro
 ```
 {: codeblock}
 
+# Great work! You're done!
+
+Nice work! You have learned how to develop a REST service in Open Liberty by using JAX-RS and JSON-B and then deployed the application on OpenShift 4.x.
+
 
 If you are interested in continuing on this journey, you should get a [free Kubernetes cluster](https://www.ibm.com/cloud/container-service/) and your own free [IBM Container Registry](https://www.ibm.com/cloud/container-registry).
-

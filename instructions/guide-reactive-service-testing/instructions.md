@@ -427,6 +427,7 @@ public class InventoryServiceIT {
 ```
 {: codeblock}
 
+The **InventoryServiceIT** class uses the **KafkaProducer**
 client API to produce messages in the test environment for the **inventory** service container to consume. The
 **@KafkaProducerConfig** annotation configures the producer to use the custom serializer provided in
 the **@KafkaProducerConfig** annotation
