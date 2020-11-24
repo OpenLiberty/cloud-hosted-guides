@@ -54,6 +54,34 @@ jobs:
         SSH_PRIVATE_KEY: ${{secrets.DEPLOY_KEY_QUICK_LABS}}
         KNOWN_HOSTS_FILE: .github/workflows/known_hosts # Needed if target repo is not on github.com.
         SKIP_EMPTY_COMMITS: "true"
+
+    - name: Check GitLab Pipeline
+      run: |
+        echo "Waiting for initial pipeline start..."
+        sleep 30
+
+        for i in {1..5}
+        do
+            echo "Checking GitLab Pipeline Attempt #$i"
+            pipelineJson=$(curl --header "PRIVATE-TOKEN: ${{secrets.GITLAB_API_TOKEN}}" "https://gitlab.com/api/v4/projects/ibm%2Fskills-network%2Fquicklabs%2F${{matrix.repo.gitlab}}/pipelines?per_page=1")
+            status=$(jq '.[].status' <<< $pipelineJson | tr -d '"')
+            pipeline_id=$(jq '.[].id' <<< $pipelineJson | tr -d '"')
+
+            if [[ "$status" == "success" ]]; then
+                echo $(jq '.' <<< $pipelineJson)
+                echo "Success - Pipeline passed"
+                exit 0
+            elif [[ "$status" == "failed" ]]; then
+                echo "Pipeline failed, retrying..."
+                curl --request POST --header "PRIVATE-TOKEN: ${{secrets.GITLAB_API_TOKEN}}" "https://gitlab.com/api/v4/projects/ibm%2Fskills-network%2Fquicklabs%2F${{matrix.repo.gitlab}}/pipelines/$pipeline_id/retry"
+                sleep 30
+            else
+                sleep 60
+            fi
+        done
+
+        echo "GitLab Pipeline Timed Out - Potential infrastructure issue on the GitLab runner"
+        exit 1
     
     # Output link to staged files
     - name: Print staging lab URL
