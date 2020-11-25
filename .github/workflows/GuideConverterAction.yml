@@ -32,7 +32,6 @@ jobs:
       # Any prerequisite steps
       - uses: actions/checkout@master
         
-
       - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
         with:
@@ -83,13 +82,11 @@ jobs:
       # Any prerequisite steps
       - uses: actions/checkout@master
       
-      
       - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
         with:
           repository: OpenLiberty/cloud-hosted-guide-converter
           path: GuideConverter
-
 
       - uses: actions/setup-java@v1
         with:
