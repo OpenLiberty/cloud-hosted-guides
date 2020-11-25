@@ -35,7 +35,7 @@ jobs:
       - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
         with:
-          repository: test-actions/GuideConverter
+          repository: OpenLiberty/cloud-hosted-guide-converter
           path: GuideConverter
 
       - uses: actions/setup-java@v1
@@ -86,7 +86,7 @@ jobs:
       - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
         with:
-          repository: test-actions/GuideConverter
+          repository: OpenLiberty/cloud-hosted-guide-converter
           path: GuideConverter
 
 
