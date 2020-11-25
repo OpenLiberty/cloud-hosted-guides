@@ -1,0 +1,72 @@
+name: DraftConverter
+on: 
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch pushed to'     
+        required: true
+        default: 'master'
+      guide_name:
+        description: 'Guide changed'
+        required: true
+        default: 'guide-rest-into'
+        
+jobs:
+  printBranch:
+    runs-on: ubuntu-latest
+
+    steps: 
+
+      - name: Output message
+        run: |
+          echo "${{ github.event.inputs.branch }}"
+          echo "${{ github.event.inputs.guide_name }}"
+
+  convertStaging:
+    name: Make PR to Staging
+    runs-on: ubuntu-latest
+  
+    steps:
+
+      # Any prerequisite steps
+      - uses: actions/checkout@master
+        
+      - name: Checkout Guide Converter repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/cloud-hosted-guide-converter
+          path: GuideConverter
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+
+      - name: Run Converter
+        run: |
+          branchName=${{ github.event.inputs.branch }}
+          git init
+          mkdir -p instructions/${{ github.event.inputs.guide_name }}/
+          rm -f instructions/${{ github.event.inputs.guide_name }}/README.md
+          cd GuideConverter
+          javac *.java
+          java GuideConverterV2 ${{ github.event.inputs.guide_name }} ${branchName:11}
+          rm -f importFunctions.class
+          rm -f functions.class
+          rm -f GuideConverterV2.class
+          cd ..
+          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
+          rm -r GuideConverter
+          git add .
+          git config --global user.email "GuidesBot@OpenLiberty.io"
+          git config --global user.name "GuidesBot"
+          git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
+    
+      - uses: peter-evans/create-pull-request@v3
+        with:
+            title: "Change to ${{ github.event.inputs.guide_name }}"
+            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
+            branch: "${{ github.event.inputs.guide_name }}/staging"
+            base: "staging" 
+        name: Create Pull Request

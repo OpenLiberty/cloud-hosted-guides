@@ -411,7 +411,6 @@ project. For simplicity, the script starts one instance of the `system` service.
 {: codeblock}
 
 
-
 ## Testing the application
 
 After the application is up and running, you can access the application by making a GET request to the `/systems` endpoint
@@ -454,7 +453,6 @@ curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-
 ```
 {: codeblock}
 
-
 URL adds the `os.name` system property for your system. The `inventory` service sends a message that contains the requested
 system property to the `system` service. The `inventory` service then waits until the message is acknowledged before it
 sends a response back.
@@ -474,6 +472,8 @@ curl http://localhost:9085/inventory/systems
 ```
 {: codeblock}
 
+
+ URL and see the `os.name` system property value is now
 included with the previous values:
 
 ```
@@ -495,7 +495,6 @@ Finally, run the following script to stop the application:
 {: codeblock}
 
 
-
 # Summary
 
 ## Clean up your environment
@@ -505,7 +504,6 @@ Delete the **guide-microprofile-reactive-messaging-acknowledgment** project by n
 ```
 cd ../..
 rm -r -f guide-microprofile-reactive-messaging-acknowledgment
-rmdir guide-microprofile-reactive-messaging-acknowledgment
 ```
 {: codeblock}
 

@@ -61,7 +61,6 @@ The defaultServer server is ready to run a smarter planet.
 
 The `system` and `inventory` services can be found at the following URLs:
 
-- 
 ```
 curl http://localhost:9080/system/properties
 ```
@@ -69,7 +68,6 @@ curl http://localhost:9080/system/properties
 
 
 
-- 
 ```
 curl http://localhost:9080/inventory/systems
 ```

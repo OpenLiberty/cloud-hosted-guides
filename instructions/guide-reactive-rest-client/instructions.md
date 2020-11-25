@@ -84,7 +84,6 @@ touch query/src/main/java/io/openliberty/guides/query/client/InventoryClient.jav
 
 
 ```
-
 package io.openliberty.guides.query.client;
 
 import java.util.List;
@@ -151,7 +150,6 @@ touch query/src/main/java/io/openliberty/guides/query/QueryResource.java
 
 
 ```
-
 package io.openliberty.guides.query;
 
 import java.math.BigDecimal;
@@ -185,27 +183,32 @@ public class QueryResource {
         List<String> systems = inventoryClient.getSystems();
         CountDownLatch remainingSystems = new CountDownLatch(systems.size());
         final Holder systemLoads = new Holder();
+
         for (String system : systems) {
             inventoryClient.getSystem(system)
-                           .subscribe(p -> {
+                           .thenAcceptAsync(p -> {
                                 if (p != null) {
                                     systemLoads.updateValues(p);
                                 }
                                 remainingSystems.countDown();
-                           }, e -> {
+                           })
+                           .exceptionally(ex -> {
                                 remainingSystems.countDown();
-                                e.printStackTrace();
+                                ex.printStackTrace();
+                                return null;
                            });
         }
 
+        // Wait for all remaining systems to be checked
         try {
             remainingSystems.await(30, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        
+
         return systemLoads.getValues();
     }
+    // end::systemLoad[]
 
     private class Holder {
         private volatile Map<String, Properties> values;
@@ -233,6 +236,7 @@ public class QueryResource {
         }
 
         private void init() {
+            // Initialize highest and lowest values
             this.values.put("highest", new Properties());
             this.values.put("lowest", new Properties());
             this.values.get("highest").put("hostname", "temp_max");

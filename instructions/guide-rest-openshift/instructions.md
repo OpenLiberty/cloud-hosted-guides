@@ -163,7 +163,7 @@ oc get builds
 The output will be something like this:
 ```
 NAME              TYPE     FROM             STATUS    STARTED          DURATION
-rest-quicklab-1   Docker   Binary@f9c9544	  Running   29 seconds ago   
+rest-quicklab-1   Docker   Binary@f9c9544   Running   29 seconds ago   
 ```
 
 
@@ -251,10 +251,10 @@ In this lab, you learned:
 
 ## Clean up your environment
 
-Delete the **guide-microprofile-reactive-messaging-acknowledgment** project by navigating to the **/home/project/** directory
+Delete the **guide-rest-intro** project by navigating to the **/home/project/** directory
 ```
 cd ../..
-rm -r -f guide-rest-openshift
+rm -r -f guide-rest-intro
 ```
 {: codeblock}
 
