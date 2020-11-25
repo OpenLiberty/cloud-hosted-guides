@@ -52,10 +52,10 @@ jobs:
           rm -f instructions/${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
           javac *.java
-          java GuideConverterV2 ${{ github.event.inputs.guide_name }} ${branchName:11}
+          java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} ${branchName:11}
           rm -f importFunctions.class
           rm -f functions.class
-          rm -f GuideConverterV2.class
+          rm -f CloudHostedGuideConverter.class
           cd ..
           mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
           rm -r GuideConverter
@@ -102,10 +102,10 @@ jobs:
           rm -f instructions/${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
           javac *.java
-          java GuideConverterV2 ${{ github.event.inputs.guide_name }} ${branchName:11}
+          java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} ${branchName:11}
           rm -f importFunctions.class
           rm -f functions.class
-          rm -f GuideConverterV2.class
+          rm -f CloudHostedGuideConverter.class
           cd ..
           mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
           rm -r GuideConverter
