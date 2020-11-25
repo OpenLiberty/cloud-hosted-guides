@@ -30,6 +30,12 @@ jobs:
 
       # Any prerequisite steps
       - uses: actions/checkout@master
+        
+      - name: Checkout Guide Converter repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/cloud-hosted-guide-converter
+          path: GuideConverter
 
       - uses: actions/setup-java@v1
         with:
@@ -43,12 +49,15 @@ jobs:
           git init
           mkdir -p instructions/${{ github.event.inputs.guide_name }}/
           rm -f instructions/${{ github.event.inputs.guide_name }}/README.md
-          javac GuideConverterV2.java
+          cd GuideConverter
+          javac *.java
           java GuideConverterV2 ${{ github.event.inputs.guide_name }} ${branchName:11}
           rm -f importFunctions.class
           rm -f functions.class
           rm -f GuideConverterV2.class
-          mv ${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
+          cd ..
+          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
+          rm -r GuideConverter
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
