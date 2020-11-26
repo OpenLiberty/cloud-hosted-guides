@@ -446,9 +446,6 @@ property for the systems changed.
  URL after a while, you notice that the CPU `systemLoad`
 property for the systems changed.
 
- URL after a while, you notice that the CPU `systemLoad`
-property for the systems changed.
-
 Make a `PUT` request to the `\http://localhost:9085/inventory/data` URL to add the value of a particular system property
 to the set of existing properties. For example, run the following `curl` command:
 
@@ -546,4 +543,6 @@ This is a test for the link. [Click this link](https://labs.cognitiveclass.ai/to
 [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
 
 This is a test for the link. [Click this link](https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https://cf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud/acknowledging-messages-using-microprofile-reactive-messaging/instructions.md).
+
+[View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
 
