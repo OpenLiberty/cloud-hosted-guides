@@ -6,6 +6,8 @@ Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
 
 ## What you'll learn
 
+This is a test
+
 MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive
 Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged
 after they are processed. Every message that gets sent out must be acknowledged. This way, any messages that were delivered
@@ -446,9 +448,6 @@ property for the systems changed.
  URL after a while, you notice that the CPU `systemLoad`
 property for the systems changed.
 
- URL after a while, you notice that the CPU `systemLoad`
-property for the systems changed.
-
 Make a `PUT` request to the `\http://localhost:9085/inventory/data` URL to add the value of a particular system property
 to the set of existing properties. For example, run the following `curl` command:
 
@@ -546,4 +545,6 @@ This is a test for the link. [Click this link](https://labs.cognitiveclass.ai/to
 [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
 
 This is a test for the link. [Click this link](https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https://cf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud/acknowledging-messages-using-microprofile-reactive-messaging/instructions.md).
+
+[View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
 
