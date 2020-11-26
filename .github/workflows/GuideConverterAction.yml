@@ -51,7 +51,7 @@ jobs:
           mkdir -p instructions/${{ github.event.inputs.guide_name }}/
           rm -f instructions/${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
-          javac *.java
+          javac CloudHostedGuideConverter.java
           java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} ${branchName:11}
           rm -f importFunctions.class
           rm -f functions.class
@@ -101,7 +101,7 @@ jobs:
           mkdir -p instructions/${{ github.event.inputs.guide_name }}/
           rm -f instructions/${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
-          javac *.java
+          javac CloudHostedGuideConverter.java
           java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} ${branchName:11}
           rm -f importFunctions.class
           rm -f functions.class
