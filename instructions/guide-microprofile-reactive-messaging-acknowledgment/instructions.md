@@ -538,3 +538,7 @@ This is a test for the link. [https://labs.cognitiveclass.ai/tools/theiadocker/l
 
 This is a test for the link. [Click this link](https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https://cf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud/acknowledging-messages-using-microprofile-reactive-messaging/instructions.md).
 
+[View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
+
+This is a test for the link. [Click this link](https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https://cf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud/acknowledging-messages-using-microprofile-reactive-messaging/instructions.md).
+
