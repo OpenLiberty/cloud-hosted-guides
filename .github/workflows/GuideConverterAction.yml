@@ -102,7 +102,7 @@ jobs:
           rm -f instructions/${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
           javac *.java
-          java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} ${branchName:11}
+          java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} ${branchName}
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
