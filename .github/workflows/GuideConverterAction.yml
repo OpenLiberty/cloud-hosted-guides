@@ -63,6 +63,7 @@ jobs:
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
           git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
+          git checkout --ours instructions/${{ github.event.inputs.guide_name }}/instructions.md
     
       - uses: peter-evans/create-pull-request@v3
         with:
@@ -113,6 +114,7 @@ jobs:
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
           git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
+          git checkout --ours instructions/${{ github.event.inputs.guide_name }}/instructions.md
     
       - uses: peter-evans/create-pull-request@v3
         with:
