@@ -6,7 +6,8 @@ Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
 
 ## What you'll learn
 
-This is a test number 2
+
+THIS IS A TEST
 
 MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive
 Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged
@@ -20,11 +21,11 @@ You can get the current inventory of systems by accessing the `/systems` REST en
 
 You will explore the acknowledgment strategies that are available with MicroProfile Reactive Messaging, and you'll implement
 your own manual acknowledgment strategy. To learn more about how the reactive Java services used in this guide work, check
-out the [https://openliberty.io/guides/microprofile-reactive-messaging.html](Creating reactive Java microservices) guide.
+out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 # Getting started
 
-The fastest way to work through this guide is to clone the [https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git](Git repository) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git) and use the projects that are provided inside:
 
 ```
 git clone https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git
@@ -532,4 +533,8 @@ Learn more about MicroProfile.
 [https://openliberty.io/docs/latest/microprofile.html](View the MicroProfile)
 
 This is a test for the link. [https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https://cf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud/acknowledging-messages-using-microprofile-reactive-messaging/instructions.md](Click this link).
+
+[View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
+
+This is a test for the link. [Click this link](https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https://cf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud/acknowledging-messages-using-microprofile-reactive-messaging/instructions.md).
 
