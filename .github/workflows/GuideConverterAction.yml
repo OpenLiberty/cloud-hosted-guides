@@ -113,11 +113,4 @@ jobs:
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
           git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
-    
-      - uses: peter-evans/create-pull-request@v3
-        with:
-            title: "Change to ${{ github.event.inputs.guide_name }}"
-            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
-            branch: "${{ github.event.inputs.guide_name }}/staging"
-            base: "staging" 
-        name: Create Pull Request
+          git push origin staging 
