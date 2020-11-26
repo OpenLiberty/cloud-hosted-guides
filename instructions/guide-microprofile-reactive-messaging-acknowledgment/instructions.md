@@ -4,11 +4,9 @@
 
 Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
 
-Try this guide in skill network by clicking this [link](https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https:%2F%2Fcf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud%2Facknowledging-messages-using-microprofile-reactive-messaging%2Finstructions.md)
-
 ## What you'll learn
 
-Testing guide convertor #1.
+This is a test number 2
 
 MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive
 Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged
@@ -22,11 +20,11 @@ You can get the current inventory of systems by accessing the `/systems` REST en
 
 You will explore the acknowledgment strategies that are available with MicroProfile Reactive Messaging, and you'll implement
 your own manual acknowledgment strategy. To learn more about how the reactive Java services used in this guide work, check
-out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+out the [https://openliberty.io/guides/microprofile-reactive-messaging.html](Creating reactive Java microservices) guide.
 
-## Getting started
+# Getting started
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git](Git repository) and use the projects that are provided inside:
 
 ```
 git clone https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git
@@ -39,7 +37,6 @@ The `start` directory contains the starting project that you will build upon.
 
 The `finish` directory contains the finished project that you will build.
 
-## Choosing an acknowledgment strategy
 
 
 Messages must be acknowledged in reactive applications. Messages are either acknowledged explicitly, or messages are acknowledged
@@ -79,16 +76,9 @@ message must be acknowledged immediately.
 This case where a message either needs to be acknowledged immediately or some time later is one of the situations where
 the `MANUAL` acknowledgment strategy would be beneficial
 
-## Implementing the MANUAL acknowledgment strategy
 
 
-Navigate to the **start** directory to begin.
-
-```
-cd start
-```
-{: codeblock}
-
+Navigate to the `start` directory to begin.
 
 Update the `SystemService.sendProperty` method to use the `MANUAL` acknowledgment strategy, which fits the method processing
 requirements better than the default `PRE_PROCESSING` strategy.
@@ -177,6 +167,7 @@ public class SystemService {
 ```
 {: codeblock}
 
+
 The `sendProperty()` method needs to manually acknowledge the incoming messages, so it is
 annotated with the `@Acknowledgment(Acknowledgment.Strategy.MANUAL)`
 annotation. This annotation sets the method up to expect an incoming message. To meet the requirements of acknowledgment,
@@ -191,7 +182,6 @@ One of the following outcomes occurs:
         requested system property and sends it to the proper channel. The method acknowledges the incoming message only
         after the sent message is acknowledged.
 
-## Waiting for a message to be acknowledged
 
 
 The `inventory` service contains an endpoint that accepts `PUT` requests. When a `PUT` request that contains a system property
@@ -363,6 +353,11 @@ The `sendPropertyName()` method is updated to return a
 that runs after the outgoing message is acknowledged. In addition to updating the `sendPropertyName()`
 method, the `propertyNameEmitter` variable is updated to send a `Message<String>` type.
 
+The `sendPropertyName()` method is updated to return a
+`Message<String>` instead of just a `String`. This return type allows the method to set a callback
+that runs after the outgoing message is acknowledged. In addition to updating the `sendPropertyName()`
+method, the `propertyNameEmitter` variable is updated to send a `Message<String>` type.
+
 The `updateSystemProperty()` method now returns a
 `CompletionStage` object wrapped around a Response type. This return type allows for a response
 object to be returned after the outgoing message is acknowledged. The outgoing `message` is created
@@ -371,7 +366,7 @@ with the requested property name as the `payload` and an acknowledgment
 `CompletableFuture` variable that returns a `200` response
 code after the variable is completed in the `callback` function.
 
-## Building and running the application
+# Building and running the application
 
 Build the `system` and `inventory` microservices using Maven and then run them in Docker containers.
 
@@ -385,12 +380,14 @@ mvn package
 ```
 {: codeblock}
 
+
 Run the following command to download or update to the latest `openliberty/open-liberty:kernel-java8-openj9-ubi` Docker image:
 
 ```
 docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
 ```
 {: codeblock}
+
 
 Run the following commands to containerize the microservices:
 
@@ -411,7 +408,9 @@ project. For simplicity, the script starts one instance of the `system` service.
 {: codeblock}
 
 
-## Testing the application
+
+
+# Testing the application
 
 After the application is up and running, you can access the application by making a GET request to the `/systems` endpoint
 of the `inventory` service.
@@ -422,6 +421,7 @@ Go to the http://localhost:9085/inventory/systems[^] URL to access the inventory
 curl http://localhost:9085/inventory/systems
 ```
 {: codeblock}
+
 
 property for all the systems:
 
@@ -444,6 +444,9 @@ curl http://localhost:9085/inventory/systems
  URL after a while, you notice that the CPU `systemLoad`
 property for the systems changed.
 
+ URL after a while, you notice that the CPU `systemLoad`
+property for the systems changed.
+
 Make a `PUT` request to the `\http://localhost:9085/inventory/data` URL to add the value of a particular system property
 to the set of existing properties. For example, run the following `curl` command:
 
@@ -452,6 +455,8 @@ to the set of existing properties. For example, run the following `curl` command
 curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-Type:text/plain"
 ```
 {: codeblock}
+
+
 
 URL adds the `os.name` system property for your system. The `inventory` service sends a message that contains the requested
 system property to the `system` service. The `inventory` service then waits until the message is acknowledged before it
@@ -473,7 +478,6 @@ curl http://localhost:9085/inventory/systems
 {: codeblock}
 
 
- URL and see the `os.name` system property value is now
 included with the previous values:
 
 ```
@@ -495,6 +499,9 @@ Finally, run the following script to stop the application:
 {: codeblock}
 
 
+
+
+
 # Summary
 
 ## Clean up your environment
@@ -504,10 +511,13 @@ Delete the **guide-microprofile-reactive-messaging-acknowledgment** project by n
 ```
 cd ../..
 rm -r -f guide-microprofile-reactive-messaging-acknowledgment
+rmdir guide-microprofile-reactive-messaging-acknowledgment
 ```
 {: codeblock}
 
+
 ## Great work! You're done!
+
 
 You developed an application by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
@@ -515,9 +525,11 @@ You developed an application by using MicroProfile Reactive Messaging, Open Libe
 
 Learn more about MicroProfile.
 
-[View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html)
+[https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html](View the MicroProfile Reactive Messaging Specification)
 
-[View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/apidocs/)
+[https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/apidocs/](View the MicroProfile Reactive Messaging Javadoc)
 
-[View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
+[https://openliberty.io/docs/latest/microprofile.html](View the MicroProfile)
+
+This is a test for the link. [https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https://cf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud/acknowledging-messages-using-microprofile-reactive-messaging/instructions.md](Click this link).
 
