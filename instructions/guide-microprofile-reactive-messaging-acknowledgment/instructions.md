@@ -4,11 +4,7 @@
 
 Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
 
-## What you'll learns
-
-
-
-THIS IS A TEST
+## What you'll learn
 
 MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive
 Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged
@@ -78,6 +74,7 @@ message must be acknowledged immediately.
 This case where a message either needs to be acknowledged immediately or some time later is one of the situations where
 the `MANUAL` acknowledgment strategy would be beneficial
 
+# Implementing the MANUAL acknowledgment strategy
 
 
 Navigate to the `start` directory to begin.
@@ -449,6 +446,9 @@ property for the systems changed.
  URL after a while, you notice that the CPU `systemLoad`
 property for the systems changed.
 
+ URL after a while, you notice that the CPU `systemLoad`
+property for the systems changed.
+
 Make a `PUT` request to the `\http://localhost:9085/inventory/data` URL to add the value of a particular system property
 to the set of existing properties. For example, run the following `curl` command:
 
@@ -534,6 +534,10 @@ Learn more about MicroProfile.
 [https://openliberty.io/docs/latest/microprofile.html](View the MicroProfile)
 
 This is a test for the link. [https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https://cf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud/acknowledging-messages-using-microprofile-reactive-messaging/instructions.md](Click this link).
+
+[View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
+
+This is a test for the link. [Click this link](https://labs.cognitiveclass.ai/tools/theiadocker/lab/tree?md_instructions_url=https://cf-course-data-staging.s3.us-east.cloud-object-storage.appdomain.cloud/acknowledging-messages-using-microprofile-reactive-messaging/instructions.md).
 
 [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
 
