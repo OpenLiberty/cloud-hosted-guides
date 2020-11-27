@@ -5,7 +5,7 @@ on:
       branch:
         description: 'Branch pushed to'     
         required: true
-        default: 'qa'
+        default: 'refs/heads/master'
       guide_name:
         description: 'Guide changed'
         required: true
@@ -59,6 +59,7 @@ jobs:
           cd ..
           mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
           rm -r GuideConverter
+          bash .github/workflows/draftRemoval.sh ${{ github.event.inputs.guide_name }}
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
@@ -110,6 +111,7 @@ jobs:
           cd ..
           mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
           rm -r GuideConverter
+          bash /.github/workflows/draftRemoval.sh ${{ github.event.inputs.guide_name }}
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
