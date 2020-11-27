@@ -58,7 +58,7 @@ jobs:
           rm -f CloudHostedGuideConverter.class
           cd ..
           mv cloud-hosted-guide-converter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
-          rm -r GuideConverter
+          rm -rf cloud-hosted-guide-converter
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
@@ -109,7 +109,7 @@ jobs:
           rm -f CloudHostedGuideConverter.class
           cd ..
           mv cloud-hosted-guide-converter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
-          rm -r GuideConverter
+          rm -rf cloud-hosted-guide-converter
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
