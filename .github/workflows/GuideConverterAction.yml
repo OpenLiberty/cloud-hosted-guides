@@ -50,14 +50,14 @@ jobs:
           git init
           mkdir -p instructions/${{ github.event.inputs.guide_name }}/
           rm -f instructions/${{ github.event.inputs.guide_name }}/README.md
-          cd GuideConverter
+          cd cloud-hosted-guide-converter
           javac *.java
           java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} ${branchName:11}
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
+          mv cloud-hosted-guide-converter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
           rm -r GuideConverter
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
@@ -101,14 +101,14 @@ jobs:
           git init
           mkdir -p instructions/${{ github.event.inputs.guide_name }}/
           rm -f instructions/${{ github.event.inputs.guide_name }}/README.md
-          cd GuideConverter
+          cd cloud-hosted-guide-converter
           javac *.java
           java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} ${branchName:11}
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
+          mv cloud-hosted-guide-converter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
           rm -r GuideConverter
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
