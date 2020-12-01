@@ -15,16 +15,17 @@ jobs:
               # Add new quick-labs here to add them to the mirror process.
               # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
         repo: 
-          - {"github":"develop-microservices-docker","gitlab":"using-docker-to-develop-java-microservices"}
           - {"github":"guide-cdi-intro","gitlab":"injecting-dependencies-into-a-java-microservices"}
           - {"github":"guide-cloud-native","gitlab":"get-started-with-cloud-native-on-the-open-java-stack"}
           - {"github":"guide-deploying-and-packinging-applications","gitlab":"packaging-and-deploying-applications-with-open-liberty"}
+          - {"github":"guide-docker","gitlab":"cloud-hosted-guide-docker"}
           - {"github":"guide-kubernetes-intro","gitlab":"deploying-a-java-microservices-to-kubernetes"}
           - {"github":"guide-microprofile-config","gitlab":"configuring-java-microservices"}
           - {"github":"guide-microprofile-fallback","gitlab":"fault-tolerant-microservices-with-ol-and-microprofile"}
           - {"github":"guide-microprofile-health","gitlab":"configuing-a-readiness-probe-for-a-java-microservice"}
           - {"github":"guide-microprofile-jwt","gitlab":"securing-microservices-with-json-web-token"}
-          - {"github":"guide-microprofile-reactive-messaging-acknowledgment","gitlab":"acknowledging-messages-using-microprofile-reactive-messaging"}
+          - {"github":"guide-microprofile-opentracing","gitlab":"cloud-hosted-guide-microprofile-opentracing"}
+          - {"github":"guide-microprofile-reactive-messaging-acknowledgment","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment"}
           - {"github":"guide-microprofile-reactive-messaging-rest-integration","gitlab":"integrating-restful-services-with-a-reactive-system"}
           - {"github":"guide-microprofile-rest-client","gitlab":"consuming-restful-services-with-template-interfaces-with-ol"}
           - {"github":"guide-microprofile-rest-client-async","gitlab":"consuming-restful-services-asynchronously-with-template-interfaces"}
@@ -34,7 +35,7 @@ jobs:
           - {"github":"guide-reactive-rest-client","gitlab":"consuming-restful-services-using-the-reactive-jax-rs-client"}
           - {"github":"guide-reactive-service-testing","gitlab":"testing-reactive-java-microservices"}
           - {"github":"guide-rest-openshift","gitlab":"java-on-openshift"}
-          - {"github":"guide-restful-webservice","gitlab":"creating-a-restful-web-service-with-open-liberty"}
+          - {"github":"guide-restful-webservice","gitlab":"cloud-hosted-guide-restful-webservice"}
 
     steps:
 
