@@ -15,28 +15,27 @@ jobs:
               # Add new quick-labs here to add them to the mirror process.
               # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
         repo: 
-          - {"github":"guide-cdi-intro","gitlab":"injecting-dependencies-into-a-java-microservices"}
+          - {"github":"guide-cdi-intro","gitlab":"cloud-hosted-guide-cdi-intro"}
           - {"github":"guide-cloud-native","gitlab":"get-started-with-cloud-native-on-the-open-java-stack"}
           - {"github":"guide-deploying-and-packinging-applications","gitlab":"packaging-and-deploying-applications-with-open-liberty"}
           - {"github":"guide-docker","gitlab":"cloud-hosted-guide-docker"}
-          - {"github":"guide-kubernetes-intro","gitlab":"deploying-a-java-microservices-to-kubernetes"}
-          - {"github":"guide-microprofile-config","gitlab":"configuring-java-microservices"}
-          - {"github":"guide-microprofile-fallback","gitlab":"fault-tolerant-microservices-with-ol-and-microprofile"}
-          - {"github":"guide-microprofile-health","gitlab":"configuing-a-readiness-probe-for-a-java-microservice"}
+          - {"github":"guide-kubernetes-intro","gitlab":"cloud-hosted-guide-kubernetes-intro"}
+          - {"github":"guide-microprofile-config","gitlab":"cloud-hosted-guide-microprofile-config"}
+          - {"github":"guide-microprofile-fallback","gitlab":"cloud-hosted-guide-microprofile-fallback"}
+          - {"github":"guide-microprofile-health","gitlab":"cloud-hosted-guide-microprofile-health"}
           - {"github":"guide-microprofile-jwt","gitlab":"securing-microservices-with-json-web-token"}
           - {"github":"guide-microprofile-opentracing","gitlab":"cloud-hosted-guide-microprofile-opentracing"}
           - {"github":"guide-microprofile-reactive-messaging-acknowledgment","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment"}
-          - {"github":"guide-microprofile-reactive-messaging-rest-integration","gitlab":"integrating-restful-services-with-a-reactive-system"}
-          - {"github":"guide-microprofile-rest-client","gitlab":"consuming-restful-services-with-template-interfaces-with-ol"}
+          - {"github":"guide-microprofile-reactive-messaging-rest-integration","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-rest-integration"}
+          - {"github":"guide-microprofile-rest-client","gitlab":"cloud-hosted-guide-microprofile-rest-client"}
           - {"github":"guide-microprofile-rest-client-async","gitlab":"consuming-restful-services-asynchronously-with-template-interfaces"}
-          - {"github":"guide-microshed-testing","gitlab":"learn-how-to-use-microshed-testing"}
-          - {"github":"guide-reactive-messaging","gitlab":"creating-reactive-microservices-using-microprofile-reactive-messaging-with-docker"}
-          - {"github":"guide-reactive-messaging-openshift","gitlab":"creating-reactive-microservices-using-microprofile-reactive-messaging"}
-          - {"github":"guide-reactive-rest-client","gitlab":"consuming-restful-services-using-the-reactive-jax-rs-client"}
-          - {"github":"guide-reactive-service-testing","gitlab":"testing-reactive-java-microservices"}
-          - {"github":"guide-rest-openshift","gitlab":"java-on-openshift"}
+          - {"github":"guide-microshed-testing","gitlab":"cloud-hosted-guide-microshed-testing"}
+          - {"github":"guide-reactive-messaging","gitlab":"cloud-hosted-guide-reactive-messaging"}
+          - {"github":"guide-reactive-messaging-openshift","gitlab":"cloud-hosted-guide-reactive-messaging-openshift"}
+          - {"github":"guide-reactive-rest-client","gitlab":"cloud-hosted-guide-reactive-rest-client"}
+          - {"github":"guide-reactive-service-testing","gitlab":"cloud-hosted-guide-reactive-service-testing"}
+          - {"github":"guide-rest-openshift","gitlab":"cloud-hosted-guide-rest-openshift"}
           - {"github":"guide-restful-webservice","gitlab":"cloud-hosted-guide-restful-webservice"}
-
     steps:
 
     # Any prerequisite steps
