@@ -16,8 +16,8 @@ jobs:
               # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
         repo: 
           - {"github":"guide-cdi-intro","gitlab":"cloud-hosted-guide-cdi-intro"}
-          - {"github":"guide-cloud-native","gitlab":"get-started-with-cloud-native-on-the-open-java-stack"}
-          - {"github":"guide-deploying-and-packinging-applications","gitlab":"packaging-and-deploying-applications-with-open-liberty"}
+          - {"github":"guide-cloud-native","gitlab":"cloud-hosted-guide-cloud-native"}
+          - {"github":"guide-deploying-and-packinging-applications","gitlab":"cloud-hosted-guide-deploying-and-packinging-applications"}
           - {"github":"guide-docker","gitlab":"cloud-hosted-guide-docker"}
           - {"github":"guide-kubernetes-intro","gitlab":"cloud-hosted-guide-kubernetes-intro"}
           - {"github":"guide-microprofile-config","gitlab":"cloud-hosted-guide-microprofile-config"}
