@@ -16,7 +16,6 @@ jobs:
               # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
         repo: 
           - {"github":"guide-cdi-intro","gitlab":"cloud-hosted-guide-cdi-intro"}
-          - {"github":"guide-cloud-native","gitlab":"cloud-hosted-guide-cloud-native"}
           - {"github":"guide-docker","gitlab":"cloud-hosted-guide-docker"}
           - {"github":"guide-getting-started","gitlab":"cloud-hosted-guide-getting-started"}
           - {"github":"guide-kubernetes-intro","gitlab":"cloud-hosted-guide-kubernetes-intro"}
