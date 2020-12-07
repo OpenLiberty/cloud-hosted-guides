@@ -17,8 +17,8 @@ jobs:
         repo: 
           - {"github":"guide-cdi-intro","gitlab":"cloud-hosted-guide-cdi-intro"}
           - {"github":"guide-cloud-native","gitlab":"cloud-hosted-guide-cloud-native"}
-          - {"github":"guide-deploying-and-packinging-applications","gitlab":"cloud-hosted-guide-deploying-and-packinging-applications"}
           - {"github":"guide-docker","gitlab":"cloud-hosted-guide-docker"}
+          - {"github":"guide-getting-started","gitlab":"cloud-hosted-guide-getting-started"}
           - {"github":"guide-kubernetes-intro","gitlab":"cloud-hosted-guide-kubernetes-intro"}
           - {"github":"guide-microprofile-config","gitlab":"cloud-hosted-guide-microprofile-config"}
           - {"github":"guide-microprofile-fallback","gitlab":"cloud-hosted-guide-microprofile-fallback"}
