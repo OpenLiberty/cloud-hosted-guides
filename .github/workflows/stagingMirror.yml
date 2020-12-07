@@ -35,7 +35,8 @@ jobs:
           - {"github":"guide-reactive-rest-client","gitlab":"cloud-hosted-guide-reactive-rest-client"}
           - {"github":"guide-reactive-service-testing","gitlab":"cloud-hosted-guide-reactive-service-testing"}
           - {"github":"guide-rest-openshift","gitlab":"cloud-hosted-guide-rest-openshift"}
-          - {"github":"guide-restful-webservice","gitlab":"cloud-hosted-guide-restful-webservice"}
+          - {"github":"guide-rest-intro","gitlab":"cloud-hosted-guide-rest-intro"}
+    
     steps:
 
     # Any prerequisite steps
