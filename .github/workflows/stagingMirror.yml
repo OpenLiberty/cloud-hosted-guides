@@ -28,7 +28,7 @@ jobs:
           - {"github":"guide-microprofile-reactive-messaging-acknowledgment","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment"}
           - {"github":"guide-microprofile-reactive-messaging-rest-integration","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-rest-integration"}
           - {"github":"guide-microprofile-rest-client","gitlab":"cloud-hosted-guide-microprofile-rest-client"}
-          - {"github":"guide-microprofile-rest-client-async","gitlab":"consuming-restful-services-asynchronously-with-template-interfaces"}
+          - {"github":"guide-microprofile-rest-client-async","gitlab":"cloud-hosted-guide-microprofile-rest-client-async"}
           - {"github":"guide-microshed-testing","gitlab":"cloud-hosted-guide-microshed-testing"}
           - {"github":"guide-reactive-messaging","gitlab":"cloud-hosted-guide-reactive-messaging"}
           - {"github":"guide-reactive-messaging-openshift","gitlab":"cloud-hosted-guide-reactive-messaging-openshift"}
