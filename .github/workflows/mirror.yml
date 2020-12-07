@@ -34,8 +34,8 @@ jobs:
           - {"github":"guide-reactive-messaging-openshift","gitlab":"cloud-hosted-guide-reactive-messaging-openshift"}
           - {"github":"guide-reactive-rest-client","gitlab":"cloud-hosted-guide-reactive-rest-client"}
           - {"github":"guide-reactive-service-testing","gitlab":"cloud-hosted-guide-reactive-service-testing"}
-          - {"github":"guide-rest-openshift","gitlab":"cloud-hosted-guide-rest-openshift"}
           - {"github":"guide-rest-intro","gitlab":"cloud-hosted-guide-rest-intro"}
+          - {"github":"guide-rest-openshift","gitlab":"cloud-hosted-guide-rest-openshift"}
 
     steps:
 
