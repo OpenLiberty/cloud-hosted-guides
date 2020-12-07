@@ -15,26 +15,26 @@ jobs:
               # Add new quick-labs here to add them to the mirror process.
               # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
         repo: 
-          - {"github":"guide-cdi-intro","gitlab":"cloud-hosted-guide-cdi-intro"}
-          - {"github":"guide-docker","gitlab":"cloud-hosted-guide-docker"}
-          - {"github":"guide-getting-started","gitlab":"cloud-hosted-guide-getting-started"}
-          - {"github":"guide-kubernetes-intro","gitlab":"cloud-hosted-guide-kubernetes-intro"}
-          - {"github":"guide-microprofile-config","gitlab":"cloud-hosted-guide-microprofile-config"}
-          - {"github":"guide-microprofile-fallback","gitlab":"cloud-hosted-guide-microprofile-fallback"}
-          - {"github":"guide-microprofile-health","gitlab":"cloud-hosted-guide-microprofile-health"}
-          - {"github":"guide-microprofile-jwt","gitlab":"securing-microservices-with-json-web-token"}
-          - {"github":"guide-microprofile-opentracing","gitlab":"cloud-hosted-guide-microprofile-opentracing"}
-          - {"github":"guide-microprofile-reactive-messaging-acknowledgment","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment"}
-          - {"github":"guide-microprofile-reactive-messaging-rest-integration","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-rest-integration"}
-          - {"github":"guide-microprofile-rest-client","gitlab":"cloud-hosted-guide-microprofile-rest-client"}
-          - {"github":"guide-microprofile-rest-client-async","gitlab":"cloud-hosted-guide-microprofile-rest-client-async"}
-          - {"github":"guide-microshed-testing","gitlab":"cloud-hosted-guide-microshed-testing"}
-          - {"github":"guide-reactive-messaging","gitlab":"cloud-hosted-guide-reactive-messaging"}
-          - {"github":"guide-reactive-messaging-openshift","gitlab":"cloud-hosted-guide-reactive-messaging-openshift"}
-          - {"github":"guide-reactive-rest-client","gitlab":"cloud-hosted-guide-reactive-rest-client"}
-          - {"github":"guide-reactive-service-testing","gitlab":"cloud-hosted-guide-reactive-service-testing"}
-          - {"github":"guide-rest-intro","gitlab":"cloud-hosted-guide-rest-intro"}
-          - {"github":"guide-rest-openshift","gitlab":"cloud-hosted-guide-rest-openshift"}
+          - {"github":"cloud-hosted-guide-cdi-intro","gitlab":"cloud-hosted-guide-cdi-intro"}
+          - {"github":"cloud-hosted-guide-docker","gitlab":"cloud-hosted-guide-docker"}
+          - {"github":"cloud-hosted-guide-getting-started","gitlab":"cloud-hosted-guide-getting-started"}
+          - {"github":"cloud-hosted-guide-kubernetes-intro","gitlab":"cloud-hosted-guide-kubernetes-intro"}
+          - {"github":"cloud-hosted-guide-microprofile-config","gitlab":"cloud-hosted-guide-microprofile-config"}
+          - {"github":"cloud-hosted-guide-microprofile-fallback","gitlab":"cloud-hosted-guide-microprofile-fallback"}
+          - {"github":"cloud-hosted-guide-microprofile-health","gitlab":"cloud-hosted-guide-microprofile-health"}
+          - {"github":"cloud-hosted-guide-microprofile-jwt","gitlab":"securing-microservices-with-json-web-token"}
+          - {"github":"cloud-hosted-guide-microprofile-opentracing","gitlab":"cloud-hosted-guide-microprofile-opentracing"}
+          - {"github":"cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment"}
+          - {"github":"cloud-hosted-guide-microprofile-reactive-messaging-rest-integration","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-rest-integration"}
+          - {"github":"cloud-hosted-guide-microprofile-rest-client","gitlab":"cloud-hosted-guide-microprofile-rest-client"}
+          - {"github":"cloud-hosted-guide-microprofile-rest-client-async","gitlab":"cloud-hosted-guide-microprofile-rest-client-async"}
+          - {"github":"cloud-hosted-guide-microshed-testing","gitlab":"cloud-hosted-guide-microshed-testing"}
+          - {"github":"cloud-hosted-guide-reactive-messaging","gitlab":"cloud-hosted-guide-reactive-messaging"}
+          - {"github":"cloud-hosted-guide-reactive-messaging-openshift","gitlab":"cloud-hosted-guide-reactive-messaging-openshift"}
+          - {"github":"cloud-hosted-guide-reactive-rest-client","gitlab":"cloud-hosted-guide-reactive-rest-client"}
+          - {"github":"cloud-hosted-guide-reactive-service-testing","gitlab":"cloud-hosted-guide-reactive-service-testing"}
+          - {"github":"cloud-hosted-guide-rest-intro","gitlab":"cloud-hosted-guide-rest-intro"}
+          - {"github":"cloud-hosted-guide-rest-openshift","gitlab":"cloud-hosted-guide-rest-openshift"}
     
     steps:
 
