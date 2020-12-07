@@ -47,8 +47,8 @@ jobs:
         run: |
           branchName=${{ github.event.inputs.branch }}
           git init
-          mkdir -p instructions/${{ github.event.inputs.guide_name }}/
-          rm -f instructions/${{ github.event.inputs.guide_name }}/README.md
+          mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/
+          rm -f instructions/cloud-hosted-$${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
           javac *.java
           java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} ${branchName:11}
@@ -56,16 +56,17 @@ jobs:
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/${{ github.event.inputs.guide_name }}/instructions.md
+          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-$${{ github.event.inputs.guide_name }}/instructions.md
           rm -r GuideConverter
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
           git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
+          git checkout --ours instructions/cloud-hosted-$${{ github.event.inputs.guide_name }}/instructions.md
     
       - uses: peter-evans/create-pull-request@v3
         with:
-            title: "Change to ${{ github.event.inputs.guide_name }}"
+            title: "Change to cloud-hosted-$${{ github.event.inputs.guide_name }}"
             body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
             branch: "${{ github.event.inputs.guide_name }}/staging"
             base: "staging" 

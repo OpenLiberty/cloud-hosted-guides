@@ -106,8 +106,7 @@ public class SystemService {
 ```
 {: codeblock}
 
-The **SystemService** class contains a **Publisher** method that is called **Flowable.interval()** method from **rxJava** is used to set the frequency of how often the system service publishes the calculation to the event stream.
-
+The **SystemService** class contains a **Publisher** method that is called **sendSystemLoad()**, which calculates and returns the average system load. The **@Outgoing** annotation on the **sendSystemLoad()** method indicates that the method publishes its calculation as a message on a topic in the Kafka messaging system. The **Flowable.interval()** method from **rxJava** is used to set the frequency of how often the system service publishes the calculation to the event stream.
 The messages are transported between the service and the Kafka messaging system through a channel called **systemLoadTopic**.
 
 # Creating the consumer in the inventory microservice
@@ -214,7 +213,7 @@ public class InventoryResource {
 
 The **inventory** microservice receives the message from the **system** microservice over the **/inventory** endpoint.
 
-The **InventoryResource** class contains a method called **systemLoadTopic**.
+The **InventoryResource** class contains a method called **updateStatus()**, which receives the message that contains the average system load and updates its existing inventory of systems and their average system load. The **@Incoming("systemLoad")** annotation on the **updateStatus()** method indicates that the method retrieves the average system load information by connecting to the channel called **systemLoad**. Later in the guide, you will configure the service so that any messages sent by the system service through the **systemLoad** channel are retrieved from a topic called **systemLoadTopic**.
 
 # Configuring the MicroProfile Reactive Messaging connectors for Kafka
 
