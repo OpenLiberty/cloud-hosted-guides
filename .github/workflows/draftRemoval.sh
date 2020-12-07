@@ -1,6 +1,6 @@
-if [[ -d "instructions/draft-$1" ]]; then
-    rm -rf instructions/draft-$1
-    echo "Removed draft-$1"
+if [[ -d "instructions/draft-cloud-hosted-$1" ]]; then
+    rm -rf instructions/draft-cloud-hosted-$1
+    echo "Removed draft-cloud-hosted-$1"
 else
-    echo "No draft guide found (draft-$1)"
+    echo "No draft guide found (draft-cloud-hosted-$1)"
 fi
