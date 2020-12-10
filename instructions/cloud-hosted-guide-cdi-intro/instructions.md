@@ -72,13 +72,17 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Point your browser to the [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) URL This is the starting point of the **inventory**
+Point your browser to the [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) URL
 
 ```
-curl http://localhost:9080/inventory/systems
+The defaultServer server is ready to run a smarter planet.
 ```
 {: codeblock}
 
+
+This is the starting point of the **inventory** service and it displays the current contents of the inventory. 
+As you might expect, these are empty since nothing is stored in the inventory yet. 
+Next, point your browser to the [http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) URL
 
 service and it displays the current contents of the inventory. As you might expect, these are empty since
 nothing is stored in the inventory yet
@@ -89,15 +93,16 @@ curl http://localhost:9080/inventory/systems/localhost
 
 
 You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
-properties are automatically stored in the inventory Go back to [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) and
-
+properties are automatically stored in the inventory. 
+Go back to 
 ```
 curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
 
 
-you see a new entry for **localhost**. For simplicity, only the OS name and username are shown here for
+ 
+and you see a new entry for **localhost**. For simplicity, only the OS name and username are shown here for
 each host. You can repeat this process for your own hostname or any other machine that is running
 the **system** service.
 
