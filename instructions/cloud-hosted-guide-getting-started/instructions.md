@@ -152,6 +152,21 @@ Development mode automatically picks up changes that you make to your applicatio
 
 As before, you can see that the application is running by going to the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) URL
 
+Development mode automatically picks up changes that you make to your application and allows you to run tests by pressing the **enter/return** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the **enter/return** key to verify your change.
+
+As before, you can see that the application is running by going to the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) URL
+
+```
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
+
+
+
+Now try updating the server configuration while the server is running in development mode.
+The **system** microservice does not currently include health monitoring to report whether the server and the microservice that it runs are healthy.
+You can add health reports with the MicroProfile Health feature, which adds a **/health** endpoint to your application.
+If you try to access this endpoint now at the 
 ```
 curl http://localhost:9080/system/properties
 ```
@@ -181,7 +196,8 @@ Replace the server configuration file.
 
 
 > [File -> Open...]
-guide-getting-started/start/src/main/liberty/config/server.xml
+
+>guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
@@ -276,7 +292,8 @@ Create the **SystemReadinessCheck** class.
 
 
 > [File -> New File]
-guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+
+>guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 
 
 
@@ -326,7 +343,8 @@ Create the **SystemLivenessCheck** class.
 
 
 > [File -> New File]
-guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+
+>guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
 
 
 
@@ -461,7 +479,8 @@ Replace the server configuration file.
 
 
 > [File -> Open...]
-guide-getting-started/start/src/main/liberty/config/server.xml
+
+>guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
