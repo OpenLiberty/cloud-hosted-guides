@@ -29,7 +29,7 @@ such as performance, scalability, and modifiability.
 
 # Getting started
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guiderestintro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
 
 ```
 git clone https://github.com/openliberty/guide-rest-intro.git
@@ -113,7 +113,8 @@ common path. You can think of the JAX-RS application as a wrapper for all of you
 Replace the **SystemApplication** class.
 
 
-> [File -> Open]guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
+> [File -> Open...]
+guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
 
 
 
@@ -148,7 +149,8 @@ of resources helps with maintainability in the long run.
 Create the **PropertiesResource** class.
 
 
-> [File -> Open]guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+> [File -> New File]
+guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 
 
@@ -209,7 +211,8 @@ To get the service running, the Liberty server needs to be correctly configured.
 Replace the server configuration file.
 
 
-> [File -> Open]guide-rest-intro/start/src/main/liberty/config/server.xml
+> [File -> Open...]
+guide-rest-intro/start/src/main/liberty/config/server.xml
 
 
 
@@ -283,7 +286,8 @@ does the latter.
 Create the **EndpointIT** class.
 
 
-> [File -> Open]guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+> [File -> New File]
+guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
 
 
@@ -392,14 +396,13 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 Delete the **guide-rest-intro** project by navigating to the **/home/project/** directory
 
 ```
-cd ../..
-rm -r -f guide-rest-intro
-rmdir guide-rest-intro
+cd /home/project
+rm -fr guide-rest-intro
 ```
 {: codeblock}
 
 
-## Great work! You're done!
+## Nice work!
 
 
 You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
