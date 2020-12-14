@@ -181,7 +181,7 @@ Replace the server configuration file.
 
 
 > [File -> Open...]
-guide-getting-started/start/src/main/liberty/config/server.xml
+> guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
@@ -276,7 +276,7 @@ Create the **SystemReadinessCheck** class.
 
 
 > [File -> New File]
-guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+ >guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 
 
 
@@ -326,7 +326,7 @@ Create the **SystemLivenessCheck** class.
 
 
 > [File -> New File]
-guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+ >guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
 
 
 
@@ -461,7 +461,7 @@ Replace the server configuration file.
 
 
 > [File -> Open...]
-guide-getting-started/start/src/main/liberty/config/server.xml
+> guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
