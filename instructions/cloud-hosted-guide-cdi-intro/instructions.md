@@ -24,7 +24,7 @@ The implementation of the application and its services are provided for you in t
 The **system** service can be found in the **start/src/main/java/io/openliberty/guides/system** directory, 
 and the **inventory** service can be found in the **start/src/main/java/io/openliberty/guides/inventory** directory. 
 If you want to learn more about RESTful web services and how to build them, see
-[Creating a RESTful web service](https://openliberty.io/guides/restintro.html) for details about how to build the **system** service.
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the **system** service.
 The **inventory** service is built in a similar way.
 
 ### What is CDI?
@@ -39,7 +39,7 @@ controlling exactly when and how these components are instantiated and destroyed
 
 # Getting started
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guidecdiintro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cdi-intro.git) and use the projects that are provided inside:
 
 ```
 git clone https://github.com/openliberty/guide-cdi-intro.git
@@ -76,6 +76,10 @@ Point your browser to the [http://localhost:9080/inventory/systems](http://local
 
 ```
 The defaultServer server is ready to run a smarter planet.
+```
+
+Point your browser to the [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) URL
+
 ```
 {: codeblock}
 
@@ -145,7 +149,8 @@ or open the project in your editor.
 Create the **InventoryManager** class.
 
 
-> [File -> Open]guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> [File -> New File]
+guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -199,7 +204,8 @@ it is injected into the application.
 Create the **InventoryResource** class.
 
 
-> [File -> Open]guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> [File -> New File]
+guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
@@ -290,7 +296,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 You can find the **inventory** and **system** services at the following URLs:
 
- 
+- 
 ```
 curl http://localhost:9080/inventory/systems
 ```
@@ -298,11 +304,7 @@ curl http://localhost:9080/inventory/systems
 
 
 
- 
-```
-curl http://localhost:9080/system/properties
-```
-{: codeblock}
+
 
 
 
@@ -319,7 +321,8 @@ In testing the functionality of the application, the scopes and dependencies are
 Create the **InventoryEndpointIT** class.
 
 
-> [File -> Open]guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+> [File -> New File]
+guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
 
@@ -556,14 +559,13 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 Delete the **guide-cdi-intro** project by navigating to the **/home/project/** directory
 
 ```
-cd ../..
-rm -r -f guide-cdi-intro
-rmdir guide-cdi-intro
+cd /home/project
+rm -fr guide-cdi-intro
 ```
 {: codeblock}
 
 
-## Great work! You're done!
+## Nice work!
 
 
 You just used CDI services in Open Liberty to build a simple inventory application.
