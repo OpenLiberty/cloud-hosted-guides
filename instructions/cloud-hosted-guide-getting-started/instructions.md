@@ -180,7 +180,8 @@ To add the MicroProfile Health feature to the server, include the **mpHealth** f
 Replace the server configuration file.
 
 
-> [File -> Open]guide-getting-started/start/src/main/liberty/config/server.xml
+> [File -> Open...]
+guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
@@ -274,7 +275,8 @@ A liveness check allows third-party services to determine if the microservice is
 Create the **SystemReadinessCheck** class.
 
 
-> [File -> New File]guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+> [File -> New File]
+guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 
 
 
@@ -323,7 +325,8 @@ The **SystemReadinessCheck** class verifies that the
 Create the **SystemLivenessCheck** class.
 
 
-> [File -> New File]guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+> [File -> New File]
+guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
 
 
 
@@ -457,7 +460,8 @@ Try enabling detailed logging of the MicroProfile Health feature by adding the
 Replace the server configuration file.
 
 
-> [File -> Open]guide-getting-started/start/src/main/liberty/config/server.xml
+> [File -> Open...]
+guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
@@ -678,7 +682,7 @@ Delete the **guide-getting-started** project by navigating to the **/home/projec
 
 ```
 cd /home/project
-rm -fr cloud-hostedguide-getting-started
+rm -fr guide-getting-started
 ```
 {: codeblock}
 
