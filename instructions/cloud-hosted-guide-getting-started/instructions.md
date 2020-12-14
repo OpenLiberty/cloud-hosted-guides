@@ -32,7 +32,7 @@ image and run that image as a container.
 
 # Getting started
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guidegettingstarted.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-getting-started.git) and use the projects that are provided inside:
 
 ```
 git clone https://github.com/openliberty/guide-getting-started.git
@@ -80,7 +80,7 @@ the **target/liberty/wlp** directory, a server instance is created and configure
 **target/liberty/wlp/usr/servers/defaultServer** directory, and the application is
 installed into that server via [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
 
-For more information about the Liberty Maven plugin, see its [GitHub repository](https://github.com/WASdev/ci.maven).
+For more information about the Liberty Maven plug-in, see its [GitHub repository](https://github.com/WASdev/ci.maven).
 
 When the server begins starting up, various messages display in your command-line session. Wait
 for the following message, which indicates that the server startup is complete:
@@ -274,7 +274,7 @@ A liveness check allows third-party services to determine if the microservice is
 Create the **SystemReadinessCheck** class.
 
 
-> [File -> Open]guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+> [File -> New File]guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 
 
 
@@ -323,7 +323,7 @@ The **SystemReadinessCheck** class verifies that the
 Create the **SystemLivenessCheck** class.
 
 
-> [File -> Open]guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+> [File -> New File]guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
 
 
 
@@ -677,14 +677,13 @@ You can stop the server by pressing **CTRL+C** in the command-line session that 
 Delete the **guide-getting-started** project by navigating to the **/home/project/** directory
 
 ```
-cd ../..
-rm -r -f guide-getting-started
-rmdir guide-getting-started
+cd /home/project
+rm -fr cloud-hostedguide-getting-started
 ```
 {: codeblock}
 
 
-## Great work! You're done!
+## Nice work!
 
 
 You've learned the basics of deploying and updating an application on an Open Liberty server.
