@@ -129,19 +129,7 @@ the Maven **liberty:start** and **liberty:stop** goals:
 mvn liberty:start
 mvn liberty:stop
 ```
-{: codeblock)
-
-
-
-
-
-
-
-
-# Updating the server configuration without restarting the server
-
-The Open Liberty Maven plug-in includes a **dev** goal that listens for any changes in the project, 
-including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
+{: codeblock}
 
 
 
