@@ -113,8 +113,9 @@ common path. You can think of the JAX-RS application as a wrapper for all of you
 Replace the **SystemApplication** class.
 
 
-> [File -> Open...]
-guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
+> [File -> Open...] 
+>
+> guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
 
 
 
@@ -149,8 +150,9 @@ of resources helps with maintainability in the long run.
 Create the **PropertiesResource** class.
 
 
-> [File -> New File]
-guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+> [File -> New File] 
+>
+> guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 
 
@@ -211,8 +213,9 @@ To get the service running, the Liberty server needs to be correctly configured.
 Replace the server configuration file.
 
 
-> [File -> Open...]
-guide-rest-intro/start/src/main/liberty/config/server.xml
+> [File -> Open...] 
+>
+> guide-rest-intro/start/src/main/liberty/config/server.xml
 
 
 
@@ -286,8 +289,9 @@ does the latter.
 Create the **EndpointIT** class.
 
 
-> [File -> New File]
-guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+> [File -> New File] 
+>
+> guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
 
 
