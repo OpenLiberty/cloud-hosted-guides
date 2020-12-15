@@ -135,6 +135,9 @@ mvn liberty:stop
 
 
 
+
+
+
 # Updating the server configuration without restarting the server
 
 The Open Liberty Maven plug-in includes a **dev** goal that listens for any changes in the project, 
@@ -180,7 +183,8 @@ To add the MicroProfile Health feature to the server, include the **mpHealth** f
 Replace the server configuration file.
 
 
-> [File -> Open...]
+> [File -> Open...] 
+>
 > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
@@ -275,8 +279,9 @@ A liveness check allows third-party services to determine if the microservice is
 Create the **SystemReadinessCheck** class.
 
 
-> [File -> New File]
- >guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+> [File -> New File] 
+>
+> guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 
 
 
@@ -325,8 +330,9 @@ The **SystemReadinessCheck** class verifies that the
 Create the **SystemLivenessCheck** class.
 
 
-> [File -> New File]
- >guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+> [File -> New File] 
+>
+> guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
 
 
 
@@ -460,7 +466,8 @@ Try enabling detailed logging of the MicroProfile Health feature by adding the
 Replace the server configuration file.
 
 
-> [File -> Open...]
+> [File -> Open...] 
+>
 > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
@@ -595,6 +602,14 @@ CONTAINER ID    IMAGE                         CREATED          STATUS           
 
 To access the application, go to the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) URL
 
+```
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
+
+
+
+To stop and remove the container, run the following commands:
 ```
 curl http://localhost:9080/system/properties
 ```
