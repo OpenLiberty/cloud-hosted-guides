@@ -72,14 +72,16 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Point your browser to the [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) URL
+Point your browser to the [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) URL This is the starting point of the **inventory**
 
 ```
-The defaultServer server is ready to run a smarter planet.
+curl http://localhost:9080/inventory/systems
 ```
+{: codeblock}
 
-Point your browser to the [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) URL
 
+service and it displays the current contents of the inventory. As you might expect, these are empty since
+nothing is stored in the inventory yet
 ```
 {: codeblock}
 
@@ -97,6 +99,9 @@ curl http://localhost:9080/inventory/systems/localhost
 
 
 You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
+properties are automatically stored in the inventory Go back to [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) and
+
+You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
 properties are automatically stored in the inventory. 
 Go back to 
 ```
@@ -105,8 +110,7 @@ curl http://localhost:9080/inventory/systems
 {: codeblock}
 
 
- 
-and you see a new entry for **localhost**. For simplicity, only the OS name and username are shown here for
+you see a new entry for **localhost**. For simplicity, only the OS name and username are shown here for
 each host. You can repeat this process for your own hostname or any other machine that is running
 the **system** service.
 
@@ -149,8 +153,9 @@ or open the project in your editor.
 Create the **InventoryManager** class.
 
 
-> [File -> New File]
-guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> [File -> New File] 
+>
+> guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -204,8 +209,9 @@ it is injected into the application.
 Create the **InventoryResource** class.
 
 
-> [File -> New File]
-guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> [File -> New File] 
+>
+> guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
@@ -306,10 +312,6 @@ curl http://localhost:9080/inventory/systems
 
 
 
-
-
-
-
 # Testing the inventory application
 
 While you can test your application manually, you should rely on automated tests since they trigger
@@ -321,8 +323,9 @@ In testing the functionality of the application, the scopes and dependencies are
 Create the **InventoryEndpointIT** class.
 
 
-> [File -> New File]
-guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+> [File -> New File] 
+>
+> guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
 
