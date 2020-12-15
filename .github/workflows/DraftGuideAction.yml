@@ -36,6 +36,18 @@ jobs:
         with:
           repository: OpenLiberty/cloud-hosted-guide-converter
           path: GuideConverter
+        
+      - name: Checkout guide repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/${{ github.event.inputs.guide_name }}
+          path: GuideConverter/Guide-repo
+        
+      - name: Checkout guides-common repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/guides-common
+          path: GuideConverter/Guides-common
 
       - uses: actions/setup-java@v1
         with:
@@ -48,21 +60,22 @@ jobs:
           branchName=${{ github.event.inputs.branch }}
           git init
           mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/
-          rm -f instructions/cloud-hosted-$${{ github.event.inputs.guide_name }}/README.md
+          rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
-          javac *.java
+          javac CloudHostedGuideConverter.java
           java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} ${branchName:11}
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-$${{ github.event.inputs.guide_name }}/instructions.md
-          rm -r GuideConverter
+          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/instructions.md
+          rm -rf GuideConverter
+          bash .github/workflows/draftRemoval.sh cloud-hosted-${{ github.event.inputs.guide_name }}
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
           git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
-          git checkout --ours instructions/cloud-hosted-$${{ github.event.inputs.guide_name }}/instructions.md
+          git checkout --ours instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/instructions.md
     
       - uses: peter-evans/create-pull-request@v3
         with:
