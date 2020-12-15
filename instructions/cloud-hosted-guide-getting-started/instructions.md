@@ -32,6 +32,17 @@ image and run that image as a container.
 
 # Getting started
 
+Open a terminal window:
+
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-getting-started.git) and use the projects that are provided inside:
 
 ```
