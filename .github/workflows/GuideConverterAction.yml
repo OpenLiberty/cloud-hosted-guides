@@ -94,7 +94,9 @@ jobs:
     steps:
 
       # Any prerequisite steps
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
+        with:
+          ref: staging
         
       - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
@@ -105,6 +107,7 @@ jobs:
       - name: Checkout guide repo
         uses: actions/checkout@v2
         with:
+          ref: qa
           repository: OpenLiberty/${{ github.event.inputs.guide_name }}
           path: GuideConverter/Guide-repo
         
