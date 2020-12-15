@@ -69,7 +69,7 @@ jobs:
           rm -f CloudHostedGuideConverter.class
           cd ..
           mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/instructions.md
-          rm -r GuideConverter
+          rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh cloud-hosted-${{ github.event.inputs.guide_name }}
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
