@@ -143,6 +143,15 @@ mvn liberty:stop
 The Open Liberty Maven plug-in includes a **dev** goal that listens for any changes in the project, 
 including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
 
+
+
+
+
+# Updating the server configuration without restarting the server
+
+The Open Liberty Maven plug-in includes a **dev** goal that listens for any changes in the project, 
+including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
+
 Stop the Open Liberty server if it is running, and start it in development mode by running the **liberty:dev** goal in the **start** directory:
 
 ```
@@ -602,14 +611,6 @@ CONTAINER ID    IMAGE                         CREATED          STATUS           
 
 To access the application, go to the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) URL
 
-```
-curl http://localhost:9080/system/properties
-```
-{: codeblock}
-
-
-
-To stop and remove the container, run the following commands:
 ```
 curl http://localhost:9080/system/properties
 ```
