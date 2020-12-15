@@ -135,6 +135,18 @@ mvn liberty:stop
 
 
 
+
+
+
+# Updating the server configuration without restarting the server
+
+The Open Liberty Maven plug-in includes a **dev** goal that listens for any changes in the project, 
+including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
+
+
+
+
+
 # Updating the server configuration without restarting the server
 
 The Open Liberty Maven plug-in includes a **dev** goal that listens for any changes in the project, 
@@ -180,7 +192,8 @@ To add the MicroProfile Health feature to the server, include the **mpHealth** f
 Replace the server configuration file.
 
 
-> [File -> Open...]
+> [File -> Open...] 
+>
 > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
@@ -275,8 +288,9 @@ A liveness check allows third-party services to determine if the microservice is
 Create the **SystemReadinessCheck** class.
 
 
-> [File -> New File]
- >guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+> [File -> New File] 
+>
+> guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 
 
 
@@ -325,8 +339,9 @@ The **SystemReadinessCheck** class verifies that the
 Create the **SystemLivenessCheck** class.
 
 
-> [File -> New File]
- >guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+> [File -> New File] 
+>
+> guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
 
 
 
@@ -460,7 +475,8 @@ Try enabling detailed logging of the MicroProfile Health feature by adding the
 Replace the server configuration file.
 
 
-> [File -> Open...]
+> [File -> Open...] 
+>
 > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
