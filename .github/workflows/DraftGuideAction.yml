@@ -29,32 +29,25 @@ jobs:
     steps:
 
            # Any prerequisite steps
-       - uses: actions/checkout@master
+      - uses: actions/checkout@master
         
       - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
         with:
           repository: OpenLiberty/cloud-hosted-guide-converter
           path: GuideConverter
-
-
-          # Any prerequisite steps
-      - uses: actions/checkout@master
         
       - name: Checkout guide repo
         uses: actions/checkout@v2
         with:
           repository: OpenLiberty/${{ github.event.inputs.guide_name }}
-          path: Guide-repo
-
-          # Any prerequisite steps
-      - uses: actions/checkout@master
+          path: GuideConverter/Guide-repo
         
       - name: Checkout guides-common repo
         uses: actions/checkout@v2
         with:
           repository: OpenLiberty/guides-common
-          path: Guides-common
+          path: GuideConverter/Guides-common
 
       - uses: actions/setup-java@v1
         with:
@@ -77,8 +70,6 @@ jobs:
           cd ..
           mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/instructions.md
           rm -r GuideConverter
-          rm -r Guide-repo
-          rm -r Guides-common
           bash .github/workflows/draftRemoval.sh cloud-hosted-${{ github.event.inputs.guide_name }}
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
