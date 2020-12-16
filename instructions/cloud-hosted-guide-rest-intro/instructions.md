@@ -29,6 +29,17 @@ such as performance, scalability, and modifiability.
 
 # Getting started
 
+Open a terminal window:
+
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
 
 ```
@@ -405,6 +416,9 @@ rm -fr guide-rest-intro
 ```
 {: codeblock}
 
+Now Log out by navigating to: 
+
+> [Account -> Logout]
 
 ## Nice work!
 
