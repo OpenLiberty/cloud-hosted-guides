@@ -701,6 +701,9 @@ rm -fr guide-getting-started
 ```
 {: codeblock}
 
+Now Log out by navigating to: 
+
+> [Account -> Logout]
 
 ## Nice work!
 
