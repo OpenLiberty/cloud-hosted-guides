@@ -139,8 +139,7 @@ The template interface describes the remote service that you want to access. The
 Create the **SystemClient** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 
 
@@ -198,8 +197,7 @@ Implement the actual exception class and the mapper class to see how this mechan
 Create the **UnknownUriException** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 
 
@@ -229,8 +227,7 @@ Now, link the **UnknownUriException** class with the corresponding response code
 Create the **UnknownUriExceptionMapper** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
 
 
@@ -277,8 +274,7 @@ Configure the default base URL with the MicroProfile Config feature. This featur
 Create the configuration file.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
 
 
@@ -312,9 +308,8 @@ Inject the **SystemClient** interface into the **InventoryManager** class, which
 Replace the **InventoryManager** class.
 
 
-> [File -> Open...] 
->
-> guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> [File -> Open...]  
+>guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -465,8 +460,7 @@ When the server is running, select either approach to fetch your system properti
 Create the **RestClientIT** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 
 
@@ -602,10 +596,17 @@ Rerun the tests to see a test failure occur.
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
+## Nice work!
+
+You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
 
 # Summary
 
 ## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide!
+
+You can clean up the environment by doing the following:
 
 Delete the **guide-microprofile-rest-client** project by navigating to the **/home/project/** directory
 
@@ -619,10 +620,7 @@ Now Log out by navigating to:
 
 > [Account -> Logout]
 
-## Nice work!
 
-
-You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
 
 MicroProfile Rest Client also provides a uniform way to configure SSL for the client.
 You can learn more in the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl) blog and the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl).
