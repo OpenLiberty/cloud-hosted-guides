@@ -191,9 +191,8 @@ To add the MicroProfile Health feature to the server, include the **mpHealth** f
 Replace the server configuration file.
 
 
-> [File -> Open...] 
->
-> guide-getting-started/start/src/main/liberty/config/server.xml
+> [File -> Open...]  
+>guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
@@ -287,8 +286,7 @@ A liveness check allows third-party services to determine if the microservice is
 Create the **SystemReadinessCheck** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 
 
@@ -338,8 +336,7 @@ The **SystemReadinessCheck** class verifies that the
 Create the **SystemLivenessCheck** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
 
 
@@ -474,9 +471,8 @@ Try enabling detailed logging of the MicroProfile Health feature by adding the
 Replace the server configuration file.
 
 
-> [File -> Open...] 
->
-> guide-getting-started/start/src/main/liberty/config/server.xml
+> [File -> Open...]  
+>guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
@@ -688,10 +684,17 @@ You can stop the server by pressing **CTRL+C** in the command-line session that 
 
 
 
+## Nice work!
+
+You've learned the basics of deploying and updating an application on an Open Liberty server.
 
 # Summary
 
 ## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide!
+
+You can clean up the environment by doing the following:
 
 Delete the **guide-getting-started** project by navigating to the **/home/project/** directory
 
@@ -705,9 +708,6 @@ Now Log out by navigating to:
 
 > [Account -> Logout]
 
-## Nice work!
 
-
-You've learned the basics of deploying and updating an application on an Open Liberty server.
 
 
