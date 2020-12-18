@@ -94,8 +94,7 @@ properties, such as the OS name and user name, are automatically stored in the i
 Update the **CustomConfigSource** configuration file.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-microprofile-fallback/start/resources/CustomConfigSource.json
 
 
@@ -128,8 +127,7 @@ When you are done checking out the application, go to the **CustomConfigSource.j
 Update the **CustomConfigSource** configuration file.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-microprofile-fallback/start/resources/CustomConfigSource.json
 
 
@@ -229,8 +227,7 @@ Now, set a fallback method to deal with this failure.
 Replace the **InventoryManager** class.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
@@ -382,8 +379,7 @@ the **io_openliberty_guides_system_inMaintenance** property value to **true** in
 Update the configuration file.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-microprofile-fallback/start/resources/CustomConfigSource.json
 
 
@@ -442,8 +438,7 @@ indicates that the **fallbackForGet()** method was called once.
 Update the configuration file.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-microprofile-fallback/start/resources/CustomConfigSource.json
 
 
@@ -468,8 +463,7 @@ whenever a code change introduces a defect. JUnit and the JAX-RS Client API prov
 Create the **FaultToleranceIT** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
 
 
@@ -622,10 +616,17 @@ When you are done checking out the service, exit dev mode by pressing **CTRL+C**
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
+## Nice work!
+
+You just learned how to build a fallback mechanism for a microservice with MicroProfile Fault Tolerance in Open Liberty and wrote a test to validate it.
 
 # Summary
 
 ## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide!
+
+You can clean up the environment by doing the following:
 
 Delete the **guide-microprofile-fallback** project by navigating to the **/home/project/** directory
 
@@ -639,10 +640,7 @@ Now Log out by navigating to:
 
 > [Account -> Logout]
 
-## Nice work!
 
-
-You just learned how to build a fallback mechanism for a microservice with MicroProfile Fault Tolerance in Open Liberty and wrote a test to validate it.
 
 You can try one of the related MicroProfile guides. They demonstrate technologies that you can
 learn and expand on what you built here.
