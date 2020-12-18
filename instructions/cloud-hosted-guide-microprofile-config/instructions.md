@@ -156,8 +156,7 @@ To use this configuration property,
 Create the **InventoryConfig.java** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
 
 
@@ -227,8 +226,7 @@ To link this JSON file to your application and to implement the **ConfigSource**
 Create the **CustomConfigSource** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java
 
 
@@ -335,8 +333,7 @@ Finally, register the custom configuration source.
 Create the configuration file.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource
 
 
@@ -358,8 +355,7 @@ To enable this dynamic injection,
 Replace the **InventoryConfig.java** class.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
 
 
@@ -421,8 +417,7 @@ To convert configured Strings to an arbitrary class type, such as the **Email** 
 Replace the **Email** Class.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java
 
 
@@ -466,8 +461,7 @@ The Type parameter of the interface is the target type the String is converted t
 Create the **CustomEmailConverter** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java
 
 
@@ -497,8 +491,7 @@ To register your implementation,
 Create the configuration file.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter
 
 
@@ -514,8 +507,7 @@ To use the custom **Email** converter,
 Replace the **InventoryConfig** class.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
 
 
@@ -568,8 +560,7 @@ To use externalized configuration in the **inventory** service,
 Replace the **InventoryResource** class.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
@@ -721,8 +712,7 @@ The following message displays: **ERROR: Service is currently in maintenance**.
 Create the **ConfigurationIT** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java
 
 
@@ -889,10 +879,17 @@ When you are done checking out the service, exit dev mode by pressing **CTRL+C**
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
+## Nice work!
+
+You just built and tested a MicroProfile application with MicroProfile Config in Open Liberty.
 
 # Summary
 
 ## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide!
+
+You can clean up the environment by doing the following:
 
 Delete the **guide-microprofile-config** project by navigating to the **/home/project/** directory
 
@@ -906,10 +903,7 @@ Now Log out by navigating to:
 
 > [Account -> Logout]
 
-## Nice work!
 
-
-You just built and tested a MicroProfile application with MicroProfile Config in Open Liberty.
 
 Feel free to try one of the related guides. They demonstrate new technologies that you can learn and
 expand on top what you built in this guide.
