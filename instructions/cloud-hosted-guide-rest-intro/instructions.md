@@ -124,8 +124,7 @@ common path. You can think of the JAX-RS application as a wrapper for all of you
 Replace the **SystemApplication** class.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
 
 
@@ -161,8 +160,7 @@ of resources helps with maintainability in the long run.
 Create the **PropertiesResource** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 
@@ -224,8 +222,7 @@ To get the service running, the Liberty server needs to be correctly configured.
 Replace the server configuration file.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-rest-intro/start/src/main/liberty/config/server.xml
 
 
@@ -300,8 +297,7 @@ does the latter.
 Create the **EndpointIT** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
 
@@ -403,10 +399,17 @@ When you are done checking out the service, exit dev mode by pressing **CTRL+C**
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
+## Nice work!
+
+You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
 
 # Summary
 
 ## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide!
+
+You can clean up the environment by doing the following:
 
 Delete the **guide-rest-intro** project by navigating to the **/home/project/** directory
 
@@ -420,8 +423,5 @@ Now Log out by navigating to:
 
 > [Account -> Logout]
 
-## Nice work!
 
-
-You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
 
