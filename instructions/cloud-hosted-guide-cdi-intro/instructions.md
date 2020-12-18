@@ -154,8 +154,7 @@ or open the project in your editor.
 Create the **InventoryManager** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
@@ -210,8 +209,7 @@ it is injected into the application.
 Create the **InventoryResource** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
@@ -324,8 +322,7 @@ In testing the functionality of the application, the scopes and dependencies are
 Create the **InventoryEndpointIT** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
@@ -555,10 +552,17 @@ run the tests again to see that a test failure occurs.
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
+## Nice work!
+
+You just used CDI services in Open Liberty to build a simple inventory application.
 
 # Summary
 
 ## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide!
+
+You can clean up the environment by doing the following:
 
 Delete the **guide-cdi-intro** project by navigating to the **/home/project/** directory
 
@@ -568,9 +572,9 @@ rm -fr guide-cdi-intro
 ```
 {: codeblock}
 
+Now Log out by navigating to: 
 
-## Nice work!
+> [Account -> Logout]
 
 
-You just used CDI services in Open Liberty to build a simple inventory application.
 
