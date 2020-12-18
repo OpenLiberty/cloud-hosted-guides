@@ -192,7 +192,7 @@ Replace the server configuration file.
 
 
 > [File -> Open...]  
->guide-getting-started/start/src/main/liberty/config/server.xml
+> guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
@@ -472,7 +472,7 @@ Replace the server configuration file.
 
 
 > [File -> Open...]  
->guide-getting-started/start/src/main/liberty/config/server.xml
+> guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
