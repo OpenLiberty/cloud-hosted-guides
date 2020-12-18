@@ -106,8 +106,7 @@ You will be creating two Docker images to run the **inventory** service and **sy
 Create the **Dockerfile** for the inventory service.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-containerize/start/inventory/Dockerfile
 
 
@@ -172,8 +171,7 @@ The **Dockerfile** for the **system** service follows the same instructions as t
 Create the **Dockerfile** for the system service.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-containerize/start/system/Dockerfile
 
 
@@ -344,8 +342,7 @@ You can test your microservices manually by hitting the endpoints or with automa
 Create the **SystemEndpointIT** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 
 
@@ -420,8 +417,7 @@ The **testGetProperties()** method checks for a **200** response code from the *
 Create the **InventoryEndpointIT** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
@@ -653,10 +649,17 @@ docker rm inventory system
 
 
 
+## Nice work!
+
+You have just built Docker images and run two microservices on Open Liberty in containers. 
 
 # Summary
 
 ## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide!
+
+You can clean up the environment by doing the following:
 
 Delete the **guide-containerize** project by navigating to the **/home/project/** directory
 
@@ -670,8 +673,5 @@ Now Log out by navigating to:
 
 > [Account -> Logout]
 
-## Nice work!
 
-
-You have just built Docker images and run two microservices on Open Liberty in containers. 
 
