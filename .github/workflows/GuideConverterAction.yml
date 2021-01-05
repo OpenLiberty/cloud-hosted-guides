@@ -42,7 +42,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: OpenLiberty/${{ github.event.inputs.guide_name }}
-          path: GuideConverter/Guide-repo
+          path: GuideConverter/${{ github.event.inputs.guide_name }}
         
       - name: Checkout guides-common repo
         uses: actions/checkout@v2
@@ -110,7 +110,7 @@ jobs:
           ref: qa
 
           repository: OpenLiberty/${{ github.event.inputs.guide_name }}
-          path: GuideConverter/Guide-repo
+          path: GuideConverter/${{ github.event.inputs.guide_name }}
         
       - name: Checkout guides-common repo
         uses: actions/checkout@v2
