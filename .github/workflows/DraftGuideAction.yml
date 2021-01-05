@@ -64,7 +64,7 @@ jobs:
           mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/
           rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
-          mvn package
+          mvn package -Dmaven.test.skip=true 
           mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11}"
           rm -f importFunctions.class
           rm -f functions.class
