@@ -42,7 +42,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: OpenLiberty/${{ github.event.inputs.guide_name }}
-          path: GuideConverter/Guide-repo
+          path: GuideConverter/${{ github.event.inputs.guide_name }}
         
       - name: Checkout guides-common repo
         uses: actions/checkout@v2
@@ -63,8 +63,8 @@ jobs:
           mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/
           rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
-          javac CloudHostedGuideConverter.java
-          java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} ${branchName:11}
+          mvn package -Dmaven.test.skip=true 
+          mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
@@ -108,8 +108,9 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: qa
+
           repository: OpenLiberty/${{ github.event.inputs.guide_name }}
-          path: GuideConverter/Guide-repo
+          path: GuideConverter/${{ github.event.inputs.guide_name }}
         
       - name: Checkout guides-common repo
         uses: actions/checkout@v2
@@ -130,8 +131,8 @@ jobs:
           mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/
           rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
-          javac CloudHostedGuideConverter.java
-          java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} ${branchName:11}
+          mvn package -Dmaven.test.skip=true 
+          mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
