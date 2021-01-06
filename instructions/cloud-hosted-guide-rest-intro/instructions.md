@@ -74,7 +74,7 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 Check out the service at the
-[](http://localhost:9080/LibertyProject/System/properties) URL 
+[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL 
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
@@ -266,7 +266,7 @@ The variables that are being used in the **server.xml** file are provided by the
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 Check out the service that you created at the
-[](http://localhost:9080/LibertyProject/System/properties) URL 
+[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL 
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
@@ -279,7 +279,7 @@ curl http://localhost:9080/LibertyProject/System/properties
 # Testing the service
 
 You can test this service manually by starting a server and pointing a web browser at the
-[](http://localhost:9080/LibertyProject/System/properties) URL However, automated tests are a 
+[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL However, automated tests are a 
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
