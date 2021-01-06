@@ -309,7 +309,7 @@ Replace the **InventoryManager** class.
 
 
 > [File -> Open...]  
->guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -596,11 +596,19 @@ Rerun the tests to see a test failure occur.
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
-## Nice work!
+# Summary
+
+## Nice Work!
 
 You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
 
-# Summary
+
+MicroProfile Rest Client also provides a uniform way to configure SSL for the client.
+You can learn more in the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl) blog and the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl).
+
+Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
+
+
 
 ## Clean up your environment
 
@@ -619,11 +627,4 @@ rm -fr guide-microprofile-rest-client
 Now Log out by navigating to: 
 
 > [Account -> Logout]
-
-
-
-MicroProfile Rest Client also provides a uniform way to configure SSL for the client.
-You can learn more in the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl) blog and the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl).
-
-Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
 
