@@ -649,11 +649,14 @@ docker rm inventory system
 
 
 
-## Nice work!
+# Summary
+
+## Nice Work!
 
 You have just built Docker images and run two microservices on Open Liberty in containers. 
 
-# Summary
+
+
 
 ## Clean up your environment
 
@@ -672,6 +675,4 @@ rm -fr guide-containerize
 Now Log out by navigating to: 
 
 > [Account -> Logout]
-
-
 
