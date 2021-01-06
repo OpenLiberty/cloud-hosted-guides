@@ -552,11 +552,14 @@ run the tests again to see that a test failure occurs.
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
-## Nice work!
+# Summary
+
+## Nice Work!
 
 You just used CDI services in Open Liberty to build a simple inventory application.
 
-# Summary
+
+
 
 ## Clean up your environment
 
@@ -575,6 +578,4 @@ rm -fr guide-cdi-intro
 Now Log out by navigating to: 
 
 > [Account -> Logout]
-
-
 
