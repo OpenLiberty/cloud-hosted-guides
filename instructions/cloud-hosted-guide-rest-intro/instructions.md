@@ -399,11 +399,14 @@ When you are done checking out the service, exit dev mode by pressing **CTRL+C**
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
-## Nice work!
+# Summary
+
+## Nice Work!
 
 You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
 
-# Summary
+
+
 
 ## Clean up your environment
 
@@ -422,6 +425,4 @@ rm -fr guide-rest-intro
 Now Log out by navigating to: 
 
 > [Account -> Logout]
-
-
 
