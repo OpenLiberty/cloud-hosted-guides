@@ -684,11 +684,15 @@ You can stop the server by pressing **CTRL+C** in the command-line session that 
 
 
 
-## Nice work!
+# Summary
+
+## Nice Work!
 
 You've learned the basics of deploying and updating an application on an Open Liberty server.
 
-# Summary
+
+
+
 
 ## Clean up your environment
 
@@ -707,7 +711,4 @@ rm -fr guide-getting-started
 Now Log out by navigating to: 
 
 > [Account -> Logout]
-
-
-
 
