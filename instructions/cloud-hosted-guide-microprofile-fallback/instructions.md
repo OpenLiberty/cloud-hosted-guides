@@ -616,11 +616,18 @@ When you are done checking out the service, exit dev mode by pressing **CTRL+C**
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
-## Nice work!
+# Summary
+
+## Nice Work!
 
 You just learned how to build a fallback mechanism for a microservice with MicroProfile Fault Tolerance in Open Liberty and wrote a test to validate it.
 
-# Summary
+
+You can try one of the related MicroProfile guides. They demonstrate technologies that you can
+learn and expand on what you built here.
+
+
+
 
 ## Clean up your environment
 
@@ -639,10 +646,4 @@ rm -fr guide-microprofile-fallback
 Now Log out by navigating to: 
 
 > [Account -> Logout]
-
-
-
-You can try one of the related MicroProfile guides. They demonstrate technologies that you can
-learn and expand on what you built here.
-
 
