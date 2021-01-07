@@ -117,15 +117,6 @@ jobs:
           repository: OpenLiberty/guides-common
           path: GuideConverter/Guides-common
 
-          repository: OpenLiberty/${{ github.event.inputs.guide_name }}
-          path: GuideConverter/${{ github.event.inputs.guide_name }}
-        
-      - name: Checkout guides-common repo
-        uses: actions/checkout@v2
-        with:
-          repository: OpenLiberty/guides-common
-          path: GuideConverter/Guides-common
-
       - uses: actions/setup-java@v1
         with:
           java-version: '11' # The JDK version to make available on the path.
