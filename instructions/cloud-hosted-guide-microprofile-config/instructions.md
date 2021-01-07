@@ -114,7 +114,7 @@ Press the Enter key to run tests on demand.
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
-MicroProfile Config combines configuration properties from multiple sources, each known as a ConfigSource. Each ConfigSource has a specified priority, defined by its **config_ordinal** value.
+MicroProfile Config combines configuration properties from multiple sources, each known as a ConfigSource. Each ConfigSource has a specified priority, defined by its **'config_ordinal'** value.
 
 A higher ordinal value means that the values taken from this ConfigSource will override values from ConfigSources with a lower ordinal value.
 
@@ -138,7 +138,7 @@ The **mpConfig** feature is also enabled in the **src/main/liberty/config/server
 Now navigate to the **src/main/resources/META-INF/microprofile-config.properties** local configuration file to check some static configuration.
 This configuration file is the default configuration source for an application that uses MicroProfile Config.
 
-The **io_openliberty_guides_port_number** property that has already been defined in this file, determines the port number of the REST service.
+The **'io_openliberty_guides_port_number'** property that has already been defined in this file, determines the port number of the REST service.
 
 
 To use this configuration property,
@@ -190,7 +190,7 @@ public class InventoryConfig {
 
 
 
-Inject the **io_openliberty_guides_port_number** property, and add the **getPortNumber()** class method to the **InventoryConfig.java** file.
+Inject the **'io_openliberty_guides_port_number'** property, and add the **getPortNumber()** class method to the **InventoryConfig.java** file.
 
 The **@Inject** annotation injects the port number directly, the injection value is static and fixed on application starting.
 
@@ -385,13 +385,13 @@ public class InventoryConfig {
 {: codeblock}
 
 
-Inject the **io_openliberty_guides_inventory_inMaintenance** property, and add the **isInMaintenance()** class method.
+Inject the **'io_openliberty_guides_inventory_inMaintenance'** property, and add the **isInMaintenance()** class method.
 
-The **@Inject** and **@ConfigProperty** annotations inject the **io_openliberty_guides_inventory_inMaintenance** configuration property from the **CustomConfigSource.json** file.
+The **@Inject** and **@ConfigProperty** annotations inject the **'io_openliberty_guides_inventory_inMaintenance'** configuration property from the **CustomConfigSource.json** file.
 The **Provider<>** interface used, forces the service to retrieve the inMaintenance value just in time. This retrieval of the value just in time makes the config injection dynamic and able to change without having to restart the application.
 
 Every time that you invoke the **inMaintenance.get()** method, the **Provider<>** interface picks up the
-latest value of the **io_openliberty_guides_inventory_inMaintenance** property from configuration sources.
+latest value of the **'io_openliberty_guides_inventory_inMaintenance'** property from configuration sources.
 
 
 # Creating custom converters
@@ -533,7 +533,7 @@ public class InventoryConfig {
 {: codeblock}
 
 
-Inject the **io_openliberty_guides_email** property, and add the **getEmail()** method.
+Inject the **'io_openliberty_guides_email'** property, and add the **getEmail()** method.
 
 # Adding configuration to the microservice
 
@@ -619,7 +619,7 @@ To add configuration to the **inventory** service, the **InventoryConfig** objec
 The port number from the configuration is retrieved by the **inventoryConfig.getPortNumber()** method and passed to the **manager.get()** method as a parameter.
 
 To determine whether the inventory service is in maintenance or not (according to the configuration value), **inventoryConfig.isInMaintenance()** class method is used.
-If you set the **io_openliberty_guides_inventory_inMaintenance** property to **true** in the configuration, the inventory service returns the message, **ERROR: Service is currently in maintenance**, along with the contact email.
+If you set the **'io_openliberty_guides_inventory_inMaintenance'** property to **true** in the configuration, the inventory service returns the message, **ERROR: Service is currently in maintenance**, along with the contact email.
 The email configuration value can be obtained by calling **inventoryConfig.getEmail()** method.
 
 
@@ -662,7 +662,7 @@ curl http://localhost:9080/config
 
 
 
-The **config_ordinal** value of the custom configuration source is set to **150**. It overrides configuration values of the default **microprofile-config.properties** source, which has a **config_ordinal** value of **100**.
+The **'config_ordinal'** value of the custom configuration source is set to **'config_ordinal'** value of **100**.
 
 
 
@@ -675,7 +675,7 @@ curl http://localhost:9080/config
 
 
 
-For example, change **io_openliberty_guides_inventory_inMaintenance** from **false** to **true**, then try to access [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) again
+For example, change **'io_openliberty_guides_inventory_inMaintenance'** from **false** to **true**, then try to access [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) again
 
 ```
 curl http://localhost:9080/inventory/systems
@@ -810,11 +810,11 @@ public class ConfigurationIT {
 
 
 
-The **testInitialServiceStatus()** test case reads the value of the **io_openliberty_guides_inventory_inMaintenance** configuration property in the **META-INF/microprofile-config.properties** file and checks the HTTP response of the inventory service.
+The **testInitialServiceStatus()** test case reads the value of the **'io_openliberty_guides_inventory_inMaintenance'** configuration property in the **META-INF/microprofile-config.properties** file and checks the HTTP response of the inventory service.
 If the configuration value is **false**, the service returns a valid response. Otherwise, the service returns the following message: **ERROR: Service is currently in maintenance**.
 
-Because the **io_openliberty_guides_inventory_inMaintenance** configuration property is set to **false** by default, the **testPutServiceInMaintenance()** test case first checks that the inventory service is not in maintenance in the beginning.
-Next, this test switches the value of the **io_openliberty_guides_inventory_inMaintenance** configuration property to **true**.
+Because the **'io_openliberty_guides_inventory_inMaintenance'** configuration property is set to **false** by default, the **testPutServiceInMaintenance()** test case first checks that the inventory service is not in maintenance in the beginning.
+Next, this test switches the value of the **'io_openliberty_guides_inventory_inMaintenance'** configuration property to **true**.
 In the end, the inventory service returns the following message: **ERROR: Service is currently in maintenance**.
 
 The **testChangeEmail()** test case first puts the **inventory** service in maintenance, then it changes the email address in the configuration file. In the end, the **inventory** service should display the error message with the latest email address.
@@ -856,7 +856,6 @@ Rerun the tests. You will see a test failure occur.
 
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
-
 
 
 # Summary
