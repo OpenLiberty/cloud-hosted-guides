@@ -29,6 +29,17 @@ such as performance, scalability, and modifiability.
 
 # Getting started
 
+Open a terminal window:
+
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
 
 ```
@@ -63,7 +74,7 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 Check out the service at the
-[](http://localhost:9080/LibertyProject/System/properties) URL 
+[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL 
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
@@ -113,8 +124,7 @@ common path. You can think of the JAX-RS application as a wrapper for all of you
 Replace the **SystemApplication** class.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
 
 
@@ -150,8 +160,7 @@ of resources helps with maintainability in the long run.
 Create the **PropertiesResource** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 
@@ -213,8 +222,7 @@ To get the service running, the Liberty server needs to be correctly configured.
 Replace the server configuration file.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-rest-intro/start/src/main/liberty/config/server.xml
 
 
@@ -258,7 +266,7 @@ The variables that are being used in the **server.xml** file are provided by the
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 Check out the service that you created at the
-[](http://localhost:9080/LibertyProject/System/properties) URL 
+[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL 
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
@@ -271,7 +279,7 @@ curl http://localhost:9080/LibertyProject/System/properties
 # Testing the service
 
 You can test this service manually by starting a server and pointing a web browser at the
-[](http://localhost:9080/LibertyProject/System/properties) URL However, automated tests are a 
+[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL However, automated tests are a 
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
@@ -289,8 +297,7 @@ does the latter.
 Create the **EndpointIT** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
 
@@ -392,10 +399,20 @@ When you are done checking out the service, exit dev mode by pressing **CTRL+C**
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
-
 # Summary
 
+## Nice Work!
+
+You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
+
+
+
+
 ## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide!
+
+You can clean up the environment by doing the following:
 
 Delete the **guide-rest-intro** project by navigating to the **/home/project/** directory
 
@@ -405,9 +422,7 @@ rm -fr guide-rest-intro
 ```
 {: codeblock}
 
+Now Log out by navigating to: 
 
-## Nice work!
-
-
-You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
+> [Account -> Logout]
 

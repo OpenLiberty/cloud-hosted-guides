@@ -12,7 +12,7 @@ that reduce the impact from failure and ensure continued operation of services.
 
 MP Fault Tolerance provides a simple and flexible solution to build fault-tolerant microservices.
 Fault tolerance leverages different strategies to guide the execution and result of logic.
-As stated in the [MicroProfile website](https://microprofile.io/project/eclipse/microprofilefaulttolerance),
+As stated in the [MicroProfile website](https://microprofile.io/project/eclipse/microprofile-fault-tolerance),
 retry policies, bulkheads, and circuit breakers are popular concepts in this area.
 They dictate whether and when executions take place, and fallbacks offer an alternative result
 when an execution does not complete successfully.
@@ -34,7 +34,18 @@ when you add the MicroProfile Metrics feature to the server.
 
 # Getting started
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guidemicroprofilefallback.git) and use the projects that are provided inside:
+Open a terminal window:
+
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-fallback.git) and use the projects that are provided inside:
 
 ```
 git clone https://github.com/openliberty/guide-microprofile-fallback.git
@@ -83,7 +94,8 @@ properties, such as the OS name and user name, are automatically stored in the i
 Update the **CustomConfigSource** configuration file.
 
 
-> [File -> Open]guide-microprofile-fallback/start/resources/CustomConfigSource.json
+> [File -> Open...]  
+> guide-microprofile-fallback/start/resources/CustomConfigSource.json
 
 
 
@@ -115,7 +127,8 @@ When you are done checking out the application, go to the **CustomConfigSource.j
 Update the **CustomConfigSource** configuration file.
 
 
-> [File -> Open]guide-microprofile-fallback/start/resources/CustomConfigSource.json
+> [File -> Open...]  
+> guide-microprofile-fallback/start/resources/CustomConfigSource.json
 
 
 
@@ -173,7 +186,7 @@ To easily work through this guide, the two provided microservices are set up to 
 on the same server. To simulate the availability of the services and then to enable fault tolerance,
 dynamic configuration with MicroProfile Configuration is used so that you can easily take one service
 or the other down for maintenance. If you want to learn more about setting up dynamic configuration,
-see [Configuring microservices](https://openliberty.io/guides/microprofileconfig.html).
+see [Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
 
 The following two steps set up the dynamic configuration on the **system** service and its client.
 You can move on to the next section, which adds the fallback mechanism on the **inventory** service.
@@ -186,7 +199,7 @@ Otherwise, the service returns a **Status.SERVICE_UNAVAILABLE** message, which m
 Next, the **src/main/java/io/openliberty/guides/inventory/client/SystemClient.java** file
 makes a request to the **system** service through the MicroProfile Rest Client API.
 If you want to learn more about MicroProfile Rest Client,
-you can follow the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofilerestclient.html) guide.
+you can follow the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html) guide.
 The **system** service as described in the **SystemResource.java** file
 may return a **Status.SERVICE_UNAVAILABLE** message, which is a 503 status code.
 This code indicates that the server being called
@@ -214,7 +227,8 @@ Now, set a fallback method to deal with this failure.
 Replace the **InventoryManager** class.
 
 
-> [File -> Open]guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> [File -> Open...]  
+> guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -317,7 +331,7 @@ the **@Fallback** fault tolerance annotation provides metrics that count the fol
 The **mpMetrics** feature requires SSL and the configuration is provided for you. The **quickStartSecurity** and **keyStore** configuration elements provide basic security to secure the
 server. When you go to the **/metrics** endpoint, use the credentials that are defined in the server configuration to log in to view the data for the fault tolerance methods.
 
-You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofilemetrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the https://github.com/eclipse/microprofilefaulttolerance/releases[MicroProfile Fault Tolerance specification^].
+You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html).
 
 
 # Running the application
@@ -346,13 +360,7 @@ to retrieve the system properties for the specific localhost.
 Notice that the results from the two URLs are identical because the **inventory** service gets its results from
 calling the **system** service.
 
-To see the application metrics, go to the https://localhost:9443/metrics/application[https://localhost:9443/metrics/application^] URL
-```
-curl https://localhost:9443/metrics/application
-```
-{: codeblock}
-
-
+To see the application metrics, go to the [https://localhost:9443/metrics/application](https://localhost:9443/metrics/application) URL. Log in as the **admin** user, and use **adminpwd** as the password.
 See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
 
 ```
@@ -371,7 +379,8 @@ the **io_openliberty_guides_system_inMaintenance** property value to **true** in
 Update the configuration file.
 
 
-> [File -> Open]guide-microprofile-fallback/start/resources/CustomConfigSource.json
+> [File -> Open...]  
+> guide-microprofile-fallback/start/resources/CustomConfigSource.json
 
 
 
@@ -409,14 +418,7 @@ curl http://localhost:9080/system/properties
 
 You see that the service displays a 503 HTTP response code.
 
-Go to the https://localhost:9443/metrics/application[https://localhost:9443/metrics/application^] URL again
-
-```
-curl https://localhost:9443/metrics/application
-```
-{: codeblock}
-
-
+Go to the [https://localhost:9443/metrics/application](https://localhost:9443/metrics/application) URL again.
 See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
 
 ```
@@ -436,7 +438,8 @@ indicates that the **fallbackForGet()** method was called once.
 Update the configuration file.
 
 
-> [File -> Open]guide-microprofile-fallback/start/resources/CustomConfigSource.json
+> [File -> Open...]  
+> guide-microprofile-fallback/start/resources/CustomConfigSource.json
 
 
 
@@ -460,7 +463,8 @@ whenever a code change introduces a defect. JUnit and the JAX-RS Client API prov
 Create the **FaultToleranceIT** class.
 
 
-> [File -> Open]guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+> [File -> New File]  
+> guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
 
 
 
@@ -612,27 +616,34 @@ When you are done checking out the service, exit dev mode by pressing **CTRL+C**
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
-
 # Summary
 
-## Clean up your environment
-
-Delete the **guide-microprofile-fallback** project by navigating to the **/home/project/** directory
-
-```
-cd ../..
-rm -r -f guide-microprofile-fallback
-rmdir guide-microprofile-fallback
-```
-{: codeblock}
-
-
-## Great work! You're done!
-
+## Nice Work!
 
 You just learned how to build a fallback mechanism for a microservice with MicroProfile Fault Tolerance in Open Liberty and wrote a test to validate it.
+
 
 You can try one of the related MicroProfile guides. They demonstrate technologies that you can
 learn and expand on what you built here.
 
+
+
+
+## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide!
+
+You can clean up the environment by doing the following:
+
+Delete the **guide-microprofile-fallback** project by navigating to the **/home/project/** directory
+
+```
+cd /home/project
+rm -fr guide-microprofile-fallback
+```
+{: codeblock}
+
+Now Log out by navigating to: 
+
+> [Account -> Logout]
 

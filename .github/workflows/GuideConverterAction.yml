@@ -108,6 +108,16 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: qa
+
+          repository: OpenLiberty/${{ github.event.inputs.guide_name }}
+          path: GuideConverter/${{ github.event.inputs.guide_name }}
+        
+      - name: Checkout guides-common repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/guides-common
+          path: GuideConverter/Guides-common
+
           repository: OpenLiberty/${{ github.event.inputs.guide_name }}
           path: GuideConverter/${{ github.event.inputs.guide_name }}
         

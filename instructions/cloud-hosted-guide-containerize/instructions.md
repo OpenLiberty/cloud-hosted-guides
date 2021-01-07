@@ -84,7 +84,7 @@ mvn package
 
 
 To learn more about RESTful web services and how to build them, see
-[Creating a RESTful web service](https://openliberty.io/guides/restintro.html) for details about how to build the **system** service.
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the **system** service.
 The **inventory** service is built in a similar way.
 
 
@@ -98,7 +98,7 @@ As each instruction is run in a **Dockerfile**, a new Docker layer is created. T
 
 Every **Dockerfile** begins with a parent or base image over which various commands are run. For example, you can start your image from scratch and run commands that download and install a Java runtime, or you can start from an image that already contains a Java installation.
 
-Learn more about Docker on the [official Docker page](https://www.docker.com/whatdocker).
+Learn more about Docker on the [official Docker page](https://www.docker.com/what-docker).
 
 ### Creating your Dockerfiles
 You will be creating two Docker images to run the **inventory** service and **system** service. The first step is to create Dockerfiles for both services.
@@ -106,7 +106,8 @@ You will be creating two Docker images to run the **inventory** service and **sy
 Create the **Dockerfile** for the inventory service.
 
 
-> [File -> Open]guide-containerize/start/inventory/Dockerfile
+> [File -> New File]  
+> guide-containerize/start/inventory/Dockerfile
 
 
 
@@ -152,9 +153,9 @@ RUN configure.sh
 The **FROM** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use **FROM scratch**, which makes your image a base image. 
 
 In this case, you're using the recommended production image, 
-**openliberty/openliberty:kerneljava8openj9ubi**, as your parent image. If you don't want any additional runtime features for your **kernel** image, define the **FROM** instruction as **FROM openliberty:kernel**. To use the default image that comes with the Open Liberty runtime, define the **FROM** instruction as **FROM openliberty**. You can find all the official images at [openliberty Docker Hub](https://hub.docker.com/_/openliberty).
+**openliberty/open-liberty:kernel-java8-openj9-ubi**, as your parent image. If you don't want any additional runtime features for your **kernel** image, define the **FROM** instruction as **FROM open-liberty:kernel**. To use the default image that comes with the Open Liberty runtime, define the **FROM** instruction as **FROM open-liberty**. You can find all the official images at [open-liberty Docker Hub](https://hub.docker.com/_/open-liberty).
 
-It is also recommended to label your Docker images with the **LABEL** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/developimages/dockerfile_bestpractices/#label).
+It is also recommended to label your Docker images with the **LABEL** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
 
 The **COPY** instructions are structured as **COPY** **[--chown=<user>:<group>]** **<source>** **<destination>**. 
 They copy local files into the specified destination within your Docker image.
@@ -170,7 +171,8 @@ The **Dockerfile** for the **system** service follows the same instructions as t
 Create the **Dockerfile** for the system service.
 
 
-> [File -> Open]guide-containerize/start/system/Dockerfile
+> [File -> New File]  
+> guide-containerize/start/system/Dockerfile
 
 
 
@@ -340,7 +342,8 @@ You can test your microservices manually by hitting the endpoints or with automa
 Create the **SystemEndpointIT** class.
 
 
-> [File -> Open]guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+> [File -> New File]  
+> guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 
 
 
@@ -414,7 +417,8 @@ The **testGetProperties()** method checks for a **200** response code from the *
 Create the **InventoryEndpointIT** class.
 
 
-> [File -> Open]guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+> [File -> New File]  
+> guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
 
@@ -645,23 +649,30 @@ docker rm inventory system
 
 
 
-
 # Summary
 
+## Nice Work!
+
+You have just built Docker images and run two microservices on Open Liberty in containers. 
+
+
+
+
 ## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide!
+
+You can clean up the environment by doing the following:
 
 Delete the **guide-containerize** project by navigating to the **/home/project/** directory
 
 ```
-cd ../..
-rm -r -f guide-containerize
-rmdir guide-containerize
+cd /home/project
+rm -fr guide-containerize
 ```
 {: codeblock}
 
+Now Log out by navigating to: 
 
-## Great work! You're done!
-
-
-You have just built Docker images and run two microservices on Open Liberty in containers. 
+> [Account -> Logout]
 

@@ -32,6 +32,17 @@ image and run that image as a container.
 
 # Getting started
 
+Open a terminal window:
+
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-getting-started.git) and use the projects that are provided inside:
 
 ```
@@ -129,19 +140,7 @@ the Maven **liberty:start** and **liberty:stop** goals:
 mvn liberty:start
 mvn liberty:stop
 ```
-{: codeblock)
-
-
-
-
-
-
-
-
-# Updating the server configuration without restarting the server
-
-The Open Liberty Maven plug-in includes a **dev** goal that listens for any changes in the project, 
-including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
+{: codeblock}
 
 
 
@@ -192,8 +191,7 @@ To add the MicroProfile Health feature to the server, include the **mpHealth** f
 Replace the server configuration file.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
@@ -288,8 +286,7 @@ A liveness check allows third-party services to determine if the microservice is
 Create the **SystemReadinessCheck** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 
 
@@ -339,8 +336,7 @@ The **SystemReadinessCheck** class verifies that the
 Create the **SystemLivenessCheck** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
 
 
@@ -475,8 +471,7 @@ Try enabling detailed logging of the MicroProfile Health feature by adding the
 Replace the server configuration file.
 
 
-> [File -> Open...] 
->
+> [File -> Open...]  
 > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
@@ -689,10 +684,21 @@ You can stop the server by pressing **CTRL+C** in the command-line session that 
 
 
 
-
 # Summary
 
+## Nice Work!
+
+You've learned the basics of deploying and updating an application on an Open Liberty server.
+
+
+
+
+
 ## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide!
+
+You can clean up the environment by doing the following:
 
 Delete the **guide-getting-started** project by navigating to the **/home/project/** directory
 
@@ -702,10 +708,7 @@ rm -fr guide-getting-started
 ```
 {: codeblock}
 
+Now Log out by navigating to: 
 
-## Nice work!
-
-
-You've learned the basics of deploying and updating an application on an Open Liberty server.
-
+> [Account -> Logout]
 

@@ -39,6 +39,17 @@ controlling exactly when and how these components are instantiated and destroyed
 
 # Getting started
 
+Open a terminal window:
+
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cdi-intro.git) and use the projects that are provided inside:
 
 ```
@@ -72,16 +83,10 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Point your browser to the [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) URL This is the starting point of the **inventory**
+Point your browser to the [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) URL
 
 ```
 curl http://localhost:9080/inventory/systems
-```
-{: codeblock}
-
-
-service and it displays the current contents of the inventory. As you might expect, these are empty since
-nothing is stored in the inventory yet
 ```
 {: codeblock}
 
@@ -90,16 +95,11 @@ This is the starting point of the **inventory** service and it displays the curr
 As you might expect, these are empty since nothing is stored in the inventory yet. 
 Next, point your browser to the [http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) URL
 
-service and it displays the current contents of the inventory. As you might expect, these are empty since
-nothing is stored in the inventory yet
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
 
-
-You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
-properties are automatically stored in the inventory Go back to [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) and
 
 You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
 properties are automatically stored in the inventory. 
@@ -110,7 +110,8 @@ curl http://localhost:9080/inventory/systems
 {: codeblock}
 
 
-you see a new entry for **localhost**. For simplicity, only the OS name and username are shown here for
+ 
+and you see a new entry for **localhost**. For simplicity, only the OS name and username are shown here for
 each host. You can repeat this process for your own hostname or any other machine that is running
 the **system** service.
 
@@ -153,8 +154,7 @@ or open the project in your editor.
 Create the **InventoryManager** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
@@ -209,8 +209,7 @@ it is injected into the application.
 Create the **InventoryResource** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
@@ -323,8 +322,7 @@ In testing the functionality of the application, the scopes and dependencies are
 Create the **InventoryEndpointIT** class.
 
 
-> [File -> New File] 
->
+> [File -> New File]  
 > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
@@ -554,10 +552,20 @@ run the tests again to see that a test failure occurs.
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
-
 # Summary
 
+## Nice Work!
+
+You just used CDI services in Open Liberty to build a simple inventory application.
+
+
+
+
 ## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide!
+
+You can clean up the environment by doing the following:
 
 Delete the **guide-cdi-intro** project by navigating to the **/home/project/** directory
 
@@ -567,9 +575,7 @@ rm -fr guide-cdi-intro
 ```
 {: codeblock}
 
+Now Log out by navigating to: 
 
-## Nice work!
-
-
-You just used CDI services in Open Liberty to build a simple inventory application.
+> [Account -> Logout]
 

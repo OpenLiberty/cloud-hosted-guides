@@ -15,7 +15,7 @@ The application that you will be working with is an **inventory** service, which
 Whenever a request is made to retrieve the system properties of a particular host, the **inventory** service will create a client to invoke the **system**
 service on that host. The **system** service simulates a remote service in the application.
 
-You will instantiate the client and use it in the **inventory** service. You can choose from two different approaches, https://openliberty.io/docs/ref/general/#contexts_dependency_injection.html[Context and Dependency Injection (CDI)^] with the help of MicroProfile Config or the https://openliberty.io/blog/2018/01/31/mpRestClient.html[RestClientBuilder^] method.
+You will instantiate the client and use it in the **inventory** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/ref/general/#contexts_dependency_injection.html) with the help of MicroProfile Config or the [Context and Dependency Injection (CDI)](https://openliberty.io/docs/ref/general/#contexts_dependency_injection.html) method.
 In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
 
  - When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with CDI method.
@@ -25,7 +25,18 @@ In this guide, you will explore both methods to handle scenarios for providing a
 
 # Getting started
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guidemicroprofilerestclient.git) and use the projects that are provided inside:
+Open a terminal window:
+
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client.git) and use the projects that are provided inside:
 
 ```
 git clone https://github.com/openliberty/guide-microprofile-rest-client.git
@@ -128,7 +139,8 @@ The template interface describes the remote service that you want to access. The
 Create the **SystemClient** class.
 
 
-> [File -> Open]guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+> [File -> New File]  
+> guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 
 
 
@@ -163,7 +175,7 @@ public interface SystemClient extends AutoCloseable {
 The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the **SystemClient** interface. There is no need to set up the client and connect with the remote service.
 
 Notice the **SystemClient** interface inherits the **AutoCloseable** interface.
-This allows the user to explicitly close the client instance by invoking the **close()** method or to implicitly close the client instance using a trywithresources block. When the client instance is closed, all underlying resources associated with the client instance are cleaned up. Refer to the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofilerestclient/releases) for more details.
+This allows the user to explicitly close the client instance by invoking the **close()** method or to implicitly close the client instance using a try-with-resources block. When the client instance is closed, all underlying resources associated with the client instance are cleaned up. Refer to the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases) for more details.
 
 When the **getProperties()** method is invoked, the **SystemClient** instance sends a GET request to the **<baseUrl>/properties** endpoint, where **<baseUrl>** is the default base URL of the **system** service. You will see how to configure the base URL in the next section.
 
@@ -185,7 +197,8 @@ Implement the actual exception class and the mapper class to see how this mechan
 Create the **UnknownUriException** class.
 
 
-> [File -> Open]guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
+> [File -> New File]  
+> guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 
 
 
@@ -214,7 +227,8 @@ Now, link the **UnknownUriException** class with the corresponding response code
 Create the **UnknownUriExceptionMapper** class.
 
 
-> [File -> Open]guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+> [File -> New File]  
+> guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
 
 
 
@@ -260,7 +274,8 @@ Configure the default base URL with the MicroProfile Config feature. This featur
 Create the configuration file.
 
 
-> [File -> Open]guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
+> [File -> New File]  
+> guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
 
 
 
@@ -293,7 +308,8 @@ Inject the **SystemClient** interface into the **InventoryManager** class, which
 Replace the **InventoryManager** class.
 
 
-> [File -> Open]guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> [File -> Open...]  
+> guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -435,13 +451,6 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 When the server is running, select either approach to fetch your system properties:
 
- Visit the [http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) URL
-```
-curl http://localhost:9080/inventory/systems/localhost
-```
-{: codeblock}
-
-
 
 
 
@@ -451,7 +460,8 @@ curl http://localhost:9080/inventory/systems/localhost
 Create the **RestClientIT** class.
 
 
-> [File -> Open]guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
+> [File -> New File]  
+> guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 
 
 
@@ -586,28 +596,35 @@ Rerun the tests to see a test failure occur.
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
-
 # Summary
 
+## Nice Work!
+
+You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
+
+
+MicroProfile Rest Client also provides a uniform way to configure SSL for the client.
+You can learn more in the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl) blog and the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl).
+
+Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
+
+
+
 ## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide!
+
+You can clean up the environment by doing the following:
 
 Delete the **guide-microprofile-rest-client** project by navigating to the **/home/project/** directory
 
 ```
-cd ../..
-rm -r -f guide-microprofile-rest-client
-rmdir guide-microprofile-rest-client
+cd /home/project
+rm -fr guide-microprofile-rest-client
 ```
 {: codeblock}
 
+Now Log out by navigating to: 
 
-## Great work! You're done!
-
-
-You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
-
-MicroProfile Rest Client also provides a uniform way to configure SSL for the client.
-You can learn more in the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofilerestclient19006.html#ssl) blog and the https://github.com/eclipse/microprofilerestclient/releases[MicroProfile Rest Client specification^].
-
-Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
+> [Account -> Logout]
 
