@@ -496,10 +496,13 @@ Create the configuration file.
 
 
 
+
+
 ```
 io.openliberty.guides.config.CustomEmailConverter
 ```
 {: codeblock}
+
 
 
 
@@ -509,6 +512,7 @@ Replace the **InventoryConfig** class.
 
 > [File -> Open...]  
 > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
+
 
 
 
@@ -562,6 +566,9 @@ Replace the **InventoryResource** class.
 
 > [File -> Open...]  
 > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+
+
+
 
 
 
@@ -686,6 +693,7 @@ The **'config_ordinal'** value of the custom configuration source is set to **'c
 
 
 
+
 Play with this application by changing configuration values for each property in the **resources/CustomConfigSource.json** file.
 Your changes are added dynamically, and you do not need to restart the server
 ```
@@ -696,6 +704,7 @@ curl http://localhost:9080/config
 
 
 For example, change **'io_openliberty_guides_inventory_inMaintenance'** from **false** to **true**, then try to access [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) again
+
 
 ```
 curl http://localhost:9080/inventory/systems
@@ -836,6 +845,7 @@ If the configuration value is **false**, the service returns a valid response. O
 
 Because the **'io_openliberty_guides_inventory_inMaintenance'** configuration property is set to **false** by default, the **testPutServiceInMaintenance()** test case first checks that the inventory service is not in maintenance in the beginning.
 Next, this test switches the value of the **'io_openliberty_guides_inventory_inMaintenance'** configuration property to **true**.
+
 In the end, the inventory service returns the following message: **ERROR: Service is currently in maintenance**.
 
 The **testChangeEmail()** test case first puts the **inventory** service in maintenance, then it changes the email address in the configuration file. In the end, the **inventory** service should display the error message with the latest email address.
@@ -908,4 +918,3 @@ rm -fr guide-microprofile-config
 Now Log out by navigating to: 
 
 > [Account -> Logout]
-
