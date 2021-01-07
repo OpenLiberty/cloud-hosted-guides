@@ -49,7 +49,7 @@ curl http://localhost:9081/inventory/systems
 
 
 
-The **system** service shows the system properties of the running JVM and can be found at  [](http://localhost:9080/system/properties)
+The **system** service shows the system properties of the running JVM and can be found at  [http://localhost:9080/system/properties](http://localhost:9080/system/properties)
 
 ```
 curl http://localhost:9080/system/properties
@@ -270,7 +270,7 @@ The flags are described in the table below:
 | ---| ---
 | -d     | Runs the container in the background.
 | --name | Specifies a name for the container.
-| -p     | Maps the host ports to the container ports. For example: **-p <HOST_PORT>:<CONTAINER_PORT>**
+| -p     | Maps the host ports to the container ports. For example: **'-p <HOST_PORT>:<CONTAINER_PORT>'**
 
 Next, run the **docker ps** command to verify that your containers are started:
 
