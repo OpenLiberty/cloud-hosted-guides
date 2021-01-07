@@ -25,7 +25,7 @@ jobs:
   convertMaster:
     name: Make PR to Master
     runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch, 'master')
+    if: contains(github.event.inputs.branch, 'master') || contains(github.event.inputs.branch, 'main') || contains(github.event.inputs.branch, 'prod')
   
     steps:
 
@@ -64,7 +64,7 @@ jobs:
           rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
           javac CloudHostedGuideConverter.java
-          java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} ${branchName:11}
+          java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} master
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
@@ -89,7 +89,7 @@ jobs:
   convertStaging:
     name: Make PR to Staging
     runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch, 'qa')
+    if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging')
   
     steps:
 
@@ -131,7 +131,7 @@ jobs:
           rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
           javac CloudHostedGuideConverter.java
-          java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} ${branchName:11}
+          java CloudHostedGuideConverter ${{ github.event.inputs.guide_name }} qa
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
