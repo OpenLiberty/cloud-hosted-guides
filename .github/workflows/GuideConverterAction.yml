@@ -154,7 +154,7 @@ jobs:
             base: "staging" 
         name: Create Pull Request
 
-        - name: Run Test
+      - name: Run Test
         run: |
         cd instructions/cloud-hosted-${{ github.event.inputs.guide_name }}
         mvn -Dtest=TestConversion test -DguideName="instructions"
