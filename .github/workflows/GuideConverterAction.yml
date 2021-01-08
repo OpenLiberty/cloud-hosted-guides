@@ -133,7 +133,6 @@ jobs:
           cd GuideConverter
           mvn compiler:compile
           mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11}"
-          mvn -Dtest=TestConversion test -DguideName="${{ github.event.inputs.guide_name }}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
@@ -154,3 +153,8 @@ jobs:
             branch: "cloud-hosted-${{ github.event.inputs.guide_name }}/staging"
             base: "staging" 
         name: Create Pull Request
+
+        - name: Run Test
+        run: |
+        cd instructions/cloud-hosted-${{ github.event.inputs.guide_name }}
+        mvn -Dtest=TestConversion test -DguideName="instructions"
