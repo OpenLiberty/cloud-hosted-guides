@@ -4,10 +4,10 @@ on: [push]
 
 jobs:
 
-  Testing:
+  TestingMaster:
     name: Checking Conversion of Cloud-Hosted-${{ github.event.inputs.guide_name }}
     runs-on: ubuntu-latest
-    if: contains('master') || contains('main') || contains('prod')
+    if: contains(github.event.inputs.branch,'master') || contains(github.event.inputs.branch,'main') || contains(github.event.inputs.branch,'prod')
   
     steps:
 
@@ -40,10 +40,10 @@ jobs:
         cd quick-labs/cloud-hosted-${{ github.event.inputs.guide_name }}
         mvn -Dtest=TestConversion test -DguideName="instructions.md"
 
-        Testing:
+  TestingStaging:
     name: Checking Conversion of Cloud-Hosted-${{ github.event.inputs.guide_name }}
     runs-on: ubuntu-latest
-    if: contains('staging')
+    if: contains(github.event.inputs.branch,'staging')
   
     steps:
 
