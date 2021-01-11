@@ -13,6 +13,8 @@ jobs:
         
         # Any prerequisite steps
       - uses: actions/checkout@master
+        with:
+         ref: ${{ github.base_ref }}
         
       - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
@@ -35,5 +37,5 @@ jobs:
 
       - name: Testing with Maven
         run: |
-        cd quick-labs/cloud-hosted-${{ github.payload.pull_request.head.ref }}
+        cd quick-labs/cloud-hosted-${{ github.base_ref }}
         mvn -Dtest=TestConversion test -DguideName="instructions.md"
