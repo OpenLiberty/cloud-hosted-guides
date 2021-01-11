@@ -13,23 +13,14 @@ jobs:
       # Any prerequisite steps
       - uses: actions/checkout@master
         
-      - name: Checkout guide-getting-started
-        uses: actions/checkout@v2
-        with:
-          repository: OpenLiberty/guide-getting-started
-          path: guide-getting-started
-
-      - name: Checkout guide-microprofile-reactive-messaging-acknowledgment
-        uses: actions/checkout@v2
-        with:
-          repository: OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment
-          path: guide-microprofile-reactive-messaging-acknowledgment
+        # Any prerequisite steps
+      - uses: actions/checkout@master
         
-      - name: Checkout guides-common repo
+      - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
         with:
-          repository: OpenLiberty/guides-common
-          path: Guides-common
+          repository: OpenLiberty/cloud-hosted-guide-converter
+          path: GuideConverter
 
       - uses: actions/setup-java@v1
         with:
@@ -38,4 +29,6 @@ jobs:
           architecture: x64 # (x64 or x86) - defaults to x64
 
       - name: Testing with Maven
-        run: mvn -Dtest=TestConversion test -DguideName="${{ github.event.inputs.guide_name }}"
+        run: |
+
+        mvn -Dtest=TestConversion test -DguideName="${{ github.event.inputs.guide_name }}"
