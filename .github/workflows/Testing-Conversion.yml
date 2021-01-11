@@ -11,4 +11,4 @@ jobs:
     steps:
 
       - name: Testing with Maven
-        run: echo "::warning file=app.js,line=1,col=5::Missing semicolon"
+        run: echo "heloo"
