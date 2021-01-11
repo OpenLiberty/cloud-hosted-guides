@@ -87,6 +87,17 @@ jobs:
             base: "master" 
         name: Create Pull Request
 
+      - uses: actions/checkout@v2
+
+      - name: Invoke workflow in another repo with inputs
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: TestingConversion
+          repo: jakub-pomykala/quick-labs
+          token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
+          inputs: '{ "branch": "${{ github.ref }}", "guide_name": "${{ github.event.inputs.guide_name }}" }'
+          ref: "refs/heads/master"
+
   convertStaging:
     name: Make PR to Staging
     runs-on: ubuntu-latest
@@ -156,21 +167,13 @@ jobs:
         name: Create Pull Request
 
 
-    post:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+      - uses: actions/checkout@v2
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    # Uses the secrets from the organisation for credentials
-    - uses: actions/checkout@v2
-
-    - name: Invoke workflow in another repo with inputs
-      uses: benc-uk/workflow-dispatch@v1
-      with:
-        workflow: TestingConversion
-        repo: jakub-pomykala/quick-labs
-        token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-        inputs: '{ "branch": "${{ github.ref }}", "guide_name": "${{ github.event.inputs.guide_name }}" }'
-        ref: "refs/heads/master"
+      - name: Invoke workflow in another repo with inputs
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: TestingConversion
+          repo: jakub-pomykala/quick-labs
+          token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
+          inputs: '{ "branch": "${{ github.ref }}", "guide_name": "${{ github.event.inputs.guide_name }}" }'
+          ref: "refs/heads/master"
