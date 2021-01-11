@@ -3,12 +3,12 @@ name: TestingConversion
 on: [pull_request]
 
 jobs:
-
-  TestingMaster:
-    name: Checking Conversion of Cloud-Hosted-
+  printBranch:
     runs-on: ubuntu-latest
-  
-    steps:
 
-      - name: Testing with Maven
-        run: echo "heloo"
+    steps: 
+
+      - name: Output message
+        run: |
+          echo "hi"
+          echo "hello"
