@@ -1,0 +1,41 @@
+name: Testing Conversion
+
+on: [push]
+
+jobs:
+
+  prereqs:
+    name: Checking Conversion of Cloud-Hosted-${{ github.event.inputs.guide_name }}
+    runs-on: ubuntu-latest
+  
+    steps:
+
+      # Any prerequisite steps
+      - uses: actions/checkout@master
+        
+      - name: Checkout guide-getting-started
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/guide-getting-started
+          path: guide-getting-started
+
+      - name: Checkout guide-microprofile-reactive-messaging-acknowledgment
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment
+          path: guide-microprofile-reactive-messaging-acknowledgment
+        
+      - name: Checkout guides-common repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/guides-common
+          path: Guides-common
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '15' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+
+      - name: Testing with Maven
+        run: mvn -Dtest=TestConversion test -DguideName="${{ github.event.inputs.guide_name }}"
