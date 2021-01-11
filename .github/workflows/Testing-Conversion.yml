@@ -1,6 +1,6 @@
 name: TestingConversion
 
-on: [pull_request]
+on: [push]
 
 jobs:
   printBranch:
