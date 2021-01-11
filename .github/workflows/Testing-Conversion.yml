@@ -36,5 +36,4 @@ jobs:
           architecture: x64 # (x64 or x86) - defaults to x64
 
       - name: Testing with Maven
-        run: |
-        cd quick-labs
+        run: cd quick-labs
