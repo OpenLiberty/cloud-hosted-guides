@@ -7,7 +7,6 @@ jobs:
   TestingMaster:
     name: Checking Conversion of Cloud-Hosted-${{ github.event.inputs.guide_name }}
     runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch,'master') || contains(github.event.inputs.branch,'main') || contains(github.event.inputs.branch,'prod')
   
     steps:
         
