@@ -35,42 +35,5 @@ jobs:
 
       - name: Testing with Maven
         run: |
-        cd quick-labs/cloud-hosted-${{ github.event.inputs.guide_name }}
-        mvn -Dtest=TestConversion test -DguideName="instructions.md"
-
-  TestingStaging:
-    name: Checking Conversion of Cloud-Hosted-${{ github.event.inputs.guide_name }}
-    runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch,'staging')
-  
-    steps:
-
-      # Any prerequisite steps
-      - uses: actions/checkout@master
-        
-        # Any prerequisite steps
-      - uses: actions/checkout@master
-        
-      - name: Checkout Guide Converter repo
-        uses: actions/checkout@v2
-        with:
-          repository: OpenLiberty/cloud-hosted-guide-converter
-          path: GuideConverter
-
-      - name: Checkout QuickLabs repo
-        uses: actions/checkout@v2
-        with:
-          ref: staging
-          repository: jakub-pomykala/quick-labs
-          path: GuideConverter/quick-labs
-
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '15' # The JDK version to make available on the path.
-          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
-          architecture: x64 # (x64 or x86) - defaults to x64
-
-      - name: Testing with Maven
-        run: |
-        cd quick-labs/cloud-hosted-${{ github.event.inputs.guide_name }}
+        cd quick-labs/cloud-hosted-${{ github.payload.pull_request.head.ref }}
         mvn -Dtest=TestConversion test -DguideName="instructions.md"
