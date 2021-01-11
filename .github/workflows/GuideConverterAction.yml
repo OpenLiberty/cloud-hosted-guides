@@ -52,7 +52,7 @@ jobs:
 
       - uses: actions/setup-java@v1
         with:
-          java-version: '11' # The JDK version to make available on the path.
+          java-version: '15' # The JDK version to make available on the path.
           java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
       
@@ -63,8 +63,9 @@ jobs:
           mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/
           rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
-          mvn package -Dmaven.test.skip=true 
-          mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} master"
+          mvn compiler:compile
+          mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11}"
+          mvn -Dtest=TestConversion test -DguideName="${{ github.event.inputs.guide_name }}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
@@ -119,7 +120,7 @@ jobs:
 
       - uses: actions/setup-java@v1
         with:
-          java-version: '11' # The JDK version to make available on the path.
+          java-version: '15' # The JDK version to make available on the path.
           java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
 
@@ -130,8 +131,9 @@ jobs:
           mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/
           rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
-          mvn package -Dmaven.test.skip=true 
-          mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} qa"
+          mvn compiler:compile
+          mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11}"
+          mvn -Dtest=TestConversion test -DguideName="${{ github.event.inputs.guide_name }}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
