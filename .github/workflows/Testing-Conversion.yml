@@ -5,7 +5,7 @@ on: [pull_request]
 jobs:
 
   TestingMaster:
-    name: Checking Conversion of Cloud-Hosted-${{ github.event.inputs.guide_name }}
+    name: Checking Conversion of Cloud-Hosted-
     runs-on: ubuntu-latest
   
     steps:
