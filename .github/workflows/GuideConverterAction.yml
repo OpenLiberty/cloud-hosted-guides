@@ -87,17 +87,6 @@ jobs:
             base: "master" 
         name: Create Pull Request
 
-      - uses: actions/checkout@v2
-
-      - name: Invoke workflow in another repo with inputs
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: TestingConversion
-          repo: jakub-pomykala/quick-labs
-          token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-          inputs: '{ "branch": "${{ github.ref }}", "guide_name": "${{ github.event.inputs.guide_name }}" }'
-          ref: "refs/heads/master"
-
   convertStaging:
     name: Make PR to Staging
     runs-on: ubuntu-latest
@@ -165,15 +154,3 @@ jobs:
             branch: "cloud-hosted-${{ github.event.inputs.guide_name }}/staging"
             base: "staging" 
         name: Create Pull Request
-
-
-      - uses: actions/checkout@v2
-
-      - name: Invoke workflow in another repo with inputs
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: TestingConversion
-          repo: jakub-pomykala/quick-labs
-          token: ${{ secrets.PAT_TOKEN }}
-          inputs: '{ "branch": "${{ github.ref }}", "guide_name": "${{ github.event.inputs.guide_name }}" }'
-          ref: "refs/heads/staging"

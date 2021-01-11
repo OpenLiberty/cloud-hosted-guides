@@ -1,15 +1,6 @@
 name: TestingConversion
-on: 
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch pushed to'     
-        required: true
-        default: 'refs/heads/master'
-      guide_name:
-        description: 'Guide changed'
-        required: true
-        default: 'guide-rest-intro'
+
+on: [push]
 
 jobs:
 
