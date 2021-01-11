@@ -65,7 +65,6 @@ jobs:
           cd GuideConverter
           mvn compiler:compile
           mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11}"
-          mvn -Dtest=TestConversion test -DguideName="${{ github.event.inputs.guide_name }}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
@@ -133,7 +132,6 @@ jobs:
           cd GuideConverter
           mvn compiler:compile
           mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11}"
-          mvn -Dtest=TestConversion test -DguideName="${{ github.event.inputs.guide_name }}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class

@@ -1,6 +1,6 @@
 name: TestingConversion
 
-on: [push]
+on: [pull_request]
 
 jobs:
 
@@ -10,9 +10,6 @@ jobs:
     if: contains(github.event.inputs.branch,'master') || contains(github.event.inputs.branch,'main') || contains(github.event.inputs.branch,'prod')
   
     steps:
-
-      # Any prerequisite steps
-      - uses: actions/checkout@master
         
         # Any prerequisite steps
       - uses: actions/checkout@master
@@ -23,7 +20,8 @@ jobs:
           repository: OpenLiberty/cloud-hosted-guide-converter
           path: GuideConverter
 
-      - name: Checkout QuickLabs repo
+
+      - name: Checkout Pull Request
         uses: actions/checkout@v2
         with:
           repository: jakub-pomykala/quick-labs
