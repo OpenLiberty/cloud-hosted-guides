@@ -1,12 +1,13 @@
-name: Testing Conversion
+name: TestingConversion
 
 on: [push]
 
 jobs:
 
-  prereqs:
+  Testing:
     name: Checking Conversion of Cloud-Hosted-${{ github.event.inputs.guide_name }}
     runs-on: ubuntu-latest
+    if: contains('master') || contains('main') || contains('prod')
   
     steps:
 
@@ -22,6 +23,12 @@ jobs:
           repository: OpenLiberty/cloud-hosted-guide-converter
           path: GuideConverter
 
+      - name: Checkout QuickLabs repo
+        uses: actions/checkout@v2
+        with:
+          repository: jakub-pomykala/quick-labs
+          path: GuideConverter/quick-labs
+
       - uses: actions/setup-java@v1
         with:
           java-version: '15' # The JDK version to make available on the path.
@@ -30,5 +37,42 @@ jobs:
 
       - name: Testing with Maven
         run: |
+        cd quick-labs/cloud-hosted-${{ github.event.inputs.guide_name }}
+        mvn -Dtest=TestConversion test -DguideName="instructions.md"
 
-        mvn -Dtest=TestConversion test -DguideName="${{ github.event.inputs.guide_name }}"
+        Testing:
+    name: Checking Conversion of Cloud-Hosted-${{ github.event.inputs.guide_name }}
+    runs-on: ubuntu-latest
+    if: contains('staging')
+  
+    steps:
+
+      # Any prerequisite steps
+      - uses: actions/checkout@master
+        
+        # Any prerequisite steps
+      - uses: actions/checkout@master
+        
+      - name: Checkout Guide Converter repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/cloud-hosted-guide-converter
+          path: GuideConverter
+
+      - name: Checkout QuickLabs repo
+        uses: actions/checkout@v2
+        with:
+          ref: staging
+          repository: jakub-pomykala/quick-labs
+          path: GuideConverter/quick-labs
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '15' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+
+      - name: Testing with Maven
+        run: |
+        cd quick-labs/cloud-hosted-${{ github.event.inputs.guide_name }}
+        mvn -Dtest=TestConversion test -DguideName="instructions.md"
