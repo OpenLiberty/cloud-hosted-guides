@@ -176,4 +176,4 @@ jobs:
           repo: jakub-pomykala/quick-labs
           token: ${{ secrets.PAT_TOKEN }}
           inputs: '{ "branch": "${{ github.ref }}", "guide_name": "${{ github.event.inputs.guide_name }}" }'
-          ref: "refs/heads/master"
+          ref: "refs/heads/staging"
