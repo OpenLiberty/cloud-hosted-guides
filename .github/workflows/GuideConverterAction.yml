@@ -167,5 +167,5 @@ jobs:
       uses: benc-uk/workflow-dispatch@v1
       with:
         workflow: Testing-Conversion
-        token: ${{ secrets.PAT_TOKEN }}
+        token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
         inputs: '{ "branch":"${{ github.event.inputs.branch }}" , "guide_name": "${{ github.event.repository.name }}" }'
