@@ -173,4 +173,3 @@ jobs:
         workflow: Testing-Conversion
         token: ${{ secrets.PAT_TOKEN }}
         inputs: '{ "guide_name": "${{ github.event.repository.name }}" }'
-        ref: staging
