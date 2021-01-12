@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: OpenLiberty/cloud-hosted-guide-converter
-          path: GuideConverter/instructions
+          path: GuideConverter
 
         
       - name: Checkout instructions
