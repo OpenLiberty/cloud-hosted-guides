@@ -156,14 +156,11 @@ jobs:
         name: Create Pull Request
 
 
-  post:
-    # The type of runner that the job will run on
+  triggerPostConversionTesting:
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    # Uses the secrets from the organisation for credentials
+
     - uses: actions/checkout@v2
 
     - name: Invoke workflow in another repo with inputs
