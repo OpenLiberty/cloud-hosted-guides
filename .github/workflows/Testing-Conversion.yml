@@ -57,7 +57,7 @@ jobs:
           mvn -Dtest=TestConversion test -DguideName="quick-labs/instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/instructions"
 
 
-TestConversionStaging:
+  TestConversionStaging:
     name: Test Converted cloud-hosted-guide
     runs-on: ubuntu-latest
     if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging')
