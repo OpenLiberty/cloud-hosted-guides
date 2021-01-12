@@ -30,7 +30,14 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: OpenLiberty/cloud-hosted-guide-converter
-          path: GuideConverter
+          path: GuideConverter/instructions
+
+        
+      - name: Checkout instructions
+        uses: actions/checkout@v2
+        with:
+          repository: jakub-pomykala/quick-labs/instructions
+          path: GuideConverter/
 
       - uses: actions/setup-java@v1
         with:
@@ -41,4 +48,4 @@ jobs:
       - name: Run Tests
         run: |
           cd GuideConverter
-          mvn -Dtest=TestConversion test -DguideName="$github_workspace/instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/instructions"
+          mvn -Dtest=TestConversion test -DguideName="instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/instructions"
