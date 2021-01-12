@@ -1,6 +1,5 @@
 name: GuideConverter
 on:
-  push:
   workflow_dispatch:
     inputs:
       branch:
