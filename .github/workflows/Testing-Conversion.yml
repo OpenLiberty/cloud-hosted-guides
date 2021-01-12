@@ -22,7 +22,7 @@ jobs:
         echo "${{ github.event.inputs.guide_name }}"
 
   TestConversionMaster:
-    name: Test Converted cloud-hosted-guide
+    name: Test Converted cloud-hosted-guide to Master
     runs-on: ubuntu-latest
     if: contains(github.event.inputs.branch, 'master') || contains(github.event.inputs.branch, 'main') || contains(github.event.inputs.branch, 'prod')
 
@@ -58,7 +58,7 @@ jobs:
 
 
   TestConversionStaging:
-    name: Test Converted cloud-hosted-guide
+    name: Test Converted cloud-hosted-guide to Staging
     runs-on: ubuntu-latest
     if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging')
 
