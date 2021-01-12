@@ -170,6 +170,6 @@ jobs:
     - name: Invoke workflow in another repo with inputs
       uses: benc-uk/workflow-dispatch@v1
       with:
-        workflow: TestingConversion
+        workflow: Testing-Conversion
         token: ${{ secrets.PAT_TOKEN }}
         inputs: '{ "guide_name": "${{ github.event.repository.name }}" }'
