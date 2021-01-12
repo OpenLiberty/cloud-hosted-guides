@@ -36,7 +36,7 @@ jobs:
           - {"github":"cloud-hosted-guide-reactive-service-testing","gitlab":"cloud-hosted-guide-reactive-service-testing"}
           - {"github":"cloud-hosted-guide-rest-intro","gitlab":"cloud-hosted-guide-rest-intro"}
           - {"github":"cloud-hosted-guide-rest-openshift","gitlab":"cloud-hosted-guide-rest-openshift"}
-          - {"github":"draft-guide-contract-testing","gitlab":"cloud-hosted-guide-contract-testing"}
+          - {"github":"cloud-hosted-draft-guide-contract-testing","gitlab":"cloud-hosted-guide-contract-testing"}
     
     steps:
 
