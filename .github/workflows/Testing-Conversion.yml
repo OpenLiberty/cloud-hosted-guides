@@ -41,7 +41,7 @@ jobs:
       - name: Checkout instructions
         uses: actions/checkout@v2
         with:
-          repository: jakub-pomykala/quick-labs
+          repository: OpenLiberty/quick-labs
           path: GuideConverter/quick-labs
           ref: master
 
@@ -77,7 +77,7 @@ jobs:
       - name: Checkout instructions
         uses: actions/checkout@v2
         with:
-          repository: jakub-pomykala/quick-labs
+          repository: OpenLiberty/quick-labs
           path: GuideConverter/quick-labs
           ref: staging
 
