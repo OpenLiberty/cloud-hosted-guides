@@ -36,7 +36,7 @@ jobs:
       - name: Checkout instructions
         uses: actions/checkout@v2
         with:
-          repository: jakub-pomykala/quick-labs/
+          repository: jakub-pomykala/quick-labs
           path: GuideConverter/quick-labs
 
       - uses: actions/setup-java@v1
