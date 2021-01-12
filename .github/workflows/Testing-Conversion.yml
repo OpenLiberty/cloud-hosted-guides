@@ -2,6 +2,9 @@ name: Testing-Conversion
 on: 
   workflow_dispatch:
     inputs:
+      description: 'Branch pushed to'     
+        required: true
+        default: 'refs/heads/master'
       guide_name:
         description: 'Guide changed'
         required: true
@@ -17,10 +20,11 @@ jobs:
       run: |
         echo "${{ github.event.inputs.guide_name }}"
 
-  TestConversion:
+  TestConversionMaster:
     name: Test Converted cloud-hosted-guide
     runs-on: ubuntu-latest
-  
+    if: contains(github.event.inputs.branch, 'master') || contains(github.event.inputs.branch, 'main') || contains(github.event.inputs.branch, 'prod')
+
     steps:
 
       # Any prerequisite steps
@@ -38,6 +42,43 @@ jobs:
         with:
           repository: jakub-pomykala/quick-labs
           path: GuideConverter/quick-labs
+          ref: master
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '15' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+      
+      - name: Run Tests
+        run: |
+          cd GuideConverter
+          mvn -Dtest=TestConversion test -DguideName="quick-labs/instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/instructions"
+
+
+TestConversionStaging:
+    name: Test Converted cloud-hosted-guide
+    runs-on: ubuntu-latest
+    if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging')
+
+    steps:
+
+      # Any prerequisite steps
+      - uses: actions/checkout@master
+        
+      - name: Checkout Guide Converter repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/cloud-hosted-guide-converter
+          path: GuideConverter
+
+        
+      - name: Checkout instructions
+        uses: actions/checkout@v2
+        with:
+          repository: jakub-pomykala/quick-labs
+          path: GuideConverter/quick-labs
+          ref: staging
 
       - uses: actions/setup-java@v1
         with:
