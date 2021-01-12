@@ -35,3 +35,4 @@ jobs:
         with:
           repository: OpenLiberty/cloud-hosted-guide-converter
           path: GuideConverter
+          ref: refs/head/staging
