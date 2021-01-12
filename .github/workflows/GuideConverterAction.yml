@@ -171,7 +171,7 @@ jobs:
       uses: benc-uk/workflow-dispatch@v1
       with:
         workflow: Testing Conversion
-        repo: OpenLiberty/quick-labs
+        repo: jakub-pomykala/quick-labs
         token: ${{ secrets.PAT_TOKEN }}
         inputs: '{ "guide_name": "${{ github.event.repository.name }}" }'
         ref: "refs/heads/master"
