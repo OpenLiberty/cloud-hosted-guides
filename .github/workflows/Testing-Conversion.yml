@@ -41,4 +41,4 @@ jobs:
       - name: Run Tests
         run: |
           cd GuideConverter
-          mvn -Dtest=TestConversion test -DguideName="/quick-labs/instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/instructions.md"
+          mvn -Dtest=TestConversion test -DguideName="$github_workspace/instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/instructions.md"
