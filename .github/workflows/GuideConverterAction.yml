@@ -170,7 +170,7 @@ jobs:
     - name: Invoke workflow in another repo with inputs
       uses: benc-uk/workflow-dispatch@v1
       with:
-        workflow: Testing Conversion
+        workflow: TestingConversion
         repo: jakub-pomykala/quick-labs
         token: ${{ secrets.PAT_TOKEN }}
         inputs: '{ "guide_name": "${{ github.event.repository.name }}" }'

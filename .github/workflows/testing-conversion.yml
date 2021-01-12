@@ -1,4 +1,4 @@
-name: Testing Conversion
+name: TestingConversion
 on: 
   workflow_dispatch:
     inputs:
