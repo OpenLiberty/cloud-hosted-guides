@@ -2,7 +2,8 @@ name: Testing-Conversion
 on: 
   workflow_dispatch:
     inputs:
-      description: 'Branch pushed to'     
+      branch:
+        description: 'Branch pushed to'     
         required: true
         default: 'refs/heads/master'
       guide_name:
