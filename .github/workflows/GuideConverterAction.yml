@@ -82,7 +82,7 @@ jobs:
       - uses: peter-evans/create-pull-request@v3
         with:
             title: "To Master: Change to cloud-hosted-${{ github.event.inputs.guide_name }}"
-            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo.  ![Testing-Conversion](https://github.com/OpenLiberty/quick-labs/workflows/Testing-Conversion/badge.svg)"
+            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo.  ![Testing-Conversion](https://github.com/OpenLiberty/quick-labs/workflows/Testing-Conversion/badge.svg?branch=master)"
             branch: "cloud-hosted-${{ github.event.inputs.guide_name }}/master"
             base: "master" 
         name: Create Pull Request
@@ -150,7 +150,7 @@ jobs:
       - uses: peter-evans/create-pull-request@v3
         with:
             title: "To Staging: Change to cloud-hosted-${{ github.event.inputs.guide_name }}"
-            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo.   ![Testing-Conversion](https://github.com/OpenLiberty/quick-labs/workflows/Testing-Conversion/badge.svg)"
+            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo.   ![Testing-Conversion](https://github.com/OpenLiberty/quick-labs/workflows/Testing-Conversion/badge.svg?branch=staging)"
             branch: "cloud-hosted-${{ github.event.inputs.guide_name }}/staging"
             base: "staging" 
         name: Create Pull Request
