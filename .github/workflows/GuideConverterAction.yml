@@ -172,6 +172,6 @@ jobs:
       with:
         workflow: Testing Conversion
         repo: OpenLiberty/quick-labs
-        token: ${{ secrets.ACTION_PAT }}
+        token: ${{ secrets.PAT_TOKEN }}
         inputs: '{ "guide_name": "${{ github.event.repository.name }}" }'
         ref: "refs/heads/master"
