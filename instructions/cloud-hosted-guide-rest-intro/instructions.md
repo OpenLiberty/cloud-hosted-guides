@@ -74,14 +74,14 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 Check out the service at the
-[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL 
-
+[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL
 ```
 curl http://localhost:9080/LibertyProject/System/properties
 ```
 {: codeblock}
 
 
+ 
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -204,11 +204,11 @@ The **@GET** annotation on the method indicates that this method is to be called
 method. The **@Produces** annotation indicates the format of the content that will be returned. The
 value of the **@Produces** annotation will be specified in the HTTP **Content-Type** response header.
 For this application, a JSON structure is to be returned. The desired **Content-Type** for a JSON
-response is **application/json** with **MediaType.APPLICATION_JSON** instead of the **String** content type. Using a constant such as **MediaType.APPLICATION_JSON** is better because if there's a spelling error, a compile failure occurs.
+response is **application/json** with **'MediaType.APPLICATION_JSON'** instead of the **String** content type. Using a constant such as **'MediaType.APPLICATION_JSON'** is better because if there's a spelling error, a compile failure occurs.
 
 JAX-RS supports a number of ways to marshal JSON. The JAX-RS 2.1 specification mandates JSON-Binding
 (JSON-B). The method body returns the result of **System.getProperties()**, which is of type **java.util.Properties**. Since the method 
-is annotated with **@Produces(MediaType.APPLICATION_JSON)**, JAX-RS uses JSON-B to automatically convert the returned object
+is annotated with **'@Produces(MediaType.APPLICATION_JSON)'**, JAX-RS uses JSON-B to automatically convert the returned object
 to JSON data in the HTTP response.
 
 
@@ -229,20 +229,14 @@ Replace the server configuration file.
 
 ```
 <server description="Intro REST Guide Liberty server">
-  <!-- tag::featureManager[] -->
   <featureManager>
       <feature>jaxrs-2.1</feature>
   </featureManager>
-  <!-- end::featureManager[] -->
 
-  <!-- tag::httpEndpoint[] -->
   <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
                 id="defaultHttpEndpoint" host="*" />
-  <!-- end::httpEndpoint[] -->
   
-  <!-- tag::webApplication[] -->
   <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
-  <!-- end::webApplication[] -->
 </server>
 ```
 {: codeblock}
@@ -266,27 +260,27 @@ The variables that are being used in the **server.xml** file are provided by the
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 Check out the service that you created at the
-[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL 
-
+[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL
 ```
 curl http://localhost:9080/LibertyProject/System/properties
 ```
 {: codeblock}
 
 
+ 
 
 
 # Testing the service
 
 You can test this service manually by starting a server and pointing a web browser at the
-[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL However, automated tests are a 
-
+[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL
 ```
 curl http://localhost:9080/LibertyProject/System/properties
 ```
 {: codeblock}
 
 
+ However, automated tests are a 
 much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS 
 Client API provide a simple environment to test the application.
 
