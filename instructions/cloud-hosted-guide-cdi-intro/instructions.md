@@ -99,7 +99,7 @@ Point your browser to the [http://localhost:9080/inventory/systems](http://local
 ```
 curl http://localhost:9080/inventory/systems
 ```
-: codeblock
+{: codeblock}
 
 
 
