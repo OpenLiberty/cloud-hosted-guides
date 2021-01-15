@@ -41,7 +41,7 @@ jobs:
       - name: Checkout instructions
         uses: actions/checkout@v2
         with:
-          repository: OpenLiberty/quick-labs
+          repository: OpenLiberty/cloud-hosted-guides
           path: GuideConverter/quick-labs
           ref: master
 
