@@ -43,7 +43,8 @@ jobs:
         with:
           repository: OpenLiberty/cloud-hosted-guides
           path: GuideConverter/cloud-hosted-guides
-          refs: cloud-hosted-${{ github.event.inputs.guide_name }}/master
+          refs: cloud-hosted-${{ github.event.inputs.guide_name }}/main
+
 
       - uses: actions/setup-java@v1
         with:

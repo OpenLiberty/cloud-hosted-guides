@@ -81,7 +81,7 @@ jobs:
       - uses: peter-evans/create-pull-request@v3
         with:
             title: "To Master: Change to cloud-hosted-${{ github.event.inputs.guide_name }}"
-            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo.  ![Testing-Conversion](https://github.com/OpenLiberty/cloud-hosted-guides/workflows/Testing-Conversion/badge.svg?branch=master)"
+            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo.  ![Testing-Conversion](https://github.com/OpenLiberty/cloud-hosted-guides/workflows/Testing-Conversion/badge.svg?branch=cloud-hosted-${{ github.event.inputs.guide_name }}/main)"
             branch: "cloud-hosted-${{ github.event.inputs.guide_name }}/master"
             base: "main" 
         name: Create Pull Request
@@ -148,7 +148,7 @@ jobs:
       - uses: peter-evans/create-pull-request@v3
         with:
             title: "To Staging: Change to cloud-hosted-${{ github.event.inputs.guide_name }}"
-            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo.   ![Testing-Conversion](https://github.com/OpenLiberty/cloud-hosted-guides/workflows/Testing-Conversion/badge.svg?branch=staging)"
+            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo.   ![Testing-Conversion](https://github.com/OpenLiberty/cloud-hosted-guides/workflows/Testing-Conversion/badge.svg?branch=cloud-hosted-${{ github.event.inputs.guide_name }}/staging)"
             branch: "cloud-hosted-${{ github.event.inputs.guide_name }}/staging"
             base: "staging" 
         name: Create Pull Request
