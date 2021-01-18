@@ -34,7 +34,7 @@ when you add the MicroProfile Metrics feature to the server.
 
 # Getting started
 
-Open a terminal window:
+Open a command-line session:
 
 > [Terminal -> New Terminal]
 
@@ -78,6 +78,17 @@ After you see the following message, your application server is ready:
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
+Open a command-line session:
+
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
 
 Point your browser to the 
 ```
@@ -111,6 +122,7 @@ Change the **'io_openliberty_guides_system_inMaintenance'** property from **fals
 
 You do not need
 to restart the server. Next, return to your browser and point back to the
+
 [http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) URL
 
 ```
@@ -339,6 +351,7 @@ You can learn more about MicroProfile Metrics in the [Providing metrics from a m
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 When the server is running, point your browser to the
+
 [http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) URL
 
 ```
@@ -348,6 +361,7 @@ curl http://localhost:9080/inventory/systems/localhost
 
 
 You receive the system properties of your local JVM from the **inventory** service. Next, point your
+
 browser to the **system** service URL, which is located at 
 ```
 curl http://localhost:9080/system/properties
@@ -360,7 +374,15 @@ to retrieve the system properties for the specific localhost.
 Notice that the results from the two URLs are identical because the **inventory** service gets its results from
 calling the **system** service.
 
-To see the application metrics, go to the [https://localhost:9443/metrics/application](https://localhost:9443/metrics/application) URL. Log in as the **admin** user, and use **adminpwd** as the password.
+
+To see the application metrics, go to the https://localhost:9443/metrics/application[https://localhost:9443/metrics/application^] URL
+
+```
+curl https://localhost:9443/metrics/application
+```
+{: codeblock}
+
+
 See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
 
 ```
@@ -396,6 +418,7 @@ Change the **'io_openliberty_guides_system_inMaintenance'** property from **fals
 
 
 After saving the file, go back to your browser and
+
 refresh to the 
 ```
 curl http://localhost:9080/inventory/systems/localhost
@@ -408,6 +431,7 @@ the properties. The **fallbackForGet()** method, which is the designated fallbac
 when the **system** service is not available.
 The cached system properties contain only the OS name and user name key and value pairs.
 
+
 To see that the **system** service is down, point your browser to the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) URL again
 
 ```
@@ -418,7 +442,15 @@ curl http://localhost:9080/system/properties
 
 You see that the service displays a 503 HTTP response code.
 
-Go to the [https://localhost:9443/metrics/application](https://localhost:9443/metrics/application) URL again.
+
+Go to the https://localhost:9443/metrics/application[https://localhost:9443/metrics/application^] URL again
+
+```
+curl https://localhost:9443/metrics/application
+```
+{: codeblock}
+
+
 See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
 
 ```
@@ -430,9 +462,9 @@ application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations
 application:ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total 1
 ```
 
-From the output, the **ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total**
+From the output, the **'ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total'**
 data indicates that the **get()** was called twice including the previous call before turning the **system** service in maintenance.
-The **ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total** data
+The **'ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total'** data
 indicates that the **fallbackForGet()** method was called once.
 
 Update the configuration file.
