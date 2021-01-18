@@ -25,7 +25,7 @@ In this guide, you will explore both methods to handle scenarios for providing a
 
 # Getting started
 
-Open a terminal window:
+Open a command-line session:
 
 > [Terminal -> New Terminal]
 
@@ -70,8 +70,20 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 You can access the following microservices:
+Open a command-line session:
 
- The [http://localhost:9080/system/properties](http://localhost:9080/system/properties) microservice simulates the remote system service that retrieves the system property information for a specific host
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
+
+* The [http://localhost:9080/system/properties](http://localhost:9080/system/properties) microservice simulates the remote **system** service that retrieves the system property information for a specific host
+
 ```
 curl http://localhost:9080/system/properties
 ```
@@ -79,7 +91,8 @@ curl http://localhost:9080/system/properties
 
 
 
- The [http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) microservice is the inventory service that invokes the [http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) microservice to retrieves the system property information
+
+* The [http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) microservice is the **inventory** service that invokes the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) microservice to retrieves the system property information
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
@@ -88,7 +101,7 @@ curl http://localhost:9080/inventory/systems/localhost
 
 
 
-* The \http://localhost:9080/inventory/systems/{your_hostname} microservice is the **inventory** service that invokes the \http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering **hostname** from your terminal. Visit the URL by replacing **{your_hostname}** with your FQDN.
+* The \http://localhost:9080/inventory/systems/{your_hostname} microservice is the **inventory**' service that invokes the http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering '**hostname** from your terminal. Visit the URL by replacing **' service that invokes the http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering '** with your FQDN.
 You will see the same system property information, but the process of getting the information is different.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
@@ -179,7 +192,7 @@ This allows the user to explicitly close the client instance by invoking the **c
 
 When the **getProperties()** method is invoked, the **SystemClient** instance sends a GET request to the **<baseUrl>/properties** endpoint, where **<baseUrl>** is the default base URL of the **system** service. You will see how to configure the base URL in the next section.
 
-The **@Produces** annotation specifies the media (MIME) type of the expected response. The default value is **MediaType.APPLICATION_JSON**.
+The **@Produces** annotation specifies the media (MIME) type of the expected response. The default value is **'MediaType.APPLICATION_JSON'**.
 
 The **@RegisterProvider** annotation tells the framework to register the provider classes to be used when the framework invokes the interface. You can add as many providers as necessary.
 In the **SystemClient** interface, add a response exception mapper as a provider to map the **404** response code with the **UnknownUriException** exception.
@@ -452,6 +465,16 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 When the server is running, select either approach to fetch your system properties:
 
 
+- Visit the [http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) URL
+
+```
+curl http://localhost:9080/inventory/systems/localhost
+```
+{: codeblock}
+
+
+
+ Get your FQDN first. Then, visit the \http://localhost:9080/inventory/systems/{your_hostname} URL by replacing **'{your_hostname}'** with your FQDN, which retrieves your system properties by invoking the \http://{your_hostname}:9080/system/properties service.
 
 
 
