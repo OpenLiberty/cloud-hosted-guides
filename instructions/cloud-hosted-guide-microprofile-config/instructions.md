@@ -18,7 +18,7 @@ service on that host to get these system properties. You will add configuration 
 
 # Getting started
 
-Open a terminal window:
+Open a command-line session:
 
 > [Terminal -> New Terminal]
 
@@ -63,8 +63,19 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 You can access the following two microservices to test their availability:
+Open a command-line session:
 
- 
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
+
+* 
 ```
 curl http://localhost:9080/system/properties
 ```
@@ -73,7 +84,8 @@ curl http://localhost:9080/system/properties
 
  retrieves the information for a specific host
 
- 
+
+* 
 ```
 curl http://localhost:9080/inventory/systems
 ```
@@ -84,7 +96,8 @@ curl http://localhost:9080/inventory/systems
 
 In addition, you can access a third microservice, which retrieves and aggregates all of the configuration properties and sources that have been added throughout this guide. This is available at:
 
- 
+
+* 
 ```
 curl http://localhost:9080/config
 ```
@@ -496,10 +509,6 @@ Create the configuration file.
 
 
 
-
-
-
-
 ```
 io.openliberty.guides.config.CustomEmailConverter
 ```
@@ -513,8 +522,6 @@ Replace the **InventoryConfig** class.
 
 > [File -> Open...]  
 > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
-
-
 
 
 
@@ -568,11 +575,6 @@ Replace the **InventoryResource** class.
 
 > [File -> Open...]  
 > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
-
-
-
-
-
 
 
 
@@ -662,7 +664,8 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 While the server is running, the following two microservices should be available to access:
 
- 
+
+* 
 ```
 curl http://localhost:9080/system/properties
 ```
@@ -671,7 +674,8 @@ curl http://localhost:9080/system/properties
 
 
 
- 
+
+* 
 ```
 curl http://localhost:9080/inventory/systems
 ```
@@ -683,7 +687,8 @@ curl http://localhost:9080/inventory/systems
 
 You can find the service that retrieves configuration information that is specific to this guide at the following location:
 
- 
+
+* 
 ```
 curl http://localhost:9080/config
 ```
@@ -693,13 +698,14 @@ curl http://localhost:9080/config
 
 
 
-The **'config_ordinal'** value of the custom configuration source is set to **'config_ordinal'** value of **100**.
-
+The **'config_ordinal'** value of the custom configuration source is set to **150**. It overrides configuration values of the default **microprofile-config.properties** source, which has a **'config_ordinal'** value of **100**.
 
 
 
 Play with this application by changing configuration values for each property in the **resources/CustomConfigSource.json** file.
+
 Your changes are added dynamically, and you do not need to restart the server
+
 ```
 curl http://localhost:9080/config
 ```
@@ -707,8 +713,8 @@ curl http://localhost:9080/config
 
 
 
-For example, change **'io_openliberty_guides_inventory_inMaintenance'** from **false** to **true**, then try to access [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) again
 
+For example, change **'io_openliberty_guides_inventory_inMaintenance'** from **false** to **true**, then try to access [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) again
 
 ```
 curl http://localhost:9080/inventory/systems
@@ -849,7 +855,6 @@ If the configuration value is **false**, the service returns a valid response. O
 
 Because the **'io_openliberty_guides_inventory_inMaintenance'** configuration property is set to **false** by default, the **testPutServiceInMaintenance()** test case first checks that the inventory service is not in maintenance in the beginning.
 Next, this test switches the value of the **'io_openliberty_guides_inventory_inMaintenance'** configuration property to **true**.
-
 In the end, the inventory service returns the following message: **ERROR: Service is currently in maintenance**.
 
 The **testChangeEmail()** test case first puts the **inventory** service in maintenance, then it changes the email address in the configuration file. In the end, the **inventory** service should display the error message with the latest email address.
@@ -922,3 +927,4 @@ rm -fr guide-microprofile-config
 Now Log out by navigating to: 
 
 > [Account -> Logout]
+
