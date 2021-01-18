@@ -498,11 +498,12 @@ Create the configuration file.
 
 
 
+
+
 ```
 io.openliberty.guides.config.CustomEmailConverter
 ```
 {: codeblock}
-
 
 
 
@@ -512,6 +513,7 @@ Replace the **InventoryConfig** class.
 
 > [File -> Open...]  
 > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
+
 
 
 
@@ -566,6 +568,8 @@ Replace the **InventoryResource** class.
 
 > [File -> Open...]  
 > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+
+
 
 
 
