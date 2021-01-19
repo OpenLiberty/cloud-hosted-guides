@@ -82,6 +82,8 @@ After you see the following message, your application server is ready:
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
+
+
 Open a command-line session:
 
 > [Terminal -> New Terminal]
@@ -102,7 +104,6 @@ curl http://localhost:9080/inventory/systems
 {: codeblock}
 
 
-
 This is the starting point of the **inventory** service and it displays the current contents of the inventory. 
 As you might expect, these are empty since nothing is stored in the inventory yet. 
 
@@ -114,10 +115,17 @@ curl http://localhost:9080/inventory/systems/localhost
 {: codeblock}
 
 
-
 You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
 properties are automatically stored in the inventory. 
-Go back to [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) 
+
+Go back to 
+```
+curl http://localhost:9080/inventory/systems
+```
+{: codeblock}
+
+
+ 
 and you see a new entry for **localhost**. For simplicity, only the OS name and username are shown here for
 each host. You can repeat this process for your own hostname or any other machine that is running
 the **system** service.
@@ -308,8 +316,24 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 You can find the **inventory** and **system** services at the following URLs:
 
- [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems)
- [http://localhost:9080/system/properties](http://localhost:9080/system/properties)
+
+
+```
+curl http://localhost:9080/inventory/systems
+```
+{: codeblock}
+
+
+
+
+
+```
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
+
+
+
 
 
 # Testing the inventory application
