@@ -65,7 +65,6 @@ jobs:
           cd GuideConverter
           mvn compiler:compile
           mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11}"
-          mvn -Dtest=TestConversion test -DguideName="${{ github.event.inputs.guide_name }}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
@@ -82,9 +81,11 @@ jobs:
       - uses: peter-evans/create-pull-request@v3
         with:
             title: "To Master: Change to cloud-hosted-${{ github.event.inputs.guide_name }}"
-            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo.  ![Testing-Conversion](https://github.com/OpenLiberty/quick-labs/workflows/Testing-Conversion/badge.svg?branch=master)"
+            token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
+            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
             branch: "cloud-hosted-${{ github.event.inputs.guide_name }}/master"
-            base: "master" 
+            base: "prod" 
+            labels: "RunTests"
         name: Create Pull Request
 
   convertStaging:
@@ -94,7 +95,6 @@ jobs:
   
     steps:
 
-      # Any prerequisite steps
       - uses: actions/checkout@v2
         with:
           ref: staging
@@ -133,7 +133,6 @@ jobs:
           cd GuideConverter
           mvn compiler:compile
           mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11}"
-          mvn -Dtest=TestConversion test -DguideName="${{ github.event.inputs.guide_name }}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
@@ -150,22 +149,9 @@ jobs:
       - uses: peter-evans/create-pull-request@v3
         with:
             title: "To Staging: Change to cloud-hosted-${{ github.event.inputs.guide_name }}"
-            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo.   ![Testing-Conversion](https://github.com/OpenLiberty/quick-labs/workflows/Testing-Conversion/badge.svg?branch=staging)"
+            token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
+            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
             branch: "cloud-hosted-${{ github.event.inputs.guide_name }}/staging"
             base: "staging" 
+            labels: "RunTests"
         name: Create Pull Request
-
-
-  triggerPostConversionTesting:
-    runs-on: ubuntu-latest
-
-    steps:
-
-    - uses: actions/checkout@v2
-
-    - name: Invoke workflow in another repo with inputs
-      uses: benc-uk/workflow-dispatch@v1
-      with:
-        workflow: Testing-Conversion
-        token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-        inputs: '{ "branch":"${{ github.event.inputs.branch }}" , "${{ github.event.inputs.guide_name }}" }'
