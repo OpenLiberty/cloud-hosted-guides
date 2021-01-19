@@ -32,7 +32,7 @@ image and run that image as a container.
 
 # Getting started
 
-Open a terminal window:
+Open a command-line session:
 
 > [Terminal -> New Terminal]
 
@@ -100,6 +100,19 @@ for the following message, which indicates that the server startup is complete:
 [INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
 ```
 
+
+Open a command-line session:
+
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
+
 To access the **system** microservice, see the 
 ```
 curl http://localhost:9080/system/properties
@@ -161,6 +174,7 @@ mvn liberty:dev
 
 Development mode automatically picks up changes that you make to your application and allows you to run tests by pressing the **enter/return** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the **enter/return** key to verify your change.
 
+
 As before, you can see that the application is running by going to the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) URL
 
 ```
@@ -173,6 +187,7 @@ curl http://localhost:9080/system/properties
 Now try updating the server configuration while the server is running in development mode.
 The **system** microservice does not currently include health monitoring to report whether the server and the microservice that it runs are healthy.
 You can add health reports with the MicroProfile Health feature, which adds a **/health** endpoint to your application.
+
 If you try to access this endpoint now at the 
 ```
 curl http://localhost:9080/health/
@@ -198,18 +213,14 @@ Replace the server configuration file.
 
 ```
 <server description="Sample Liberty server">
-    <!-- tag::features[] -->
     <featureManager>
         <feature>jaxrs-2.1</feature>
         <feature>jsonp-1.1</feature>
         <feature>cdi-2.0</feature>
         <feature>mpMetrics-2.3</feature>
-        <!-- tag::mpHealth[] -->
         <feature>mpHealth-2.2</feature>
-        <!-- end::mpHealth[] -->
         <feature>mpConfig-1.4</feature>
     </featureManager>
-    <!-- end::features[] -->
 
     <variable name="default.http.port" defaultValue="9080"/>
     <variable name="default.https.port" defaultValue="9443"/>
@@ -217,9 +228,7 @@ Replace the server configuration file.
     <webApplication location="guide-getting-started.war" contextRoot="/" />
     <mpMetrics authentication="false"/>
 
-    <!-- tag::logging[] -->
     <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-    <!-- end::logging[] -->
 
     <httpEndpoint host="*" httpPort="${default.http.port}" 
         httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
@@ -246,6 +255,7 @@ You can see the server being updated in the server log displayed in your command
 [INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
 [INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.173 seconds.
 ```
+
 
 Try to access the **/health** endpoint again by visiting the [http://localhost:9080/health](http://localhost:9080/health) URL
 
@@ -362,7 +372,7 @@ public class SystemLivenessCheck implements HealthCheck {
         MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
         long memUsed = memBean.getHeapMemoryUsage().getUsed();
         long memMax = memBean.getHeapMemoryUsage().getMax();
-  
+
         return HealthCheckResponse.named(
             SystemResource.class.getSimpleName() + " Liveness Check")
                                   .withData("memory used", memUsed)
@@ -389,6 +399,7 @@ The following messages display in your first command-line session:
 [INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
 [INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.136 seconds.
 ```
+
 
 Access the **/health** endpoint again by going to the [http://localhost:9080/health](http://localhost:9080/health) URL
 
@@ -421,12 +432,14 @@ This time you see the overall status of your server and the aggregated data of t
 }
 ```
 
+
 You can also access the **/health/ready** endpoint by going to the [http://localhost:9080/health/ready](http://localhost:9080/health/ready) URL to view the data from the readiness health check
 
 ```
 curl http://localhost:9080/health/ready
 ```
 {: codeblock}
+
 
 
 Similarly, access the **/health/live** endpoint by going to the [http://localhost:9080/health/live](http://localhost:9080/health/live) URL to view the data from the liveness health check
@@ -478,18 +491,14 @@ Replace the server configuration file.
 
 ```
 <server description="Sample Liberty server">
-    <!-- tag::features[] -->
     <featureManager>
         <feature>jaxrs-2.1</feature>
         <feature>jsonp-1.1</feature>
         <feature>cdi-2.0</feature>
         <feature>mpMetrics-2.3</feature>
-        <!-- tag::mpHealth[] -->
         <feature>mpHealth-2.2</feature>
-        <!-- end::mpHealth[] -->
         <feature>mpConfig-1.4</feature>
     </featureManager>
-    <!-- end::features[] -->
 
     <variable name="default.http.port" defaultValue="9080"/>
     <variable name="default.https.port" defaultValue="9443"/>
@@ -497,9 +506,7 @@ Replace the server configuration file.
     <webApplication location="guide-getting-started.war" contextRoot="/" />
     <mpMetrics authentication="false"/>
 
-    <!-- tag::logging[] -->
     <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-    <!-- end::logging[] -->
 
     <httpEndpoint host="*" httpPort="${default.http.port}" 
         httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
@@ -604,6 +611,7 @@ CONTAINER ID    IMAGE                         CREATED          STATUS           
 4294a6bdf41b    openliberty-getting-started   9 seconds ago    Up 11 seconds    gettingstarted-app
 ```
 
+
 To access the application, go to the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) URL
 
 ```
@@ -666,6 +674,7 @@ directory and run the **java -jar** command:
 java -jar guide-getting-started.jar
 ```
 {: codeblock}
+
 
 
 When the server starts, go to the 
