@@ -1,9 +1,9 @@
-# quick-labs
+# cloud-hosted-guides
 A temp repo to store instructions and other artifacts in regards to our Quick Labs and Workshops
 
 # Mirror Instructions
-All of the folders under `https://github.com/OpenLiberty/quick-labs/tree/master/instructions/` have a matching Gitlab repository used for SkillsNetwork labs.
-When creating a new quick-labs guide some steps must be taken to ensure that future changes will be mirrored.
+All of the folders under `https://github.com/OpenLiberty/cloud-hosted-guides/tree/master/instructions/` have a matching Gitlab repository used for SkillsNetwork labs.
+When creating a new cloud-hosted-guides guide some steps must be taken to ensure that future changes will be mirrored.
 
 1. Create the Quicklab 
 
@@ -24,7 +24,7 @@ jobs:
     strategy:
       matrix: # Uses an array of Json variables to pass the repo names.
               # The names differ between Github and Gitlab so this is necessary.
-              # Add new quick-labs here to add them to the mirror process.
+              # Add new cloud-hosted-guides here to add them to the mirror process.
               # i.e. {"github":"new-lab-github-folder","gitlab":"new-lab-gitlab-url"}
         repo:
           - {"github":"develop-microservices-docker","gitlab":"using-docker-to-develop-java-microservices"}

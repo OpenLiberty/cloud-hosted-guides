@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix: # Uses an array of Json variables to pass the repo names.
               # The names differ between Github and Gitlab so this is necessary.
-              # Add new quick-labs here to add them to the mirror process.
+              # Add new cloud-hosted-guides here to add them to the mirror process.
               # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
         repo: 
           - {"github":"cloud-hosted-guide-cdi-intro","gitlab":"cloud-hosted-guide-cdi-intro"}
