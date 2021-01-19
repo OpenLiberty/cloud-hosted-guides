@@ -1,34 +1,16 @@
-name: Testing-Conversion
-on: 
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch pushed to'     
-        required: true
-        default: 'refs/heads/master'
-      guide_name:
-        description: 'Guide changed'
-        required: true
-        default: 'guide-rest-intro'
+name: Test Conversion
+on:
+  pull_request:
+    types:
+      - labeled
 
 jobs:
-  printBranch:
+  testingConversion:
     runs-on: ubuntu-latest
-  
-    steps:
-
-    - name: Get Guide name
-      run: |
-        echo "${{ github.event.inputs.guide_name }}"
-
-  TestConversionMaster:
-    name: Test Converted cloud-hosted-guide to Master
-    runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch, 'master') || contains(github.event.inputs.branch, 'main') || contains(github.event.inputs.branch, 'prod')
+    if: github.event.label.name == 'RunTests'
 
     steps:
 
-      # Any prerequisite steps
       - uses: actions/checkout@master
         
       - name: Checkout Guide Converter repo
@@ -43,52 +25,20 @@ jobs:
         with:
           repository: OpenLiberty/cloud-hosted-guides
           path: GuideConverter/cloud-hosted-guides
-          refs: cloud-hosted-${{ github.event.inputs.guide_name }}/prod
-
-
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '15' # The JDK version to make available on the path.
-          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
-          architecture: x64 # (x64 or x86) - defaults to x64
-      
-      - name: Run Tests
-        run: |
-          cd GuideConverter
-          mvn -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/instructions"
-
-
-  TestConversionStaging:
-    name: Test Converted cloud-hosted-guide to Staging
-    runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging')
-
-    steps:
-
-      # Any prerequisite steps
-      - uses: actions/checkout@master
-        
-      - name: Checkout Guide Converter repo
-        uses: actions/checkout@v2
-        with:
-          repository: OpenLiberty/cloud-hosted-guide-converter
-          path: GuideConverter
-
-        
-      - name: Checkout instructions
-        uses: actions/checkout@v2
-        with:
-          repository: OpenLiberty/cloud-hosted-guides
-          path: GuideConverter/cloud-hosted-guides
-          ref: cloud-hosted-${{ github.event.inputs.guide_name }}/staging
+          ref: ${{ github.event.pull_request.branch }}
 
       - uses: actions/setup-java@v1
         with:
           java-version: '15' # The JDK version to make available on the path.
           java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
-      
-      - name: Run Tests
+
+      - name: Get Guide name
         run: |
+          echo ${{ github.event.pull_request.body }}
+          prText="${{ github.event.pull_request.body }}"
+          removeStart="${prText:44}"
+          removeEnd="${removeStart% *}"
+          echo $removeEnd
           cd GuideConverter
-          mvn -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/instructions"
+          mvn -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"
