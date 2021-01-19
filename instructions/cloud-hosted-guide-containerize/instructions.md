@@ -37,7 +37,20 @@ Open another command-line session and run the following Maven goal to build the 
 ```
 mvn -pl inventory liberty:run
 ```
+
+
+Open a command-line session:
+
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
 {: codeblock}
+{: codeblock}
+
 
 
 To access the **inventory** service, which displays the current contents of the inventory, see [http://localhost:9081/inventory/systems](http://localhost:9081/inventory/systems)
@@ -49,12 +62,14 @@ curl http://localhost:9081/inventory/systems
 
 
 
+
 The **system** service shows the system properties of the running JVM and can be found at  [http://localhost:9080/system/properties](http://localhost:9080/system/properties)
 
 ```
 curl http://localhost:9080/system/properties
 ```
 {: codeblock}
+
 
 
 
@@ -295,6 +310,7 @@ container logs for any potential problems. Run the **docker stats system** and *
 find the cause of the issues, remove the faulty containers with the **docker rm system** and **docker rm inventory** commands. Rebuild
 your images, and start the containers again.
 
+
 To access the application, point your browser to the [http://localhost:9081/inventory/systems](http://localhost:9081/inventory/systems) URL 
 
 ```
@@ -324,6 +340,7 @@ In this case, the IP address for the **system** service is **172.17.0.2**. Take 
 
 Point your browser to **\http://localhost:9081/inventory/systems/pass:c[[system-ip-address]]** by replacing **[system-ip-address]** with the IP address you obtained earlier.
 You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
+
 properties are automatically stored in the inventory Go back to [http://localhost:9081/inventory/systems](http://localhost:9081/inventory/systems) and
 
 ```
