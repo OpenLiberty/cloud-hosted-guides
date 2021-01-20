@@ -96,6 +96,7 @@ cd /home/project
 {: codeblock}
 
 
+
 Point your browser to the [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) URL
 
 ```
