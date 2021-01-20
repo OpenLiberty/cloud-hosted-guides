@@ -9,7 +9,7 @@ Learn how to create a REST service with JAX-RS, JSON-B, and Open Liberty.
 ## What you'll learn
 
 You will learn how to build and test a simple REST service with JAX-RS and JSON-B, which will expose
-the JVM's system properties. The REST service will respond to **GET** requests made to the **\http://localhost:9080/LibertyProject/System/properties** URL.
+the JVM's system properties. The REST service will respond to **GET** requests made to the **http://localhost:9080/LibertyProject/System/properties** URL.
 
 The service responds to a **GET** request with a JSON representation of the system properties, where
 each property is a field in a JSON object like this:
@@ -85,9 +85,10 @@ Navigate to the **/home/project** directory:
 cd /home/project
 ```
 {: codeblock}
+
 Check out the service at the
 
-[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL 
+[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
@@ -95,6 +96,7 @@ curl http://localhost:9080/LibertyProject/System/properties
 {: codeblock}
 
 
+ 
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -274,7 +276,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 Check out the service that you created at the
 
-[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL 
+[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
@@ -282,13 +284,14 @@ curl http://localhost:9080/LibertyProject/System/properties
 {: codeblock}
 
 
+ 
 
 
 # Testing the service
 
 You can test this service manually by starting a server and pointing a web browser at the
 
-[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL However, automated tests are a 
+[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
@@ -296,6 +299,7 @@ curl http://localhost:9080/LibertyProject/System/properties
 {: codeblock}
 
 
+ However, automated tests are a 
 much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS 
 Client API provide a simple environment to test the application.
 
