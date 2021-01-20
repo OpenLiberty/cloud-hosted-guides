@@ -92,6 +92,7 @@ cd /home/project
 {: codeblock}
 
 
+
 Point your browser to the 
 ```
 curl http://localhost:9080/inventory/systems/localhost
@@ -378,6 +379,7 @@ calling the **system** service.
 
 
 To see the application metrics, go to the [https://localhost:9443/metrics/application](https://localhost:9443/metrics/application) URL
+
 ```
 curl https://localhost:9443/metrics/application
 ```
