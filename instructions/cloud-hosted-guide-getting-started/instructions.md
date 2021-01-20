@@ -113,6 +113,7 @@ cd /home/project
 {: codeblock}
 
 
+
 To access the **system** microservice, see the 
 ```
 curl http://localhost:9080/system/properties
