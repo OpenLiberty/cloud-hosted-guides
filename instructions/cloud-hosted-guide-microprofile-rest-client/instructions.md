@@ -84,7 +84,9 @@ cd /home/project
 {: codeblock}
 
 
+
 * The [http://localhost:9080/system/properties](http://localhost:9080/system/properties) microservice simulates the remote **system** service that retrieves the system property information for a specific host
+
 ```
 curl http://localhost:9080/system/properties
 ```
@@ -102,7 +104,7 @@ curl http://localhost:9080/inventory/systems/localhost
 
 
 
-* The \http://localhost:9080/inventory/systems/{your_hostname} microservice is the **inventory**' service that invokes the http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering '**hostname** from your terminal. Visit the URL by replacing **' service that invokes the http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering '** with your FQDN.
+* The http://localhost:9080/inventory/systems/{your_hostname} microservice is the **inventory**' service that invokes the http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering '**hostname** from your terminal. Visit the URL by replacing **' service that invokes the http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering '** with your FQDN.
 You will see the same system property information, but the process of getting the information is different.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
@@ -300,7 +302,7 @@ systemClient/mp-rest/uri=http://localhost:9080/system
 
 
 
-The **mp-rest/uri** base URL config property is configured to the default **\http://localhost:9080/system** URL.
+The **mp-rest/uri** base URL config property is configured to the default **http://localhost:9080/system** URL.
 
 This configuration is automatically picked up by the MicroProfile Config API.
 
@@ -467,6 +469,7 @@ When the server is running, select either approach to fetch your system properti
 
 
 - Visit the [http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) URL
+
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
@@ -474,7 +477,7 @@ curl http://localhost:9080/inventory/systems/localhost
 
 
 
- Get your FQDN first. Then, visit the \http://localhost:9080/inventory/systems/{your_hostname} URL by replacing **'{your_hostname}'** with your FQDN, which retrieves your system properties by invoking the \http://{your_hostname}:9080/system/properties service.
+ Get your FQDN first. Then, visit the http://localhost:9080/inventory/systems/{your_hostname} URL by replacing **'{your_hostname}'** with your FQDN, which retrieves your system properties by invoking the http://{your_hostname}:9080/system/properties service.
 
 
 
@@ -581,7 +584,7 @@ public class RestClientIT {
 
 Each test case tests one of the methods for instantiating a RESTful client.
 
-The **testDefaultLocalhost()** test fetches and compares system properties from the \http://localhost:9080/inventory/systems/localhost URL.
+The **testDefaultLocalhost()** test fetches and compares system properties from the http://localhost:9080/inventory/systems/localhost URL.
 
 The **testRestClientBuilder()** test gets your IP address. Then, use your IP address as the host name to fetch your system properties and compare them.
 
