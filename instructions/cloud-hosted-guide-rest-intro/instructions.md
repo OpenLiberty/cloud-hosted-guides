@@ -88,12 +88,14 @@ cd /home/project
 
 Check out the service at the
 
-[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL
+http://localhost:9080/LibertyProject/System/properties[^] URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
 ```
-{: codeblock}
+: codeblock
 
 
  
@@ -145,6 +147,7 @@ Replace the **SystemApplication** class.
 
 
 ```
+/*******************************************************************************
 package io.openliberty.guides.rest;
 
 import javax.ws.rs.core.Application;
@@ -181,6 +184,7 @@ Create the **PropertiesResource** class.
 
 
 ```
+/*******************************************************************************
 package io.openliberty.guides.rest;
 
 import java.util.Properties;
@@ -276,12 +280,14 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 Check out the service that you created at the
 
-[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL
+http://localhost:9080/LibertyProject/System/properties[^] URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
 ```
-{: codeblock}
+: codeblock
 
 
  
@@ -291,12 +297,14 @@ curl http://localhost:9080/LibertyProject/System/properties
 
 You can test this service manually by starting a server and pointing a web browser at the
 
-[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL
+http://localhost:9080/LibertyProject/System/properties[^] URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
 ```
-{: codeblock}
+: codeblock
 
 
  However, automated tests are a 
@@ -316,6 +324,7 @@ Create the **EndpointIT** class.
 
 
 ```
+/*******************************************************************************
 package it.io.openliberty.guides.rest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
