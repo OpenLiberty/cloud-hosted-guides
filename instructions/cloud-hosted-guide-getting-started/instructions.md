@@ -114,7 +114,10 @@ cd /home/project
 
 
 
-To access the **system** microservice, see the 
+To access the **system** microservice, see the http://localhost:9080/system/properties
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/system/properties
 ```
@@ -176,7 +179,9 @@ mvn liberty:dev
 Development mode automatically picks up changes that you make to your application and allows you to run tests by pressing the **enter/return** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the **enter/return** key to verify your change.
 
 
-As before, you can see that the application is running by going to the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) URL
+As before, you can see that the application is running by going to the  URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/system/properties
@@ -185,11 +190,15 @@ curl http://localhost:9080/system/properties
 
 
 
+
 Now try updating the server configuration while the server is running in development mode.
 The **system** microservice does not currently include health monitoring to report whether the server and the microservice that it runs are healthy.
 You can add health reports with the MicroProfile Health feature, which adds a **/health** endpoint to your application.
 
-If you try to access this endpoint now at the 
+If you try to access this endpoint now at the http://localhost:9080/health/
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/health/
 ```
@@ -258,12 +267,15 @@ You can see the server being updated in the server log displayed in your command
 ```
 
 
-Try to access the **/health** endpoint again by visiting the [http://localhost:9080/health](http://localhost:9080/health) URL
+Try to access the **/health** endpoint again by visiting the  URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
+
 
 
 You see the following JSON:
@@ -303,6 +315,7 @@ Create the **SystemReadinessCheck** class.
 
 
 ```
+/*******************************************************************************
 package io.openliberty.sample.system;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -353,6 +366,7 @@ Create the **SystemLivenessCheck** class.
 
 
 ```
+/*******************************************************************************
 package io.openliberty.sample.system;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -402,12 +416,15 @@ The following messages display in your first command-line session:
 ```
 
 
-Access the **/health** endpoint again by going to the [http://localhost:9080/health](http://localhost:9080/health) URL
+Access the **/health** endpoint again by going to the  URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
+
 
 
 This time you see the overall status of your server and the aggregated data of the liveness and readiness checks for the **system** microservice:
@@ -434,7 +451,9 @@ This time you see the overall status of your server and the aggregated data of t
 ```
 
 
-You can also access the **/health/ready** endpoint by going to the [http://localhost:9080/health/ready](http://localhost:9080/health/ready) URL to view the data from the readiness health check
+You can also access the **/health/ready** endpoint by going to the  URL to view the data from the readiness health check
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/health/ready
@@ -443,12 +462,16 @@ curl http://localhost:9080/health/ready
 
 
 
-Similarly, access the **/health/live** endpoint by going to the [http://localhost:9080/health/live](http://localhost:9080/health/live) URL to view the data from the liveness health check
+
+Similarly, access the **/health/live** endpoint by going to the  URL to view the data from the liveness health check
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/health/live
 ```
 {: codeblock}
+
 
 
 
@@ -613,12 +636,15 @@ CONTAINER ID    IMAGE                         CREATED          STATUS           
 ```
 
 
-To access the application, go to the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) URL
+To access the application, go to the  URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/system/properties
 ```
 {: codeblock}
+
 
 
 
@@ -678,7 +704,10 @@ java -jar guide-getting-started.jar
 
 
 
-When the server starts, go to the 
+When the server starts, go to the http://localhost:9080/system/properties
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/system/properties
 ```
