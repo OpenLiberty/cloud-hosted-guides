@@ -78,6 +78,10 @@ cd /home/project
 
 
 
+* http://localhost:9080/system/properties
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/system/properties
 ```
@@ -87,6 +91,9 @@ curl http://localhost:9080/system/properties
  retrieves the information for a specific host
 
 
+* http://localhost:9080/inventory/systems
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/inventory/systems
@@ -99,6 +106,9 @@ curl http://localhost:9080/inventory/systems
 In addition, you can access a third microservice, which retrieves and aggregates all of the configuration properties and sources that have been added throughout this guide. This is available at:
 
 
+* http://localhost:9080/config
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/config
@@ -260,6 +270,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import org.eclipse.microprofile.config.spi.ConfigSource;
 
+/**
 public class CustomConfigSource implements ConfigSource {
 
   String fileLocation = System.getProperty("user.dir").split("target")[0]
@@ -667,6 +678,9 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 While the server is running, the following two microservices should be available to access:
 
 
+* http://localhost:9080/system/properties
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/system/properties
@@ -677,6 +691,9 @@ curl http://localhost:9080/system/properties
 
 
 
+* http://localhost:9080/inventory/systems
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/inventory/systems
@@ -690,6 +707,9 @@ curl http://localhost:9080/inventory/systems
 You can find the service that retrieves configuration information that is specific to this guide at the following location:
 
 
+* http://localhost:9080/config
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/config
@@ -707,6 +727,9 @@ The **'config_ordinal'** value of the custom configuration source is set to **15
 Play with this application by changing configuration values for each property in the **resources/CustomConfigSource.json** file.
 
 Your changes are added dynamically, and you do not need to restart the server
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/config
 ```
@@ -715,12 +738,15 @@ curl http://localhost:9080/config
 
 
 
-For example, change **'io_openliberty_guides_inventory_inMaintenance'** from **false** to **true**, then try to access [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) again
+For example, change **'io_openliberty_guides_inventory_inMaintenance'** from **false** to **true**, then try to access http://localhost:9080/inventory/systems again
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
+
 
 
 The following message displays: **ERROR: Service is currently in maintenance**.
