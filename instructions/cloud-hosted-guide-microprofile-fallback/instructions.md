@@ -124,7 +124,7 @@ Update the **CustomConfigSource** configuration file.
 
 
 
-Change the **'io_openliberty_guides_system_inMaintenance'** property from **false** to **true** and save the file.
+Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
 
 You do not need
 to restart the server. Next, return to your browser and point back to the
@@ -160,7 +160,7 @@ Update the **CustomConfigSource** configuration file.
 
 
 
-Change the **'io_openliberty_guides_system_inMaintenance'** property from **true** to **false** to set this
+Change the **`io_openliberty_guides_system_inMaintenance`** property from **true** to **false** to set this
 condition back to its original value.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
@@ -213,16 +213,16 @@ The following two steps set up the dynamic configuration on the **system** servi
 You can move on to the next section, which adds the fallback mechanism on the **inventory** service.
 
 First, the **src/main/java/io/openliberty/guides/system/SystemResource.java** file has
-the **isInMaintenance()** condition, which determines that the system properties are returned only if you set the **'io_openliberty_guides_system_inMaintenance'** configuration property
+the **isInMaintenance()** condition, which determines that the system properties are returned only if you set the **`io_openliberty_guides_system_inMaintenance`** configuration property
 to **false** in the **CustomConfigSource** file.
-Otherwise, the service returns a **'Status.SERVICE_UNAVAILABLE'** message, which makes it unavailable.
+Otherwise, the service returns a **`Status.SERVICE_UNAVAILABLE`** message, which makes it unavailable.
 
 Next, the **src/main/java/io/openliberty/guides/inventory/client/SystemClient.java** file
 makes a request to the **system** service through the MicroProfile Rest Client API.
 If you want to learn more about MicroProfile Rest Client,
 you can follow the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html) guide.
 The **system** service as described in the **SystemResource.java** file
-may return a **'Status.SERVICE_UNAVAILABLE'** message, which is a 503 status code.
+may return a **`Status.SERVICE_UNAVAILABLE`** message, which is a 503 status code.
 This code indicates that the server being called
 is unable to handle the request because of a temporary overload or scheduled maintenance, which would
 likely be alleviated after some delay. To simulate that the system is unavailable, an **IOException** is thrown.
@@ -412,7 +412,7 @@ application:ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_ca
 ```
 
 You can test the fault tolerance mechanism of your microservices by dynamically changing
-the **'io_openliberty_guides_system_inMaintenance'** property value to **true** in the
+the **`io_openliberty_guides_system_inMaintenance`** property value to **true** in the
 **resources/CustomConfigSource.json** file, which turns the **system** service in maintenance.
 
 Update the configuration file.
@@ -430,7 +430,7 @@ Update the configuration file.
 {: codeblock}
 
 
-Change the **'io_openliberty_guides_system_inMaintenance'** property from **false** to **true** and save the file.
+Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
 
 
 
@@ -488,9 +488,9 @@ application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations
 application:ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total 1
 ```
 
-From the output, the **'ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total'**
+From the output, the **`ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total`**
 data indicates that the **get()** was called twice including the previous call before turning the **system** service in maintenance.
-The **'ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total'** data
+The **`ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total`** data
 indicates that the **fallbackForGet()** method was called once.
 
 Update the configuration file.
@@ -508,7 +508,7 @@ Update the configuration file.
 {: codeblock}
 
 
-After you finish, change the **'io_openliberty_guides_system_inMaintenance'**
+After you finish, change the **`io_openliberty_guides_system_inMaintenance`**
 property value back to **false** in the **resources/CustomConfigSource.json** file.
 
 
