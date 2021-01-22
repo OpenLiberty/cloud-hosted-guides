@@ -15,7 +15,7 @@ The application that you will be working with is an **inventory** service, which
 Whenever a request is made to retrieve the system properties of a particular host, the **inventory** service will create a client to invoke the **system**
 service on that host. The **system** service simulates a remote service in the application.
 
-You will instantiate the client and use it in the **inventory** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/ref/general/#contexts_dependency_injection.html) with the help of MicroProfile Config or the [Context and Dependency Injection (CDI)](https://openliberty.io/docs/ref/general/#contexts_dependency_injection.html) method.
+You will instantiate the client and use it in the **inventory** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/ref/general/#contexts_dependency_injection.html) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method.
 In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
 
  - When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with CDI method.
@@ -85,7 +85,7 @@ cd /home/project
 
 
 
-* The http://localhost:9080/system/properties microservice simulates the remote **system** service that retrieves the system property information for a specific host
+The http://localhost:9080/system/properties microservice simulates the remote system service that retrieves the system property information for a specific host
 
 _(or run the following curl command)_
 
@@ -97,7 +97,7 @@ curl http://localhost:9080/system/properties
 
 
 
-* The http://localhost:9080/inventory/systems/localhost microservice is the **inventory** service that invokes the http://localhost:9080/system/properties microservice to retrieves the system property information
+The http://localhost:9080/inventory/systems/localhost microservice is the inventory service that invokes the http://localhost:9080/system/properties microservice to retrieves the system property information
 
 _(or run the following curl command)_
 
@@ -109,7 +109,7 @@ curl http://localhost:9080/inventory/systems/localhost
 
 
 
-* The http://localhost:9080/inventory/systems/{your_hostname} microservice is the **inventory**' service that invokes the http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering '**hostname** from your terminal. Visit the URL by replacing **' service that invokes the http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering '** with your FQDN.
+* The http://localhost:9080/inventory/systems/{your_hostname} microservice is the **inventory** service that invokes the http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering **hostname** from your terminal. Visit the URL by replacing **{your_hostname}** with your FQDN.
 You will see the same system property information, but the process of getting the information is different.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
@@ -159,9 +159,9 @@ The template interface describes the remote service that you want to access. The
 
 Create the **SystemClient** class.
 
-
 > [File -> New File]  
 > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+
 
 
 
@@ -200,7 +200,7 @@ This allows the user to explicitly close the client instance by invoking the **c
 
 When the **getProperties()** method is invoked, the **SystemClient** instance sends a GET request to the **<baseUrl>/properties** endpoint, where **<baseUrl>** is the default base URL of the **system** service. You will see how to configure the base URL in the next section.
 
-The **@Produces** annotation specifies the media (MIME) type of the expected response. The default value is **'MediaType.APPLICATION_JSON'**.
+The **@Produces** annotation specifies the media (MIME) type of the expected response. The default value is **`MediaType.APPLICATION_JSON`**.
 
 The **@RegisterProvider** annotation tells the framework to register the provider classes to be used when the framework invokes the interface. You can add as many providers as necessary.
 In the **SystemClient** interface, add a response exception mapper as a provider to map the **404** response code with the **UnknownUriException** exception.
@@ -217,9 +217,9 @@ Implement the actual exception class and the mapper class to see how this mechan
 
 Create the **UnknownUriException** class.
 
-
 > [File -> New File]  
 > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
+
 
 
 
@@ -247,9 +247,9 @@ Now, link the **UnknownUriException** class with the corresponding response code
 
 Create the **UnknownUriExceptionMapper** class.
 
-
 > [File -> New File]  
 > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+
 
 
 
@@ -294,9 +294,9 @@ Configure the default base URL with the MicroProfile Config feature. This featur
 
 Create the configuration file.
 
-
 > [File -> New File]  
 > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
+
 
 
 
@@ -328,9 +328,9 @@ Inject the **SystemClient** interface into the **InventoryManager** class, which
 
 Replace the **InventoryManager** class.
 
-
 > [File -> Open...]  
 > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+
 
 
 
@@ -473,7 +473,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 When the server is running, select either approach to fetch your system properties:
 
 
-- Visit the http://localhost:9080/inventory/systems/localhost URL
+Visit the http://localhost:9080/inventory/systems/localhost URL
 
 _(or run the following curl command)_
 
@@ -484,7 +484,7 @@ curl http://localhost:9080/inventory/systems/localhost
 
 
 
- Get your FQDN first. Then, visit the http://localhost:9080/inventory/systems/{your_hostname} URL by replacing **'{your_hostname}'** with your FQDN, which retrieves your system properties by invoking the http://{your_hostname}:9080/system/properties service.
+ Get your FQDN first. Then, visit the http://localhost:9080/inventory/systems/{your_hostname} URL by replacing **`{your_hostname}`** with your FQDN, which retrieves your system properties by invoking the http://{your_hostname}:9080/system/properties service.
 
 
 
@@ -492,9 +492,9 @@ curl http://localhost:9080/inventory/systems/localhost
 
 Create the **RestClientIT** class.
 
-
 > [File -> New File]  
 > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
+
 
 
 
@@ -637,7 +637,7 @@ You just invoked a remote service by using a template interface with MicroProfil
 
 
 MicroProfile Rest Client also provides a uniform way to configure SSL for the client.
-You can learn more in the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl) blog and the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl).
+You can learn more in the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl) blog and the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases).
 
 Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
 
