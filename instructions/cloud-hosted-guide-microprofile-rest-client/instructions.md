@@ -85,7 +85,9 @@ cd /home/project
 
 
 
-* The [http://localhost:9080/system/properties](http://localhost:9080/system/properties) microservice simulates the remote **system** service that retrieves the system property information for a specific host
+* The http://localhost:9080/system/properties microservice simulates the remote **system** service that retrieves the system property information for a specific host
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/system/properties
@@ -95,12 +97,15 @@ curl http://localhost:9080/system/properties
 
 
 
-* The [http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) microservice is the **inventory** service that invokes the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) microservice to retrieves the system property information
+* The http://localhost:9080/inventory/systems/localhost microservice is the **inventory** service that invokes the http://localhost:9080/system/properties microservice to retrieves the system property information
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
+
 
 
 
@@ -468,7 +473,9 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 When the server is running, select either approach to fetch your system properties:
 
 
-- Visit the [http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) URL
+- Visit the http://localhost:9080/inventory/systems/localhost URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
