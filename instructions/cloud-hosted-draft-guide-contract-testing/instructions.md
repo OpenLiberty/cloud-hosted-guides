@@ -1,34 +1,33 @@
 
-# Testing microservices with Consumer Driven Contracts
+# Testing microservices with consumer-driven contracts
 
 
-Learn how to test Java microservices with consumer driven contracts in Open Liberty.
+Learn how to test Java microservices with consumer-driven contracts in Open Liberty.
 
 ## What you'll learn
 
-With microservices-based architecture, there is a need for robust testing to ensure that microservices that depend on one another are able to communicate effectively.
-Typically, to prevent multiple points of failures at different integration points, a combination of unit, integration, and end-to-end tests are used.
-While unit tests are fast, they are less trustworthy as they run in isolation and usually rely on mock data.
+With a microservices-based architecture, you need robust testing to ensure that microservices that depend on one another are able to communicate effectively.
+Typically, to prevent multiple points of failure at different integration points, a combination of unit, integration, and end-to-end tests are used.
+While unit tests are fast, they are less trustworthy because they run in isolation and usually rely on mock data.
 
-Integration tests address this issue by testing against real running services. However, they tend to be slow as the tests depend on other microservices and are less reliable as they are prone to external changes.
+Integration tests address this issue by testing against real running services. However, they tend to be slow as the tests depend on other microservices and are less reliable because they are prone to external changes.
 
-Usually, end-to-end tests tend to be more trustworthy as they verify functionality from the perspective of a user. A GUI component
-is required to perform end-to-end tests that rely on third-party software such as Selenium that requires heavy compute time and resources.
+Usually, end-to-end tests are more trustworthy because they verify functionality from the perspective of a user. However, a graphical user interface (GUI) component is required to perform end-to-end tests, and GUI components rely on third-party software, such as Selenium, which requires heavy computation time and resources.
 
-*Contract testing*
+*What is contract testing?*
 
-Contract testing bridges the gap among the shortcomings of those testing methodologies. Contract testing is a technique for testing an integration point by isolating each microservice and checking if the
-HTTP requests and responses it transmits conform to a shared understanding that is documented in a contract.
-It ensures that microservices can communicate with each other.
+Contract testing bridges the gaps among the shortcomings of these different testing methodologies. Contract testing is a technique for testing an integration point by isolating each microservice and checking whether the
+HTTP requests and responses that the microservice transmits conform to a shared understanding that is documented in a contract.
+This way, contract testing ensures that microservices can communicate with each other.
 
-[Pact](https://docs.pact.io/) is an open source contract testing tool for testing HTTP requests, responses and, message integrations by using contract tests.
+[Pact](https://docs.pact.io/) is an open source contract testing tool for testing HTTP requests, responses, and message integrations by using contract tests.
 
-The [pact broker](https://docs.pact.io/pact_broker/docker_images) is an application for sharing pact contracts and verification results, and is an important piece for integrating pact into CI/CD pipelines.
+The [Pact Broker](https://docs.pact.io/pact_broker/docker_images) is an application for sharing Pact contracts and verification results. The Pact Broker is also an important piece for integrating Pact into continuous integration (CI) and continuous delivery (CD) pipelines.
 
 The two microservices you will interact with are called **system** and **inventory**. The **system** microservice returns the JVM
-system properties of its host. The **inventory** microservice retrieves specific properties from the **system** microservice. You will
-learn how to use the [Pact](https://docs.pact.io/) framework to write contract tests for the **inventory** microservice to be verified by
-the **system** microservice.
+system properties of its host. The **inventory** microservice retrieves specific properties from the **system** microservice.
+
+You will learn how to use the Pact framework to write contract tests for the **inventory** microservice that will then be verified by the **system** microservice.
 
 ```
 docker-compose -f "pact-broker/docker-compose.yml" up -d --build
@@ -37,29 +36,57 @@ docker-compose -f "pact-broker/docker-compose.yml" up -d --build
 
 
 
-When the pact broker application is running, you will see:
+When the Pact Broker is running, you'll see the following output:
 ```
 Creating pact-broker_postgres_1 ... done
 Creating pact-broker_pact-broker_1 ... done
 ```
 
-Go to [http://localhost:9292/](http://localhost:9292/) to confirm that you can access the pact broker's UI
+
+Open a command-line session:
+
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
+
+
+Go to the http://localhost:9292/
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9292/
 ```
 {: codeblock}
 
 
+ URL to confirm that you can access the user interface (UI) of the Pact Broker, as shown in the following image:
 
 
+{empty} +
 
-You can refer to the official [Pact Broker](https://docs.pact.io/pact_broker/docker_images/pactfoundation)
-documentation for more information about the components of the docker compose file.
 
-# Implementing pact test in the inventory service
+Open a command-line session:
 
-You can find the starting Java projects in the **start** directory. It is made up of the **system** and **inventory** microservices.
-Each microservice lives in its own corresponding directory; **system** and **inventory**.
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
+
+You can refer to the [official Pact Broker documentation](https://docs.pact.io/pact_broker/docker_images/pactfoundation) for more information about the components of the Docker Compose file.
+
+# Implementing pact testing in the inventory service
 
 Navigate to the **start/inventory** directory to begin.
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
@@ -83,11 +110,11 @@ or open the project in your editor.
 
 
 
-Create the InventoryPactIT.java file.
-
+Create the InventoryPactIT class file.
 
 > [File -> New File]  
 > draft-guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java
+
 
 
 
@@ -96,6 +123,7 @@ Create the InventoryPactIT.java file.
 package io.openliberty.guides.inventory;
 
 import au.com.dius.pact.consumer.dsl.PactDslJsonArray;
+import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
 import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
 import au.com.dius.pact.consumer.junit.PactProviderRule;
 import au.com.dius.pact.consumer.junit.PactVerification;
@@ -111,103 +139,124 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class InventoryPactIT {
-    @Rule
-    public PactProviderRule mockProvider = new PactProviderRule("System", this);
-    @Pact(consumer = "Inventory")
-    public RequestResponsePact createPactServer(PactDslWithProvider builder) {
-        Map<String, String> headers = new HashMap<String, String>();
-        headers.put("Content-Type", "application/json");
+  @Rule
+  public PactProviderRule mockProvider = new PactProviderRule("System", this);
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactServer(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
 
-        return builder
-                .given("wlp.server.name is defaultServer")
-                .uponReceiving("a request for server name")
-                .path("/system/properties/key/wlp.server.name")
-                .method("GET")
-                .willRespondWith()
-                .headers(headers)
-                .status(200)
-                .body(new PactDslJsonArray().object()
-                        .stringValue("wlp.server.name", "defaultServer"))
-                .toPact();
-    }
-    @Pact(consumer = "Inventory")
-    public RequestResponsePact createPactEdition(PactDslWithProvider builder) {
-        Map<String, String> headers = new HashMap<String, String>();
-        headers.put("Content-Type", "application/json");
+    return builder
+      .given("wlp.server.name is defaultServer")
+      .uponReceiving("a request for server name")
+      .path("/system/properties/key/wlp.server.name")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonArray().object()
+        .stringValue("wlp.server.name", "defaultServer"))
+      .toPact();
+  }
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactEdition(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
 
-        return builder
-                .given("Default directory is true")
-                .uponReceiving("a request to check for the default directory")
-                .path("/system/properties/key/wlp.user.dir.isDefault")
-                .method("GET")
-                .willRespondWith()
-                .headers(headers)
-                .status(200)
-                .body(new PactDslJsonArray().object()
-                        .stringValue("wlp.user.dir.isDefault", "true"))
-                .toPact();
-    }
+    return builder
+      .given("Default directory is true")
+      .uponReceiving("a request to check for the default directory")
+      .path("/system/properties/key/wlp.user.dir.isDefault")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonArray().object()
+        .stringValue("wlp.user.dir.isDefault", "true"))
+      .toPact();
+  }
 
-    @Pact(consumer = "Inventory")
-    public RequestResponsePact createPactVersion(PactDslWithProvider builder) {
-        Map<String, String> headers = new HashMap<String, String>();
-        headers.put("Content-Type", "application/json");
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactVersion(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
 
-        return builder
-                .given("version is 1.1")
-                .uponReceiving("a request for the version")
-                .path("/system/properties/version")
-                .method("GET")
-                .willRespondWith()
-                .headers(headers)
-                .status(200)
-                .body(new PactDslJsonArray().object()
-                        .decimalType("system.properties.version", 1.1))
-                .toPact();
-    }
+    return builder
+      .given("version is 1.1")
+      .uponReceiving("a request for the version")
+      .path("/system/properties/version")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonBody()
+        .decimalType("system.properties.version", 1.1))
+      .toPact();
+  }
 
-    @Test
-    @PactVerification(value = "System", fragment = "createPactServer")
-    public void runServerTest() {
-        String serverName = new Inventory(mockProvider.getUrl()).getServerName();
-        assertEquals("Expected server name does not match",
-                     "[{\"wlp.server.name\":\"defaultServer\"}]", serverName);
-    }
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactInvalid(PactDslWithProvider builder) {
 
-    @Test
-    @PactVerification(value = "System", fragment = "createPactEdition")
-    public void runEditionTest() {
-        String edition = new Inventory(mockProvider.getUrl()).getEdition();
-        assertEquals("Expected edition does not match",
-                     "[{\"wlp.user.dir.isDefault\":\"true\"}]", edition);
-    }
+    return builder
+      .given("invalid property")
+      .uponReceiving("a request with an invalid property")
+      .path("/system/properties/invalidProperty")
+      .method("GET")
+      .willRespondWith()
+      .status(404)
+      .toPact();
+  }
 
-    @Test
-    @PactVerification(value = "System", fragment = "createPactVersion")
-    public void runVersionTest() {
-        String version = new Inventory(mockProvider.getUrl()).getVersion();
-        assertEquals("Expected version does not match",
-                     "[{\"system.properties.version\":1.1}]", version);
-    }
+  @Test
+  @PactVerification(value = "System", fragment = "createPactServer")
+  public void runServerTest() {
+    String serverName = new Inventory(mockProvider.getUrl()).getServerName();
+    assertEquals("Expected server name does not match",
+      "[{\"wlp.server.name\":\"defaultServer\"}]", serverName);
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactEdition")
+  public void runEditionTest() {
+    String edition = new Inventory(mockProvider.getUrl()).getEdition();
+    assertEquals("Expected edition does not match",
+      "[{\"wlp.user.dir.isDefault\":\"true\"}]", edition);
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactVersion")
+  public void runVersionTest() {
+    String version = new Inventory(mockProvider.getUrl()).getVersion();
+    assertEquals("Expected version does not match",
+      "{\"system.properties.version\":1.1}", version);
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactInvalid")
+  public void runInvalidTest() {
+    String invalid = new Inventory(mockProvider.getUrl()).getInvalidProperty();
+    assertEquals("Expected invalid property response does not match",
+      "", invalid);
+  }
 }
 ```
 {: codeblock}
 
 
 The **InventoryPactIT** class contains a **PactProviderRule** mock provider that mimics the HTTP responses from the **system** microservice.
-The **@Pact** annotation takes the name of the microservice as a parameter that makes it easier to differentiate microservices from one another when there are multiple applications.
+The **@Pact** annotation takes the name of the microservice as a parameter, which makes it easier to differentiate microservices from each other when you have multiple applications.
 
-The **createPactServer()** method defines the minimal expected response for a specific endpoint and is also known as an interaction.
+The **createPactServer()** method defines the minimal expected response for a specific endpoint, which is known as an interaction.
 For each interaction, the expected request and the response are registered with the mock service by using the **@PactVerification** annotation.
 
-The test sends a real request by the **getUrl()** method of the mock provider. The mock provider compares the actual request with the expected request and confirms if the comparison is successful.
-Finally, the **assertEquals()** confirms that the response is correct.
+The test sends a real request with the **getUrl()** method of the mock provider. The mock provider compares the actual request with the expected request and confirms whether the comparison is successful.
+Finally, the **assertEquals()** method confirms that the response is correct.
 
-Replace the inventory pom file.
-
+Replace the inventory Maven project file.
 
 > [File -> Open...]  
 > draft-guide-contract-testing/start/inventory/pom.xml
+
 
 
 
@@ -317,31 +366,46 @@ Replace the inventory pom file.
 {: codeblock}
 
 
-The pact framework provides a **maven** extension that can be added to the build section of the **pom.xml**. The endpoint URL for the **system** microservice and the **pactFileDirectory** at which the pact file is to be stored is defined in the **serviceProvider** element.
-The **pact-jvm-consumer-junit** dependency provides the base test class for use with JUnit to build the unit tests.
+The Pact framework provides a **maven** extension that can be added to the build section of the **pom.xml** file.
+The **serviceProvider** element defines the endpoint URL for the **system** microservice and the **pactFileDirectory** directory where you want to store the pact file.
+The **pact-jvm-consumer-junit** dependency provides the base test class that you can use with JUnit to build unit tests.
 
-After you create **InventoryPactIT.java** and replace the **pom.xml** file, Open Liberty automatically reloads its configuration.
+After you create the **InventoryPactIT.java** class and replace the **pom.xml** file, Open Liberty automatically reloads its configuration.
 
-A contract between **inventory** and **system** microservice is known as a pact. Each pact is a collection of interactions that are defined in the **InventoryPactIT** class.
+The contract between the **inventory** and **system** microservices is known as a pact. Each pact is a collection of interactions. In this guide, those interactions are defined in the **InventoryPactIT** class.
 
 Press the **enter/return** key to run the tests and generate the pact file.
 
-When completed, you will see a similar output to the following example:
+When completed, you'll see a similar output to the following example:
 ```
 [INFO] -------------------------------------------------------
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
 [INFO] Running io.openliberty.guides.inventory.InventoryPactIT
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.631 s - in io.openliberty.guides.inventory.InventoryPactIT
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.631 s - in io.openliberty.guides.inventory.InventoryPactIT
 [INFO]
 [INFO] Results:
 [INFO]
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When integrating the pact framework in a CI/CD build pipeline, the **mvn failsafe:integration-test** goal can be used instead to generate the pact file.
 
-The generated pact file is named **Inventory-System.json** and is located in **inventory/target/pacts**. It contains the defined interactions in **.json** format:
+
+Open a command-line session:
+
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
+When you integrate the Pact framework in a CI/CD build pipeline, you can use the **mvn failsafe:integration-test** goal to generate the pact file.
+The Maven failsafe plug-in provides a lifecycle phase for running integration tests that run after unit tests. By default, it looks for classes that are suffixed with **IT**, which stands for Integration Test. You can refer to the [Maven failsafe plug-in documentation](https://maven.apache.org/surefire/maven-failsafe-plugin/) for more information.
+
+The generated pact file is named **Inventory-System.json** and is located in the **inventory/target/pacts** directory. The pact file contains the defined interactions in JSON format:
 
 ```
 {
@@ -375,45 +439,53 @@ The generated pact file is named **Inventory-System.json** and is located in **i
 }
 ```
 
-Open a new command-line session and navigate to the **start/inventory** directory. Publish the generated pact file to the pact broker by running the following command:
+Open a new command-line session and navigate to the **start/inventory** directory. Publish the generated pact file to the Pact Broker by running the following command:
 ```
 mvn pact:publish
 ```
 {: codeblock}
 
 
-When completed, you will see a similar output to the following example:
+After the file is published, you'll see a similar output to the following example:
 ```
 --- maven:4.1.0:publish (default-cli) @ inventory ---
 Publishing 'Inventory-System.json' with tags 'open-liberty-pact' ... OK
 ```
 
-# Verifying the pact in pact broker
+# Verifying the pact in the Pact Broker
 
-Refresh the pact broker webpage at [http://localhost:9292/](http://localhost:9292/) to verify that there is a new entry
+
+Refresh the Pact Broker webpage at the http://localhost:9292/ URL to verify that a new entry exists
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9292/
 ```
 {: codeblock}
 
 
- Note there is no
-timestamp in the last verified column as the pact is yet to be verified by the **system** microservice.
+ There isn't yet a
+timestamp in the last verified column because the pact hasn't been verified by the **system** microservice.
 
 
-You can see detailed insights about each interaction by navigating to the [http://localhost:9292/pacts/provider/System/consumer/Inventory/latest](http://localhost:9292/pacts/provider/System/consumer/Inventory/latest) URL
+{empty} +
+
+
+You can see detailed insights about each interaction by going to the http://localhost:9292/pacts/provider/System/consumer/Inventory/latest
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9292/pacts/provider/System/consumer/Inventory/latest
 ```
 {: codeblock}
 
 
+ URL, as shown in the following image:
 
 
-A snippet of the webpage looks similar to:
-
-
-# Implementing pact test in the system service
+# Implementing pact testing in the system service
 
 
 
@@ -434,11 +506,13 @@ After you see the following message, your application server in dev mode is read
 *    Liberty is running in dev mode.
 ```
 
-Create the SystemBrokerIT.java file.
+{empty} +
 
+Create the SystemBrokerIT class file.
 
 > [File -> New File]  
 > draft-guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java
+
 
 
 
@@ -461,11 +535,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @Provider("System")
 @Consumer("Inventory")
 @PactBroker(
-        host = "localhost",
-        port = "9292",
-        consumerVersionSelectors = {
-                @VersionSelector(tag = "open-liberty-pact")
-        })
+  host = "localhost",
+  port = "9292",
+  consumerVersionSelectors = {
+    @VersionSelector(tag = "open-liberty-pact")
+  })
 public class SystemBrokerIT {
   @TestTemplate
   @ExtendWith(PactVerificationInvocationContextProvider.class)
@@ -495,24 +569,28 @@ public class SystemBrokerIT {
   @State("version is 1.1")
   public void validVersion() {
   }
+
+  @State("invalid property")
+  public void invalidProperty() {
+  }
 }
 ```
 {: codeblock}
 
 
-The connection information for the pact broker is provided with the **@PactBroker** annotation. The dependency also provides a JUnit5 Invocation Context Provider by the **pactVerificationTestTemplate** method to generate a test for each of the interactions.
+The connection information for the Pact Broker is provided with the **@PactBroker** annotation. The dependency also provides a JUnit5 Invocation Context Provider with the **pactVerificationTestTemplate()** method to generate a test for each of the interactions.
 
-The **pact.verifier.publishResults** property is set to true so that the results are sent to the pact broker after the tests are completed.
+The **pact.verifier.publishResults** property is set to **true** so that the results are sent to the Pact Broker after the tests are completed.
 
 The test target is defined in the **PactVerificationContext** context to point to the running endpoint of the **system** microservice.
 
-The **@State** annotation must match the **given()** parameter that was provided in the **inventory** test class so that pact can identify which test case to run against which endpoint.
+The **@State** annotation must match the **given()** parameter that was provided in the **inventory** test class so that Pact can identify which test case to run against which endpoint.
 
-Replace the system pom file.
-
+Replace the system Maven project file.
 
 > [File -> Open...]  
 > draft-guide-contract-testing/start/system/pom.xml
+
 
 
 
@@ -602,16 +680,104 @@ Replace the system pom file.
 {: codeblock}
 
 
-The **Junit5** pact provider dependency is used for the **system** microservice to connect to the pact broker to verify the pact file.
-Ideally, in a CI/CD pipeline, the **pact.provider.version** element is dynamically set to the build number so that it is easier to identify at which point a breaking change is introduced.
+The **system** microservice uses the **junit5** pact provider dependency to connect to the Pact Broker and verify the pact file.
+Ideally, in a CI/CD build pipeline, the **pact.provider.version** element is dynamically set to the build number so that it's easier to identify at which point a breaking change is introduced.
 
-After you create the **SystemBrokerIT.java** and replace the **pom.xml** file, Open Liberty automatically reloads its configuration.
+After you create the **SystemBrokerIT.java** class and replace the **pom.xml** file, Open Liberty automatically reloads its configuration.
 
 # Verifying the contract
 
-In the command-line session where the **system** microservice was started, press the **enter/return** key to run the tests to verify the pact file. When integrating the pact framework in a CI/CD build pipeline, the **mvn failsafe:integration-test** goal can be used instead to verify the pact file from the pact broker.
+In the command-line session where you started the **system** microservice, press the **enter/return** key to run the tests to verify the pact file. When you integrate the Pact framework into a CI/CD build pipeline, the **mvn failsafe:integration-test** goal can be used to verify the pact file from the Pact Broker.
 
-If successful, you will see a similar output to the following example:
+The tests fail with the following errors:
+```
+[ERROR] Failures:
+[ERROR]   SystemBrokerIT.pactVerificationTestTemplate:44
+Failures:
+
+1) Verifying a pact between Inventory and System - a request for the version
+
+    1.1) BodyMismatch: $.0.system.properties.version BodyMismatch: $.0.system.properties.version Expected "1.1" (String) to be a decimal number
+
+
+[INFO]
+[ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0
+```
+
+The test from the **system** microservice fails because the **inventory** microservice was expecting a decimal, **1.1**, for the value of the **system.properties.version** property, but it received a string, **"1.1"**.
+
+Correct the value of the **system.properties.version** property to a decimal.
+Replace the SystemResource class file.
+
+> [File -> Open...]  
+> draft-guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
+
+
+
+
+```
+package io.openliberty.guides.system;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Response;
+
+import javax.enterprise.context.RequestScoped;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.metrics.annotation.Counted;
+import org.eclipse.microprofile.metrics.annotation.Timed;
+
+@RequestScoped
+@Path("/properties")
+public class SystemResource {
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Timed(name = "getPropertiesTime",
+    description = "Time needed to get the JVM system properties")
+  @Counted(absolute = true,
+    description = "Number of times the JVM system properties are requested")
+
+  public Response getProperties() {
+    return Response.ok(System.getProperties()).build();
+  }
+
+  @GET
+  @Path("/key/{key}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getPropertiesByKey(@PathParam("key") String key) {
+    try {
+      JsonArray response = Json.createArrayBuilder()
+        .add(Json.createObjectBuilder()
+          .add(key, System.getProperties().get(key).toString()))
+        .build();
+      return Response.ok(response, MediaType.APPLICATION_JSON).build();
+    } catch (java.lang.NullPointerException exception) {
+        return Response.status(Response.Status.NOT_FOUND).build();
+    }
+  }
+
+  @GET
+  @Path("/version")
+  @Produces(MediaType.APPLICATION_JSON)
+  public JsonObject getVersion() {
+    JsonObject response = Json.createObjectBuilder().add("system.properties.version", 1.1)
+      .build();
+    return response;
+  }
+}
+```
+{: codeblock}
+
+
+
+If the tests are successful, you'll see a similar output to the following example:
 ```
 ...
 Verifying a pact between pact between Inventory (1.0-SNAPSHOT) and System
@@ -626,28 +792,34 @@ Verifying a pact between pact between Inventory (1.0-SNAPSHOT) and System
       has status code 200 (OK)
       has a matching body (OK)
 [main] INFO au.com.dius.pact.provider.DefaultVerificationReporter - Published verification result of 'au.com.dius.pact.core.pactbroker.TestResult$Ok@4d84dfe7' for consumer 'Consumer(name=Inventory)'
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.835 s - in it.io.openliberty.guides.system.SystemBrokerIT
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.835 s - in it.io.openliberty.guides.system.SystemBrokerIT
 ...
 ```
-When completed, refresh the pact broker webpage at [http://localhost:9292/](http://localhost:9292/) to confirm that there is now a timestamp in the last verified column
+
+After the tests are complete, refresh the Pact Broker webpage at the http://localhost:9292/
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9292/
 ```
 {: codeblock}
 
 
+ URL to confirm that there's now a timestamp in the last verified column:
 
 
+{empty} +
 
-The pact file that is created by the **inventory** microservice was successfully verified by the **system** microservice through the pact broker application.
+The pact file that's created by the **inventory** microservice was successfully verified by the **system** microservice through the Pact Broker.
 This ensures that responses from the **system** microservice meet the expectations of the **inventory** microservice.
 
 # Tearing down the environment
 
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line sessions
-where you ran the servers for **system** and **inventory**, or by typing **q** and then pressing the **enter/return** key.
+where you ran the servers for the **system** and **inventory** microservices, or by typing **q** and then pressing the **enter/return** key.
 
-Navigate back to the **/guide-contract-testing** directory and run the following commands to remove the pact broker application.
+Navigate back to the **/guide-contract-testing** directory and run the following commands to remove the Pact Broker:
 ```
 docker-compose -f "pact-broker/docker-compose.yml" down
 docker rmi postgres:12
@@ -661,14 +833,14 @@ docker volume rm pact-broker_postgres-volume
 
 ## Nice Work!
 
-You implemented contract testing by using pact in microservices and verified the contract by using the pact broker.
+You implemented contract testing in microservices by using Pact and verified the contract with the Pact Broker.
 
 
 # Related Links
 
-Learn more about the pact framework.
+Learn more about the Pact framework.
 
-[View the Pact website](https://pact.io/)
+[Go to the Pact website.](https://pact.io/)
 
 
 
