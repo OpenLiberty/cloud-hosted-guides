@@ -40,7 +40,7 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the https://github.com/openliberty/guide-rest-intro.git[Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
 
 ```
 git clone https://github.com/openliberty/guide-rest-intro.git
@@ -88,7 +88,9 @@ cd /home/project
 
 Check out the service at the
 
-[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL
+http://localhost:9080/LibertyProject/System/properties URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
@@ -276,7 +278,9 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 Check out the service that you created at the
 
-[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL
+http://localhost:9080/LibertyProject/System/properties URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
@@ -291,7 +295,9 @@ curl http://localhost:9080/LibertyProject/System/properties
 
 You can test this service manually by starting a server and pointing a web browser at the
 
-[http://localhost:9080/LibertyProject/System/properties](http://localhost:9080/LibertyProject/System/properties) URL
+http://localhost:9080/LibertyProject/System/properties URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
