@@ -93,7 +93,10 @@ cd /home/project
 
 
 
-Point your browser to the 
+Point your browser to the http://localhost:9080/inventory/systems/localhost
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
@@ -126,12 +129,15 @@ Change the **'io_openliberty_guides_system_inMaintenance'** property from **fals
 You do not need
 to restart the server. Next, return to your browser and point back to the
 
-[http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) URL
+http://localhost:9080/inventory/systems/localhost URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
+
 
 
 The fallback mechanism is triggered because the **system** service is now in maintenance.
@@ -355,7 +361,9 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 When the server is running, point your browser to the
 
-[http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) URL
+http://localhost:9080/inventory/systems/localhost URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
@@ -363,9 +371,13 @@ curl http://localhost:9080/inventory/systems/localhost
 {: codeblock}
 
 
+
 You receive the system properties of your local JVM from the **inventory** service. Next, point your
 
-browser to the **system** service URL, which is located at 
+browser to the **system** service URL, which is located at http://localhost:9080/system/properties
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/system/properties
 ```
@@ -378,7 +390,9 @@ Notice that the results from the two URLs are identical because the **inventory*
 calling the **system** service.
 
 
-To see the application metrics, go to the [https://localhost:9443/metrics/application](https://localhost:9443/metrics/application) URL
+To see the application metrics, go to the https://localhost:9443/metrics/application URL
+
+_(or run the following curl command)_
 
 ```
 curl https://localhost:9443/metrics/application
@@ -422,7 +436,10 @@ Change the **'io_openliberty_guides_system_inMaintenance'** property from **fals
 
 After saving the file, go back to your browser and
 
-refresh to the 
+refresh to the http://localhost:9080/inventory/systems/localhost
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
@@ -435,7 +452,9 @@ when the **system** service is not available.
 The cached system properties contain only the OS name and user name key and value pairs.
 
 
-To see that the **system** service is down, point your browser to the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) URL again
+To see that the **system** service is down, point your browser to the http://localhost:9080/system/properties URL again
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/system/properties
@@ -443,15 +462,19 @@ curl http://localhost:9080/system/properties
 {: codeblock}
 
 
+
 You see that the service displays a 503 HTTP response code.
 
 
-Go to the [https://localhost:9443/metrics/application](https://localhost:9443/metrics/application) URL again
+Go to the https://localhost:9443/metrics/application URL again
+
+_(or run the following curl command)_
 
 ```
 curl https://localhost:9443/metrics/application
 ```
 {: codeblock}
+
 
 
 See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
@@ -535,6 +558,7 @@ public class FaultToleranceIT {
         client.close();
         response.close();
     }
+    /**
      * testFallbackForGet - test for checking if the fallback is being called
      * correctly 1. Return system properties for a hostname when inventory
      * service is available. 2. Make System service down and get the system
@@ -569,6 +593,7 @@ public class FaultToleranceIT {
         Thread.sleep(3000);
     }
 
+    /**
      * testFallbackForGet - test for checking if the fallback skip mechanism is working as intended:
      * 1. Access system properties for the wrong hostname (localhot)
      * 2. Verify that the response code is 404
@@ -583,6 +608,7 @@ public class FaultToleranceIT {
                    "Incorrect response body from " + TestUtils.INVENTORY_UNKNOWN_HOST_URL);
     }
 
+    /**
      * Asserts that the given URL's response code matches the given status code.
      */
     private void assertResponse(String url, Response response, int status_code) {
@@ -590,6 +616,7 @@ public class FaultToleranceIT {
                 "Incorrect response code from " + url);
     }
 
+    /**
      * Asserts that the given URL has the correct response code of 200.
      */
     private void assertResponse(String url, Response response) {
