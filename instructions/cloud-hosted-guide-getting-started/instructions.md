@@ -43,7 +43,7 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-getting-started.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the https://github.com/openliberty/guide-getting-started.git[Git repository](https://github.com/openliberty/guide-getting-started.git) and use the projects that are provided inside:
 
 ```
 git clone https://github.com/openliberty/guide-getting-started.git
@@ -89,9 +89,9 @@ starts an Open Liberty server instance in the foreground.
 As part of this phase, an Open Liberty server runtime is downloaded and installed into
 the **target/liberty/wlp** directory, a server instance is created and configured in the
 **target/liberty/wlp/usr/servers/defaultServer** directory, and the application is
-installed into that server via [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
+installed into that server via https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html[loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
 
-For more information about the Liberty Maven plug-in, see its [GitHub repository](https://github.com/WASdev/ci.maven).
+For more information about the Liberty Maven plug-in, see its https://github.com/WASdev/ci.maven[GitHub repository](https://github.com/WASdev/ci.maven).
 
 When the server begins starting up, various messages display in your command-line session. Wait
 for the following message, which indicates that the server startup is complete:
@@ -114,7 +114,10 @@ cd /home/project
 
 
 
-To access the **system** microservice, see the 
+To access the **system** microservice, see the http://localhost:9080/system/properties
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/system/properties
 ```
@@ -176,7 +179,9 @@ mvn liberty:dev
 Development mode automatically picks up changes that you make to your application and allows you to run tests by pressing the **enter/return** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the **enter/return** key to verify your change.
 
 
-As before, you can see that the application is running by going to the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) URL
+As before, you can see that the application is running by going to the http://localhost:9080/system/properties URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/system/properties
@@ -185,11 +190,15 @@ curl http://localhost:9080/system/properties
 
 
 
+
 Now try updating the server configuration while the server is running in development mode.
 The **system** microservice does not currently include health monitoring to report whether the server and the microservice that it runs are healthy.
 You can add health reports with the MicroProfile Health feature, which adds a **/health** endpoint to your application.
 
-If you try to access this endpoint now at the 
+If you try to access this endpoint now at the http://localhost:9080/health/
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/health/
 ```
@@ -258,12 +267,15 @@ You can see the server being updated in the server log displayed in your command
 ```
 
 
-Try to access the **/health** endpoint again by visiting the [http://localhost:9080/health](http://localhost:9080/health) URL
+Try to access the **/health** endpoint again by visiting the http://localhost:9080/health URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
+
 
 
 You see the following JSON:
@@ -402,12 +414,15 @@ The following messages display in your first command-line session:
 ```
 
 
-Access the **/health** endpoint again by going to the [http://localhost:9080/health](http://localhost:9080/health) URL
+Access the **/health** endpoint again by going to the http://localhost:9080/health URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
+
 
 
 This time you see the overall status of your server and the aggregated data of the liveness and readiness checks for the **system** microservice:
@@ -434,7 +449,9 @@ This time you see the overall status of your server and the aggregated data of t
 ```
 
 
-You can also access the **/health/ready** endpoint by going to the [http://localhost:9080/health/ready](http://localhost:9080/health/ready) URL to view the data from the readiness health check
+You can also access the **/health/ready** endpoint by going to the http://localhost:9080/health/ready URL to view the data from the readiness health check
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/health/ready
@@ -443,12 +460,16 @@ curl http://localhost:9080/health/ready
 
 
 
-Similarly, access the **/health/live** endpoint by going to the [http://localhost:9080/health/live](http://localhost:9080/health/live) URL to view the data from the liveness health check
+
+Similarly, access the **/health/live** endpoint by going to the http://localhost:9080/health/live URL to view the data from the liveness health check
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/health/live
 ```
 {: codeblock}
+
 
 
 
@@ -530,7 +551,7 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 # Running the application in a Docker container
 
 To run the application in a container, Docker needs to be installed. For installation
-instructions, see the [Official Docker Docs](https://docs.docker.com/install/).
+instructions, see the https://docs.docker.com/install/[Official Docker Docs](https://docs.docker.com/install/).
 
 Make sure to start your Docker daemon before you proceed.
 
@@ -613,12 +634,15 @@ CONTAINER ID    IMAGE                         CREATED          STATUS           
 ```
 
 
-To access the application, go to the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) URL
+To access the application, go to the http://localhost:9080/system/properties URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/system/properties
 ```
 {: codeblock}
+
 
 
 
@@ -678,7 +702,10 @@ java -jar guide-getting-started.jar
 
 
 
-When the server starts, go to the 
+When the server starts, go to the http://localhost:9080/system/properties
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/system/properties
 ```
