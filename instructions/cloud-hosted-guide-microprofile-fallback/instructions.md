@@ -110,9 +110,8 @@ properties, such as the OS name and user name, are automatically stored in the i
 
 Update the **CustomConfigSource** configuration file.
 
-
 > [File -> Open...]  
-> guide-microprofile-fallback/start/resources/CustomConfigSource.json
+> guide-microprofile-fallback/finish/resources/CustomConfigSource.json
 
 
 
@@ -121,6 +120,7 @@ Update the **CustomConfigSource** configuration file.
 "io_openliberty_guides_system_inMaintenance":false}
 ```
 {: codeblock}
+
 
 
 
@@ -147,9 +147,8 @@ When you are done checking out the application, go to the **CustomConfigSource.j
 
 Update the **CustomConfigSource** configuration file.
 
-
 > [File -> Open...]  
-> guide-microprofile-fallback/start/resources/CustomConfigSource.json
+> guide-microprofile-fallback/finish/resources/CustomConfigSource.json
 
 
 
@@ -158,6 +157,7 @@ Update the **CustomConfigSource** configuration file.
 "io_openliberty_guides_system_inMaintenance":false}
 ```
 {: codeblock}
+
 
 
 Change the **'io_openliberty_guides_system_inMaintenance'** property from **true** to **false** to set this
@@ -247,9 +247,9 @@ Now, set a fallback method to deal with this failure.
 
 Replace the **InventoryManager** class.
 
-
 > [File -> Open...]  
 > guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+
 
 
 
@@ -417,9 +417,9 @@ the **'io_openliberty_guides_system_inMaintenance'** property value to **true** 
 
 Update the configuration file.
 
-
 > [File -> Open...]  
 > guide-microprofile-fallback/start/resources/CustomConfigSource.json
+
 
 
 
@@ -495,9 +495,9 @@ indicates that the **fallbackForGet()** method was called once.
 
 Update the configuration file.
 
-
 > [File -> Open...]  
 > guide-microprofile-fallback/start/resources/CustomConfigSource.json
+
 
 
 
@@ -520,9 +520,9 @@ whenever a code change introduces a defect. JUnit and the JAX-RS Client API prov
 
 Create the **FaultToleranceIT** class.
 
-
 > [File -> New File]  
 > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+
 
 
 
