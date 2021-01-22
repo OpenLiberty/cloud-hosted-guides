@@ -12,7 +12,7 @@ that reduce the impact from failure and ensure continued operation of services.
 
 MP Fault Tolerance provides a simple and flexible solution to build fault-tolerant microservices.
 Fault tolerance leverages different strategies to guide the execution and result of logic.
-As stated in the [MicroProfile website](https://microprofile.io/project/eclipse/microprofile-fault-tolerance),
+As stated in the https://microprofile.io/project/eclipse/microprofile-fault-tolerance[MicroProfile website](https://microprofile.io/project/eclipse/microprofile-fault-tolerance),
 retry policies, bulkheads, and circuit breakers are popular concepts in this area.
 They dictate whether and when executions take place, and fallbacks offer an alternative result
 when an execution does not complete successfully.
@@ -45,7 +45,7 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-fallback.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the https://github.com/openliberty/guide-microprofile-fallback.git[Git repository](https://github.com/openliberty/guide-microprofile-fallback.git) and use the projects that are provided inside:
 
 ```
 git clone https://github.com/openliberty/guide-microprofile-fallback.git
@@ -93,7 +93,10 @@ cd /home/project
 
 
 
-Point your browser to the 
+Point your browser to the http://localhost:9080/inventory/systems/localhost
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
@@ -126,12 +129,15 @@ Change the **'io_openliberty_guides_system_inMaintenance'** property from **fals
 You do not need
 to restart the server. Next, return to your browser and point back to the
 
-[http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) URL
+http://localhost:9080/inventory/systems/localhost URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
+
 
 
 The fallback mechanism is triggered because the **system** service is now in maintenance.
@@ -201,7 +207,7 @@ To easily work through this guide, the two provided microservices are set up to 
 on the same server. To simulate the availability of the services and then to enable fault tolerance,
 dynamic configuration with MicroProfile Configuration is used so that you can easily take one service
 or the other down for maintenance. If you want to learn more about setting up dynamic configuration,
-see [Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
+see https://openliberty.io/guides/microprofile-config.html[Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
 
 The following two steps set up the dynamic configuration on the **system** service and its client.
 You can move on to the next section, which adds the fallback mechanism on the **inventory** service.
@@ -214,7 +220,7 @@ Otherwise, the service returns a **'Status.SERVICE_UNAVAILABLE'** message, which
 Next, the **src/main/java/io/openliberty/guides/inventory/client/SystemClient.java** file
 makes a request to the **system** service through the MicroProfile Rest Client API.
 If you want to learn more about MicroProfile Rest Client,
-you can follow the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html) guide.
+you can follow the https://openliberty.io/guides/microprofile-rest-client.html[Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html) guide.
 The **system** service as described in the **SystemResource.java** file
 may return a **'Status.SERVICE_UNAVAILABLE'** message, which is a 503 status code.
 This code indicates that the server being called
@@ -346,7 +352,7 @@ the **@Fallback** fault tolerance annotation provides metrics that count the fol
 The **mpMetrics** feature requires SSL and the configuration is provided for you. The **quickStartSecurity** and **keyStore** configuration elements provide basic security to secure the
 server. When you go to the **/metrics** endpoint, use the credentials that are defined in the server configuration to log in to view the data for the fault tolerance methods.
 
-You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html).
+You can learn more about MicroProfile Metrics in the https://openliberty.io/guides/microprofile-metrics.html[Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the https://github.com/eclipse/microprofile-fault-tolerance/releases[Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html).
 
 
 # Running the application
@@ -355,7 +361,9 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 When the server is running, point your browser to the
 
-[http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) URL
+http://localhost:9080/inventory/systems/localhost URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
@@ -363,9 +371,13 @@ curl http://localhost:9080/inventory/systems/localhost
 {: codeblock}
 
 
+
 You receive the system properties of your local JVM from the **inventory** service. Next, point your
 
-browser to the **system** service URL, which is located at 
+browser to the **system** service URL, which is located at http://localhost:9080/system/properties
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/system/properties
 ```
@@ -378,7 +390,9 @@ Notice that the results from the two URLs are identical because the **inventory*
 calling the **system** service.
 
 
-To see the application metrics, go to the [https://localhost:9443/metrics/application](https://localhost:9443/metrics/application) URL
+To see the application metrics, go to the https://localhost:9443/metrics/application URL
+
+_(or run the following curl command)_
 
 ```
 curl https://localhost:9443/metrics/application
@@ -422,7 +436,10 @@ Change the **'io_openliberty_guides_system_inMaintenance'** property from **fals
 
 After saving the file, go back to your browser and
 
-refresh to the 
+refresh to the http://localhost:9080/inventory/systems/localhost
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
@@ -435,7 +452,9 @@ when the **system** service is not available.
 The cached system properties contain only the OS name and user name key and value pairs.
 
 
-To see that the **system** service is down, point your browser to the [http://localhost:9080/system/properties](http://localhost:9080/system/properties) URL again
+To see that the **system** service is down, point your browser to the http://localhost:9080/system/properties URL again
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/system/properties
@@ -443,15 +462,19 @@ curl http://localhost:9080/system/properties
 {: codeblock}
 
 
+
 You see that the service displays a 503 HTTP response code.
 
 
-Go to the [https://localhost:9443/metrics/application](https://localhost:9443/metrics/application) URL again
+Go to the https://localhost:9443/metrics/application URL again
+
+_(or run the following curl command)_
 
 ```
 curl https://localhost:9443/metrics/application
 ```
 {: codeblock}
+
 
 
 See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
@@ -535,6 +558,7 @@ public class FaultToleranceIT {
         client.close();
         response.close();
     }
+    /**
      * testFallbackForGet - test for checking if the fallback is being called
      * correctly 1. Return system properties for a hostname when inventory
      * service is available. 2. Make System service down and get the system
@@ -569,6 +593,7 @@ public class FaultToleranceIT {
         Thread.sleep(3000);
     }
 
+    /**
      * testFallbackForGet - test for checking if the fallback skip mechanism is working as intended:
      * 1. Access system properties for the wrong hostname (localhot)
      * 2. Verify that the response code is 404
@@ -583,6 +608,7 @@ public class FaultToleranceIT {
                    "Incorrect response body from " + TestUtils.INVENTORY_UNKNOWN_HOST_URL);
     }
 
+    /**
      * Asserts that the given URL's response code matches the given status code.
      */
     private void assertResponse(String url, Response response, int status_code) {
@@ -590,6 +616,7 @@ public class FaultToleranceIT {
                 "Incorrect response code from " + url);
     }
 
+    /**
      * Asserts that the given URL has the correct response code of 200.
      */
     private void assertResponse(String url, Response response) {
