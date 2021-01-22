@@ -24,7 +24,7 @@ The implementation of the application and its services are provided for you in t
 The **system** service can be found in the **start/src/main/java/io/openliberty/guides/system** directory, 
 and the **inventory** service can be found in the **start/src/main/java/io/openliberty/guides/inventory** directory. 
 If you want to learn more about RESTful web services and how to build them, see
-[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the **system** service.
+https://openliberty.io/guides/rest-intro.html[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the **system** service.
 The **inventory** service is built in a similar way.
 
 ### What is CDI?
@@ -50,7 +50,7 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cdi-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the https://github.com/openliberty/guide-cdi-intro.git[Git repository](https://github.com/openliberty/guide-cdi-intro.git) and use the projects that are provided inside:
 
 ```
 git clone https://github.com/openliberty/guide-cdi-intro.git
@@ -97,7 +97,9 @@ cd /home/project
 
 
 
-Point your browser to the [http://localhost:9080/inventory/systems](http://localhost:9080/inventory/systems) URL
+Point your browser to the http://localhost:9080/inventory/systems URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/inventory/systems
@@ -105,10 +107,13 @@ curl http://localhost:9080/inventory/systems
 {: codeblock}
 
 
+
 This is the starting point of the **inventory** service and it displays the current contents of the inventory. 
 As you might expect, these are empty since nothing is stored in the inventory yet. 
 
-Next, point your browser to the [http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) URL
+Next, point your browser to the http://localhost:9080/inventory/systems/localhost URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
@@ -116,10 +121,14 @@ curl http://localhost:9080/inventory/systems/localhost
 {: codeblock}
 
 
+
 You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
 properties are automatically stored in the inventory. 
 
-Go back to 
+Go back to http://localhost:9080/inventory/systems
+
+_(or run the following curl command)_
+
 ```
 curl http://localhost:9080/inventory/systems
 ```
@@ -318,6 +327,9 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 You can find the **inventory** and **system** services at the following URLs:
 
 
+- http://localhost:9080/inventory/systems
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/inventory/systems
@@ -327,6 +339,9 @@ curl http://localhost:9080/inventory/systems
 
 
 
+- http://localhost:9080/system/properties
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/system/properties
