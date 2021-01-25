@@ -111,7 +111,8 @@ properties, such as the OS name and user name, are automatically stored in the i
 Update the **CustomConfigSource** configuration file.
 
 > [File -> Open...]  
-> guide-microprofile-fallback/finish/resources/CustomConfigSource.json
+> guide-microprofile-fallback/start/resources/CustomConfigSource.json
+
 
 
 
@@ -120,7 +121,6 @@ Update the **CustomConfigSource** configuration file.
 "io_openliberty_guides_system_inMaintenance":false}
 ```
 {: codeblock}
-
 
 
 
@@ -148,7 +148,8 @@ When you are done checking out the application, go to the **CustomConfigSource.j
 Update the **CustomConfigSource** configuration file.
 
 > [File -> Open...]  
-> guide-microprofile-fallback/finish/resources/CustomConfigSource.json
+> guide-microprofile-fallback/start/resources/CustomConfigSource.json
+
 
 
 
@@ -157,7 +158,6 @@ Update the **CustomConfigSource** configuration file.
 "io_openliberty_guides_system_inMaintenance":false}
 ```
 {: codeblock}
-
 
 
 Change the **`io_openliberty_guides_system_inMaintenance`** property from **true** to **false** to set this
@@ -352,7 +352,7 @@ the **@Fallback** fault tolerance annotation provides metrics that count the fol
 The **mpMetrics** feature requires SSL and the configuration is provided for you. The **quickStartSecurity** and **keyStore** configuration elements provide basic security to secure the
 server. When you go to the **/metrics** endpoint, use the credentials that are defined in the server configuration to log in to view the data for the fault tolerance methods.
 
-You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html).
+You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [MicroProfile Fault Tolerance specification](https://github.com/eclipse/microprofile-fault-tolerance/releases).
 
 
 # Running the application
@@ -488,9 +488,9 @@ application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations
 application:ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total 1
 ```
 
-From the output, the **`ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total`**
+From the output, the **ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total**
 data indicates that the **get()** was called twice including the previous call before turning the **system** service in maintenance.
-The **`ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total`** data
+The **ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total** data
 indicates that the **fallbackForGet()** method was called once.
 
 Update the configuration file.
