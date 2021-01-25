@@ -1,0 +1,135 @@
+## mako
+<%page expression_filter="h"/>
+<%!
+  from django.urls import reverse
+  from django.utils.translation import ugettext as _
+  from branding.api import get_footer
+  from openedx.core.djangoapps.lang_pref.api import footer_language_selector_is_enabled
+%>
+<% footer = get_footer(is_secure=is_secure) %>
+<%namespace name='static' file='static_content.html'/>
+
+% if uses_bootstrap:
+  <div class="container-fluid wrapper-footer">
+    <footer>
+      <div class="row">
+        <div class="col-md-9">
+          <nav class="navbar site-nav navbar-expand-sm" aria-label="${_('About')}">
+            <ul class="navbar-nav">
+              <li class="nav-item">
+                <a class="nav-link" href="${marketing_link('PRIVACY')}">${_("Privacy Notice")}</a>
+              </li>
+              % for item_num, link in enumerate(settings.FOOTER_NAVIGATION_LINKS, start=1):
+              <li class="nav-item">
+                <a class="nav-link" href="${link['url']}">${link['title']}</a>
+              </li>
+              % endfor
+            </ul>
+          </nav>
+        </div>
+
+        <div class="col-md-3">
+          ## Please leave this link and use one of the logos provided
+          ## The OpenEdX link may be hidden when this view is served
+          ## through an API to partner sites (such as marketing sites or blogs),
+          ## which are not technically powered by Open edX.
+
+
+          % if settings.SHOW_POWERED_BY_LOGO:
+          <div class="footer-about-openedx">
+            <p class="powered-by">Powered by</p>
+            <a href="https://cognitiveclass.ai">
+              <img src="${static.url('images/cc-footer.png')}" alt="Powered by IBM Skills Network" width="140" />
+              IBM<br>Skills Network
+            </a>
+          </div>
+          % endif
+        </div>
+      </div>
+    </footer>
+    % if settings.FOOTER_FOOTNOTE:
+    <footer class="footer">
+      <p class="footnote">${settings.FOOTER_FOOTNOTE}</p>
+    </footer>
+    % endif
+    <script type="text/javascript">
+      if ("${settings.SESSION_INACTIVITY_TYPE}" === "browser") {
+        setInterval(function () {
+          var req = new XMLHttpRequest()
+          req.open("GET", "/heartbeat", true)
+          req.send(null)
+        }, 5000)
+      }
+    </script>
+  </div>
+% else:
+  <div class="wrapper wrapper-footer">
+    <footer id="footer-openedx" class="footer grid-container"
+      ## When rendering the footer through the branding API,
+      ## the direction may not be set on the parent element,
+      ## so we set it here.
+      % if bidi:
+        dir=${bidi}
+      % endif
+    >
+      <div class="colophon">
+        <nav class="nav-colophon" aria-label="${_('About')}">
+          <ol>
+            <li class="nav-colophon-0">
+              <a href="${marketing_link('PRIVACY')}">${_("Privacy Notice")}</a>
+            </li>
+            % for item_num, link in enumerate(settings.FOOTER_NAVIGATION_LINKS, start=1):
+              <li class="nav-colophon-0${item_num}">
+                <a href="${link['url']}">${link['title']}</a>
+              </li>
+            % endfor
+          </ol>
+        </nav>
+
+        ## Site operators: Please do not remove this paragraph! This attributes back to edX and makes your acknowledgement of edX's trademarks clear.
+        <p class="copyright">${footer['copyright']} ${u" | {icp}".format(icp=getattr(settings,'ICP_LICENSE')) if getattr(settings,'ICP_LICENSE',False) else ""}</p>
+      </div>
+
+
+      % if settings.SHOW_POWERED_BY_LOGO:
+        <div class="footer-about-openedx">
+          <p class="powered-by">Powered by</p>
+          <a href="https://cognitiveclass.ai">
+            <img src="${static.url('images/cc-footer.png')}" alt="Powered by IBM Skills Network" width="140" />
+            IBM<br>Skills Network
+          </a>
+        </div>
+      % endif
+
+    </footer>
+
+    % if settings.FOOTER_FOOTNOTE:
+      <footer class="footer">
+          <p class="footnote">${settings.FOOTER_FOOTNOTE}</p>
+      </footer>
+    % endif
+    <script type="text/javascript">
+      if ("${settings.SESSION_INACTIVITY_TYPE}" === "browser") {
+        setInterval(function() {
+          var req = new XMLHttpRequest()
+          req.open("GET", "/heartbeat", true)
+          req.send(null)
+        }, 5000)
+      }
+    </script>
+  </div>
+% endif
+% if include_dependencies:
+  <%static:js group='base_vendor'/>
+  <%static:css group='style-vendor'/>
+  <%include file="widgets/segment-io.html" />
+  <%include file="widgets/segment-io-footer.html" />
+% endif
+
+<%include file="widgets/learner_support.html" />
+
+% if footer_css_urls:
+  % for url in footer_css_urls:
+    <link rel="stylesheet" type="text/css" href="${url}"></link>
+  % endfor
+% endif
