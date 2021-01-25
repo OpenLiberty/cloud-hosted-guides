@@ -124,7 +124,7 @@ Update the **CustomConfigSource** configuration file.
 
 
 
-Change the **io\_openliberty\_guides\_system\_inMaintenance** property from **false** to **true** and save the file.
+Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
 
 You do not need
 to restart the server. Next, return to your browser and point back to the
@@ -412,7 +412,7 @@ application:ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_ca
 ```
 
 You can test the fault tolerance mechanism of your microservices by dynamically changing
-the io_openliberty_guides_system_inMaintenance property value to **true** in the
+the **`io_openliberty_guides_system_inMaintenance`** property value to **true** in the
 **resources/CustomConfigSource.json** file, which turns the **system** service in maintenance.
 
 Update the configuration file.
