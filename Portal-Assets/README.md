@@ -18,4 +18,4 @@ In the `edX Theme` directory you can find a folder containing the `lms` file. Th
  - To make changes to the theme clone the lms folder.
  - Do the required to the code
  - Zip the folder (Make sure it is names `lms.zip`)
- - Go to the openliberty portal admin page -> In the left hand menu -> Settings -> Advances -> Under Open Edx Theme -> Press Choose file -> Select the `lms.zip`
+ - Go to the openliberty portal admin page [here](https://openliberty.skillsnetwork.site/admin/learning_paths) -> In the left hand menu -> Settings -> Advances -> Under Open Edx Theme -> Press Choose file -> Select the `lms.zip`
