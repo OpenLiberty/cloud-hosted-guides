@@ -21,6 +21,31 @@ The two microservices that you'll be working with are called **system** and **in
 of the running container. The **inventory** microservice adds the properties from the **system** microservice to the inventory. This guide demonstrates how both microservices can run and communicate
 with each other in different Docker containers. 
 
+# Getting started
+
+Open a command-line session:
+
+> [Terminal -> New Terminal]
+
+Navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-containerize.git) and use the projects that are provided inside:
+
+```
+git clone https://github.com/openliberty/guide-containerize.git
+cd guide-containerize
+```
+{: codeblock}
+
+
+The **start** directory contains the starting project that you will build upon.
+
+The **finish** directory contains the finished project that you will build.
 
 
 # Packaging your microservices
@@ -787,6 +812,16 @@ docker rm inventory system
 You have just built Docker images and run two microservices on Open Liberty in containers. 
 
 
+ Copyright (c) 2018 IBM Corporation and others.
+ Licensed under Creative Commons Attribution-NoDerivatives
+ 4.0 International (CC BY-ND 4.0)
+   https://creativecommons.org/licenses/by-nd/4.0/
+
+ Contributors:
+     IBM Corporation
+# Guide Attribution
+
+{doctitle} [licensedClass]#by# {guide-author} [licensedClass]#is licensed under# CC BY-ND 4.0
 
 
 ## Clean up your environment
