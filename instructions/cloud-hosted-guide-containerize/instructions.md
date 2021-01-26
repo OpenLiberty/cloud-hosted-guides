@@ -33,10 +33,15 @@ To try out the microservices by using Maven, run the following Maven goal to bui
 ```
 mvn -pl system liberty:run
 ```
+{: codeblock}
+
 Open another command-line session and run the following Maven goal to build the **inventory** microservice and run it inside Open Liberty:
 ```
 mvn -pl inventory liberty:run
 ```
+{: codeblock}
+
+
 
 
 Open a command-line session:
@@ -49,11 +54,11 @@ Navigate to the **/home/project** directory:
 cd /home/project
 ```
 {: codeblock}
-{: codeblock}
 
 
+To access the **inventory** service, which displays the current contents of the inventory, see http://localhost:9081/inventory/systems
 
-To access the **inventory** service, which displays the current contents of the inventory, see [http://localhost:9081/inventory/systems](http://localhost:9081/inventory/systems)
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9081/inventory/systems
@@ -63,7 +68,10 @@ curl http://localhost:9081/inventory/systems
 
 
 
-The **system** service shows the system properties of the running JVM and can be found at  [http://localhost:9080/system/properties](http://localhost:9080/system/properties)
+
+The **system** service shows the system properties of the running JVM and can be found at  http://localhost:9080/system/properties
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9080/system/properties
@@ -73,12 +81,16 @@ curl http://localhost:9080/system/properties
 
 
 
-The system properties of your localhost can be added to the **inventory** at [http://localhost:9081/inventory/systems/localhost](http://localhost:9081/inventory/systems/localhost)
+
+The system properties of your localhost can be added to the **inventory** at http://localhost:9081/inventory/systems/localhost
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9081/inventory/systems/localhost
 ```
 {: codeblock}
+
 
 
 
@@ -120,9 +132,9 @@ You will be creating two Docker images to run the **inventory** service and **sy
 
 Create the **Dockerfile** for the inventory service.
 
-
 > [File -> New File]  
 > guide-containerize/start/inventory/Dockerfile
+
 
 
 
@@ -150,6 +162,7 @@ COPY --chown=1001:0 \
     src/main/liberty/config \
     # end::inventory-config[]
     # tag::config[]
+    /config/
     # end::config[]
 
 COPY --chown=1001:0 \
@@ -157,6 +170,7 @@ COPY --chown=1001:0 \
     target/inventory.war \
     # end::inventory-war[]
     # tag::config-apps[]
+    /config/apps
     # end::config-apps[]
 
 RUN configure.sh
@@ -167,8 +181,13 @@ RUN configure.sh
 
 The **FROM** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use **FROM scratch**, which makes your image a base image. 
 
-In this case, you're using the recommended production image, 
-**openliberty/open-liberty:kernel-java8-openj9-ubi**, as your parent image. If you don't want any additional runtime features for your **kernel** image, define the **FROM** instruction as **FROM open-liberty:kernel**. To use the default image that comes with the Open Liberty runtime, define the **FROM** instruction as **FROM open-liberty**. You can find all the official images at [open-liberty Docker Hub](https://hub.docker.com/_/open-liberty).
+In this case, you're using the recommended production image,
+**openliberty/open-liberty:kernel-java8-openj9-ubi**, as your parent image. If you
+don't want any additional runtime features for your **kernel** image, define the
+**FROM** instruction as **FROM open-liberty:kernel**. To use the default image that
+comes with the Open Liberty runtime, define the **FROM** instruction as **FROM
+open-liberty`. You can find all the [official images](https://hub.docker.com/_/open-liberty) and
+https://hub.docker.com/r/openliberty/open-liberty/[ubi images] on the open-liberty Docker Hub.
 
 It is also recommended to label your Docker images with the **LABEL** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
 
@@ -185,9 +204,9 @@ The **Dockerfile** for the **system** service follows the same instructions as t
 
 Create the **Dockerfile** for the system service.
 
-
 > [File -> New File]  
 > guide-containerize/start/system/Dockerfile
+
 
 
 
@@ -281,11 +300,11 @@ docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
 
 The flags are described in the table below: 
 
-| Flag | Description
+| *Flag* | *Description*
 | ---| ---
 | -d     | Runs the container in the background.
 | --name | Specifies a name for the container.
-| -p     | Maps the host ports to the container ports. For example: **'-p <HOST_PORT>:<CONTAINER_PORT>'**
+| -p     | Maps the host ports to the container ports. For example: **`-p <HOST_PORT>:<CONTAINER_PORT>`**
 
 Next, run the **docker ps** command to verify that your containers are started:
 
@@ -311,7 +330,9 @@ find the cause of the issues, remove the faulty containers with the **docker rm 
 your images, and start the containers again.
 
 
-To access the application, point your browser to the [http://localhost:9081/inventory/systems](http://localhost:9081/inventory/systems) URL 
+To access the application, point your browser to the http://localhost:9081/inventory/systems URL
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9081/inventory/systems
@@ -319,6 +340,7 @@ curl http://localhost:9081/inventory/systems
 {: codeblock}
 
 
+ 
 An empty list is expected because no system properties are stored in the inventory yet. 
 
 Next, retrieve the **system** container's IP address by using the **system** container's name that is defined when it ran the Docker containers. 
@@ -338,10 +360,12 @@ You find the **system** container's IP address:
 
 In this case, the IP address for the **system** service is **172.17.0.2**. Take note of this IP address to add the system properties to the **inventory** service. 
 
-Point your browser to **\http://localhost:9081/inventory/systems/pass:c[[system-ip-address]]** by replacing **[system-ip-address]** with the IP address you obtained earlier.
+Point your browser to **http://localhost:9081/inventory/systems/pass:c[[system-ip-address]]** by replacing **[system-ip-address]** with the IP address you obtained earlier.
 You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
 
-properties are automatically stored in the inventory Go back to [http://localhost:9081/inventory/systems](http://localhost:9081/inventory/systems) and
+properties are automatically stored in the inventory
+
+_(or run the following curl command)_
 
 ```
 curl http://localhost:9081/inventory/systems
@@ -349,8 +373,98 @@ curl http://localhost:9081/inventory/systems
 {: codeblock}
 
 
+ Go back to http://localhost:9081/inventory/systems[http://localhost:9081/inventory/systems^] and
 you see a new entry for **[system-ip-address]**. 
 
+
+# Externalizing server configuration
+
+
+As mentioned at the beginning of this guide, one of the advantages of using
+containers is that they are portable and can be moved and deployed efficiently
+across all of your DevOps environments. Configuration often changes across
+different environments, and by externalizing your server configuration, you
+can simplify the development process.
+
+Imagine a scenario where you are developing an Open Liberty application on
+port **9081** but to deploy it to production, it must be available
+on port **9091**. To manage this scenario, you can keep two different versions of the
+**server.xml** file; one for production and one for development. However, trying to
+maintain two different versions of a file might lead to mistakes. A better
+solution would be to externalize the configuration of the port number and use the
+value of an environment variable that is stored in each environment. 
+
+In this example, you will use an environment variable to externally configure the
+HTTP port number of the **inventory** service. 
+
+In the **inventory/server.xml** file, the [hotspot=httpPort
+file=0]**default.http.port** variable is declared and is used in the
+**httpEndpoint** element to define the service
+endpoint. The default value of the **default.http.port**
+variable is **9081**. However, this value is only used if no other value is
+specified. To find a value for this variable, Open Liberty looks for the
+following environment variables, in order:
+
+* **default.http.port**
+* **`default_http_port`**
+* **`DEFAULT_HTTP_PORT`**
+
+When you previously ran the **inventory** container, none of the environment variables mentioned were defined and thus the default value of **9081** was used.
+
+Run the following commands to stop and remove the **inventory** container and rerun it with the **default.http.port** environment variable set:
+
+```
+docker stop inventory
+docker rm inventory 
+docker run -d --name inventory -e default.http.port=9091 -p 9091:9091 inventory:1.0-SNAPSHOT
+```
+{: codeblock}
+
+
+The `-e` flag can be used to create and set the values of environment variables
+in a Docker container. In this case, you are setting the **default.http.port** environment
+variable to **9091** for the **inventory** container.
+
+Now, when the service is starting up, Open Liberty finds the
+**default.http.port** environment variable and uses it to set the value of the
+**default.http.port** variable to be used in the HTTP
+endpoint.
+
+The **inventory** service will now be available on the new port number you
+specified. You can see the contents of the inventory at
+
+http://localhost:9091/inventory/systems
+
+_(or run the following curl command)_
+
+```
+curl http://localhost:9091/inventory/systems
+```
+{: codeblock}
+
+
+
+You can add your local system properties at
+**http://localhost:9091/inventory/systems/pass:c[[system-ip-address]]** by
+replacing **[system-ip-address]** with the IP address you obtained in the previous
+section. The **system** service remains unchanged and is available at
+
+http://localhost:9080/system/properties
+
+_(or run the following curl command)_
+
+```
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
+
+
+
+
+You can externalize the configuration of more than just the port numbers.
+To learn more about Open Liberty server configuration, check out the
+https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html[Server
+Configuration Overview] docs. 
 
 # Testing the microservices
 
@@ -358,9 +472,9 @@ You can test your microservices manually by hitting the endpoints or with automa
 
 Create the **SystemEndpointIT** class.
 
-
 > [File -> New File]  
 > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+
 
 
 
@@ -433,9 +547,9 @@ The **testGetProperties()** method checks for a **200** response code from the *
 
 Create the **InventoryEndpointIT** class.
 
-
 > [File -> New File]  
 > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+
 
 
 
@@ -623,11 +737,11 @@ public class InventoryEndpointIT {
 
 ### Running the tests
 
-Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by replacing the **[system-ip-address]** with the IP address that was determined in the previous section.
+Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by replacing the **[system-ip-address]** with the IP address that you determined previously.
 
 ```
 mvn package
-mvn failsafe:integration-test -Dsystem.ip=[system-ip-address] -Dinventory.http.port=9081 -Dsystem.http.port=9080
+mvn failsafe:integration-test -Dsystem.ip=[system-ip-address] -Dinventory.http.port=9091 -Dsystem.http.port=9080
 ```
 {: codeblock}
 
