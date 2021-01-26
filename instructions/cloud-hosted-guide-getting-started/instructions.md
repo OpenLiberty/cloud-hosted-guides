@@ -101,6 +101,7 @@ for the following message, which indicates that the server startup is complete:
 ```
 
 
+
 Open a command-line session:
 
 > [Terminal -> New Terminal]
@@ -111,7 +112,6 @@ Navigate to the **/home/project** directory:
 cd /home/project
 ```
 {: codeblock}
-
 
 
 To access the **system** microservice, see the http://localhost:9080/system/properties
