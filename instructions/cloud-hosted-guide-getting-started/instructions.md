@@ -101,6 +101,7 @@ for the following message, which indicates that the server startup is complete:
 ```
 
 
+
 Open a command-line session:
 
 > [Terminal -> New Terminal]
@@ -111,7 +112,6 @@ Navigate to the **/home/project** directory:
 cd /home/project
 ```
 {: codeblock}
-
 
 
 To access the **system** microservice, see the http://localhost:9080/system/properties
@@ -215,9 +215,9 @@ To add the MicroProfile Health feature to the server, include the **mpHealth** f
 
 Replace the server configuration file.
 
-
 > [File -> Open...]  
 > guide-getting-started/start/src/main/liberty/config/server.xml
+
 
 
 
@@ -308,9 +308,9 @@ A liveness check allows third-party services to determine if the microservice is
 
 Create the **SystemReadinessCheck** class.
 
-
 > [File -> New File]  
 > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+
 
 
 
@@ -358,9 +358,9 @@ The **SystemReadinessCheck** class verifies that the
 
 Create the **SystemLivenessCheck** class.
 
-
 > [File -> New File]  
 > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+
 
 
 
@@ -505,9 +505,9 @@ Try enabling detailed logging of the MicroProfile Health feature by adding the
 
 Replace the server configuration file.
 
-
 > [File -> Open...]  
 > guide-getting-started/start/src/main/liberty/config/server.xml
+
 
 
 
@@ -611,7 +611,7 @@ docker run -d --name gettingstarted-app -p 9080:9080 openliberty-getting-started
 
 There is a bit going on here, so here's a breakdown of the command:
 
-| Flag | Description
+| *Flag* | *Description*
 | ---| ---
 | -d     | Runs the container in the background.
 | --name | Specifies a name for the container.
