@@ -187,6 +187,15 @@ Create the **InventoryConfig.java** class.
 
 
 ```
+ * Copyright (c) 2017, 2019 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - Initial implementation
+ *******************************************************************************/
 package io.openliberty.guides.inventory;
 
 import javax.enterprise.context.RequestScoped;
@@ -257,6 +266,15 @@ Create the **CustomConfigSource** class.
 
 
 ```
+ * Copyright (c) 2017, 2019 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - Initial implementation
+ *******************************************************************************/
 package io.openliberty.guides.config;
 
 import javax.json.stream.JsonParser;
@@ -271,6 +289,12 @@ import java.io.FileReader;
 import org.eclipse.microprofile.config.spi.ConfigSource;
 
 /**
+ * User-provided ConfigSources are dynamic.
+ * The getProperties() method will be periodically invoked by the runtime
+ * to retrieve up-to-date values. The frequency is controlled by
+ * the microprofile.config.refresh.rate Java system property,
+ * which is in milliseconds and can be customized.
+ */
 public class CustomConfigSource implements ConfigSource {
 
   String fileLocation = System.getProperty("user.dir").split("target")[0]
@@ -387,6 +411,15 @@ Replace the **InventoryConfig.java** class.
 
 
 ```
+ * Copyright (c) 2017, 2019 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - Initial implementation
+ *******************************************************************************/
 package io.openliberty.guides.inventory;
 
 import javax.enterprise.context.RequestScoped;
@@ -449,6 +482,15 @@ Replace the **Email** Class.
 
 
 ```
+ * Copyright (c) 2017, 2019 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - Initial implementation
+ *******************************************************************************/
 
 package io.openliberty.guides.config;
 
@@ -493,6 +535,15 @@ Create the **CustomEmailConverter** class.
 
 
 ```
+ * Copyright (c) 2017, 2019 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - Initial implementation
+ *******************************************************************************/
 package io.openliberty.guides.config;
 
 import org.eclipse.microprofile.config.spi.Converter;
@@ -539,6 +590,15 @@ Replace the **InventoryConfig** class.
 
 
 ```
+ * Copyright (c) 2017, 2019 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - Initial implementation
+ *******************************************************************************/
 package io.openliberty.guides.inventory;
 
 import javax.enterprise.context.RequestScoped;
@@ -592,6 +652,15 @@ Replace the **InventoryResource** class.
 
 
 ```
+ * Copyright (c) 2017, 2020 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - Initial implementation
+ *******************************************************************************/
 package io.openliberty.guides.inventory;
 
 import java.util.Properties;
@@ -764,6 +833,15 @@ Create the **ConfigurationIT** class.
 
 
 ```
+ * Copyright (c) 2017, 2020 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - Initial implementation
+ *******************************************************************************/
 package it.io.openliberty.guides.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
