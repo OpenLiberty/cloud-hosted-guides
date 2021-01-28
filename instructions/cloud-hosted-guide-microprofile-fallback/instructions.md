@@ -395,12 +395,12 @@ To see the application metrics, go to the https://localhost:9443/metrics/applica
 _(or run the following curl command)_
 
 ```
-curl https://localhost:9443/metrics/application
+curl -k -u admin https://localhost:9443/metrics/application
 ```
 {: codeblock}
 
 
-See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
+ Log in as the **admin** user, and use **adminpwd** as the passwordSee the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
 
 ```
 # TYPE application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total counter
@@ -471,7 +471,7 @@ Go to the https://localhost:9443/metrics/application URL again
 _(or run the following curl command)_
 
 ```
-curl https://localhost:9443/metrics/application
+curl -k -u admin https://localhost:9443/metrics/application
 ```
 {: codeblock}
 
