@@ -80,6 +80,7 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
+
 Open a command-line session:
 
 > [Terminal -> New Terminal]
@@ -90,7 +91,6 @@ Navigate to the **/home/project** directory:
 cd /home/project
 ```
 {: codeblock}
-
 
 
 Point your browser to the http://localhost:9080/inventory/systems/localhost
@@ -124,7 +124,7 @@ Update the **CustomConfigSource** configuration file.
 
 
 
-Change the **io\_openliberty\_guides\_system\_inMaintenance** property from **false** to **true** and save the file.
+Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
 
 You do not need
 to restart the server. Next, return to your browser and point back to the
@@ -395,12 +395,12 @@ To see the application metrics, go to the https://localhost:9443/metrics/applica
 _(or run the following curl command)_
 
 ```
-curl https://localhost:9443/metrics/application
+curl -k -u admin https://localhost:9443/metrics/application
 ```
 {: codeblock}
 
 
-See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
+ Log in as the **admin** user, and use **adminpwd** as the passwordSee the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
 
 ```
 # TYPE application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total counter
@@ -412,7 +412,7 @@ application:ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_ca
 ```
 
 You can test the fault tolerance mechanism of your microservices by dynamically changing
-the io_openliberty_guides_system_inMaintenance property value to **true** in the
+the **`io_openliberty_guides_system_inMaintenance`** property value to **true** in the
 **resources/CustomConfigSource.json** file, which turns the **system** service in maintenance.
 
 Update the configuration file.
@@ -471,7 +471,7 @@ Go to the https://localhost:9443/metrics/application URL again
 _(or run the following curl command)_
 
 ```
-curl https://localhost:9443/metrics/application
+curl -k -u admin https://localhost:9443/metrics/application
 ```
 {: codeblock}
 
