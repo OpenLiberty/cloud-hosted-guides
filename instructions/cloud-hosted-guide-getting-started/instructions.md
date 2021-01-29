@@ -1,11 +1,11 @@
 
-# Instructions for this cloud-hosted guide
+# Welcome to the cloud-hosted guide!
 
-In this guide you will be using a pre-configured environment that runs in containers on the cloud.
+In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
-On the left side you have the instructions. You can customise the instructions using the bar at the top. Move between steps using either the arrows or the buttons at the bottom. 
+This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
 
-On the right side of the window you have the IDE. This is based of Visual Studio Code, it comes with pre installed tools and also has a built in terminal. 
+The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
 # Getting started with Open Liberty
@@ -122,7 +122,7 @@ cd /home/project
 
 To access the **system** microservice, see the http://localhost:9080/system/properties URL,
 
-_To see the output for this URL in the IDE, run the following command:_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
@@ -186,7 +186,7 @@ Development mode automatically picks up changes that you make to your applicatio
 
 As before, you can see that the application is running by going to the http://localhost:9080/system/properties URL.
 
-_To see the output for this URL in the IDE, run the following command:_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
@@ -201,7 +201,7 @@ You can add health reports with the MicroProfile Health feature, which adds a **
 
 If you try to access this endpoint now at the http://localhost:9080/health/ URL, you see a 404 error because the **/health** endpoint does not yet exist:
 
-_To see the output for this URL in the IDE, run the following command:_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/health/
@@ -218,9 +218,9 @@ To add the MicroProfile Health feature to the server, include the **mpHealth** f
 
 Replace the server configuration file.
 
-From the menu of the IDE, select 
+> From the menu of the IDE, select 
 
-> File > Open > guide-getting-started/start/src/main/liberty/config/server.xml
+ **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
@@ -273,7 +273,7 @@ You can see the server being updated in the server log displayed in your command
 
 Try to access the **/health** endpoint again by visiting the http://localhost:9080/health URL.
 
-_To see the output for this URL in the IDE, run the following command:_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/health
@@ -310,10 +310,7 @@ A readiness check allows third-party services, such as Kubernetes, to know if th
 A liveness check allows third-party services to determine if the microservice is running.
 
 Create the **SystemReadinessCheck** class.
-
-From the menu of the IDE, select 
-
-> File > New File > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+\n> From the menu of the IDE, select \n\n **File** > **New File** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 
 
 
@@ -361,10 +358,7 @@ The **SystemReadinessCheck** class verifies that the
 **system** microservice is not in maintenance by checking a config property.
 
 Create the **SystemLivenessCheck** class.
-
-From the menu of the IDE, select 
-
-> File > New File > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+\n> From the menu of the IDE, select \n\n **File** > **New File** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
 
 
 
@@ -421,7 +415,7 @@ The following messages display in your first command-line session:
 
 Access the **/health** endpoint again by going to the http://localhost:9080/health URL.
 
-_To see the output for this URL in the IDE, run the following command:_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/health
@@ -455,7 +449,7 @@ This time you see the overall status of your server and the aggregated data of t
 
 You can also access the **/health/ready** endpoint by going to the http://localhost:9080/health/ready URL to view the data from the readiness health check.
 
-_To see the output for this URL in the IDE, run the following command:_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/health/ready
@@ -466,7 +460,7 @@ curl http://localhost:9080/health/ready
 
 Similarly, access the **/health/live** endpoint by going to the http://localhost:9080/health/live URL to view the data from the liveness health check.
 
-_To see the output for this URL in the IDE, run the following command:_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/health/live
@@ -507,9 +501,9 @@ Try enabling detailed logging of the MicroProfile Health feature by adding the
 
 Replace the server configuration file.
 
-From the menu of the IDE, select 
+> From the menu of the IDE, select 
 
-> File > Open > guide-getting-started/start/src/main/liberty/config/server.xml
+ **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
@@ -639,7 +633,7 @@ CONTAINER ID    IMAGE                         CREATED          STATUS           
 
 To access the application, go to the http://localhost:9080/system/properties URL.
 
-_To see the output for this URL in the IDE, run the following command:_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
@@ -706,7 +700,7 @@ java -jar guide-getting-started.jar
 
 When the server starts, go to the http://localhost:9080/system/properties URL to access your application that is now running out of the minimal runnable JAR file.
 
-_To see the output for this URL in the IDE, run the following command:_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
