@@ -219,7 +219,6 @@ To add the MicroProfile Health feature to the server, include the **mpHealth** f
 Replace the server configuration file.
 
 > From the menu of the IDE, select 
-
  **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
@@ -310,7 +309,9 @@ A readiness check allows third-party services, such as Kubernetes, to know if th
 A liveness check allows third-party services to determine if the microservice is running.
 
 Create the **SystemReadinessCheck** class.
-\n> From the menu of the IDE, select \n\n **File** > **New File** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 
 
 
@@ -358,7 +359,9 @@ The **SystemReadinessCheck** class verifies that the
 **system** microservice is not in maintenance by checking a config property.
 
 Create the **SystemLivenessCheck** class.
-\n> From the menu of the IDE, select \n\n **File** > **New File** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
 
 
 
@@ -502,7 +505,6 @@ Try enabling detailed logging of the MicroProfile Health feature by adding the
 Replace the server configuration file.
 
 > From the menu of the IDE, select 
-
  **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
