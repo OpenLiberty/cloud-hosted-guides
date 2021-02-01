@@ -1,4 +1,13 @@
 
+# Welcome to the cloud-hosted guide!
+
+In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
+
+This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
+
+The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+
+
 # Testing a MicroProfile or Jakarta EE application
 
 
@@ -93,8 +102,8 @@ To begin bootstrapping, annotate the **src/test/java/io/openliberty/guides/testi
 
 Update the **PersonServiceIT** class.
 
-> [File -> Open...]  
-> guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 
@@ -195,8 +204,8 @@ Next, the **PersonServiceIT** class outlines some basic information that informs
 
 Update the **PersonServiceIT** class.
 
-> [File -> Open...]  
-> guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 
@@ -297,11 +306,9 @@ The **withAppContextRoot(String)** method indicates the base path of the applica
 
 
 
-Open a command-line session:
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-> [Terminal -> New Terminal]
-
-Navigate to the **/home/project** directory:
+Run the following command to navigate to the **/home/project** directory:
 
 ```
 cd /home/project
@@ -309,9 +316,9 @@ cd /home/project
 {: codeblock}
 
 
-The **withReadinessPath(String)** method indicates what path is polled by HTTP to determine application readiness
+The **withReadinessPath(String)** method indicates what path is polled by HTTP to determine application readiness. MicroShed Testing automatically starts the ApplicationContainer application and waits for it to be ready before the tests start running. In this case, you are using the default application readiness check at the http://localhost:9080/health/ready URL, which is enabled by the **MicroProfile Health** feature in our server.xml configuration file. When the readiness URL returns **HTTP 200**, the application is considered ready and the tests begin running.
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/health/ready
@@ -329,8 +336,8 @@ With MicroShed Testing, applications are exercised in a black box fashion. Black
 
 Update the **PersonServiceIT** class.
 
-> [File -> Open...]  
-> guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 
@@ -428,9 +435,9 @@ Import the **org.microshed.testing.jaxrs.RESTClient** annotation, create a **Per
 
 
 
-In this example, the **PersonService** injected type is the same **io
+In this example, the **PersonService** injected type is the same **io.openliberty.guides.testing.PersonService** class that is used in your application. However, the _instance_ that gets injected is a REST client proxy. So, if you call **personSvc.createPerson("Bob", 42)**, the REST client makes an HTTP POST request to the application that is running at http://localhost:9080/guide-microshed-testing/people
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/guide-microshed-testing/people
@@ -438,6 +445,7 @@ curl http://localhost:9080/guide-microshed-testing/people
 {: codeblock}
 
 
+, which triggers the corresponding Java method in the application.
 
 
 
@@ -447,8 +455,8 @@ Now that the setup is complete, you can write your first test case. Start by tes
 
 Update the **PersonServiceIT** class.
 
-> [File -> Open...]  
-> guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 
@@ -556,8 +564,8 @@ Next, add more tests.
 
 Replace the **PersonServiceIT** class.
 
-> [File -> Open...]  
-> guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 
@@ -681,8 +689,8 @@ First, create another test class.
 
 Create the **ErrorPathIT** class.
 
-> [File -> New File]  
-> guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
 
 
@@ -750,8 +758,8 @@ To solve this issue, common configuration can be placed in a class that implemen
 
 Create the **AppDeploymentConfig** class.
 
-> [File -> New File]  
-> guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
 
 
 
@@ -781,8 +789,8 @@ After the common configuration is created, the test classes can be updated to re
 Remove the container code from the **PersonServiceIT** class.
 Update the **PersonServiceIT** class.
 
-> [File -> Open...]  
-> guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 
@@ -882,8 +890,8 @@ Remove **import** statements and the **ApplicationContainer app** field.
 Annotate the **PersonServiceIT** class with the **@SharedContainerConfig** annotation that references the **AppDeploymentConfig** shared configuration class.
 Update the **PersonServiceIT** class.
 
-> [File -> Open...]  
-> guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 
@@ -983,8 +991,8 @@ Import the **SharedContainerConfig** annotation and annotate the **PersonService
 Similarly, update the **ErrorPathIT** class to remove the container code.
 Update the **ErrorPathIT** class.
 
-> [File -> Open...]  
-> guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
 
 
@@ -1042,8 +1050,8 @@ Remove **import** statements and the **ApplicationContainer app** field
 Annotate the **ErrorPathIT** class with the **@SharedContainerConfig** annotation.
 Update the **ErrorPathIT** class.
 
-> [File -> Open...]  
-> guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
 
 
@@ -1122,11 +1130,9 @@ Learn more about MicroShed Testing.
 
 ## Clean up your environment
 
-Clean up your online environment so that it is ready to be used with the next guide!
+Clean up your online environment so that it is ready to be used with the next guide:
 
-You can clean up the environment by doing the following:
-
-Delete the **guide-microshed-testing** project by navigating to the **/home/project/** directory
+Delete the **guide-microshed-testing** project by running the following commands:
 
 ```
 cd /home/project
@@ -1134,7 +1140,4 @@ rm -fr guide-microshed-testing
 ```
 {: codeblock}
 
-Now Log out by navigating to: 
-
-> [Account -> Logout]
-
+Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
