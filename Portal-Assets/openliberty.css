@@ -205,15 +205,6 @@ footer {
   display: none;
 }
 
-/* Fix Layout post-SSO */
-
-.js-form-feedback ~ form#register,
-.js-form-feedback ~ form#login {
-  display: flex;
-  flex-direction: column;
-  max-width: 400px;
-}
-
 /* Mobile */
 @media (max-width: 767px) {
   form#login,
