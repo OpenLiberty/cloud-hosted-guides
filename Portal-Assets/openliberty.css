@@ -172,6 +172,39 @@ form#register input[type="text"] {
   background-color: #0730ad !important;
 }
 
+/* Footer */
+
+footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  padding: 1rem;
+  background-color: #d6d6d6;
+  box-shadow: 0 -1px 5px 0 rgba(0,0,0,0.1);
+  border-top: 1px solid #c5c6c7;
+}
+
+.footer__copyright {
+  padding-top: .7rem;
+  padding-bottom: .7rem;
+}
+
+.wrapper-footer {
+  box-shadow: 0 0px 0px 0 rgb(0 0 0 / 0%);
+  border-top: 0px;
+  padding: 0px;
+}
+
+.wrapper-footer footer#footer-openedx {
+  max-width: 100%;
+}
+
+.wrapper-footer footer#footer-openedx .footer-about-openedx {
+  display: none;
+}
+
 /* Mobile */
 @media (max-width: 767px) {
   form#login,
