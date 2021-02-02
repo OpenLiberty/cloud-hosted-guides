@@ -40,6 +40,15 @@ function changePageText() {
         forgotPassword.textContent = 'Forgot your password?'
     }
 }
+Function fixPage() {
+    var warning = document.querySelector('.js-form-feedback .js-auth-warning');
+    
+    if (warning) {
+      document.querySelector('form#login, form#register').style.display = 'flex';
+      document.querySelector('form#login, form#register').style.flexDirection = 'column';
+      document.querySelector('form#login, form#register').style.maxWidth = '400px';
+    }
+}
 
 function addFooter() {
     var bodyWindow = document.querySelector('body')
@@ -53,4 +62,5 @@ setTimeout(function() {
     // fixRegisterPage();
     changePageText();
     // addFooter();
+    fixPage();
 },100);
