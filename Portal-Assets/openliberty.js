@@ -7,26 +7,6 @@ function addAccountReqText() {
     }
 }
 
-function fixRegisterPage() {
-    var ssoUsed = document.querySelector('.js-auth-warning')
-    var registerForm = document.querySelector('#register')
-    var loginForm = document.querySelector('#login')
-    var signInLink = document.querySelector('.toggle-form')
-
-
-    if (ssoUsed) {
-        if (registerForm) {
-            registerForm.style.display = "block";
-        }
-        if (loginForm) {
-            loginForm.style.display = "block";
-        }
-        if (signInLink){
-            signInLink.innerHTML = '';
-        }
-    }
-}
-
 function changePageText() {
     var signIn = document.querySelector('#login-form h2')
     var emailReminder = document.querySelector('#login-email-desc')
@@ -50,7 +30,5 @@ function addFooter() {
 
 setTimeout(function() {
     //addAccountReqText();
-    // fixRegisterPage();
-    changePageText();
-    // addFooter();
+    //changePageText();
 },100);
