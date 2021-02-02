@@ -21,6 +21,13 @@ function changePageText() {
     }
 }
 
+function addFooter() {
+    var bodyWindow = document.querySelector('body')
+
+    bodyWindow.insertAdjacentHTML('afterend', '<footer> <div> <p> <a rel="noopener" target="_blank" href="https://ide.skillsnetwork.site/legal">Terms of Use</a> | <a rel="noopener" target="_blank" href="https://openliberty.skillsnetwork.site/privacy">Privacy Notice</a> </p> </div> <div class="footer__copyright"> © Copyright Open Liberty Skills Network 2021 </div> </footer>');
+}
+
+
 setTimeout(function() {
     //addAccountReqText();
     //changePageText();
