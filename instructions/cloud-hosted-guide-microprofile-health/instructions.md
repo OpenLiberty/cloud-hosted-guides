@@ -1,4 +1,13 @@
 
+# Welcome to the cloud-hosted guide!
+
+In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
+
+This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
+
+The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+
+
 # Adding health reports to microservices
 
 
@@ -11,8 +20,8 @@ You will learn how to use MicroProfile Health to report the health status of mic
 appropriate actions based on this report.
 
 MicroProfile Health allows services to report their health, and it publishes the overall health status to a defined
-endpoint. A service reports `UP` if it is available and reports `DOWN` if it is unavailable. MicroProfile Health reports
-an individual service status at the endpoint and indicates the overall status as `UP` if all the services are `UP`. A service
+endpoint. A service reports **UP** if it is available and reports **DOWN** if it is unavailable. MicroProfile Health reports
+an individual service status at the endpoint and indicates the overall status as **UP** if all the services are **UP**. A service
 orchestrator can then use the health statuses to make decisions.
 
 A service checks its own health by performing necessary self-checks and then reports its overall status by
@@ -20,46 +29,74 @@ implementing the API provided by MicroProfile Health. A self-check can be a chec
 as a dependency, a successful connection to an endpoint, a system property, a database connection, or
 the availability of required resources. MicroProfile offers checks for both liveness and readiness.
 
-You will add liveness and readiness checks to the `system` and `inventory` services, which
+You will add liveness and readiness checks to the **system** and **inventory** services, which
 are provided for you, and implement what is necessary to report health status by
 using MicroProfile Health.
 
 
 # Getting started
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/master.git) and use the projects that are provided inside:
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
+
+Run the following command to navigate to the **/home/project** directory:
 
 ```
-git clone https://github.com/openliberty/master.git
-cd master
+cd /home/project
+```
+{: codeblock}
+
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-health.git) and use the projects that are provided inside:
+
+```
+git clone https://github.com/openliberty/guide-microprofile-health.git
+cd guide-microprofile-health
 ```
 {: codeblock}
 
 
-The `start` directory contains the starting project that you will build upon.
+The **start** directory contains the starting project that you will build upon.
 
-The `finish` directory contains the finished project that you will build.
+The **finish** directory contains the finished project that you will build.
 
 
 ### Try what you'll build
 
-The `finish` directory in the root of this guide contains the finished application. Give it a try before you proceed.
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the `finish` directory and run the following
+To try out the application, first go to the **finish** directory and run the following
 Maven goal to build the application and deploy it to Open Liberty:
 
 ```
+cd finish
 mvn liberty:run
 ```
 {: codeblock}
 
-After you see the following message, your application server is ready.
+
+After you see the following message, your application server is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
-The `system` and `inventory` services can be found at the following URLs:
+The **system** and **inventory** services can be found at the following URLs:
+
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+Run the following command to navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
+
+http://localhost:9080/system/properties
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
@@ -68,6 +105,12 @@ curl http://localhost:9080/system/properties
 
 
 
+
+
+http://localhost:9080/inventory/systems
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
 curl http://localhost:9080/inventory/systems
 ```
@@ -75,38 +118,53 @@ curl http://localhost:9080/inventory/systems
 
 
 
-Visit the 
+
+
+Visit the http://localhost:9080/health URL to see the
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
 
- URL to see the
-overall health status of the application, as well as the aggregated data of the liveness
-and readiness checks. Two checks show the state of the `system` service, and the other two
-checks show the state of the `inventory` service. As you might expect, both services are in the
-`UP` state, and the overall health status of the application is in the `UP` state.
 
-You can also access the `/health/ready` endpoint by visiting the 
+overall health status of the application, as well as the aggregated data of the liveness
+and readiness checks. Two checks show the state of the **system** service, and the other two
+checks show the state of the **inventory** service. As you might expect, both services are in the
+**UP** state, and the overall health status of the application is in the **UP** state.
+
+
+You can also access the **/health/ready** endpoint by visiting the http://localhost:9080/health/ready
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
 curl http://localhost:9080/health/ready
 ```
 {: codeblock}
 
 
-URL to view the data from the readiness health checks. Similarly, access the `/health/live`
-endpoint by visiting the 
+
+URL to view the data from the readiness health checks. Similarly, access the **/health/live**
+
+endpoint by visiting the http://localhost:9080/health/live
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
 curl http://localhost:9080/health/live
 ```
 {: codeblock}
 
 
+
 URL to view the data from the liveness health checks.
 
-After you are finished checking out the application, stop the Open Liberty server by pressing `CTRL+C`
-in the command-line session where you ran the server. Alternatively, you can run the `liberty:stop` goal
-from the `finish` directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
+in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
+from the **finish** directory in another shell session:
 
 ```
 mvn liberty:stop
@@ -114,17 +172,19 @@ mvn liberty:stop
 {: codeblock}
 
 
+
 # Adding health checks to microservices
 
-Navigate to the `start` directory to begin.
+Navigate to the **start** directory to begin.
 
-When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start in dev mode:
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
+deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```
 mvn liberty:dev
 ```
 {: codeblock}
+
 
 After you see the following message, your application server in dev mode is ready:
 
@@ -136,10 +196,10 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 or open the project in your editor.
 
 A health report will be generated automatically for all services that enable MicroProfile Health. The
-`mpHealth` feature has already been enabled for you in the `src/main/liberty/config/server.xml`
+**mpHealth** feature has already been enabled for you in the **src/main/liberty/config/server.xml**
 file.
 
-All services must provide an implementation of the `HealthCheck` interface, which will be used to
+All services must provide an implementation of the **HealthCheck** interface, which will be used to
 verify their health. MicroProfile Health offers health checks for both readiness and liveness.
 A readiness check allows third-party services, such as Kubernetes, to determine whether a microservice
 is ready to process requests. For example, a readiness check might check dependencies,
@@ -151,10 +211,11 @@ terminated. For example, a liveness check might fail if the application runs out
 
 ### Adding health checks to the system service
 
-Create the `SystemReadinessCheck` class.
+Create the **SystemReadinessCheck** class.
 
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
 
-> [File -> Open]master/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
 
 
 
@@ -185,29 +246,36 @@ public class SystemReadinessCheck implements HealthCheck {
 {: codeblock}
 
 
-The `@Readiness` annotation indicates that this particular bean is a readiness health check procedure.
-By pairing this annotation with the `ApplicationScoped` context from the Contexts and
-Dependency Injections API, the bean is discovered automatically when the 
+
+The **@Readiness** annotation indicates that this particular bean is a readiness health check procedure.
+By pairing this annotation with the **ApplicationScoped** context from the Contexts and
+
+Dependency Injections API, the bean is discovered automatically when the http://localhost:9080/health
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
 
 
+
 endpoint receives a request.
 
-The `call()` method is used to return the health status of a particular service.
-In this case, you are simply checking if the server name is `defaultServer` and
-returning `UP` if it is, and `DOWN` otherwise.  
-Overall, this is a very simple implementation of the `call()`
-method. In a real development environment, you would want to orchestrate much more meaningful
+The **call()** method is used to return the health status of a particular service.
+In this case, you are simply checking if the server name is **defaultServer** and
+returning **UP** if it is, and **DOWN** otherwise.  
+Overall, this is a very simple implementation of the **call()**
+method. In a real environment, you would want to orchestrate more meaningful
 health checks.
 
 
-Create the `SystemLivenessCheck` class.
+Create the **SystemLivenessCheck** class.
 
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
 
-> [File -> Open]master/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
 
 
 
@@ -242,17 +310,19 @@ public class SystemLivenessCheck implements HealthCheck {
 {: codeblock}
 
 
-The `@Liveness` annotation indicates that this is a liveness health check procedure.
+
+The **@Liveness** annotation indicates that this is a liveness health check procedure.
 In this case, you are checking the heap memory usage. If more than 90% of the maximum memory
-is being used, a status of `DOWN` is returned.
+is being used, a status of **DOWN** is returned.
 
 
 ### Adding health checks to the inventory service
 
-Create the `InventoryReadinessCheck` class.
+Create the **InventoryReadinessCheck** class.
 
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
 
-> [File -> Open]master/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
 
 
 
@@ -278,7 +348,7 @@ public class InventoryReadinessCheck implements HealthCheck {
 
   @Inject
   InventoryConfig config;
-  
+
   public boolean isHealthy() {
     if (config.isInMaintenance()) {
       return false;
@@ -312,26 +382,28 @@ public class InventoryReadinessCheck implements HealthCheck {
 {: codeblock}
 
 
-This time, you are checking whether or not the service is in maintenance or if it's down.
-For simplicity, the custom `io_openliberty_guides_inventory_inMaintenance`
-MicroProfile Config property defined in the `resources/CustomConfigSource.json`
-file is used to indicate whether the service is in maintenance or not. This file was already
-created for you. To check whether the service is down, make an HTTP GET request to
-the `system` service and check the status that is returned by the response. You make a GET request
-to the `system` service rather than the `inventory` service because the `inventory` service
-depends on the `system` service. In other words, the `inventory` service doesn't work if
-the `system` service is down. If the status is not 200, then the service is not running.
-Based on these two factors, the `isHealthy()` method returns whether
-the `inventory` service is healthy.
 
-If you are curious about the injected `inventoryConfig` object or if
-you want more information on MicroProfile Config, see
+In the **isHealthy()** method, 
+you report the **inventory** service as not ready if the service is in maintenance or if its dependant service is unavailable.
+
+For simplicity, the custom **`io_openliberty_guides_inventory_inMaintenance`**
+MicroProfile Config property, which is defined in the **resources/CustomConfigSource.json**
+file, is used to indicate whether the service is in maintenance. This file was already
+created for you.
+
+Moreover, the readiness health check procedure makes an HTTP **GET** request to the **system** service and checks its status.
+If the request is successful, the **inventory** service is healthy and ready because its dependant service is available.
+Otherwise, the **inventory** service is not ready and an unhealthy readiness status is returned.
+
+If you are curious about the injected **inventoryConfig** object or if
+you want to learn more about MicroProfile Config, see
 [Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
 
-Create the `InventoryLivenessCheck` class.
+Create the **InventoryLivenessCheck** class.
 
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
 
-> [File -> Open]master/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
 
 
 
@@ -368,32 +440,46 @@ public class InventoryLivenessCheck implements HealthCheck {
 {: codeblock}
 
 
-As with the `system` liveness check, you are checking the heap memory usage. If more
-than 90% of the maximum memory is being used, a `DOWN` status is returned.
+
+As with the **system** liveness check, you are checking the heap memory usage. If more
+than 90% of the maximum memory is being used, a **DOWN** status is returned.
 
 
 
 # Running the application
 
-The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
-While the server is running, navigate to the 
+
+While the server is running, navigate to the http://localhost:9080/health URL to find
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
 
- URL to find
+
 the aggregated liveness and readiness health reports on the two services.
 
-You can also navigate to the 
+
+You can also navigate to the http://localhost:9080/health/ready
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
 curl http://localhost:9080/health/ready
 ```
 {: codeblock}
 
 
-URL to view the readiness health report, or the 
+
+
+URL to view the readiness health report, or the http://localhost:9080/health/live
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
 curl http://localhost:9080/health/live
 ```
@@ -402,37 +488,47 @@ curl http://localhost:9080/health/live
 
 URL to view the liveness health report.
 
-Put the `inventory` service in maintenance by setting the `io_openliberty_guides_inventory_inMaintenance`
-property to `true` in the `resources/CustomConfigSource.json` file. Because
-this configuration file is picked up dynamically, simply refresh the 
+Put the **inventory** service in maintenance by setting the **`io_openliberty_guides_inventory_inMaintenance`**
+property to **true** in the **resources/CustomConfigSource.json** file. Because
+
+this configuration file is picked up dynamically, simply refresh the http://localhost:9080/health
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
 
 
-URL to see that the state of the `inventory` service changed to `DOWN`. The
-overall state of the application also changed to `DOWN` as a result. Go to the
+
+URL to see that the state of the **inventory** service changed to **DOWN**. The
+overall state of the application also changed to **DOWN** as a result. Go to the
+
+http://localhost:9080/inventory/systems URL to verify that the **inventory** service is
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
 
- URL to verify that the `inventory` service is
-indeed in maintenance. Set the `io_openliberty_guides_inventory_inMaintenance`
-property back to `false` after you are done.
+
+indeed in maintenance. Set the **`io_openliberty_guides_inventory_inMaintenance`**
+property back to **false** after you are done.
 
 
 
 # Testing health checks
 
-You will implement several test methods to validate the health of the `system` and `inventory` services.
+You will implement several test methods to validate the health of the **system** and **inventory** services.
 
-Create the `HealthIT` class.
+Create the **HealthIT** class.
 
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
 
-> [File -> Open]master/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
 
 
 
@@ -526,22 +622,24 @@ public class HealthIT {
 {: codeblock}
 
 
+
+
 Let's break down the test cases:
 
-- The `testIfServicesAreUp()` test case compares the generated health report
+- The **testIfServicesAreUp()** test case compares the generated health report
 with the actual status of the services.
-- The `testReadiness()` test case compares the generated health report for the
+- The **testReadiness()** test case compares the generated health report for the
 readiness checks with the actual status of the services.
-- The `testLiveness()` test case compares the generated health report for the
+- The **testLiveness()** test case compares the generated health report for the
 liveness checks with the actual status of the services.
-- The `testIfInventoryServiceIsDown()` test case puts the `inventory` service
-in maintenance by setting the `io_openliberty_guides_inventory_inMaintenance`
-property to `true` and comparing the generated health report with the actual status of
+- The **testIfInventoryServiceIsDown()** test case puts the **inventory** service
+in maintenance by setting the **`io_openliberty_guides_inventory_inMaintenance`**
+property to **true** and comparing the generated health report with the actual status of
 the services.
 
-A few more tests were included to verify the basic functionality of the `system` and `inventory`
-services. They can be found under the `src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java`
-and `src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java` files.
+A few more tests were included to verify the basic functionality of the **system** and **inventory**
+services. They can be found under the **src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java**
+and **src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java** files.
 If a test failure occurs, then you might have introduced a bug into the code. These tests
 run automatically as a part of the integration test suite.
 
@@ -552,7 +650,7 @@ run automatically as a part of the integration test suite.
 
 ### Running the tests
 
-Since you started Open Liberty in dev mode, press the enter/return key to run the tests.
+Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
 You see the following output:
 
@@ -561,10 +659,14 @@ You see the following output:
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
 [INFO] Running it.io.openliberty.guides.health.HealthIT
+[INFO] [WARNING ] CWMH0052W: The class com.ibm.ws.microprofile.health.impl.HealthCheckResponseImpl implementing HealthCheckResponse in the guide-microprofile-health application in module guide-microprofile-health.war, reported a DOWN status with data Optional[{}].
 [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.463 s - in it.io.openliberty.guides.health.HealthIT
 [INFO] Running it.io.openliberty.guides.system.SystemEndpointIT
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s - in it.io.openliberty.guides.system.SystemEndpointIT
 [INFO] Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+[INFO] [WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+[INFO] Could not send Message.
+[INFO] [err] The specified host is unknown.
 [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.102 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 [INFO]
 [INFO] Results:
@@ -572,21 +674,41 @@ You see the following output:
 [INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
 ```
 
+The warning messages are expected. The first warning results from a request to a service that is under maintenance. This request is made in the **testIfInventoryServiceIsDown()** test from the **InventoryEndpointIT** integration test. The second warning and error results from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
+
 To see whether the tests detect a failure, manually change the configuration of
-`io_openliberty_guides_inventory_inMaintenance` from `false` to `true`
-in the `resources/CustomConfigSource.json` file. Rerun the tests to see a test failure occur.
-The test failure occurs because the initial status of the `inventory` service is `DOWN`.
+**`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**
+in the **resources/CustomConfigSource.json** file. Rerun the tests to see a test failure occur.
+The test failure occurs because the initial status of the **inventory** service is **DOWN**.
 
-When you are done checking out the service, exit development mode by pressing `CTRL+C` in the command-line session
-where you ran the server, or by typing `q` and then pressing the `enter/return` key.
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
+where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
-# Great work! You're done!
+# Summary
+
+## Nice Work!
 
 You just learned how to add health checks to report the states of microservices by using
+
 MicroProfile Health in Open Liberty. Then, you wrote tests to validate the generated
 health report.
 
 Feel free to try one of the related MicroProfile guides. They demonstrate additional
 technologies that you can learn and expand on top of what you built here.
 
+
+
+## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide:
+
+Delete the **guide-microprofile-health** project by running the following commands:
+
+```
+cd /home/project
+rm -fr guide-microprofile-health
+```
+{: codeblock}
+
+Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
