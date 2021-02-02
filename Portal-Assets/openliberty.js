@@ -27,16 +27,30 @@ function fixRegisterPage() {
     }
 }
 
-function changeTitleText() {
+function changePageText() {
     var signIn = document.querySelector('#login-form h2')
+    var emailReminder = document.querySelector('#login-email-desc')
+    var createAccount = document.querySelector('#login-form > div.toggle-form > a')
+    var forgotPassword = document.querySelector('#login > div.form-field.password-password > button')
 
-    if (signIn) {
-        signIn.textContent = 'Access Cloud Hosted Guides'
+    if (emailReminder) {
+        emailReminder.textContent = 'The email address you used to create an Open Liberty SkillsNetwork account.'
+    }
+    if (forgotPassword) {
+        forgotPassword.textContent = 'Forgot your password?'
     }
 }
 
+function addFooter() {
+    var bodyWindow = document.querySelector('body')
+
+    bodyWindow.insertAdjacentHTML('afterend', '<footer> <div> <p> <a rel="noopener" target="_blank" href="https://ide.skillsnetwork.site/legal">Terms of Use</a> | <a rel="noopener" target="_blank" href="https://openliberty.skillsnetwork.site/privacy">Privacy Notice</a> </p> </div> <div class="footer__copyright"> © Copyright Open Liberty Skills Network 2021 </div> </footer>');
+}
+
+
 setTimeout(function() {
-    addAccountReqText();
-    fixRegisterPage();
-    changeTitleText();
-}, 100);
+    //addAccountReqText();
+    // fixRegisterPage();
+    changePageText();
+    // addFooter();
+},100);
