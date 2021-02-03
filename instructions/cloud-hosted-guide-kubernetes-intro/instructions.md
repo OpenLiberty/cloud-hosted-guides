@@ -192,6 +192,10 @@ docker images
 Verify that the **system:1.0-SNAPSHOT** and **inventory:1.0-SNAPSHOT** images are listed among them, for example:
 
 
+```
+REPOSITORY                                                       TAG
+inventory                                                        1.0-SNAPSHOT
+system                                                           1.0-SNAPSHOT
 openliberty/open-liberty                                         kernel-java8-openj9-ubi
 k8s.gcr.io/kube-proxy-amd64                                      v1.10.0
 k8s.gcr.io/kube-controller-manager-amd64                         v1.10.0
@@ -395,6 +399,10 @@ free to inspect all other resources.
 Next you will make requests to your services.
 
 
+The default host name for minikube is 192.168.99.100. Otherwise it can be found using the **minikube ip** command.
+
+Then **curl** or visit the following URLs to access your microservices, substituting the appropriate host name:
+
 - **http://[hostname]:31000/system/properties**
  **http://[hostname]:32000/inventory/systems/system-service**
 
@@ -463,6 +471,13 @@ in the ready state before proceeding further. The default properties defined in 
 | **inventory.node.port**        | The NodePort of the Kubernetes Service **inventory-service**, 32000 by default.
 
 Navigate back to the **start** directory.
+
+
+Run the integration tests with the IP address for Minikube:
+```
+mvn failsafe:integration-test -Dcluster.ip=$(minikube ip)
+```
+{: codeblock}
 
 
 
