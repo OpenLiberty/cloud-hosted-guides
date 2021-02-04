@@ -1,4 +1,13 @@
 
+# Welcome to the cloud-hosted guide!
+
+In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
+
+This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
+
+The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+
+
 # Consuming RESTful services with template interfaces
 
 
@@ -25,11 +34,10 @@ In this guide, you will explore both methods to handle scenarios for providing a
 
 # Getting started
 
-Open a command-line session:
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
 
-> [Terminal -> New Terminal]
-
-Navigate to the **/home/project** directory:
+Run the following command to navigate to the **/home/project** directory:
 
 ```
 cd /home/project
@@ -72,11 +80,10 @@ The defaultServer server is ready to run a smarter planet.
 You can access the following microservices:
 
 
-Open a command-line session:
 
-> [Terminal -> New Terminal]
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Navigate to the **/home/project** directory:
+Run the following command to navigate to the **/home/project** directory:
 
 ```
 cd /home/project
@@ -84,10 +91,9 @@ cd /home/project
 {: codeblock}
 
 
+ The http://localhost:9080/system/properties
 
-The http://localhost:9080/system/properties microservice simulates the remote **system** service that retrieves the system property information for a specific host
-
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
@@ -95,11 +101,12 @@ curl http://localhost:9080/system/properties
 {: codeblock}
 
 
+ microservice simulates the remote **system** service that retrieves the system property information for a specific host. In this case, **localhost** is a specific host name.
 
 
-The http://localhost:9080/inventory/systems/localhost microservice is the **inventory** service that invokes the http://localhost:9080/system/properties microservice to retrieves the system property information
+ The http://localhost:9080/inventory/systems/localhost
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
@@ -107,7 +114,7 @@ curl http://localhost:9080/inventory/systems/localhost
 {: codeblock}
 
 
-
+ microservice is the **inventory** service that invokes the [http://localhost:9080/inventory/systems/localhost](http://localhost:9080/inventory/systems/localhost) microservice to retrieves the system property information.
 
 * The http://localhost:9080/inventory/systems/{your_hostname} microservice is the **inventory** service that invokes the http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering **hostname** from your terminal. Visit the URL by replacing **{your_hostname}** with your FQDN.
 You will see the same system property information, but the process of getting the information is different.
@@ -159,8 +166,8 @@ The template interface describes the remote service that you want to access. The
 
 Create the **SystemClient** class.
 
-> [File -> New File]  
-> guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 
 
 
@@ -217,8 +224,8 @@ Implement the actual exception class and the mapper class to see how this mechan
 
 Create the **UnknownUriException** class.
 
-> [File -> New File]  
-> guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 
 
 
@@ -247,8 +254,8 @@ Now, link the **UnknownUriException** class with the corresponding response code
 
 Create the **UnknownUriExceptionMapper** class.
 
-> [File -> New File]  
-> guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
 
 
 
@@ -294,8 +301,8 @@ Configure the default base URL with the MicroProfile Config feature. This featur
 
 Create the configuration file.
 
-> [File -> New File]  
-> guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
 
 
 
@@ -328,8 +335,8 @@ Inject the **SystemClient** interface into the **InventoryManager** class, which
 
 Replace the **InventoryManager** class.
 
-> [File -> Open...]  
-> guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -473,9 +480,9 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 When the server is running, select either approach to fetch your system properties:
 
 
-Visit the http://localhost:9080/inventory/systems/localhost URL
+Visit the http://localhost:9080/inventory/systems/localhost URL. The URL retrieves the system property information for **localhost** host name by invoking the http://localhost:9080/system/properties service.
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
@@ -492,8 +499,8 @@ curl http://localhost:9080/inventory/systems/localhost
 
 Create the **RestClientIT** class.
 
-> [File -> New File]  
-> guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 
 
 
@@ -645,11 +652,9 @@ Feel free to try one of the related guides where you can learn more technologies
 
 ## Clean up your environment
 
-Clean up your online environment so that it is ready to be used with the next guide!
+Clean up your online environment so that it is ready to be used with the next guide:
 
-You can clean up the environment by doing the following:
-
-Delete the **guide-microprofile-rest-client** project by navigating to the **/home/project/** directory
+Delete the **guide-microprofile-rest-client** project by running the following commands:
 
 ```
 cd /home/project
@@ -657,7 +662,4 @@ rm -fr guide-microprofile-rest-client
 ```
 {: codeblock}
 
-Now Log out by navigating to: 
-
-> [Account -> Logout]
-
+Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
