@@ -379,7 +379,7 @@ Create the Maven configuration file.
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>2.4.0</version>
+            <version>2.7.0</version>
         </dependency>
         <!-- tag::rxjava[] -->
         <dependency>
@@ -391,13 +391,13 @@ Create the Maven configuration file.
         <dependency>
             <groupId>org.microshed</groupId>
             <artifactId>microshed-testing-liberty</artifactId>
-            <version>0.9</version>
+            <version>0.9.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>kafka</artifactId>
-            <version>1.12.5</version>
+            <version>1.15.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -423,7 +423,7 @@ Create the Maven configuration file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.2.1</version>
+                <version>3.3.4</version>
             </plugin>
 
             <plugin>
@@ -504,6 +504,12 @@ Next, use the provided script to start the application in Docker containers. The
 
 
 
+```
+.\scripts\startContainers.bat
+```
+{: codeblock}
+
+
 
 # Testing the application
 
@@ -572,6 +578,12 @@ Run the following script to stop the application:
 ```
 {: codeblock}
 
+
+
+```
+.\scripts\stopContainers.bat
+```
+{: codeblock}
 
 
 
