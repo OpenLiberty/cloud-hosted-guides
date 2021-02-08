@@ -1,4 +1,13 @@
 
+# Welcome to the cloud-hosted guide!
+
+In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
+
+This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
+
+The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+
+
 # Getting started with Open Liberty
 
 
@@ -32,11 +41,10 @@ image and run that image as a container.
 
 # Getting started
 
-Open a command-line session:
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
 
-> [Terminal -> New Terminal]
-
-Navigate to the **/home/project** directory:
+Run the following command to navigate to the **/home/project** directory:
 
 ```
 cd /home/project
@@ -101,11 +109,10 @@ for the following message, which indicates that the server startup is complete:
 ```
 
 
-Open a command-line session:
 
-> [Terminal -> New Terminal]
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Navigate to the **/home/project** directory:
+Run the following command to navigate to the **/home/project** directory:
 
 ```
 cd /home/project
@@ -113,10 +120,9 @@ cd /home/project
 {: codeblock}
 
 
+To access the **system** microservice, see the http://localhost:9080/system/properties URL,
 
-To access the **system** microservice, see the http://localhost:9080/system/properties
-
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
@@ -124,7 +130,6 @@ curl http://localhost:9080/system/properties
 {: codeblock}
 
 
- URL,
 and you see a list of the various system properties of your JVM:
 
 ```
@@ -179,9 +184,9 @@ mvn liberty:dev
 Development mode automatically picks up changes that you make to your application and allows you to run tests by pressing the **enter/return** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the **enter/return** key to verify your change.
 
 
-As before, you can see that the application is running by going to the http://localhost:9080/system/properties URL
+As before, you can see that the application is running by going to the http://localhost:9080/system/properties URL.
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
@@ -190,14 +195,13 @@ curl http://localhost:9080/system/properties
 
 
 
-
 Now try updating the server configuration while the server is running in development mode.
 The **system** microservice does not currently include health monitoring to report whether the server and the microservice that it runs are healthy.
 You can add health reports with the MicroProfile Health feature, which adds a **/health** endpoint to your application.
 
-If you try to access this endpoint now at the http://localhost:9080/health/
+If you try to access this endpoint now at the http://localhost:9080/health/ URL, you see a 404 error because the **/health** endpoint does not yet exist:
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/health/
@@ -205,7 +209,6 @@ curl http://localhost:9080/health/
 {: codeblock}
 
 
- URL, you see a 404 error because the **/health** endpoint does not yet exist:
 
 ```
 Error 404: java.io.FileNotFoundException: SRVE0190E: File not found: /health
@@ -215,8 +218,8 @@ To add the MicroProfile Health feature to the server, include the **mpHealth** f
 
 Replace the server configuration file.
 
-> [File -> Open...]  
-> guide-getting-started/start/src/main/liberty/config/server.xml
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
@@ -267,15 +270,14 @@ You can see the server being updated in the server log displayed in your command
 ```
 
 
-Try to access the **/health** endpoint again by visiting the http://localhost:9080/health URL
+Try to access the **/health** endpoint again by visiting the http://localhost:9080/health URL.
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
-
 
 
 You see the following JSON:
@@ -308,8 +310,8 @@ A liveness check allows third-party services to determine if the microservice is
 
 Create the **SystemReadinessCheck** class.
 
-> [File -> New File]  
-> guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 
 
 
@@ -358,8 +360,8 @@ The **SystemReadinessCheck** class verifies that the
 
 Create the **SystemLivenessCheck** class.
 
-> [File -> New File]  
-> guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
 
 
 
@@ -414,15 +416,14 @@ The following messages display in your first command-line session:
 ```
 
 
-Access the **/health** endpoint again by going to the http://localhost:9080/health URL
+Access the **/health** endpoint again by going to the http://localhost:9080/health URL.
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
-
 
 
 This time you see the overall status of your server and the aggregated data of the liveness and readiness checks for the **system** microservice:
@@ -449,9 +450,9 @@ This time you see the overall status of your server and the aggregated data of t
 ```
 
 
-You can also access the **/health/ready** endpoint by going to the http://localhost:9080/health/ready URL to view the data from the readiness health check
+You can also access the **/health/ready** endpoint by going to the http://localhost:9080/health/ready URL to view the data from the readiness health check.
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/health/ready
@@ -460,16 +461,14 @@ curl http://localhost:9080/health/ready
 
 
 
+Similarly, access the **/health/live** endpoint by going to the http://localhost:9080/health/live URL to view the data from the liveness health check.
 
-Similarly, access the **/health/live** endpoint by going to the http://localhost:9080/health/live URL to view the data from the liveness health check
-
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/health/live
 ```
 {: codeblock}
-
 
 
 
@@ -505,8 +504,8 @@ Try enabling detailed logging of the MicroProfile Health feature by adding the
 
 Replace the server configuration file.
 
-> [File -> Open...]  
-> guide-getting-started/start/src/main/liberty/config/server.xml
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
@@ -634,15 +633,14 @@ CONTAINER ID    IMAGE                         CREATED          STATUS           
 ```
 
 
-To access the application, go to the http://localhost:9080/system/properties URL
+To access the application, go to the http://localhost:9080/system/properties URL.
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
 ```
 {: codeblock}
-
 
 
 
@@ -702,9 +700,9 @@ java -jar guide-getting-started.jar
 
 
 
-When the server starts, go to the http://localhost:9080/system/properties
+When the server starts, go to the http://localhost:9080/system/properties URL to access your application that is now running out of the minimal runnable JAR file.
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
@@ -712,8 +710,6 @@ curl http://localhost:9080/system/properties
 {: codeblock}
 
 
- URL to access
-your application that is now running out of the minimal runnable JAR file.
 
 You can stop the server by pressing **CTRL+C** in the command-line session that the server runs in.
 
@@ -733,11 +729,9 @@ You've learned the basics of deploying and updating an application on an Open Li
 
 ## Clean up your environment
 
-Clean up your online environment so that it is ready to be used with the next guide!
+Clean up your online environment so that it is ready to be used with the next guide:
 
-You can clean up the environment by doing the following:
-
-Delete the **guide-getting-started** project by navigating to the **/home/project/** directory
+Delete the **guide-getting-started** project by running the following commands:
 
 ```
 cd /home/project
@@ -745,7 +739,4 @@ rm -fr guide-getting-started
 ```
 {: codeblock}
 
-Now Log out by navigating to: 
-
-> [Account -> Logout]
-
+Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
