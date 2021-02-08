@@ -1,4 +1,13 @@
 
+# Welcome to the cloud-hosted guide!
+
+In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
+
+This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
+
+The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+
+
 # Configuring microservices
 
 
@@ -18,11 +27,10 @@ service on that host to get these system properties. You will add configuration 
 
 # Getting started
 
-Open a command-line session:
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
 
-> [Terminal -> New Terminal]
-
-Navigate to the **/home/project** directory:
+Run the following command to navigate to the **/home/project** directory:
 
 ```
 cd /home/project
@@ -66,11 +74,9 @@ You can access the following two microservices to test their availability:
 
 
 
-Open a command-line session:
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-> [Terminal -> New Terminal]
-
-Navigate to the **/home/project** directory:
+Run the following command to navigate to the **/home/project** directory:
 
 ```
 cd /home/project
@@ -80,7 +86,7 @@ cd /home/project
 
  http://localhost:9080/system/properties
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
@@ -93,7 +99,7 @@ curl http://localhost:9080/system/properties
 
  http://localhost:9080/inventory/systems
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems
@@ -108,7 +114,7 @@ In addition, you can access a third microservice, which retrieves and aggregates
 
  http://localhost:9080/config
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/config
@@ -180,8 +186,8 @@ The **`io_openliberty_guides_port_number`** property that has already been defin
 To use this configuration property,
 Create the **InventoryConfig.java** class.
 
-> [File -> New File]  
-> guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
 
 
 
@@ -250,8 +256,8 @@ To link this JSON file to your application and to implement the **ConfigSource**
 
 Create the **CustomConfigSource** class.
 
-> [File -> New File]  
-> guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java
 
 
 
@@ -364,8 +370,8 @@ Finally, register the custom configuration source.
 
 Create the configuration file.
 
-> [File -> New File]  
-> guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource
 
 
 
@@ -386,8 +392,8 @@ To enable this dynamic injection,
 
 Replace the **InventoryConfig.java** class.
 
-> [File -> Open...]  
-> guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
 
 
 
@@ -448,8 +454,8 @@ Therefore, in the previous section, it is type-safe to directly set the variable
 To convert configured Strings to an arbitrary class type, such as the **Email** class type,
 Replace the **Email** Class.
 
-> [File -> Open...]  
-> guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java
 
 
 
@@ -492,8 +498,8 @@ The Type parameter of the interface is the target type the String is converted t
 
 Create the **CustomEmailConverter** class.
 
-> [File -> New File]  
-> guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java
 
 
 
@@ -522,8 +528,8 @@ This implements the **Converter<T>** interface.
 To register your implementation,
 Create the configuration file.
 
-> [File -> New File]  
-> guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter
 
 
 
@@ -538,8 +544,8 @@ io.openliberty.guides.config.CustomEmailConverter
 To use the custom **Email** converter,
 Replace the **InventoryConfig** class.
 
-> [File -> Open...]  
-> guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
 
 
 
@@ -591,8 +597,8 @@ Inject the **`io_openliberty_guides_email`** property, and add the **getEmail()*
 To use externalized configuration in the **inventory** service,
 Replace the **InventoryResource** class.
 
-> [File -> Open...]  
-> guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
@@ -686,7 +692,7 @@ While the server is running, the following two microservices should be available
 
  http://localhost:9080/system/properties
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
@@ -699,7 +705,7 @@ curl http://localhost:9080/system/properties
 
  http://localhost:9080/inventory/systems
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems
@@ -715,7 +721,7 @@ You can find the service that retrieves configuration information that is specif
 
  http://localhost:9080/config
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/config
@@ -732,9 +738,9 @@ The **`config_ordinal`** value of the custom configuration source is set to **15
 
 Play with this application by changing configuration values for each property in the **resources/CustomConfigSource.json** file.
 
-Your changes are added dynamically, and you do not need to restart the server
+Your changes are added dynamically, and you do not need to restart the server. Refresh http://localhost:9080/config
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/config
@@ -742,11 +748,12 @@ curl http://localhost:9080/config
 {: codeblock}
 
 
+ to see the dynamic changes.
 
 
-For example, change **`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**, then try to access http://localhost:9080/inventory/systems again
+For example, change **`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**, then try to access http://localhost:9080/inventory/systems
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems
@@ -754,7 +761,7 @@ curl http://localhost:9080/inventory/systems
 {: codeblock}
 
 
-
+ again.
 The following message displays: **ERROR: Service is currently in maintenance**.
 
 
@@ -763,8 +770,8 @@ The following message displays: **ERROR: Service is currently in maintenance**.
 
 Create the **ConfigurationIT** class.
 
-> [File -> New File]  
-> guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java
 
 
 
@@ -945,11 +952,9 @@ expand on top what you built in this guide.
 
 ## Clean up your environment
 
-Clean up your online environment so that it is ready to be used with the next guide!
+Clean up your online environment so that it is ready to be used with the next guide:
 
-You can clean up the environment by doing the following:
-
-Delete the **guide-microprofile-config** project by navigating to the **/home/project/** directory
+Delete the **guide-microprofile-config** project by running the following commands:
 
 ```
 cd /home/project
@@ -957,7 +962,4 @@ rm -fr guide-microprofile-config
 ```
 {: codeblock}
 
-Now Log out by navigating to: 
-
-> [Account -> Logout]
-
+Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
