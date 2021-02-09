@@ -96,6 +96,7 @@ cd /home/project
 
 http://localhost:9080/system/properties
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -106,8 +107,8 @@ curl http://localhost:9080/system/properties
 
 
 
-
 http://localhost:9080/inventory/systems
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -119,8 +120,8 @@ curl http://localhost:9080/inventory/systems
 
 
 
-
 Visit the http://localhost:9080/health URL to see the
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -138,6 +139,7 @@ checks show the state of the **inventory** service. As you might expect, both se
 
 You can also access the **/health/ready** endpoint by visiting the http://localhost:9080/health/ready
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -146,10 +148,10 @@ curl http://localhost:9080/health/ready
 {: codeblock}
 
 
-
 URL to view the data from the readiness health checks. Similarly, access the **/health/live**
 
 endpoint by visiting the http://localhost:9080/health/live
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -157,7 +159,6 @@ _To see the output for this URL in the IDE, run the following command at a termi
 curl http://localhost:9080/health/live
 ```
 {: codeblock}
-
 
 
 URL to view the data from the liveness health checks.
@@ -252,13 +253,13 @@ By pairing this annotation with the **ApplicationScoped** context from the Conte
 
 Dependency Injections API, the bean is discovered automatically when the http://localhost:9080/health
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
-
 
 
 endpoint receives a request.
@@ -453,6 +454,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 While the server is running, navigate to the http://localhost:9080/health URL to find
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -466,6 +468,7 @@ the aggregated liveness and readiness health reports on the two services.
 
 You can also navigate to the http://localhost:9080/health/ready
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -475,8 +478,8 @@ curl http://localhost:9080/health/ready
 
 
 
-
 URL to view the readiness health report, or the http://localhost:9080/health/live
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -493,6 +496,7 @@ property to **true** in the **resources/CustomConfigSource.json** file. Because
 
 this configuration file is picked up dynamically, simply refresh the http://localhost:9080/health
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -501,11 +505,11 @@ curl http://localhost:9080/health
 {: codeblock}
 
 
-
 URL to see that the state of the **inventory** service changed to **DOWN**. The
 overall state of the application also changed to **DOWN** as a result. Go to the
 
 http://localhost:9080/inventory/systems URL to verify that the **inventory** service is
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
