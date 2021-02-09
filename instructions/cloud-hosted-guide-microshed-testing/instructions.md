@@ -318,6 +318,7 @@ cd /home/project
 
 The **withReadinessPath(String)** method indicates what path is polled by HTTP to determine application readiness. MicroShed Testing automatically starts the ApplicationContainer application and waits for it to be ready before the tests start running. In this case, you are using the default application readiness check at the http://localhost:9080/health/ready URL, which is enabled by the **MicroProfile Health** feature in our server.xml configuration file. When the readiness URL returns **HTTP 200**, the application is considered ready and the tests begin running.
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -435,7 +436,8 @@ Import the **org.microshed.testing.jaxrs.RESTClient** annotation, create a **Per
 
 
 
-In this example, the **PersonService** injected type is the same **io.openliberty.guides.testing.PersonService** class that is used in your application. However, the _instance_ that gets injected is a REST client proxy. So, if you call **personSvc.createPerson("Bob", 42)**, the REST client makes an HTTP POST request to the application that is running at http://localhost:9080/guide-microshed-testing/people
+In this example, the **PersonService** injected type is the same **io.openliberty.guides.testing.PersonService** class that is used in your application. However, the _instance_ that gets injected is a REST client proxy. So, if you call **personSvc.createPerson("Bob", 42)**, the REST client makes an HTTP POST request to the application that is running at http://localhost:9080/guide-microshed-testing/people, which triggers the corresponding Java method in the application.
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -445,7 +447,6 @@ curl http://localhost:9080/guide-microshed-testing/people
 {: codeblock}
 
 
-, which triggers the corresponding Java method in the application.
 
 
 
