@@ -149,7 +149,7 @@ to see the application services.
 
 View the traces for **inventory**. You'll see the following trace:
 
-![Trace result](https://github.com/OpenLiberty/guide-microprofile-opentracing-jaeger/blob/master/assets/tracelist.png)
+![Trace result](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/tracelist.png)
 
 The trace has four spans, three from inventory and one from system.
 Click the trace to view its details.
@@ -159,7 +159,7 @@ received and the time at which a response was sent back.
 
 Verify that there are three spans from **inventory** and one span from **system**:
 
-![Finished application's trace](https://github.com/OpenLiberty/guide-microprofile-opentracing-jaeger/blob/master/assets/trace01.png)
+![Finished application's trace](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/trace01.png)
 
 After you’re finished reviewing the application, stop the Open Liberty servers by pressing **CTRL+C** in the command-line
 sessions where you ran the system and inventory services.
@@ -400,7 +400,7 @@ method in the **InventoryManager** class.
 
 Verify that you see the following spans:
 
-![Explicit trace span](https://github.com/OpenLiberty/guide-microprofile-opentracing-jaeger/blob/master/assets/trace02.png)
+![Explicit trace span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/trace02.png)
 
 
 
@@ -496,7 +496,7 @@ You see a new trace record that is just one span long for the remaining **list()
 
 Verify that you see the following span:
 
-![Disable trace span](https://github.com/OpenLiberty/guide-microprofile-opentracing-jaeger/blob/master/assets/trace03.png)
+![Disable trace span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/trace03.png)
 
 
 
@@ -601,7 +601,7 @@ Select the **inventory** traces and click the **Find Traces** button.
 
 Verify that there are three spans from **inventory** and one span from **system**:
 
-![Trace with custom span](https://github.com/OpenLiberty/guide-microprofile-opentracing-jaeger/blob/master/assets/trace01.png)
+![Trace with custom span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/trace01.png)
 
 This simple example shows what you can do with the injected **Tracer** object. More configuration
 options are available to you, including setting a timestamp for when a span was created and destroyed.
