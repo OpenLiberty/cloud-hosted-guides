@@ -24,7 +24,10 @@ between services so that requests are non-blocking and decoupled from responses.
 services that use an external message broker to manage communications in the
 [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
+![Reactive system inventory application](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-service-testing/master/assets/reactive-messaging-system-inventory.png)
 
+
+*True-to-production integration testing with MicroShed Testing*
 
 Tests sometimes pass during the development and testing stages of an application's lifecycle but then fail in production
 because of differences between your development and production environments. While you can create mock objects and custom
@@ -267,8 +270,9 @@ public class SystemServiceIT {
 
     @KafkaConsumerClient(valueDeserializer = SystemLoadDeserializer.class,
                          groupId = "system-load-status",
-                         topics = "systemLoadTopic",
-                         properties = ConsumerConfig.AUTO_OFFSET_RESET_CONFIG + "=earliest")
+                         topics = "system.load",
+                         properties = ConsumerConfig.AUTO_OFFSET_RESET_CONFIG
+                                      + "=earliest")
     public static KafkaConsumer<String, SystemLoad> consumer;
 
     @Test
@@ -283,7 +287,7 @@ public class SystemServiceIT {
             assertNotNull(sl.hostname);
             assertNotNull(sl.loadAverage);
         }
-        
+
         consumer.commitAsync();
     }
 }
@@ -294,7 +298,7 @@ public class SystemServiceIT {
 
 The test uses the **KafkaConsumer** client API and
 is configured by using the **@KafkaConsumerConfig** annotation. The consumer client is configured
-to consume messages from the **systemLoadTopic** topic in the **kafka** container.
+to consume messages from the **system.load** topic in the **kafka** container.
 To learn more about Kafka APIs and how to use them, check out the
 [official Kafka Documentation](https://kafka.apache.org/documentation/#api).
 
@@ -434,11 +438,11 @@ public class InventoryServiceIT {
     @Test
     public void testCpuUsage() throws InterruptedException {
         SystemLoad sl = new SystemLoad("localhost", 1.1);
-        producer.send(new ProducerRecord<String, SystemLoad>("systemLoadTopic", sl));
+        producer.send(new ProducerRecord<String, SystemLoad>("system.load", sl));
         Thread.sleep(5000);
         Response response = inventoryResource.getSystems();
         List<Properties> systems =
-                response.readEntity(new GenericType<List<Properties>>() {});
+                response.readEntity(new GenericType<List<Properties>>() { });
         Assertions.assertEquals(200, response.getStatus(),
                 "Response should be 200");
         Assertions.assertEquals(systems.size(), 1);
@@ -460,7 +464,7 @@ client API to produce messages in the test environment for the **inventory** ser
 **@KafkaProducerClient** annotation configures the producer to use the custom serializer provided in
 the **SystemLoad** class. The **@KafkaProducerClient** annotation
 doesn't include a topic that the client produces messages to because it has the flexibility to produce messages to any topic.
-In this example, it is configured to produce messages to the **systemLoadTopic** topic.
+In this example, it is configured to produce messages to the **system.load** topic.
 
 The **testCpuUsage** test method produces a message to Kafka and then
 **verifies** that the response from the **inventory** service matches what is expected.
