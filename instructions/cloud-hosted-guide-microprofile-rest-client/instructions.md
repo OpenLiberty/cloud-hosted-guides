@@ -91,7 +91,8 @@ cd /home/project
 {: codeblock}
 
 
-The http://localhost:9080/system/properties microservice simulates the remote **system** service that retrieves the system property information for a specific host
+ The http://localhost:9080/system/properties microservice simulates the remote **system** service that retrieves the system property information for a specific host. In this case, **localhost** is a specific host name.
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -103,13 +104,24 @@ curl http://localhost:9080/system/properties
 
 
 
-The http://localhost:9080/inventory/systems/localhost microservice is the **inventory** service that invokes the http://localhost:9080/system/properties microservice to retrieves the system property information
+
+ The http://localhost:9080/inventory/systems/localhost microservice is the **inventory** service that invokes the http://localhost:9080/system/properties microservice to retrieves the system property information.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
+```
+: codeblock
+
+
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
@@ -479,12 +491,24 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 When the server is running, select either approach to fetch your system properties:
 
 
-Visit the http://localhost:9080/inventory/systems/localhost URL
+
+Visit the http://localhost:9080/inventory/systems/localhost URL. The URL retrieves the system property information for **localhost** host name by invoking the http://localhost:9080/system/properties service.
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
+```
+: codeblock
+
+
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
