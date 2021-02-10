@@ -94,7 +94,8 @@ cd /home/project
 {: codeblock}
 
 
-http://localhost:9080/LibertyProject/System/properties URL.
+http://localhost:9080/LibertyProject/System/properties URL. 
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -283,7 +284,8 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 Check out the service that you created at the
 
-http://localhost:9080/LibertyProject/System/properties URL.
+http://localhost:9080/LibertyProject/System/properties URL. 
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -299,7 +301,8 @@ curl http://localhost:9080/LibertyProject/System/properties
 
 You can test this service manually by starting a server and pointing a web browser at the
 
-http://localhost:9080/LibertyProject/System/properties URL. However, automated tests are a
+http://localhost:9080/LibertyProject/System/properties URL. However, automated tests are a 
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
