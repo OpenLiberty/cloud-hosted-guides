@@ -122,6 +122,7 @@ cd /home/project
 
 To access the **system** microservice, see the http://localhost:9080/system/properties URL,
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -186,6 +187,7 @@ Development mode automatically picks up changes that you make to your applicatio
 
 As before, you can see that the application is running by going to the http://localhost:9080/system/properties URL.
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -200,6 +202,7 @@ The **system** microservice does not currently include health monitoring to repo
 You can add health reports with the MicroProfile Health feature, which adds a **/health** endpoint to your application.
 
 If you try to access this endpoint now at the http://localhost:9080/health/ URL, you see a 404 error because the **/health** endpoint does not yet exist:
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -271,6 +274,7 @@ You can see the server being updated in the server log displayed in your command
 
 
 Try to access the **/health** endpoint again by visiting the http://localhost:9080/health URL.
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -418,6 +422,7 @@ The following messages display in your first command-line session:
 
 Access the **/health** endpoint again by going to the http://localhost:9080/health URL.
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -452,6 +457,7 @@ This time you see the overall status of your server and the aggregated data of t
 
 You can also access the **/health/ready** endpoint by going to the http://localhost:9080/health/ready URL to view the data from the readiness health check.
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -462,6 +468,7 @@ curl http://localhost:9080/health/ready
 
 
 Similarly, access the **/health/live** endpoint by going to the http://localhost:9080/health/live URL to view the data from the liveness health check.
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -635,6 +642,7 @@ CONTAINER ID    IMAGE                         CREATED          STATUS           
 
 To access the application, go to the http://localhost:9080/system/properties URL.
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -701,6 +709,7 @@ java -jar guide-getting-started.jar
 
 
 When the server starts, go to the http://localhost:9080/system/properties URL to access your application that is now running out of the minimal runnable JAR file.
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
