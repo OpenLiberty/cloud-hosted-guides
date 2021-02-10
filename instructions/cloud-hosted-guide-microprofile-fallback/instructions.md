@@ -101,6 +101,7 @@ cd /home/project
 
 Point your browser to the http://localhost:9080/inventory/systems/localhost URL, which accesses the
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -135,6 +136,7 @@ You do not need
 to restart the server. Next, return to your browser and point back to the
 
 http://localhost:9080/inventory/systems/localhost URL.
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -368,6 +370,7 @@ When the server is running, point your browser to the
 
 http://localhost:9080/inventory/systems/localhost URL.
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -379,6 +382,7 @@ curl http://localhost:9080/inventory/systems/localhost
 You receive the system properties of your local JVM from the **inventory** service. Next, point your
 
 browser to the **system** service URL, which is located at http://localhost:9080/system/properties,
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -394,6 +398,7 @@ calling the **system** service.
 
 
 To see the application metrics, go to the https://localhost:9443/metrics/application URL. Log in as the **admin** user, and use **adminpwd** as the password.
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -441,6 +446,7 @@ After saving the file, go back to your browser and
 
 refresh to the http://localhost:9080/inventory/systems/localhost URL to view the cached version of
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -456,6 +462,7 @@ The cached system properties contain only the OS name and user name key and valu
 
 To see that the **system** service is down, point your browser to the http://localhost:9080/system/properties URL again.
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -468,6 +475,7 @@ You see that the service displays a 503 HTTP response code.
 
 
 Go to the https://localhost:9443/metrics/application URL again.
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
