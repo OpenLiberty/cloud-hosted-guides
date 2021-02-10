@@ -84,7 +84,8 @@ cd /home/project
 {: codeblock}
 
 
- http://localhost:9080/system/properties
+ http://localhost:9080/system/properties retrieves the information for a specific host
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -94,10 +95,10 @@ curl http://localhost:9080/system/properties
 {: codeblock}
 
 
- retrieves the information for a specific host
 
 
- http://localhost:9080/inventory/systems
+ http://localhost:9080/inventory/systems retrieves the information for a list of all previously registered hosts
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -107,12 +108,12 @@ curl http://localhost:9080/inventory/systems
 {: codeblock}
 
 
- retrieves the information for a list of all previously registered hosts
 
 In addition, you can access a third microservice, which retrieves and aggregates all of the configuration properties and sources that have been added throughout this guide. This is available at:
 
 
  http://localhost:9080/config
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -120,7 +121,6 @@ _To see the output for this URL in the IDE, run the following command at a termi
 curl http://localhost:9080/config
 ```
 {: codeblock}
-
 
 
 
@@ -692,6 +692,7 @@ While the server is running, the following two microservices should be available
 
  http://localhost:9080/system/properties
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -702,8 +703,8 @@ curl http://localhost:9080/system/properties
 
 
 
-
  http://localhost:9080/inventory/systems
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -715,11 +716,11 @@ curl http://localhost:9080/inventory/systems
 
 
 
-
 You can find the service that retrieves configuration information that is specific to this guide at the following location:
 
 
  http://localhost:9080/config
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -727,7 +728,6 @@ _To see the output for this URL in the IDE, run the following command at a termi
 curl http://localhost:9080/config
 ```
 {: codeblock}
-
 
 
 
@@ -738,7 +738,8 @@ The **`config_ordinal`** value of the custom configuration source is set to **15
 
 Play with this application by changing configuration values for each property in the **resources/CustomConfigSource.json** file.
 
-Your changes are added dynamically, and you do not need to restart the server. Refresh http://localhost:9080/config
+Your changes are added dynamically, and you do not need to restart the server. Refresh http://localhost:9080/config to see the dynamic changes.
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -748,10 +749,10 @@ curl http://localhost:9080/config
 {: codeblock}
 
 
- to see the dynamic changes.
 
 
-For example, change **`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**, then try to access http://localhost:9080/inventory/systems
+For example, change **`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**, then try to access http://localhost:9080/inventory/systems again.
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -761,7 +762,6 @@ curl http://localhost:9080/inventory/systems
 {: codeblock}
 
 
- again.
 The following message displays: **ERROR: Service is currently in maintenance**.
 
 
