@@ -1,4 +1,13 @@
 
+# Welcome to the cloud-hosted guide!
+
+In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
+
+This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
+
+The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+
+
 # Containerizing microservices
 
 
@@ -21,6 +30,30 @@ The two microservices that you'll be working with are called **system** and **in
 of the running container. The **inventory** microservice adds the properties from the **system** microservice to the inventory. This guide demonstrates how both microservices can run and communicate
 with each other in different Docker containers. 
 
+# Getting started
+
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
+
+Run the following command to navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-containerize.git) and use the projects that are provided inside:
+
+```
+git clone https://github.com/openliberty/guide-containerize.git
+cd guide-containerize
+```
+{: codeblock}
+
+
+The **start** directory contains the starting project that you will build upon.
+
+The **finish** directory contains the finished project that you will build.
 
 
 # Packaging your microservices
@@ -43,56 +76,23 @@ mvn -pl inventory liberty:run
 
 
 
-
-Open a command-line session:
-
-> [Terminal -> New Terminal]
-
-Navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-
-To access the **inventory** service, which displays the current contents of the inventory, see http://localhost:9081/inventory/systems
-
-_(or run the following curl command)_
-
+To access the **inventory** service, which displays the current contents of the inventory, run the following curl command: 
 ```
 curl http://localhost:9081/inventory/systems
 ```
 {: codeblock}
 
-
-
-
-
-The **system** service shows the system properties of the running JVM and can be found at  http://localhost:9080/system/properties
-
-_(or run the following curl command)_
-
+The **system** service shows the system properties of the running JVM and can be found by running the following curl command:
 ```
 curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
-
-
-
-
-The system properties of your localhost can be added to the **inventory** at http://localhost:9081/inventory/systems/localhost
-
-_(or run the following curl command)_
-
+The system properties of your localhost can be added to the **inventory** service at **http://localhost:9081/inventory/systems/localhost**. Run the following curl command:
 ```
 curl http://localhost:9081/inventory/systems/localhost
 ```
 {: codeblock}
-
-
-
 
 After you are finished checking out the microservices, stop the Open Liberty servers by pressing **CTRL+C**
 in the command-line sessions where you ran the servers. Alternatively, you can run the **liberty:stop** goal in another command-line session:
@@ -132,8 +132,8 @@ You will be creating two Docker images to run the **inventory** service and **sy
 
 Create the **Dockerfile** for the inventory service.
 
-> [File -> New File]  
-> guide-containerize/start/inventory/Dockerfile
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-containerize/start/inventory/Dockerfile
 
 
 
@@ -204,8 +204,8 @@ The **Dockerfile** for the **system** service follows the same instructions as t
 
 Create the **Dockerfile** for the system service.
 
-> [File -> New File]  
-> guide-containerize/start/system/Dockerfile
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-containerize/start/system/Dockerfile
 
 
 
@@ -330,18 +330,12 @@ find the cause of the issues, remove the faulty containers with the **docker rm 
 your images, and start the containers again.
 
 
-To access the application, point your browser to the http://localhost:9081/inventory/systems URL
-
-_(or run the following curl command)_
-
+To access the application, run the following curl command. 
+An empty list is expected because no system properties are stored in the inventory yet:
 ```
 curl http://localhost:9081/inventory/systems
 ```
 {: codeblock}
-
-
- 
-An empty list is expected because no system properties are stored in the inventory yet. 
 
 Next, retrieve the **system** container's IP address by using the **system** container's name that is defined when it ran the Docker containers. 
 Run the following command to retrieve the **system** IP address:
@@ -360,22 +354,21 @@ You find the **system** container's IP address:
 
 In this case, the IP address for the **system** service is **172.17.0.2**. Take note of this IP address to add the system properties to the **inventory** service. 
 
-Point your browser to **http://localhost:9081/inventory/systems/pass:c[[system-ip-address]]** by replacing **[system-ip-address]** with the IP address you obtained earlier.
+
+Run the following commands to go to the **http://localhost:9081/inventory/systems/[system-ip-address]** by replacing **[system-ip-address]** URL with the IP address that you obtained earlier:
+```
+SYSTEM_IP=**docker inspect -f "{{.NetworkSettings.IPAddress }}" system**
+curl http://localhost:9081/inventory/systems/{$SYSTEM_IP}
+```
+{: codeblock}
+
 You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
-
-properties are automatically stored in the inventory
-
-_(or run the following curl command)_
-
+properties are automatically stored in the inventory. Run the following curl command and 
+you see a new entry for **[system-ip-address]**:
 ```
 curl http://localhost:9081/inventory/systems
 ```
 {: codeblock}
-
-
- Go back to http://localhost:9081/inventory/systems[http://localhost:9081/inventory/systems^] and
-you see a new entry for **[system-ip-address]**. 
-
 
 # Externalizing server configuration
 
@@ -430,36 +423,31 @@ Now, when the service is starting up, Open Liberty finds the
 **default.http.port** variable to be used in the HTTP
 endpoint.
 
-The **inventory** service will now be available on the new port number you
-specified. You can see the contents of the inventory at
 
-http://localhost:9091/inventory/systems
-
-_(or run the following curl command)_
-
+The **inventory** service is now available on the new port number that you
+specified. You can see the contents of the inventory at the
+**http://localhost:9091/inventory/systems** URL. Run the following curl command:
 ```
 curl http://localhost:9091/inventory/systems
 ```
 {: codeblock}
 
+You can add your local system properties at the
+**http://localhost:9091/inventory/systems/[system-ip-address]** URL by
+replacing **[system-ip-address]** with the IP address that you obtained in the previous
+section. Run the following commands:
+```
+SYSTEM_IP=**docker inspect -f "{{.NetworkSettings.IPAddress }}" system**
+curl http://localhost:9081/inventory/systems/{$SYSTEM_IP}
+```
+{: codeblock}
 
-
-You can add your local system properties at
-**http://localhost:9091/inventory/systems/pass:c[[system-ip-address]]** by
-replacing **[system-ip-address]** with the IP address you obtained in the previous
-section. The **system** service remains unchanged and is available at
-
-http://localhost:9080/system/properties
-
-_(or run the following curl command)_
-
+The **system** service remains unchanged and is available at the
+**http://localhost:9080/system/properties** URL. Run the following curl command:
 ```
 curl http://localhost:9080/system/properties
 ```
 {: codeblock}
-
-
-
 
 You can externalize the configuration of more than just the port numbers.
 To learn more about Open Liberty server configuration, check out the
@@ -472,8 +460,8 @@ You can test your microservices manually by hitting the endpoints or with automa
 
 Create the **SystemEndpointIT** class.
 
-> [File -> New File]  
-> guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 
 
 
@@ -547,8 +535,8 @@ The **testGetProperties()** method checks for a **200** response code from the *
 
 Create the **InventoryEndpointIT** class.
 
-> [File -> New File]  
-> guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
 
@@ -787,15 +775,23 @@ docker rm inventory system
 You have just built Docker images and run two microservices on Open Liberty in containers. 
 
 
+ Copyright (c) 2018 IBM Corporation and others.
+ Licensed under Creative Commons Attribution-NoDerivatives
+ 4.0 International (CC BY-ND 4.0)
+   https://creativecommons.org/licenses/by-nd/4.0/
+
+ Contributors:
+     IBM Corporation
+# Guide Attribution
+
+{doctitle} [licensedClass]#by# {guide-author} [licensedClass]#is licensed under# CC BY-ND 4.0
 
 
 ## Clean up your environment
 
-Clean up your online environment so that it is ready to be used with the next guide!
+Clean up your online environment so that it is ready to be used with the next guide:
 
-You can clean up the environment by doing the following:
-
-Delete the **guide-containerize** project by navigating to the **/home/project/** directory
+Delete the **guide-containerize** project by running the following commands:
 
 ```
 cd /home/project
@@ -803,7 +799,10 @@ rm -fr guide-containerize
 ```
 {: codeblock}
 
-Now Log out by navigating to: 
+Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
 
-> [Account -> Logout]
 
+# Where to next? 
+
+- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+- [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
