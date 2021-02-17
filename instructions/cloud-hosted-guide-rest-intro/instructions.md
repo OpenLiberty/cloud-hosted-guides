@@ -1,5 +1,5 @@
 
-# Welcome to the cloud-hosted guide!
+# Welcome to the cloud-hosted-guide-rest-intro!
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
