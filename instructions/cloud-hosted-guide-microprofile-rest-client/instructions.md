@@ -177,8 +177,14 @@ The template interface describes the remote service that you want to access. The
 
 Create the **SystemClient** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 
 
 
@@ -235,8 +241,14 @@ Implement the actual exception class and the mapper class to see how this mechan
 
 Create the **UnknownUriException** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 
 
 
@@ -265,8 +277,14 @@ Now, link the **UnknownUriException** class with the corresponding response code
 
 Create the **UnknownUriExceptionMapper** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
 
 
 
@@ -312,8 +330,14 @@ Configure the default base URL with the MicroProfile Config feature. This featur
 
 Create the configuration file.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
 
 
 
@@ -522,8 +546,14 @@ curl http://localhost:9080/system/properties
 
 Create the **RestClientIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 
 
 
