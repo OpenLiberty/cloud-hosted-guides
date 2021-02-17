@@ -1,5 +1,5 @@
 
-# Welcome to the cloud-hosted guide!
+# Welcome to the cloud-hosted-guide-microprofile-reactive-messaging!
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -26,6 +26,8 @@ Asynchronous communication between microservices can be used to build reactive a
 MicroProfile Reactive Messaging provides an easy way to asynchronously send, receive, and process messages that are received as continuous streams of events. You simply annotate application beans' methods and Open Liberty converts the annotated methods to reactive streams-compatible publishers, subscribers, and processors and connects them up to each other. MicroProfile Reactive Messaging provides a Connector API so that your methods can be connected to external messaging systems that produce and consume the streams of events, such as [Apache Kafka](https://kafka.apache.org/).
 
 The application in this guide consists of two microservices, **system** and **inventory**. Every 15 seconds, the **system** microservice calculates and publishes an event that contains its current average system load. The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. The current inventory of systems can be accessed via the **/systems** REST endpoint. You'll create the **system** and **inventory** microservices using MicroProfile Reactive Messaging.
+
+![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory.png)
 
 
 # Getting started
@@ -118,7 +120,11 @@ public class SystemService {
 
 The **SystemService** class contains a **Publisher** method that is called **sendSystemLoad()**, which calculates and returns the average system load. The **@Outgoing** annotation on the **sendSystemLoad()** method indicates that the method publishes its calculation as a message on a topic in the Kafka messaging system. The **Flowable.interval()** method from **rxJava** is used to set the frequency of how often the system service publishes the calculation to the event stream.
 
-The messages are transported between the service and the Kafka messaging system through a channel called **systemLoad**.
+The messages are transported between the service and the Kafka messaging system through a channel called **systemLoad**. The name of the channel to use is set in the **@Outgoing("systemLoad")** annotation. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are published on a topic called **systemLoadTopic**, as shown in the following diagram:
+
+![Reactive system publisher](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-publisher.png)
+
+
 # Creating the consumer in the inventory microservice
 
 The **inventory** microservice records in its inventory the average system load information that it received from potentially multiple instances of the **system** service.
@@ -223,7 +229,11 @@ public class InventoryResource {
 
 The **inventory** microservice receives the message from the **system** microservice over the **@Incoming("systemLoad")** channel. The properties of this channel are defined in the **microprofile-config.properties** file. The **inventory** microservice is also a RESTful service that is served at the **/inventory** endpoint.
 
-The **InventoryResource** class contains a method called **updateStatus()**, which receives the message that contains the average system load and updates its existing inventory of systems and their average system load.
+The **InventoryResource** class contains a method called **updateStatus()**, which receives the message that contains the average system load and updates its existing inventory of systems and their average system load. The **@Incoming("systemLoad")** annotation on the **updateStatus()** method indicates that the method retrieves the average system load information by connecting to the channel called **systemLoad**. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are retrieved from a topic called **systemLoadTopic**, as shown in the following diagram:
+
+![Reactive system inventory detail](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-detail.png)
+
+
 # Configuring the MicroProfile Reactive Messaging connectors for Kafka
 
 The **system** and **inventory** services exchange messages with the external messaging system through a channel. The MicroProfile Reactive Messaging Connector API makes it easy to connect each service to the channel. You just need to add configuration keys in a properties file for each of the services. These configuration keys define properties such as the name of the channel and the topic in the Kafka messaging system. Open Liberty includes the **liberty-kafka** connector for sending and receiving messages from Apache Kafka.
@@ -379,7 +389,7 @@ Create the Maven configuration file.
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>2.4.0</version>
+            <version>2.7.0</version>
         </dependency>
         <!-- tag::rxjava[] -->
         <dependency>
@@ -391,13 +401,13 @@ Create the Maven configuration file.
         <dependency>
             <groupId>org.microshed</groupId>
             <artifactId>microshed-testing-liberty</artifactId>
-            <version>0.9</version>
+            <version>0.9.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>kafka</artifactId>
-            <version>1.12.5</version>
+            <version>1.15.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -423,7 +433,7 @@ Create the Maven configuration file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.2.1</version>
+                <version>3.3.4</version>
             </plugin>
 
             <plugin>
@@ -504,6 +514,12 @@ Next, use the provided script to start the application in Docker containers. The
 
 
 
+```
+.\scripts\startContainers.bat
+```
+{: codeblock}
+
+
 
 # Testing the application
 
@@ -523,6 +539,7 @@ cd /home/project
 
 Go to the http://localhost:9085/inventory/systems URL to access the inventory microservice. You see the CPU **systemLoad** property for all the systems:
 
+
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
@@ -541,6 +558,7 @@ curl http://localhost:9085/inventory/systems
 
 
 You can revisit the http://localhost:9085/inventory/systems URL after a while, and you will notice the CPU **systemLoad** property for the systems changed.
+
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -574,6 +592,12 @@ Run the following script to stop the application:
 
 
 
+```
+.\scripts\stopContainers.bat
+```
+{: codeblock}
+
+
 
 # Summary
 
@@ -597,3 +621,8 @@ rm -fr guide-microprofile-reactive-messaging
 {: codeblock}
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
+
+
+# Where to next? 
+
+- [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
