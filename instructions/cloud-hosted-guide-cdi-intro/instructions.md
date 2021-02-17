@@ -184,8 +184,14 @@ or open the project in your editor.
 
 Create the **InventoryManager** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -239,8 +245,14 @@ it is injected into the application.
 
 Create the **InventoryResource** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
@@ -368,8 +380,14 @@ In testing the functionality of the application, the scopes and dependencies are
 
 Create the **InventoryEndpointIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
 
