@@ -184,7 +184,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 
 
 
@@ -248,7 +248,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 
 
 
@@ -284,7 +284,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
 
 
 
@@ -337,7 +337,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/webapp/META-IN
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
 
 
 
@@ -553,7 +553,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/ope
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 
 
 
