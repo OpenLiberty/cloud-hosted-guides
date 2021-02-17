@@ -193,7 +193,7 @@ touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
 
 
 
@@ -269,7 +269,7 @@ touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java
 
 
 
@@ -389,7 +389,7 @@ touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource
 
 
 
@@ -523,7 +523,7 @@ touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java
 
 
 
@@ -559,7 +559,7 @@ touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter
 
 
 
@@ -807,7 +807,7 @@ touch /home/project/guide-microprofile-config/start/src/test/java/it/io/openlibe
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java
 
 
 
