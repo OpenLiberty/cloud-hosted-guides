@@ -63,8 +63,14 @@ The **system** microservice is the producer of the messages that are published t
 
 Create the **SystemService** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 
 
 
@@ -131,8 +137,14 @@ The **inventory** microservice records in its inventory the average system load 
 
 Create the **InventoryResource** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
@@ -242,8 +254,14 @@ The system and inventory microservices each have a MicroProfile Config propertie
 
 Create the system/microprofile-config.properties file.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
 
 
 
@@ -267,8 +285,14 @@ The **inventory** microservice uses a similar **microprofile-config.properties**
 
 Create the inventory/microprofile-config.properties file.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
 
 
 
@@ -293,8 +317,14 @@ To run the services, the Open Liberty server on which each service runs needs to
 
 Create the system/server.xml configuration file.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
 
 
 
@@ -333,8 +363,14 @@ Build the **system** and **inventory** microservices using Maven and then run th
 
 Create the Maven configuration file.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-reactive-messaging/start/system/pom.xml
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/pom.xml
 
 
 
