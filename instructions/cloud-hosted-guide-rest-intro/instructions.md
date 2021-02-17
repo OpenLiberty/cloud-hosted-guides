@@ -1,4 +1,13 @@
 
+# Welcome to the cloud-hosted guide!
+
+In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
+
+This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
+
+The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+
+
 # Creating a RESTful web service
 
 
@@ -29,11 +38,10 @@ such as performance, scalability, and modifiability.
 
 # Getting started
 
-Open a command-line session:
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
 
-> [Terminal -> New Terminal]
-
-Navigate to the **/home/project** directory:
+Run the following command to navigate to the **/home/project** directory:
 
 ```
 cd /home/project
@@ -73,24 +81,23 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
+Check out the service at the
 
 
-Open a command-line session:
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-> [Terminal -> New Terminal]
-
-Navigate to the **/home/project** directory:
+Run the following command to navigate to the **/home/project** directory:
 
 ```
 cd /home/project
 ```
 {: codeblock}
 
-Check out the service at the
 
-http://localhost:9080/LibertyProject/System/properties URL
+http://localhost:9080/LibertyProject/System/properties URL. 
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
@@ -98,7 +105,6 @@ curl http://localhost:9080/LibertyProject/System/properties
 {: codeblock}
 
 
- 
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -140,8 +146,8 @@ common path. You can think of the JAX-RS application as a wrapper for all of you
 
 Replace the **SystemApplication** class.
 
-> [File -> Open...]  
-> guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
 
 
 
@@ -176,8 +182,8 @@ of resources helps with maintainability in the long run.
 
 Create the **PropertiesResource** class.
 
-> [File -> New File]  
-> guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 
 
@@ -238,8 +244,8 @@ To get the service running, the Liberty server needs to be correctly configured.
 
 Replace the server configuration file.
 
-> [File -> Open...]  
-> guide-rest-intro/start/src/main/liberty/config/server.xml
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-rest-intro/start/src/main/liberty/config/server.xml
 
 
 
@@ -278,9 +284,10 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 Check out the service that you created at the
 
-http://localhost:9080/LibertyProject/System/properties URL
+http://localhost:9080/LibertyProject/System/properties URL. 
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
@@ -288,16 +295,16 @@ curl http://localhost:9080/LibertyProject/System/properties
 {: codeblock}
 
 
- 
 
 
 # Testing the service
 
 You can test this service manually by starting a server and pointing a web browser at the
 
-http://localhost:9080/LibertyProject/System/properties URL
+http://localhost:9080/LibertyProject/System/properties URL. However, automated tests are a 
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/LibertyProject/System/properties
@@ -305,7 +312,6 @@ curl http://localhost:9080/LibertyProject/System/properties
 {: codeblock}
 
 
- However, automated tests are a 
 much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS 
 Client API provide a simple environment to test the application.
 
@@ -315,8 +321,8 @@ does the latter.
 
 Create the **EndpointIT** class.
 
-> [File -> New File]  
-> guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
 
 
@@ -429,11 +435,9 @@ You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
 
 ## Clean up your environment
 
-Clean up your online environment so that it is ready to be used with the next guide!
+Clean up your online environment so that it is ready to be used with the next guide:
 
-You can clean up the environment by doing the following:
-
-Delete the **guide-rest-intro** project by navigating to the **/home/project/** directory
+Delete the **guide-rest-intro** project by running the following commands:
 
 ```
 cd /home/project
@@ -441,7 +445,10 @@ rm -fr guide-rest-intro
 ```
 {: codeblock}
 
-Now Log out by navigating to: 
+Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
 
-> [Account -> Logout]
 
+# Where to next? 
+
+- [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+- [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
