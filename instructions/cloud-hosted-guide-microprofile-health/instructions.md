@@ -214,8 +214,14 @@ terminated. For example, a liveness check might fail if the application runs out
 
 Create the **SystemReadinessCheck** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
 
 
 
@@ -274,8 +280,14 @@ health checks.
 
 Create the **SystemLivenessCheck** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
 
 
 
@@ -321,8 +333,14 @@ is being used, a status of **DOWN** is returned.
 
 Create the **InventoryReadinessCheck** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
 
 
 
@@ -402,8 +420,14 @@ you want to learn more about MicroProfile Config, see
 
 Create the **InventoryLivenessCheck** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
 
 
 
@@ -530,8 +554,14 @@ You will implement several test methods to validate the health of the **system**
 
 Create the **HealthIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
 
 
 
