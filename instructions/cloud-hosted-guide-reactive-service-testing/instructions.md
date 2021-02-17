@@ -1,5 +1,5 @@
 
-# Welcome to the cloud-hosted guide!
+# Welcome to the cloud-hosted-guide-reactive-service-testing!
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -187,8 +187,14 @@ Create a class to externalize your container configurations.
 
 Create the **AppContainerConfig** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/AppContainerConfig.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/AppContainerConfig.java
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/AppContainerConfig.java
 
 
 
@@ -239,8 +245,14 @@ Now you can start writing the test that uses the configured containers.
 
 Create the **SystemServiceIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
 
 
 
@@ -387,8 +399,14 @@ Now you can create your integrated test.
 
 Create the **InventoryServiceIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
 
 
 
