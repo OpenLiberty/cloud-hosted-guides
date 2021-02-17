@@ -541,6 +541,17 @@ You will see the following output:
  ------------------------------------------------------------------------
 ```
 
+# Tearing down the environment
+
+Run the following script to stop the application:
+
+
+```
+./scripts/stopContainers.sh
+```
+{: codeblock}
+
+
 # Summary
 
 ## Nice Work!
