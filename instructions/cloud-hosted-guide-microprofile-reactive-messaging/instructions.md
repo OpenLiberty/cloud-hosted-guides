@@ -126,7 +126,7 @@ public class SystemService {
 
 The **SystemService** class contains a **Publisher** method that is called **sendSystemLoad()**, which calculates and returns the average system load. The **@Outgoing** annotation on the **sendSystemLoad()** method indicates that the method publishes its calculation as a message on a topic in the Kafka messaging system. The **Flowable.interval()** method from **rxJava** is used to set the frequency of how often the system service publishes the calculation to the event stream.
 
-The messages are transported between the service and the Kafka messaging system through a channel called **systemLoad**. The name of the channel to use is set in the **@Outgoing("systemLoad")** annotation. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are published on a topic called **systemLoadTopic**, as shown in the following diagram:
+The messages are transported between the service and the Kafka messaging system through a channel called **systemLoad**. The name of the channel to use is set in the **@Outgoing("systemLoad")** annotation. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are published on a topic called **system.load**, as shown in the following diagram:
 
 ![Reactive system publisher](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-publisher.png)
 
@@ -241,7 +241,7 @@ public class InventoryResource {
 
 The **inventory** microservice receives the message from the **system** microservice over the **@Incoming("systemLoad")** channel. The properties of this channel are defined in the **microprofile-config.properties** file. The **inventory** microservice is also a RESTful service that is served at the **/inventory** endpoint.
 
-The **InventoryResource** class contains a method called **updateStatus()**, which receives the message that contains the average system load and updates its existing inventory of systems and their average system load. The **@Incoming("systemLoad")** annotation on the **updateStatus()** method indicates that the method retrieves the average system load information by connecting to the channel called **systemLoad**. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are retrieved from a topic called **systemLoadTopic**, as shown in the following diagram:
+The **InventoryResource** class contains a method called **updateStatus()**, which receives the message that contains the average system load and updates its existing inventory of systems and their average system load. The **@Incoming("systemLoad")** annotation on the **updateStatus()** method indicates that the method retrieves the average system load information by connecting to the channel called **systemLoad**. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are retrieved from a topic called **system.load**, as shown in the following diagram:
 
 ![Reactive system inventory detail](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-detail.png)
 
@@ -270,7 +270,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/
 mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
 
 mp.messaging.outgoing.systemLoad.connector=liberty-kafka
-mp.messaging.outgoing.systemLoad.topic=systemLoadTopic
+mp.messaging.outgoing.systemLoad.topic=system.load
 mp.messaging.outgoing.systemLoad.key.serializer=org.apache.kafka.common.serialization.StringSerializer
 mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.SystemLoad$SystemLoadSerializer
 ```
@@ -279,7 +279,7 @@ mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.S
 
 
 
-The **mp.messaging.connector.liberty-kafka.bootstrap.servers** property configures the hostname and port for connecting to the Kafka server. The **system** microservice uses an outgoing connector to send messages through the **systemLoad** channel to the **systemLoadTopic** topic in the Kafka message broker so that the **inventory** microservices can consume the messages. The **key.serializer** and **value.serializer** properties characterize how to serialize the messages. The **SystemLoadSerializer** class implements the logic for turning a **SystemLoad** object into JSON and is configured as the **value.serializer**.
+The **mp.messaging.connector.liberty-kafka.bootstrap.servers** property configures the hostname and port for connecting to the Kafka server. The **system** microservice uses an outgoing connector to send messages through the **systemLoad** channel to the **system.load** topic in the Kafka message broker so that the **inventory** microservices can consume the messages. The **key.serializer** and **value.serializer** properties characterize how to serialize the messages. The **SystemLoadSerializer** class implements the logic for turning a **SystemLoad** object into JSON and is configured as the **value.serializer**.
 
 The **inventory** microservice uses a similar **microprofile-config.properties** configuration to define its required incoming stream.
 
@@ -301,7 +301,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/ma
 mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
 
 mp.messaging.incoming.systemLoad.connector=liberty-kafka
-mp.messaging.incoming.systemLoad.topic=systemLoadTopic
+mp.messaging.incoming.systemLoad.topic=system.load
 mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
 mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
 mp.messaging.incoming.systemLoad.group.id=system-load-status
@@ -309,7 +309,7 @@ mp.messaging.incoming.systemLoad.group.id=system-load-status
 {: codeblock}
 
 
-The **inventory** microservice uses an incoming connector to receive messages through the **systemLoad** channel. The messages were published by the **system** microservice to the **systemLoadTopic** in the Kafka message broker. The **key.deserializer** and **value.deserializer** properties define how to deserialize the messages. The **SystemLoadDeserializer** class implements the logic for turning JSON into a **SystemLoad** object and is configured as the **value.deserializer**. The **group.id** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) and [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs).
+The **inventory** microservice uses an incoming connector to receive messages through the **systemLoad** channel. The messages were published by the **system** microservice to the **system.load** topic in the Kafka message broker. The **key.deserializer** and **value.deserializer** properties define how to deserialize the messages. The **SystemLoadDeserializer** class implements the logic for turning JSON into a **SystemLoad** object and is configured as the **value.deserializer**. The **group.id** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) and [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs).
 
 # Configuring the server
 
@@ -550,13 +550,6 @@ Next, use the provided script to start the application in Docker containers. The
 
 
 
-```
-.\scripts\startContainers.bat
-```
-{: codeblock}
-
-
-
 # Testing the application
 
 After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint of the **inventory** service. 
@@ -623,13 +616,6 @@ Run the following script to stop the application:
 
 ```
 ./scripts/stopContainers.sh
-```
-{: codeblock}
-
-
-
-```
-.\scripts\stopContainers.bat
 ```
 {: codeblock}
 
