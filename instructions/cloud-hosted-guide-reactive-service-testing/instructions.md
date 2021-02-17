@@ -194,7 +194,7 @@ touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/AppContainerConfig.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/AppContainerConfig.java
 
 
 
@@ -252,7 +252,7 @@ touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
 
 
 
@@ -406,7 +406,7 @@ touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
 
 
 
