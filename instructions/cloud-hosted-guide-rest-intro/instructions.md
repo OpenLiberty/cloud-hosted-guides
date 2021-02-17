@@ -189,7 +189,7 @@ touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/r
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 
 
@@ -334,7 +334,7 @@ touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guide
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
 
 
