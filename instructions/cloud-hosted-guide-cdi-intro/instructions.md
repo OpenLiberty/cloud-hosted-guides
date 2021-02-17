@@ -1,4 +1,13 @@
 
+# Welcome to the cloud-hosted guide!
+
+In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
+
+This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
+
+The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+
+
 # Injecting dependencies into microservices
 
 
@@ -39,11 +48,10 @@ controlling exactly when and how these components are instantiated and destroyed
 
 # Getting started
 
-Open a command-line session:
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
 
-> [Terminal -> New Terminal]
-
-Navigate to the **/home/project** directory:
+Run the following command to navigate to the **/home/project** directory:
 
 ```
 cd /home/project
@@ -84,11 +92,10 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-Open a command-line session:
 
-> [Terminal -> New Terminal]
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Navigate to the **/home/project** directory:
+Run the following command to navigate to the **/home/project** directory:
 
 ```
 cd /home/project
@@ -96,10 +103,10 @@ cd /home/project
 {: codeblock}
 
 
+Point your browser to the http://localhost:9080/inventory/systems URL.
 
-Point your browser to the http://localhost:9080/inventory/systems URL
 
-_(or run the following curl command)_
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems
@@ -107,13 +114,13 @@ curl http://localhost:9080/inventory/systems
 {: codeblock}
 
 
-
 This is the starting point of the **inventory** service and it displays the current contents of the inventory. 
 As you might expect, these are empty since nothing is stored in the inventory yet. 
 
-Next, point your browser to the http://localhost:9080/inventory/systems/localhost URL
+Next, point your browser to the http://localhost:9080/inventory/systems/localhost URL.
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
@@ -121,13 +128,13 @@ curl http://localhost:9080/inventory/systems/localhost
 {: codeblock}
 
 
-
 You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
 properties are automatically stored in the inventory. 
 
-Go back to http://localhost:9080/inventory/systems
+Go back to http://localhost:9080/inventory/systems 
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems
@@ -135,7 +142,6 @@ curl http://localhost:9080/inventory/systems
 {: codeblock}
 
 
- 
 and you see a new entry for **localhost**. For simplicity, only the OS name and username are shown here for
 each host. You can repeat this process for your own hostname or any other machine that is running
 the **system** service.
@@ -178,8 +184,8 @@ or open the project in your editor.
 
 Create the **InventoryManager** class.
 
-> [File -> New File]  
-> guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -233,8 +239,8 @@ it is injected into the application.
 
 Create the **InventoryResource** class.
 
-> [File -> New File]  
-> guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
@@ -329,7 +335,8 @@ You can find the **inventory** and **system** services at the following URLs:
 
 http://localhost:9080/inventory/systems
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems
@@ -338,16 +345,15 @@ curl http://localhost:9080/inventory/systems
 
 
 
-
 http://localhost:9080/system/properties
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
 ```
 {: codeblock}
-
 
 
 
@@ -362,8 +368,8 @@ In testing the functionality of the application, the scopes and dependencies are
 
 Create the **InventoryEndpointIT** class.
 
-> [File -> New File]  
-> guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
 
@@ -604,11 +610,9 @@ You just used CDI services in Open Liberty to build a simple inventory applicati
 
 ## Clean up your environment
 
-Clean up your online environment so that it is ready to be used with the next guide!
+Clean up your online environment so that it is ready to be used with the next guide:
 
-You can clean up the environment by doing the following:
-
-Delete the **guide-cdi-intro** project by navigating to the **/home/project/** directory
+Delete the **guide-cdi-intro** project by running the following commands:
 
 ```
 cd /home/project
@@ -616,7 +620,9 @@ rm -fr guide-cdi-intro
 ```
 {: codeblock}
 
-Now Log out by navigating to: 
+Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
 
-> [Account -> Logout]
 
+# Where to next? 
+
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
