@@ -70,7 +70,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 
 
 
@@ -144,7 +144,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/ma
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
@@ -261,7 +261,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
 
 
 
@@ -292,7 +292,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/ma
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
 
 
 
@@ -324,7 +324,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
 
 
 
@@ -370,7 +370,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
 {: codeblock}
 
 
-> Then from the menue of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/pom.xml
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/pom.xml
 
 
 
