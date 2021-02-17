@@ -182,8 +182,14 @@ of resources helps with maintainability in the long run.
 
 Create the **PropertiesResource** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 
 
@@ -321,8 +327,14 @@ does the latter.
 
 Create the **EndpointIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+```
+{: codeblock}
+
+
+> Then from the menue of the IDE, select **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
 
 
