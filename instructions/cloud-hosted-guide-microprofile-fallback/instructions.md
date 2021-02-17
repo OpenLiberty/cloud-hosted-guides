@@ -528,8 +528,14 @@ whenever a code change introduces a defect. JUnit and the JAX-RS Client API prov
 
 Create the **FaultToleranceIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
 
 
 
