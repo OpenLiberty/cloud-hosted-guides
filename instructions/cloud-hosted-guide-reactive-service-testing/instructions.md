@@ -202,6 +202,8 @@ touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it
 ```
 package it.io.openliberty.guides.system;
 
+import java.time.Duration;
+
 import org.microshed.testing.SharedContainerConfiguration;
 import org.microshed.testing.testcontainers.ApplicationContainer;
 import org.testcontainers.containers.KafkaContainer;
@@ -222,6 +224,7 @@ public class AppContainerConfig implements SharedContainerConfiguration {
                     .withExposedPorts(9083)
                     .withReadinessPath("/health/ready")
                     .withNetwork(network)
+                    .withStartupTimeout(Duration.ofMinutes(3))
                     .dependsOn(kafka);
 }
 ```
