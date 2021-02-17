@@ -1,4 +1,13 @@
 
+# Welcome to the cloud-hosted-guide-microprofile-fallback!
+
+In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
+
+This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
+
+The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+
+
 # Building fault-tolerant microservices with the @Fallback annotation
 
 
@@ -34,11 +43,10 @@ when you add the MicroProfile Metrics feature to the server.
 
 # Getting started
 
-Open a command-line session:
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
 
-> [Terminal -> New Terminal]
-
-Navigate to the **/home/project** directory:
+Run the following command to navigate to the **/home/project** directory:
 
 ```
 cd /home/project
@@ -81,11 +89,9 @@ The defaultServer server is ready to run a smarter planet.
 
 
 
-Open a command-line session:
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-> [Terminal -> New Terminal]
-
-Navigate to the **/home/project** directory:
+Run the following command to navigate to the **/home/project** directory:
 
 ```
 cd /home/project
@@ -93,9 +99,10 @@ cd /home/project
 {: codeblock}
 
 
-Point your browser to the http://localhost:9080/inventory/systems/localhost
+Point your browser to the http://localhost:9080/inventory/systems/localhost URL, which accesses the
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
@@ -103,15 +110,14 @@ curl http://localhost:9080/inventory/systems/localhost
 {: codeblock}
 
 
- URL, which accesses the
 **inventory** service with a localhost hostname. You see the system properties for this host.
 When you visit this URL, some of these system
 properties, such as the OS name and user name, are automatically stored in the inventory.
 
 Update the **CustomConfigSource** configuration file.
 
-> [File -> Open...]  
-> guide-microprofile-fallback/finish/resources/CustomConfigSource.json
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json
 
 
 
@@ -129,15 +135,15 @@ Change the **`io_openliberty_guides_system_inMaintenance`** property from **fals
 You do not need
 to restart the server. Next, return to your browser and point back to the
 
-http://localhost:9080/inventory/systems/localhost URL
+http://localhost:9080/inventory/systems/localhost URL.
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
-
 
 
 The fallback mechanism is triggered because the **system** service is now in maintenance.
@@ -147,8 +153,8 @@ When you are done checking out the application, go to the **CustomConfigSource.j
 
 Update the **CustomConfigSource** configuration file.
 
-> [File -> Open...]  
-> guide-microprofile-fallback/finish/resources/CustomConfigSource.json
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json
 
 
 
@@ -190,7 +196,8 @@ mvn liberty:dev
 After you see the following message, your application server in dev mode is ready:
 
 ```
-Press the Enter key to run tests on demand.
+************************************************************************
+*    Liberty is running in dev mode.
 ```
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
@@ -247,8 +254,8 @@ Now, set a fallback method to deal with this failure.
 
 Replace the **InventoryManager** class.
 
-> [File -> Open...]  
-> guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -349,7 +356,7 @@ MicroProfile Fault Tolerance integrates with MicroProfile Metrics to provide met
 When both the **mpFaultTolerance** and the **mpMetrics** features are included in the **server.xml** configuration file,
 the **@Fallback** fault tolerance annotation provides metrics that count the following things: the total number of annotated method invocations, the total number of failed annotated method invocations, and the total number of the fallback method calls.
 
-The **mpMetrics** feature requires SSL and the configuration is provided for you. The **quickStartSecurity** and **keyStore** configuration elements provide basic security to secure the
+The **mpMetrics** feature requires SSL and the configuration is provided for you. The **quickStartSecurity** configuration element provides basic security to secure the
 server. When you go to the **/metrics** endpoint, use the credentials that are defined in the server configuration to log in to view the data for the fault tolerance methods.
 
 You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [MicroProfile Fault Tolerance specification](https://github.com/eclipse/microprofile-fault-tolerance/releases).
@@ -361,9 +368,10 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 When the server is running, point your browser to the
 
-http://localhost:9080/inventory/systems/localhost URL
+http://localhost:9080/inventory/systems/localhost URL.
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
@@ -371,12 +379,12 @@ curl http://localhost:9080/inventory/systems/localhost
 {: codeblock}
 
 
-
 You receive the system properties of your local JVM from the **inventory** service. Next, point your
 
-browser to the **system** service URL, which is located at http://localhost:9080/system/properties
+browser to the **system** service URL, which is located at http://localhost:9080/system/properties,
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
@@ -384,15 +392,15 @@ curl http://localhost:9080/system/properties
 {: codeblock}
 
 
-,
 to retrieve the system properties for the specific localhost.
 Notice that the results from the two URLs are identical because the **inventory** service gets its results from
 calling the **system** service.
 
 
-To see the application metrics, go to the https://localhost:9443/metrics/application URL
+To see the application metrics, go to the https://localhost:9443/metrics/application URL. Log in as the **admin** user, and use **adminpwd** as the password.
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl -k -u admin https://localhost:9443/metrics/application
@@ -400,15 +408,15 @@ curl -k -u admin https://localhost:9443/metrics/application
 {: codeblock}
 
 
- Log in as the **admin** user, and use **adminpwd** as the passwordSee the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
+See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
 
 ```
-# TYPE application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total counter
-application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total 1
-# TYPE application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_failed_total counter
-application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_failed_total 0
-# TYPE application:ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total counter
-application:ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total 0
+# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_total counter
+application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_total 1
+# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_failed_total counter
+application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_failed_total 0
+# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_fallback_calls_total counter
+application_ft_io_openliberty_guides_inventory_InventoryManager_get_fallback_calls_total 0
 ```
 
 You can test the fault tolerance mechanism of your microservices by dynamically changing
@@ -417,8 +425,8 @@ the **`io_openliberty_guides_system_inMaintenance`** property value to **true** 
 
 Update the configuration file.
 
-> [File -> Open...]  
-> guide-microprofile-fallback/start/resources/CustomConfigSource.json
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
 
 
 
@@ -436,9 +444,10 @@ Change the **`io_openliberty_guides_system_inMaintenance`** property from **fals
 
 After saving the file, go back to your browser and
 
-refresh to the http://localhost:9080/inventory/systems/localhost
+refresh to the http://localhost:9080/inventory/systems/localhost URL to view the cached version of
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/inventory/systems/localhost
@@ -446,15 +455,15 @@ curl http://localhost:9080/inventory/systems/localhost
 {: codeblock}
 
 
- URL to view the cached version of
 the properties. The **fallbackForGet()** method, which is the designated fallback method, is called
 when the **system** service is not available.
 The cached system properties contain only the OS name and user name key and value pairs.
 
 
-To see that the **system** service is down, point your browser to the http://localhost:9080/system/properties URL again
+To see that the **system** service is down, point your browser to the http://localhost:9080/system/properties URL again.
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/system/properties
@@ -462,13 +471,13 @@ curl http://localhost:9080/system/properties
 {: codeblock}
 
 
-
 You see that the service displays a 503 HTTP response code.
 
 
-Go to the https://localhost:9443/metrics/application URL again
+Go to the https://localhost:9443/metrics/application URL again.
 
-_(or run the following curl command)_
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl -k -u admin https://localhost:9443/metrics/application
@@ -476,16 +485,15 @@ curl -k -u admin https://localhost:9443/metrics/application
 {: codeblock}
 
 
-
 See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
 
 ```
-# TYPE application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total counter
-application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total 2
-# TYPE application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_failed_total counter
-application:ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_failed_total 0
-# TYPE application:ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total counter
-application:ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total 1
+# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_total counter
+application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_total 2
+# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_failed_total counter
+application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_failed_total 0
+# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_fallback_calls_total counter
+application_ft_io_openliberty_guides_inventory_InventoryManager_get_fallback_calls_total 1
 ```
 
 From the output, the **ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total**
@@ -495,8 +503,8 @@ indicates that the **fallbackForGet()** method was called once.
 
 Update the configuration file.
 
-> [File -> Open...]  
-> guide-microprofile-fallback/start/resources/CustomConfigSource.json
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
 
 
 
@@ -520,8 +528,8 @@ whenever a code change introduces a defect. JUnit and the JAX-RS Client API prov
 
 Create the **FaultToleranceIT** class.
 
-> [File -> New File]  
-> guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+> From the menu of the IDE, select 
+ **File** > **New File** > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
 
 
 
@@ -693,11 +701,9 @@ learn and expand on what you built here.
 
 ## Clean up your environment
 
-Clean up your online environment so that it is ready to be used with the next guide!
+Clean up your online environment so that it is ready to be used with the next guide:
 
-You can clean up the environment by doing the following:
-
-Delete the **guide-microprofile-fallback** project by navigating to the **/home/project/** directory
+Delete the **guide-microprofile-fallback** project by running the following commands:
 
 ```
 cd /home/project
@@ -705,7 +711,12 @@ rm -fr guide-microprofile-fallback
 ```
 {: codeblock}
 
-Now Log out by navigating to: 
+Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
 
-> [Account -> Logout]
 
+# Where to next? 
+
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+- 
