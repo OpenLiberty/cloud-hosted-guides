@@ -1,5 +1,5 @@
 
-# Welcome to the cloud-hosted guide!
+# Welcome to the cloud-hosted-guide-containerize!
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -132,8 +132,14 @@ You will be creating two Docker images to run the **inventory** service and **sy
 
 Create the **Dockerfile** for the inventory service.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-containerize/start/inventory/Dockerfile
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-containerize/start/inventory/Dockerfile
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/inventory/Dockerfile
 
 
 
@@ -185,9 +191,9 @@ In this case, you're using the recommended production image,
 **openliberty/open-liberty:kernel-java8-openj9-ubi**, as your parent image. If you
 don't want any additional runtime features for your **kernel** image, define the
 **FROM** instruction as **FROM open-liberty:kernel**. To use the default image that
-comes with the Open Liberty runtime, define the **FROM** instruction as **FROM
-open-liberty`. You can find all the [official images](https://hub.docker.com/_/open-liberty) and
-https://hub.docker.com/r/openliberty/open-liberty/[ubi images] on the open-liberty Docker Hub.
+comes with the Open Liberty runtime, define the **FROM** instruction as **FROM open-liberty**. 
+You can find all the [official images](https://hub.docker.com/_/open-liberty) and
+[ubi images](https://hub.docker.com/r/openliberty/open-liberty/) on the open-liberty Docker Hub.
 
 It is also recommended to label your Docker images with the **LABEL** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
 
@@ -204,8 +210,14 @@ The **Dockerfile** for the **system** service follows the same instructions as t
 
 Create the **Dockerfile** for the system service.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-containerize/start/system/Dockerfile
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-containerize/start/system/Dockerfile
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/system/Dockerfile
 
 
 
@@ -451,8 +463,7 @@ curl http://localhost:9080/system/properties
 
 You can externalize the configuration of more than just the port numbers.
 To learn more about Open Liberty server configuration, check out the
-https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html[Server
-Configuration Overview] docs. 
+[Server Configuration Overview](https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html) docs. 
 
 # Testing the microservices
 
@@ -460,8 +471,14 @@ You can test your microservices manually by hitting the endpoints or with automa
 
 Create the **SystemEndpointIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 
 
 
@@ -535,8 +552,14 @@ The **testGetProperties()** method checks for a **200** response code from the *
 
 Create the **InventoryEndpointIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
 
@@ -775,16 +798,6 @@ docker rm inventory system
 You have just built Docker images and run two microservices on Open Liberty in containers. 
 
 
- Copyright (c) 2018 IBM Corporation and others.
- Licensed under Creative Commons Attribution-NoDerivatives
- 4.0 International (CC BY-ND 4.0)
-   https://creativecommons.org/licenses/by-nd/4.0/
-
- Contributors:
-     IBM Corporation
-# Guide Attribution
-
-{doctitle} [licensedClass]#by# {guide-author} [licensedClass]#is licensed under# CC BY-ND 4.0
 
 
 ## Clean up your environment
