@@ -725,3 +725,4 @@ Log out of the cloud-hosted guides by selecting **Account** > **Logout** from th
 - [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 - [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 - [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+- [Preventing repeated failed calls to microservices](https://openliberty.io/guides/circuit-breaker.html)
