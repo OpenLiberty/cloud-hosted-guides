@@ -1,5 +1,5 @@
 
-# Welcome to the cloud-hosted guide!
+# Welcome to the cloud-hosted-guide-microprofile-config!
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -186,8 +186,14 @@ The **`io_openliberty_guides_port_number`** property that has already been defin
 To use this configuration property,
 Create the **InventoryConfig.java** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
 
 
 
@@ -256,8 +262,14 @@ To link this JSON file to your application and to implement the **ConfigSource**
 
 Create the **CustomConfigSource** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java
 
 
 
@@ -370,8 +382,14 @@ Finally, register the custom configuration source.
 
 Create the configuration file.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource
 
 
 
@@ -498,8 +516,14 @@ The Type parameter of the interface is the target type the String is converted t
 
 Create the **CustomEmailConverter** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java
 
 
 
@@ -528,8 +552,14 @@ This implements the **Converter<T>** interface.
 To register your implementation,
 Create the configuration file.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter
 
 
 
@@ -770,8 +800,14 @@ The following message displays: **ERROR: Service is currently in maintenance**.
 
 Create the **ConfigurationIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java
 
 
 
@@ -963,3 +999,10 @@ rm -fr guide-microprofile-config
 {: codeblock}
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
+
+
+# Where to next? 
+
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+- [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
