@@ -169,7 +169,7 @@ mvn liberty:dev
 After you see the following message, your application server in dev mode is ready:
 
 ```
-**********************************************************
+************************************************************************
 *    Liberty is running in dev mode.
 ```
 
@@ -541,17 +541,6 @@ You will see the following output:
  Finished at: 2020-03-13T16:43:34-04:00
  ------------------------------------------------------------------------
 ```
-
-# Tearing down the environment
-
-Run the following script to stop the application:
-
-
-```
-./scripts/stopContainers.sh
-```
-{: codeblock}
-
 
 # Summary
 
