@@ -1,5 +1,5 @@
 
-# Welcome to the cloud-hosted guide!
+# Welcome to the cloud-hosted-guide-microprofile-fallback!
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -528,8 +528,14 @@ whenever a code change introduces a defect. JUnit and the JAX-RS Client API prov
 
 Create the **FaultToleranceIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
 
 
 
@@ -712,3 +718,11 @@ rm -fr guide-microprofile-fallback
 {: codeblock}
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
+
+
+# Where to next? 
+
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+- [Preventing repeated failed calls to microservices](https://openliberty.io/guides/circuit-breaker.html)
