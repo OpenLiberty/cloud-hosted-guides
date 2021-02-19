@@ -169,7 +169,8 @@ mvn liberty:dev
 After you see the following message, your application server in dev mode is ready:
 
 ```
-Press the Enter key to run tests on demand.
+************************************************************************
+*    Liberty is running in dev mode.
 ```
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
@@ -312,7 +313,7 @@ public class SystemServiceIT {
 
 
 The test uses the **KafkaConsumer** client API and
-is configured by using the **@KafkaConsumerConfig** annotation. The consumer client is configured
+is configured by using the **@KafkaConsumerClient** annotation. The consumer client is configured
 to consume messages from the **system.load** topic in the **kafka** container.
 To learn more about Kafka APIs and how to use them, check out the
 [official Kafka Documentation](https://kafka.apache.org/documentation/#api).
