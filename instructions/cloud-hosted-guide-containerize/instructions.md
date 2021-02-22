@@ -197,7 +197,7 @@ You can find all the [official images](https://hub.docker.com/_/open-liberty) an
 
 It is also recommended to label your Docker images with the **LABEL** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
 
-The **COPY** instructions are structured as **COPY** **[--chown=\<user\>:\<group\>]** **\<source\>** **\<destination\>**. 
+The **COPY** instructions are structured as **COPY** **[--chown=<user>:<group>]** **<source>** **<destination>**. 
 They copy local files into the specified destination within your Docker image.
 In this case, the **inventory** server configuration files that are located at **src/main/liberty/config** are copied to the **/config/** destination directory.
 The **inventory** application WAR file **inventory.war**, which was created from running **mvn package**, is copied to the **/config/apps** destination directory.
