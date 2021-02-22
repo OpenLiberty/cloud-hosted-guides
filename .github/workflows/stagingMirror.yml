@@ -38,6 +38,7 @@ jobs:
           - {"github":"cloud-hosted-guide-rest-intro","gitlab":"cloud-hosted-guide-rest-intro"}
           - {"github":"cloud-hosted-guide-rest-openshift","gitlab":"cloud-hosted-guide-rest-openshift"}
           - {"github":"cloud-hosted-draft-guide-contract-testing","gitlab":"cloud-hosted-guide-contract-testing"}
+          - {"github":"cloud-hosted-draft-guide-development","gitlab":"cloud-hosted-draft-guide-development"}
     
     steps:
 
