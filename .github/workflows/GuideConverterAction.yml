@@ -80,10 +80,10 @@ jobs:
     
       - uses: peter-evans/create-pull-request@v3
         with:
-            title: "To Master: Change to cloud-hosted-${{ github.event.inputs.guide_name }}"
+            title: "To Prod: Change to cloud-hosted-${{ github.event.inputs.guide_name }}"
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
             body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
-            branch: "cloud-hosted-${{ github.event.inputs.guide_name }}/master"
+            branch: "cloud-hosted-${{ github.event.inputs.guide_name }}/prod"
             base: "prod" 
             labels: "RunTests"
         name: Create Pull Request
