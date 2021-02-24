@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted-guide-containerize!
+# Welcome to the Containerizing microservices guide!
+
+Learn how to containerize and run your microservices with Open Liberty using Docker
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,13 +10,12 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Containerizing microservices
 
 
 Learn how to containerize and run your microservices with Open Liberty using Docker.
 
 
-## What you'll learn
+# What you'll learn
 
 
 You can easily deploy your microservices in different environments in a lightweight and portable manner by using containers.
@@ -197,7 +198,7 @@ You can find all the [official images](https://hub.docker.com/_/open-liberty) an
 
 It is also recommended to label your Docker images with the **LABEL** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
 
-The **COPY** instructions are structured as **COPY** **[--chown=<user>:<group>]** **<source>** **<destination>**. 
+The **COPY** instructions are structured as **COPY** **`[--chown=<user>:<group>]`** **`<source>`** **`<destination>`**. 
 They copy local files into the specified destination within your Docker image.
 In this case, the **inventory** server configuration files that are located at **src/main/liberty/config** are copied to the **/config/** destination directory.
 The **inventory** application WAR file **inventory.war**, which was created from running **mvn package**, is copied to the **/config/apps** destination directory.
@@ -800,7 +801,14 @@ You have just built Docker images and run two microservices on Open Liberty in c
 
 
 
-## Clean up your environment
+
+## Where to next? 
+
+- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+- [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+
+
+# Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -813,9 +821,3 @@ rm -fr guide-containerize
 {: codeblock}
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
-
-
-# Where to next? 
-
-- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-- [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
