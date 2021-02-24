@@ -1,0 +1,105 @@
+name: GuideConverter
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch pushed to'     
+        required: true
+        default: 'refs/heads/qa'
+        
+jobs:        
+  convertStaging:
+    name: Make PR to Staging
+    runs-on: ubuntu-latest
+    if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging')
+    strategy:
+      matrix: # Uses an array of Json variables to pass the repo names.
+              # The names differ between Github and Gitlab so this is necessary.
+              # Add new cloud-hosted-guides here to add them to the mirror process.
+              # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
+        guide:
+          - { guideName: "guide-cdi-intro"}
+          - { guideName: "guide-containerize"}
+          - { guideName: "guide-docker"}
+          - { guideName: "guide-getting-started"}
+          - { guideName: "guide-kubernetes-intro"}
+          - { guideName: "guide-microprofile-config"}
+          - { guideName: "guide-microprofile-fallback"}
+          - { guideName: "guide-microprofile-health"}
+          - { guideName: "guide-microprofile-jwt"}
+          - { guideName: "guide-microprofile-opentracing"}
+          - { guideName: "guide-microprofile-opentracing-jaeger"}
+          - { guideName: "guide-microprofile-reactive-messaging-acknowledgment"}
+          - { guideName: "guide-microprofile-reactive-messaging-rest-integration"}
+          - { guideName: "guide-microprofile-rest-client"}
+          - { guideName: "guide-microprofile-rest-client-async"}
+          - { guideName: "guide-microshed-testing"}
+          - { guideName: "guide-microprofile-reactive-messaging"}
+          - { guideName: "guide-reactive-messaging-openshift"}
+          - { guideName: "guide-reactive-rest-client"}
+          - { guideName: "guide-reactive-service-testing"}
+          - { guideName: "guide-rest-intro"}
+          - { guideName: "guide-rest-openshift"}
+
+
+    steps:
+
+      # Any prerequisite steps
+      - uses: actions/checkout@master
+        
+      - name: Checkout Guide Converter repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/cloud-hosted-guide-converter
+          path: GuideConverter
+        
+      - name: Checkout guide repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/${{matrix.guide.guideName}}
+          path: GuideConverter/${{matrix.guide.guideName}}
+        
+      - name: Checkout guides-common repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/guides-common
+          path: GuideConverter/Guides-common
+
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '15' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+
+      - name: Run Converter
+        run: |
+          branchName=${{ github.event.inputs.branch }}
+          git init
+          mkdir -p instructions/cloud-hosted-${{matrix.guide.guideName}}/
+          rm -f instructions/cloud-hosted-${{matrix.guide.guideName}}/README.md
+          cd GuideConverter
+          mvn compiler:compile
+          mvn exec:java -Dexec.args="${{matrix.guide.guideName}} ${branchName:11}"
+          rm -f importFunctions.class
+          rm -f functions.class
+          rm -f CloudHostedGuideConverter.class
+          cd ..
+          mv GuideConverter/${{matrix.guide.guideName}}.md instructions/cloud-hosted-${{matrix.guide.guideName}}/instructions.md
+          rm -rf GuideConverter
+          bash .github/workflows/draftRemoval.sh cloud-hosted-${{matrix.guide.guideName}}
+          git add .
+          git config --global user.email "GuidesBot@OpenLiberty.io"
+          git config --global user.name "GuidesBot"
+          git commit -m "Updated by github actions from ALL Guides"
+          git checkout --ours instructions/cloud-hosted-ALL/instructions.md
+    
+      - uses: peter-evans/create-pull-request@v3
+        with:
+            title: "To Staging: Change to ALL GUIDES"
+            token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
+            body: "Updated by github actions, triggered by the MANUAL ACTION"
+            branch: "cloud-hosted-ALL/staging"
+            base: "staging" 
+            labels: "RunTests"
+        name: Create Pull Request
