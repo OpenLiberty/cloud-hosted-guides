@@ -1,4 +1,4 @@
-name: GuideConverter
+name: GuideConverter3_4_ALL
 on:
   workflow_dispatch:
     inputs:
