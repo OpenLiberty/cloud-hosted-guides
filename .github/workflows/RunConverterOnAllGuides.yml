@@ -20,26 +20,26 @@ jobs:
         guide:
           - { guideName: "guide-cdi-intro"}
           - { guideName: "guide-containerize"}
-          - { guideName: "guide-docker"}
+          # - { guideName: "guide-docker"}
           - { guideName: "guide-getting-started"}
           # - { guideName: "guide-kubernetes-intro"}
           - { guideName: "guide-microprofile-config"}
           - { guideName: "guide-microprofile-fallback"}
           - { guideName: "guide-microprofile-health"}
-          - { guideName: "guide-microprofile-jwt"}
-          - { guideName: "guide-microprofile-opentracing"}
-          - { guideName: "guide-microprofile-opentracing-jaeger"}
-          - { guideName: "guide-microprofile-reactive-messaging-acknowledgment"}
-          - { guideName: "guide-microprofile-reactive-messaging-rest-integration"}
+          # - { guideName: "guide-microprofile-jwt"}
+          # - { guideName: "guide-microprofile-opentracing"}
+          # - { guideName: "guide-microprofile-opentracing-jaeger"}
+          # - { guideName: "guide-microprofile-reactive-messaging-acknowledgment"}
+          # - { guideName: "guide-microprofile-reactive-messaging-rest-integration"}
           - { guideName: "guide-microprofile-rest-client"}
-          - { guideName: "guide-microprofile-rest-client-async"}
+          # - { guideName: "guide-microprofile-rest-client-async"}
           - { guideName: "guide-microshed-testing"}
           - { guideName: "guide-microprofile-reactive-messaging"}
-          - { guideName: "guide-reactive-messaging-openshift"}
-          - { guideName: "guide-reactive-rest-client"}
+          # - { guideName: "guide-reactive-messaging-openshift"}
+          # - { guideName: "guide-reactive-rest-client"}
           - { guideName: "guide-reactive-service-testing"}
           - { guideName: "guide-rest-intro"}
-          - { guideName: "guide-rest-openshift"}
+          # - { guideName: "guide-rest-openshift"}
 
 
     steps:
