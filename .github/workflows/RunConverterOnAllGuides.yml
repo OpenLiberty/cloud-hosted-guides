@@ -22,7 +22,7 @@ jobs:
           - { guideName: "guide-containerize"}
           - { guideName: "guide-docker"}
           - { guideName: "guide-getting-started"}
-          - { guideName: "guide-kubernetes-intro"}
+          # - { guideName: "guide-kubernetes-intro"}
           - { guideName: "guide-microprofile-config"}
           - { guideName: "guide-microprofile-fallback"}
           - { guideName: "guide-microprofile-health"}
@@ -89,6 +89,8 @@ jobs:
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh cloud-hosted-${{matrix.guide.guideName}}
           git add .
+          git config --global user.email "GuidesBot@OpenLiberty.io"
+          git config --global user.name "GuidesBot"
           git commit -m "Updated by github actions from ALL Guides"
           git checkout --ours instructions/cloud-hosted-${{matrix.guide.guideName}}/instructions.md
     
