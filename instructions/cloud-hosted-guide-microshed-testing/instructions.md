@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted guide!
+# Welcome to the Testing a MicroProfile or Jakarta EE application guide!
+
+Learn how to use MicroShed Testing to test a MicroProfile or Jakarta EE application.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,12 +10,10 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Testing a MicroProfile or Jakarta EE application
 
 
-Learn how to use MicroShed Testing to test a MicroProfile or Jakarta EE application.
 
-## What you'll learn
+# What you'll learn
 
 You'll start with an existing REST application that runs on Open Liberty and use [MicroShed Testing](https://microshed.org/microshed-testing/) 
 to write tests for the application that exercise the application inside of a Docker container.
@@ -31,11 +31,44 @@ one another.
 
 Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
 
+# Getting started
+
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
+
+Run the following command to navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microshed-testing.git) and use the projects that are provided inside:
+
+```
+git clone https://github.com/openliberty/guide-microshed-testing.git
+cd guide-microshed-testing
+```
+{: codeblock}
+
+
+The **start** directory contains the starting project that you will build upon.
+
+The **finish** directory contains the finished project that you will build.
+
+### Try what you'll build
+
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+First, review the **PersonServiceIT** class to see what the tests look like:
+
+
+To try out the application, go to the **finish** directory and run the following Maven 
+goal to build the application and run the integration tests on an Open Liberty server in a container:
 ```
 mvn verify
 ```
 {: codeblock}
-
 
 
 This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty must download. If you 
@@ -690,8 +723,14 @@ First, create another test class.
 
 Create the **ErrorPathIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
 
 
@@ -759,8 +798,14 @@ To solve this issue, common configuration can be placed in a class that implemen
 
 Create the **AppDeploymentConfig** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
 
 
 
@@ -1121,15 +1166,19 @@ mvn verify
 You developed automated tests for a REST service in Open Liberty by using MicroShed Testing and Open Liberty development mode.
 
 
-# Related Links
-
-Learn more about MicroShed Testing.
-
-[View the MicroShed Testing website](https://microshed.org/microshed-testing/)
 
 
 
-## Clean up your environment
+## Where to next? 
+
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+- [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+- [View the MicroShed Testing website](https://microshed.org/microshed-testing/)
+
+
+
+# Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
