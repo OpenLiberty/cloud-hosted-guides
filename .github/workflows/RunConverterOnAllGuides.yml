@@ -96,10 +96,10 @@ jobs:
     
       - uses: peter-evans/create-pull-request@v3
         with:
-            title: "To Staging: Change to ALL GUIDES"
+            title: "To Staging: Change to ${{matrix.guide.guideName}}"
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
             body: "Updated by github actions, triggered by the MANUAL ACTION"
-            branch: "cloud-hosted-ALL/staging"
+            branch: "cloud-hosted-${{matrix.guide.guideName}}/staging"
             base: "staging" 
             labels: "RunTests"
         name: Create Pull Request
