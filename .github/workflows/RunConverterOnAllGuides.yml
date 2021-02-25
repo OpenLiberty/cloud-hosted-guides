@@ -11,7 +11,7 @@ jobs:
   convertProd:
     name: Make PR to Prod
     runs-on: ubuntu-latest
-    if: if: contains(github.event.inputs.branch, 'master') || contains(github.event.inputs.branch, 'main') || contains(github.event.inputs.branch, 'prod')
+    if: contains(github.event.inputs.branch, 'master') || contains(github.event.inputs.branch, 'main') || contains(github.event.inputs.branch, 'prod')
     strategy:
       matrix: # Uses an array of Json variables to pass the repo names.
               # The names differ between Github and Gitlab so this is necessary.
