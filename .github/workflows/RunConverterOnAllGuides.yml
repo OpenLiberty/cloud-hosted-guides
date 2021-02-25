@@ -22,7 +22,7 @@ jobs:
           - { guideName: "guide-containerize"}
           # - { guideName: "guide-docker"}
           - { guideName: "guide-getting-started"}
-          # - { guideName: "guide-kubernetes-intro"}
+          - { guideName: "guide-kubernetes-intro"}
           - { guideName: "guide-microprofile-config"}
           - { guideName: "guide-microprofile-fallback"}
           - { guideName: "guide-microprofile-health"}
