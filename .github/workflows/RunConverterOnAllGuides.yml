@@ -3,167 +3,63 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch pushed to'     
+        description: "Branch pushed to"
         required: true
-        default: 'refs/heads/qa'
-        
+        default: "refs/heads/qa"
+
 jobs:
-  convertProd:
-    name: Make PR to Prod
+  matrix:
     runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch, 'master') || contains(github.event.inputs.branch, 'main') || contains(github.event.inputs.branch, 'prod')
-    strategy:
-      matrix: # Uses an array of Json variables to pass the guide names.
-              # If you want any extra guides add the guide name in the same format as these in the list bellow.
-              # - { guideName: "GUIDE-NAME"}
-              # if you do not wish to run it for a certain guide/guides just comment that guide out.
-        guide:
-          - { guideName: "guide-cdi-intro"}
-          - { guideName: "guide-containerize"}
-          # - { guideName: "guide-docker"}
-          # - { guideName: "guide-getting-started"}
-          - { guideName: "guide-kubernetes-intro"}
-          - { guideName: "guide-microprofile-config"}
-          - { guideName: "guide-microprofile-fallback"}
-          - { guideName: "guide-microprofile-health"}
-          # - { guideName: "guide-microprofile-jwt"}
-          - { guideName: "guide-microprofile-opentracing"}
-          - { guideName: "guide-microprofile-opentracing-jaeger"}
-          # - { guideName: "guide-microprofile-reactive-messaging-acknowledgment"}
-          # - { guideName: "guide-microprofile-reactive-messaging-rest-integration"}
-          - { guideName: "guide-microprofile-rest-client"}
-          # - { guideName: "guide-microprofile-rest-client-async"}
-          - { guideName: "guide-microshed-testing"}
-          - { guideName: "guide-microprofile-reactive-messaging"}
-          # - { guideName: "guide-reactive-messaging-openshift"}
-          # - { guideName: "guide-reactive-rest-client"}
-          - { guideName: "guide-reactive-service-testing"}
-          - { guideName: "guide-rest-intro"}
-          # - { guideName: "guide-rest-openshift"}
-
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-
       # Any prerequisite steps
-      - uses: actions/checkout@master
-        
-      - name: Checkout Guide Converter repo
-        uses: actions/checkout@v2
-        with:
-          repository: OpenLiberty/cloud-hosted-guide-converter
-          path: GuideConverter
-        
-      - name: Checkout guide repo
-        uses: actions/checkout@v2
-        with:
-          repository: OpenLiberty/${{matrix.guide.guideName}}
-          path: GuideConverter/${{matrix.guide.guideName}}
-        
-      - name: Checkout guides-common repo
-        uses: actions/checkout@v2
-        with:
-          repository: OpenLiberty/guides-common
-          path: GuideConverter/Guides-common
-
-
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '15' # The JDK version to make available on the path.
-          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
-          architecture: x64 # (x64 or x86) - defaults to x64
-
-      - name: Run Converter
-        run: |
-          branchName=${{ github.event.inputs.branch }}
-          git init
-          mkdir -p instructions/cloud-hosted-${{matrix.guide.guideName}}/
-          rm -f instructions/cloud-hosted-${{matrix.guide.guideName}}/README.md
-          cd GuideConverter
-          mvn compiler:compile
-          mvn exec:java -Dexec.args="${{matrix.guide.guideName}} ${branchName:11}"
-          rm -f importFunctions.class
-          rm -f functions.class
-          rm -f CloudHostedGuideConverter.class
-          cd ..
-          mv GuideConverter/${{matrix.guide.guideName}}.md instructions/cloud-hosted-${{matrix.guide.guideName}}/instructions.md
-          rm -rf GuideConverter
-          bash .github/workflows/draftRemoval.sh cloud-hosted-${{matrix.guide.guideName}}
-          git add .
-          git config --global user.email "GuidesBot@OpenLiberty.io"
-          git config --global user.name "GuidesBot"
-          git commit -m "Updated by github actions from ALL Guides"
-          git checkout --ours instructions/cloud-hosted-${{matrix.guide.guideName}}/instructions.md
+    - uses: actions/checkout@master
     
-      - uses: peter-evans/create-pull-request@v3
-        with:
-            title: "To Prod: Change to ${{matrix.guide.guideName}}"
-            token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-            body: "Updated by github actions, triggered by the MANUAL ACTION"
-            branch: "cloud-hosted-${{matrix.guide.guideName}}/prod"
-            base: "prod" 
-            labels: "RunTests"
-        name: Create Pull Request
+    - id: set-matrix
+      run: |
+        TASKS=$(echo $(cat $GITHUB_WORKSPACE/.github/workflows/guides.json))
+        TASKS="${TASKS//'%'/'%25'}"
+        TASKS="${TASKS//$'\n'/'%0A'}"
+        TASKS="${TASKS//$'\r'/'%0D'}"
+        echo "::set-output name=matrix::$TASKS"
+
 
   convertStaging:
+    needs: matrix
     name: Make PR to Staging
     runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging')
     strategy:
-      matrix: # Uses an array of Json variables to pass the guide names.
-              # If you want any extra guides add the guide name in the same format as these in the list bellow.
-              # - { guideName: "GUIDE-NAME"}
-              # if you do not wish to run it for a certain guide/guides just comment that guide out.
-        guide:
-          - { guideName: "guide-cdi-intro"}
-          - { guideName: "guide-containerize"}
-          # - { guideName: "guide-docker"}
-          # - { guideName: "guide-getting-started"}
-          - { guideName: "guide-kubernetes-intro"}
-          - { guideName: "guide-microprofile-config"}
-          - { guideName: "guide-microprofile-fallback"}
-          - { guideName: "guide-microprofile-health"}
-          # - { guideName: "guide-microprofile-jwt"}
-          - { guideName: "guide-microprofile-opentracing"}
-          - { guideName: "guide-microprofile-opentracing-jaeger"}
-          # - { guideName: "guide-microprofile-reactive-messaging-acknowledgment"}
-          # - { guideName: "guide-microprofile-reactive-messaging-rest-integration"}
-          - { guideName: "guide-microprofile-rest-client"}
-          # - { guideName: "guide-microprofile-rest-client-async"}
-          - { guideName: "guide-microshed-testing"}
-          - { guideName: "guide-microprofile-reactive-messaging"}
-          # - { guideName: "guide-reactive-messaging-openshift"}
-          # - { guideName: "guide-reactive-rest-client"}
-          - { guideName: "guide-reactive-service-testing"}
-          - { guideName: "guide-rest-intro"}
-          # - { guideName: "guide-rest-openshift"}
+      matrix: 
+        guides: ${{fromJson(needs.matrix.outputs.matrix)}}
+    if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging')
 
     steps:
-
       # Any prerequisite steps
       - uses: actions/checkout@master
-        
+
       - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
         with:
           repository: OpenLiberty/cloud-hosted-guide-converter
           path: GuideConverter
-        
+
       - name: Checkout guide repo
         uses: actions/checkout@v2
         with:
           ref: qa
-          repository: OpenLiberty/${{matrix.guide.guideName}}
-          path: GuideConverter/${{matrix.guide.guideName}}
-        
+          repository: OpenLiberty/${{matrix.guides.guide}}
+          path: GuideConverter/${{matrix.guides.guide}}
+
       - name: Checkout guides-common repo
         uses: actions/checkout@v2
         with:
           repository: OpenLiberty/guides-common
           path: GuideConverter/Guides-common
 
-
       - uses: actions/setup-java@v1
         with:
-          java-version: '15' # The JDK version to make available on the path.
+          java-version: "15" # The JDK version to make available on the path.
           java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
 
@@ -171,30 +67,30 @@ jobs:
         run: |
           branchName=${{ github.event.inputs.branch }}
           git init
-          mkdir -p instructions/cloud-hosted-${{matrix.guide.guideName}}/
-          rm -f instructions/cloud-hosted-${{matrix.guide.guideName}}/README.md
+          mkdir -p instructions/cloud-hosted-${{matrix.guides.guide}}/
+          rm -f instructions/cloud-hosted-${{matrix.guides.guide}}/README.md
           cd GuideConverter
           mvn compiler:compile
-          mvn exec:java -Dexec.args="${{matrix.guide.guideName}} ${branchName:11}"
+          mvn exec:java -Dexec.args="${{matrix.guides.guide}} ${branchName:11}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{matrix.guide.guideName}}.md instructions/cloud-hosted-${{matrix.guide.guideName}}/instructions.md
+          mv GuideConverter/${{matrix.guides.guide}}.md instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
           rm -rf GuideConverter
-          bash .github/workflows/draftRemoval.sh cloud-hosted-${{matrix.guide.guideName}}
+          bash .github/workflows/draftRemoval.sh cloud-hosted-${{matrix.guides.guide}}
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
           git commit -m "Updated by github actions from ALL Guides"
-          git checkout --ours instructions/cloud-hosted-${{matrix.guide.guideName}}/instructions.md
-    
+          git checkout --ours instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
+
       - uses: peter-evans/create-pull-request@v3
         with:
-            title: "To Staging: Change to ${{matrix.guide.guideName}}"
-            token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-            body: "Updated by github actions, triggered by the MANUAL ACTION"
-            branch: "cloud-hosted-${{matrix.guide.guideName}}/staging"
-            base: "staging" 
-            labels: "RunTests"
+          title: "To Staging: Change to ${{matrix.guides.guide}}"
+          token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
+          body: "Updated by github actions, triggered by the MANUAL ACTION"
+          branch: "cloud-hosted-${{matrix.guides.guide}}/staging"
+          base: "staging"
+          # labels: "RunTests"
         name: Create Pull Request

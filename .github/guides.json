@@ -1,0 +1,41 @@
+[
+    {
+        "guide": "guide-cdi-intro"
+    },
+    {
+        "guide": "guide-containerize"
+    },
+    {
+        "guide": "guide-kubernetes-intro"
+    },
+    {
+        "guide": "guide-microprofile-config"
+    },
+    {
+        "guide": "guide-microprofile-fallback"
+    },
+    {
+        "guide": "guide-microprofile-health"
+    },
+    {
+        "guide": "guide-microprofile-opentracing"
+    },
+    {
+        "guide": "guide-microprofile-opentracing-jaeger"
+    },
+    {
+        "guide": "guide-microprofile-rest-client"
+    },
+    {
+        "guide": "guide-microshed-testing"
+    },
+    {
+        "guide": "guide-microprofile-reactive-messaging"
+    },
+    {
+        "guide": "guide-reactive-service-testing"
+    },
+    {
+        "guide": "guide-rest-intro"
+    }
+]
