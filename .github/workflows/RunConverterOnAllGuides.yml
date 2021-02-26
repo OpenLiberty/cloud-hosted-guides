@@ -26,6 +26,7 @@ jobs:
         echo "::set-output name=matrix::$TASKS"
 
   convertProd:
+    needs: matrix
     name: Make PR to Prod
     runs-on: ubuntu-latest
     strategy:
