@@ -3,11 +3,12 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: "Branch pushed to"
+        description: 'Branch pushed to'     
         required: true
-        default: "refs/heads/qa"
-
+        default: 'refs/heads/qa'
+        
 jobs:
+
   matrix:
     runs-on: ubuntu-latest
     outputs:
@@ -24,6 +25,75 @@ jobs:
         TASKS="${TASKS//$'\r'/'%0D'}"
         echo "::set-output name=matrix::$TASKS"
 
+  convertProd:
+    name: Make PR to Prod
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        guides: ${{fromJson(needs.matrix.outputs.matrix)}}
+    if: contains(github.event.inputs.branch, 'master') || contains(github.event.inputs.branch, 'main') || contains(github.event.inputs.branch, 'prod')
+
+    steps:
+
+      # Any prerequisite steps
+      - uses: actions/checkout@master
+        
+      - name: Checkout Guide Converter repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/cloud-hosted-guide-converter
+          path: GuideConverter
+        
+      - name: Checkout guide repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/${{matrix.guides.guide}}
+          path: GuideConverter/${{matrix.guides.guide}}
+        
+      - name: Checkout guides-common repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/guides-common
+          path: GuideConverter/Guides-common
+
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '15' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+
+      - name: Run Converter
+        run: |
+          branchName=${{ github.event.inputs.branch }}
+          git init
+          mkdir -p instructions/cloud-hosted-${{matrix.guides.guide}}/
+          rm -f instructions/cloud-hosted-${{matrix.guides.guide}}/README.md
+          cd GuideConverter
+          mvn compiler:compile
+          mvn exec:java -Dexec.args="${{matrix.guides.guide}} ${branchName:11}"
+          rm -f importFunctions.class
+          rm -f functions.class
+          rm -f CloudHostedGuideConverter.class
+          cd ..
+          mv GuideConverter/${{matrix.guides.guide}}.md instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
+          rm -rf GuideConverter
+          bash .github/workflows/draftRemoval.sh cloud-hosted-${{matrix.guides.guide}}
+          git add .
+          git config --global user.email "GuidesBot@OpenLiberty.io"
+          git config --global user.name "GuidesBot"
+          git commit -m "Updated by github actions from ALL Guides"
+          git checkout --ours instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
+    
+      - uses: peter-evans/create-pull-request@v3
+        with:
+            title: "To Prod: Change to ${{matrix.guides.guide}}"
+            token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
+            body: "Updated by github actions, triggered by the MANUAL ACTION"
+            branch: "cloud-hosted-${{matrix.guides.guide}}/prod"
+            base: "prod" 
+            labels: "RunTests"
+        name: Create Pull Request
 
   convertStaging:
     needs: matrix
