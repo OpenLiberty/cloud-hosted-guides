@@ -113,7 +113,6 @@ jobs:
         with:
           repository: OpenLiberty/cloud-hosted-guide-converter
           path: GuideConverter
-
       - name: Checkout guide repo
         uses: actions/checkout@v2
         with:
