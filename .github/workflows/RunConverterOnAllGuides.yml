@@ -26,6 +26,7 @@ jobs:
         echo "::set-output name=matrix::$TASKS"
 
   convertProd:
+    needs: matrix
     name: Make PR to Prod
     runs-on: ubuntu-latest
     strategy:
@@ -113,7 +114,6 @@ jobs:
         with:
           repository: OpenLiberty/cloud-hosted-guide-converter
           path: GuideConverter
-
       - name: Checkout guide repo
         uses: actions/checkout@v2
         with:
