@@ -205,6 +205,12 @@ footer {
   display: none;
 }
 
+/* Logo */
+
+.logo-left {
+    border-left: 1px solid #eee;
+  }
+
 /* Mobile */
 @media (max-width: 767px) {
   form#login,
@@ -231,3 +237,10 @@ footer {
     width: 100%;
   }
 }
+
+@media (max-width: 991px) {
+    .global-header .header-logo .logo-left {
+      margin-left: 40%;
+    }
+  }
+  
