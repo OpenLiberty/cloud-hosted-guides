@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted guide!
+# Welcome to the Deploying microservices to Kubernetes guide!
+
+Deploy microservices in Open Liberty Docker containers to Kubernetes and manage them with the Kubernetes CLI, kubectl.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,10 +10,6 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Deploying microservices to Kubernetes
-
-
-Deploy microservices in Open Liberty Docker containers to Kubernetes and manage them with the Kubernetes CLI, kubectl.
 
 
 
@@ -61,7 +59,7 @@ To learn about the various Kubernetes resources that you can configure, see the 
 
 
 
-## What you'll learn
+# What you'll learn
 
 You will learn how to deploy two microservices in Open Liberty containers to a local Kubernetes cluster.
 You will then manage your deployed microservices using the **kubectl** command line
@@ -235,8 +233,14 @@ A Kubernetes resource definition is a yaml file that contains a description of a
 
 Create the Kubernetes configuration file.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-kubernetes-intro/start/kubernetes.yaml
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-kubernetes-intro/start/kubernetes.yaml
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-intro/start/kubernetes.yaml
 
 
 
@@ -561,7 +565,14 @@ You have just deployed two microservices running in Open Liberty to Kubernetes. 
 
 
 
-## Clean up your environment
+
+## Where to next? 
+
+- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+- [Managing microservice traffic using Istio](https://openliberty.io/guides/istio-intro.html)
+
+
+# Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
