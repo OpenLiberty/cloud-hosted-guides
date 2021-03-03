@@ -555,6 +555,20 @@ You developed an application by using MicroProfile Reactive Messaging, Open Libe
 
 
 
+## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide:
+
+Delete the **guide-microprofile-reactive-messaging-acknowledgment** project by running the following commands:
+
+```
+cd /home/project
+rm -fr guide-microprofile-reactive-messaging-acknowledgment
+```
+{: codeblock}
+
+
+
 
 ## Where to next? 
 
@@ -571,16 +585,6 @@ You developed an application by using MicroProfile Reactive Messaging, Open Libe
 
 
 
-# Clean up your environment
-
-Clean up your online environment so that it is ready to be used with the next guide:
-
-Delete the **guide-microprofile-reactive-messaging-acknowledgment** project by running the following commands:
-
-```
-cd /home/project
-rm -fr guide-microprofile-reactive-messaging-acknowledgment
-```
-{: codeblock}
+## Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
