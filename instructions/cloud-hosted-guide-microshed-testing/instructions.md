@@ -1166,16 +1166,6 @@ You developed automated tests for a REST service in Open Liberty by using MicroS
 
 
 
-
-## Where to next? 
-
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-- [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-- [View the MicroShed Testing website](https://microshed.org/microshed-testing/)
-
-
-
 # Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
@@ -1187,5 +1177,19 @@ cd /home/project
 rm -fr guide-microshed-testing
 ```
 {: codeblock}
+
+
+
+
+## Where to next? 
+
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+- [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+- [View the MicroShed Testing website](https://microshed.org/microshed-testing/)
+
+
+
+## Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
