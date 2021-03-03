@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted-guide-reactive-service-testing!
+# Welcome to the Testing reactive Java microservices guide!
+
+Learn how to test reactive Java microservices in true-to-production environments using MicroShed Testing.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,12 +10,8 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Testing reactive Java microservices
 
-
-Learn how to test reactive Java microservices in true-to-production environments using MicroShed Testing.
-
-## What you'll learn
+# What you'll learn
 
 You will learn how to write integration tests for reactive Java microservices and to run the tests in true-to-production
 environments by using containers with [MicroShed Testing](https://microshed.org/microshed-testing/). MicroShed Testing tests
@@ -169,7 +167,8 @@ mvn liberty:dev
 After you see the following message, your application server in dev mode is ready:
 
 ```
-Press the Enter key to run tests on demand.
+************************************************************************
+*    Liberty is running in dev mode.
 ```
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
@@ -312,7 +311,7 @@ public class SystemServiceIT {
 
 
 The test uses the **KafkaConsumer** client API and
-is configured by using the **@KafkaConsumerConfig** annotation. The consumer client is configured
+is configured by using the **@KafkaConsumerClient** annotation. The consumer client is configured
 to consume messages from the **system.load** topic in the **kafka** container.
 To learn more about Kafka APIs and how to use them, check out the
 [official Kafka Documentation](https://kafka.apache.org/documentation/#api).
@@ -548,15 +547,18 @@ You will see the following output:
 You just tested two reactive Java microservices using MicroShed Testing.
 
 
-# Related Links
-
-Learn more about MicroShed Testing.
-
-[Visit the official MicroShed Testing website](https://microshed.org/microshed-testing/)
 
 
 
-## Clean up your environment
+## Where to next? 
+
+- [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+- [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
+- [Visit the official MicroShed Testing website](https://microshed.org/microshed-testing/)
+
+
+
+# Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -569,9 +571,3 @@ rm -fr guide-reactive-service-testing
 {: codeblock}
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
-
-
-# Where to next? 
-
-- [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-- [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
