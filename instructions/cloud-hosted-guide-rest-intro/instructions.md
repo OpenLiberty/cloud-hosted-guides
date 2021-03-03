@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted guide!
+# Welcome to the Creating a RESTful web service guide!
+
+Learn how to create a REST service with JAX-RS, JSON-B, and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,14 +10,10 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Creating a RESTful web service
-
-
-Learn how to create a REST service with JAX-RS, JSON-B, and Open Liberty.
 
 
 
-## What you'll learn
+# What you'll learn
 
 You will learn how to build and test a simple REST service with JAX-RS and JSON-B, which will expose
 the JVM's system properties. The REST service will respond to **GET** requests made to the **http://localhost:9080/LibertyProject/System/properties** URL.
@@ -182,8 +180,14 @@ of resources helps with maintainability in the long run.
 
 Create the **PropertiesResource** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 
 
@@ -270,9 +274,9 @@ The configuration does the following actions:
 
 . Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
 . Configures the server to resolve the HTTP port numbers from variables, which are then specified in
-the Maven **pom.xml** file. This is specified in the **<httpEndpoint/>** element. Variables use the **${variableName}** syntax.
+the Maven **pom.xml** file. This is specified in the **`<httpEndpoint/>`** element. Variables use the **${variableName}** syntax.
 . Configures the server to run the produced web application on a context root specified in the 
-**pom.xml** file. This is specified in the **<webApplication/>** element.
+**pom.xml** file. This is specified in the **`<webApplication/>`** element.
 
 
 The variables that are being used in the **server.xml** file are provided by the properties set in the Maven **pom.xml** file. The properties must be formatted as **liberty.var.variableName**.
@@ -321,8 +325,14 @@ does the latter.
 
 Create the **EndpointIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
 
 
@@ -381,7 +391,7 @@ The test method is indicated with the **@Test** annotation.
 The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the server configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven **pom.xml** file. Refer to the **pom.xml** file to see how the application information such as the **default.http.port**, **default.https.port** and **app.context.root** elements are provided in the file.
 
 
-These Maven properties are then passed to the Java test program as the **<systemPropertyVariables/>** element in the **pom.xml** file.
+These Maven properties are then passed to the Java test program as the **`<systemPropertyVariables/>`** element in the **pom.xml** file.
 
 Getting the values to create a representation of the URL is simple. The test class uses the **getProperty** method
 to get the application details.
@@ -433,7 +443,14 @@ You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
 
 
 
-## Clean up your environment
+
+## Where to next? 
+
+- [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+- [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+
+
+# Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
