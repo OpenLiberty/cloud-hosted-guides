@@ -462,4 +462,15 @@ rm -fr guide-rest-intro
 ```
 {: codeblock}
 
+
+
+
+## Where to next? 
+
+- [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+- [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+
+
+## Log out of the session
+
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
