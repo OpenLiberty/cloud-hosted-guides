@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted guide!
+# Welcome to the Adding health reports to microservices guide!
+
+Explore how to report and check the health of a microservice with MicroProfile Health.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,13 +10,9 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Adding health reports to microservices
 
 
-Explore how to report and check the health of a microservice with MicroProfile Health.
-
-
-## What you'll learn
+# What you'll learn
 
 You will learn how to use MicroProfile Health to report the health status of microservices and take
 appropriate actions based on this report.
@@ -214,8 +212,14 @@ terminated. For example, a liveness check might fail if the application runs out
 
 Create the **SystemReadinessCheck** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
 
 
 
@@ -274,8 +278,14 @@ health checks.
 
 Create the **SystemLivenessCheck** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
 
 
 
@@ -321,8 +331,14 @@ is being used, a status of **DOWN** is returned.
 
 Create the **InventoryReadinessCheck** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
 
 
 
@@ -402,8 +418,14 @@ you want to learn more about MicroProfile Config, see
 
 Create the **InventoryLivenessCheck** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
 
 
 
@@ -530,8 +552,14 @@ You will implement several test methods to validate the health of the **system**
 
 Create the **HealthIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
 
 
 
@@ -703,7 +731,16 @@ technologies that you can learn and expand on top of what you built here.
 
 
 
-## Clean up your environment
+
+## Where to next? 
+
+- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+- [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+
+
+# Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
