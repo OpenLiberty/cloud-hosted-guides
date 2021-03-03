@@ -1,7 +1,12 @@
-The **COPY** instructions are structured as **COPY** **`[--chown=<user>:<group>]`** **`<source>`** **`<destination>`**. 
-They copy local files into the specified destination within your Docker image.
-In this case, the **inventory** server configuration files that are located at **src/main/liberty/config** are copied to the **/config/** destination directory.
-The **inventory** application WAR file **inventory.war**, which was created from running **mvn package**, is copied to the **/config/apps** destination directory.
+## Where to next? 
 
+- [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+- [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest.html)
+- [Streaming updates to a client using Server-Sent Events](https://openliberty.io/guides/reactive-messaging-sse.html)
+- [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+- [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
+- [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html)
 
-[Creating a RESTful web service](https://openliberty.skillsnetwork.site/login?next=/quicklab/cloud-hosted-guide-rest-intro/launch)
+- [View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/apidocs/)
+
+- [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)

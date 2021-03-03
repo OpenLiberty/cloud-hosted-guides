@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted guide!
+# Welcome to the Injecting dependencies into microservices guide!
+
+Learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies into microservices.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,12 +10,8 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Injecting dependencies into microservices
 
-
-Learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies into microservices.
-
-## What you'll learn
+# What you'll learn
 
 You will learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies in a simple inventory management application.
 
@@ -184,8 +182,14 @@ or open the project in your editor.
 
 Create the **InventoryManager** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -239,8 +243,14 @@ it is injected into the application.
 
 Create the **InventoryResource** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
@@ -368,8 +378,14 @@ In testing the functionality of the application, the scopes and dependencies are
 
 Create the **InventoryEndpointIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
 
@@ -608,7 +624,13 @@ You just used CDI services in Open Liberty to build a simple inventory applicati
 
 
 
-## Clean up your environment
+
+## Where to next? 
+
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+
+
+# Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
