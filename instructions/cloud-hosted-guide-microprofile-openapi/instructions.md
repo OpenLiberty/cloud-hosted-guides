@@ -914,7 +914,7 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 
 ## Nice Work!
 
-You have just documented and filtered the APIs of the `inventory` service from both the code and a static
+You have just documented and filtered the APIs of the **inventory** service from both the code and a static
 
 file by using MicroProfile OpenAPI in Open Liberty.
 
@@ -928,14 +928,7 @@ MicroProfile OpenAPI
 
 
 
-
-## Where to next? 
-
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-
-
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -946,5 +939,16 @@ cd /home/project
 rm -fr guide-microprofile-openapi
 ```
 {: codeblock}
+
+
+
+
+## Where to next? 
+
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+
+
+## Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
