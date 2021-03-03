@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted-guide-microprofile-config!
+# Welcome to the Configuring microservices guide!
+
+Learn how to provide external configuration to microservices using MicroProfile Config.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,13 +10,9 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Configuring microservices
 
 
-Learn how to provide external configuration to microservices using MicroProfile Config.
-
-
-## What you'll learn
+# What you'll learn
 You will learn how to externalize and inject both static and dynamic configuration properties for microservices using MicroProfile Config.
 
 You will learn to aggregate multiple configuration sources, assign prioritization values to these sources, merge configuration values, and create custom configuration sources.
@@ -162,7 +160,7 @@ A higher ordinal value means that the values taken from this ConfigSource will o
 
 The following four sources are the default configuration sources:
 
-* A **<variable name="..." value="..."/>** element in the server.xml file has a default ordinal of 500.
+* A **`<variable name="..." value="..."/>`** element in the server.xml file has a default ordinal of 500.
 * System properties has a default ordinal of 400. (e.g. **bootstrap.properties** file)
 * Environment variables have a default ordinal of 300. (e.g. **server.env** file)
 * The **META-INF/microprofile-config.properties** configuration property file on the classpath has a default ordinal of 100.
@@ -986,7 +984,15 @@ expand on top what you built in this guide.
 
 
 
-## Clean up your environment
+
+## Where to next? 
+
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+- [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
+
+
+# Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -999,10 +1005,3 @@ rm -fr guide-microprofile-config
 {: codeblock}
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
-
-
-# Where to next? 
-
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
