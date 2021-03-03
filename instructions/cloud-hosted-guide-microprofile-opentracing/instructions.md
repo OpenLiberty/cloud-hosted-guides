@@ -595,14 +595,7 @@ Feel free to try one of the related MicroProfile guides. They demonstrate additi
 can learn to expand on top of what you built here.
 
 
-
-## Where to next? 
-
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Enabling distributed tracing in microservices with Jaeger](https://openliberty.io/guides/microprofile-opentracing-jaeger.html)
-
-
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -613,5 +606,18 @@ cd /home/project
 rm -fr guide-microprofile-opentracing
 ```
 {: codeblock}
+
+Feel free to try one of the related MicroProfile guides. They demonstrate additional technologies that you
+can learn to expand on top of what you built here.
+
+
+
+## Where to next? 
+
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+- [Enabling distributed tracing in microservices with Jaeger](https://openliberty.io/guides/microprofile-opentracing-jaeger.html)
+
+
+## Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
