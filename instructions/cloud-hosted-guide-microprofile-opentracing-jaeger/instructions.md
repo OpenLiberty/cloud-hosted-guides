@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted guide!
+# Welcome to the Enabling distributed tracing in microservices with Jaeger guide!
+
+Explore how to enable and customize tracing of JAX-RS and non-JAX-RS methods by using MicroProfile OpenTracing and Jaeger.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,15 +10,11 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Enabling distributed tracing in microservices with Jaeger
-
-
-Explore how to enable and customize tracing of JAX-RS and non-JAX-RS methods by using MicroProfile OpenTracing and Jaeger.
 
 
 
 
-## What you'll learn
+# What you'll learn
 
 You will learn how to enable automatic tracing for JAX-RS methods and create custom tracers
 for non-JAX-RS methods by using MicroProfile OpenTracing.
@@ -117,7 +115,7 @@ cd /home/project
 {: codeblock}
 
 
-Make sure that your Jaeger server is running and point your browser to the http://localhost:9081/inventory/systems/localhost URL
+Make sure that your Jaeger server is running and point your browser to the http://localhost:9081/inventory/systems/localhost URL.
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -131,7 +129,7 @@ When you visit this endpoint, you make two GET HTTP requests, one to the **syste
 service. Both of these requests are configured to be traced, so a new trace is recorded in Jaeger.
 
 
-To view the traces, go to the http://localhost:16686 URL
+To view the traces, go to the http://localhost:16686 URL.
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -151,6 +149,7 @@ View the traces for **inventory**. You'll see the following trace:
 
 ![Trace result](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/tracelist.png)
 
+
 The trace has four spans, three from inventory and one from system.
 Click the trace to view its details.
 Under **Service & Operation**, you see the spans in this trace.
@@ -160,6 +159,7 @@ received and the time at which a response was sent back.
 Verify that there are three spans from **inventory** and one span from **system**:
 
 ![Finished application's trace](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/trace01.png)
+
 
 After you’re finished reviewing the application, stop the Open Liberty servers by pressing **CTRL+C** in the command-line
 sessions where you ran the system and inventory services.
@@ -285,7 +285,7 @@ The OpenTracing API is exposed as a third-party API in Open Liberty.
 To add the visibility of OpenTracing APIs to the application, add **third-party** to the types of API packages
 that this class loader supports.
 Instead of explicitly configuring a list of API packages that includes **third-party**, set the **+third-party** value
-to the **apiTypeVisibility** attribute in the **<classLoader />** configuration.
+to the **apiTypeVisibility** attribute in the **`<classLoader />`** configuration.
 This configuration adds **third-party** to the default list of API package types that are supported.
 
 
@@ -304,7 +304,7 @@ The **@Traced** annotation can be configured with the following two parameters:
 traced. For example, while all JAX-RS methods are traced by default, you can disable their tracing by
 using the **@Traced(false)** annotation. This parameter is set to **true** by default.
 - The **operationName=<Span name>** parameter indicates the name of the span that is assigned to the method that is traced.
-If you omit this parameter, the span is named with the **<package name>.<class name>.<method name>** format.
+If you omit this parameter, the span is named with the **`<package name>.<class name>.<method name>`** format.
 If you use this parameter at a class level, then all methods within that class have the same span name unless they are
 explicitly overridden by another **@Traced** annotation.
 
@@ -380,12 +380,23 @@ public class InventoryManager {
 Enable tracing of the **list()** non-JAX-RS method by updating **@Traced** as shown.
 
 
-Go to the http://localhost:9081/inventory/systems URL and check your Jaeger server at the http://localhost:16686 URL
+
+Go to the http://localhost:9081/inventory/systems URL and check your Jaeger server at the http://localhost:16686 URL.
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9081/inventory/systems
+```
+{: codeblock}
+
+
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:16686
 ```
 {: codeblock}
 
@@ -401,6 +412,7 @@ method in the **InventoryManager** class.
 Verify that you see the following spans:
 
 ![Explicit trace span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/trace02.png)
+
 
 
 
@@ -479,12 +491,23 @@ public class InventoryResource {
 Disable tracing of the **listContents()** JAX-RS method by setting **@Traced(false)**.
 
 
-Go to the http://localhost:9081/inventory/systems URL and check your Jaeger server at the http://localhost:16686 URL
+
+Go to the http://localhost:9081/inventory/systems URL and check your Jaeger server at the http://localhost:16686 URL.
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9081/inventory/systems
+```
+{: codeblock}
+
+
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:16686
 ```
 {: codeblock}
 
@@ -497,6 +520,7 @@ You see a new trace record that is just one span long for the remaining **list()
 Verify that you see the following span:
 
 ![Disable trace span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/trace03.png)
+
 
 
 
@@ -585,7 +609,7 @@ It's good practice to define custom spans inside such statements.
 Otherwise, any exceptions that are thrown before the span closes will leak the active span.
 
 
-Go to the http://localhost:9081/inventory/systems/localhost
+Go to the [http://localhost:9081/inventory/systems/localhost](http://localhost:9081/inventory/systems/localhost)
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -595,13 +619,14 @@ curl http://localhost:9081/inventory/systems/localhost
 {: codeblock}
 
 
- URL and check your Jaeger server at the [http://localhost:9081/inventory/systems/localhost](http://localhost:9081/inventory/systems/localhost)URL.
+URL.
 If you have the Jaeger UI open from a previous step, refresh the page.
 Select the **inventory** traces and click the **Find Traces** button.
 
 Verify that there are three spans from **inventory** and one span from **system**:
 
 ![Trace with custom span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/trace01.png)
+
 
 This simple example shows what you can do with the injected **Tracer** object. More configuration
 options are available to you, including setting a timestamp for when a span was created and destroyed.
@@ -645,7 +670,14 @@ on what you built in this guide.
 
 
 
-## Clean up your environment
+
+## Where to next? 
+
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+- [Enabling distributed tracing in microservices with Zipkin](https://openliberty.io/guides/microprofile-opentracing.html)
+
+
+# Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
