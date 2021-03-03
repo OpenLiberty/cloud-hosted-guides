@@ -519,14 +519,7 @@ You have just modified an application to make asynchronous HTTP requests using O
 
 
 
-
-## Where to next? 
-
-- [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-- [Consuming RESTful services using the reactive JAX-RS client](https://openliberty.io/guides/reactive-rest-client.html)
-
-
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -537,5 +530,16 @@ cd /home/project
 rm -fr guide-microprofile-rest-client-async
 ```
 {: codeblock}
+
+
+
+
+## Where to next? 
+
+- [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+- [Consuming RESTful services using the reactive JAX-RS client](https://openliberty.io/guides/reactive-rest-client.html)
+
+
+## Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
