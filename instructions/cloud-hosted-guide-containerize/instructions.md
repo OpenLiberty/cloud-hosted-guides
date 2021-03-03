@@ -799,14 +799,7 @@ You have just built Docker images and run two microservices on Open Liberty in c
 
 
 
-
-## Where to next? 
-
-- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-- [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
-
-
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -817,5 +810,16 @@ cd /home/project
 rm -fr guide-containerize
 ```
 {: codeblock}
+
+
+
+
+## Where to next? 
+
+- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+- [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+
+
+## Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
