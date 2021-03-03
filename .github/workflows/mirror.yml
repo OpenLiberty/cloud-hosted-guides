@@ -16,6 +16,7 @@ jobs:
               # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
         repo: 
           - {"github":"cloud-hosted-guide-cdi-intro","gitlab":"cloud-hosted-guide-cdi-intro"}
+          - {"github":"cloud-hosted-guide-containerize","gitlab":"cloud-hosted-guide-containerize"}
           - {"github":"cloud-hosted-guide-docker","gitlab":"cloud-hosted-guide-docker"}
           - {"github":"cloud-hosted-guide-getting-started","gitlab":"cloud-hosted-guide-getting-started"}
           - {"github":"cloud-hosted-guide-kubernetes-intro","gitlab":"cloud-hosted-guide-kubernetes-intro"}
@@ -23,8 +24,10 @@ jobs:
           - {"github":"cloud-hosted-guide-microprofile-fallback","gitlab":"cloud-hosted-guide-microprofile-fallback"}
           - {"github":"cloud-hosted-guide-microprofile-health","gitlab":"cloud-hosted-guide-microprofile-health"}
           - {"github":"cloud-hosted-guide-microprofile-jwt","gitlab":"securing-microservices-with-json-web-token"}
+          - {"github":"cloud-hosted-guide-microprofile-openapi","gitlab":"cloud-hosted-guide-microprofile-openapi"}
           - {"github":"cloud-hosted-guide-microprofile-opentracing","gitlab":"cloud-hosted-guide-microprofile-opentracing"}
           - {"github":"cloud-hosted-guide-microprofile-opentracing-jaeger","gitlab":"cloud-hosted-guide-microprofile-opentracing-jaeger"}
+          - {"github":"cloud-hosted-guide-microprofile-metrics","gitlab":"cloud-hosted-guide-microprofile-metrics"}
           - {"github":"cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment"}
           - {"github":"cloud-hosted-guide-microprofile-reactive-messaging-rest-integration","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-rest-integration"}
           - {"github":"cloud-hosted-guide-microprofile-rest-client","gitlab":"cloud-hosted-guide-microprofile-rest-client"}
@@ -36,6 +39,7 @@ jobs:
           - {"github":"cloud-hosted-guide-reactive-service-testing","gitlab":"cloud-hosted-guide-reactive-service-testing"}
           - {"github":"cloud-hosted-guide-rest-intro","gitlab":"cloud-hosted-guide-rest-intro"}
           - {"github":"cloud-hosted-guide-rest-openshift","gitlab":"cloud-hosted-guide-rest-openshift"}
+          - {"github":"cloud-hosted-draft-guide-contract-testing","gitlab":"cloud-hosted-guide-contract-testing"}
           - {"github":"cloud-hosted-draft-guide-development","gitlab":"cloud-hosted-draft-guide-development"}
 
     steps:
