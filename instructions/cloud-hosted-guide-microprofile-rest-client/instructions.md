@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted guide!
+# Welcome to the Consuming RESTful services with template interfaces guide!
+
+Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,13 +10,9 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Consuming RESTful services with template interfaces
 
 
-Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
-
-
-## What you'll learn
+# What you'll learn
 
 You will learn how to build a MicroProfile Rest Client to access remote RESTful services. You will create a template interface that maps to the remote service that you want to call.
 MicroProfile Rest Client automatically generates a client instance based on what is defined and annotated in the template interface.
@@ -113,7 +111,7 @@ _To see the output for this URL in the IDE, run the following command at a termi
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
-: codeblock
+{: codeblock}
 
 
 
@@ -177,8 +175,14 @@ The template interface describes the remote service that you want to access. The
 
 Create the **SystemClient** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 
 
 
@@ -216,7 +220,7 @@ The MicroProfile Rest Client feature automatically builds and generates a client
 Notice the **SystemClient** interface inherits the **AutoCloseable** interface.
 This allows the user to explicitly close the client instance by invoking the **close()** method or to implicitly close the client instance using a try-with-resources block. When the client instance is closed, all underlying resources associated with the client instance are cleaned up. Refer to the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases) for more details.
 
-When the **getProperties()** method is invoked, the **SystemClient** instance sends a GET request to the **<baseUrl>/properties** endpoint, where **<baseUrl>** is the default base URL of the **system** service. You will see how to configure the base URL in the next section.
+When the **getProperties()** method is invoked, the **SystemClient** instance sends a GET request to the **`<baseUrl>/properties`** endpoint, where **`<baseUrl>`** is the default base URL of the **system** service. You will see how to configure the base URL in the next section.
 
 The **@Produces** annotation specifies the media (MIME) type of the expected response. The default value is **`MediaType.APPLICATION_JSON`**.
 
@@ -235,8 +239,14 @@ Implement the actual exception class and the mapper class to see how this mechan
 
 Create the **UnknownUriException** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 
 
 
@@ -265,8 +275,14 @@ Now, link the **UnknownUriException** class with the corresponding response code
 
 Create the **UnknownUriExceptionMapper** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
 
 
 
@@ -312,8 +328,14 @@ Configure the default base URL with the MicroProfile Config feature. This featur
 
 Create the configuration file.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
 
 
 
@@ -500,7 +522,7 @@ _To see the output for this URL in the IDE, run the following command at a termi
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
-: codeblock
+{: codeblock}
 
 
 
@@ -522,8 +544,14 @@ curl http://localhost:9080/system/properties
 
 Create the **RestClientIT** class.
 
-> From the menu of the IDE, select 
- **File** > **New File** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 
 
 
@@ -673,7 +701,16 @@ Feel free to try one of the related guides where you can learn more technologies
 
 
 
-## Clean up your environment
+
+## Where to next? 
+
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+- [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
+
+
+# Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
