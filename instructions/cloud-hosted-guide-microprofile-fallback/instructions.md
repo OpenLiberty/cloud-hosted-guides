@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted-guide-microprofile-fallback!
+# Welcome to the Building fault-tolerant microservices with the @Fallback annotation guide!
+
+You'll explore how to manage the impact of failures using MicroProfile Fault Tolerance by adding fallback behavior to microservice dependencies.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,13 +10,9 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Building fault-tolerant microservices with the @Fallback annotation
 
 
-You'll explore how to manage the impact of failures using MicroProfile Fault Tolerance by adding fallback behavior to microservice dependencies.
-
-
-## What you'll learn
+# What you'll learn
 
 You will learn how to use MicroProfile (MP) Fault Tolerance to build resilient microservices
 that reduce the impact from failure and ensure continued operation of services.
@@ -496,9 +494,9 @@ application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_
 application_ft_io_openliberty_guides_inventory_InventoryManager_get_fallback_calls_total 1
 ```
 
-From the output, the **ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total**
+From the output, the **`ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total`**
 data indicates that the **get()** was called twice including the previous call before turning the **system** service in maintenance.
-The **ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total** data
+The **`ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total`** data
 indicates that the **fallbackForGet()** method was called once.
 
 Update the configuration file.
@@ -705,7 +703,16 @@ learn and expand on what you built here.
 
 
 
-## Clean up your environment
+
+## Where to next? 
+
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+- [Preventing repeated failed calls to microservices](https://openliberty.io/guides/circuit-breaker.html)
+
+
+# Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -718,11 +725,3 @@ rm -fr guide-microprofile-fallback
 {: codeblock}
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
-
-
-# Where to next? 
-
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-- [Preventing repeated failed calls to microservices](https://openliberty.io/guides/circuit-breaker.html)
