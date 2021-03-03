@@ -21,6 +21,10 @@
   max-width: 100%;
 }
 
+.toggle-form {
+  padding-top: 1rem;
+}
+
 #login-and-registration-container,
 #login-and-registration-container #login-anchor,
 #login-and-registration-container #register-anchor,
@@ -61,6 +65,7 @@ form#register {
   grid-auto-flow: column;
   grid-column-gap: 128px;
   padding-bottom: 3rem;
+  width: fit-content;
 }
 
 form#login .login-providers,
