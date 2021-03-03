@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted guide!
+# Welcome to the Enabling distributed tracing in microservices with Zipkin guide!
+
+Explore how to enable and customize tracing of JAX-RS and non-JAX-RS methods by using MicroProfile OpenTracing and the Zipkin tracing system.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,15 +10,11 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Enabling distributed tracing in microservices with Zipkin
-
-
-Explore how to enable and customize tracing of JAX-RS and non-JAX-RS methods by using MicroProfile OpenTracing and the Zipkin tracing system.
 
 
 
 
-## What you'll learn
+# What you'll learn
 
 You will learn how to enable automatic tracing for JAX-RS methods as well as create custom tracers
 for non-JAX-RS methods by using MicroProfile OpenTracing.
@@ -262,7 +260,7 @@ traced. For example, while all JAX-RS methods are traced by default, you can dis
 using the **@Traced(false)** annotation. This parameter is set to **true** by default.
 - The **operationName=<Span name>** parameter indicates the name of the span that is assigned to the
 particular method that is traced. If you omit this parameter, the span will be named with the following
-form: **<package name>.<class name>.<method name>**. If you use this parameter at a class level, then
+form: **`<package name>.<class name>.<method name>`**. If you use this parameter at a class level, then
 all methods within that class will have the same span name unless they are explicitly overridden by
 another **@Traced** annotation.
 
@@ -597,7 +595,14 @@ Feel free to try one of the related MicroProfile guides. They demonstrate additi
 can learn to expand on top of what you built here.
 
 
-## Clean up your environment
+
+## Where to next? 
+
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+- [Enabling distributed tracing in microservices with Jaeger](https://openliberty.io/guides/microprofile-opentracing-jaeger.html)
+
+
+# Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
