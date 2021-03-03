@@ -670,14 +670,7 @@ on what you built in this guide.
 
 
 
-
-## Where to next? 
-
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Enabling distributed tracing in microservices with Zipkin](https://openliberty.io/guides/microprofile-opentracing.html)
-
-
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -688,5 +681,16 @@ cd /home/project
 rm -fr guide-microprofile-opentracing-jaeger
 ```
 {: codeblock}
+
+
+
+
+## Where to next? 
+
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+- [Enabling distributed tracing in microservices with Zipkin](https://openliberty.io/guides/microprofile-opentracing.html)
+
+
+## Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
