@@ -549,15 +549,6 @@ You just tested two reactive Java microservices using MicroShed Testing.
 
 
 
-
-## Where to next? 
-
-- [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-- [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
-- [Visit the official MicroShed Testing website](https://microshed.org/microshed-testing/)
-
-
-
 # Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
@@ -569,5 +560,18 @@ cd /home/project
 rm -fr guide-reactive-service-testing
 ```
 {: codeblock}
+
+
+
+
+## Where to next? 
+
+- [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+- [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
+- [Visit the official MicroShed Testing website](https://microshed.org/microshed-testing/)
+
+
+
+## Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
