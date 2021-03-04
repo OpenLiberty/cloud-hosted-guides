@@ -567,6 +567,7 @@ You successfully integrated a RESTful microservice with a reactive system by usi
 
 
 
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
