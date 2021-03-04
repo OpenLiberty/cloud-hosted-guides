@@ -111,31 +111,16 @@ After you see the following message in both command-line sessions, both of your 
 The defaultServer server is ready to run a smarter planet.
 ```
 
-In your browser, go to the front-end web application endpoint at
 
+To launch the front-end web application, 
+select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
+and click the **OK** button. You’re redirected to the **https://yourname-9090.theiadocker-4.proxy.cognitiveclass.ai/** URL, 
+where **yourname** is your user name.
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+In your browser, go to the front-end web application endpoint at the
+**https://yourname-9090.theiadocker-4.proxy.cognitiveclass.ai/login.jsf** URL. 
+From here, you can log in to the application with the form-based login.
 
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-
-http://localhost:9090/login.jsf. From here,
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9090/login.jsf
-```
-{: codeblock}
-
-
-you can log in to the application with the form-based login.
 
 Log in with one of the following usernames and its corresponding password:
 
@@ -155,20 +140,15 @@ have sufficient privileges to view current OS information.
 Additionally, the **groups** claim of the JWT is read by the **system** service and
 requested by the front end to be displayed.
 
-You can try accessing these services without a JWT by going to the
 
-https://localhost:8443/system/properties/os
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+You can try accessing these services without a JWT by going to the **system** endpoint. 
+Run the following curl command from the terminal in the IDE:
 ```
-curl https://localhost:8443/system/properties/os
+curl -k https://localhost:8443/system/properties/os
 ```
 {: codeblock}
 
-
-**system** endpoint in your browser. You get a blank screen and aren't given
+You get a blank screen and aren't given
 access because you didn't supply a valid JWT with the request. The following
 error also appears in the command-line session of the **system** service:
 
@@ -288,7 +268,6 @@ public class SystemResource {
     public String getRoles() {
         return roles.toString();
     }
-
 }
 ```
 {: codeblock}
@@ -404,7 +383,6 @@ touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openl
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
 
 
-In the front end, you see your JWT displayed in the row with the **JSON Web Token** label.
 
 
 ```
@@ -558,7 +536,15 @@ The **mpJwt** feature adds the libraries that are required for MicroProfile JWT 
 
 Because you are running the **frontend** and **system** services in dev mode, the changes that you made were automatically picked up. You're now ready to check out your application in your browser.
 
-In your browser, go to the front-end web application endpoint at http://localhost:9090/login.jsf. Log in with one of the following usernames and its corresponding password:
+
+To launch the front-end web application, 
+select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
+and click the **OK** button. You’re redirected to the **https://yourname-9090.theiadocker-4.proxy.cognitiveclass.ai/** URL, 
+where **yourname** is your user name.
+
+In your browser, go to the front-end web application endpoint at the
+**https://yourname-9090.theiadocker-4.proxy.cognitiveclass.ai/login.jsf** URL. 
+Log in with one of the following usernames and its corresponding password:
 
 | *Username* | *Password* | *Role*
 | --- | --- | ---
@@ -574,20 +560,14 @@ You can also see the value of the **groups** claim in the row with the **Roles:*
 These roles are read from the JWT and sent back to the front end to
 be displayed.
 
+
 You can check that the **system** service is secured against unauthenticated
-
-requests by going to the https://localhost:8443/system/properties/os
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+requests by going to the **system** endpoint. 
+Run the following curl command from the terminal in the IDE:
 ```
-curl https://localhost:8443/system/properties/os
+curl -k https://localhost:8443/system/properties/os
 ```
 {: codeblock}
-
-
-**system** endpoint in your browser.
 
 In the front end, you see your JWT displayed in the row with the **JSON Web Token** label.
 
