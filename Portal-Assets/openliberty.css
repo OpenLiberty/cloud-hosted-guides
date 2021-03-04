@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Asap&family=IBM+Plex+Sans&display=swap');
 
-
 .global-header .nav-links {
   display: none;
 }
@@ -38,6 +37,10 @@
   text-decoration: none !important;
   color: #CC4D19 !important;
   font-size: 0.8rem;
+}
+
+.register-button {
+  grid-row-start: 5;
 }
 
 #login-and-registration-container .login-button,
