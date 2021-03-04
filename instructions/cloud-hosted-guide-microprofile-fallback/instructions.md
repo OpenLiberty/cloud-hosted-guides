@@ -86,31 +86,16 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-
-Point your browser to the http://localhost:9080/inventory/systems/localhost URL, which accesses the
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+To access the **inventory** service with a localhost hostname, run the following curl command:
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
 
+You see the system properties for this host.
+When you run this curl command, some of these system properties, such as the OS name and user name, are automatically stored in the inventory.
 
-**inventory** service with a localhost hostname. You see the system properties for this host.
-When you visit this URL, some of these system
-properties, such as the OS name and user name, are automatically stored in the inventory.
 
 Update the **CustomConfigSource** configuration file.
 
@@ -130,19 +115,13 @@ Update the **CustomConfigSource** configuration file.
 
 Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
 
-You do not need
-to restart the server. Next, return to your browser and point back to the
 
-http://localhost:9080/inventory/systems/localhost URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+You do not need to restart the server. 
+Next, run the following curl command:
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
-
 
 The fallback mechanism is triggered because the **system** service is now in maintenance.
 You see the cached properties for this localhost.
@@ -180,7 +159,12 @@ mvn liberty:stop
 
 # Enabling fault tolerance
 
-Navigate to the **start** directory to begin.
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd /home/project/guide-microprofile-fallback/start
+```
+{: codeblock}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -364,47 +348,29 @@ You can learn more about MicroProfile Metrics in the [Providing metrics from a m
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
-When the server is running, point your browser to the
 
-http://localhost:9080/inventory/systems/localhost URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+When the server is running, run the following curl command:
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
 
+You receive the system properties of your local JVM from the **inventory** service.
 
-You receive the system properties of your local JVM from the **inventory** service. Next, point your
-
-browser to the **system** service URL, which is located at http://localhost:9080/system/properties,
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Next, run the following curl command which accesses the **system** service, to retrieve the system properties for the specific localhost:
 ```
 curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
-
-to retrieve the system properties for the specific localhost.
 Notice that the results from the two URLs are identical because the **inventory** service gets its results from
 calling the **system** service.
 
-
-To see the application metrics, go to the https://localhost:9443/metrics/application URL. Log in as the **admin** user, and use **adminpwd** as the password.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+To see the application metrics, run the following curl commmand. This command will Log in using **admin** user, and you will have to enter **adminpwd** as the password.
 ```
 curl -k -u admin https://localhost:9443/metrics/application
 ```
 {: codeblock}
-
 
 See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
 
@@ -440,48 +406,31 @@ Change the **`io_openliberty_guides_system_inMaintenance`** property from **fals
 
 
 
-After saving the file, go back to your browser and
 
-refresh to the http://localhost:9080/inventory/systems/localhost URL to view the cached version of
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+After saving the file, run the following curl command to view the cached version of the properties:
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
 
-
-the properties. The **fallbackForGet()** method, which is the designated fallback method, is called
-when the **system** service is not available.
+The **fallbackForGet()** method, which is the designated fallback method, is called when the **system** service is not available.
 The cached system properties contain only the OS name and user name key and value pairs.
 
 
-To see that the **system** service is down, point your browser to the http://localhost:9080/system/properties URL again.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+To see that the **system** service is down, run the following curl command:
 ```
-curl http://localhost:9080/system/properties
+curl -I http://localhost:9080/system/properties
 ```
 {: codeblock}
-
 
 You see that the service displays a 503 HTTP response code.
 
 
-Go to the https://localhost:9443/metrics/application URL again.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command again and enter **adminpwd** as the password:
 ```
 curl -k -u admin https://localhost:9443/metrics/application
 ```
 {: codeblock}
-
 
 See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
 
@@ -703,16 +652,7 @@ learn and expand on what you built here.
 
 
 
-
-## Where to next? 
-
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-- [Preventing repeated failed calls to microservices](https://openliberty.io/guides/circuit-breaker.html)
-
-
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
