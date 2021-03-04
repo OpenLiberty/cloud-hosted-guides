@@ -752,4 +752,17 @@ rm -fr guide-microprofile-health
 ```
 {: codeblock}
 
+
+
+
+## Where to next? 
+
+- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+- [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+
+
+## Log out of the session
+
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

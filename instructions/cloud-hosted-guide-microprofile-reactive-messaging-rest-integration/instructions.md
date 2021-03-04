@@ -568,14 +568,6 @@ You successfully integrated a RESTful microservice with a reactive system by usi
 
 
 
-## Where to next? 
-
-- [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-- [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-
-
-# Clean up your environment
-
 Clean up your online environment so that it is ready to be used with the next guide:
 
 Delete the **guide-microprofile-reactive-messaging-rest-integration** project by running the following commands:
@@ -585,5 +577,16 @@ cd /home/project
 rm -fr guide-microprofile-reactive-messaging-rest-integration
 ```
 {: codeblock}
+
+
+
+
+## Where to next? 
+
+- [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+- [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+
+
+## Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

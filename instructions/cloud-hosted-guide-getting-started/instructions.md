@@ -866,15 +866,6 @@ You've learned the basics of deploying and updating an application on an Open Li
 
 
 
-## Where to next? 
-
-- [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-
-
-# Clean up your environment
-
 Clean up your online environment so that it is ready to be used with the next guide:
 
 Delete the **guide-getting-started** project by running the following commands:
@@ -884,5 +875,17 @@ cd /home/project
 rm -fr guide-getting-started
 ```
 {: codeblock}
+
+
+
+
+## Where to next? 
+
+- [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+
+
+## Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

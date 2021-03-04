@@ -288,6 +288,7 @@ public class SystemResource {
     public String getRoles() {
         return roles.toString();
     }
+
 }
 ```
 {: codeblock}
@@ -403,6 +404,7 @@ touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openl
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
 
 
+In the front end, you see your JWT displayed in the row with the **JSON Web Token** label.
 
 
 ```
@@ -805,15 +807,7 @@ You learned how to use MicroProfile JWT to validate JWTs, authenticate and autho
 
 
 
-
-## Where to next? 
-
-- [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-
-
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -824,5 +818,17 @@ cd /home/project
 rm -fr guide-microprofile-jwt
 ```
 {: codeblock}
+
+
+
+
+## Where to next? 
+
+- [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+
+
+## Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

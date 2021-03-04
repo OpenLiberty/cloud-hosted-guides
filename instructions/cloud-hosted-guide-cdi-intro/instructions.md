@@ -642,4 +642,14 @@ rm -fr guide-cdi-intro
 ```
 {: codeblock}
 
+
+
+
+## Where to next? 
+
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+
+
+## Log out of the session
+
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

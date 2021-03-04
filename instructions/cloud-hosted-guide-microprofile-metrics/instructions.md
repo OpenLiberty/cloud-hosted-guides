@@ -798,15 +798,7 @@ and wrote tests to validate them in Open Liberty.
 
 
 
-
-## Where to next? 
-
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-
-
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -817,5 +809,17 @@ cd /home/project
 rm -fr guide-microprofile-metrics
 ```
 {: codeblock}
+
+
+
+
+## Where to next? 
+
+- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+- [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
+- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+
+
+## Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

@@ -646,4 +646,14 @@ rm -fr guide-microprofile-reactive-messaging
 ```
 {: codeblock}
 
+
+
+
+## Where to next? 
+
+- [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+
+
+## Log out of the session
+
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
