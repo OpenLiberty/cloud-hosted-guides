@@ -142,6 +142,7 @@ requested by the front end to be displayed.
 
 
 You can try accessing these services without a JWT by going to the **system** endpoint. 
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 Run the following curl command from the terminal in the IDE:
 ```
 curl -k https://localhost:8443/system/properties/os
@@ -171,7 +172,12 @@ mvn -pl frontend liberty:stop
 
 # Creating the secure system service
 
-Navigate to the **start** directory to begin.
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd /home/project/guide-microprofile-jwt/start
+```
+{: codeblock}
 
 When you run Open Liberty in development mode, known as dev mode, the server
 listens for file changes and automatically recompiles and deploys your updates
