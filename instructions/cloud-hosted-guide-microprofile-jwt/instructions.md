@@ -114,11 +114,11 @@ The defaultServer server is ready to run a smarter planet.
 
 To launch the front-end web application, 
 select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
-and click the **OK** button. You’re redirected to the **https://yourname-9090.theiadocker-4.proxy.cognitiveclass.ai/** URL, 
-where **yourname** is your user name.
+and click the **OK** button. You’re redirected to the https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai URL, 
+where **accountname** is your account name.
 
 In your browser, go to the front-end web application endpoint at the
-**https://yourname-9090.theiadocker-4.proxy.cognitiveclass.ai/login.jsf** URL. 
+https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai/login.jsf URL. 
 From here, you can log in to the application with the form-based login.
 
 
@@ -545,11 +545,11 @@ Because you are running the **frontend** and **system** services in dev mode, th
 
 To launch the front-end web application, 
 select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
-and click the **OK** button. You’re redirected to the **https://yourname-9090.theiadocker-4.proxy.cognitiveclass.ai/** URL, 
-where **yourname** is your user name.
+and click the **OK** button. You’re redirected to the https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai URL, 
+where **accountname** is your account name.
 
 In your browser, go to the front-end web application endpoint at the
-**https://yourname-9090.theiadocker-4.proxy.cognitiveclass.ai/login.jsf** URL. 
+https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai/login.jsf URL. 
 Log in with one of the following usernames and its corresponding password:
 
 | *Username* | *Password* | *Role*
