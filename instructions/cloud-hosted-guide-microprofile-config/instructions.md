@@ -984,15 +984,7 @@ expand on top what you built in this guide.
 
 
 
-
-## Where to next? 
-
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
-
-
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
