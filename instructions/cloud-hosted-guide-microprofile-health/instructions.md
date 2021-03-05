@@ -78,88 +78,45 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
-The **system** and **inventory** services can be found at the following URLs:
-
-
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-
-http://localhost:9080/system/properties
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+To access the **system** service, run the following curl command:
 ```
 curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
-
-
-
-http://localhost:9080/inventory/systems
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+To access the **inventory** service, run the following curl command:
 ```
 curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
 
-
-
-
-Visit the http://localhost:9080/health URL to see the
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Visit the ** http://localhost:9080/health ** URL to see the
+overall health status of the application, as well as the aggregated data of the liveness
+and readiness checks. Run the following curl command:
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
 
-
-overall health status of the application, as well as the aggregated data of the liveness
-and readiness checks. Two checks show the state of the **system** service, and the other two
+Two checks show the state of the **system** service, and the other two
 checks show the state of the **inventory** service. As you might expect, both services are in the
 **UP** state, and the overall health status of the application is in the **UP** state.
 
-
-You can also access the **/health/ready** endpoint by visiting the http://localhost:9080/health/ready
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+You can also access the **/health/ready** endpoint by visiting the ** http://localhost:9080/health/ready **
+URL to view the data from the readiness health checks. Run the following curl command:
 ```
 curl http://localhost:9080/health/ready
 ```
 {: codeblock}
 
-
-URL to view the data from the readiness health checks. Similarly, access the **/health/live**
-
-endpoint by visiting the http://localhost:9080/health/live
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Similarly, access the **/health/live** endpoint by visiting the ** http://localhost:9080/health/live **
+URL to view the data from the liveness health checks. Run the following curl command:
 ```
 curl http://localhost:9080/health/live
 ```
 {: codeblock}
-
-
-URL to view the data from the liveness health checks.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -174,7 +131,12 @@ mvn liberty:stop
 
 # Adding health checks to microservices
 
-Navigate to the **start** directory to begin.
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd /home/project/guide-microprofile-health/start
+```
+{: codeblock}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -252,21 +214,16 @@ public class SystemReadinessCheck implements HealthCheck {
 
 
 
+
 The **@Readiness** annotation indicates that this particular bean is a readiness health check procedure.
 By pairing this annotation with the **ApplicationScoped** context from the Contexts and
-
-Dependency Injections API, the bean is discovered automatically when the http://localhost:9080/health
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Dependency Injections API, the bean is discovered automatically when the ** http://localhost:9080/health **
+endpoint receives a request. Run the following curl command:
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
 
-
-endpoint receives a request.
 
 The **call()** method is used to return the health status of a particular service.
 In this case, you are simply checking if the server name is **defaultServer** and
@@ -474,75 +431,62 @@ than 90% of the maximum memory is being used, a **DOWN** status is returned.
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-While the server is running, navigate to the http://localhost:9080/health URL to find
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+While the server is running, run the following curl command to find
+the aggregated liveness and readiness health reports on the two services:
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
 
-
-the aggregated liveness and readiness health reports on the two services.
-
-
-You can also navigate to the http://localhost:9080/health/ready
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+You can also run the following curl command to view the readiness health report:
 ```
 curl http://localhost:9080/health/ready
 ```
 {: codeblock}
 
-
-
-URL to view the readiness health report, or the http://localhost:9080/health/live
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+or run the following curl command to view the liveness health report:
 ```
 curl http://localhost:9080/health/live
 ```
 {: codeblock}
 
+Put the **inventory** service in maintenance by setting the ***`*io_openliberty_guides_inventory_inMaintenance`****
+property to **true** in the **resources/CustomConfigSource.json** file. 
 
-URL to view the liveness health report.
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json
 
-Put the **inventory** service in maintenance by setting the **`io_openliberty_guides_inventory_inMaintenance`**
-property to **true** in the **resources/CustomConfigSource.json** file. Because
+```
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":true}
+```
+{: codeblock}
 
-this configuration file is picked up dynamically, simply refresh the http://localhost:9080/health
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Because this configuration file is picked up dynamically, simply refresh the ** http://localhost:9080/health **
+URL to see that the state of the **inventory** service changed to **DOWN**. Run the following curl command:
 ```
 curl http://localhost:9080/health
 ```
 {: codeblock}
 
-
-URL to see that the state of the **inventory** service changed to **DOWN**. The
-overall state of the application also changed to **DOWN** as a result. Go to the
-
-http://localhost:9080/inventory/systems URL to verify that the **inventory** service is
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+The overall state of the application also changed to **DOWN** as a result. Run the following curl command
+ to verify that the **inventory** service is indeed in maintenance:
 ```
 curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
 
-
-indeed in maintenance. Set the **`io_openliberty_guides_inventory_inMaintenance`**
+Set the ***`*io_openliberty_guides_inventory_inMaintenance`****
 property back to **false** after you are done.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json
+
+```
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":false}
+```
+{: codeblock}
 
 
 
