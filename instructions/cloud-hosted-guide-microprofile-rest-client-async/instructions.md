@@ -74,7 +74,12 @@ The **finish** directory contains the finished project that you will build.
 
 # Updating the template interface of a REST client to use asynchronous methods
 
-Navigate to the **start** directory to begin.
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd /home/project/guide-microprofile-rest-client-async/start
+```
+{: codeblock}
 
 The **query** service uses a MicroProfile Rest Client to access the **inventory** service.
 You will update the methods in the template interface for this client to be asynchronous.
@@ -310,30 +315,13 @@ The script also creates three instances of the **system** microservice.
 
 
 
+
 The services take some time to become available. 
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-
-You can access the application by making requests to the **query/systemLoad** endpoint by going to http://localhost:9080/query/systemLoad.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+You can access the application by making requests to the **query/systemLoad** endpoint by running the following curl command:
 ```
 curl http://localhost:9080/query/systemLoad
 ```
 {: codeblock}
-
-
 
 When the service is ready, you see an output similar to the following example which was formatted for readability. 
 
