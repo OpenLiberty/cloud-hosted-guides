@@ -865,6 +865,7 @@ You've learned the basics of deploying and updating an application on an Open Li
 
 
 
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
