@@ -607,8 +607,6 @@ rm -fr guide-microprofile-opentracing
 ```
 {: codeblock}
 
-Feel free to try one of the related MicroProfile guides. They demonstrate additional technologies that you
-can learn to expand on top of what you built here.
 
 
 
