@@ -57,7 +57,12 @@ The **finish** directory contains the finished project that you will build.
 
 # Packaging your microservices
 
-Navigate to the **start** directory to begin.
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd start
+```
+{: codeblock}
 
 You can find the starting Java project in the **start** directory. It is a multi-module Maven project that is made up of the **system** and **inventory** microservices. Each microservice lives in its own corresponding directory, **system** and **inventory**.
 
