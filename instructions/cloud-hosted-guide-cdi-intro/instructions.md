@@ -624,13 +624,7 @@ You just used CDI services in Open Liberty to build a simple inventory applicati
 
 
 
-
-## Where to next? 
-
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-
-
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
