@@ -731,16 +731,7 @@ technologies that you can learn and expand on top of what you built here.
 
 
 
-
-## Where to next? 
-
-- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-- [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-
-
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
