@@ -77,6 +77,7 @@ mvn -pl system liberty:run
 Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session and 
 run the following Maven goal to build the **inventory** microservice and run it inside Open Liberty:
 ```
+cd /home/project/guide-containerize/start
 mvn -pl inventory liberty:run
 ```
 {: codeblock}
