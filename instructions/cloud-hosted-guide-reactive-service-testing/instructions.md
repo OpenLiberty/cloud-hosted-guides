@@ -549,7 +549,7 @@ You just tested two reactive Java microservices using MicroShed Testing.
 
 
 
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
