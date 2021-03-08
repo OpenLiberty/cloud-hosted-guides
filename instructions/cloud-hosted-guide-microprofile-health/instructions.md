@@ -450,7 +450,7 @@ curl http://localhost:9080/health/live
 ```
 {: codeblock}
 
-Put the **inventory** service in maintenance by setting the ***`*io_openliberty_guides_inventory_inMaintenance`****
+Put the **inventory** service in maintenance by setting the **`io_openliberty_guides_inventory_inMaintenance`**
 property to **true** in the **resources/CustomConfigSource.json** file. 
 
 > From the menu of the IDE, select 
@@ -476,7 +476,7 @@ curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
 
-Set the ***`*io_openliberty_guides_inventory_inMaintenance`****
+Set the **`io_openliberty_guides_inventory_inMaintenance`**
 property back to **false** after you are done.
 
 > From the menu of the IDE, select 
