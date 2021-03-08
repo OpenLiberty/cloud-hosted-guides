@@ -72,14 +72,16 @@ mvn -pl system liberty:run
 ```
 {: codeblock}
 
-Open another command-line session and run the following Maven goal to build the **inventory** microservice and run it inside Open Liberty:
+
+
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session and 
+run the following Maven goal to build the **inventory** microservice and run it inside Open Liberty:
+[role='command']
 ```
 mvn -pl inventory liberty:run
 ```
-{: codeblock}
 
-
-
+Select **Terminal** > **New Terminal** from the menu of the IDE to open a new command-line session.
 To access the **inventory** service, which displays the current contents of the inventory, run the following curl command: 
 ```
 curl http://localhost:9081/inventory/systems
