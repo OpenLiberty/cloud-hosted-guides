@@ -114,7 +114,7 @@ The defaultServer server is ready to run a smarter planet.
 
 To launch the front-end web application, 
 select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
-and click the **OK** button. You’re redirected to the https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai URL, 
+and click the **OK** button. You’re redirected to the **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
 where **accountname** is your account name. Click the **Log in** link on the welcome page. From here, 
 you can log in to the application with the form-based login.
 
@@ -542,7 +542,7 @@ Because you are running the **frontend** and **system** services in dev mode, th
 
 To launch the front-end web application, 
 select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
-and click the **OK** button. You’re redirected to the https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai URL, 
+and click the **OK** button. You’re redirected to the **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
 where **accountname** is your account name. Click the **Log in** link on the welcome page. 
 Log in with one of the following usernames and its corresponding password:
 
