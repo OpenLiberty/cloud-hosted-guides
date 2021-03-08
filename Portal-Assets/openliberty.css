@@ -213,6 +213,10 @@ footer {
   display: none;
 }
 
+#register-terms_of_service-validation-icon {
+  display: none;
+}
+
 /* Mobile */
 @media (max-width: 767px) {
   form#login,
