@@ -1,0 +1,241 @@
+@import url('https://fonts.googleapis.com/css2?family=Asap&family=IBM+Plex+Sans&display=swap');
+
+.global-header .nav-links {
+  display: none;
+}
+
+.global-header {
+  background: #313653;
+  box-shadow: none;
+}
+
+#content-container.login-register-content {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding-left: 3rem;
+}
+
+#login-form {
+  max-width: 100%;
+}
+
+.toggle-form {
+  padding-top: 1rem;
+}
+
+#login-and-registration-container,
+#login-and-registration-container #login-anchor,
+#login-and-registration-container #register-anchor,
+#login-and-registration-container .toggle-form {
+  margin: unset;
+  max-width: unset;
+}
+
+#login-and-registration-container a,
+.forgot-password.field-link {
+  text-decoration: none !important;
+  color: #CC4D19 !important;
+  font-size: 0.8rem;
+}
+
+.register-button {
+  grid-row-start: 5;
+}
+
+#login-and-registration-container .login-button,
+#login-and-registration-container .register-button {
+  background: #acd154;
+  color: #313653;
+  border-radius: 4px;
+  width: auto;
+  padding: 12px 8px;
+  box-shadow: none;
+}
+
+#login-and-registration-container h2 {
+  font-family: 'Asap', sans-serif;
+  color: #2C2E50;
+  letter-spacing: 0;
+  font-size: 2.2rem;
+  padding-top: 1.5rem;
+}
+
+form#login,
+form#register {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: column;
+  grid-column-gap: 128px;
+  padding-bottom: 3rem;
+  width: fit-content;
+}
+
+form#login .login-providers,
+form#register .login-providers {
+  grid-column-start: 2;
+  border-left: 1px solid #eee;
+  height: 100%;
+  grid-row-start: 1;
+  grid-row-end: 5;
+  padding-left: 6rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+form#login input[type="email"],
+form#login input[type="password"],
+form#login input[type="text"],
+form#register input[type="email"],
+form#register input[type="password"],
+form#register input[type="text"] {
+  height: 2.5rem;
+  padding: 16px;
+  border-color: #979797;
+}
+
+.text, #login-and-registration-container a {
+  font-family: 'Asap', sans-serif;
+  font-size: .9rem;
+  color: #161616;
+  letter-spacing: 0;
+}
+
+.label-text, #login-email {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.8rem;
+  color: #525252;
+  letter-spacing: 0.02rem;
+}
+
+#login-email, label[for=login-remember] span {
+  font-size: .9rem;
+  border-color: #979797;
+}
+
+/* SSO Buttons */
+
+#register .section-title.lines,
+.login-providers .section-title.lines {
+  display: none;
+}
+
+.login-providers .login-provider {
+  width: 175%;
+  height: 3rem;
+}
+
+#register .login-providers .login-provider {
+  width: 120%;
+}
+
+#login-email-desc, .forgot-password {
+  font-family: 'Asap', sans-serif;
+  font-size: .7rem;
+  color: #161616;
+  letter-spacing: 0;
+}
+
+.login-providers .button {
+  font-family: 'Asap', sans-serif;
+  font-size: .8rem;
+  color: #FFFFFF;
+  letter-spacing: 0;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 0;
+  border-radius: .15rem;
+  color: white;
+  border: none;
+  margin-bottom: 12px;
+}
+
+.login-providers .button .icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0px 16px;
+  font-size: 2rem;
+  position: relative;
+  background: transparent;
+}
+
+.login-providers .button-oa2-github {
+  background-color: #242a2e;
+}
+
+.login-providers .button-oa2-google-oauth2 {
+  background-color: #d0482d !important;
+}
+
+.login-providers .button-oa2-linkedin-oauth2 {
+  background-color: #0177b5;
+  color: white !important;
+}
+
+.login-providers .button-oa2-ibmid {
+  background-color: #0730ad !important;
+}
+
+/* Footer */
+
+footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  padding: 1rem;
+  background-color: #d6d6d6;
+  box-shadow: 0 -1px 5px 0 rgba(0,0,0,0.1);
+  border-top: 1px solid #c5c6c7;
+}
+
+.footer__copyright {
+  padding-top: .7rem;
+  padding-bottom: .7rem;
+}
+
+.wrapper-footer {
+  box-shadow: 0 0px 0px 0 rgb(0 0 0 / 0%);
+  border-top: 0px;
+  padding: 0px;
+}
+
+.wrapper-footer footer#footer-openedx {
+  max-width: 100%;
+}
+
+.wrapper-footer footer#footer-openedx .footer-about-openedx {
+  display: none;
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  form#login,
+  form#register {
+    grid-template-columns: 1fr;
+    grid-auto-flow: row;
+    grid-column-gap: 0px;
+  }
+
+  .login-providers .section-title.lines {
+    display: block;
+    width: 100%;
+  }
+
+  form#login .login-providers,
+  form#register .login-providers {
+    grid-column-start: 1;
+    grid-row-start: 5;
+    border: none;
+    padding-left: 0px;
+  }
+
+  .login-providers .login-provider {
+    width: 100%;
+  }
+}
