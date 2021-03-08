@@ -628,13 +628,7 @@ You just developed a reactive Java application using MicroProfile Reactive Messa
 
 
 
-
-## Where to next? 
-
-- [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-
-
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
