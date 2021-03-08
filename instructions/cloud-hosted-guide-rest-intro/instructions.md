@@ -443,14 +443,7 @@ You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
 
 
 
-
-## Where to next? 
-
-- [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-- [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
-
-
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
