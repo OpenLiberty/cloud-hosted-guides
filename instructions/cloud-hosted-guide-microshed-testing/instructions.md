@@ -1166,7 +1166,7 @@ You developed automated tests for a REST service in Open Liberty by using MicroS
 
 
 
-# Clean up your environment
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
