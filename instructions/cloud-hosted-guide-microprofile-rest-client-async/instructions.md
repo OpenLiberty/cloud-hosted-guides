@@ -317,7 +317,7 @@ The script also creates three instances of the **system** microservice.
 
 
 The services take some time to become available. 
-You can access the application by making requests to the **query/systemLoad** endpoint by running the following curl command:
+You can access the application by making requests to the `query/systemLoad` endpoint by running the following curl command:
 ```
 curl http://localhost:9080/query/systemLoad
 ```
