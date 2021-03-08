@@ -373,7 +373,7 @@ In this case, the IP address for the **system** service is **172.17.0.2**. Take 
 
 Run the following commands to go to the **http://localhost:9081/inventory/systems/[system-ip-address]** by replacing **[system-ip-address]** URL with the IP address that you obtained earlier:
 ```
-SYSTEM_IP=**docker inspect -f "{{.NetworkSettings.IPAddress }}" system**
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
 curl http://localhost:9081/inventory/systems/{$SYSTEM_IP}
 ```
 {: codeblock}
@@ -406,8 +406,7 @@ value of an environment variable that is stored in each environment.
 In this example, you will use an environment variable to externally configure the
 HTTP port number of the **inventory** service. 
 
-In the **inventory/server.xml** file, the [hotspot=httpPort
-file=0]**default.http.port** variable is declared and is used in the
+In the **inventory/server.xml** file, the **default.http.port** variable is declared and is used in the
 **httpEndpoint** element to define the service
 endpoint. The default value of the **default.http.port**
 variable is **9081**. However, this value is only used if no other value is
@@ -453,7 +452,7 @@ You can add your local system properties at the
 replacing **[system-ip-address]** with the IP address that you obtained in the previous
 section. Run the following commands:
 ```
-SYSTEM_IP=**docker inspect -f "{{.NetworkSettings.IPAddress }}" system**
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
 curl http://localhost:9081/inventory/systems/{$SYSTEM_IP}
 ```
 {: codeblock}
