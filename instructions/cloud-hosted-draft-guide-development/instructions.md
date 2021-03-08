@@ -2,7 +2,7 @@
 
 To launch the front-end web application, 
 select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
-and click the **OK** button. You’re redirected to the **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
+and click the **OK** button. You’re redirected to the `https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai` URL, 
 where **accountname** is your account name.
 
 ## Where to next? 
