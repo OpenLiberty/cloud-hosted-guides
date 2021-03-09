@@ -19,7 +19,7 @@ jobs:
 
       - name: Output message
         run: |
-          echo "${{ github.event.inputs.guide_namename }}"
+          echo "${{ github.event.inputs.guide_name }}"
           echo "${{ github.event.inputs.guide_branch }}"
           
   convertToDevelopmentLab:
@@ -62,7 +62,7 @@ jobs:
           branchName=${{ github.event.inputs.branch }}
           git init
           mkdir -p instructions/cloud-hosted-draft-guide-development/
-          rm -f instructions/cloud-hosted-draft-guide-development/instructions.md
+          rm -f instructions/cloud-hosted-draft-guide-development/README.md
           cd GuideConverter
           mvn compiler:compile
           mvn exec:java -Dexec.args="cloud-hosted-draft-guide-development staging"
