@@ -1,4 +1,4 @@
-name: GuideConverter
+name: DevGuideConverter
 on:
   workflow_dispatch:
     inputs:
