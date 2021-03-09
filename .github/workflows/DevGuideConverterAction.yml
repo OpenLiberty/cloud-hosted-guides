@@ -19,7 +19,7 @@ jobs:
 
       - name: Output message
         run: |
-          echo "${{ github.event.inputs.guide_namename }}"
+          echo "${{ github.event.inputs.guide_name }}"
           echo "${{ github.event.inputs.guide_branch }}"
           
   convertToDevelopmentLab:
