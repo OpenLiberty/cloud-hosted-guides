@@ -10,7 +10,6 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Containerizing microservices
 
 
 # What you'll learn
@@ -409,7 +408,8 @@ value of an environment variable that is stored in each environment.
 In this example, you will use an environment variable to externally configure the
 HTTP port number of the **inventory** service. 
 
-In the **inventory/server.xml** file, the **default.http.port** variable is declared and is used in the
+In the **inventory/server.xml** file, 
+the **default.http.port** variable is declared and is used in the
 **httpEndpoint** element to define the service
 endpoint. The default value of the **default.http.port**
 variable is **9081**. However, this value is only used if no other value is
