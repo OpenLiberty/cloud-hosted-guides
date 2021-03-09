@@ -25,7 +25,6 @@ jobs:
   convertToDevelopmentLab:
     name: Make PR to cloud-hosted-draft-guide-development
     runs-on: ubuntu-latest
-    runs-on: ubuntu-latest
   
     steps:
 
