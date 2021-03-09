@@ -181,6 +181,6 @@ jobs:
           body: "Updated by github actions, triggered by the MANUAL ACTION"
           branch: "cloud-hosted-${{matrix.guides.guide}}/staging"
           base: "staging"
-          # labels: "RunTests"
+          labels: "RunTests"
         name: Create Pull Request
         continue-on-error: true
