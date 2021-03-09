@@ -25,7 +25,6 @@ jobs:
   convertToDevelopmentLab:
     name: Make PR to cloud-hosted-draft-guide-development
     runs-on: ubuntu-latest
-    runs-on: ubuntu-latest
   
     steps:
 
@@ -63,7 +62,7 @@ jobs:
           branchName=${{ github.event.inputs.branch }}
           git init
           mkdir -p instructions/cloud-hosted-draft-guide-development/
-          rm -f instructions/cloud-hosted-draft-guide-development/README.md
+          rm -f instructions/cloud-hosted-draft-guide-development/instructions.md
           cd GuideConverter
           mvn compiler:compile
           mvn exec:java -Dexec.args="cloud-hosted-draft-guide-development staging"
