@@ -55,7 +55,7 @@ jobs:
       - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
         with:
-          repository: jakub-pomykala/cloud-hosted-guide-converter
+          repository: OpenLiberty/cloud-hosted-guide-converter
           ref: ${{ github.event.inputs.GuideConverterBranch }}
           path: GuideConverter
         
