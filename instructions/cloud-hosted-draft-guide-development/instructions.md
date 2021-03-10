@@ -14,6 +14,6 @@ where **accountname** is your account name.
 - [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html) {:target="_blank"}
 - [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html) {:target="_blank"}
 
-- [View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/apidocs/) {:target="_blank"}
+- [View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/apidocs/){:target="_blank"}
 
-- [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html) {:target="_blank"}
+- [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html){:target="_blank"}
