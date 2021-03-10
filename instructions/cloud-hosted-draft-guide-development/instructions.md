@@ -17,3 +17,5 @@ where **accountname** is your account name.
 - [View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/apidocs/){:target="_blank"}
 
 - [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html){:target="_blank"}
+
+- <a href="https://openliberty.io/docs/latest/microprofile.html" target="blank">View the MicroProfile</a>
