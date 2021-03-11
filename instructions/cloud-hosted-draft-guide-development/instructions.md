@@ -8,7 +8,7 @@ where **accountname** is your account name.
 ## Where to next? 
 
 - **Creating reactive Java microservices** - https://openliberty.io/guides/microprofile-reactive-messaging.html
-- **Integrating RESTful services with a reactive system** - [https://openliberty.io/guides/microprofile-reactive-messaging-rest.html]
+- **Integrating RESTful services with a reactive system** - [https://openliberty.io/guides/microprofile-reactive-messaging-rest.html](https://openliberty.io/guides/microprofile-reactive-messaging-rest.html)
 - [Streaming updates to a client using Server-Sent Events](https://openliberty.io/guides/reactive-messaging-sse.html)
 - [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html) {:target="_blank"}
 - [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html) {:target="_blank"}
