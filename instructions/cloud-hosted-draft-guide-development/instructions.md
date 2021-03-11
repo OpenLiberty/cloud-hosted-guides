@@ -128,8 +128,7 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE, 
-and run the following curl command from the terminal:
+Open another command-line session and run the following curl command from the terminal:
 ```
 curl http://localhost:9081/inventory/systems/localhost
 ```
