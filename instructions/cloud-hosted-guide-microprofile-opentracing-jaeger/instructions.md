@@ -627,9 +627,8 @@ docker rm jaeger
 
 ## Nice Work!
 
-You just used MicroProfile OpenTracing in Open Liberty to customize how and which traces are delivered to
+You just used MicroProfile OpenTracing in Open Liberty to customize how and which traces are delivered to Jaeger.
 
-Jaeger.
 
 Try out one of the related MicroProfile guides. These guides demonstrate more technologies that you can learn to expand
 on what you built in this guide.
