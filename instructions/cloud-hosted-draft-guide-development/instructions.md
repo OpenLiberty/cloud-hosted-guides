@@ -76,34 +76,6 @@ The **finish** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-The **finish** directory in the root of this guide contains the finished application.
-Give it a try before you proceed.
-
-Open a command-line session and navigate to the **finish/inventory** directory.
-Run the following Maven goal to build the **inventory** service and deploy it to Open Liberty:
-```
-mvn liberty:run
-```
-{: codeblock}
-
-
-
-Open another command-line session and navigate to the **finish/system** directory.
-Run the following Maven goal to build the **system** service and deploy it to Open Liberty:
-```
-mvn liberty:run
-```
-{: codeblock}
-
-
-
-After you see the following message in both command-line sessions, both of your services are ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
 Run the following docker command to start Jaeger server:
 ```
 docker run -d --name jaeger \
@@ -128,6 +100,33 @@ Select **Launch Application** from the menu of the IDE,
 type in **16686** to specify the port number for the Jaeger service, and click the **OK** button. 
 Jaeger can be found at the **`https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
 where **accountname** is your account name.
+
+The **finish** directory in the root of this guide contains the finished application.
+Give it a try before you proceed.
+
+
+Navigate to the **finish/inventory** directory.
+Run the following Maven goal to build the **inventory** service and deploy it to Open Liberty:
+```
+cd /home/project/guide-microprofile-opentracing-jaeger/finish/inventory
+mvn liberty:run
+```
+{: codeblock}
+
+Open another command-line session and navigate to the **finish/system** directory.
+Run the following Maven goal to build the **system** service and deploy it to Open Liberty:
+```
+cd /home/project/guide-microprofile-opentracing-jaeger/finish/system
+mvn liberty:run
+```
+{: codeblock}
+
+After you see the following message in both command-line sessions, both of your services are ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE, 
 and run the following curl command from the terminal:
