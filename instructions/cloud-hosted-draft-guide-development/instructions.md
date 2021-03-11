@@ -18,4 +18,4 @@ where **accountname** is your account name.
 
 - [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html){:target="_blank"}
 
-- <a href="https://openliberty.io/docs/latest/microprofile.html" target="_blank">View the MicroProfile</a>
+- <a href="https://openliberty.io/docs/latest/microprofile.html" target="_blank" rel="noopener noreferrer">View the MicroProfile</a>
