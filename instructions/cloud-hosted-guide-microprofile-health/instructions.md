@@ -218,11 +218,7 @@ public class SystemReadinessCheck implements HealthCheck {
 The **@Readiness** annotation indicates that this particular bean is a readiness health check procedure.
 By pairing this annotation with the **ApplicationScoped** context from the Contexts and
 Dependency Injections API, the bean is discovered automatically when the http://localhost:9080/health
-endpoint receives a request. Run the following curl command:
-```
-curl http://localhost:9080/health
-```
-{: codeblock}
+endpoint receives a request.
 
 
 The **call()** method is used to return the health status of a particular service.
