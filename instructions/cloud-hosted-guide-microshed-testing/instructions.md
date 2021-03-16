@@ -142,87 +142,16 @@ Update the **PersonServiceIT** class.
 ```
 package io.openliberty.guides.testing;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Collection;
-
 import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.jaxrs.RESTClient;
 import org.microshed.testing.jupiter.MicroShedTest;
 
 @MicroShedTest
-@SharedContainerConfig(AppDeploymentConfig.class)
 public class PersonServiceIT {
-    
-    @RESTClient
-    public static PersonService personSvc;
     
     @Test
     public void testCreatePerson() {
-        Long createId = personSvc.createPerson("Hank", 42);
-        assertNotNull(createId);
     }
-
-    @Test
-    public void testMinSizeName() {
-        Long minSizeNameId = personSvc.createPerson("Ha", 42);
-        assertEquals(new Person("Ha", 42, minSizeNameId),
-                     personSvc.getPerson(minSizeNameId));
-    }
-
-    @Test
-    public void testMinAge() {
-        Long minAgeId = personSvc.createPerson("Newborn", 0);
-        assertEquals(new Person("Newborn", 0, minAgeId),
-                     personSvc.getPerson(minAgeId));
-    }
-
-    @Test
-    public void testGetPerson() {
-        Long bobId = personSvc.createPerson("Bob", 24);
-        Person bob = personSvc.getPerson(bobId);
-        assertEquals("Bob", bob.name);
-        assertEquals(24, bob.age);
-        assertNotNull(bob.id);
-    }
-
-    @Test
-    public void testGetAllPeople() {
-        Long person1Id = personSvc.createPerson("Person1", 1);
-        Long person2Id = personSvc.createPerson("Person2", 2);
-
-        Person expected1 = new Person("Person1", 1, person1Id);
-        Person expected2 = new Person("Person2", 2, person2Id);
-
-        Collection<Person> allPeople = personSvc.getAllPeople();
-        assertTrue(allPeople.size() >= 2,
-            "Expected at least 2 people to be registered, but there were only: " + 
-            allPeople);
-        assertTrue(allPeople.contains(expected1),
-            "Did not find person " + expected1 + " in all people: " + allPeople);
-        assertTrue(allPeople.contains(expected2),
-            "Did not find person " + expected2 + " in all people: " + allPeople);
-    }
-
-    @Test
-    public void testUpdateAge() {
-        Long personId = personSvc.createPerson("newAgePerson", 1);
-
-        Person originalPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", originalPerson.name);
-        assertEquals(1, originalPerson.age);
-        assertEquals(personId, Long.valueOf(originalPerson.id));
-
-        personSvc.updatePerson(personId, 
-            new Person(originalPerson.name, 2, originalPerson.id));
-        Person updatedPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", updatedPerson.name);
-        assertEquals(2, updatedPerson.age);
-        assertEquals(personId, Long.valueOf(updatedPerson.id));
-    }
+    
 }
 ```
 {: codeblock}
@@ -244,87 +173,33 @@ Update the **PersonServiceIT** class.
 ```
 package io.openliberty.guides.testing;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Collection;
 
 import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
 import org.microshed.testing.jaxrs.RESTClient;
 import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.SharedContainerConfig;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
 
 @MicroShedTest
 @SharedContainerConfig(AppDeploymentConfig.class)
 public class PersonServiceIT {
-    
+
     @RESTClient
     public static PersonService personSvc;
-    
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
     @Test
     public void testCreatePerson() {
         Long createId = personSvc.createPerson("Hank", 42);
         assertNotNull(createId);
     }
 
-    @Test
-    public void testMinSizeName() {
-        Long minSizeNameId = personSvc.createPerson("Ha", 42);
-        assertEquals(new Person("Ha", 42, minSizeNameId),
-                     personSvc.getPerson(minSizeNameId));
-    }
-
-    @Test
-    public void testMinAge() {
-        Long minAgeId = personSvc.createPerson("Newborn", 0);
-        assertEquals(new Person("Newborn", 0, minAgeId),
-                     personSvc.getPerson(minAgeId));
-    }
-
-    @Test
-    public void testGetPerson() {
-        Long bobId = personSvc.createPerson("Bob", 24);
-        Person bob = personSvc.getPerson(bobId);
-        assertEquals("Bob", bob.name);
-        assertEquals(24, bob.age);
-        assertNotNull(bob.id);
-    }
-
-    @Test
-    public void testGetAllPeople() {
-        Long person1Id = personSvc.createPerson("Person1", 1);
-        Long person2Id = personSvc.createPerson("Person2", 2);
-
-        Person expected1 = new Person("Person1", 1, person1Id);
-        Person expected2 = new Person("Person2", 2, person2Id);
-
-        Collection<Person> allPeople = personSvc.getAllPeople();
-        assertTrue(allPeople.size() >= 2,
-            "Expected at least 2 people to be registered, but there were only: " + 
-            allPeople);
-        assertTrue(allPeople.contains(expected1),
-            "Did not find person " + expected1 + " in all people: " + allPeople);
-        assertTrue(allPeople.contains(expected2),
-            "Did not find person " + expected2 + " in all people: " + allPeople);
-    }
-
-    @Test
-    public void testUpdateAge() {
-        Long personId = personSvc.createPerson("newAgePerson", 1);
-
-        Person originalPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", originalPerson.name);
-        assertEquals(1, originalPerson.age);
-        assertEquals(personId, Long.valueOf(originalPerson.id));
-
-        personSvc.updatePerson(personId, 
-            new Person(originalPerson.name, 2, originalPerson.id));
-        Person updatedPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", updatedPerson.name);
-        assertEquals(2, updatedPerson.age);
-        assertEquals(personId, Long.valueOf(updatedPerson.id));
-    }
 }
 ```
 {: codeblock}
@@ -377,87 +252,33 @@ Update the **PersonServiceIT** class.
 ```
 package io.openliberty.guides.testing;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Collection;
 
 import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
 import org.microshed.testing.jaxrs.RESTClient;
 import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.SharedContainerConfig;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
 
 @MicroShedTest
 @SharedContainerConfig(AppDeploymentConfig.class)
 public class PersonServiceIT {
-    
+
     @RESTClient
     public static PersonService personSvc;
-    
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
     @Test
     public void testCreatePerson() {
         Long createId = personSvc.createPerson("Hank", 42);
         assertNotNull(createId);
     }
 
-    @Test
-    public void testMinSizeName() {
-        Long minSizeNameId = personSvc.createPerson("Ha", 42);
-        assertEquals(new Person("Ha", 42, minSizeNameId),
-                     personSvc.getPerson(minSizeNameId));
-    }
-
-    @Test
-    public void testMinAge() {
-        Long minAgeId = personSvc.createPerson("Newborn", 0);
-        assertEquals(new Person("Newborn", 0, minAgeId),
-                     personSvc.getPerson(minAgeId));
-    }
-
-    @Test
-    public void testGetPerson() {
-        Long bobId = personSvc.createPerson("Bob", 24);
-        Person bob = personSvc.getPerson(bobId);
-        assertEquals("Bob", bob.name);
-        assertEquals(24, bob.age);
-        assertNotNull(bob.id);
-    }
-
-    @Test
-    public void testGetAllPeople() {
-        Long person1Id = personSvc.createPerson("Person1", 1);
-        Long person2Id = personSvc.createPerson("Person2", 2);
-
-        Person expected1 = new Person("Person1", 1, person1Id);
-        Person expected2 = new Person("Person2", 2, person2Id);
-
-        Collection<Person> allPeople = personSvc.getAllPeople();
-        assertTrue(allPeople.size() >= 2,
-            "Expected at least 2 people to be registered, but there were only: " + 
-            allPeople);
-        assertTrue(allPeople.contains(expected1),
-            "Did not find person " + expected1 + " in all people: " + allPeople);
-        assertTrue(allPeople.contains(expected2),
-            "Did not find person " + expected2 + " in all people: " + allPeople);
-    }
-
-    @Test
-    public void testUpdateAge() {
-        Long personId = personSvc.createPerson("newAgePerson", 1);
-
-        Person originalPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", originalPerson.name);
-        assertEquals(1, originalPerson.age);
-        assertEquals(personId, Long.valueOf(originalPerson.id));
-
-        personSvc.updatePerson(personId, 
-            new Person(originalPerson.name, 2, originalPerson.id));
-        Person updatedPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", updatedPerson.name);
-        assertEquals(2, updatedPerson.age);
-        assertEquals(personId, Long.valueOf(updatedPerson.id));
-    }
 }
 ```
 {: codeblock}
@@ -496,87 +317,33 @@ Update the **PersonServiceIT** class.
 ```
 package io.openliberty.guides.testing;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Collection;
 
 import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
 import org.microshed.testing.jaxrs.RESTClient;
 import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.SharedContainerConfig;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
 
 @MicroShedTest
 @SharedContainerConfig(AppDeploymentConfig.class)
 public class PersonServiceIT {
-    
+
     @RESTClient
     public static PersonService personSvc;
-    
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
     @Test
     public void testCreatePerson() {
         Long createId = personSvc.createPerson("Hank", 42);
         assertNotNull(createId);
     }
 
-    @Test
-    public void testMinSizeName() {
-        Long minSizeNameId = personSvc.createPerson("Ha", 42);
-        assertEquals(new Person("Ha", 42, minSizeNameId),
-                     personSvc.getPerson(minSizeNameId));
-    }
-
-    @Test
-    public void testMinAge() {
-        Long minAgeId = personSvc.createPerson("Newborn", 0);
-        assertEquals(new Person("Newborn", 0, minAgeId),
-                     personSvc.getPerson(minAgeId));
-    }
-
-    @Test
-    public void testGetPerson() {
-        Long bobId = personSvc.createPerson("Bob", 24);
-        Person bob = personSvc.getPerson(bobId);
-        assertEquals("Bob", bob.name);
-        assertEquals(24, bob.age);
-        assertNotNull(bob.id);
-    }
-
-    @Test
-    public void testGetAllPeople() {
-        Long person1Id = personSvc.createPerson("Person1", 1);
-        Long person2Id = personSvc.createPerson("Person2", 2);
-
-        Person expected1 = new Person("Person1", 1, person1Id);
-        Person expected2 = new Person("Person2", 2, person2Id);
-
-        Collection<Person> allPeople = personSvc.getAllPeople();
-        assertTrue(allPeople.size() >= 2,
-            "Expected at least 2 people to be registered, but there were only: " + 
-            allPeople);
-        assertTrue(allPeople.contains(expected1),
-            "Did not find person " + expected1 + " in all people: " + allPeople);
-        assertTrue(allPeople.contains(expected2),
-            "Did not find person " + expected2 + " in all people: " + allPeople);
-    }
-
-    @Test
-    public void testUpdateAge() {
-        Long personId = personSvc.createPerson("newAgePerson", 1);
-
-        Person originalPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", originalPerson.name);
-        assertEquals(1, originalPerson.age);
-        assertEquals(personId, Long.valueOf(originalPerson.id));
-
-        personSvc.updatePerson(personId, 
-            new Person(originalPerson.name, 2, originalPerson.id));
-        Person updatedPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", updatedPerson.name);
-        assertEquals(2, updatedPerson.age);
-        assertEquals(personId, Long.valueOf(updatedPerson.id));
-    }
 }
 ```
 {: codeblock}
@@ -612,17 +379,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Collection;
 
 import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
 import org.microshed.testing.jaxrs.RESTClient;
 import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
 
 @MicroShedTest
-@SharedContainerConfig(AppDeploymentConfig.class)
 public class PersonServiceIT {
-    
+
     @RESTClient
     public static PersonService personSvc;
-    
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
     @Test
     public void testCreatePerson() {
         Long createId = personSvc.createPerson("Hank", 42);
@@ -662,7 +434,7 @@ public class PersonServiceIT {
 
         Collection<Person> allPeople = personSvc.getAllPeople();
         assertTrue(allPeople.size() >= 2,
-            "Expected at least 2 people to be registered, but there were only: " + 
+            "Expected at least 2 people to be registered, but there were only: " +
             allPeople);
         assertTrue(allPeople.contains(expected1),
             "Did not find person " + expected1 + " in all people: " + allPeople);
@@ -679,7 +451,7 @@ public class PersonServiceIT {
         assertEquals(1, originalPerson.age);
         assertEquals(personId, Long.valueOf(originalPerson.id));
 
-        personSvc.updatePerson(personId, 
+        personSvc.updatePerson(personId,
             new Person(originalPerson.name, 2, originalPerson.id));
         Person updatedPerson = personSvc.getPerson(personId);
         assertEquals("newAgePerson", updatedPerson.name);
@@ -728,8 +500,7 @@ touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/g
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-microshed-testing/start/hotspots/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
 
 
@@ -742,17 +513,24 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
 import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.jaxrs.RESTClient;
 import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.SharedContainerConfig;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.microshed.testing.jaxrs.RESTClient;
 
 @MicroShedTest
 @SharedContainerConfig(AppDeploymentConfig.class)
 public class ErrorPathIT {
-    
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
     @RESTClient
     public static PersonService personSvc;
-    
+
     @Test
     public void testGetUnknownPerson() {
         assertThrows(NotFoundException.class, () -> personSvc.getPerson(-1L));
@@ -771,9 +549,9 @@ public class ErrorPathIT {
 
     @Test
     public void testCreateBadPersonNameTooLong() {
-        assertThrows(BadRequestException.class, () ->
-           personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson", 
-           5));
+        assertThrows(BadRequestException.class, () -> 
+          personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson", 
+          5));
     }
 }
 ```
@@ -803,8 +581,7 @@ touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/g
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-microshed-testing/start/finish/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
 
 
 
@@ -849,17 +626,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Collection;
 
 import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
 import org.microshed.testing.jaxrs.RESTClient;
 import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
 
 @MicroShedTest
-@SharedContainerConfig(AppDeploymentConfig.class)
 public class PersonServiceIT {
-    
+
     @RESTClient
     public static PersonService personSvc;
-    
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
     @Test
     public void testCreatePerson() {
         Long createId = personSvc.createPerson("Hank", 42);
@@ -899,7 +681,7 @@ public class PersonServiceIT {
 
         Collection<Person> allPeople = personSvc.getAllPeople();
         assertTrue(allPeople.size() >= 2,
-            "Expected at least 2 people to be registered, but there were only: " + 
+            "Expected at least 2 people to be registered, but there were only: " +
             allPeople);
         assertTrue(allPeople.contains(expected1),
             "Did not find person " + expected1 + " in all people: " + allPeople);
@@ -916,7 +698,7 @@ public class PersonServiceIT {
         assertEquals(1, originalPerson.age);
         assertEquals(personId, Long.valueOf(originalPerson.id));
 
-        personSvc.updatePerson(personId, 
+        personSvc.updatePerson(personId,
             new Person(originalPerson.name, 2, originalPerson.id));
         Person updatedPerson = personSvc.getPerson(personId);
         assertEquals("newAgePerson", updatedPerson.name);
@@ -1050,17 +832,24 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 
 import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.jaxrs.RESTClient;
 import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.SharedContainerConfig;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.microshed.testing.jaxrs.RESTClient;
 
 @MicroShedTest
 @SharedContainerConfig(AppDeploymentConfig.class)
 public class ErrorPathIT {
-    
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
     @RESTClient
     public static PersonService personSvc;
-    
+
     @Test
     public void testGetUnknownPerson() {
         assertThrows(NotFoundException.class, () -> personSvc.getPerson(-1L));
@@ -1079,9 +868,9 @@ public class ErrorPathIT {
 
     @Test
     public void testCreateBadPersonNameTooLong() {
-        assertThrows(BadRequestException.class, () ->
-           personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson", 
-           5));
+        assertThrows(BadRequestException.class, () -> 
+          personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson", 
+          5));
     }
 }
 ```
@@ -1178,15 +967,19 @@ rm -fr guide-microshed-testing
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microshed-testing/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microshed-testing/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-- [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-- [View the MicroShed Testing website](https://microshed.org/microshed-testing/)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [View the MicroShed Testing website](https://microshed.org/microshed-testing/)
 
 
 
