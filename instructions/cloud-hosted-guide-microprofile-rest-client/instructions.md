@@ -182,8 +182,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/finish/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 
 
 
@@ -246,8 +245,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/finish/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 
 
 
@@ -282,8 +280,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/finish/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
 
 
 
@@ -335,8 +332,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/webapp/META-IN
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/finish/src/main/webapp/META-INF/microprofile-config.properties
 
 
 
@@ -551,8 +547,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/ope
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/finish/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 
 
 
@@ -713,15 +708,19 @@ rm -fr guide-microprofile-rest-client
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-rest-client/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-rest-client/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-- [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 
 ## Log out of the session
