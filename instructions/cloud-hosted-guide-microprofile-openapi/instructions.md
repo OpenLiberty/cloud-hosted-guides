@@ -522,8 +522,7 @@ touch /home/project/guide-microprofile-openapi/start/src/main/java/io/openlibert
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/filter/InventoryOASFilter.java
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/finish/src/main/java/io/openliberty/guides/inventory/filter/InventoryOASFilter.java
 
 
 
@@ -610,8 +609,7 @@ touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/mi
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/finish/src/main/webapp/META-INF/microprofile-config.properties
 
 
 
@@ -690,8 +688,7 @@ touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/op
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/openapi.yaml
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/finish/src/main/webapp/META-INF/openapi.yaml
 
 
 
@@ -940,13 +937,17 @@ rm -fr guide-microprofile-openapi
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-openapi/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-openapi/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 
 
 ## Log out of the session
