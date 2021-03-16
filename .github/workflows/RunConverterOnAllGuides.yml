@@ -105,7 +105,7 @@ jobs:
         with:
             title: "To Prod: Change to ${{matrix.guides.guide}}"
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-            body: "Updated by github actions, triggered by the MANUAL ACTION"
+            body: "Updated by github actions, triggered by the ${{matrix.guides.guide}} repo."
             branch: "cloud-hosted-${{matrix.guides.guide}}/prod"
             base: "prod" 
             labels: "RunTests"
@@ -178,7 +178,7 @@ jobs:
         with:
           title: "To Staging: Change to ${{matrix.guides.guide}}"
           token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-          body: "Updated by github actions, triggered by the MANUAL ACTION"
+          body: "Updated by github actions, triggered by the ${{matrix.guides.guide}} repo."
           branch: "cloud-hosted-${{matrix.guides.guide}}/staging"
           base: "staging"
           labels: "RunTests"
