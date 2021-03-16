@@ -187,7 +187,7 @@ touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/r
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/finish/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 
 
@@ -332,8 +332,7 @@ touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guide
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/finish/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
 
 
@@ -455,13 +454,17 @@ rm -fr guide-rest-intro
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-rest-intro/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-rest-intro/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-- [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
 ## Log out of the session
