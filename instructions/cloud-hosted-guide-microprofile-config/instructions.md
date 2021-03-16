@@ -74,13 +74,6 @@ You can access the following two microservices to test their availability:
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
 
  http://localhost:9080/system/properties retrieves the information for a specific host
 
@@ -996,14 +989,18 @@ rm -fr guide-microprofile-config
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-config/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-config/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
 
 
 ## Log out of the session
