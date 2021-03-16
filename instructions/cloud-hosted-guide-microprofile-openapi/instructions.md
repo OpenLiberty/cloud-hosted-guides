@@ -85,13 +85,6 @@ The defaultServer server is ready to run a smarter planet.
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
 
 Next, point your browser to the http://localhost:9080/openapi URL and you'll see the RESTful APIs of the **inventory**
 
@@ -124,6 +117,7 @@ from the **finish** directory in another shell session:
 mvn liberty:stop
 ```
 {: codeblock}
+
 
 
 
@@ -616,7 +610,6 @@ touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/mi
 
 
 ```
-mp.openapi.scan.disable = true
 mp.openapi.filter = io.openliberty.guides.inventory.filter.InventoryOASFilter
 ```
 {: codeblock}
@@ -940,13 +933,17 @@ rm -fr guide-microprofile-openapi
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-openapi/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-openapi/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 
 
 ## Log out of the session
