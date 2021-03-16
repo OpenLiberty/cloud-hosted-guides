@@ -239,7 +239,7 @@ Replace the server configuration file.
     <variable name="default.http.port" defaultValue="9080"/>
     <variable name="default.https.port" defaultValue="9443"/>
 
-    <webApplication location="guide-getting-started.war" contextRoot="/dev" />
+    <webApplication location="guide-getting-started.war" contextRoot="/" />
     
     <mpMetrics authentication="false"/>
 
@@ -320,8 +320,7 @@ touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sam
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-getting-started/start/finish/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 
 
 
@@ -376,8 +375,7 @@ touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sam
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-getting-started/start/finish/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
 
 
 
@@ -542,7 +540,7 @@ Replace the server configuration file.
     <variable name="default.http.port" defaultValue="9080"/>
     <variable name="default.https.port" defaultValue="9443"/>
 
-    <webApplication location="guide-getting-started.war" contextRoot="/dev" />
+    <webApplication location="guide-getting-started.war" contextRoot="/" />
     
     <mpMetrics authentication="false"/>
 
@@ -877,14 +875,18 @@ rm -fr guide-getting-started
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-getting-started/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-getting-started/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
 ## Log out of the session
