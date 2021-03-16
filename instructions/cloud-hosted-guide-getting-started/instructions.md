@@ -110,16 +110,10 @@ for the following message, which indicates that the server startup is complete:
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
 
 To access the **system** microservice, see the http://localhost:9080/system/properties URL,
 
+To access the **system** microservice, see the http://localhost:9080/system/properties URL,
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
@@ -239,7 +233,7 @@ Replace the server configuration file.
     <variable name="default.http.port" defaultValue="9080"/>
     <variable name="default.https.port" defaultValue="9443"/>
 
-    <webApplication location="guide-getting-started.war" contextRoot="/dev" />
+    <webApplication location="guide-getting-started.war" contextRoot="/" />
     
     <mpMetrics authentication="false"/>
 
@@ -542,7 +536,7 @@ Replace the server configuration file.
     <variable name="default.http.port" defaultValue="9080"/>
     <variable name="default.https.port" defaultValue="9443"/>
 
-    <webApplication location="guide-getting-started.war" contextRoot="/dev" />
+    <webApplication location="guide-getting-started.war" contextRoot="/" />
     
     <mpMetrics authentication="false"/>
 
@@ -877,14 +871,18 @@ rm -fr guide-getting-started
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-getting-started/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-getting-started/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
 ## Log out of the session
