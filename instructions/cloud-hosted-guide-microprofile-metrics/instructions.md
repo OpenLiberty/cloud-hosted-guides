@@ -543,7 +543,7 @@ touch /home/project/guide-microprofile-metrics/start/src/test/java/it/io/openlib
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-metrics/start/finish/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java
 
 
 
@@ -810,14 +810,18 @@ rm -fr guide-microprofile-metrics
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-metrics/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-metrics/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 ## Log out of the session
