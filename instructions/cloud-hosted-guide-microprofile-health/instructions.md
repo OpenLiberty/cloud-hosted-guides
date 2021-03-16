@@ -683,15 +683,19 @@ rm -fr guide-microprofile-health
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-health/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-health/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-- [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 
 
 ## Log out of the session
