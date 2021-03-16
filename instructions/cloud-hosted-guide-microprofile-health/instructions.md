@@ -598,13 +598,13 @@ public class HealthIT {
 
 Let's break down the test cases:
 
-- The **testIfServicesAreUp()** test case compares the generated health report
+* The **testIfServicesAreUp()** test case compares the generated health report
 with the actual status of the services.
-- The **testReadiness()** test case compares the generated health report for the
+* The **testReadiness()** test case compares the generated health report for the
 readiness checks with the actual status of the services.
-- The **testLiveness()** test case compares the generated health report for the
+* The **testLiveness()** test case compares the generated health report for the
 liveness checks with the actual status of the services.
-- The **testIfInventoryServiceIsDown()** test case puts the **inventory** service
+* The **testIfInventoryServiceIsDown()** test case puts the **inventory** service
 in maintenance by setting the **`io_openliberty_guides_inventory_inMaintenance`**
 property to **true** and comparing the generated health report with the actual status of
 the services.
