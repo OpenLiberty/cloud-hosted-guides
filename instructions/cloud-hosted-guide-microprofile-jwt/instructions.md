@@ -221,7 +221,7 @@ touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openlib
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/finish/system/src/main/java/io/openliberty/guides/system/SystemResource.java
 
 
 
@@ -317,7 +317,7 @@ touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openl
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/finish/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
 
 
 
@@ -383,7 +383,7 @@ touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openl
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/finish/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
 
 
 
@@ -477,7 +477,7 @@ touch /home/project/guide-microprofile-jwt/start/system/src/main/webapp/META-INF
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/finish/system/src/main/webapp/META-INF/microprofile-config.properties
 
 
 
@@ -534,6 +534,7 @@ Replace the system server configuration file.
 
 The **mpJwt** feature adds the libraries that are required for MicroProfile JWT implementation.
 
+# Creating a client to access the secure system service
 
 # Building and running the application
 
@@ -616,7 +617,7 @@ touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/open
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/finish/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 
 
 
@@ -799,14 +800,18 @@ rm -fr guide-microprofile-jwt
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-jwt/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-jwt/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 ## Log out of the session
