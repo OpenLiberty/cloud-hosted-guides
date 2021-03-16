@@ -179,25 +179,14 @@ public class InventoryConfig {
   @ConfigProperty(name = "io_openliberty_guides_port_number")
   private int portNumber;
 
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_inventory_inMaintenance")
   private Provider<Boolean> inMaintenance;
 
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_email")
-  private Provider<Email> email;
 
   public int getPortNumber() {
     return portNumber;
   }
 
-  public boolean isInMaintenance() {
-    return inMaintenance.get();
-  }
 
-  public Email getEmail() {
-    return email.get();
-  }
 }
 ```
 {: codeblock}
@@ -401,9 +390,6 @@ public class InventoryConfig {
   @ConfigProperty(name = "io_openliberty_guides_inventory_inMaintenance")
   private Provider<Boolean> inMaintenance;
 
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_email")
-  private Provider<Email> email;
 
   public int getPortNumber() {
     return portNumber;
@@ -413,9 +399,6 @@ public class InventoryConfig {
     return inMaintenance.get();
   }
 
-  public Email getEmail() {
-    return email.get();
-  }
 }
 ```
 {: codeblock}
@@ -925,14 +908,18 @@ rm -fr guide-microprofile-config
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-config/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-config/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
 
 
 ## Log out of the session
