@@ -68,59 +68,26 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
-You can access the following two microservices to test their availability:
 
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-
- http://localhost:9080/system/properties retrieves the information for a specific host
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to test the availability of the **system** microservice and retrieve the system information:
 ```
 curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
-
-
-
- http://localhost:9080/inventory/systems retrieves the information for a list of all previously registered hosts
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to test the availability of the **inventory** microservice and 
+retrieve the information for a list of all previously registered hosts:
 ```
 curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
 
-
-
-In addition, you can access a third microservice, which retrieves and aggregates all of the configuration properties and sources that have been added throughout this guide. This is available at:
-
-
- http://localhost:9080/config
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+In addition, you can run the following curl command to access a third microservice, 
+which retrieves and aggregates all of the configuration properties and sources that are added throughout this guide.
 ```
 curl http://localhost:9080/config
 ```
 {: codeblock}
-
-
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -715,80 +682,42 @@ The email configuration value can be obtained by calling **inventoryConfig.getEm
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
-While the server is running, the following two microservices should be available to access:
 
-
- http://localhost:9080/system/properties
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+While the server is running, run the following curl command to access the **system** microservice:
 ```
 curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
-
-
-
- http://localhost:9080/inventory/systems
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+and run the following curl command to access the **inventory** microservice:
 ```
 curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
 
-
-
-
-You can find the service that retrieves configuration information that is specific to this guide at the following location:
-
-
- http://localhost:9080/config
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+You can find the service that retrieves configuration information that is specific to this guide by running the following curl command:
 ```
 curl http://localhost:9080/config
 ```
 {: codeblock}
-
-
-
 
 The **`config_ordinal`** value of the custom configuration source is set to **150**. It overrides configuration values of the default **microprofile-config.properties** source, which has a **`config_ordinal`** value of **100**.
 
 
 
+
 Play with this application by changing configuration values for each property in the **resources/CustomConfigSource.json** file.
-
-Your changes are added dynamically, and you do not need to restart the server. Refresh http://localhost:9080/config to see the dynamic changes.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Your changes are added dynamically, and you do not need to restart the server. Rerun the following curl command to see the dynamic changes:
 ```
 curl http://localhost:9080/config
 ```
 {: codeblock}
 
-
-
-
-For example, change **`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**, then try to access http://localhost:9080/inventory/systems again.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+For example, change **`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**, then try to access http://localhost:9080/inventory/systems again by running the following curl command:
 ```
 curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
-
 
 The following message displays: **ERROR: Service is currently in maintenance**.
 
