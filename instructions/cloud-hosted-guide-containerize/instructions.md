@@ -145,8 +145,7 @@ touch /home/project/guide-containerize/start/inventory/Dockerfile
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/inventory/Dockerfile
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/finish/inventory/Dockerfile
 
 
 
@@ -223,8 +222,7 @@ touch /home/project/guide-containerize/start/system/Dockerfile
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/system/Dockerfile
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/finish/system/Dockerfile
 
 
 
@@ -484,8 +482,7 @@ touch /home/project/guide-containerize/start/system/src/test/java/it/io/openlibe
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/finish/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 
 
 
@@ -565,8 +562,7 @@ touch /home/project/guide-containerize/start/inventory/src/test/java/it/io/openl
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/finish/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
 
@@ -818,13 +814,17 @@ rm -fr guide-containerize
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-containerize/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-containerize/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-- [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
 ## Log out of the session
