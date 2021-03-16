@@ -76,26 +76,50 @@ The **finish** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-The **finish** directory in the root of this guide contains the finished application.
-Give it a try before you proceed.
-
-Open a command-line session and navigate to the **finish/inventory** directory.
-Run the following Maven goal to build the **inventory** service and deploy it to Open Liberty:
+Run the following docker command to start Jaeger server:
 ```
-mvn liberty:run
+docker run -d --name jaeger \
+  -e COLLECTOR_ZIPKIN_HTTP_PORT=9411 \
+  -p 5775:5775/udp \
+  -p 6831:6831/udp \
+  -p 6832:6832/udp \
+  -p 5778:5778 \
+  -p 16686:16686 \
+  -p 14268:14268 \
+  -p 14250:14250 \
+  -p 9411:9411 \
+  jaegertracing/all-in-one:1.17
 ```
 {: codeblock}
 
+You can find information about the Jaeger server and instructions for starting the all-in-one executable file in the
+[Jaeger documentation](https://www.jaegertracing.io/docs/1.17/getting-started/#all-in-one).
 
+Before you proceed, make sure that your Jaeger server is up and running. 
+Select **Launch Application** from the menu of the IDE, 
+type in **16686** to specify the port number for the Jaeger service, and click the **OK** button. 
+Jaeger can be found at the **`https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
+where **accountname** is your account name.
+
+The **finish** directory in the root of this guide contains the finished application.
+Give it a try before you proceed.
+
+
+Navigate to the **finish/inventory** directory.
+Run the following Maven goal to build the **inventory** service and deploy it to Open Liberty:
+```
+cd /home/project/guide-microprofile-opentracing-jaeger/finish/inventory
+mvn liberty:run
+```
+{: codeblock}
 
 Open another command-line session and navigate to the **finish/system** directory.
 Run the following Maven goal to build the **system** service and deploy it to Open Liberty:
 ```
+cd /home/project/guide-microprofile-opentracing-jaeger/finish/system
 mvn liberty:run
 ```
 {: codeblock}
-
-
 
 After you see the following message in both command-line sessions, both of your services are ready:
 
@@ -104,42 +128,17 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-
-Make sure that your Jaeger server is running and point your browser to the http://localhost:9081/inventory/systems/localhost URL.
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Open another command-line session and run the following curl command from the terminal:
 ```
 curl http://localhost:9081/inventory/systems/localhost
 ```
 {: codeblock}
 
-
 When you visit this endpoint, you make two GET HTTP requests, one to the **system** service and one to the **inventory**
 service. Both of these requests are configured to be traced, so a new trace is recorded in Jaeger.
 
-
-To view the traces, go to the http://localhost:16686 URL.
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:16686
-```
-{: codeblock}
-
-
-You can view the traces for the inventory or system services under the **Search** tab in the upper left of the page.
+To view the traces, go to the **`https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai`** URL.
+You can view the traces for the inventory or system services under the **Search** tab.
 Select the services in the **Select a service** menu and click the **Find Traces** button at the end of the section.
 
 If you only see the **jaeger-query** listed in the dropdown, you might need to wait a little longer and refresh the page
@@ -164,10 +163,14 @@ Verify that there are three spans from **inventory** and one span from **system*
 After you’re finished reviewing the application, stop the Open Liberty servers by pressing **CTRL+C** in the command-line
 sessions where you ran the system and inventory services.
 Alternatively, you can run the following goals from the **finish** directory in another command-line session:
+
+
 ```
- mvn -pl system liberty:stop
- mvn -pl inventory liberty:stop
+cd /home/project/guide-microprofile-opentracing-jaeger/finish
+mvn -pl system liberty:stop
+mvn -pl inventory liberty:stop
 ```
+{: codeblock}
 
 # Building the application
 
@@ -178,21 +181,22 @@ recompiles and deploys your updates whenever you save a new change.
 
 Open a command-line session and navigate to the **start/inventory** directory.
 Run the following Maven goal to start the **inventory** service in dev mode:
+
 ```
+cd /home/project/guide-microprofile-opentracing-jaeger/start/inventory
 mvn liberty:dev
 ```
 {: codeblock}
-
 
 
 Open a command-line session and navigate to the **start/system** directory.
 Run the following Maven goal to start the **system** service in dev mode:
+
 ```
+cd /home/project/guide-microprofile-opentracing-jaeger/start/system
 mvn liberty:dev
 ```
 {: codeblock}
-
-
 
 After you see the following message, your application server in dev mode is ready:
 ```
@@ -202,30 +206,18 @@ Press the Enter key to run tests on demand.
 Dev mode holds your command-line session to listen for file changes.
 Open another command-line session to continue, or open the project in your editor.
 
-When the servers start, you can find the **system** and **inventory** services at the following URLs:
 
-
-http://localhost:9080/system/properties
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+When the servers start, you can find the **system** service by running the following curl command:
 ```
 curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
-
-
-http://localhost:9081/inventory/systems
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+and the **inventory** service by running the following curl command:
 ```
 curl http://localhost:9081/inventory/systems
 ```
 {: codeblock}
-
-
 
 
 # Enabling existing Tracer implementation
@@ -300,10 +292,10 @@ If you place the annotation on a method, then the annotation overrides the class
 
 The **@Traced** annotation can be configured with the following two parameters:
 
-- The **value=[true|false]** parameter indicates whether a particular class or method is
+* The **value=[true|false]** parameter indicates whether a particular class or method is
 traced. For example, while all JAX-RS methods are traced by default, you can disable their tracing by
 using the **@Traced(false)** annotation. This parameter is set to **true** by default.
-- The **operationName=<Span name>** parameter indicates the name of the span that is assigned to the method that is traced.
+* The **operationName=<Span name>** parameter indicates the name of the span that is assigned to the method that is traced.
 If you omit this parameter, the span is named with the **`<package name>.<class name>.<method name>`** format.
 If you use this parameter at a class level, then all methods within that class have the same span name unless they are
 explicitly overridden by another **@Traced** annotation.
@@ -380,27 +372,13 @@ public class InventoryManager {
 Enable tracing of the **list()** non-JAX-RS method by updating **@Traced** as shown.
 
 
-
-Go to the http://localhost:9081/inventory/systems URL and check your Jaeger server at the http://localhost:16686 URL.
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command:
 ```
 curl http://localhost:9081/inventory/systems
 ```
 {: codeblock}
 
-
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:16686
-```
-{: codeblock}
-
-
+Check your Jaeger server at the **`https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai`** URL.
 If you have the Jaeger UI open from a previous step, refresh the page.
 Select the **inventory** traces and click the **Find Traces** button.
 
@@ -491,27 +469,13 @@ public class InventoryResource {
 Disable tracing of the **listContents()** JAX-RS method by setting **@Traced(false)**.
 
 
-
-Go to the http://localhost:9081/inventory/systems URL and check your Jaeger server at the http://localhost:16686 URL.
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command:
 ```
 curl http://localhost:9081/inventory/systems
 ```
 {: codeblock}
 
-
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:16686
-```
-{: codeblock}
-
-
+Check your Jaeger server at the **`https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai`** URL.
 If you have the Jaeger UI open from a previous step, refresh the page.
 Select the **inventory** traces and click the **Find Traces** button.
 You see a new trace record that is just one span long for the remaining **list()** method in the
@@ -609,17 +573,13 @@ It's good practice to define custom spans inside such statements.
 Otherwise, any exceptions that are thrown before the span closes will leak the active span.
 
 
-Go to the [http://localhost:9081/inventory/systems/localhost](http://localhost:9081/inventory/systems/localhost)
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command:
 ```
 curl http://localhost:9081/inventory/systems/localhost
 ```
 {: codeblock}
 
-
-URL.
+Check your Jaeger server at the **`https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai`** URL.
 If you have the Jaeger UI open from a previous step, refresh the page.
 Select the **inventory** traces and click the **Find Traces** button.
 
@@ -654,16 +614,21 @@ Since you started Open Liberty in dev mode, run the tests for the system and inv
 When you are done checking out the services, exit dev mode by pressing **CTRL+C** in the shell sessions where you
 ran the **system** and **inventory** services,  or by typing **q** and then pressing the **enter/return key**.
 
-Finally, stop the **Jaeger** service that you started in the **Additional prerequisites** section.
+
+Finally, stop the **Jaeger** service that you started in the previous step.
+```
+docker stop jaeger
+docker rm jaeger
+```
+{: codeblock}
 
 
 # Summary
 
 ## Nice Work!
 
-You just used MicroProfile OpenTracing in Open Liberty to customize how and which traces are delivered to
+You just used MicroProfile OpenTracing in Open Liberty to customize how and which traces are delivered to Jaeger.
 
-Jaeger.
 
 Try out one of the related MicroProfile guides. These guides demonstrate more technologies that you can learn to expand
 on what you built in this guide.

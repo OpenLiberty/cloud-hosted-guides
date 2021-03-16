@@ -62,10 +62,10 @@ jobs:
           branchName=${{ github.event.inputs.branch }}
           git init
           mkdir -p instructions/cloud-hosted-draft-guide-development/
-          rm -f instructions/cloud-hosted-draft-guide-development/instructions.md
+          rm -f instructions/cloud-hosted-draft-guide-development/README.md
           cd GuideConverter
           mvn compiler:compile
-          mvn exec:java -Dexec.args="cloud-hosted-draft-guide-development staging"
+          mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${{ github.event.inputs.guide_branch }}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
