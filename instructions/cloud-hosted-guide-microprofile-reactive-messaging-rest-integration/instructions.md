@@ -579,13 +579,17 @@ rm -fr guide-microprofile-reactive-messaging-rest-integration
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-rest-integration/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-rest-integration/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-- [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
 
 
 ## Log out of the session
