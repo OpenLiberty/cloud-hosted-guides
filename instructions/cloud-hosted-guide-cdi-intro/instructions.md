@@ -189,8 +189,7 @@ touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/in
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/finish/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -250,8 +249,7 @@ touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/in
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
-
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/finish/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
@@ -385,7 +383,7 @@ touch /home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/finish/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
 
@@ -636,12 +634,16 @@ rm -fr guide-cdi-intro
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-cdi-intro/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-cdi-intro/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 
 
 ## Log out of the session
