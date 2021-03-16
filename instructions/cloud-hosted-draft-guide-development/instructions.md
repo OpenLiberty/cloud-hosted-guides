@@ -457,11 +457,15 @@ rm -fr guide-microprofile-config
 
 ## Where to next? 
 
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
-
+- [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+- [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest.html)
+- [Streaming updates to a client using Server-Sent Events](https://openliberty.io/guides/reactive-messaging-sse.html)
+- [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html) {:target="_blank"}
+- [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html) {:target="_blank"}
+- [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html) {:target="_blank"}
 
 ## Log out of the session
 
-Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
+- [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html){:target="_blank"}
+
+- <a href="https://openliberty.io/docs/latest/microprofile.html" target="blank">View the MicroProfile</a>
