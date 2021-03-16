@@ -561,14 +561,18 @@ rm -fr guide-reactive-service-testing
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-reactive-service-testing/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-reactive-service-testing/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-- [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
-- [Visit the official MicroShed Testing website](https://microshed.org/microshed-testing/)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
+* [Visit the official MicroShed Testing website](https://microshed.org/microshed-testing/)
 
 
 
