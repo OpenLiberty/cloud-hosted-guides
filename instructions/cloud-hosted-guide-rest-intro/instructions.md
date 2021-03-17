@@ -79,13 +79,12 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Check out the service at the
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-http://localhost:9080/LibertyProject/System/properties URL. 
+Check out the service at the http://localhost:9080/LibertyProject/System/properties URL. 
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -279,9 +278,8 @@ The variables that are being used in the **server.xml** file are provided by the
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
-Check out the service that you created at the
 
-http://localhost:9080/LibertyProject/System/properties URL. 
+Check out the service that you created at the http://localhost:9080/LibertyProject/System/properties URL. 
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -296,19 +294,9 @@ curl http://localhost:9080/LibertyProject/System/properties
 
 # Testing the service
 
+
 You can test this service manually by starting a server and pointing a web browser at the
-
 http://localhost:9080/LibertyProject/System/properties URL. However, automated tests are a 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/LibertyProject/System/properties
-```
-{: codeblock}
-
-
 much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS 
 Client API provide a simple environment to test the application.
 
@@ -448,17 +436,13 @@ rm -fr guide-rest-intro
 ```
 {: codeblock}
 
-## What could make this guide better?
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-rest-intro/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-rest-intro/pulls)
-
 
 
 
 ## Where to next? 
 
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+- [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+- [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
 ## Log out of the session
