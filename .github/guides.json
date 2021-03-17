@@ -58,5 +58,8 @@
     },
     {
         "guide": "guide-microprofile-rest-client-async"
+    },
+    {
+        "guide": "guide-rest-client-java"
     }
 ]
