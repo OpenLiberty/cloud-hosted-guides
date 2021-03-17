@@ -26,13 +26,6 @@ The REST service that provides the artists and albums resources has already been
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
 
 for you and is accessible at the following link when the server is running http://localhost:9080/artists, which responds with the **artists.json**.
 
@@ -57,13 +50,6 @@ If you are interested in learning more about REST services and how you can write
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
 [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
 
 
@@ -82,13 +68,6 @@ cd /home/project
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
 
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-java.git) and use the projects that are provided inside:
 
@@ -692,13 +671,17 @@ rm -fr guide-rest-client-java
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-rest-client-java/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-rest-client-java/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
 ## Log out of the session
