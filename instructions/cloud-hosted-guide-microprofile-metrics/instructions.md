@@ -79,13 +79,6 @@ The defaultServer server is ready to run a smarter planet.
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
 
 Point your browser to the http://localhost:9080/inventory/systems URL to access the **inventory**
 
@@ -810,14 +803,18 @@ rm -fr guide-microprofile-metrics
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-metrics/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-metrics/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 ## Log out of the session
