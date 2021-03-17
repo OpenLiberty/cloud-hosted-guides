@@ -519,13 +519,17 @@ rm -fr guide-microprofile-rest-client-async
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-rest-client-async/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-rest-client-async/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-- [Consuming RESTful services using the reactive JAX-RS client](https://openliberty.io/guides/reactive-rest-client.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Consuming RESTful services using the reactive JAX-RS client](https://openliberty.io/guides/reactive-rest-client.html)
 
 
 ## Log out of the session
