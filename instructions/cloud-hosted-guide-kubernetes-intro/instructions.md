@@ -577,13 +577,17 @@ rm -fr guide-kubernetes-intro
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-kubernetes-intro/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-kubernetes-intro/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-- [Managing microservice traffic using Istio](https://openliberty.io/guides/istio-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Managing microservice traffic using Istio](https://openliberty.io/guides/istio-intro.html)
 
 
 ## Log out of the session
