@@ -647,13 +647,17 @@ rm -fr guide-microprofile-opentracing-jaeger
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-opentracing-jaeger/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-opentracing-jaeger/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Enabling distributed tracing in microservices with Zipkin](https://openliberty.io/guides/microprofile-opentracing.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Enabling distributed tracing in microservices with Zipkin](https://openliberty.io/guides/microprofile-opentracing.html)
 
 
 ## Log out of the session
