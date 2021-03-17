@@ -10,6 +10,10 @@ on:
         description: 'Guide changed'
         required: true
         default: 'guide-rest-intro'
+      converter_branch:
+        description: 'Converter branch'
+        required: true
+        default: 'main'
         
 jobs:
   printBranch:
@@ -19,8 +23,9 @@ jobs:
 
       - name: Output message
         run: |
-          echo "${{ github.event.inputs.branch }}"
-          echo "${{ github.event.inputs.guide_name }}"
+          echo "branch: ${{ github.event.inputs.branch }}"
+          echo "guide_name: ${{ github.event.inputs.guide_name }}"
+          echo "converter_branch: ${{ github.event.inputs.converter_branch }}"
           
   convertMaster:
     name: Make PR to Master
@@ -102,6 +107,7 @@ jobs:
       - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
         with:
+          ref: ${{ github.event.inputs.converter_branch }}
           repository: OpenLiberty/cloud-hosted-guide-converter
           path: GuideConverter
         
