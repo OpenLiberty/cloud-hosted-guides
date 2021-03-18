@@ -59,7 +59,7 @@ jobs:
 
       - name: Run Converter
         run: |
-          branchName=${{ github.event.inputs.branch }}
+          branchName=${{ github.event.inputs.guide_branch }}
           git init
           mkdir -p instructions/cloud-hosted-draft-guide-development/
           rm -f instructions/cloud-hosted-draft-guide-development/README.md
