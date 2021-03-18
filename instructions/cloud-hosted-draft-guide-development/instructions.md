@@ -345,4 +345,6 @@ rm -fr guide-rest-client-java
 
 ## Log out of the session
 
-Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
+- [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html){:target="_blank"}
+
+- <a href="https://openliberty.io/docs/latest/microprofile.html" target="blank">View the MicroProfile</a>

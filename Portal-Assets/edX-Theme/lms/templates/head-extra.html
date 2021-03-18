@@ -1,0 +1,7 @@
+<%!
+from django.conf import settings
+%>
+
+% if settings.ENABLE_IBM_IDA_STATS:
+  <script src="${settings.IBM_IDA_STATS_URL}"></script>
+% endif

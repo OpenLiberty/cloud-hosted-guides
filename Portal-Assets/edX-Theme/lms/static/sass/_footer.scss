@@ -1,0 +1,35 @@
+.footer {
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .footer-about-openedx {
+    a {
+      position: relative;
+      text-align: left;
+      font-weight: 100;
+      font-size: 0.875rem;
+
+      img {
+        height: 2.5rem;
+        width: auto;
+        position: absolute;
+        left: -65px;
+        top: -5px;
+      }
+    }
+  }
+
+  .powered-by {
+    margin-right: 85px;
+    margin-bottom: 5px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: right;
+    color: #1e6b9c;
+  }
+
+  .footnote {
+    color: #999;
+    font-size: 0.75rem;
+  }
+}
