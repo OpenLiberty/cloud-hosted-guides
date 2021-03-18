@@ -436,13 +436,17 @@ rm -fr guide-rest-intro
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-rest-intro/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-rest-intro/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-- [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
 ## Log out of the session
