@@ -74,13 +74,6 @@ Before you proceed, make sure that your Zipkin server is up and running. By defa
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
 
 at the http://localhost:9411 URL.
 
@@ -295,7 +288,6 @@ public class InventoryManager {
     
     private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
     private SystemClient systemClient = new SystemClient();
-    @Inject Tracer tracer;
 
     public Properties get(String hostname) {
         systemClient.init(hostname, 9080);
@@ -311,10 +303,6 @@ public class InventoryManager {
 
         SystemData system = new SystemData(hostname, props);
         if (!systems.contains(system)) {
-            try (Scope childScope = tracer.buildSpan("add() Span")
-                                              .startActive(true)) {
-                systems.add(system);
-            }
         }
     }
 
@@ -607,13 +595,17 @@ rm -fr guide-microprofile-opentracing
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-opentracing/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-opentracing/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Enabling distributed tracing in microservices with Jaeger](https://openliberty.io/guides/microprofile-opentracing-jaeger.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Enabling distributed tracing in microservices with Jaeger](https://openliberty.io/guides/microprofile-opentracing-jaeger.html)
 
 
 ## Log out of the session

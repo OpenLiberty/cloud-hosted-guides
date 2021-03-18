@@ -799,14 +799,18 @@ rm -fr guide-microprofile-jwt
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-jwt/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-jwt/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 ## Log out of the session

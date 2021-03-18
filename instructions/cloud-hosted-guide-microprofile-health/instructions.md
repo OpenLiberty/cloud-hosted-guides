@@ -453,8 +453,10 @@ property to **true** in the **resources/CustomConfigSource.json** file.
  **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json
 
 ```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":true}
+{
+  "config_ordinal":700,
+  "io_openliberty_guides_system_inMaintenance":true
+}
 ```
 {: codeblock}
 
@@ -479,8 +481,10 @@ property back to **false** after you are done.
  **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json
 
 ```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":false}
+{
+  "config_ordinal":700,
+  "io_openliberty_guides_system_inMaintenance":false
+}
 ```
 {: codeblock}
 
@@ -683,15 +687,19 @@ rm -fr guide-microprofile-health
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-health/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-health/pulls)
+
 
 
 
 ## Where to next? 
 
-- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-- [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 
 
 ## Log out of the session

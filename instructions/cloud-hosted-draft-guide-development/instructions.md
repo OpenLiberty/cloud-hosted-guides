@@ -1,7 +1,7 @@
 
-# Welcome to the Configuring microservices guide!
+# Welcome to the Creating a RESTful web service guide!
 
-Learn how to provide external configuration to microservices using MicroProfile Config.
+Learn how to create a REST service with JAX-RS, JSON-B, and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -12,16 +12,27 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 # What you'll learn
-You will learn how to externalize and inject both static and dynamic configuration properties for microservices using MicroProfile Config.
 
-You will learn to aggregate multiple configuration sources, assign prioritization values to these sources, merge configuration values, and create custom configuration sources.
+You will learn how to build and test a simple REST service with JAX-RS and JSON-B, which will expose
+the JVM's system properties. The REST service will respond to **GET** requests made to the **http://localhost:9080/LibertyProject/System/properties** URL.
 
-The application that you will be working with is an **inventory** service which stores the information about various JVMs running on different hosts.
-Whenever a request is made to the **inventory** service to retrieve the JVM
-system properties of a particular host, the **inventory** service will communicate with the **system**
-service on that host to get these system properties. You will add configuration properties to simulate if a service is down for maintenance.
+The service responds to a **GET** request with a JSON representation of the system properties, where
+each property is a field in a JSON object like this:
 
+```
+{
+  "os.name":"Mac",
+  "java.version": "1.8"
+}
+```
+
+The design of an HTTP API is essential when creating a web application. The REST API has 
+become the go-to architectural style for building an HTTP API. The JAX-RS API offers 
+functionality for creating, reading, updating, and deleting exposed resources. The JAX-RS API 
+supports the creation of RESTful web services that come with desirable properties, 
+such as performance, scalability, and modifiability.
 
 # Getting started
 
@@ -35,11 +46,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-config.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-config.git
-cd guide-microprofile-config
+git clone https://github.com/openliberty/guide-rest-intro.git
+cd guide-rest-intro
 ```
 {: codeblock}
 
@@ -69,25 +80,21 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-Run the following curl command to test the availability of the **system** microservice and retrieve the system information:
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+
+Check out the service at the http://localhost:9080/LibertyProject/System/properties URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
-curl http://localhost:9080/system/properties
+curl http://localhost:9080/LibertyProject/System/properties
 ```
 {: codeblock}
 
-Run the following curl command to test the availability of the **inventory** microservice and 
-retrieve the information for a list of all previously registered hosts:
-```
-curl http://localhost:9080/inventory/systems
-```
-{: codeblock}
 
-In addition, you can run the following curl command to access a third microservice, 
-which retrieves and aggregates all of the configuration properties and sources that have been added throughout this guide.
-```
-curl http://localhost:9080/config
-```
-{: codeblock}
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -99,9 +106,10 @@ mvn liberty:stop
 {: codeblock}
 
 
-# Ordering multiple configuration sources
 
-Now, navigate to the **start** directory to begin.
+# Creating a JAX-RS application
+
+Navigate to the **start** directory to begin.
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -121,200 +129,93 @@ Press the Enter key to run tests on demand.
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
-MicroProfile Config combines configuration properties from multiple sources, each known as a ConfigSource. Each ConfigSource has a specified priority, defined by its **`config_ordinal`** value.
-
-A higher ordinal value means that the values taken from this ConfigSource will override values from ConfigSources with a lower ordinal value.
-
-The following four sources are the default configuration sources:
-
-* A **`<variable name="..." value="..."/>`** element in the server.xml file has a default ordinal of 500.
-* System properties has a default ordinal of 400. (e.g. **bootstrap.properties** file)
-* Environment variables have a default ordinal of 300. (e.g. **server.env** file)
-* The **META-INF/microprofile-config.properties** configuration property file on the classpath has a default ordinal of 100.
-
-Access the **src/main/resources/META-INF/microprofile-config.properties** local configuration file. This configuration file is the default configuration source for an application that uses MicroProfile Config.
+JAX-RS has two key concepts for creating REST APIs. The most obvious one is the resource itself, which is
+modelled as a class. The second is a JAX-RS application, which groups all exposed resources under a
+common path. You can think of the JAX-RS application as a wrapper for all of your resources.
 
 
-# Injecting static configuration
-
-The MicroProfile Config API is included in the MicroProfile dependency that is specified in your **pom.xml** file. Look for the dependency with the **microprofile** artifact ID. This dependency provides a library that allows you to use the MicroProfile Config API to externalize configurations for your microservices.
-The **mpConfig** feature is also enabled in the **src/main/liberty/config/server.xml** file.
-
-
-
-Now navigate to the **src/main/resources/META-INF/microprofile-config.properties** local configuration file to check some static configuration.
-This configuration file is the default configuration source for an application that uses MicroProfile Config.
-
-The **`io_openliberty_guides_port_number`** property that has already been defined in this file, determines the port number of the REST service.
-
-
-To use this configuration property,
-Create the **InventoryConfig.java** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
-
-
-
-
-Inject the **`io_openliberty_guides_port_number`** property, and add the **getPortNumber()** class method to the **InventoryConfig.java** file.
-
-The **@Inject** annotation injects the port number directly, the injection value is static and fixed on application starting.
-
-The **getPortNumber()** method directly returns the value of **portNumber** because it has been injected.
-
-# Injecting dynamic configuration
-
-Note that three default config sources mentioned above are static and fixed on application starting, so the properties within them cannot be modified while the server is running.
-However, you can externalize configuration data out of the application package, through the creation of custom configuration sources, so that the service updates configuration changes dynamically.
-
-### Creating custom configuration sources
-
-Custom configuration sources can be created by implementing the **org.eclipse.microprofile.config.spi.ConfigSource** interface and using the **java.util.ServiceLoader** mechanism.
-
-A **CustomConfigSource.json** JSON file has already been created in the **resources** directory. This JSON file simulates a remote configuration resource in real life.
-This file contains 4 custom config properties and has an ordinal of **150**.
-To use these properties in the application, the data object needs to be transformed from this JSON file to the configuration for your application.
-
-To link this JSON file to your application and to implement the **ConfigSource** interface,
-
-Create the **CustomConfigSource** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java
-
-
-
-
-The **getProperties()** method reads the key value pairs from the **resources/CustomConfigSource.json** JSON file and writes the information into a map.
-
-Finally, register the custom configuration source.
-
-Create the configuration file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource
-
-
-
-
-
-
-### Enabling dynamic configuration injection
-
-Now that the custom configuration source has successfully been set up, you can enable dynamic configuration injection of the properties being set in this ConfigSource.
-To enable this dynamic injection,
-
-Replace the **InventoryConfig.java** class.
+Replace the **SystemApplication** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
+ **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
 
 
 
-Inject the **`io_openliberty_guides_inventory_inMaintenance`** property, and add the **isInMaintenance()** class method.
-
-The **@Inject** and **@ConfigProperty** annotations inject the **`io_openliberty_guides_inventory_inMaintenance`** configuration property from the **CustomConfigSource.json** file.
-The **Provider<>** interface used, forces the service to retrieve the inMaintenance value just in time. This retrieval of the value just in time makes the config injection dynamic and able to change without having to restart the application.
-
-Every time that you invoke the **inMaintenance.get()** method, the **Provider<>** interface picks up the
-latest value of the **`io_openliberty_guides_inventory_inMaintenance`** property from configuration sources.
-
-
-# Creating custom converters
-Configuration values are purely Strings. MicroProfile Config API has built-in converters that automatically converts configured Strings into target types such as **int**, **Integer**, **boolean**, **Boolean**, **float**, **Float**, **double** and **Double**.
-Therefore, in the previous section, it is type-safe to directly set the variable type to **Provider<Boolean>**.
-
-To convert configured Strings to an arbitrary class type, such as the **Email** class type,
-Replace the **Email** Class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java
+The **SystemApplication** class extends the **Application** class, which associates all JAX-RS resource classes in the WAR file with this JAX-RS application. These resources become available under the common path that's specified with the **@ApplicationPath** 
+annotation. The **@ApplicationPath** annotation has a value that indicates the path in the WAR file that 
+the JAX-RS application accepts requests from.
 
 
 
 
-To use this **Email** class type, add a custom converter by implementing the generic interface **org.eclipse.microprofile.config.spi.Converter<T>**.
-The Type parameter of the interface is the target type the String is converted to.
+# Creating the JAX-RS resource
 
-Create the **CustomEmailConverter** class.
+In JAX-RS, a single class should represent a single resource, or a group of resources of the same type.
+In this application, a resource might be a system property, or a set of system properties. It is easy
+to have a single class handle multiple different resources, but keeping a clean separation between types
+of resources helps with maintainability in the long run.
+
+Create the **PropertiesResource** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java
+touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+
+
+
+This resource class has quite a bit of code in it, so let's break it down into manageable chunks.
+
+The **@Path** annotation on the class indicates that this resource responds to the **properties** path
+in the JAX-RS application. The **@ApplicationPath** annotation in the **SystemApplication** class together with
+the **@Path** annotation in this class indicates that the resource is available at the **System/properties**
+path.
+
+JAX-RS maps the HTTP methods on the URL to the methods of the class by using annotations. 
+Your application uses the **GET** annotation to map an HTTP **GET** request
+to the **System/properties** path.
+
+The **@GET** annotation on the method indicates that this method is to be called for the HTTP **GET**
+method. The **@Produces** annotation indicates the format of the content that will be returned. The
+value of the **@Produces** annotation will be specified in the HTTP **Content-Type** response header.
+For this application, a JSON structure is to be returned. The desired **Content-Type** for a JSON
+response is **application/json** with **`MediaType.APPLICATION_JSON`** instead of the **String** content type. Using a constant such as **`MediaType.APPLICATION_JSON`** is better because if there's a spelling error, a compile failure occurs.
+
+JAX-RS supports a number of ways to marshal JSON. The JAX-RS 2.1 specification mandates JSON-Binding
+(JSON-B). The method body returns the result of **System.getProperties()**, which is of type **java.util.Properties**. Since the method 
+is annotated with **`@Produces(MediaType.APPLICATION_JSON)`**, JAX-RS uses JSON-B to automatically convert the returned object
+to JSON data in the HTTP response.
 
 
 
 
-This implements the **Converter<T>** interface.
 
-To register your implementation,
-Create the configuration file.
+# Configuring the server
 
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter
-```
-{: codeblock}
+To get the service running, the Liberty server needs to be correctly configured.
 
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter
-
-
-
-
-To use the custom **Email** converter,
-Replace the **InventoryConfig** class.
+Replace the server configuration file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
+ **File** > **Open** > guide-rest-intro/start/src/main/liberty/config/server.xml
 
 
 
-Inject the **`io_openliberty_guides_email`** property, and add the **getEmail()** method.
 
-# Adding configuration to the microservice
+The configuration does the following actions:
 
-To use externalized configuration in the **inventory** service,
-Replace the **InventoryResource** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
-
+. Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
+. Configures the server to resolve the HTTP port numbers from variables, which are then specified in
+the Maven **pom.xml** file. This is specified in the **`<httpEndpoint/>`** element. Variables use the **${variableName}** syntax.
+. Configures the server to run the produced web application on a context root specified in the 
+**pom.xml** file. This is specified in the **`<webApplication/>`** element.
 
 
-To add configuration to the **inventory** service, the **InventoryConfig** object is injected to the existing class.
-
-The port number from the configuration is retrieved by the **inventoryConfig.getPortNumber()** method and passed to the **manager.get()** method as a parameter.
-
-To determine whether the inventory service is in maintenance or not (according to the configuration value), **inventoryConfig.isInMaintenance()** class method is used.
-If you set the **`io_openliberty_guides_inventory_inMaintenance`** property to **true** in the configuration, the inventory service returns the message, **ERROR: Service is currently in maintenance**, along with the contact email.
-The email configuration value can be obtained by calling **inventoryConfig.getEmail()** method.
-
-
+The variables that are being used in the **server.xml** file are provided by the properties set in the Maven **pom.xml** file. The properties must be formatted as **liberty.var.variableName**.
 
 
 # Running the application
@@ -322,107 +223,90 @@ The email configuration value can be obtained by calling **inventoryConfig.getEm
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-While the server is running, run the following curl command to access the **system** microservice:
-```
-curl http://localhost:9080/system/properties
-```
-{: codeblock}
+Check out the service that you created at the http://localhost:9080/LibertyProject/System/properties URL. 
 
-and run the following curl command to access the **inventory** microservice:
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
-curl http://localhost:9080/inventory/systems
+curl http://localhost:9080/LibertyProject/System/properties
 ```
 {: codeblock}
 
-You can find the service that retrieves configuration information that is specific to this guide by running the following curl command:
-```
-curl http://localhost:9080/config
-```
-{: codeblock}
-
-The **`config_ordinal`** value of the custom configuration source is set to **150**. It overrides configuration values of the default **microprofile-config.properties** source, which has a **`config_ordinal`** value of **100**.
 
 
 
-
-Play with this application by changing configuration values for each property in the **resources/CustomConfigSource.json** file.
-Your changes are added dynamically, and you do not need to restart the server. Rerun the following curl command to see the dynamic changes:
-```
-curl http://localhost:9080/config
-```
-{: codeblock}
-
-For example, change **`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**, then try to access http://localhost:9080/inventory/systems again by running the following curl command:
-```
-curl http://localhost:9080/inventory/systems
-```
-{: codeblock}
-
-The following message displays: **ERROR: Service is currently in maintenance**.
+# Testing the service
 
 
+You can test this service manually by starting a server and pointing a web browser at the
+http://localhost:9080/LibertyProject/System/properties URL. However, automated tests are a 
+much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS 
+Client API provide a simple environment to test the application.
 
-# Testing the application
+You can write tests for the individual units of code outside of a running application server, or they
+can be written to call the application server directly. In this example, you will create a test that
+does the latter.
 
-Create the **ConfigurationIT** class.
+Create the **EndpointIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java
+touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
 
 
 
+This test class has more lines of code than the resource implementation. This situation is common.
+The test method is indicated with the **@Test** annotation.
 
 
-The **testInitialServiceStatus()** test case reads the value of the **`io_openliberty_guides_inventory_inMaintenance`** configuration property in the **META-INF/microprofile-config.properties** file and checks the HTTP response of the inventory service.
-If the configuration value is **false**, the service returns a valid response. Otherwise, the service returns the following message: **ERROR: Service is currently in maintenance**.
+The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the server configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven **pom.xml** file. Refer to the **pom.xml** file to see how the application information such as the **default.http.port**, **default.https.port** and **app.context.root** elements are provided in the file.
 
-Because the **`io_openliberty_guides_inventory_inMaintenance`** configuration property is set to **false** by default, the **testPutServiceInMaintenance()** test case first checks that the inventory service is not in maintenance in the beginning.
-Next, this test switches the value of the **`io_openliberty_guides_inventory_inMaintenance`** configuration property to **true**.
-In the end, the inventory service returns the following message: **ERROR: Service is currently in maintenance**.
 
-The **testChangeEmail()** test case first puts the **inventory** service in maintenance, then it changes the email address in the configuration file. In the end, the **inventory** service should display the error message with the latest email address.
+These Maven properties are then passed to the Java test program as the **`<systemPropertyVariables/>`** element in the **pom.xml** file.
 
-In addition, a few endpoint tests have been provided for you to test the basic functionality of the **inventory** and **system** services. If a test failure occurs, then you must have introduced a bug into the code.
-Remember that you must register the custom configuration source and custom converter in the **src/main/resources/META-INF/services/** directory. If you don't complete these steps, the tests will fail. These tests run automatically as a part of the integration test suite.
+Getting the values to create a representation of the URL is simple. The test class uses the **getProperty** method
+to get the application details.
 
+To call the JAX-RS service using the JAX-RS client, first create a **WebTarget** object by calling
+the **target** method that provides the URL. To cause the HTTP request to occur, the **request().get()** method
+is called on the **WebTarget** object. The **get** method
+call is a synchronous call that blocks until a response is received. This call returns a **Response**
+object, which can be inspected to determine whether the request was successful.
+
+The first thing to check is that a **200** response was received. The JUnit **assertEquals** method can be used for this check.
+
+Check the response body to ensure it returned the right information. Since the client and the server
+are running on the same machine, it is reasonable to expect that the system properties for the local
+and remote JVM would be the same. In this case, an **assertEquals** assertion is made so that the **os.name** system property
+for both JVMs is the same. You can write additional assertions to check for more values.
 
 ### Running the tests
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
-You see the following output:
+You will see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.config.ConfigurationIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.92 s - in it.io.openliberty.guides.config.ConfigurationIT
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
-Could not send Message.
-[err] The specified host is unknown.
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.077 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Running it.io.openliberty.guides.rest.EndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
 
-Results:
+Results :
 
-Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
-
-To see whether the tests detect a failure, remove the configuration resetting line in the **setup()** method of the **ConfigurationIT.java** file.
-Then, manually change some configuration values in the **resources/CustomConfigSource.json** file.
-Rerun the tests. You will see a test failure occur.
+To see whether the tests detect a failure, add an assertion that you know fails, or change the existing
+assertion to a constant value that doesn't match the **os.name** system property.
 
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
@@ -432,11 +316,8 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 
 ## Nice Work!
 
-You just built and tested a MicroProfile application with MicroProfile Config in Open Liberty.
+You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
 
-
-Feel free to try one of the related guides. They demonstrate new technologies that you can learn and
-expand on top what you built in this guide.
 
 
 
@@ -444,11 +325,11 @@ expand on top what you built in this guide.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-config** project by running the following commands:
+Delete the **guide-rest-intro** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-config
+rm -fr guide-rest-intro
 ```
 {: codeblock}
 
@@ -457,12 +338,9 @@ rm -fr guide-microprofile-config
 
 ## Where to next? 
 
-- [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-- [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest.html)
-- [Streaming updates to a client using Server-Sent Events](https://openliberty.io/guides/reactive-messaging-sse.html)
-- [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html) {:target="_blank"}
-- [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html) {:target="_blank"}
-- [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html) {:target="_blank"}
+- [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+- [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+
 
 ## Log out of the session
 

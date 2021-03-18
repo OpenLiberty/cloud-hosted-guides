@@ -122,12 +122,12 @@ form#register input[type="text"] {
 }
 
 .login-providers .login-provider {
-  width: 175%;
+  width: 85%;
   height: 3rem;
 }
 
 #register .login-providers .login-provider {
-  width: 120%;
+  width: 85%;
 }
 
 #login-email-desc, .forgot-password {
