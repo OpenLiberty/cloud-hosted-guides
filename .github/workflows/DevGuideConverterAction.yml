@@ -65,7 +65,7 @@ jobs:
           rm -f instructions/cloud-hosted-draft-guide-development/README.md
           cd GuideConverter
           mvn compiler:compile
-          mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} qa"
+          mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
