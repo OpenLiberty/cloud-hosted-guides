@@ -76,76 +76,34 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-
-Point your browser to the http://localhost:9080/inventory/systems URL to access the **inventory**
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to access the **inventory** service. Because you just started the application, the inventory is empty. 
 ```
 curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
 
-
-service. Because you just started the application, the inventory is currently empty. Access the
-
-http://localhost:9080/inventory/systems/localhost URL to add the localhost into the inventory.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to add the **localhost** into the inventory.
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
 
+Access the **inventory** service at the http://localhost:9080/inventory/systems URL at least once so that application metrics are collected. Otherwise, the metrics do not appear.
 
-
-
-Access the **inventory** service at the http://localhost:9080/inventory/systems URL at least once
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Next, run the following curl command to visit the MicroProfile Metrics endpoint by the **admin** user with **adminpwd** as the password. 
+You can see both the system and application metrics in a text format.
 ```
-curl http://localhost:9080/inventory/systems
+curl -k --user admin:adminpwd https://localhost:9443/metrics
 ```
 {: codeblock}
 
-
-for application metrics to be collected. Otherwise, the metrics will not appear.
-
-
-Next, point your browser to the https://localhost:9443/metrics MicroProfile Metrics endpoint. Log in
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+To see only the application metrics, run the following curl command:
 ```
-curl https://localhost:9443/metrics
+curl -k --user admin:adminpwd https://localhost:9443/metrics/application
 ```
 {: codeblock}
-
-
-as the **admin** user with **adminpwd** as the password. You can see both the system and application
-metrics in a text format.
-
-
-To see only the application metrics, point your browser to https://localhost:9443/metrics/application.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl https://localhost:9443/metrics/application
-```
-{: codeblock}
-
-
 
 See the following sample outputs for the **@Timed**, **@Gauge**, and **@Counted** metrics:
 
@@ -179,17 +137,11 @@ application_inventoryAccessCount_total 1
 ```
 
 
-To see only the system metrics, point your browser to https://localhost:9443/metrics/base.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+To see only the system metrics, run the following curl command:
 ```
-curl https://localhost:9443/metrics/base
+curl -k --user admin:adminpwd https://localhost:9443/metrics/base
 ```
 {: codeblock}
-
-
 
 See the following sample output:
 
@@ -205,17 +157,11 @@ base_classloader_loadedClasses_count 11231
 ```
 
 
-To see only the vendor metrics, point your browser to https://localhost:9443/metrics/vendor.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+To see only the vendor metrics, run the following curl command:
 ```
-curl https://localhost:9443/metrics/vendor
+curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
 ```
 {: codeblock}
-
-
 
 See the following sample output:
 
@@ -245,7 +191,12 @@ mvn liberty:stop
 
 
 
-Navigate to the **start** directory to begin.
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd /home/project/guide-microprofile-metrics/start
+```
+{: codeblock}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -404,8 +355,8 @@ This annotation has these metadata fields:
 The **@Timed** annotation tracks how frequently the method is invoked and how long it takes for each invocation of the method to complete.
 Both the **get()** and **list()** methods are annotated with the **@Timed** metric and have the same **inventoryProcessingTime** name. The **method=get** and **method=list** tags add a dimension that uniquely identifies the collected metric data from the inventory processing time in getting the system properties.
 
-- The **method=get** tag identifies the **inventoryProcessingTime** metric that measures the elapse time in getting the system properties from calling the **system** service.
- The **method=list** tag identifies the **inventoryProcessingTime** metric that measures the elapse time for the **inventory** service to list all of the system properties in the inventory.
+* The **method=get** tag identifies the **inventoryProcessingTime** metric that measures the elapsed time to get the system properties when you call the **system** service.
+* The **method=list** tag identifies the **inventoryProcessingTime** metric that measures the elapsed time for the **inventory** service to list all of the system properties in the inventory.
 
 The tags allow you to query the metrics together or separately based on the functionality of the monitoring tool of your choice. The **inventoryProcessingTime** metrics for example could be queried to display an aggregate time of both tagged metrics or individual times.
 
@@ -442,81 +393,42 @@ Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metr
 The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
 
 
-Point your browser to the https://localhost:9443/metrics URL to review the all available metrics
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to review all the metrics that are enabled through MicroProfile Metrics.
+You see only the system and vendor metrics because the server just started, and the **inventory** service has not been accessed.
 ```
-curl https://localhost:9443/metrics
+curl -k --user admin:adminpwd https://localhost:9443/metrics
 ```
 {: codeblock}
 
-
-that have been enabled through MicroProfile Metrics. Log in with **admin** as your username and
-**adminpwd** as your password. You see only the system and vendor metrics because the server just started,
-and the **inventory** service has not been accessed.
-
-
-Next, point your browser to the http://localhost:9080/inventory/systems URL. Reload the
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Next, run the following curl command to access the **inventory** service:
 ```
 curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
 
-
-
-https://localhost:9443/metrics URL, or access only the application metrics at the
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Rerun the following curl command to access the all metrics:
 ```
-curl https://localhost:9443/metrics
+curl -k --user admin:adminpwd https://localhost:9443/metrics
 ```
 {: codeblock}
 
-
-
-https://localhost:9443/metrics/application URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+or access only the application metrics by running following curl command:
 ```
-curl https://localhost:9443/metrics/application
+curl -k --user admin:adminpwd https://localhost:9443/metrics/application
 ```
 {: codeblock}
 
-
-
-
-
-You can see the system metrics in the https://localhost:9443/metrics/base URL as well as see the vendor metrics in the https://localhost:9443/metrics/vendor URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+You can see the system metrics by running following curl command:
 ```
-curl https://localhost:9443/metrics/base
+curl -k --user admin:adminpwd https://localhost:9443/metrics/base
 ```
 {: codeblock}
 
-
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+as well as see the vendor metrics by running following curl command:
 ```
-curl https://localhost:9443/metrics/vendor
+curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
 ```
 {: codeblock}
-
-
 
 
 
