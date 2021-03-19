@@ -9,7 +9,21 @@ This panel contains the step-by-step guide instructions. You can customize these
 
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
+  test line 1
+  test line 2
+ 
+ 1. list a
+ 2. list b
+ 
+ ~~~~
+This is a 
+piece of code 
+in a block
+~~~~
 
+```
+This too
+```
 
 
 # What you'll learn
