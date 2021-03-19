@@ -76,56 +76,34 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-
-Point your browser to the http://localhost:9080/inventory/systems URL to access the **inventory** service. Because you just started the application, the inventory is currently empty. 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to access the **inventory** service. Because you just started the application, the inventory is currently empty. 
 ```
 curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
 
-
-
-Access the http://localhost:9080/inventory/systems/localhost URL to add the localhost into the inventory.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to add the localhost into the inventory.
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
 
-
-
-
 Access the **inventory** service at the http://localhost:9080/inventory/systems URL at least once for application metrics to be collected. Otherwise, the metrics will not appear.
 
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Next, run the following curl command to visit the MicroProfile Metrics endpoint by the **admin** user with **adminpwd** as the password. 
+You can see both the system and application metrics in a text format.
 ```
-curl http://localhost:9080/inventory/systems
+curl -k --user admin:adminpwd https://localhost:9443/metrics
 ```
 {: codeblock}
 
-
-
-
-Next, to visit the **/metrics** MicroProfile Metrics endpoint, select **Launch Application** from the menu of the IDE, 
-type in **9443** to specify the port number for the front-end web application, and click the **OK** button. 
-You’re redirected to the **`https://accountname-9443.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
-where **accountname** is your account name. Click the **metrics** link on the welcome page.
-Log in as the **admin** user with **adminpwd** as the password. You can see both the system and application
-metrics in a text format.
-
-To see only the application metrics, visit the **/metrics/application** endpoint by clicking the **application metrics** link on the welcome page.
+To see only the application metrics, run the following curl command:
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics/application
+```
+{: codeblock}
 
 See the following sample outputs for the **@Timed**, **@Gauge**, and **@Counted** metrics:
 
@@ -159,7 +137,11 @@ application_inventoryAccessCount_total 1
 ```
 
 
-To see only the system metrics, visit the **/metrics/base** endpoint by clicking the **system metrics** link on the welcome page.
+To see only the system metrics, run the following curl command:
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics/base
+```
+{: codeblock}
 
 See the following sample output:
 
@@ -175,7 +157,11 @@ base_classloader_loadedClasses_count 11231
 ```
 
 
-To see only the vendor metrics, visit the **/metrics/vendor** endpoint by clicking the **vendor metrics** link on the welcome page.
+To see only the vendor metrics, run the following curl command:
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
+```
+{: codeblock}
 
 See the following sample output:
 
@@ -364,8 +350,8 @@ This annotation has these metadata fields:
 The **@Timed** annotation tracks how frequently the method is invoked and how long it takes for each invocation of the method to complete.
 Both the **get()** and **list()** methods are annotated with the **@Timed** metric and have the same **inventoryProcessingTime** name. The **method=get** and **method=list** tags add a dimension that uniquely identifies the collected metric data from the inventory processing time in getting the system properties.
 
-- The **method=get** tag identifies the **inventoryProcessingTime** metric that measures the elapse time in getting the system properties from calling the **system** service.
- The **method=list** tag identifies the **inventoryProcessingTime** metric that measures the elapse time for the **inventory** service to list all of the system properties in the inventory.
+* The **method=get** tag identifies the **inventoryProcessingTime** metric that measures the elapse time in getting the system properties from calling the **system** service.
+* The **method=list** tag identifies the **inventoryProcessingTime** metric that measures the elapse time for the **inventory** service to list all of the system properties in the inventory.
 
 The tags allow you to query the metrics together or separately based on the functionality of the monitoring tool of your choice. The **inventoryProcessingTime** metrics for example could be queried to display an aggregate time of both tagged metrics or individual times.
 
@@ -402,25 +388,42 @@ Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metr
 The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
 
 
-Select **Launch Application** from the menu of the IDE, 
-type in **9443** to specify the port number for the front-end web application, and click the **OK** button. 
-You’re redirected to the **`https://accountname-9443.theiadocker-4.proxy.cognitiveclass.ai`** URL.
+Run the following curl command to review the all available metrics that have been enabled through MicroProfile Metrics. 
+You see only the system and vendor metrics because the server just started, and the **inventory** service has not been accessed.
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics
+```
+{: codeblock}
 
-To review the all available metrics that have been enabled through MicroProfile Metrics, click the **metrics** link on the welcome page.
-Log in with **admin** as your username and **adminpwd** as your password. You see only the system and vendor metrics because the server just started,
-and the **inventory** service has not been accessed.
-
-Next, run the following curl command from the terminal in the IDE:
+Next, run the following curl command to access the **inventory** service:
 ```
 curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
 
-Reload the **`https://accountname-9443.theiadocker-4.proxy.cognitiveclass.ai/metrics`** URL,
-or access only the application metrics by clicking the **application metrics** link on the welcome page.
+Rerun the following curl command to access the all metrics:
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics
+```
+{: codeblock}
 
-You can see the system metrics by clicking the **system metrics** link on the welcome page, 
-as well as see the vendor metrics by clicking the **vendor metrics** link on the welcome page.
+or access only the application metrics by running following curl command:
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics/application
+```
+{: codeblock}
+
+You can see the system metrics by running following curl command:
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics/base
+```
+{: codeblock}
+
+as well as see the vendor metrics by running following curl command:
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
+```
+{: codeblock}
 
 
 
