@@ -478,16 +478,17 @@ The **testLoads()** test case verifies that the **query** service can calculate 
 
 ### Running the tests
 
-Navigate to the **query** directory, then verify that the tests pass by using the Maven **verify** goal:
 
+Run the following commands to navigate to the **query** directory and verify that the tests pass by using the Maven **verify** goal:
+
+[role='command']
 ```
+cd /home/project/guide-microprofile-rest-client-async/start/query
 mvn verify
 ```
 {: codeblock}
 
-// cloud-hosted guide instructions:
-The tests might take a few minutes to complete. 
-When the tests succeed, you see output similar to the following example:
+The tests might take a few minutes to complete. When the tests succeed, you see output similar to the following example:
 
 ```
 -------------------------------------------------------
