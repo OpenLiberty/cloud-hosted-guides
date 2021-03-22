@@ -9,21 +9,7 @@ This panel contains the step-by-step guide instructions. You can customize these
 
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
-  test line 1
-  test line 2
- 
- 1. list a
- 2. list b
- 
- ~~~~
-This is a 
-piece of code 
-in a block
-~~~~
 
-```
-This too
-```
 
 
 # What you'll learn
@@ -92,19 +78,19 @@ The defaultServer server is ready to run a smarter planet.
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Run the following curl command to access the **inventory** service. Because you just started the application, the inventory is currently empty. 
+Run the following curl command to access the **inventory** service. Because you just started the application, the inventory is empty. 
 ```
 curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
 
-Run the following curl command to add the localhost into the inventory.
+Run the following curl command to add the **localhost** into the inventory.
 ```
 curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
 
-Access the **inventory** service at the http://localhost:9080/inventory/systems URL at least once for application metrics to be collected. Otherwise, the metrics will not appear.
+Access the **inventory** service at the **http://localhost:9080/inventory/systems** URL at least once so that application metrics are collected. Otherwise, the metrics do not appear.
 
 Next, run the following curl command to visit the MicroProfile Metrics endpoint by the **admin** user with **adminpwd** as the password. 
 You can see both the system and application metrics in a text format.
@@ -369,8 +355,8 @@ This annotation has these metadata fields:
 The **@Timed** annotation tracks how frequently the method is invoked and how long it takes for each invocation of the method to complete.
 Both the **get()** and **list()** methods are annotated with the **@Timed** metric and have the same **inventoryProcessingTime** name. The **method=get** and **method=list** tags add a dimension that uniquely identifies the collected metric data from the inventory processing time in getting the system properties.
 
-* The **method=get** tag identifies the **inventoryProcessingTime** metric that measures the elapse time in getting the system properties from calling the **system** service.
-* The **method=list** tag identifies the **inventoryProcessingTime** metric that measures the elapse time for the **inventory** service to list all of the system properties in the inventory.
+* The **method=get** tag identifies the **inventoryProcessingTime** metric that measures the elapsed time to get the system properties when you call the **system** service.
+* The **method=list** tag identifies the **inventoryProcessingTime** metric that measures the elapsed time for the **inventory** service to list all of the system properties in the inventory.
 
 The tags allow you to query the metrics together or separately based on the functionality of the monitoring tool of your choice. The **inventoryProcessingTime** metrics for example could be queried to display an aggregate time of both tagged metrics or individual times.
 
@@ -407,7 +393,7 @@ Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metr
 The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
 
 
-Run the following curl command to review the all available metrics that have been enabled through MicroProfile Metrics. 
+Run the following curl command to review all the metrics that are enabled through MicroProfile Metrics.
 You see only the system and vendor metrics because the server just started, and the **inventory** service has not been accessed.
 ```
 curl -k --user admin:adminpwd https://localhost:9443/metrics
