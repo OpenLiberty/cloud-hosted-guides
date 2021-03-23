@@ -481,7 +481,6 @@ The **testLoads()** test case verifies that the **query** service can calculate 
 
 Run the following commands to navigate to the **query** directory and verify that the tests pass by using the Maven **verify** goal:
 
-[role='command']
 ```
 cd /home/project/guide-microprofile-rest-client-async/start/query
 mvn verify
