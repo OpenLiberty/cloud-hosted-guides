@@ -172,7 +172,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: instructions.md
+          name: cloud-hosted-${{matrix.guides.guide}}/instructions.md
           path: instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
 
   createPullRequest:
