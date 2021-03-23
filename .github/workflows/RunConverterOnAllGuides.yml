@@ -194,8 +194,7 @@ jobs:
           token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
           body: |
           Updated by github actions, triggered by the conversion of:
-
-          - ${{matrix.guides.guide}}
+              - ${{matrix.guides.guide}}
           branch: "cloud-hosted-Manual-ALL/staging"
           base: "staging"
           labels: "RunTests"
