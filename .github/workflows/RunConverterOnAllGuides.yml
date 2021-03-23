@@ -170,6 +170,11 @@ jobs:
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
 
+      - uses: actions/upload-artifact@v2
+        with:
+          name: instructions.md
+          path: instructions/cloud-hosted-${{matrix.guides.guide}}
+
   createPullRequest:
     needs: convertStaging
     runs-on: ubuntu-latest
