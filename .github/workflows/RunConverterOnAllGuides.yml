@@ -167,20 +167,27 @@ jobs:
           mv GuideConverter/${{matrix.guides.guide}}.md instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh cloud-hosted-${{matrix.guides.guide}}
-          git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
-          git commit -m "Updated by github actions from ALL Guides"
-          git checkout --ours instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
-        continue-on-error: true
 
-      - uses: peter-evans/create-pull-request@v3
+  createPullRequest:
+    needs: convertStaging
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      # Download all artifacts
+      # https://github.com/actions/download-artifact#download-all-artifacts
+      - uses: actions/download-artifact@v2
         with:
-          title: "To Staging: Change to ${{matrix.guides.guide}}"
+          path: instructions
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          title: "To Staging: Change to All Guides"
           token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-          body: "Updated by github actions, triggered by the ${{matrix.guides.guide}} repo."
-          branch: "cloud-hosted-${{matrix.guides.guide}}/staging"
+          body: "Updated by github actions, triggered by the manual conversion of all guides."
+          branch: "cloud-hosted-Manual-ALL/staging"
           base: "staging"
           labels: "RunTests"
-        name: Create Pull Request
-        continue-on-error: true
