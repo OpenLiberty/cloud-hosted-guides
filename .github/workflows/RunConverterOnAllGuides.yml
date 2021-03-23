@@ -172,7 +172,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: new
+          name: cloud-hosted-${{matrix.guides.guide}}
           path: instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
 
   createPullRequest:
@@ -185,7 +185,7 @@ jobs:
       # https://github.com/actions/download-artifact#download-all-artifacts
       - uses: actions/download-artifact@v2
         with:
-          path: instructions/cloud-hosted-${{matrix.guides.guide}}/
+          path: instructions/
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
