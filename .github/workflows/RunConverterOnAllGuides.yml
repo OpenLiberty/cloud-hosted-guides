@@ -173,7 +173,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: instructions.md
-          path: instructions/cloud-hosted-${{matrix.guides.guide}}
+          path: instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
 
   createPullRequest:
     needs: convertStaging
