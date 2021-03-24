@@ -22,22 +22,7 @@ to directly convert JSON messages into Java objects. The second approach consist
 using the Java API for JSON Processing (JSON-P) to process the JSON.
 
 The REST service that provides the artists and albums resources has already been written
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-for you and is accessible at the following link when the server is running http://localhost:9080/artists, which responds with the **artists.json**.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/artists
-```
-{: codeblock}
-
-
+for you and is accessible at the following link when the server is running **http://localhost:9080/artists**, which responds with the **artists.json**.
 
 You will implement the following two endpoints using the two deserialization approaches:
 
@@ -46,10 +31,6 @@ You will implement the following two endpoints using the two deserialization app
 for the particular artist
 
 If you are interested in learning more about REST services and how you can write them, read
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
 [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
 
 
@@ -64,10 +45,6 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 {: codeblock}
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-java.git) and use the projects that are provided inside:
 
@@ -103,9 +80,27 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
-You can find your service at http://localhost:9080/artists.
 
-Now, you can access the endpoint at http://localhost:9080/artists/total to see the total number of artists, and you can access the endpoint at **http://localhost:9080/artists/total/<artist>** to see a particular artist’s total number of albums.
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+You can find your service at **http://localhost:9080/artists** by running the following curl command:
+```
+curl http://localhost:9080/artists
+```
+{: codeblock}
+
+Run the following curl command to retrieve the total number of artists:
+```
+curl http://localhost:9080/artists/total
+```
+{: codeblock}
+
+You can access the endpoint at **`http://localhost:9080/artists/total/<artist>`** to see a particular artist’s total number of albums.
+Run the following curl command to retrieve the artist **bar**'s total number of albums:
+```
+curl http://localhost:9080/artists/total/bar
+```
+{: codeblock}
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -120,7 +115,12 @@ mvn liberty:stop
 
 # Starting the service
 
-Navigate to the **start** directory to begin.
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd /home/project/guide-rest-client-java/start
+```
+{: codeblock}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -140,19 +140,13 @@ Press the Enter key to run tests on demand.
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
+
 The application that you'll build upon was created for you. After your server is
-
-ready, you can access the service at the http://localhost:9080/artists URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+ready, run the following curl command to access the service:
 ```
 curl http://localhost:9080/artists
 ```
 {: codeblock}
-
-
 
 # Creating POJOs
 
@@ -423,31 +417,24 @@ party service, you should separate your **GET**/**POST** requests from your data
 The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
 
 
-You can find your service at http://localhost:9080/artists.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+You can find your service at **http://localhost:9080/artists** by running the following curl command:
 ```
 curl http://localhost:9080/artists
 ```
 {: codeblock}
 
-
-
-
-Now, you can access the endpoint at http://localhost:9080/artists/total to see the total number of artists,
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to retrieve the total number of artists:
 ```
 curl http://localhost:9080/artists/total
 ```
 {: codeblock}
 
-
-and you can access the endpoint at **http://localhost:9080/artists/total/<artist>** to see a particular artist's total number of albums. 
+You can access the endpoint at **`http://localhost:9080/artists/total/<artist>`** to see a particular artist’s total number of albums.
+Run the following curl command to retrieve the artist **bar**'s total number of albums:
+```
+curl http://localhost:9080/artists/total/bar
+```
+{: codeblock}
 
 
 # Testing deserialization
