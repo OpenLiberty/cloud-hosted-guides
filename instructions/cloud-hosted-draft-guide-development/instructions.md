@@ -1,7 +1,7 @@
 
-# Welcome to the Consuming a RESTful web service guide!
+# Welcome to the Creating reactive Java microservices guide!
 
-Explore how to access a simple RESTful web service and consume its resources in Java
+Learn how to write reactive Java microservices using MicroProfile Reactive Messaging.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,28 +10,22 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-using JSON-B and JSON-P.
-
 
 # What you'll learn
 
-You will learn how to access a REST service, serialize a Java object that contains a
-list of artists and their albums, and use two different approaches to deserialize
-the returned JSON resources. The first approach consists of using the Java API for JSON Binding (JSON-B)
-to directly convert JSON messages into Java objects. The second approach consists of
-using the Java API for JSON Processing (JSON-P) to process the JSON.
+You will learn how to build reactive microservices that can send requests to other microservices, and asynchronously receive and process the responses. You will use an external messaging system to handle the asynchronous messages that are sent and received between the microservices as streams of events. MicroProfile Reactive Messaging makes it easy to write and configure your application to send, receive, and process the events efficiently.
 
-The REST service that provides the artists and albums resources has already been written
-for you and is accessible at the following link when the server is running **http://localhost:9080/artists**, which responds with the **artists.json**.
+*Asynchronous messaging between microservices*
 
-You will implement the following two endpoints using the two deserialization approaches:
+Asynchronous communication between microservices can be used to build reactive and responsive applications. By decoupling the requests sent by a microservice from the responses that it receives, the microservice is not blocked from performing other tasks while waiting for the requested data to become available. Imagine asynchronous communication as a restaurant. A waiter might come to your table and take your order. While you are waiting for your food to be prepared, that waiter serves other tables and takes their orders too. When your food is ready, the waiter brings your food to the table and then continues to serve the other tables. If the waiter were to operate synchronously, they must take your order and then wait until they deliver your food before serving any other tables. In microservices, a request call from a REST client to another microservice can be time-consuming because the network might be slow, or the other service might be overwhelmed with requests and can’t respond quickly. But in an asynchronous system, the microservice sends a request to another microservice and continues to send other calls and to receive and process other responses until it receives a response to the original request.
 
-* **.../artists/total** to return the total number of artists in the JSON
-* **.../artists/total/<artist>** to return the total number of albums in the JSON
-for the particular artist
+*What is MicroProfile Reactive Messaging?*
 
-If you are interested in learning more about REST services and how you can write them, read
-[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
+MicroProfile Reactive Messaging provides an easy way to asynchronously send, receive, and process messages that are received as continuous streams of events. You simply annotate application beans' methods and Open Liberty converts the annotated methods to reactive streams-compatible publishers, subscribers, and processors and connects them up to each other. MicroProfile Reactive Messaging provides a Connector API so that your methods can be connected to external messaging systems that produce and consume the streams of events, such as [Apache Kafka](https://kafka.apache.org/).
+
+The application in this guide consists of two microservices, **system** and **inventory**. Every 15 seconds, the **system** microservice calculates and publishes an event that contains its current average system load. The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. The current inventory of systems can be accessed via the **/systems** REST endpoint. You'll create the **system** and **inventory** microservices using MicroProfile Reactive Messaging.
+
+![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory.png)
 
 
 # Getting started
@@ -46,11 +40,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-java.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-rest-client-java.git
-cd guide-rest-client-java
+git clone https://github.com/openliberty/guide-microprofile-reactive-messaging.git
+cd guide-microprofile-reactive-messaging
 ```
 {: codeblock}
 
@@ -59,577 +53,560 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+# Creating the producer in the system microservice
 
-### Try what you'll build
+Navigate to the **start** directory to begin. 
 
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+The **system** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of events. Every 15 seconds, the **system** microservice publishes an event that contains its calculation of the average system load (its CPU usage) for the last minute.
 
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
-
-```
-cd finish
-mvn liberty:run
-```
-{: codeblock}
-
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-You can find your service at **http://localhost:9080/artists** by running the following curl command:
-```
-curl http://localhost:9080/artists
-```
-{: codeblock}
-
-Run the following curl command to retrieve the total number of artists:
-```
-curl http://localhost:9080/artists/total
-```
-{: codeblock}
-
-You can access the endpoint at **`http://localhost:9080/artists/total/<artist>`** to see a particular artist’s total number of albums.
-Run the following curl command to retrieve the artist **bar**'s total number of albums:
-```
-curl http://localhost:9080/artists/total/bar
-```
-{: codeblock}
-
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
-
-```
-mvn liberty:stop
-```
-{: codeblock}
-
-
-
-# Starting the service
-
-
-To begin, run the following command to navigate to the **start** directory:
-```
-cd /home/project/guide-rest-client-java/start
-```
-{: codeblock}
-
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-Press the Enter key to run tests on demand.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
-
-
-The application that you'll build upon was created for you. After your server is
-ready, run the following curl command to access the service:
-```
-curl http://localhost:9080/artists
-```
-{: codeblock}
-
-# Creating POJOs
-
-
-
-To deserialize a JSON message, start with creating Plain Old Java Objects (POJOs) that represent what
-is in the JSON and whose instance members map to the keys in the JSON.
-
-For the purpose of this guide, you are given two POJOs.
-The **Artist** object has two instance members **name** and **albums**, 
-which map to the artist name and the collection of the albums they have written. The **Album** object represents a 
-single object within the album collection, and contains three instance members **title**, **artistName**, and **totalTracks**, which map to the album title, the artist who wrote the album, and the number of tracks the album contains.
-
-# Introducing JSON-B and JSON-P
-
-JSON-B is a feature introduced with Java EE 8 and strengthens Java support for JSON.
-With JSON-B you directly serialize and deserialize POJOs. This API gives you a
-variety of options for working with JSON resources.
-
-In contrast, you need to use helper methods with JSON-P to process a JSON response.
-This tactic is more straightforward, but it can be cumbersome with more complex classes.
-
-JSON-B is built on top of the existing JSON-P API. JSON-B can do everything that JSON-P can do
-and allows for more customization for serializing and deserializing.
-
-### Using JSON-B
-
-JSON-B requires a POJO to have a public default no-argument constructor for deserialization
-and binding to work properly.
-
-The JSON-B engine includes a set of default mapping rules, which can be run without
-any customization annotations or custom configuration. In some instances, you might
-find it useful to deserialize a JSON message with only certain fields, specific
-field names, or classes with custom constructors. In these cases,
-annotations are necessary and recommended:
-
-* The **@JsonbProperty** annotation to map JSON keys to class instance members and vice versa.
-Without the use of this annotation, JSON-B will attempt to do POJO mapping, matching the keys in
-the JSON to the class instance members by name. JSON-B will attempt to match the JSON key 
-with a Java field or method annotated with **@JsonbProperty** where the value in the
-annotation exactly matches the JSON key. If no annotation exists with the given JSON key, 
-JSON-B will attempt to find a matching field with the same name. If no match is found, 
-JSON-B attempts to find a matching getter method for serialization or a matching setter 
-method for de-serialization. A match occurs when the property name of the method matches 
-the JSON key. If no matching getter or setter method is found, serialization or 
-de-serialization, respectively, fails with an exception. The Artist POJO does not require 
-this annotation because all instance members match the JSON keys by name.
-
-* The **@JsonbCreator** and **@JsonbProperty** annotations to annotate a custom constructor.
-These annotations are required for proper parameter substitution when a custom constructor is used.
-
-* The **@JsonbTransient** annotation to define an object property that does not map to a JSON
-property. While the use of this annotation is good practice, it is only necessary for serialization.
-
-For more information on customization with JSON-B, see the [official JSON-B site](http://json-b.net).
-
-
-# Consuming the REST resource
-
-
-
-
-The **Artist** and **Album** POJOs are ready for deserialization. 
-Next, we'll learn to consume the JSON response from your REST service.
-
-Create the **Consumer** class.
+Create the **SystemService** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java
+touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 
 
 
 
 ```
-package io.openliberty.guides.consumingrest;
+package io.openliberty.guides.system;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
+import javax.enterprise.context.ApplicationScoped;
 
-import io.openliberty.guides.consumingrest.model.Album;
-import io.openliberty.guides.consumingrest.model.Artist;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import org.reactivestreams.Publisher;
 
-public class Consumer {
-    public static Artist[] consumeWithJsonb(String targetUrl) {
-      Client client = ClientBuilder.newClient();
-      Response response = client.target(targetUrl).request().get();
-      Artist[] artists = response.readEntity(Artist[].class);
+import io.openliberty.guides.models.SystemLoad;
+import io.reactivex.rxjava3.core.Flowable;
 
-      response.close();
-      client.close();
+@ApplicationScoped
+public class SystemService {
 
-      return artists;
+    private static final OperatingSystemMXBean osMean = 
+            ManagementFactory.getOperatingSystemMXBean();
+    private static String hostname = null;
+
+    private static String getHostname() {
+        if (hostname == null) {
+            try {
+                return InetAddress.getLocalHost().getHostName();
+            } catch (UnknownHostException e) {
+                return System.getenv("HOSTNAME");
+            }
+        }
+        return hostname;
     }
 
-    public static Artist[] consumeWithJsonp(String targetUrl) {
-      Client client = ClientBuilder.newClient();
-      Response response = client.target(targetUrl).request().get();
-      JsonArray arr = response.readEntity(JsonArray.class);
-
-      response.close();
-      client.close();
-
-      return Consumer.collectArtists(arr);
+    @Outgoing("systemLoad")
+    public Publisher<SystemLoad> sendSystemLoad() {
+        return Flowable.interval(15, TimeUnit.SECONDS)
+                .map((interval -> new SystemLoad(getHostname(),
+                        new Double(osMean.getSystemLoadAverage()))));
     }
 
-    private static Artist[] collectArtists(JsonArray artistArr) {
-      List<Artist> artists = artistArr.stream().map(artistJson -> {
-        JsonArray albumArr = ((JsonObject) artistJson).getJsonArray("albums");
-        Artist artist = new Artist(
-          ((JsonObject) artistJson).getString("name"),
-          Consumer.collectAlbums(albumArr));
-        return artist;
-      }).collect(Collectors.toList());
-
-      return artists.toArray(new Artist[artists.size()]);
-    }
-
-    private static Album[] collectAlbums(JsonArray albumArr) {
-      List<Album> albums = albumArr.stream().map(albumJson -> {
-        Album album = new Album(
-          ((JsonObject) albumJson).getString("title"),
-          ((JsonObject) albumJson).getString("artist"),
-          ((JsonObject) albumJson).getInt("ntracks") );
-        return album;
-      }).collect(Collectors.toList());
-
-      return albums.toArray(new Album[albums.size()]);
-    }
 }
 ```
 {: codeblock}
 
 
-### Processing JSON using JSON-B
 
 
-JSON-B is a Java API that is used to serialize Java objects to JSON messages and vice versa.
+The **SystemService** class contains a **Publisher** method that is called **sendSystemLoad()**, which calculates and returns the average system load. The **@Outgoing** annotation on the **sendSystemLoad()** method indicates that the method publishes its calculation as a message on a topic in the Kafka messaging system. The **Flowable.interval()** method from **rxJava** is used to set the frequency of how often the system service publishes the calculation to the event stream.
 
-Open Liberty's JSON-B feature on Maven Central includes the JSON-B provider through transitive dependencies.
-The JSON-B APIs are provided by the MicroProfile dependency in your **pom.xml** file. 
-Look for the dependency with the **microprofile** artifact ID. 
+The messages are transported between the service and the Kafka messaging system through a channel called **systemLoad**. The name of the channel to use is set in the **@Outgoing("systemLoad")** annotation. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are published on a topic called **system.load**, as shown in the following diagram:
 
-The **consumeWithJsonb()** method in the **Consumer** class makes a **GET** request to the
-running artist service and retrieves the JSON. To bind the JSON into an **Artist**
-array, use the **Artist[]** entity type in the **readEntity** call.
-
-### Processing JSON using JSON-P
-
-The **consumeWithJsonp()** method in the **Consumer** class makes a **GET** request
-to the running artist service and retrieves the JSON. This method then uses the
-**collectArtists** and **collectAlbums** helper methods. These helper methods will
-parse the JSON and collect its objects into individual POJOs. Notice that you can
-use the custom constructors to create instances of **Artist** and **Album**.
-
-# Creating additional REST resources
+![Reactive system publisher](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-publisher.png)
 
 
-Now that you can consume a JSON resource you can put that data to use.
+# Creating the consumer in the inventory microservice
 
-Replace the **ArtistResource** class.
+The **inventory** microservice records in its inventory the average system load information that it received from potentially multiple instances of the **system** service.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java
+Create the **InventoryResource** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
 
 ```
-package io.openliberty.guides.consumingrest.service;
+package io.openliberty.guides.inventory;
 
-import javax.json.JsonArray;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.Response;
 
-import io.openliberty.guides.consumingrest.model.Artist;
-import io.openliberty.guides.consumingrest.Consumer;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 
-@Path("artists")
-public class ArtistResource {
+import io.openliberty.guides.models.SystemLoad;
 
-    @Context
-    UriInfo uriInfo;
+@ApplicationScoped
+@Path("/inventory")
+public class InventoryResource {
 
+    private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
+
+    @Inject
+    private InventoryManager manager;
+    
     @GET
+    @Path("/systems")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray getArtists() {
-    	return Reader.getArtists();
+    public Response getSystems() {
+        List<Properties> systems = manager.getSystems()
+                .values()
+                .stream()
+                .collect(Collectors.toList());
+        return Response
+                .status(Response.Status.OK)
+                .entity(systems)
+                .build();
     }
 
     @GET
-    @Path("jsonString")
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getJsonString() {
-      Jsonb jsonb = JsonbBuilder.create();
-
-      Artist[] artists = Consumer.consumeWithJsonb(uriInfo.getBaseUri().toString() +
-        "artists");
-      String result = jsonb.toJson(artists);
-
-      return result;
-    }
-
-    @GET
-    @Path("total/{artist}")
-    @Produces(MediaType.TEXT_PLAIN)
-    public int getTotalAlbums(@PathParam("artist") String artist) {
-      Artist[] artists = Consumer.consumeWithJsonb(uriInfo.getBaseUri().toString()
-        + "artists");
-
-      for (int i = 0; i < artists.length; i++) {
-        if (artists[i].name.equals(artist)) {
-          return artists[i].albums.length;
+    @Path("/systems/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSystem(@PathParam("hostname") String hostname) {
+        Optional<Properties> system = manager.getSystem(hostname);
+        if (system.isPresent()) {
+            return Response
+                    .status(Response.Status.OK)
+                    .entity(system)
+                    .build();
         }
-      }
-      return -1;
+        return Response
+                .status(Response.Status.NOT_FOUND)
+                .entity("hostname does not exist.")
+                .build();
     }
 
-    @GET
-    @Path("total")
-    @Produces(MediaType.TEXT_PLAIN)
-    public int getTotalArtists() {
-      return Consumer.consumeWithJsonp(uriInfo.getBaseUri().toString() +
-        "artists").length;
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response resetSystems() {
+        manager.resetSystems();
+        return Response
+                .status(Response.Status.OK)
+                .build();
+    }
+
+    @Incoming("systemLoad")
+    public void updateStatus(SystemLoad sl)  {
+        String hostname = sl.hostname;
+        if (manager.getSystem(hostname).isPresent()) {
+            manager.updateCpuStatus(hostname, sl.loadAverage);
+            logger.info("Host " + hostname + " was updated: " + sl);
+        } else {
+            manager.addSystem(hostname, sl.loadAverage);
+            logger.info("Host " + hostname + " was added: " + sl);
+        }
     }
 }
 ```
 {: codeblock}
 
 
-* The **getArtists()** method provides the raw JSON data service that you accessed at the
-beginning of this guide.
-
-* The **getJsonString()** method uses JSON-B to return the JSON as a string that will
-be used later for testing.
-
-* The **getTotalAlbums()** method uses JSON-B to return the total number of albums present
-in the JSON for a particular artist. The method returns -1 if this artist does not exist.
-
-* The **getTotalArtists()** method uses JSON-P to return the total number of artists
-present in the JSON.
-
-The methods that you wrote in the **Consumer** class could be written directly in the
-**ArtistResource** class. However, if you are consuming a REST resource from a third
-party service, you should separate your **GET**/**POST** requests from your data consumption.
 
 
-# Running the application
+The **inventory** microservice receives the message from the **system** microservice over the **@Incoming("systemLoad")** channel. The properties of this channel are defined in the **microprofile-config.properties** file. The **inventory** microservice is also a RESTful service that is served at the **/inventory** endpoint.
 
-The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
+The **InventoryResource** class contains a method called **updateStatus()**, which receives the message that contains the average system load and updates its existing inventory of systems and their average system load. The **@Incoming("systemLoad")** annotation on the **updateStatus()** method indicates that the method retrieves the average system load information by connecting to the channel called **systemLoad**. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are retrieved from a topic called **system.load**, as shown in the following diagram:
 
-
-You can find your service at **http://localhost:9080/artists** by running the following curl command:
-```
-curl http://localhost:9080/artists
-```
-{: codeblock}
-
-Run the following curl command to retrieve the total number of artists:
-```
-curl http://localhost:9080/artists/total
-```
-{: codeblock}
-
-You can access the endpoint at **`http://localhost:9080/artists/total/<artist>`** to see a particular artist’s total number of albums.
-Run the following curl command to retrieve the artist **bar**'s total number of albums:
-```
-curl http://localhost:9080/artists/total/bar
-```
-{: codeblock}
+![Reactive system inventory detail](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-detail.png)
 
 
-# Testing deserialization
+# Configuring the MicroProfile Reactive Messaging connectors for Kafka
 
-Create the **ConsumingRestIT** class.
+The **system** and **inventory** services exchange messages with the external messaging system through a channel. The MicroProfile Reactive Messaging Connector API makes it easy to connect each service to the channel. You just need to add configuration keys in a properties file for each of the services. These configuration keys define properties such as the name of the channel and the topic in the Kafka messaging system. Open Liberty includes the **liberty-kafka** connector for sending and receiving messages from Apache Kafka.
+
+The system and inventory microservices each have a MicroProfile Config properties file to define the properties of their outgoing and incoming streams.
+
+Create the system/microprofile-config.properties file.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java 
+touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java 
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
 
 
 
 
 ```
-package it.io.openliberty.guides.consumingrest;
+mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+mp.messaging.outgoing.systemLoad.connector=liberty-kafka
+mp.messaging.outgoing.systemLoad.topic=system.load
+mp.messaging.outgoing.systemLoad.key.serializer=org.apache.kafka.common.serialization.StringSerializer
+mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.SystemLoad$SystemLoadSerializer
+```
+{: codeblock}
 
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
-import io.openliberty.guides.consumingrest.model.Artist;
 
-public class ConsumingRestIT {
+The **mp.messaging.connector.liberty-kafka.bootstrap.servers** property configures the hostname and port for connecting to the Kafka server. The **system** microservice uses an outgoing connector to send messages through the **systemLoad** channel to the **system.load** topic in the Kafka message broker so that the **inventory** microservices can consume the messages. The **key.serializer** and **value.serializer** properties characterize how to serialize the messages. The **SystemLoadSerializer** class implements the logic for turning a **SystemLoad** object into JSON and is configured as the **value.serializer**.
 
-    private static String port;
-    private static String baseUrl;
-    private static String targetUrl;
+The **inventory** microservice uses a similar **microprofile-config.properties** configuration to define its required incoming stream.
 
-    private Client client;
-    private Response response;
+Create the inventory/microprofile-config.properties file.
 
-    @BeforeAll
-    public static void oneTimeSetup() {
-      port = System.getProperty("http.port");
-      baseUrl = "http://localhost:" + port + "/artists/";
-      targetUrl = baseUrl + "total/";
-    }
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
+```
+{: codeblock}
 
-    @BeforeEach
-    public void setup() {
-      client = ClientBuilder.newClient();
-    }
 
-    @AfterEach
-    public void teardown() {
-      client.close();
-    }
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
 
-    @Test
-    public void testArtistDeserialization() {
-      response = client.target(baseUrl + "jsonString").request().get();
-      this.assertResponse(baseUrl + "jsonString", response);
 
-      Jsonb jsonb = JsonbBuilder.create();
 
-      String expectedString = "{\"name\":\"foo\",\"albums\":"
-        + "[{\"title\":\"album_one\",\"artist\":\"foo\",\"ntracks\":12}]}";
-      Artist expected = jsonb.fromJson(expectedString, Artist.class);
 
-      String actualString = response.readEntity(String.class);
-		  Artist[] actual = jsonb.fromJson(actualString, Artist[].class);
+```
+mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
 
-      assertEquals(expected.name, actual[0].name, 
-        "Expected names of artists does not match");
+mp.messaging.incoming.systemLoad.connector=liberty-kafka
+mp.messaging.incoming.systemLoad.topic=system.load
+mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
+mp.messaging.incoming.systemLoad.group.id=system-load-status
+```
+{: codeblock}
 
-      response.close();
-    }
 
-    @Test
-    public void testJsonBAlbumCount() {
-      String[] artists = {"dj", "bar", "foo"};
-      for (int i = 0; i < artists.length; i++) {
-        response = client.target(targetUrl + artists[i]).request().get();
-        this.assertResponse(targetUrl + artists[i], response);
+The **inventory** microservice uses an incoming connector to receive messages through the **systemLoad** channel. The messages were published by the **system** microservice to the **system.load** topic in the Kafka message broker. The **key.deserializer** and **value.deserializer** properties define how to deserialize the messages. The **SystemLoadDeserializer** class implements the logic for turning JSON into a **SystemLoad** object and is configured as the **value.deserializer**. The **group.id** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) and [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs).
 
-        int expected = i;
-        int actual = response.readEntity(int.class);
-        assertEquals(expected, actual, "Album count for " + artists[i] + " does not match");
+# Configuring the server
 
-        response.close();
-      }
-    }
+To run the services, the Open Liberty server on which each service runs needs to be correctly configured. Relevant features, including the [MicroProfile Reactive Messaging feature](https://openliberty.io/docs/ref/feature/#mpReactiveMessaging-1.0.html), must be enabled for the **system** and **inventory** services.
 
-    @Test
-    public void testJsonBAlbumCountForUnknownArtist() {
-      response = client.target(targetUrl + "unknown-artist").request().get();
+Create the system/server.xml configuration file.
 
-      int expected = -1;
-      int actual = response.readEntity(int.class);
-      assertEquals(expected, actual, "Unknown artist must have -1 albums");
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
+```
+{: codeblock}
 
-      response.close();
-    }
 
-    @Test
-    public void testJsonPArtistCount() {
-      response = client.target(targetUrl).request().get();
-      this.assertResponse(targetUrl, response);
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
 
-      int expected = 3;
-      int actual = response.readEntity(int.class);
-      assertEquals(expected, actual, "Expected number of artists does not match");
 
-      response.close();
-    }
 
-    /**
-     * Asserts that the given URL has the correct (200) response code.
-     */
-    private void assertResponse(String url, Response response) {
-      assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-    }
+
+```
+<server description="System Service">
+
+  <featureManager>
+    <feature>cdi-2.0</feature>
+    <feature>concurrent-1.0</feature>
+    <feature>jsonb-1.0</feature>
+    <feature>mpHealth-2.2</feature>
+    <feature>mpConfig-1.4</feature>
+    <feature>mpReactiveMessaging-1.0</feature>
+  </featureManager>
+
+  <variable name="default.http.port" defaultValue="9083"/>
+  <variable name="default.https.port" defaultValue="9446"/>
+
+  <httpEndpoint host="*" httpPort="${default.http.port}"
+      httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+
+  <webApplication location="system.war" contextRoot="/"/>
+</server>
+```
+{: codeblock}
+
+
+
+
+The **server.xml** file is already configured for the **inventory** microservice.
+
+# Building and running the application
+
+Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
+
+Create the Maven configuration file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/pom.xml
+
+
+
+
+```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>system</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <liberty.var.default.http.port>9083</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9446</liberty.var.default.https.port>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>8.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>3.3</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile.reactive.messaging</groupId>
+            <artifactId>microprofile-reactive-messaging-api</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Required dependencies -->
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>models</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+        <!-- tag::rxjava[] -->
+        <dependency>
+            <groupId>io.reactivex.rxjava3</groupId>
+            <artifactId>rxjava</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.microshed</groupId>
+            <artifactId>microshed-testing-liberty</artifactId>
+            <version>0.9.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>kafka</artifactId>
+            <version>1.15.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.6.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.2.3</version>
+                <configuration>
+                    <packagingExcludes>pom.xml</packagingExcludes>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.3.4</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.2</version>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <trimStackTrace>false</trimStackTrace>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+{: codeblock}
+
+
+
+The **pom.xml** file lists the **microprofile-reactive-messaging-api**, **kafka-clients**, and **rxjava** dependencies.
+
+The **microprofile-reactive-messaging-api** dependency is needed to enable the use of MicroProfile Reactive Messaging API. The **kafka-clients** dependency is added because the application needs a Kafka client to connect to the Kafka broker. The **rxjava** dependency is used for creating events at regular intervals.
+
+Start your Docker environment. Dockerfiles are provided for you to use.
+
+To build the application, run the Maven **install** and **package** goals from the command line in the **start** directory:
+
+```
+mvn -pl models install
+mvn package
+```
+{: codeblock}
+
+
+Run the following command to download or update to the latest Open Liberty Docker image:
+
+```
+docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
+```
+{: codeblock}
+
+
+Run the following commands to containerize the microservices:
+
+```
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+{: codeblock}
+
+
+Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the project. For simplicity, the script starts one instance of the system service.
+
+
+```
+./scripts/startContainers.sh
+```
+{: codeblock}
+
+
+
+# Testing the application
+
+After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint of the **inventory** service. 
+
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+
+Go to the http://localhost:9085/inventory/systems URL to access the inventory microservice. You see the CPU **systemLoad** property for all the systems:
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9085/inventory/systems
+```
+{: codeblock}
+
+
+
+```
+{
+   "hostname":"30bec2b63a96",
+   "systemLoad":2.25927734375
 }
 ```
+
+
+You can revisit the http://localhost:9085/inventory/systems URL after a while, and you will notice the CPU **systemLoad** property for the systems changed.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9085/inventory/systems
+```
 {: codeblock}
 
 
-Maven finds and executes all tests under the **src/test/java/it/** directory, 
-and each test method must be marked with the **@Test** annotation.
 
-You can use the **@BeforeAll** and **@AfterAll** annotations to perform any one-time setup and teardown
-tasks before and after all of your tests run. You can also use the **@BeforeEach** and **@AfterEach** annotations
-to perform setup and teardown tasks for individual test cases.
+You can use the **http://localhost:9085/inventory/systems/{hostname}** URL to see the CPU **systemLoad** property for one particular system.
 
-### Testing the binding process
-
-
-The **yasson** dependency was added in your **pom.xml** file so that your test classes have access to JSON-B.
-
-The **testArtistDeserialization** test case checks that **Artist** instances created from
-the REST data and those that are hardcoded perform the same.
-
-The **assertResponse** helper method ensures that the response code you receive is valid (200).
-
-### Processing with JSON-B test
-
-The **testJsonBAlbumCount** and **testJsonBAlbumCountForUnknownArtist** tests both use the **total/{artist}**
-endpoint which invokes JSON-B.
-
-The **testJsonBAlbumCount** test case checks that deserialization with JSON-B was done correctly
-and that the correct number of albums is returned for each artist in the JSON.
-
-The **testJsonBAlbumCountForUnknownArtist** test case is similar to **testJsonBAlbumCount**
-but instead checks an artist that does not exist in the JSON and ensures that a
-value of `-1` is returned.
-
-### Processing with JSON-P test
-
-The **testJsonPArtistCount** test uses the **total** endpoint which invokes JSON-P. This test
-checks that deserialization with JSON-P was done correctly and that the correct number
-of artists is returned.
-
-
-### Running the tests
-
-Since you started Open Liberty in development mode at the start of the guide, press the **enter/return** key to run the tests.
-
-If the tests pass, you see a similar output to the following example:
+In the following example, the **30bec2b63a96** value is the **hostname**. If you go to the **http://localhost:9085/inventory/systems/30bec2b63a96** URL, you can see the CPU **systemLoad** property only for the **30bec2b63a96** **hostname**:
 
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.consumingrest.ConsumingRestIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.59 sec - in it.io.openliberty.guides.consumingrest.ConsumingRestIT
-
-Results :
-
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-
+{
+   "hostname":"30bec2b63a96",
+   "systemLoad":2.25927734375
+}
 ```
 
-When you are done checking out the service, exit development mode by typing `q` in the command-line session where you ran the server, 
-and then press the **enter/return** key.
+# Tearing down the environment
 
-# Building the application
+Run the following script to stop the application:
 
-If you are satisfied with your application, run the Maven **package** goal to build the WAR file in the **target** directory:
 
 ```
-mvn package
+./scripts/stopContainers.sh
 ```
 {: codeblock}
 
@@ -639,9 +616,7 @@ mvn package
 
 ## Nice Work!
 
-You just accessed a simple RESTful web service and consumed its resources by using JSON-B and JSON-P in Open Liberty.
-
-
+You just developed a reactive Java application using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
 
 
@@ -650,25 +625,24 @@ You just accessed a simple RESTful web service and consumed its resources by usi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-rest-client-java** project by running the following commands:
+Delete the **guide-microprofile-reactive-messaging** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-rest-client-java
+rm -fr guide-microprofile-reactive-messaging
 ```
 {: codeblock}
 
 ## What could make this guide better?
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-rest-client-java/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-rest-client-java/pulls)
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/pulls)
 
 
 
 
 ## Where to next? 
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
 
 
 ## Log out of the session
