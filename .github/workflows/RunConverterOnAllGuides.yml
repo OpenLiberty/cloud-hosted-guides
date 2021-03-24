@@ -219,3 +219,6 @@ jobs:
         uses: trilom/file-changes-action@v1.2.3
         with:
           output: 'json'
+      - name: test
+        run: |
+          cat $HOME/files.csv
