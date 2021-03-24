@@ -1,65 +1,8 @@
 [
-    {
-        "guide": "guide-getting-started"
-    },
-    {
-        "guide": "guide-cdi-intro"
-    },
-    {
-        "guide": "guide-rest-intro"
-    },
-    {
-        "guide": "guide-microprofile-rest-client"
-    },
-    {
-        "guide": "guide-microprofile-config"
-    },
-    {
-        "guide": "guide-microprofile-fallback"
-    },
-    {
-        "guide": "guide-containerize"
-    },
-    {
-        "guide": "guide-microshed-testing"
-    },
-    {
-        "guide": "guide-kubernetes-intro"
-    },
-    {
-        "guide": "guide-microprofile-health"
-    },
-    {
-        "guide": "guide-microprofile-reactive-messaging"
-    },
-    {
-        "guide": "guide-reactive-service-testing"
-    },
-    {
-        "guide": "guide-microprofile-opentracing-jaeger"
-    },
-    {
-        "guide": "guide-microprofile-opentracing"
-    },
-    {
-        "guide": "guide-microprofile-jwt"
-    },
-    {
-        "guide": "guide-microprofile-metrics"
-    },
-    {
-        "guide": "guide-microprofile-openapi"
-    },
-    {
-        "guide": "guide-microprofile-reactive-messaging-acknowledgment"
-    },
-    {
-        "guide": "guide-microprofile-reactive-messaging-rest-integration"
-    },
-    {
-        "guide": "guide-microprofile-rest-client-async"
-    },
-    {
-        "guide": "guide-rest-client-java"
-    }
+{
+    "guide": "guide-microprofile-rest-client-async"
+},
+{
+    "guide": "guide-rest-client-java"
+}
 ]
