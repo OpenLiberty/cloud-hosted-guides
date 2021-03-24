@@ -215,10 +215,7 @@ jobs:
           base: "staging"
           labels: "RunTests"
 
-      - id: file_changes
-        uses: trilom/file-changes-action@v1.2.3
+      - name: Changed Files Exporter
+        uses: futuratrepadeira/changed-files@v3.3.0
         with:
-          output: 'json'
-      - name: test
-        run: |
-          cat $HOME/files.csv
+          repo-token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
