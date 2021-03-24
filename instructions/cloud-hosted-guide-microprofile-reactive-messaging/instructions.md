@@ -550,6 +550,7 @@ Next, use the provided script to start the application in Docker containers. The
 
 # Testing the application
 
+The application might take several minutes to become available.
 After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint of the **inventory** service. 
 
 
