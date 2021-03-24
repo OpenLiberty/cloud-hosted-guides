@@ -214,3 +214,8 @@ jobs:
           branch: "cloud-hosted-Manual-ALL/staging"
           base: "staging"
           labels: "RunTests"
+
+      - id: file_changes
+        uses: trilom/file-changes-action@v1.2.3
+        with:
+          output: 'json'
