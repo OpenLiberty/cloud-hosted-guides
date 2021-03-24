@@ -96,7 +96,7 @@ To visit the UI, select **Launch Application** from the menu of the IDE, type in
 and click the **OK** button. You’re redirected to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
 where **accountname** is your account name. Click the **interactive UI** link on the welcome page.
 
-This UI is built from the (Open Source Swagger UI)[http://swagger.io/tools/swagger-ui] and 
+This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swagger-ui) and 
 renders the generated **/openapi** document into a very user friendly page.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
