@@ -5,6 +5,23 @@ on:
       - labeled
 
 jobs:
+
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      # Any prerequisite steps
+    - uses: actions/checkout@master
+    
+    - id: set-matrix
+      run: |
+        TASKS=$(echo $(cat $GITHUB_WORKSPACE/.github/workflows/guides.json))
+        TASKS="${TASKS//'%'/'%25'}"
+        TASKS="${TASKS//$'\n'/'%0A'}"
+        TASKS="${TASKS//$'\r'/'%0D'}"
+        echo "::set-output name=matrix::$TASKS"
+
   testingConversion:
     runs-on: ubuntu-latest
     if: github.event.label.name == 'RunTests'
@@ -42,3 +59,41 @@ jobs:
           echo $removeEnd
           cd GuideConverter
           mvn -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"
+
+
+  testingConversionAllGuides:
+    needs: matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        guides: ${{fromJson(needs.matrix.outputs.matrix)}}
+    if: github.event.label.name == 'TestAll'
+
+    steps:
+
+      - uses: actions/checkout@master
+        
+      - name: Checkout Guide Converter repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/cloud-hosted-guide-converter
+          path: GuideConverter
+
+        
+      - name: Checkout instructions
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/cloud-hosted-guides
+          path: GuideConverter/cloud-hosted-guides
+          ref: ${{ github.event.pull_request.branch }}
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '15' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+
+      - name: Get Guide name
+        run: |
+          cd GuideConverter
+          mvn -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-${{matrix.guides.guide}}/instructions"
