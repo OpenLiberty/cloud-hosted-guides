@@ -6,6 +6,10 @@ on:
         description: 'Guide name'
         required: true
         default: 'guide-rest-intro'
+      devGuide:
+        description: 'Which dev guide would you like to update- 1, 2, 3 or 4?'
+        required: true
+        default: '1'
       guide_branch:
         description: 'Guide branch'     
         required: true
@@ -21,6 +25,8 @@ jobs:
         run: |
           echo "${{ github.event.inputs.guide_name }}"
           echo "${{ github.event.inputs.guide_branch }}"
+          echo "${{ github.event.inputs.devGuide }}"
+
           
   convertToDevelopmentLab:
     name: Make PR to cloud-hosted-draft-guide-development
@@ -61,8 +67,8 @@ jobs:
         run: |
           branchName=${{ github.event.inputs.guide_branch }}
           git init
-          mkdir -p instructions/cloud-hosted-draft-guide-development/
-          rm -f instructions/cloud-hosted-draft-guide-development/README.md
+          mkdir -p instructions/cloud-hosted-draft-guide-development-${{ github.event.inputs.devGuide }}/
+          rm -f instructions/cloud-hosted-draft-guide-development-${{ github.event.inputs.devGuide }}/README.md
           cd GuideConverter
           mvn compiler:compile
           mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11}"
@@ -70,20 +76,20 @@ jobs:
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-draft-guide-development/instructions.md
+          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-draft-guide-development-${{ github.event.inputs.devGuide }}/instructions.md
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh cloud-hosted-draft-guide-development
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
           git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
-          git checkout --ours instructions/cloud-hosted-draft-guide-development/instructions.md
+          git checkout --ours instructions/cloud-hosted-draft-guide-development-${{ github.event.inputs.devGuide }}/instructions.md
     
       - uses: peter-evans/create-pull-request@v3
         with:
-            title: "To Staging: Change to cloud-hosted-draft-guide-development for ${{ github.event.inputs.guide_name }}"
+            title: "To Staging: Change to cloud-hosted-draft-guide-development-${{ github.event.inputs.devGuide }} for ${{ github.event.inputs.guide_name }}"
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
+            body: "Updated by github actions, Manually triggered the ${{ github.event.inputs.guide_name }} into cloud-hosted-draft-guide-development-${{ github.event.inputs.devGuide }}."
             branch: "cloud-hosted-draft-guide-development/staging"
             base: "staging" 
             labels: "RunTests"
