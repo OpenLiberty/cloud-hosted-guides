@@ -54,9 +54,9 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-### Try what you'll build
+# Creating the producer in the system microservice
 
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+Navigate to the **start** directory to begin. 
 
 First, review the **PersonServiceIT** class to see what the tests look like:
 
@@ -66,7 +66,7 @@ goal to build the application and run the integration tests on an Open Liberty s
 ```
 mvn verify
 ```
-{: codeblock}
+package io.openliberty.guides.system;
 
 
 This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty must download. If you 
@@ -80,6 +80,8 @@ mvn liberty:dev
 ```
 {: codeblock}
 
+import io.openliberty.guides.models.SystemLoad;
+import io.reactivex.rxjava3.core.Flowable;
 
 After the Open Liberty server starts and you see the **Press the Enter key to run tests on demand.** message, you can press the 
 **enter/return** key to run the integration tests. After the tests finish, you can press the **enter/return** key to run the tests again, or you 
@@ -93,23 +95,21 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 
 Navigate to the **start** directory to begin.
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+    @Outgoing("systemLoad")
+    public Publisher<SystemLoad> sendSystemLoad() {
+        return Flowable.interval(15, TimeUnit.SECONDS)
+                .map((interval -> new SystemLoad(getHostname(),
+                        new Double(osMean.getSystemLoadAverage()))));
+    }
 
-```
-mvn liberty:dev
+}
 ```
 {: codeblock}
 
 
-After you see the following message, your application server in dev mode is ready:
 
-```
-Press the Enter key to run tests on demand.
-```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
+The **SystemService** class contains a **Publisher** method that is called **sendSystemLoad()**, which calculates and returns the average system load. The **@Outgoing** annotation on the **sendSystemLoad()** method indicates that the method publishes its calculation as a message on a topic in the Kafka messaging system. The **Flowable.interval()** method from **rxJava** is used to set the frequency of how often the system service publishes the calculation to the event stream.
 
 Wait for the **Press the Enter key to run tests on demand.** message, and then press the **enter/return** key to run the tests. You see that one test runs:
 
@@ -137,6 +137,7 @@ Update the **PersonServiceIT** class.
  **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
+![Reactive system publisher](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-publisher.png)
 
 
 ```
@@ -192,6 +193,17 @@ public class PersonServiceIT {
     public void testCreatePerson() {
     }
 
+    @Incoming("systemLoad")
+    public void updateStatus(SystemLoad sl)  {
+        String hostname = sl.hostname;
+        if (manager.getSystem(hostname).isPresent()) {
+            manager.updateCpuStatus(hostname, sl.loadAverage);
+            logger.info("Host " + hostname + " was updated: " + sl);
+        } else {
+            manager.addSystem(hostname, sl.loadAverage);
+            logger.info("Host " + hostname + " was added: " + sl);
+        }
+    }
 }
 ```
 {: codeblock}
@@ -203,6 +215,7 @@ Import the **ApplicationContainer** class and the **Container** annotation, crea
 The **withAppContextRoot(String)** method indicates the base path of the application. The app context root is the portion of the URL after the hostname and port. In this case, the application is deployed at the **http://localhost:9080/guide-microshed-testing** URL, so the app context root is **/guide-microshed-testing**.
 
 
+# Configuring the MicroProfile Reactive Messaging connectors for Kafka
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
@@ -345,9 +358,13 @@ Replace the **PersonServiceIT** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
+The **mp.messaging.connector.liberty-kafka.bootstrap.servers** property configures the hostname and port for connecting to the Kafka server. The **system** microservice uses an outgoing connector to send messages through the **systemLoad** channel to the **system.load** topic in the Kafka message broker so that the **inventory** microservices can consume the messages. The **key.serializer** and **value.serializer** properties characterize how to serialize the messages. The **SystemLoadSerializer** class implements the logic for turning a **SystemLoad** object into JSON and is configured as the **value.serializer**.
 
+The **inventory** microservice uses a similar **microprofile-config.properties** configuration to define its required incoming stream.
 
+Create the inventory/microprofile-config.properties file.
 
+> Run the following touch command in your terminal
 ```
 package io.openliberty.guides.testing;
 
@@ -442,6 +459,7 @@ public class PersonServiceIT {
 {: codeblock}
 
 
+The **inventory** microservice uses an incoming connector to receive messages through the **systemLoad** channel. The messages were published by the **system** microservice to the **system.load** topic in the Kafka message broker. The **key.deserializer** and **value.deserializer** properties define how to deserialize the messages. The **SystemLoadDeserializer** class implements the logic for turning JSON into a **SystemLoad** object and is configured as the **value.deserializer**. The **group.id** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) and [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs).
 
 The following tests are added: **testMinSizeName()**, **testMinAge()**, **testGetPerson()**, **testGetAllPeople()**, and **testUpdateAge()**.
 
@@ -592,6 +610,7 @@ Update the **PersonServiceIT** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
+To build the application, run the Maven **install** and **package** goals from the command line in the **start** directory:
 
 
 
@@ -688,6 +707,7 @@ public class PersonServiceIT {
 ```
 {: codeblock}
 
+# Testing the application
 
 Remove **import** statements and the **ApplicationContainer app** field.
 
@@ -698,8 +718,10 @@ Update the **PersonServiceIT** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
+Go to the http://localhost:9085/inventory/systems URL to access the inventory microservice. You see the CPU **systemLoad** property for all the systems:
 
 
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 package io.openliberty.guides.testing;
