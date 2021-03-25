@@ -21,8 +21,9 @@ the returned JSON resources. The first approach consists of using the Java API f
 to directly convert JSON messages into Java objects. The second approach consists of
 using the Java API for JSON Processing (JSON-P) to process the JSON.
 
-The REST service that provides the artists and albums resources has already been written
-for you and is accessible at the following link when the server is running **http://localhost:9080/artists**, which responds with the **artists.json**.
+The REST service that provides the artists and albums resources is already written
+for you. When the server is running, this service is accessible at the **http://localhost:9080/artists** endpoint,
+which responds with the **artists.json** file.
 
 You will implement the following two endpoints using the two deserialization approaches:
 
@@ -83,7 +84,7 @@ The defaultServer server is ready to run a smarter planet.
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-You can find your service at **http://localhost:9080/artists** by running the following curl command:
+You can find your service at the **http://localhost:9080/artists** endpoint by running the following curl command:
 ```
 curl http://localhost:9080/artists
 ```
@@ -417,7 +418,7 @@ party service, you should separate your **GET**/**POST** requests from your data
 The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
 
 
-You can find your service at **http://localhost:9080/artists** by running the following curl command:
+You can find your service at the **http://localhost:9080/artists** endpoint by running the following curl command:
 ```
 curl http://localhost:9080/artists
 ```
