@@ -1,7 +1,7 @@
 
-# Welcome to the Creating reactive Java microservices guide!
+# Welcome to the Documenting RESTful APIs guide!
 
-Learn how to write reactive Java microservices using MicroProfile Reactive Messaging.
+Explore how to document and filter RESTful APIs from code or static files by using MicroProfile OpenAPI.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,21 +11,29 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
+
+
 # What you'll learn
 
-You will learn how to build reactive microservices that can send requests to other microservices, and asynchronously receive and process the responses. You will use an external messaging system to handle the asynchronous messages that are sent and received between the microservices as streams of events. MicroProfile Reactive Messaging makes it easy to write and configure your application to send, receive, and process the events efficiently.
+You will learn how to document and filter RESTful APIs from annotations, POJOs, and static OpenAPI
+files by using MicroProfile OpenAPI.
 
-*Asynchronous messaging between microservices*
+The OpenAPI specification, previously known as the Swagger specification, defines a standard interface
+for documenting and exposing RESTful APIs. This specification allows both humans and computers to
+understand or process the functionalities of services without requiring direct access to underlying
+source code or documentation. The MicroProfile OpenAPI specification provides a set of Java interfaces
+and programming models that allow Java developers to natively produce OpenAPI v3 documents from their
+JAX-RS applications.
 
-Asynchronous communication between microservices can be used to build reactive and responsive applications. By decoupling the requests sent by a microservice from the responses that it receives, the microservice is not blocked from performing other tasks while waiting for the requested data to become available. Imagine asynchronous communication as a restaurant. A waiter might come to your table and take your order. While you are waiting for your food to be prepared, that waiter serves other tables and takes their orders too. When your food is ready, the waiter brings your food to the table and then continues to serve the other tables. If the waiter were to operate synchronously, they must take your order and then wait until they deliver your food before serving any other tables. In microservices, a request call from a REST client to another microservice can be time-consuming because the network might be slow, or the other service might be overwhelmed with requests and can’t respond quickly. But in an asynchronous system, the microservice sends a request to another microservice and continues to send other calls and to receive and process other responses until it receives a response to the original request.
+You will document the RESTful APIs of the provided **inventory** service, which serves two endpoints,
+**inventory/systems** and **inventory/properties**. These two endpoints function the same way as in the
+other MicroProfile guides.
 
-*What is MicroProfile Reactive Messaging?*
-
-MicroProfile Reactive Messaging provides an easy way to asynchronously send, receive, and process messages that are received as continuous streams of events. You simply annotate application beans' methods and Open Liberty converts the annotated methods to reactive streams-compatible publishers, subscribers, and processors and connects them up to each other. MicroProfile Reactive Messaging provides a Connector API so that your methods can be connected to external messaging systems that produce and consume the streams of events, such as [Apache Kafka](https://kafka.apache.org/).
-
-The application in this guide consists of two microservices, **system** and **inventory**. Every 15 seconds, the **system** microservice calculates and publishes an event that contains its current average system load. The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. The current inventory of systems can be accessed via the **/systems** REST endpoint. You'll create the **system** and **inventory** microservices using MicroProfile Reactive Messaging.
-
-![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory.png)
+Before you proceed, note that the 1.0 version of the MicroProfile OpenAPI specification does
+not define how the **/openapi** endpoint may be partitioned in the event of multiple JAX-RS applications
+running on the same server. In other words, you must stick to one JAX-RS application per server instance
+as the behaviour for handling multiple applications is currently undefined.
 
 
 # Getting started
@@ -40,11 +48,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-openapi.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-reactive-messaging.git
-cd guide-microprofile-reactive-messaging
+git clone https://github.com/openliberty/guide-microprofile-openapi.git
+cd guide-microprofile-openapi
 ```
 {: codeblock}
 
@@ -53,96 +61,108 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-# Creating the producer in the system microservice
+### Try what you'll build
 
-Navigate to the **start** directory to begin. 
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-The **system** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of events. Every 15 seconds, the **system** microservice publishes an event that contains its calculation of the average system load (its CPU usage) for the last minute.
+To try out the application, first go to the **finish** directory and run the following
+Maven goal to build the application and deploy it to Open Liberty:
 
-Create the **SystemService** class.
-
-> Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+cd finish
+mvn liberty:run
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
-
-
-
+After you see the following message, your application server is ready:
 
 ```
-package io.openliberty.guides.system;
+The defaultServer server is ready to run a smarter planet.
+```
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
 
-import javax.enterprise.context.ApplicationScoped;
 
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.reactivestreams.Publisher;
+To open a new command-line session, select **Terminal** > **New Terminal** from the menu of the IDE.
 
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.Flowable;
+Next, run the following curl command to see the RESTful APIs of the `inventory` service:
+```
+curl http://localhost:9080/openapi
+```
+{: codeblock}
 
-@ApplicationScoped
-public class SystemService {
+A UI is also available for a more interactive view of the deployed APIs.
+To visit the UI, select **Launch Application** from the menu of the IDE, type in **9080** to specify the port number 
+and click the **OK** button. You’re redirected to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
+where **accountname** is your account name. Click the **interactive UI** link on the welcome page. 
+This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swagger-ui)
+renders the generated **/openapi** document into a very user friendly page.
 
-    private static final OperatingSystemMXBean osMean = 
-            ManagementFactory.getOperatingSystemMXBean();
-    private static String hostname = null;
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
+in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
+from the **finish** directory in another shell session:
 
-    private static String getHostname() {
-        if (hostname == null) {
-            try {
-                return InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException e) {
-                return System.getenv("HOSTNAME");
-            }
-        }
-        return hostname;
-    }
-
-    @Outgoing("systemLoad")
-    public Publisher<SystemLoad> sendSystemLoad() {
-        return Flowable.interval(15, TimeUnit.SECONDS)
-                .map((interval -> new SystemLoad(getHostname(),
-                        new Double(osMean.getSystemLoadAverage()))));
-    }
-
-}
+```
+mvn liberty:stop
 ```
 {: codeblock}
 
 
 
+# Generating the OpenAPI document for the inventory service
 
-The **SystemService** class contains a **Publisher** method that is called **sendSystemLoad()**, which calculates and returns the average system load. The **@Outgoing** annotation on the **sendSystemLoad()** method indicates that the method publishes its calculation as a message on a topic in the Kafka messaging system. The **Flowable.interval()** method from **rxJava** is used to set the frequency of how often the system service publishes the calculation to the event stream.
+You can generate an OpenAPI document in various ways. First, because
+all JAX-RS annotations are processed by default, you can augment your existing JAX-RS annotations with
+OpenAPI annotations to enrich your APIs with a minimal amount of work. Second, you can use a set of predefined
+models to manually create all elements of the OpenAPI tree. Finally, you can filter various elements of the
+OpenAPI tree, changing them to your liking or removing them entirely.
 
-The messages are transported between the service and the Kafka messaging system through a channel called **systemLoad**. The name of the channel to use is set in the **@Outgoing("systemLoad")** annotation. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are published on a topic called **system.load**, as shown in the following diagram:
+Navigate to the **start** directory to begin.
 
-![Reactive system publisher](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-publisher.png)
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
+deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
-
-# Creating the consumer in the inventory microservice
-
-The **inventory** microservice records in its inventory the average system load information that it received from potentially multiple instances of the **system** service.
-
-Create the **InventoryResource** class.
-
-> Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+mvn liberty:dev
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+After you see the following message, your application server in dev mode is ready:
+
+```
+Press the Enter key to run tests on demand.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
+or open the project in your editor.
+
+Because the JAX-RS framework handles basic API generation for JAX-RS annotations, a skeleton OpenAPI
+tree will be generated from the **inventory** service. You can use this tree as a starting point and
+augment it with annotations and code to produce a complete OpenAPI document.
+
+
+
+Now, run the following curl command to see the generated OpenAPI tree:
+```
+curl http://localhost:9080/openapi
+```
+{: codeblock}
+
+To visit the UI for a more interactive view of the APIs, select **Launch Application** from the menu of the IDE, type in **9080** to specify the port number 
+and click the **OK** button. You’re redirected to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL.
+Click the **interactive UI** link on the welcome page. 
+
+### Augmenting the existing JAX-RS annotations with OpenAPI annotations
+
+Because all JAX-RS annotations are processed by default, you can augment the existing code with OpenAPI
+annotations without needing to rewrite portions of the OpenAPI document that are already covered by
+the JAX-RS framework.
+
+Update the **InventoryResource** class.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
@@ -150,15 +170,9 @@ touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/ma
 ```
 package io.openliberty.guides.inventory;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -166,69 +180,242 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+import io.openliberty.guides.inventory.model.InventoryList;
 
-import io.openliberty.guides.models.SystemLoad;
-
-@ApplicationScoped
-@Path("/inventory")
+@RequestScoped
+@Path("/systems")
 public class InventoryResource {
 
-    private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
-
     @Inject
-    private InventoryManager manager;
-    
-    @GET
-    @Path("/systems")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystems() {
-        List<Properties> systems = manager.getSystems()
-                .values()
-                .stream()
-                .collect(Collectors.toList());
-        return Response
-                .status(Response.Status.OK)
-                .entity(systems)
-                .build();
-    }
+    InventoryManager manager;
 
     @GET
-    @Path("/systems/{hostname}")
+    @Path("/{hostname}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystem(@PathParam("hostname") String hostname) {
-        Optional<Properties> system = manager.getSystem(hostname);
-        if (system.isPresent()) {
-            return Response
-                    .status(Response.Status.OK)
-                    .entity(system)
-                    .build();
+    @APIResponses(
+        value = {
+            @APIResponse(
+                responseCode = "404", 
+                description = "Missing description",
+                content = @Content(mediaType = "text/plain")),
+            @APIResponse(
+                responseCode = "200",
+                description = "JVM system properties of a particular host.",
+                content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = Properties.class))) })
+    @Operation(
+        summary = "Get JVM system properties for particular host",
+        description = "Retrieves and returns the JVM system properties from the system "
+        + "service running on the particular host.")
+    public Response getPropertiesForHost(
+        @Parameter(
+            description = "The host for whom to retrieve the JVM system properties for.",
+            required = true, 
+            example = "foo", 
+            schema = @Schema(type = SchemaType.STRING)) 
+        @PathParam("hostname") String hostname) {
+        Properties props = manager.get(hostname);
+        if (props == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                           .entity("{ \"error\" : " 
+                                   + "\"Unknown hostname " + hostname 
+                                   + " or the resource may not be "
+                                   + "running on the host machine\" }")
+                           .build();
         }
-        return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("hostname does not exist.")
-                .build();
+
+        manager.add(hostname, props);
+        return Response.ok(props).build();
     }
 
-    @DELETE
+    @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response resetSystems() {
-        manager.resetSystems();
-        return Response
-                .status(Response.Status.OK)
-                .build();
+    @APIResponse(
+        responseCode = "200",
+        description = "host:properties pairs stored in the inventory.",
+        content = @Content(
+            mediaType = "application/json",
+            schema = @Schema(
+                type = SchemaType.OBJECT,
+                implementation = InventoryList.class)))
+    @Operation(
+        summary = "List inventory contents.",
+        description = "Returns the currently stored host:properties pairs in the "
+        + "inventory.")
+    public InventoryList listContents() {
+        return manager.list();
     }
 
-    @Incoming("systemLoad")
-    public void updateStatus(SystemLoad sl)  {
-        String hostname = sl.hostname;
-        if (manager.getSystem(hostname).isPresent()) {
-            manager.updateCpuStatus(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was updated: " + sl);
-        } else {
-            manager.addSystem(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was added: " + sl);
+}
+```
+{: codeblock}
+
+
+
+Add OpenAPI **@APIResponses**, **@Operation** and **@Parameter** annotations to the two JAX-RS methods, **getPropertiesForHost()** and **listContents()**.
+
+
+
+Clearly, there are many more OpenAPI annotations now, so let’s break them down:
+
+| *Annotation*    | *Description*
+| ---| ---
+| **@APIResponses** | A container for multiple responses from an API operation. This annotation is
+optional, but it can be helpful to organize a method with multiple responses.
+| **@APIResponse**  | Describes a single response from an API operation.
+| **@Content**      | Provides a schema and examples for a particular media type.
+| **@Schema**       | Defines the input and output data types.
+| **@Operation**    | Describes a single API operation on a path.
+| **@Parameter**    | Describes a single operation parameter.
+
+
+Since the Open Liberty server was started in development mode at the beginning of the guide, your changes were automatically picked up. 
+Run the following curl command to see the updated OpenAPI tree:
+```
+curl http://localhost:9080/openapi
+```
+{: codeblock}
+
+The two endpoints at which your JAX-RS methods are served are now more meaningful:
+
+```
+/inventory/systems/{hostname}:
+  get:
+    summary: Get JVM system properties for particular host
+    description: Retrieves and returns the JVM system properties from the system
+      service running on the particular host.
+    operationId: getPropertiesForHost
+    parameters:
+    - name: hostname
+      in: path
+      description: The host for whom to retrieve the JVM system properties for.
+      required: true
+      schema:
+        type: string
+      example: foo
+    responses:
+      404:
+        description: Missing description
+        content:
+          text/plain: {}
+      200:
+        description: JVM system properties of a particular host.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Properties'
+/inventory/systems:
+  get:
+    summary: List inventory contents.
+    description: Returns the currently stored host:properties pairs in the inventory.
+    operationId: listContents
+    responses:
+      200:
+        description: host:properties pairs stored in the inventory.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InventoryList'
+```
+
+
+OpenAPI annotations can also be added to POJOs to describe what they represent. Currently, your OpenAPI
+document doesn't have a very meaningful description of the **InventoryList** POJO and hence it's very
+difficult to tell exactly what that POJO is used for. To describe the **InventoryList** POJO in more detail, augment the
+**src/main/java/io/openliberty/guides/inventory/model/InventoryList.java** file with some OpenAPI annotations.
+
+Update the **InventoryList** class.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/InventoryList.java
+
+
+
+
+```
+package io.openliberty.guides.inventory.model;
+
+import java.util.List;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+
+@Schema(name="InventoryList", description="POJO that represents the inventory contents.")
+public class InventoryList {
+
+    @Schema(required = true)
+    private List<SystemData> systems;
+
+    public InventoryList(List<SystemData> systems) {
+        this.systems = systems;
+    }
+
+    public List<SystemData> getSystems() {
+        return systems;
+    }
+
+    public int getTotal() {
+        return systems.size();
+    }
+}
+```
+{: codeblock}
+
+
+
+Add OpenAPI **@Schema** annotations to the **InventoryList** class and the **systems** variable.
+
+
+Likewise, annotate the **src/main/java/io/openliberty/guides/inventory/model/SystemData.java** POJO,
+which is referenced in the **InventoryList** class.
+
+Update the **SystemData** class.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/SystemData.java
+
+
+
+
+```
+package io.openliberty.guides.inventory.model;
+
+import java.util.Properties;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+
+@Schema(name="SystemData", description="POJO that represents a single inventory entry.")
+public class SystemData {
+
+    @Schema(required = true)
+    private final String hostname;
+
+    @Schema(required = true)
+    private final Properties properties;
+
+    public SystemData(String hostname, Properties properties) {
+        this.hostname = hostname;
+        this.properties = properties;
+    }
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    public Properties getProperties() {
+        return properties;
+    }
+
+    @Override
+    public boolean equals(Object host) {
+        if (host instanceof SystemData) {
+            return hostname.equals(((SystemData) host).getHostname());
         }
+        return false;
     }
 }
 ```
@@ -236,379 +423,419 @@ public class InventoryResource {
 
 
 
-
-The **inventory** microservice receives the message from the **system** microservice over the **@Incoming("systemLoad")** channel. The properties of this channel are defined in the **microprofile-config.properties** file. The **inventory** microservice is also a RESTful service that is served at the **/inventory** endpoint.
-
-The **InventoryResource** class contains a method called **updateStatus()**, which receives the message that contains the average system load and updates its existing inventory of systems and their average system load. The **@Incoming("systemLoad")** annotation on the **updateStatus()** method indicates that the method retrieves the average system load information by connecting to the channel called **systemLoad**. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are retrieved from a topic called **system.load**, as shown in the following diagram:
-
-![Reactive system inventory detail](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-detail.png)
+Add OpenAPI **@Schema** annotations to the **SystemData** class, the **hostname** variable and the **properties** variable.
 
 
-# Configuring the MicroProfile Reactive Messaging connectors for Kafka
 
-The **system** and **inventory** services exchange messages with the external messaging system through a channel. The MicroProfile Reactive Messaging Connector API makes it easy to connect each service to the channel. You just need to add configuration keys in a properties file for each of the services. These configuration keys define properties such as the name of the channel and the topic in the Kafka messaging system. Open Liberty includes the **liberty-kafka** connector for sending and receiving messages from Apache Kafka.
+Run the following curl command to see the updated OpenAPI tree:
+```
+curl http://localhost:9080/openapi
+```
+{: codeblock}
 
-The system and inventory microservices each have a MicroProfile Config properties file to define the properties of their outgoing and incoming streams.
+```
+components:
+  schemas:
+    InventoryList:
+      required:
+      - systems
+      type: object
+      properties:
+        systems:
+          type: array
+          items:
+            $ref: '#/components/schemas/SystemData'
+        total:
+          type: integer
+      description: POJO that represents the inventory contents.
+    SystemData:
+      required:
+      - hostname
+      - properties
+      type: object
+      properties:
+        hostname:
+          type: string
+        properties:
+          type: object
+          additionalProperties:
+            type: string
+      description: POJO that represents a single inventory entry.
+    Properties:
+      type: object
+      additionalProperties:
+        type: string
+```
 
-Create the system/microprofile-config.properties file.
+
+### Filtering the OpenAPI tree elements
+
+Filtering of certain elements and fields of the generated OpenAPI document can be done by using the
+**OASFilter** interface.
+
+Create the **InventoryOASFilter** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
+touch /home/project/guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/filter/InventoryOASFilter.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/filter/InventoryOASFilter.java
 
 
 
 
 ```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
+package io.openliberty.guides.inventory.filter;
+
+import java.util.Arrays;
+import java.util.Collections;
+
+import org.eclipse.microprofile.openapi.OASFactory;
+import org.eclipse.microprofile.openapi.OASFilter;
+import org.eclipse.microprofile.openapi.models.OpenAPI;
+import org.eclipse.microprofile.openapi.models.info.License;
+import org.eclipse.microprofile.openapi.models.info.Info;
+import org.eclipse.microprofile.openapi.models.responses.APIResponse;
+import org.eclipse.microprofile.openapi.models.servers.Server;
+import org.eclipse.microprofile.openapi.models.servers.ServerVariable;
+
+public class InventoryOASFilter implements OASFilter {
+
+  @Override
+  public APIResponse filterAPIResponse(APIResponse apiResponse) {
+    if ("Missing description".equals(apiResponse.getDescription())) {
+      apiResponse.setDescription("Invalid hostname or the system service may not "
+          + "be running on the particular host.");
+    }
+    return apiResponse;
+  }
+
+  @Override
+  public void filterOpenAPI(OpenAPI openAPI) {
+    openAPI.setInfo(
+        OASFactory.createObject(Info.class).title("Inventory App").version("1.0")
+                  .description(
+                      "App for storing JVM system properties of various hosts.")
+                  .license(
+                      OASFactory.createObject(License.class)
+                                .name("Eclipse Public License - v 1.0").url(
+                                    "https://www.eclipse.org/legal/epl-v10.html")));
+
+    openAPI.addServer(
+        OASFactory.createServer()
+                  .url("http://localhost:{port}")
+                  .description("Simple Open Liberty.")
+                  .variables(Collections.singletonMap("port", 
+                                 OASFactory.createServerVariable()
+                                           .defaultValue("9080")
+                                           .description("Server HTTP port."))));
+  }
 
-mp.messaging.outgoing.systemLoad.connector=liberty-kafka
-mp.messaging.outgoing.systemLoad.topic=system.load
-mp.messaging.outgoing.systemLoad.key.serializer=org.apache.kafka.common.serialization.StringSerializer
-mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.SystemLoad$SystemLoadSerializer
-```
-{: codeblock}
-
-
-
-
-The **mp.messaging.connector.liberty-kafka.bootstrap.servers** property configures the hostname and port for connecting to the Kafka server. The **system** microservice uses an outgoing connector to send messages through the **systemLoad** channel to the **system.load** topic in the Kafka message broker so that the **inventory** microservices can consume the messages. The **key.serializer** and **value.serializer** properties characterize how to serialize the messages. The **SystemLoadSerializer** class implements the logic for turning a **SystemLoad** object into JSON and is configured as the **value.serializer**.
-
-The **inventory** microservice uses a similar **microprofile-config.properties** configuration to define its required incoming stream.
-
-Create the inventory/microprofile-config.properties file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
-
-
-
-
-```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
-
-mp.messaging.incoming.systemLoad.connector=liberty-kafka
-mp.messaging.incoming.systemLoad.topic=system.load
-mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
-mp.messaging.incoming.systemLoad.group.id=system-load-status
-```
-{: codeblock}
-
-
-The **inventory** microservice uses an incoming connector to receive messages through the **systemLoad** channel. The messages were published by the **system** microservice to the **system.load** topic in the Kafka message broker. The **key.deserializer** and **value.deserializer** properties define how to deserialize the messages. The **SystemLoadDeserializer** class implements the logic for turning JSON into a **SystemLoad** object and is configured as the **value.deserializer**. The **group.id** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) and [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs).
-
-# Configuring the server
-
-To run the services, the Open Liberty server on which each service runs needs to be correctly configured. Relevant features, including the [MicroProfile Reactive Messaging feature](https://openliberty.io/docs/ref/feature/#mpReactiveMessaging-1.0.html), must be enabled for the **system** and **inventory** services.
-
-Create the system/server.xml configuration file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
-
-
-
-
-```
-<server description="System Service">
-
-  <featureManager>
-    <feature>cdi-2.0</feature>
-    <feature>concurrent-1.0</feature>
-    <feature>jsonb-1.0</feature>
-    <feature>mpHealth-2.2</feature>
-    <feature>mpConfig-1.4</feature>
-    <feature>mpReactiveMessaging-1.0</feature>
-  </featureManager>
-
-  <variable name="default.http.port" defaultValue="9083"/>
-  <variable name="default.https.port" defaultValue="9446"/>
-
-  <httpEndpoint host="*" httpPort="${default.http.port}"
-      httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-  <webApplication location="system.war" contextRoot="/"/>
-</server>
-```
-{: codeblock}
-
-
-
-
-The **server.xml** file is already configured for the **inventory** microservice.
-
-# Building and running the application
-
-Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
-
-Create the Maven configuration file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/pom.xml
-
-
-
-
-```
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>system</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <liberty.var.default.http.port>9083</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9446</liberty.var.default.https.port>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>8.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>3.3</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile.reactive.messaging</groupId>
-            <artifactId>microprofile-reactive-messaging-api</artifactId>
-            <version>1.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- Required dependencies -->
-        <dependency>
-            <groupId>io.openliberty.guides</groupId>
-            <artifactId>models</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>2.7.0</version>
-        </dependency>
-        <!-- tag::rxjava[] -->
-        <dependency>
-            <groupId>io.reactivex.rxjava3</groupId>
-            <artifactId>rxjava</artifactId>
-            <version>3.0.0</version>
-        </dependency>
-        <!-- For tests -->
-        <dependency>
-            <groupId>org.microshed</groupId>
-            <artifactId>microshed-testing-liberty</artifactId>
-            <version>0.9.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>kafka</artifactId>
-            <version>1.15.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.6.2</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.2.3</version>
-                <configuration>
-                    <packagingExcludes>pom.xml</packagingExcludes>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.3.4</version>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <executions>
-                    <execution>
-                        <id>integration-test</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                        </goals>
-                        <configuration>
-                            <trimStackTrace>false</trimStackTrace>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>verify</id>
-                        <goals>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-{: codeblock}
-
-
-
-The **pom.xml** file lists the **microprofile-reactive-messaging-api**, **kafka-clients**, and **rxjava** dependencies.
-
-The **microprofile-reactive-messaging-api** dependency is needed to enable the use of MicroProfile Reactive Messaging API. The **kafka-clients** dependency is added because the application needs a Kafka client to connect to the Kafka broker. The **rxjava** dependency is used for creating events at regular intervals.
-
-Start your Docker environment. Dockerfiles are provided for you to use.
-
-To build the application, run the Maven **install** and **package** goals from the command line in the **start** directory:
-
-```
-mvn -pl models install
-mvn package
-```
-{: codeblock}
-
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
-```
-{: codeblock}
-
-
-Run the following commands to containerize the microservices:
-
-```
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-{: codeblock}
-
-
-Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the project. For simplicity, the script starts one instance of the system service.
-
-
-```
-./scripts/startContainers.sh
-```
-{: codeblock}
-
-
-
-# Testing the application
-
-After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint of the **inventory** service. 
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-Go to the http://localhost:9085/inventory/systems URL to access the inventory microservice. You see the CPU **systemLoad** property for all the systems:
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9085/inventory/systems
-```
-{: codeblock}
-
-
-
-```
-{
-   "hostname":"30bec2b63a96",
-   "systemLoad":2.25927734375
 }
 ```
+{: codeblock}
 
 
-You can revisit the http://localhost:9085/inventory/systems URL after a while, and you will notice the CPU **systemLoad** property for the systems changed.
+
+The **filterAPIResponse()** method allows filtering of **APIResponse** elements. When you
+override this method, it will be called once for every **APIResponse** element in the OpenAPI tree.
+In this case, you are matching the **404** response that is returned by the **/inventory/systems/{hostname}**
+endpoint and setting the previously missing description. To remove an **APIResponse** element
+or another filterable element, simply return **null**.
+
+The **filterOpenAPI()** method allows filtering of the singleton **OpenAPI** element. Unlike other filter
+methods, when you override **filterOpenAPI()**, it is called only once as the last method
+for a particular filter. Hence, make sure that it doesn't override any other filter operations that are
+called before it. Your current OpenAPI document doesn't provide much information on the application
+itself or on what server and port it runs on. This information is usually provided in the **info**
+and **servers** elements, which are currently missing. Use the **OASFactory** class to manually set these
+and other elements of the OpenAPI tree from the **org.eclipse.microprofile.openapi.models**
+package. The **OpenAPI** element is the only element that cannot be removed since that would mean
+removing the whole OpenAPI tree.
+
+Each filtering method is called once for each corresponding element in the model tree. You can think
+of each method as a callback for various key OpenAPI elements.
+
+Before you can use the filter class that you created, you need to create the **microprofile-config.properties** file.
+
+Create the configuration file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties
+```
+{: codeblock}
 
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties
+
+
+
 
 ```
-curl http://localhost:9085/inventory/systems
+mp.openapi.filter = io.openliberty.guides.inventory.filter.InventoryOASFilter
 ```
 {: codeblock}
 
 
 
-You can use the **http://localhost:9085/inventory/systems/{hostname}** URL to see the CPU **systemLoad** property for one particular system.
+This configuration file is picked up automatically by MicroProfile Config and registers your filter
+by passing in the fully qualified name of the filter class into the **mp.openapi.filter** property.
 
-In the following example, the **30bec2b63a96** value is the **hostname**. If you go to the **http://localhost:9085/inventory/systems/30bec2b63a96** URL, you can see the CPU **systemLoad** property only for the **30bec2b63a96** **hostname**:
 
+Run the following curl command to see the updated OpenAPI tree:
 ```
-{
-   "hostname":"30bec2b63a96",
-   "systemLoad":2.25927734375
-}
-```
-
-# Tearing down the environment
-
-Run the following script to stop the application:
-
-
-```
-./scripts/stopContainers.sh
+curl http://localhost:9080/openapi
 ```
 {: codeblock}
+
+```
+info:
+  title: Inventory App
+  description: App for storing JVM system properties of various hosts.
+  license:
+    name: Eclipse Public License - v 1.0
+    url: https://www.eclipse.org/legal/epl-v10.html
+  version: 1.0.0
+servers:
+- url: http://localhost:{port}
+  description: Simple Open Liberty.
+  variables:
+    port:
+      default: "9080"
+      description: Server HTTP port.
+```
+
+```
+404:
+  description: Invalid hostname or the system service may not be running on
+    the particular host.
+  content:
+    text/plain: {}
+```
+
+For more information about which elements you can filter, see the [MicroProfile API](https://openliberty.io/docs/ref/microprofile/).
+
+To learn more about MicroProfile Config, visit the MicroProfile Config [GitHub repository](https://github.com/eclipse/microprofile-config)
+and try one of the MicroProfile Config [guides](https://openliberty.io/guides/?search=Config).
+
+
+
+# Using pregenerated OpenAPI documents
+
+As an alternative to generating the OpenAPI model tree from code, you can provide a valid pregenerated
+OpenAPI document to describe your APIs. This document must be named **openapi** with a **yml**, **yaml**, or **json**
+extension and be placed under the **META-INF** directory. Depending on the scenario, the document
+might be fully or partially complete. If the document is fully complete, then you can disable
+annotation scanning entirely by setting the **mp.openapi.scan.disable** MicroProfile Config property to **true**.
+If the document is partially complete, then you can augment it with code.
+
+To use the pre-generated OpenAPI document, create the OpenAPI document YAML file.
+
+Create the OpenAPI document file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/openapi.yaml
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/openapi.yaml
+
+
+
+
+```
+openapi: 3.0.0
+info:
+  title: Inventory App
+  description: App for storing JVM system properties of various hosts.
+  license:
+    name: Eclipse Public License - v 1.0
+    url: https://www.eclipse.org/legal/epl-v10.html
+  version: 1.0.0
+servers:
+- url: http://localhost:{port}
+  description: Simple Open Liberty.
+  variables:
+    port:
+      default: "9080"
+      description: Server HTTP port.
+paths:
+  /inventory/systems:
+    get:
+      summary: List inventory contents.
+      description: Returns the currently stored host:properties pairs in the inventory.
+      operationId: listContents
+      responses:
+        200:
+          description: host:properties pairs stored in the inventory.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryList'
+  /inventory/systems/{hostname}:
+    get:
+      summary: Get JVM system properties for particular host
+      description: Retrieves and returns the JVM system properties from the system
+        service running on the particular host.
+      operationId: getPropertiesForHost
+      parameters:
+      - name: hostname
+        in: path
+        description: The host for whom to retrieve the JVM system properties for.
+        required: true
+        schema:
+          type: string
+        example: foo
+      responses:
+        404:
+          description: Invalid hostname or the system service may not be running on
+            the particular host.
+          content:
+            text/plain: {}
+        200:
+          description: JVM system properties of a particular host.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Properties'
+  /inventory/properties:
+    get:
+      operationId: getProperties
+      responses:
+        200:
+          description: JVM system properties of the host running this service.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+components:
+  schemas:
+    InventoryList:
+      required:
+      - systems
+      type: object
+      properties:
+        systems:
+          type: array
+          items:
+            $ref: '#/components/schemas/SystemData'
+        total:
+          type: integer
+      description: POJO that represents the inventory contents.
+    SystemData:
+      required:
+      - hostname
+      - properties
+      type: object
+      properties:
+        hostname:
+          type: string
+        properties:
+          type: object
+          additionalProperties:
+            type: string
+      description: POJO that represents a single inventory entry.
+    Properties:
+      type: object
+      additionalProperties:
+        type: string
+```
+{: codeblock}
+
+
+
+
+This document is the same as your current OpenAPI document with extra APIs for the **/inventory/properties** endpoint. 
+Since this document is complete, you can also add the **mp.openapi.scan.disable** property
+and set it to **true** in the **src/main/webapp/META-INF/microprofile-config.properties** file.
+
+Update the configuration file.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties
+
+
+
+
+```
+mp.openapi.scan.disable = true
+mp.openapi.filter = io.openliberty.guides.inventory.filter.InventoryOASFilter
+```
+{: codeblock}
+
+
+Add and set the **mp.openapi.scan.disable** property to **true**.
+
+
+
+Run the following curl command to see the updated OpenAPI tree:
+```
+curl http://localhost:9080/openapi
+```
+{: codeblock}
+
+```
+/inventory/properties:
+  get:
+    operationId: getProperties
+    responses:
+      200:
+        description: JVM system properties of the host running this service.
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+```
+
+
+
+# Testing the service
+
+
+No automated tests are provided to verify the correctness of the generated OpenAPI document. Manually
+verify the document by visiting the **http://localhost:9080/openapi** or the **http://localhost:9080/openapi/ui** URL.
+
+A few tests are included for you to test the basic functionality of the **inventory** service. If a test
+failure occurs, then you might have introduced a bug into the code. These tests will run automatically
+as a part of the integration test suite.
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+
+You will see the following output:
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.4 sec - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+Could not send Message.
+[err] The specified host is unknown: java.net.UnknownHostException: UnknownHostException invoking http://badhostname:9080/inventory/properties: badhostname
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.264 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results :
+
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+```
+
+The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
+
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
+where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
 
@@ -616,7 +843,16 @@ Run the following script to stop the application:
 
 ## Nice Work!
 
-You just developed a reactive Java application using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
+You have just documented and filtered the APIs of the **inventory** service from both the code and a static
+
+file by using MicroProfile OpenAPI in Open Liberty.
+
+Feel free to try one of the related MicroProfile guides. They demonstrate additional technologies that you
+can learn and expand on top of what you built here.
+
+For more in-depth examples of MicroProfile OpenAPI, try one of the demo applications available in the
+MicroProfile OpenAPI
+[GitHub repository](https://github.com/eclipse/microprofile-open-api/tree/master/tck/src/main/java/org/eclipse/microprofile/openapi/apps).
 
 
 
@@ -625,24 +861,25 @@ You just developed a reactive Java application using MicroProfile Reactive Messa
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-reactive-messaging** project by running the following commands:
+Delete the **guide-microprofile-openapi** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-reactive-messaging
+rm -fr guide-microprofile-openapi
 ```
 {: codeblock}
 
 ## What could make this guide better?
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/pulls)
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-openapi/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-openapi/pulls)
 
 
 
 
 ## Where to next? 
 
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 
 
 ## Log out of the session
