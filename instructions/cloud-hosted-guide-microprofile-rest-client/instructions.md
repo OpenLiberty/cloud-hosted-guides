@@ -25,9 +25,9 @@ service on that host. The **system** service simulates a remote service in the a
 You will instantiate the client and use it in the **inventory** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/ref/general/#contexts_dependency_injection.html) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method.
 In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
 
- - When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with CDI method.
+ * When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with a CDI method.
 
- - When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose **RestClientBuilder** method.
+ * When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose **RestClientBuilder** method.
 
 
 # Getting started
@@ -75,14 +75,14 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
-You can access the following microservices:
-
+The **system** microservice simulates a service that returns the system
+property information for the host. 
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
- The http://localhost:9080/system/properties microservice simulates the remote **system** service that retrieves the system property information for a specific host. In this case, **localhost** is a specific host name.
+The **system** service is accessible at the http://localhost:9080/system/properties URL. In this case, **localhost** is the host name.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -94,9 +94,10 @@ curl http://localhost:9080/system/properties
 
 
 
+The **inventory** microservice makes a request to the **system** microservice and
+stores the system property information. 
 
-
- The http://localhost:9080/inventory/systems/localhost microservice is the **inventory** service that invokes the http://localhost:9080/system/properties microservice to retrieves the system property information.
+To fetch and store your system information, enter the http://localhost:9080/inventory/systems/localhost URL into your browser. 
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -107,19 +108,10 @@ curl http://localhost:9080/inventory/systems/localhost
 {: codeblock}
 
 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/system/properties
-```
-{: codeblock}
-
-
-
-* The http://localhost:9080/inventory/systems/{your_hostname} microservice is the **inventory** service that invokes the http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering **hostname** from your terminal. Visit the URL by replacing **{your_hostname}** with your FQDN.
-You will see the same system property information, but the process of getting the information is different.
+You can also use the **`http://localhost:9080/inventory/systems/{your_hostname}`** URL. In Windows,
+MacOS, and Linux, get your fully qualified domain name (FQDN) by entering
+**hostname** into your command-line. Visit the URL by replacing **`{your_hostname}`**
+with your FQDN.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -507,7 +499,7 @@ When the server is running, select either approach to fetch your system properti
 
 
 
-Visit the http://localhost:9080/inventory/systems/localhost URL. The URL retrieves the system property information for **localhost** host name by invoking the http://localhost:9080/system/properties service.
+ Visit the http://localhost:9080/inventory/systems/localhost URL. The URL retrieves the system property information for the **localhost** host name by making a request to the **system** service at http://localhost:9080/system/properties.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -529,7 +521,7 @@ curl http://localhost:9080/system/properties
 
 
 
- Get your FQDN first. Then, visit the http://localhost:9080/inventory/systems/{your_hostname} URL by replacing **`{your_hostname}`** with your FQDN, which retrieves your system properties by invoking the http://{your_hostname}:9080/system/properties service.
+* Get your FQDN first. Then, visit the http://localhost:9080/inventory/systems/{your_hostname} URL by replacing **`{your_hostname}`** with your FQDN, which retrieves your system properties by invoking the http://{your_hostname}:9080/system/properties service.
 
 
 
