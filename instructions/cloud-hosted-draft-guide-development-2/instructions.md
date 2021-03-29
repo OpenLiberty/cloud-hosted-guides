@@ -510,8 +510,8 @@ curl http://localhost:9080/inventory/systems/localhost
 
 
 
-* Get your FQDN first. Then, visit the **`http://localhost:9080/inventory/systems/{your_hostname}`** URL by replacing **`http://localhost:9080/inventory/systems/{your_hostname}`** with your FQDN, which retrieves your system properties by making a request to the **system** service at **`http://localhost:9080/inventory/systems/{your_hostname}`**.
 
+Or, get your FQDN first. Then, visit the **http://localhost:9080/inventory/systems/{your_hostname}** URL by replacing **{your_hostname}** with your FQDN, which retrieves your system properties by making a request to the **system** service at **http://{your_hostname}:9080/system/properties**.
 
 
 # Testing the application
