@@ -83,31 +83,20 @@ The defaultServer server is ready to run a smarter planet.
 
 
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+To open a new command-line session, select **Terminal** > **New Terminal** from the menu of the IDE.
 
-
-Next, point your browser to the http://localhost:9080/openapi URL and you'll see the RESTful APIs of the **inventory**
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Next, run the following curl command to see the RESTful APIs of the `inventory` service:
 ```
 curl http://localhost:9080/openapi
 ```
 {: codeblock}
 
-
-
-service. You can also point to the http://localhost:9080/openapi/ui URL for a more interactive view of the deployed APIs.
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/openapi/ui
-```
-{: codeblock}
-
-
-This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swagger-ui/) and renders the generated **/openapi** document into a very user friendly page.
+A UI is also available for a more interactive view of the deployed APIs.
+To visit the UI, select **Launch Application** from the menu of the IDE, type in **9080** to specify the port number 
+and click the **OK** button. You’re redirected to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
+where **accountname** is your account name. Click the **interactive UI** link on the welcome page. 
+This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swagger-ui)
+renders the generated **/openapi** document into a very user friendly page.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -117,7 +106,6 @@ from the **finish** directory in another shell session:
 mvn liberty:stop
 ```
 {: codeblock}
-
 
 
 
@@ -154,28 +142,16 @@ tree will be generated from the **inventory** service. You can use this tree as 
 augment it with annotations and code to produce a complete OpenAPI document.
 
 
-Now, point to the http://localhost:9080/openapi URL to see the generated OpenAPI tree. You can also point to the
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Now, run the following curl command to see the generated OpenAPI tree:
 ```
 curl http://localhost:9080/openapi
 ```
 {: codeblock}
 
-
-
-http://localhost:9080/openapi/ui URL for a more interactive view of the APIs.
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/openapi/ui
-```
-{: codeblock}
-
-
-
+To visit the UI for a more interactive view of the APIs, select **Launch Application** from the menu of the IDE, type in **9080** to specify the port number 
+and click the **OK** button. You’re redirected to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL.
+Click the **interactive UI** link on the welcome page. 
 
 ### Augmenting the existing JAX-RS annotations with OpenAPI annotations
 
@@ -299,20 +275,15 @@ optional, but it can be helpful to organize a method with multiple responses.
 | **@Operation**    | Describes a single API operation on a path.
 | **@Parameter**    | Describes a single operation parameter.
 
-Since the Open Liberty server was started in development mode at the beginning of the guide, your changes were automatically picked up.
 
-Refresh the http://localhost:9080/openapi
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Since the Open Liberty server was started in development mode at the beginning of the guide, your changes were automatically picked up. 
+Run the following curl command to see the updated OpenAPI tree:
 ```
 curl http://localhost:9080/openapi
 ```
 {: codeblock}
 
-
-URL to see the updated OpenAPI tree. The two endpoints at which your JAX-RS methods are
-served are now more meaningful:
+The two endpoints at which your JAX-RS methods are served are now more meaningful:
 
 ```
 /inventory/systems/{hostname}:
@@ -456,16 +427,11 @@ Add OpenAPI **@Schema** annotations to the **SystemData** class, the **hostname*
 
 
 
-Refresh the http://localhost:9080/openapi URL to see the updated OpenAPI tree:
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to see the updated OpenAPI tree:
 ```
 curl http://localhost:9080/openapi
 ```
 {: codeblock}
-
-
 
 ```
 components:
@@ -620,16 +586,11 @@ This configuration file is picked up automatically by MicroProfile Config and re
 by passing in the fully qualified name of the filter class into the **mp.openapi.filter** property.
 
 
-Refresh the http://localhost:9080/openapi URL to see the updated OpenAPI tree:
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to see the updated OpenAPI tree:
 ```
 curl http://localhost:9080/openapi
 ```
 {: codeblock}
-
-
 
 ```
 info:
@@ -815,16 +776,11 @@ Add and set the **mp.openapi.scan.disable** property to **true**.
 
 
 
-Refresh the http://localhost:9080/openapi URL to see the updated OpenAPI tree:
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to see the updated OpenAPI tree:
 ```
 curl http://localhost:9080/openapi
 ```
 {: codeblock}
-
-
 
 ```
 /inventory/properties:
@@ -845,29 +801,9 @@ curl http://localhost:9080/openapi
 
 # Testing the service
 
+
 No automated tests are provided to verify the correctness of the generated OpenAPI document. Manually
-
-
-verify the document by visiting the http://localhost:9080/openapi or the http://localhost:9080/openapi/ui URL.
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/openapi
-```
-{: codeblock}
-
-
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/openapi/ui
-```
-{: codeblock}
-
-
+verify the document by visiting the **http://localhost:9080/openapi** or the **http://localhost:9080/openapi/ui** URL.
 
 A few tests are included for you to test the basic functionality of the **inventory** service. If a test
 failure occurs, then you might have introduced a bug into the code. These tests will run automatically
