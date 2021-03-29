@@ -2,10 +2,6 @@ name: DevGuideConverter
 on:
   workflow_dispatch:
     inputs:
-      devGuide:
-        description: 'Which dev guide would you like to update- 1, 2, 3 or 4?'
-        required: true
-        default: '1'
       guide_name:
         description: 'Guide name'
         required: true
