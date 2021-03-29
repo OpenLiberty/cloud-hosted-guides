@@ -108,10 +108,13 @@ curl http://localhost:9080/inventory/systems/localhost
 {: codeblock}
 
 
-You can also use the **`http://localhost:9080/inventory/systems/{your_hostname}`** URL. In Windows,
+
+
+You can also use the **http://localhost:9080/inventory/systems/{your_hostname}** URL. In Windows,
 MacOS, and Linux, get your fully qualified domain name (FQDN) by entering
-**hostname** into your command-line. Visit the URL by replacing **`{your_hostname}`**
+**hostname** into your command-line. Visit the URL by replacing **{your_hostname}**
 with your FQDN.
+
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
