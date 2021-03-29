@@ -498,7 +498,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 When the server is running, select either approach to fetch your system properties:
 
 
- Visit the http://localhost:9080/inventory/systems/localhost URL. 
+ Visit the http://localhost:9080/inventory/systems/localhost URL. The URL retrieves the system property information for the **localhost** host name by making a request to the **system** service at **http://localhost:9080/system/properties**.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -510,19 +510,7 @@ curl http://localhost:9080/inventory/systems/localhost
 
 
 
-The URL retrieves the system property information for the **localhost** host name by making a request to the **system** service at http://localhost:9080/system/properties.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/system/properties
-```
-{: codeblock}
-
-
-
-* Get your FQDN first. Then, visit the http://localhost:9080/inventory/systems/{your_hostname} URL by replacing **`{your_hostname}`** with your FQDN, which retrieves your system properties by invoking the http://{your_hostname}:9080/system/properties service.
+* Get your FQDN first. Then, visit the **`http://localhost:9080/inventory/systems/{your_hostname}`** URL by replacing **`http://localhost:9080/inventory/systems/{your_hostname}`** with your FQDN, which retrieves your system properties by making a request to the **system** service at **`http://localhost:9080/inventory/systems/{your_hostname}`**.
 
 
 
