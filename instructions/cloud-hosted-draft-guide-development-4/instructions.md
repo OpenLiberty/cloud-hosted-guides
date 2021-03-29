@@ -103,12 +103,12 @@ curl http://localhost:9081/inventory/systems/localhost
 After you are finished checking out the microservices, stop the Open Liberty servers by pressing `CTRL+C`
 in the command-line sessions where you ran the servers. Alternatively, you can run the `liberty:stop` goal in another command-line session from the 
 `start` directory:
-[role='command']
 ```
 cd /home/project/guide-containerize/start
 mvn -pl system liberty:stop
 mvn -pl inventory liberty:stop
 ```
+{: codeblock}
 Run the Maven **package** goal to build the application **.war** files from the **start** directory so that the **.war** files reside in the **system/target** and **inventory/target** directories.
 ```
 mvn package
@@ -761,6 +761,7 @@ mvn package
 mvn failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9091 -Dsystem.http.port=9080
 ```
 {: codeblock}
+
 If the tests pass, you see a similar output as the following:
 
 ```
