@@ -89,7 +89,7 @@ jobs:
         with:
             title: "To Staging: Change to cloud-hosted-draft-guide-development-${{ github.event.inputs.devGuide }} for ${{ github.event.inputs.guide_name }}"
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-            body: "Updated by github actions, Manually triggered the ${{ github.event.inputs.guide_name }} into cloud-hosted-draft-guide-development-${{ github.event.inputs.devGuide }}."
+            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
             branch: "cloud-hosted-draft-guide-development/staging"
             base: "staging" 
             labels: "RunTests"
