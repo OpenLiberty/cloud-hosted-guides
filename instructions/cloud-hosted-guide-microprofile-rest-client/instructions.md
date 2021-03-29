@@ -108,10 +108,13 @@ curl http://localhost:9080/inventory/systems/localhost
 {: codeblock}
 
 
-You can also use the **`http://localhost:9080/inventory/systems/{your_hostname}`** URL. In Windows,
+
+
+You can also use the **http://localhost:9080/inventory/systems/{your_hostname}** URL. In Windows,
 MacOS, and Linux, get your fully qualified domain name (FQDN) by entering
-**hostname** into your command-line. Visit the URL by replacing **`{your_hostname}`**
+**hostname** into your command-line. Visit the URL by replacing **{your_hostname}**
 with your FQDN.
+
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -498,8 +501,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 When the server is running, select either approach to fetch your system properties:
 
 
-
- Visit the http://localhost:9080/inventory/systems/localhost URL. The URL retrieves the system property information for the **localhost** host name by making a request to the **system** service at http://localhost:9080/system/properties.
+ Visit the http://localhost:9080/inventory/systems/localhost URL. The URL retrieves the system property information for the **localhost** host name by making a request to the **system** service at **http://localhost:9080/system/properties**.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -512,17 +514,7 @@ curl http://localhost:9080/inventory/systems/localhost
 
 
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/system/properties
-```
-{: codeblock}
-
-
-
-* Get your FQDN first. Then, visit the http://localhost:9080/inventory/systems/{your_hostname} URL by replacing **`{your_hostname}`** with your FQDN, which retrieves your system properties by invoking the http://{your_hostname}:9080/system/properties service.
-
+Or, get your FQDN first. Then, visit the **http://localhost:9080/inventory/systems/{your_hostname}** URL by replacing **{your_hostname}** with your FQDN, which retrieves your system properties by making a request to the **system** service at **http://{your_hostname}:9080/system/properties**.
 
 
 # Testing the application
