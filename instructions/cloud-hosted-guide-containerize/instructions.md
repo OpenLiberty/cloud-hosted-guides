@@ -100,14 +100,16 @@ curl http://localhost:9081/inventory/systems/localhost
 ```
 {: codeblock}
 
+
 After you are finished checking out the microservices, stop the Open Liberty servers by pressing **CTRL+C**
-in the command-line sessions where you ran the servers. Alternatively, you can run the **liberty:stop** goal in another command-line session:
+in the command-line sessions where you ran the servers. Alternatively, you can run the **liberty:stop** goal in another command-line session from the 
+**start** directory:
 ```
+cd /home/project/guide-containerize/start
 mvn -pl system liberty:stop
 mvn -pl inventory liberty:stop
 ```
 {: codeblock}
-
 
 Run the Maven **package** goal to build the application **.war** files from the **start** directory so that the **.war** files reside in the **system/target** and **inventory/target** directories.
 ```
@@ -754,14 +756,14 @@ public class InventoryEndpointIT {
 
 ### Running the tests
 
-Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by replacing the **[system-ip-address]** with the IP address that you determined previously.
+Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by setting **-Dsystem.ip** to the IP address that you determined previously.
 
 ```
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
 mvn package
-mvn failsafe:integration-test -Dsystem.ip=[system-ip-address] -Dinventory.http.port=9091 -Dsystem.http.port=9080
+mvn failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9091 -Dsystem.http.port=9080
 ```
 {: codeblock}
-
 
 If the tests pass, you see a similar output as the following:
 
