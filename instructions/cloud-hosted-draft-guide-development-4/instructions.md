@@ -65,6 +65,12 @@ The **finish** directory contains the finished project that you will build.
 
 Navigate to the **start** directory to begin.
 
+```
+cd /home/project/guide-microprofile-reactive-messaging-rest-integration/start
+```
+{: codeblock}
+
+
 The **inventory** microservice records and stores the average system load information from all of the connected
 system microservices. However, the **inventory** microservice does not contain an accessible REST endpoint to control the
 sending or receiving of reactive messages. Add the **/data** RESTful endpoint to the **inventory** service by replacing the
