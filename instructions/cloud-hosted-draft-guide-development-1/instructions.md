@@ -100,9 +100,10 @@ curl http://localhost:9081/inventory/systems/localhost
 ```
 {: codeblock}
 
-After you are finished checking out the microservices, stop the Open Liberty servers by pressing `CTRL+C`
-in the command-line sessions where you ran the servers. Alternatively, you can run the `liberty:stop` goal in another command-line session from the 
-`start` directory:
+
+After you are finished checking out the microservices, stop the Open Liberty servers by pressing **CTRL+C**
+in the command-line sessions where you ran the servers. Alternatively, you can run the **liberty:stop** goal in another command-line session from the 
+**start** directory:
 ```
 cd /home/project/guide-containerize/start
 mvn -pl system liberty:stop
@@ -754,7 +755,8 @@ public class InventoryEndpointIT {
 * The **systemServiceIp** variable has the same value as what you retrieved in the previous section when manually adding the **system** service into the **inventory** service. This value of the IP address is passed in when you run the tests.
 
 ### Running the tests
-Run the Maven `package` goal to compile the test classes. Run the Maven `failsafe` goal to test the services that are running in the Docker containers by setting `Dsystem.ip` to the IP address that you determined previously.
+
+Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by setting **-Dsystem.ip** to the IP address that you determined previously.
 
 ```
 SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
