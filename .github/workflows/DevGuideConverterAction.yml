@@ -90,7 +90,7 @@ jobs:
             title: "To Staging: Change to cloud-hosted-draft-guide-development-${{ github.event.inputs.devGuide }} for ${{ github.event.inputs.guide_name }}"
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
             body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
-            branch: "cloud-hosted-draft-guide-development/staging"
+            branch: "cloud-hosted-draft-guide-development/staging-${{ github.event.inputs.devGuide }}"
             base: "staging" 
             labels: "RunTests"
         name: Create Pull Request
