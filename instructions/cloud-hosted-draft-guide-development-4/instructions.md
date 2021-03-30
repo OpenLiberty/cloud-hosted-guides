@@ -109,6 +109,7 @@ mvn -pl system liberty:stop
 mvn -pl inventory liberty:stop
 ```
 {: codeblock}
+
 Run the Maven **package** goal to build the application **.war** files from the **start** directory so that the **.war** files reside in the **system/target** and **inventory/target** directories.
 ```
 mvn package
