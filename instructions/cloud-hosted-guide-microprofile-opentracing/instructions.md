@@ -63,29 +63,23 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-
-For this guide, use Zipkin as your distributed tracing system. You can find the installation instructions
+For this guide, Zipkin is used as the distributed tracing system. You can find the installation instructions
 for Zipkin at the Zipkin [quickstart page](https://zipkin.io/pages/quickstart.html). You are not required
 to use Zipkin, but keep in mind that you might need more instructions that are not listed here if you choose
 to use another tracing system.
 
-Before you proceed, make sure that your Zipkin server is up and running. By default, Zipkin can be found
 
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-at the http://localhost:9411 URL.
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Start Zipkin by running the following command:
 ```
-curl http://localhost:9411
+docker run -d --name zipkin -p 9411:9411 openzipkin/zipkin
 ```
 {: codeblock}
 
-
-
+Before you proceed, make sure that your Zipkin server is up and running.
+Select **Launch Application** from the menu of the IDE and 
+type **9411** to specify the port number for the Zipkin service. Click the **OK** button. 
+Zipkin can also be found at the **`https://accountname-9411.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
+where **accountname** is your account name.
 
 ### Try what you'll build
 
@@ -108,42 +102,31 @@ mvn liberty:start-server
 
 
 
-Make sure that your Zipkin server is running and point your browser to the http://localhost:9081/inventory/systems/localhost URL. 
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Make sure that your Zipkin server is running and run the following curl command:
 ```
 curl http://localhost:9081/inventory/systems/localhost
 ```
 {: codeblock}
 
+When you make this curl request, you make two HTTP GET requests, one to the **system** service and 
+one to the **inventory** service. 
+Because tracing is configured for both these requests, a new trace is recorded in Zipkin.
+Visit the **`https://accountname-9411.theiadocker-4.proxy.cognitiveclass.ai`** URL.
+Run an empty query and sort the traces by latest start time first. 
 
-When you visit this endpoint, you make two GET HTTP requests, one to the **system** service and one to the **inventory**
-service. Both of these requests are configured to be traced, so a new trace will be recorded in Zipkin.
+Verify that this new trace contains three spans with the following names:
 
-Visit the http://localhost:9411 URL or another location where you configured Zipkin to run and sort the traces
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9411
-```
-{: codeblock}
-
-
-by newest first. Verify that this new trace contains three spans with the following names:
-
-- **get:io.openliberty.guides.inventory.inventoryresource.getpropertiesforhost**
-- **get:io.openliberty.guides.system.systemresource.getproperties**
- **add() span**
-
+* **get:io.openliberty.guides.inventory.inventoryresource.getpropertiesforhost**
+* **get:io.openliberty.guides.system.systemresource.getproperties**
+* **add() span**
 
 You can inspect each span by clicking it to reveal more detailed information, such as the time
 at which the request was received and the time at which a response was sent back.
 
-If you examine the other traces, you might notice a red trace entry, which happens when an error is
-caught by the span. In this case, since one of the tests accesses the **/inventory/systems/badhostname**
-endpoint, which is invalid, an error is thrown. This behavior is expected.
+If you examine the other traces, you might notice a red trace entry, 
+which indicates that the span catches an error. 
+In this case, one of the tests accesses the **/inventory/systems/badhostname**
+endpoint, which is invalid, so an error is thrown. This behavior is expected.
 
 When you are done checking out the services, stop both Open Liberty servers using the Maven
 **liberty:stop-server** goal:
@@ -151,7 +134,7 @@ When you are done checking out the services, stop both Open Liberty servers usin
 ```
 mvn liberty:stop-server
 ```
-
+{: codeblock}
 
 
 
@@ -176,30 +159,18 @@ mvn liberty:start-server
 {: codeblock}
 
 
-When the servers start, you can find the **system** and **inventory** services at the following URLs:
 
-
-http://localhost:9080/system/properties
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+When the servers start, you can access the **system** service by running the following curl command:
 ```
 curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
-
-
-http://localhost:9081/inventory/systems
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+and access the **inventory** service by running the following curl command:
 ```
 curl http://localhost:9081/inventory/systems
 ```
 {: codeblock}
-
-
 
 
 # Existing Tracer implementation
@@ -208,9 +179,9 @@ To collect traces across your systems, you need to implement the OpenTracing **T
 interface. For this guide, you can access a bare-bones **Tracer** implementation for
 the Zipkin server in the form of a user feature for Open Liberty.
 
-This feature is already configured for you in your **pom.xml** and **server.xml** files. It will be
-downloaded and installed automatically into each service when you run a Maven build. You can find the **opentracingZipkin** feature
-enabled in your **server.xml** file.
+This feature is already configured for you in your **pom.xml** and **server.xml** files. 
+It is automatically downloaded and installed into each service when you run a Maven build. 
+You can find the **opentracingZipkin** feature enabled in your **server.xml** file.
 
 The **download-maven-plugin** Maven plug-in in your **pom.xml** is responsible for downloading and installing the feature.
 
@@ -230,10 +201,11 @@ tracing of particular methods. You can also inject a custom **Tracer** object to
 
 ### Enabling distributed tracing without code instrumentation
 
-Because tracing of all JAX-RS methods is enabled by default, you need only to enable **MicroProfile OpenTracing** feature and the **Zipkin** user feature in the **server.xml** file to see some basic traces in Zipkin.
+Because tracing is enabled by default for all JAX-RS methods, you need to enable only the
+**MicroProfile OpenTracing** feature and the **Zipkin** 
+user feature in the **server.xml** file to see some basic traces in Zipkin.
 
 Both of these features are already enabled in the **inventory** and **system** configuration files.
-
 
 
 Make sure that your services are running. Then, simply point your browser to any of their endpoints and
@@ -248,10 +220,10 @@ If you place the annotation on a method, then it overrides the class annotation 
 
 The **@Traced** annotation can be configured with the following two parameters:
 
-- The **value=[true|false]** parameter indicates whether or not a particular class or method is
+* The **value=[true|false]** parameter indicates whether or not a particular class or method is
 traced. For example, while all JAX-RS methods are traced by default, you can disable their tracing by
 using the **@Traced(false)** annotation. This parameter is set to **true** by default.
-- The **operationName=<Span name>** parameter indicates the name of the span that is assigned to the
+* The **operationName=<Span name>** parameter indicates the name of the span that is assigned to the
 particular method that is traced. If you omit this parameter, the span will be named with the following
 form: **`<package name>.<class name>.<method name>`**. If you use this parameter at a class level, then
 all methods within that class will have the same span name unless they are explicitly overridden by
@@ -324,27 +296,21 @@ mvn compile
 ```
 {: codeblock}
 
-Point to the
 
-http://localhost:9081/inventory/systems URL, check your Zipkin server, and sort the traces by newest first. You see a new trace record
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command, check your Zipkin server, and sort the traces by newest first:
 ```
 curl http://localhost:9081/inventory/systems
 ```
 {: codeblock}
 
+Look for a new trace record that is two spans long with one span for the 
+**listContents()** JAX-RS method in the **InventoryResource**
+class and another span for the **list()** method in the **InventoryManager** class. 
+Verify that these spans have the following names:
 
-that is two spans long with one span for the **listContents()** JAX-RS method in the **InventoryResource**
-class and another span for the **list()** method in the **InventoryManager** class. Verify that these spans
-have the following names:
-
-- **get:io.openliberty.guides.inventory.inventoryresource.listcontents**
- **inventorymanager.list**
-
-
-
+* **get:io.openliberty.guides.inventory.inventoryresource.listcontents**
+* **inventorymanager.list**
 
 Update the **InventoryResource** class
 
@@ -412,30 +378,26 @@ mvn compile
 ```
 {: codeblock}
 
-Point to the
 
-http://localhost:9081/inventory/systems URL, check your Zipkin server, and sort the traces by newest first. You see a new trace record
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
 
+Run the following curl command again, check your Zipkin server, and sort the traces by newest first:
 ```
 curl http://localhost:9081/inventory/systems
 ```
 {: codeblock}
 
+Look for a new trace record that is just one span long for the remaining **list()** 
+method in the **InventoryManager** class. 
+Verify that this span has the following name:
 
-that is just one span long for the remaining **list()** method in the **InventoryManager** class. Verify
-that this span has the following name:
-
- **inventorymanager.list**
-
-
+* **inventorymanager.list**
 
 ### Injecting a custom Tracer object
 
 The MicroProfile OpenTracing specification also makes the underlying OpenTracing **Tracer** instance
-available for use. You can access the configured **Tracer** by injecting it into a bean by using the **@Inject**
-annotation from the Contexts and Dependency Injections API.
+available. You can access the configured **Tracer** by injecting it into a bean by using the 
+**@Inject** annotation from the Contexts and Dependency Injections API.
 
 Inject the **Tracer** object into the **inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java** file.
 Then, use it to define a new child scope in the **add()** call.
@@ -504,8 +466,10 @@ public class InventoryManager {
 
 
 
-The **try** block that you see here is called a **try-with-resources** statement, meaning that the **childScope** object is closed at the end of the statement. It's good practice to define custom spans inside
-such statements. Otherwise, any exceptions that are thrown before the span is closed will leak the active span.
+The **try** block that you see here is called a **try-with-resources** statement, 
+meaning that the **childScope** object is closed at the end of the statement. 
+Defining custom spans inside such statements is a good practice.
+Otherwise, any exceptions that are thrown before the span is closed will leak the active span.
 
 Next, run the following command from the **start** directory to recompile your services. 
 ```
@@ -513,36 +477,33 @@ mvn compile
 ```
 {: codeblock}
 
-Point to the
 
-http://localhost:9081/inventory/systems/localhost URL, check your Zipkin server, and sort the traces by newest first. You see two new
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
 
+Run the following curl command, check your Zipkin server, and sort the traces by newest first:
 ```
 curl http://localhost:9081/inventory/systems/localhost
 ```
 {: codeblock}
 
-
-trace records, one for the **system** service and one for the **inventory** service. The **system** trace 
-contains one span for the **getProperties()** method in the **SystemResource** class. The **inventory** 
-trace contains two spans. The first span is for the **getPropertiesForHost()** method in the **InventoryResource** 
-class. The second span is the custom span that you created around the **add()** call. 
+Look for two new trace records, one for the **system** service and one for the **inventory** service. The **system** trace 
+contains one span for the **getProperties()** method in the **SystemResource** class. 
+The **inventory** trace contains two spans. 
+The first span is for the **getPropertiesForHost()** method in the 
+**InventoryResource** class. The second span is the custom span that you created around the **add()** call. 
 Verify that all of these spans have the following names:
 
 The **system** trace:
 
- **get:io.openliberty.guides.system.systemresource.getproperties**
+* **get:io.openliberty.guides.system.systemresource.getproperties**
 
 The **inventory** trace:
 
-- **get:io.openliberty.guides.inventory.inventoryresource.getpropertiesforhost**
- **add() span**
-
+* **get:io.openliberty.guides.inventory.inventoryresource.getpropertiesforhost**
+* **add() span**
 
 This simple example shows what you can do with the injected **Tracer** object. More configuration
-options are available to you, including setting a timestamp for when a span was created and destroyed.
+options are available, including setting a timestamp for when a span was created and destroyed.
 However, these options require an implementation of their own, which does not come as a part of the Zipkin
 user feature that is provided. In a real-world scenario, implement all the OpenTracing interfaces that
 you deem necessary, which might include the **SpanBuilder** interface. You can use this interface for span
@@ -567,6 +528,13 @@ When you are done checking out the services, stop the server by using the Maven
 
 ```
 mvn liberty:stop-server
+```
+{: codeblock}
+
+
+Stop the Zipkin service by running the following command:
+```
+docker stop zipkin
 ```
 {: codeblock}
 
