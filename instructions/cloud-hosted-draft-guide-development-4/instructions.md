@@ -63,8 +63,8 @@ The **finish** directory contains the finished project that you will build.
 # Adding a REST endpoint that produces events
 
 
-Navigate to the **start** directory to begin.
 
+To begin, run the following command to navigate to the **start** directory:
 ```
 cd /home/project/guide-microprofile-reactive-messaging-rest-integration/start
 ```
@@ -508,6 +508,7 @@ curl http://localhost:9085/inventory/systems
 {: codeblock}
 
 Notice that the **os.name** system property value is now included with the previous values:
+
 ```
 {
    "hostname":"30bec2b63a96",
