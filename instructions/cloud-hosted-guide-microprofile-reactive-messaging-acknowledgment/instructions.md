@@ -71,8 +71,8 @@ Almost all of the methods in this application that require message acknowledgmen
 by default. If the acknowledgment strategy is set to **`POST_PROCESSING`**, then MicroProfile Reactive Messaging acknowledges
 the message based on whether the annotated method emits data:
 
-    - If the method emits data, the incoming message is acknowledged after the outgoing message is acknowledged.
-    - If the method doesn't emit data, the incoming message is acknowledged after the method or processing completes.
+* If the method emits data, the incoming message is acknowledged after the outgoing message is acknowledged.
+* If the method doesn't emit data, the incoming message is acknowledged after the method or processing completes.
 
 It’s important that the methods use the **`POST_PROCESSING`** strategy because it fulfills the requirement that a message isn't
 acknowledged until after the message is fully processed. This processing strategy is beneficial in situations where messages
@@ -197,12 +197,12 @@ the method parameter is updated to receive and return a **Message** of type **St
 than just a **String**. Then, the message **payload** is extracted and checked for validity.
 One of the following outcomes occurs:
 
-    - If the system property **isn't valid**, the method **acknowledges**
-        the incoming message and **returns** an empty reactive stream. The processing is
-        complete.
-    - If the system property is valid, the method creates a **message** with the value of the
-        requested system property and sends it to the proper channel. The method acknowledges the incoming message only
-        after the sent message is acknowledged.
+* If the system property **isn't valid**, the method **acknowledges**
+  the incoming message and **returns** an empty reactive stream. 
+  The processing is complete.
+* If the system property is valid, the method creates a **message** with the value of the
+  requested system property and sends it to the proper channel. The method acknowledges the incoming message only
+  after the sent message is acknowledged.
 
 # Waiting for a message to be acknowledged
 
@@ -423,8 +423,8 @@ docker build -t inventory:1.0-SNAPSHOT inventory/.
 
 
 Next, use the provided script to start the application in Docker containers. The script creates a network for the
-containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the
-project. For simplicity, the script starts one instance of the **system** service.
+containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices 
+in the project. For simplicity, the script starts one instance of the **system** service.
 
 
 ```
@@ -436,26 +436,17 @@ project. For simplicity, the script starts one instance of the **system** servic
 
 # Testing the application
 
-After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint
-of the **inventory** service.
+After the application is up and running, you can access the application by making a GET request to the **/systems** 
+endpoint of the **inventory** service.
 
 
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-Go to the http://localhost:9085/inventory/systems URL to access the inventory microservice. You see the CPU **systemLoad**
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to access the **inventory** microservice:
 ```
 curl http://localhost:9085/inventory/systems
 ```
 {: codeblock}
 
-
-property for all the systems:
+Look for the CPU **systemLoad** property for all the systems:
 
 ```
 {
@@ -468,18 +459,11 @@ The **system** service sends messages to the **inventory** service every 15 seco
 acknowledges each incoming message, ensuring that no **system** message is lost.
 
 
-If you revisit the http://localhost:9085/inventory/systems URL after a while, you notice that the CPU **systemLoad**
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+If you run the curl command again after a while, notice that the CPU **systemLoad** property for the systems changed.
 ```
 curl http://localhost:9085/inventory/systems
 ```
 {: codeblock}
-
-
-property for the systems changed.
 
 Make a **PUT** request to the **http://localhost:9085/inventory/data** URL to add the value of a particular system property
 to the set of existing properties. For example, run the following **curl** command:
@@ -492,10 +476,10 @@ curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-
 
 
 
-In this example, the **PUT** request with the **os.name** system property in the request body on the **http://localhost:9085/inventory/data**
-URL adds the **os.name** system property for your system. The **inventory** service sends a message that contains the requested
-system property to the **system** service. The **inventory** service then waits until the message is acknowledged before it
-sends a response back.
+In this example, the **PUT** request with the **os.name** system property in the request body on the 
+**http://localhost:9085/inventory/data** URL adds the **os.name** system property for your system. 
+The **inventory** service sends a message that contains the requested system property to the **system** service. 
+The **inventory** service then waits until the message is acknowledged before it sends a response back.
 
 You see the following output:
 
@@ -506,18 +490,13 @@ Request successful for the os.name property
 The previous example response is confirmation that the sent request message was acknowledged.
 
 
-You can revisit the http://localhost:9085/inventory/systems URL and see the **os.name** system property value is now
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command again:
 ```
 curl http://localhost:9085/inventory/systems
 ```
 {: codeblock}
 
-
-included with the previous values:
+The **os.name** system property value is now included with the previous values:
 
 ```
 {
