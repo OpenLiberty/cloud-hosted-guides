@@ -1,0 +1,33 @@
+<header id="global-navigation" class="header-global">
+    <nav class="wrapper-header" aria-label="Global">
+        <h1 class="header">
+            <a id="snref" href="https://www.skills.network/">
+                <img class="logo" id="SNLogo" src="https://courses.ol-staging.skillsnetwork.site/static/portal-custom-theme/images/IBM-Skills-Network-Logo-Square.b36a07780f7c.png">
+            </a>
+            <a id="olref" href="{% if portal.logo_link_url != " " %}{{portal.logo_link_url}}{% else %}/{% endif %}">
+              {% if portal.logo_file_name %}
+                <img class="logo" id="OLLogo" src="{{ portal.logo_url | image_path }}" />
+              {% else %}
+                <img src="{{ "cc/cc-logo.png" | image_path }}" />
+              {% endif %}
+            </a>
+        </h1>
+
+        <ol class="left nav-global list-inline authenticated">
+            {% include "header_menu_items" %}
+        </ol>
+
+        {% include "mobile_dropdown" %} {% if current_user %} {% include "user_dropdown" %} {% else %}
+        <ol class="right nav-courseware list-inline">
+            {% if portal.show_register_button? %}
+            <li class="item nav-courseware-01">
+                <a class="btn-neutral btn-register" href="{{ portal.register_path }}">{{ "register" | t }}</a>
+            </li>
+            {% endif %}
+            <li class="item nav-courseware-02">
+                <a class="btn btn-login" href="{{ portal.login_path }}">{{ "sign_in" | t }}</a>
+            </li>
+        </ol>
+        {% endif %} {% if current_user %} {% include "search_bar" %} {% endif %}
+    </nav>
+</header>

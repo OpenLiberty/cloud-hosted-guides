@@ -1,0 +1,48 @@
+<div id="mobile-dropdown">
+  <button class="dropbtn" onclick="toggleMenuDropdown()" aria-expanded="false" aria-haspopup="true">
+    <i id="mobile-dropdown-btn-icon" class="fa fa-bars"></i>
+    <span class="sr">{{ "layouts.bdu.dropdown_menu" | t }}</span>
+  </button>
+  <div class="dropdown-content" id="menu-dropdown">
+    <ul aria-label="{{ "more_options" | t }}" role="menu">
+      {% if current_user %}
+        <li>{% include "search_bar" %}</li>
+      {% endif %}
+      <li>{% include "header_menu_items" %}</li>
+      <hr style="margin: 8px 14px;" />
+      {% if current_user %}
+        {% if current_user.admin? %}
+          <li class="dropdown-item item inline-link admin">
+            <a class="action" href="/admin">{{ "layouts.bdu.user_dropdown.admin" | t }}</a>
+          </li>
+        {% endif %}
+        <li class="dropdown-item item inline-link dashboard">
+          <a class="action" href="{{ portal.lms_url }}/dashboard">{{ "layouts.bdu.user_dropdown.dashboard" | t }}</a>
+        </li>
+        <li class="dropdown-item item inline-link account">
+          <a class="action" href="{{ portal.lms_url }}/account/settings">{{ "layouts.bdu.user_dropdown.account" | t }}</a>
+        </li>
+        <li class="dropdown-item item inline-link profile">
+          <a class="action" href="/profile">{{ "layouts.bdu.user_dropdown.my_profile" | t }}</a>
+        </li>
+        <li class="dropdown-item item inline-link favorites">
+          <a class="action" href="/favorites">{{ "layouts.bdu.user_dropdown.favorites" | t }}</a>
+        </li>
+        <li class="dropdown-item item inline-link sign-out">
+          <a class="action" href="/logout">{{ "sign_out" | t }}</a>
+        </li>
+      {% else %}
+        <ol class="nav-courseware list-inline" style="margin: 30px">
+          {% if portal.show_register_button? %}
+            <li class="item nav-courseware-01">
+              <a class="btn-netral btn-register" href="{{ portal.register_path }}">{{ "register" | t }}</a>
+            </li>
+          {% endif %}
+          <li class="item nav-courseware-02">
+            <a class="btn btn-login" href="{{ portal.login_path }}">{{ "sign_in" | t }}</a>
+          </li>
+        </ol>
+      {% endif %}
+    </ul>
+  </div>
+</div>

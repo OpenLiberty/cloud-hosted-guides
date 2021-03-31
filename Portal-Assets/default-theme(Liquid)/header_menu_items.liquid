@@ -1,0 +1,11 @@
+{% for menu_item in portal.header_menu_items %}
+  {% if menu_item.visibility == "public" or current_user %}
+    <li class="item">
+      {% if menu_item.open_new_tab %}
+        <a href="{{ menu_item.url }}" target="_blank" rel="noreferrer noopener">{{ menu_item.label }}</a>
+      {% else %}
+        <a href="{{ menu_item.url }}">{{ menu_item.label }}</a>
+      {% endif %}
+    </li>
+  {% endif %}
+{% endfor %}
