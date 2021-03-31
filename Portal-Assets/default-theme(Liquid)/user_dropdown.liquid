@@ -1,0 +1,37 @@
+<ol class="user">
+  <li class="primary">
+    <a class="user-link" href="{{ portal.lms_url }}/dashboard">
+      <span class="sr">{{ ".dashboard_for" | t }}</span>
+      <img class="user-image-frame" alt="{{ ".profile_image_for" | t }}" src="{{ "default_50.png" | image_path }}" />
+      <div class="label-username">{{ current_user.name }}</div>
+    </a>
+  </li>
+  <li class="primary">
+    <button class="dropdown" style="margin-top: 11px;" aria-expanded="false" aria-haspopup="true">
+      <span class="sr">{{ "more_options_dropdown" | t }}</span>
+      <span class="fa fa-sort-desc" aria-hidden="true"></span>
+    </button>
+    <ul class="dropdown-menu" aria-label="{{ ".more_options" | t }}" role="menu">
+      {% if current_user.admin? %}
+        <li class="dropdown-item item has-block-link admin">
+          <a class="action" href="/admin">{{ ".layouts.bdu.user_dropdown.admin" | t }}</a>
+        </li>
+      {% endif %}
+      <li class="dropdown-item item has-block-link dashboard">
+        <a class="action" href="{{ portal.lms_url }}/dashboard">{{ ".layouts.bdu.user_dropdown.dashboard" | t }}</a>
+      </li>
+      <li class="dropdown-item item has-block-link account">
+        <a class="action" href="{{ portal.lms_url }}/account/settings">{{ ".layouts.bdu.user_dropdown.account" | t }}</a>
+      </li>
+      <li class="dropdown-item item has-block-link profile">
+        <a class="action" href="/profile">{{ ".layouts.bdu.user_dropdown.my_profile" | t }}</a>
+      </li>
+      <li class="dropdown-item item has-block-link favorites">
+        <a class="action" href="/favorites">{{ ".layouts.bdu.user_dropdown.favorites" | t }}</a>
+      </li>
+      <li class="dropdown-item item has-block-link sign-out">
+        <a class="action" href="/logout">{{ ".layouts.bdu.user_dropdown.sign_out" | t }}</a>
+      </li>
+    </ul>
+  </li>
+</ol>
