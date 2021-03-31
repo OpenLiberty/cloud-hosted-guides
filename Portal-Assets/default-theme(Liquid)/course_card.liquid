@@ -1,0 +1,18 @@
+<div class="courses-grid-item" style="max-width: 240px; max-height: 360px;">
+  <a href="{{ course.page_path }}">
+    <img src="{{ course.image_url }}" />
+  </a>
+  <div class="courses-grid-item-info">
+    <a href="{{ course.page_path }}">
+      <p class="courses-grid-item-field">{{ course.org }}</p>
+      <p class="courses-grid-item-field">{{ course.number }} - v{{ course.version }}</p>
+      <p class="courses-grid-item-name">{{ course.name }}</p>
+      <p class="courses-grid-item-field">{{ "starts" | t }}:&nbsp;{{ course.start_display }}</p>
+      {% assign visible_metadata_fields = course.metadata_fields | where: "show_in_preview" %}
+      {% for metadata_field in visible_metadata_fields %}
+        <p class="courses-grid-item-field">{{ metadata_field.name }}:&nbsp;{{ metadata_field.value }}</p>
+      {% endfor %}
+    </a>
+    {{ course.favorites_dropdown }}
+  </div>
+</div>
