@@ -11,6 +11,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+# What you'll learn
 
 You'll start with an existing REST application that runs on Open Liberty and use [MicroShed Testing](https://microshed.org/microshed-testing/) 
 to write tests for the application that exercise the application inside of a Docker container.
@@ -68,7 +69,7 @@ goal to build the application and run the integration tests on an Open Liberty s
 cd /home/project/guide-microshed-testing/finish
 mvn verify
 ```
-package io.openliberty.guides.system;
+{: codeblock}
 
 This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty must download. If you 
 run the same command again, it will be faster.
@@ -76,11 +77,6 @@ run the same command again, it will be faster.
 The previous example shows how you can run integration tests from a cold start. With Open Liberty development mode, you can use MicroShed Testing to run tests on
 an already running Open Liberty server. Run the following Maven goal to start Open Liberty in development mode:
 
-To open a new command-line session, select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Next, run the following curl command to see the RESTful APIs of the `inventory` service:
-```
-curl http://localhost:9080/openapi
 ```
 mvn liberty:dev
 ```
@@ -111,12 +107,6 @@ cd /home/project/guide-microprofile-metrics/start
 ```
 {: codeblock}
 
-Navigate to the **start** directory to begin.
-
-Navigate to the **start** directory to begin.
-
-Navigate to the **start** directory to begin.
-
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -133,7 +123,8 @@ After you see the following message, your application server in dev mode is read
 *    Liberty is running in dev mode.
 ```
 
-The **SystemService** class contains a **Publisher** method that is called **sendSystemLoad()**, which calculates and returns the average system load. The **@Outgoing** annotation on the **sendSystemLoad()** method indicates that the method publishes its calculation as a message on a topic in the Kafka messaging system. The **Flowable.interval()** method from **rxJava** is used to set the frequency of how often the system service publishes the calculation to the event stream.
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
+or open the project in your editor.
 
 Wait for the **Press the Enter key to run tests on demand.** message, and then press the **enter/return** key to run the tests. You see that one test runs:
 
@@ -161,7 +152,6 @@ Update the **PersonServiceIT** class.
  **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
-![Reactive system publisher](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-publisher.png)
 
 
 ```
@@ -181,9 +171,6 @@ public class PersonServiceIT {
 ```
 {: codeblock}
 
-The **inventory** microservice records in its inventory the average system load information that it received from potentially multiple instances of the **system** service.
-
-Create the **InventoryResource** class.
 
 Import the **MicroShedTest** annotation and annotate the **PersonServiceIT** class with **@MicroShedTest**.
 
@@ -248,64 +235,6 @@ curl http://localhost:9080/health/ready
 ```
 {: codeblock}
 
-The two endpoints at which your JAX-RS methods are served are now more meaningful:
-
-```
-/inventory/systems/{hostname}:
-  get:
-    summary: Get JVM system properties for particular host
-    description: Retrieves and returns the JVM system properties from the system
-      service running on the particular host.
-    operationId: getPropertiesForHost
-    parameters:
-    - name: hostname
-      in: path
-      description: The host for whom to retrieve the JVM system properties for.
-      required: true
-      schema:
-        type: string
-      example: foo
-    responses:
-      404:
-        description: Missing description
-        content:
-          text/plain: {}
-      200:
-        description: JVM system properties of a particular host.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Properties'
-/inventory/systems:
-  get:
-    summary: List inventory contents.
-    description: Returns the currently stored host:properties pairs in the inventory.
-    operationId: listContents
-    responses:
-      200:
-        description: host:properties pairs stored in the inventory.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InventoryList'
-```
-
-
-OpenAPI annotations can also be added to POJOs to describe what they represent. Currently, your OpenAPI
-document doesn't have a very meaningful description of the **InventoryList** POJO and hence it's very
-difficult to tell exactly what that POJO is used for. To describe the **InventoryList** POJO in more detail, augment the
-**src/main/java/io/openliberty/guides/inventory/model/InventoryList.java** file with some OpenAPI annotations.
-
-Update the **InventoryList** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/InventoryList.java
-
-
-
-
-```
-package io.openliberty.guides.inventory.model;
 
 
 Save your changes to the **PersonServiceIT** class and press the **enter/return** key in your console window to rerun the tests. You still see only one test running, but the output is different. Notice that MicroShed Testing is using a **hollow** configuration mode. This configuration mode means that MicroShed Testing is reusing an existing application runtime for the test, not starting up a new application instance each time you initiate a test run.
@@ -319,15 +248,8 @@ Update the **PersonServiceIT** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
-@Schema(name="InventoryList", description="POJO that represents the inventory contents.")
-public class InventoryList {
 
-    @Schema(required = true)
-    private List<SystemData> systems;
 
-    public InventoryList(List<SystemData> systems) {
-        this.systems = systems;
-    }
 
 ```
 package io.openliberty.guides.testing;
@@ -361,21 +283,9 @@ public class PersonServiceIT {
 
 Import the **org.microshed.testing.jaxrs.RESTClient** annotation, create a **PersonService** REST client, and annotate the REST client with **@RESTClient**.
 
-Add OpenAPI **@Schema** annotations to the **InventoryList** class and the **systems** variable.
-
-
-Likewise, annotate the **src/main/java/io/openliberty/guides/inventory/model/SystemData.java** POJO,
-which is referenced in the **InventoryList** class.
-
-Update the **SystemData** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/SystemData.java
 
 In this example, the **PersonService** injected type is the same **io.openliberty.guides.testing.PersonService** class that is used in your application. However, the _instance_ that gets injected is a REST client proxy. So, if you call **personSvc.createPerson("Bob", 42)**, the REST client makes an HTTP POST request to the application that is running at **http://localhost:9080/guide-microshed-testing/people**, which triggers the corresponding Java method in the application.
 
-import java.util.Properties;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 
 # Writing your first test
@@ -387,15 +297,8 @@ Update the **PersonServiceIT** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
 
-    @Schema(required = true)
-    private final Properties properties;
 
-    public SystemData(String hostname, Properties properties) {
-        this.hostname = hostname;
-        this.properties = properties;
-    }
 
 ```
 package io.openliberty.guides.testing;
@@ -447,13 +350,9 @@ Replace the **PersonServiceIT** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
-The **mp.messaging.connector.liberty-kafka.bootstrap.servers** property configures the hostname and port for connecting to the Kafka server. The **system** microservice uses an outgoing connector to send messages through the **systemLoad** channel to the **system.load** topic in the Kafka message broker so that the **inventory** microservices can consume the messages. The **key.serializer** and **value.serializer** properties characterize how to serialize the messages. The **SystemLoadSerializer** class implements the logic for turning a **SystemLoad** object into JSON and is configured as the **value.serializer**.
 
-The **inventory** microservice uses a similar **microprofile-config.properties** configuration to define its required incoming stream.
 
-Create the inventory/microprofile-config.properties file.
 
-> Run the following touch command in your terminal
 ```
 package io.openliberty.guides.testing;
 
@@ -548,15 +447,9 @@ public class PersonServiceIT {
 {: codeblock}
 
 
-The **inventory** microservice uses an incoming connector to receive messages through the **systemLoad** channel. The messages were published by the **system** microservice to the **system.load** topic in the Kafka message broker. The **key.deserializer** and **value.deserializer** properties define how to deserialize the messages. The **SystemLoadDeserializer** class implements the logic for turning JSON into a **SystemLoad** object and is configured as the **value.deserializer**. The **group.id** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) and [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs).
 
 The following tests are added: **testMinSizeName()**, **testMinAge()**, **testGetPerson()**, **testGetAllPeople()**, and **testUpdateAge()**.
 
-The **filterAPIResponse()** method allows filtering of **APIResponse** elements. When you
-override this method, it will be called once for every **APIResponse** element in the OpenAPI tree.
-In this case, you are matching the **404** response that is returned by the **/inventory/systems/{hostname}**
-endpoint and setting the previously missing description. To remove an **APIResponse** element
-or another filterable element, simply return **null**.
 
 Save the changes, and  press the **enter/return** key in your console window to run the tests.
 
@@ -668,40 +561,14 @@ Create the **AppDeploymentConfig** class.
 ```
 touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
 ```
+{: codeblock}
 
-For more information about which elements you can filter, see the [MicroProfile API](https://openliberty.io/docs/ref/microprofile/).
-
-To learn more about MicroProfile Config, visit the MicroProfile Config [GitHub repository](https://github.com/eclipse/microprofile-config)
-and try one of the MicroProfile Config [guides](https://openliberty.io/guides/?search=Config).
-
-
-
-Run the following commands to containerize the microservices:
-
-Run the following commands to containerize the microservices:
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
 
 
 
 
-Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the project. For simplicity, the script starts one instance of the system service.
-
-
-Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the project. For simplicity, the script starts one instance of the system service.
-
-As an alternative to generating the OpenAPI model tree from code, you can provide a valid pregenerated
-OpenAPI document to describe your APIs. This document must be named **openapi** with a **yml**, **yaml**, or **json**
-extension and be placed under the **META-INF** directory. Depending on the scenario, the document
-might be fully or partially complete. If the document is fully complete, then you can disable
-annotation scanning entirely by setting the **mp.openapi.scan.disable** MicroProfile Config property to **true**.
-If the document is partially complete, then you can augment it with code.
-
-To use the pre-generated OpenAPI document, create the OpenAPI document YAML file.
-
-Create the OpenAPI document file.
-
-> Run the following touch command in your terminal
 ```
 package io.openliberty.guides.testing;
 
@@ -721,111 +588,6 @@ public class AppDeploymentConfig implements SharedContainerConfiguration {
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/openapi.yaml
-
-
-
-
-```
-openapi: 3.0.0
-info:
-  title: Inventory App
-  description: App for storing JVM system properties of various hosts.
-  license:
-    name: Eclipse Public License - v 1.0
-    url: https://www.eclipse.org/legal/epl-v10.html
-  version: 1.0.0
-servers:
-- url: http://localhost:{port}
-  description: Simple Open Liberty.
-  variables:
-    port:
-      default: "9080"
-      description: Server HTTP port.
-paths:
-  /inventory/systems:
-    get:
-      summary: List inventory contents.
-      description: Returns the currently stored host:properties pairs in the inventory.
-      operationId: listContents
-      responses:
-        200:
-          description: host:properties pairs stored in the inventory.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InventoryList'
-  /inventory/systems/{hostname}:
-    get:
-      summary: Get JVM system properties for particular host
-      description: Retrieves and returns the JVM system properties from the system
-        service running on the particular host.
-      operationId: getPropertiesForHost
-      parameters:
-      - name: hostname
-        in: path
-        description: The host for whom to retrieve the JVM system properties for.
-        required: true
-        schema:
-          type: string
-        example: foo
-      responses:
-        404:
-          description: Invalid hostname or the system service may not be running on
-            the particular host.
-          content:
-            text/plain: {}
-        200:
-          description: JVM system properties of a particular host.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Properties'
-  /inventory/properties:
-    get:
-      operationId: getProperties
-      responses:
-        200:
-          description: JVM system properties of the host running this service.
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties:
-                  type: string
-components:
-  schemas:
-    InventoryList:
-      required:
-      - systems
-      type: object
-      properties:
-        systems:
-          type: array
-          items:
-            $ref: '#/components/schemas/SystemData'
-        total:
-          type: integer
-      description: POJO that represents the inventory contents.
-    SystemData:
-      required:
-      - hostname
-      - properties
-      type: object
-      properties:
-        hostname:
-          type: string
-        properties:
-          type: object
-          additionalProperties:
-            type: string
-      description: POJO that represents a single inventory entry.
-    Properties:
-      type: object
-      additionalProperties:
-        type: string
-```
-{: codeblock}
 
 After the common configuration is created, the test classes can be updated to reference this shared configuration.
 
@@ -835,7 +597,6 @@ Update the **PersonServiceIT** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
-To build the application, run the Maven **install** and **package** goals from the command line in the **start** directory:
 
 
 
@@ -932,15 +693,8 @@ public class PersonServiceIT {
 ```
 {: codeblock}
 
-# Testing the application
 
 Remove **import** statements and the **ApplicationContainer app** field.
-
-Add and set the **mp.openapi.scan.disable** property to **true**.
-
-This document is the same as your current OpenAPI document with extra APIs for the **/inventory/properties** endpoint. 
-Since this document is complete, you can also add the **mp.openapi.scan.disable** property
-and set it to **true** in the **src/main/webapp/META-INF/microprofile-config.properties** file.
 
 
 Annotate the **PersonServiceIT** class with the **@SharedContainerConfig** annotation that references the **AppDeploymentConfig** shared configuration class.
@@ -1050,9 +804,7 @@ Update the **ErrorPathIT** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
-You can revisit the http://localhost:9085/inventory/systems URL after a while, and you will notice the CPU **systemLoad** property for the systems changed.
 
-# Testing the service
 
 
 ```
@@ -1108,9 +860,6 @@ public class ErrorPathIT {
 ```
 {: codeblock}
 
-A few tests are included for you to test the basic functionality of the **inventory** service. If a test
-failure occurs, then you might have introduced a bug into the code. These tests will run automatically
-as a part of the integration test suite.
 
 Remove **import** statements and the **ApplicationContainer app** field
 
@@ -1173,7 +922,6 @@ public class ErrorPathIT {
 
 Import the **SharedContainerConfig** annotation and annotate the **ErrorPathIT** class with **@SharedContainerConfig**. 
 
-The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
 
 If you rerun the tests now, they run in about half the time because the same server instance is being used for both test classes:
 ```
