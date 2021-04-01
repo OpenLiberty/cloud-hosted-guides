@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted-guide-cdi-intro!
+# Welcome to the Injecting dependencies into microservices guide!
+
+Learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies into microservices.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,12 +10,8 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Injecting dependencies into microservices
 
-
-Learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies into microservices.
-
-## What you'll learn
+# What you'll learn
 
 You will learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies in a simple inventory management application.
 
@@ -94,13 +92,6 @@ The defaultServer server is ready to run a smarter planet.
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
 
 
 Point your browser to the http://localhost:9080/inventory/systems URL.
@@ -638,9 +629,18 @@ rm -fr guide-cdi-intro
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-cdi-intro/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-cdi-intro/pulls)
+
+
+
+
+## Where to next? 
+
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+
+
+## Log out of the session
+
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
-
-
-# Where to next? 
-
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
