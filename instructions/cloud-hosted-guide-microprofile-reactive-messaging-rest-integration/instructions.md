@@ -63,7 +63,13 @@ The **finish** directory contains the finished project that you will build.
 # Adding a REST endpoint that produces events
 
 
-Navigate to the **start** directory to begin.
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd /home/project/guide-microprofile-reactive-messaging-rest-integration/start
+```
+{: codeblock}
+
 
 The **inventory** microservice records and stores the average system load information from all of the connected
 system microservices. However, the **inventory** microservice does not contain an accessible REST endpoint to control the
@@ -449,22 +455,13 @@ After the application is up and running, you can access the application by makin
 of the **inventory** service.
 
 
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-Visit the http://localhost:9085/inventory/systems URL to access the inventory microservice. You see the CPU **systemLoad**
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to access the  **inventory** microservice:
 ```
 curl http://localhost:9085/inventory/systems
 ```
 {: codeblock}
 
-
-property for all the systems:
+You see the CPU **systemLoad** property for all the systems:
 
 ```
 {
@@ -474,18 +471,13 @@ property for all the systems:
 ```
 
 
-You can revisit the http://localhost:9085/inventory/systems URL after a while, and you will notice the CPU **systemLoad**
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+You can revisit the **inventory** service after a while by running the following curl command:
 ```
 curl http://localhost:9085/inventory/systems
 ```
 {: codeblock}
 
-
-property for the systems changed.
+Notice the value of the **systemLoad** property for the systems is changed.
 
 Make a **PUT** request on the **http://localhost:9085/inventory/data** URL to add the value of a particular system
 property to the set of existing properties. For example, run the following **curl** command:
@@ -510,18 +502,13 @@ Request successful for the os.name property
 The **system** service is available so the request to the service is successful and returns a **200** response code.
 
 
-You can revisit the http://localhost:9085/inventory/systems URL and see the **os.name** system property value is now
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+You can revisit the **inventory** service by running the following curl command:
 ```
 curl http://localhost:9085/inventory/systems
 ```
 {: codeblock}
 
-
-included with the previous values:
+Notice that the **os.name** system property value is now included with the previous values:
 
 ```
 {
