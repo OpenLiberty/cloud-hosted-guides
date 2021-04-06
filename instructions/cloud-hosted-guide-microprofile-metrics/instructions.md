@@ -210,7 +210,8 @@ mvn liberty:dev
 After you see the following message, your application server in dev mode is ready:
 
 ```
-Press the Enter key to run tests on demand.
+************************************************************************
+*    Liberty is running in dev mode.
 ```
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
@@ -245,8 +246,6 @@ Replace the server configuration file.
 
   <applicationManager autoExpand="true" />
   <quickStartSecurity userName="admin" userPassword="adminpwd"/>
-  <!-- tag::keyStore[] -->
-  <keyStore id="defaultKeyStore" location="key.jks" type="jks" password="mpKeystore"/>
   <httpEndpoint host="*" httpPort="${default.http.port}"
       httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
   <webApplication location="guide-microprofile-metrics.war" contextRoot="/"/>
@@ -258,7 +257,8 @@ Replace the server configuration file.
 The **mpMetrics** feature enables MicroProfile Metrics support in Open Liberty. Note that this
 feature requires SSL and the configuration has been provided for you.
 
-The **quickStartSecurity** and **keyStore** configuration elements provide basic security to secure the server. When you visit the **/metrics** endpoint, use the credentials defined in the server configuration to log in and view the data.
+The **quickStartSecurity** configuration element provides basic security to secure the server. 
+When you visit the **/metrics** endpoint, use the credentials defined in the server configuration to log in and view the data.
 
 
 ### Adding the annotations
@@ -456,17 +456,31 @@ touch /home/project/guide-microprofile-metrics/start/src/test/java/it/io/openlib
 ```
 package it.io.openliberty.guides.metrics;
 
-import static org.junit.jupiter.api.Assertions.*;
-import java.io.*;
-import java.util.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
 import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -474,10 +488,19 @@ import org.junit.jupiter.api.TestMethodOrder;
 
 @TestMethodOrder(OrderAnnotation.class)
 public class MetricsIT {
+
+  private static final String KEYSTORE_PATH = System.getProperty("user.dir")
+                              + "/target/liberty/wlp/usr/servers/"
+                              + "defaultServer/resources/security/key.p12";
+  private static final String SYSTEM_ENV_PATH =  System.getProperty("user.dir")
+                              + "/target/liberty/wlp/usr/servers/"
+                              + "defaultServer/server.env";
+
   private static String httpPort;
   private static String httpsPort;
   private static String baseHttpUrl;
   private static String baseHttpsUrl;
+  private static KeyStore keystore;
 
   private List<String> metrics;
   private Client client;
@@ -487,16 +510,25 @@ public class MetricsIT {
   private final String METRICS_APPLICATION = "metrics/application";
 
   @BeforeAll
-  public static void oneTimeSetup() {
+  public static void oneTimeSetup() throws Exception {
     httpPort = System.getProperty("http.port");
     httpsPort = System.getProperty("https.port");
     baseHttpUrl = "http://localhost:" + httpPort + "/";
     baseHttpsUrl = "https://localhost:" + httpsPort + "/";
+    loadKeystore();
+  }
+
+  private static void loadKeystore() throws Exception {
+    Properties sysEnv = new Properties();
+    sysEnv.load(new FileInputStream(SYSTEM_ENV_PATH));
+    char[] password = sysEnv.getProperty("keystore_password").toCharArray();
+    keystore = KeyStore.getInstance("PKCS12");
+    keystore.load(new FileInputStream(KEYSTORE_PATH), password);
   }
 
   @BeforeEach
   public void setup() {
-    client = ClientBuilder.newClient();
+    client = ClientBuilder.newBuilder().trustStore(keystore).build();
     client.register(JsrJsonpProvider.class);
   }
 
@@ -540,7 +572,7 @@ public class MetricsIT {
   @Order(3)
   public void testInventorySizeGaugeMetric() {
     metrics = getMetrics();
-    Map<String, Integer> inventorySizeGauges = getIntMetrics(metrics, 
+    Map<String, Integer> inventorySizeGauges = getIntMetrics(metrics,
             "application_inventorySizeGauge");
     for (Integer value : inventorySizeGauges.values()) {
       assertTrue(1 <= value);
@@ -579,7 +611,7 @@ public class MetricsIT {
                                          authorizationHeaderValue)
                                      .get();
 
-    BufferedReader br = new BufferedReader(new InputStreamReader((InputStream) 
+    BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)
     metricsResponse.getEntity()));
     List<String> result = new ArrayList<String>();
     try {
@@ -679,12 +711,18 @@ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.4 sec - in it.
 Running it.io.openliberty.guides.metrics.MetricsIT
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.476 sec - in it.io.openliberty.guides.metrics.MetricsIT
 Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+Could not send Message.
+[err] The specified host is unknown.
 Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.264 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
 Results :
 
 Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
 ```
+
+The warning and error messages are expected and result from a request to a bad or an unknown hostname. 
+This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
 
 To determine whether the tests detect a failure, go to the **MetricsIT.java** file and change any of the assertions
 in the test methods. Then re-run the tests to see a test failure occur.
