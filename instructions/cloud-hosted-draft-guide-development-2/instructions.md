@@ -711,12 +711,18 @@ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.4 sec - in it.
 Running it.io.openliberty.guides.metrics.MetricsIT
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.476 sec - in it.io.openliberty.guides.metrics.MetricsIT
 Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+Could not send Message.
+[err] The specified host is unknown.
 Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.264 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
 Results :
 
 Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
 ```
+
+The warning and error messages are expected and result from a request to a bad or an unknown hostname. 
+This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
 
 To determine whether the tests detect a failure, go to the **MetricsIT.java** file and change any of the assertions
 in the test methods. Then re-run the tests to see a test failure occur.
