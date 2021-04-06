@@ -204,6 +204,7 @@ The **withAppContextRoot(String)** method indicates the base path of the applica
 
 
 
+
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
@@ -218,8 +219,6 @@ curl http://localhost:9080/health/ready
 {: codeblock}
 
 
-
-```
 
 Save your changes to the **PersonServiceIT** class and press the **enter/return** key in your console window to rerun the tests. You still see only one test running, but the output is different. Notice that MicroShed Testing is using a **hollow** configuration mode. This configuration mode means that MicroShed Testing is reusing an existing application runtime for the test, not starting up a new application instance each time you initiate a test run.
 
