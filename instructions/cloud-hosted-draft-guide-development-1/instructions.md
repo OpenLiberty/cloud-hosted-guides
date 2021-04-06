@@ -85,7 +85,6 @@ mvn liberty:dev
 
 After you see the following message, your application server in dev mode is ready:
 
-
 ```
 ******************************************************
 *    Liberty is running in dev mode.
