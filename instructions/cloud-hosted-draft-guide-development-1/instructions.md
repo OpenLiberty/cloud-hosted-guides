@@ -63,11 +63,13 @@ First, review the **PersonServiceIT** class to see what the tests look like:
 
 To try out the application, go to the **finish** directory and run the following Maven 
 goal to build the application and run the integration tests on an Open Liberty server in a container:
+
+
 ```
+cd /home/project/guide-microshed-testing/finish
 mvn verify
 ```
 {: codeblock}
-
 
 This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty must download. If you 
 run the same command again, it will be faster.
@@ -81,6 +83,14 @@ mvn liberty:dev
 {: codeblock}
 
 
+After you see the following message, your application server in dev mode is ready:
+
+
+```
+******************************************************
+*    Liberty is running in dev mode.
+```
+
 After the Open Liberty server starts and you see the **Press the Enter key to run tests on demand.** message, you can press the 
 **enter/return** key to run the integration tests. After the tests finish, you can press the **enter/return** key to run the tests again, or you 
 can make code changes to the application or tests. Development mode automatically
@@ -91,7 +101,12 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 
 # Bootstrapping your application for testing
 
-Navigate to the **start** directory to begin.
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd /home/project/guide-microprofile-metrics/start
+```
+{: codeblock}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -105,7 +120,8 @@ mvn liberty:dev
 After you see the following message, your application server in dev mode is ready:
 
 ```
-Press the Enter key to run tests on demand.
+************************************************************************
+*    Liberty is running in dev mode.
 ```
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
@@ -203,11 +219,14 @@ Import the **ApplicationContainer** class and the **Container** annotation, crea
 The **withAppContextRoot(String)** method indicates the base path of the application. The app context root is the portion of the URL after the hostname and port. In this case, the application is deployed at the **http://localhost:9080/guide-microshed-testing** URL, so the app context root is **/guide-microshed-testing**.
 
 
+The **withReadinessPath(String)** method indicates what path is polled by HTTP to determine application readiness. 
+MicroShed Testing automatically starts the ApplicationContainer application and waits for it to be ready before the tests start running. 
+
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-The **withReadinessPath(String)** method indicates what path is polled by HTTP to determine application readiness. MicroShed Testing automatically starts the ApplicationContainer application and waits for it to be ready before the tests start running. In this case, you are using the default application readiness check at the http://localhost:9080/health/ready URL, which is enabled by the **MicroProfile Health** feature in our server.xml configuration file. When the readiness URL returns **HTTP 200**, the application is considered ready and the tests begin running.
+In this case, you are using the default application readiness check at the http://localhost:9080/health/ready URL, which is enabled by the **MicroProfile Health** feature in our server.xml configuration file. When the readiness URL returns **HTTP 200**, the application is considered ready and the tests begin running.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -266,18 +285,7 @@ public class PersonServiceIT {
 Import the **org.microshed.testing.jaxrs.RESTClient** annotation, create a **PersonService** REST client, and annotate the REST client with **@RESTClient**.
 
 
-
-In this example, the **PersonService** injected type is the same **io.openliberty.guides.testing.PersonService** class that is used in your application. However, the _instance_ that gets injected is a REST client proxy. So, if you call **personSvc.createPerson("Bob", 42)**, the REST client makes an HTTP POST request to the application that is running at http://localhost:9080/guide-microshed-testing/people, which triggers the corresponding Java method in the application.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/guide-microshed-testing/people
-```
-{: codeblock}
-
-
+In this example, the **PersonService** injected type is the same **io.openliberty.guides.testing.PersonService** class that is used in your application. However, the _instance_ that gets injected is a REST client proxy. So, if you call **personSvc.createPerson("Bob", 42)**, the REST client makes an HTTP POST request to the application that is running at **http://localhost:9080/guide-microshed-testing/people**, which triggers the corresponding Java method in the application.
 
 
 
@@ -332,8 +340,8 @@ Import the **assertNotNull** static method and write the test logic in the **tes
 Save the changes. Then, press the **enter/return** key in your console window to run the test. You see that the test ran again and exercised the REST endpoint of your application, including the response of your application's endpoint:
 
 ```
-INFO org.microshed.testing.jaxrs.RestClientBuilder  - Building rest client for class io.openliberty.guides.testing.PersonService with base path: http://localhost:9080/guide-microshed-testing/ and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
-INFO org.microshed.testing.jaxrs.JsonBProvider  - Response from server: 1809686877352335426
+[INFO] Building rest client for class io.openliberty.guides.testing.PersonService with base path: http://localhost:9080/guide-microshed-testing/ and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
+[INFO] Response from server: 1809686877352335426
 ```
 
 Next, add more tests.
