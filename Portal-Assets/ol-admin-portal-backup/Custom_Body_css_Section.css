@@ -19,7 +19,7 @@ body {
 }
 .content-wrapper {
     background: #fbfbfb;
-    margin-top: 80px;
+    margin-top: 60px;
 }
 .wrapper-footer {
     background: #d6d6d6;
@@ -42,6 +42,21 @@ body {
 }
 .btn-quicklabs-action:hover {
     background: #abd155;
+}
+
+#global-navigation > nav .logo{ 
+    width: auto;
+    max-height: 45px;
+    position: inline;
+} 
+
+#global-navigation > nav > h1 {
+    float: left;
+    margin: 0;
+}
+
+#OLLogo.logo { 
+    padding-left: 2rem; 
 }
 
 /* Hide quicklabs code */
@@ -72,6 +87,15 @@ body {
     letter-spacing: 0;
 }
 
+
+
+
+#content > div > section > div > div > a > div.developer--card__bottom > p.available {
+    position: absolute;
+    display: flex;
+    align-items: center;
+}
+
 /* Optionally hide the entire side area */
 .row.course-details-content .col-md-4 {
     display: none;
@@ -89,6 +113,7 @@ body {
 
 .content {
     color: #FF1493;
+    overflow:hidden
 }
 
 .header-global .primary>a:hover, .header-global .primary>a:focus, .header-global .primary>a:active {
@@ -109,3 +134,34 @@ body {
     content: "";
     flex-basis: 32%;
 }
+
+body > div > div.wrapper.wrapper-footer {
+  max-width: 100%;
+    overflow:hidden;
+    position:relative;
+     /*negative value of footer height */
+    height:120px;
+    margin-top:-32px;
+}
+
+/* New Workshop pages */
+/*#content > div > div > div {*/
+/*    display: flex;*/
+/*    flex-wrap: wrap;*/
+/*    justify-content: space-between;*/
+/*    align-items: stretch;*/
+/*    padding-bottom: 2rem;*/
+/*}*/
+
+/*#content > div > div > div:after {*/
+/*    content: "";*/
+/*    flex-basis: 32%;*/
+/*}*/
+
+/*#content > div > div > div > div > section > > div{*/
+/*    border: 0px !important;*/
+/*}*/
+
+/*#content > div > div > div > div > section > div > div > a > h5 {*/
+/* background-color:#ffffff !important;   */
+/*}*/
