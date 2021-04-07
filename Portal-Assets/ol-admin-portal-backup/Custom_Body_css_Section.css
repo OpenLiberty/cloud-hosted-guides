@@ -1,29 +1,40 @@
 header.header-global {
     background: #313653;
 }
-.header-global .nav-global li a, .header-global .nav-global div a {
+
+.header-global .nav-global li a,
+.header-global .nav-global div a {
     color: #eee;
 }
+
 header.header-global .search-group form.search .search-term {
     display: none;
 }
+
 header.header-global .search-group form.search .search-button {
     display: none;
 }
+
+
 /* hide header items */
+
 .header-global .nav-global {
     display: none;
 }
+
 body {
     background: #fbfbfb;
 }
+
 .content-wrapper {
     background: #fbfbfb;
-    margin-top: 80px;
+    margin-top: 60px;
 }
+
 .wrapper-footer {
     background: #d6d6d6;
 }
+
 .header-global .user .user-link .label-username {
     color: #eee;
 }
@@ -33,18 +44,38 @@ body {
     color: #eee;
 }
 
+
 /* Quicklabs page */
+
 .btn-quicklabs-action {
     color: #2c2e50;
     background: #abd155;
     box-shadow: none;
     border-radius: 4px;
 }
+
 .btn-quicklabs-action:hover {
     background: #abd155;
 }
 
+#global-navigation>nav .logo {
+    width: auto;
+    max-height: 45px;
+    position: inline;
+}
+
+#global-navigation>nav>h1 {
+    float: left;
+    margin: 0;
+}
+
+#OLLogo.logo {
+    padding-left: 2rem;
+}
+
+
 /* Hide quicklabs code */
+
 .row.course-details-header h2 {
     display: none;
 }
@@ -53,7 +84,9 @@ body {
     display: none;
 }
 
+
 /* Quicklabs header */
+
 .row.course-details-header h1 {
     @import url('https://fonts.googleapis.com/css2?family=Asap:wght@400;500;600;700&display=swap');
     font-family: 'Asap', sans-serif;
@@ -61,9 +94,10 @@ body {
     color: #2C2E50;
     font-weight: 550;
     letter-spacing: 0;
-    margin:0;
+    margin: 0;
     padding: 0;
 }
+
 .row.course-details-content p {
     @import url('https://fonts.googleapis.com/css2?family=Asap:wght@400;500;600;700&display=swap');
     font-family: 'Asap', sans-serif;
@@ -72,7 +106,15 @@ body {
     letter-spacing: 0;
 }
 
+#content>div>section>div>div>a>div.developer--card__bottom>p.available {
+    position: absolute;
+    display: flex;
+    align-items: center;
+}
+
+
 /* Optionally hide the entire side area */
+
 .row.course-details-content .col-md-4 {
     display: none;
 }
@@ -80,7 +122,7 @@ body {
 .effort {
     padding-top: 2em;
     display: flex;
-    align-items:center;
+    align-items: center;
 }
 
 #OLclock {
@@ -89,15 +131,18 @@ body {
 
 .content {
     color: #FF1493;
+    overflow: hidden
 }
 
-.header-global .primary>a:hover, .header-global .primary>a:focus, .header-global .primary>a:active {
+.header-global .primary>a:hover,
+.header-global .primary>a:focus,
+.header-global .primary>a:active {
     background: inherit;
     border: .2em solid white;
     border-radius: .2em;
 }
 
-#content > div > section {
+#content>div>section {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
@@ -105,7 +150,70 @@ body {
     padding-bottom: 2rem;
 }
 
-#content > div > section:after {
+#content>div>section:after {
     content: "";
     flex-basis: 32%;
 }
+
+body>div>div.wrapper.wrapper-footer {
+    max-width: 100%;
+    overflow: hidden;
+    position: relative;
+    /*negative value of footer height */
+    height: 120px;
+    margin-top: -32px;
+}
+
+
+/* New Workshop pages */
+
+
+/*#content > div > div > div {*/
+
+
+/*    display: flex;*/
+
+
+/*    flex-wrap: wrap;*/
+
+
+/*    justify-content: space-between;*/
+
+
+/*    align-items: stretch;*/
+
+
+/*    padding-bottom: 2rem;*/
+
+
+/*}*/
+
+
+/*#content > div > div > div:after {*/
+
+
+/*    content: "";*/
+
+
+/*    flex-basis: 32%;*/
+
+
+/*}*/
+
+
+/*#content > div > div > div > div > section > > div{*/
+
+
+/*    border: 0px !important;*/
+
+
+/*}*/
+
+
+/*#content > div > div > div > div > section > div > div > a > h5 {*/
+
+
+/* background-color:#ffffff !important;   */
+
+
+/*}*/
