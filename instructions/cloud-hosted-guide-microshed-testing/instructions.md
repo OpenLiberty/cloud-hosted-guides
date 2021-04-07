@@ -103,7 +103,7 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 
 To begin, run the following command to navigate to the **start** directory:
 ```
-cd /home/project/guide-microprofile-metrics/start
+cd /home/project/guide-microshed-testing/start
 ```
 {: codeblock}
 
