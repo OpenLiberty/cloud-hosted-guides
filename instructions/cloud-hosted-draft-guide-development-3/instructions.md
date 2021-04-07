@@ -530,7 +530,7 @@ inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
 Wait for your two new pods to be in the ready state, then make the following `curl` command:
 
 ```
-curl http://$SYSTEM_HOST:31000/system/properties
+curl -I http://$SYSTEM_HOST:31000/system/properties
 ```
 {: codeblock}
 
@@ -538,20 +538,32 @@ You'll notice that the **X-Pod-Name** header will have a different value when yo
 This is because there are now three pods running all serving the **system** application. 
 Similarly, to descale your deployments you can use the same scale command with fewer replicas.
 
+```
+kubectl scale deployment/system-deployment --replicas=1
+```
+{: codeblock}
+
+
 # Redeploy microservices
 
 When you're building your application, you may find that you want to quickly test a change. 
 To do that, you can rebuild your Docker images then delete and re-create your Kubernetes resources. 
 Note that there will only be one **system** pod after you redeploy since you're deleting all of the existing pods.
+
+
 ```
 mvn clean package
-kubectl delete -f kubernetes.yaml
-{: codeblock}
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 
+kubectl delete -f kubernetes.yaml
 kubectl apply -f kubernetes.yaml
 ```
 {: codeblock}
-
 
 This is not how you would want to update your applications when running in production, 
 but in a development environment this is fine. 
