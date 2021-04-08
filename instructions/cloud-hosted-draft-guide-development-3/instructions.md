@@ -191,42 +191,18 @@ docker images
 {: codeblock}
 
 
-Verify that the **system:1.0-SNAPSHOT** and **inventory:1.0-SNAPSHOT** images are listed among them, for example:
 
+Verify that the `system:1.0-SNAPSHOT` and `inventory:1.0-SNAPSHOT` images are listed among them, for example:
 
 ```
-REPOSITORY                                                       TAG
-inventory                                                        1.0-SNAPSHOT
-system                                                           1.0-SNAPSHOT
-openliberty/open-liberty                                         kernel-java8-openj9-ubi
-k8s.gcr.io/kube-proxy-amd64                                      v1.10.0
-k8s.gcr.io/kube-controller-manager-amd64                         v1.10.0
-k8s.gcr.io/kube-apiserver-amd64                                  v1.10.0
-k8s.gcr.io/kube-scheduler-amd64                                  v1.10.0
-quay.io/kubernetes-ingress-controller/nginx-ingress-controller   0.12.0
-k8s.gcr.io/etcd-amd64                                            3.1.12
-k8s.gcr.io/kube-addon-manager                                    v8.6
-k8s.gcr.io/k8s-dns-dnsmasq-nanny-amd64                           1.14.8
-k8s.gcr.io/k8s-dns-sidecar-amd64                                 1.14.8
-k8s.gcr.io/k8s-dns-kube-dns-amd64                                1.14.8
-k8s.gcr.io/pause-amd64                                           3.1
-k8s.gcr.io/kubernetes-dashboard-amd64                            v1.8.1
-k8s.gcr.io/kube-addon-manager                                    v6.5
-gcr.io/k8s-minikube/storage-provisioner                          v1.8.0
-gcr.io/k8s-minikube/storage-provisioner                          v1.8.1
-k8s.gcr.io/defaultbackend                                        1.4
-k8s.gcr.io/k8s-dns-sidecar-amd64                                 1.14.4
-k8s.gcr.io/k8s-dns-kube-dns-amd64                                1.14.4
-k8s.gcr.io/k8s-dns-dnsmasq-nanny-amd64                           1.14.4
-k8s.gcr.io/etcd-amd64                                            3.0.17
-k8s.gcr.io/pause-amd64                                           3.0
+REPOSITORY                                TAG                       
+inventory                                 1.0-SNAPSHOT
+system                                    1.0-SNAPSHOT
+openliberty/open-liberty                  kernel-java8-openj9-ubi
 ```
 
-If you don't see the **system:1.0-SNAPSHOT** and **inventory:1.0-SNAPSHOT** images, then check the Maven
+If you don't see the `system:1.0-SNAPSHOT` and `inventory:1.0-SNAPSHOT` images, then check the Maven
 build log for any potential errors.
-In addition, if you are using Minikube, make sure your Docker CLI is configured to use Minikube's Docker daemon 
-and not your host's as described in the previous section.
-
 If the images built without errors, push them to your container registry on IBM Cloud with the following commands:
 
 ```
