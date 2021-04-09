@@ -23,16 +23,16 @@ further leveraged for all steps of a continuous delivery pipeline.
 
 ### Why use Kubernetes?
 
-Managing individual containers can be challenging.  A few containers used for development by a small team might not pose a problem,
-but managing hundreds of containers can give even a large team of experienced developers a headache. Kubernetes is a primary
-tool for deployment in containerized
-environments. It handles scheduling, deployment, as well as mass deletion and creation of containers.
-It provides update rollout abilities on a large scale that would otherwise prove extremely tedious
-to do. Imagine that you updated a Docker image, which now needs to propagate to a dozen containers.
+Managing individual containers can be challenging. 
+A small team can easily manage a few containers for development but 
+managing hundreds of containers can be a headache, even for a large team of experienced developers.
+Kubernetes is a tool for deployment in containerized environments. 
+It handles scheduling, deployment, as well as mass deletion and creation of containers. 
+It provides update rollout abilities on a large scale that would otherwise prove extremely tedious to do. 
+Imagine that you updated a Docker image, which now needs to propagate to a dozen containers. 
 While you could destroy and then re-create these containers, you can also run a short one-line
 command to have Kubernetes make all those updates for you. Of course, this is just a simple example.
 Kubernetes has a lot more to offer.
-
 
 ### Architecture
 
@@ -55,25 +55,23 @@ that define a set of rules by which the pods can be accessed. In a basic scenari
 service exposes a node port that can be used together with the cluster IP address to access
 the pods encapsulated by the service.
 
-To learn about the various Kubernetes resources that you can configure, see the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/).
-
+To learn about the various Kubernetes resources that you can configure, 
+see the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/).
 
 
 # What you'll learn
 
 You will learn how to deploy two microservices in Open Liberty containers to a local Kubernetes cluster.
-You will then manage your deployed microservices using the **kubectl** command line
-interface for Kubernetes. The **kubectl** CLI is your primary tool for communicating with and managing your
-Kubernetes cluster.
+You will then manage your deployed microservices using the **kubectl** command line interface for Kubernetes. 
+The **kubectl** CLI is your primary tool for communicating with and managing your Kubernetes cluster.
 
 The two microservices you will deploy are called **system** and **inventory**. The **system** microservice
 returns the JVM system properties of the running container and it returns the pod's name in the HTTP header
 making replicas easy to distinguish from each other. The **inventory** microservice
-adds the properties from the **system** microservice to the inventory. This demonstrates
-how communication can be established between pods inside a cluster.
+adds the properties from the **system** microservice to the inventory. 
+This process demonstrates how communication can be established between pods inside a cluster.
 
 You will use a local single-node Kubernetes cluster.
-
 
 
 # Getting started
@@ -103,40 +101,45 @@ The **finish** directory contains the finished project that you will build.
 
 
 
-# Starting and preparing your cluster for deployment
+# Logging into your cluster
 
-Start your Kubernetes cluster.
-
-
-Run the following command from a command-line session:
+For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
+Get the name of your namespace with the following command:
 
 ```
-minikube start
+bx cr namespace-list
 ```
 {: codeblock}
 
+Look for output that is similar to the following:
 
-
-
-
-Next, validate that you have a healthy Kubernetes environment by running the following command from the active command-line session.
 ```
-kubectl get nodes
+Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
+
+Namespace
+sn-labs-yourname
 ```
-{: codeblock}
 
+Store the namespace name in a variable.
+Use the namespace name that was obtained from the previous command.
 
-This command should return a **Ready** status for the master node.
-
-
-Run the following command to configure the Docker CLI to use Minikube's Docker daemon.
-After you run this command, you will be able to interact with Minikube's Docker daemon and build new
-images directly to it from your host machine:
 ```
-eval $(minikube docker-env)
+NAMESPACE_NAME={namespace_name}
 ```
 {: codeblock}
 
+Verify that the variable contains your namespace name:
+
+```
+echo $NAMESPACE_NAME
+```
+{: codeblock}
+
+Log in to the registry with the following command:
+```
+bx cr login
+```
+{: codeblock}
 
 
 
@@ -145,12 +148,12 @@ eval $(minikube docker-env)
 The first step of deploying to Kubernetes is to build your microservices and containerize them with Docker.
 
 The starting Java project, which you can find in the **start** directory, is a multi-module Maven
-project that's made up of the **system** and **inventory** microservices. Each microservice resides in its own directory,
-**start/system** and **start/inventory**. Each of these directories also contains a Dockerfile, which is necessary
-for building Docker images. If you're unfamiliar with Dockerfiles, check out the
+project that's made up of the **system** and **inventory** microservices. 
+Each microservice resides in its own directory, **start/system** and **start/inventory**. 
+Each of these directories also contains a Dockerfile, which is necessary for building Docker images. 
+If you're unfamiliar with Dockerfiles, check out the
 [Containerizing Microservices](https://openliberty.io/guides/containerize.html) guide,
 which covers Dockerfiles in depth.
-
 
 Navigate to the **start** directory and build the applications by running the following commands:
 ```
@@ -177,59 +180,47 @@ docker build -t inventory:1.0-SNAPSHOT inventory/.
 
 
 The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format.
-The tag for an image describes the specific image version. If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
+The tag for an image describes the specific image version. 
+If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
 
-During the build, you'll see various Docker messages describing what images are being downloaded and
-built. When the build finishes, run the following command to list all local Docker images:
+During the build, you'll see various Docker messages describing what images are being downloaded and built. 
+When the build finishes, run the following command to list all local Docker images:
 ```
 docker images
 ```
 {: codeblock}
 
 
-Verify that the **system:1.0-SNAPSHOT** and **inventory:1.0-SNAPSHOT** images are listed among them, for example:
 
+Verify that the `system:1.0-SNAPSHOT` and `inventory:1.0-SNAPSHOT` images are listed among them, for example:
 
 ```
-REPOSITORY                                                       TAG
-inventory                                                        1.0-SNAPSHOT
-system                                                           1.0-SNAPSHOT
-openliberty/open-liberty                                         kernel-java8-openj9-ubi
-k8s.gcr.io/kube-proxy-amd64                                      v1.10.0
-k8s.gcr.io/kube-controller-manager-amd64                         v1.10.0
-k8s.gcr.io/kube-apiserver-amd64                                  v1.10.0
-k8s.gcr.io/kube-scheduler-amd64                                  v1.10.0
-quay.io/kubernetes-ingress-controller/nginx-ingress-controller   0.12.0
-k8s.gcr.io/etcd-amd64                                            3.1.12
-k8s.gcr.io/kube-addon-manager                                    v8.6
-k8s.gcr.io/k8s-dns-dnsmasq-nanny-amd64                           1.14.8
-k8s.gcr.io/k8s-dns-sidecar-amd64                                 1.14.8
-k8s.gcr.io/k8s-dns-kube-dns-amd64                                1.14.8
-k8s.gcr.io/pause-amd64                                           3.1
-k8s.gcr.io/kubernetes-dashboard-amd64                            v1.8.1
-k8s.gcr.io/kube-addon-manager                                    v6.5
-gcr.io/k8s-minikube/storage-provisioner                          v1.8.0
-gcr.io/k8s-minikube/storage-provisioner                          v1.8.1
-k8s.gcr.io/defaultbackend                                        1.4
-k8s.gcr.io/k8s-dns-sidecar-amd64                                 1.14.4
-k8s.gcr.io/k8s-dns-kube-dns-amd64                                1.14.4
-k8s.gcr.io/k8s-dns-dnsmasq-nanny-amd64                           1.14.4
-k8s.gcr.io/etcd-amd64                                            3.0.17
-k8s.gcr.io/pause-amd64                                           3.0
+REPOSITORY                                TAG                       
+inventory                                 1.0-SNAPSHOT
+system                                    1.0-SNAPSHOT
+openliberty/open-liberty                  kernel-java8-openj9-ubi
 ```
 
-
-If you don't see the **system:1.0-SNAPSHOT** and **inventory:1.0-SNAPSHOT** images, then check the Maven
+If you don't see the `system:1.0-SNAPSHOT` and `inventory:1.0-SNAPSHOT` images, then check the Maven
 build log for any potential errors.
-In addition, if you are using Minikube, make sure your Docker CLI is configured to use Minikube's Docker daemon and not your host's as described in the previous section.
+If the images built without errors, push them to your container registry on IBM Cloud with the following commands:
 
+```
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+```
+{: codeblock}
 
 
 # Deploying the microservices
 
 Now that your Docker images are built, deploy them using a Kubernetes resource definition.
 
-A Kubernetes resource definition is a yaml file that contains a description of all your deployments, services, or any other resources that you want to deploy. All resources can also be deleted from the cluster by using the same yaml file that you used to deploy them.
+A Kubernetes resource definition is a yaml file that contains a description of all your deployments, services, 
+or any other resources that you want to deploy. 
+All resources can also be deleted from the cluster by using the same yaml file that you used to deploy them.
 
 Create the Kubernetes configuration file.
 
@@ -361,12 +352,29 @@ spec:
 
 
 
-This file defines four Kubernetes resources. It defines two deployments and two services. A Kubernetes deployment is a resource responsible for controlling the creation and management of pods. A service exposes your deployment so that you can make requests to your containers. Three key items to look at when creating the deployments are the **labels**, **image**, and **containerPort** fields. The **labels** is a way for a Kubernetes service to reference specific deployments. The **image** is the name and tag of the Docker image that you want to use for this container. Finally, the **containerPort** is the port that your container exposes for purposes of accessing your application.
+This file defines four Kubernetes resources. It defines two deployments and two services. 
+A Kubernetes deployment is a resource that controls the creation and management of pods. 
+A service exposes your deployment so that you can make requests to your containers. 
+Three key items to look at when creating the deployments are the **labels**, 
+**image**, and **containerPort** fields. 
+The **labels** is a way for a Kubernetes service to reference specific deployments. 
+The **image** is the name and tag of the Docker image that you want to use for this container. 
+Finally, the **containerPort** is the port that your container exposes to access your application.
 For the services, the key point to understand is that they expose your deployments.
-The binding between deployments and services is specified by the use of labels -- in this case the **app** label.
+The binding between deployments and services is specified by labels -- in this case the 
+**app** label.
 You will also notice the service has a type of **NodePort**.
 This means you can access these services from outside of your cluster via a specific port.
-In this case, the ports will be **31000** and **32000**, but it can also be randomized if the **nodePort** field is not used.
+In this case, the ports are **31000** and **32000**, but port numbers can also be randomized if the
+**nodePort** field is not used.
+
+Update the image names so that the images in your IBM Cloud container registry are used:
+
+```
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
+```
+{: codeblock}
 
 Run the following commands to deploy the resources as defined in kubernetes.yaml:
 ```
@@ -400,26 +408,77 @@ kubectl describe pods
 You can also issue the **kubectl get** and **kubectl describe** commands on other Kubernetes resources, so feel
 free to inspect all other resources.
 
-Next you will make requests to your services.
 
+Run the following command to get the node IP for the `system` service:
 
-The default host name for minikube is 192.168.99.100. Otherwise it can be found using the **minikube ip** command.
+```
+kubectl describe pod system | grep Node
+```
+{: codeblock}
 
-Then **curl** or visit the following URLs to access your microservices, substituting the appropriate host name:
+The output shows the node IP that is later used to access the service. 
+It appears in a format similar to the following:
 
-- **http://[hostname]:31000/system/properties**
- **http://[hostname]:32000/inventory/systems/system-service**
+```
+Node:         10.114.85.140/10.114.85.140
+Node-Selectors:  <none>
+```
 
-The first URL returns system properties and the name of the pod in an HTTP header called **X-Pod-Name**.
-To view the header, you may use the **-I** option in the **curl** when making a request to **http://[hostname]:31000/system/properties**.
-The second URL adds properties from **system-service** to the inventory
-Kubernetes Service. Visiting **http://[hostname]:32000/inventory/systems/[kube-service]** in general adds to the inventory
-depending on whether **kube-service** is a valid Kubernetes Service that can be accessed.
+The IP for the system service is `10.114.85.140`.
+Store the IP in a variable.
+
+```
+SYSTEM_HOST={system-node-ip}
+```
+{: codeblock}
+
+Use another `kubectl` command to get the node IP for the `inventory` service:
+
+```
+kubectl describe pod inventory | grep Node
+```
+{: codeblock}
+
+Store this IP in a variable as well.
+
+```
+INVENTORY_HOST={inventory-node-ip}
+```
+{: codeblock}
+
+Verify that the variables that contain the IPs are set correctly:
+
+```
+echo $SYSTEM_HOST && echo $INVENTORY_HOST
+```
+{: codeblock}
+
+Then use the following `curl` commands to access your microservices:
+
+```
+curl http://$SYSTEM_HOST:31000/system/properties
+```
+{: codeblock}
+
+```
+curl http://$INVENTORY_HOST:32000/inventory/systems/system-service
+```
+{: codeblock}
+
+The first URL returns system properties and the name of the pod in an HTTP header called `X-Pod-Name`.
+To view the header, you can use the `-I` option in the `curl` command when you make a request to the
+`http://$SYSTEM_HOST:31000/system/properties` URL.
+The second URL adds properties from `system-service` to the inventory Kubernetes Service. 
+Making a request to the `http://$INVENTORY_HOST:32000/inventory/systems/[kube-service]` URL in general 
+adds to the inventory depending on whether `kube-service` is a valid Kubernetes service that can be accessed.
 
 
 # Scaling a deployment
 
-To use load balancing, you need to scale your deployments. When you scale a deployment, you replicate its pods, creating more running instances of your applications. Scaling is one of the primary advantages of Kubernetes because replicating your application allows it to accommodate more traffic, and then descale your deployments to free up resources when the traffic decreases.
+To use load balancing, you need to scale your deployments. 
+When you scale a deployment, you replicate its pods, creating more running instances of your applications. 
+Scaling is one of the primary advantages of Kubernetes because you can replicate your application to accommodate more traffic, 
+and then descale your deployments to free up resources when the traffic decreases.
 
 As an example, scale the **system** deployment to three pods by running the following command:
 ```
@@ -443,29 +502,57 @@ system-deployment-6bd97d9bf6-x4zth      1/1       Running   0          25s
 inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
 ```
 
-Wait for your two new pods to be in the ready state, then **curl -I** or visit the **http://[hostname]:31000/system/properties** URL. You'll notice that the **X-Pod-Name** header will have a different value when you call it multiple times. This is because there are now three pods running all serving the **system** application. Similarly, to descale your deployments you can use the same scale command with fewer replicas.
+
+Wait for your two new pods to be in the ready state, then make the following `curl` command:
+
+```
+curl -I http://$SYSTEM_HOST:31000/system/properties
+```
+{: codeblock}
+
+Notice that the **X-Pod-Name** header has a different value when you call it multiple times.
+The value changes because three pods that all serve the **system** application are now running.
+Similarly, to descale your deployments you can use the same scale command with fewer replicas.
+
+```
+kubectl scale deployment/system-deployment --replicas=1
+```
+{: codeblock}
+
 
 # Redeploy microservices
 
-When you're building your application, you may find that you want to quickly test a change. To do that, you can rebuild your Docker images then delete and re-create your Kubernetes resources. Note that there will only be one **system** pod after you redeploy since you're deleting all of the existing pods.
+When you're building your application, you might want to quickly test a change. 
+To run a quick test, you can rebuild your Docker images then delete and re-create your Kubernetes resources. 
+Note that there is only one **system** pod after you redeploy since you're deleting all of the existing pods.
+
+
 ```
 mvn clean package
-kubectl delete -f kubernetes.yaml
-{: codeblock}
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 
+kubectl delete -f kubernetes.yaml
 kubectl apply -f kubernetes.yaml
 ```
 {: codeblock}
 
-
-This is not how you would want to update your applications when running in production, but in a development environment this is fine. If you want to deploy an updated image to a production cluster, you can update the container in your deployment with a new image. Then, Kubernetes will automate the creation of a new container and decommissioning of the old one once the new container is ready.
+Updating your applications in this way is fine for development environments, but it is not suitable for production.
+If you want to deploy an updated image to a production cluster, 
+you can update the container in your deployment with a new image. 
+Once the new container is ready, Kubernetes automates both the creation of a new container and the decommissioning of the old one.
 
 
 # Testing microservices that are running on Kubernetes
 
-A few tests are included for you to test the basic functionality of the microservices. If a test failure
-occurs, then you might have introduced a bug into the code. To run the tests, wait for all pods to be
-in the ready state before proceeding further. The default properties defined in the **pom.xml** are:
+A few tests are included for you to test the basic functionality of the microservices. 
+If a test failure occurs, then you might have introduced a bug into the code. 
+To run the tests, wait for all pods to be in the ready state before proceeding further. 
+The default properties defined in the **pom.xml** are:
 
 | *Property*                        | *Description*
 | ---| ---
@@ -477,13 +564,20 @@ in the ready state before proceeding further. The default properties defined in 
 Navigate back to the **start** directory.
 
 
-Run the integration tests with the IP address for Minikube:
+Update the `pom.xml` files so that the `cluster.ip` properties match the values of your node IPs.
+
 ```
-mvn failsafe:integration-test -Dcluster.ip=$(minikube ip)
+sed -i 's=localhost='"$INVENTORY_HOST"'=g' inventory/pom.xml
+sed -i 's=localhost='"$SYSTEM_HOST"'=g' system/pom.xml
 ```
 {: codeblock}
 
+Run the integration tests by using the following command:
 
+```
+mvn failsafe:integration-test
+```
+{: codeblock}
 
 If the tests pass, you'll see an output similar to the following for each service respectively:
 
@@ -512,10 +606,10 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 
-
 # Tearing down the environment
 
-When you no longer need your deployed microservices, you can delete all Kubernetes resources by running the **kubectl delete** command:
+When you no longer need your deployed microservices, 
+you can delete all Kubernetes resources by running the **kubectl delete** command:
 ```
 kubectl delete -f kubernetes.yaml
 ```
@@ -524,43 +618,13 @@ kubectl delete -f kubernetes.yaml
 
 
 
-Perform the following steps to return your environment to a clean state.
-
-. Point the Docker daemon back to your local machine:
-+
-```
-eval $(minikube docker-env -u)
-```
-. Stop your Minikube cluster:
-+
-```
-minikube stop
-```
-{: codeblock}
-
-
-. Delete your cluster:
-+
-```
-minikube delete
-```
-{: codeblock}
-
-
-
-
-
-
-
-
-
-
 # Summary
 
 ## Nice Work!
 
-You have just deployed two microservices running in Open Liberty to Kubernetes. You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
+You have just deployed two microservices that are running in Open Liberty to Kubernetes.
 
+You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
 
 
 
