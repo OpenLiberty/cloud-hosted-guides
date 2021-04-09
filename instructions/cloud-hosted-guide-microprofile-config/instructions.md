@@ -101,7 +101,13 @@ mvn liberty:stop
 
 # Ordering multiple configuration sources
 
-Now, navigate to the **start** directory to begin.
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd /home/project/guide-microprofile-config/start
+```
+{: codeblock}
+
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
