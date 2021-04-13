@@ -14,12 +14,14 @@ header.header-global .search-group form.search .search-button {
 .header-global .nav-global {
     display: none;
 }
+
 body {
     background: #fbfbfb;
 }
 .content-wrapper {
     background: #fbfbfb;
-    margin-top: 60px;
+    margin-top: 3.5rem;
+    margin-bottom: 1rem;
 }
 .wrapper-footer {
     background: #d6d6d6;
@@ -89,7 +91,6 @@ body {
 
 
 
-
 #content > div > section > div > div > a > div.developer--card__bottom > p.available {
     position: absolute;
     display: flex;
@@ -123,17 +124,66 @@ body {
 }
 
 #content > div > section {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: stretch;
-    padding-bottom: 2rem;
-}
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: stretch;
+        padding-bottom: 2rem;
+    }
 
 #content > div > section:after {
-    content: "";
-    flex-basis: 32%;
-}
+        content: "";
+        flex-basis: 32%;
+    }
+    
+#content > div > section > div {
+        flex: 0 32%;
+        margin-bottom: 2%; /* (100-32*3)/2 */
+        position: relative;
+        padding: 1rem;
+        background-color: #f4f4f4;
+        outline: 2px solid transparent;
+        outline-offset: -2px;
+    }
+    
+#content > div > section > div > div > a > div.developer--card__bottom > p.available {
+        position: absolute;
+        bottom: 8%;
+        display: flex;
+        align-items: center;
+    }
+    
+    
+/*#content > div > div > div {*/
+/*        display: flex;*/
+/*        flex-wrap: wrap;*/
+/*        justify-content: space-between;*/
+/*        align-items: stretch;*/
+/*        padding-bottom: 2rem;*/
+/*    }*/
+    
+/*    #content > div > div:after {*/
+/*        content: "";*/
+/*        flex-basis: 32%;*/
+/*    }*/
+    
+/*#content > div > div > div > div > section {*/
+/*        flex: 0 32%;*/
+        margin-bottom: 2%; /* (100-32*3)/2 */
+/*        position: relative;*/
+/*        padding: 1rem;*/
+/*        background-color: #ffffff;*/
+/*        outline: 2px solid transparent;*/
+/*        outline-offset: -2px;*/
+/*    }*/
+    
+/*#content > div > div > div > div > section > div > div > a > div.developer--card__bottom > p.available {*/
+/*        position: absolute;*/
+/*        bottom: 8%;*/
+/*        display: flex;*/
+/*        align-items: center;*/
+/*    }*/
+
 
 body > div > div.wrapper.wrapper-footer {
   max-width: 100%;
@@ -144,24 +194,21 @@ body > div > div.wrapper.wrapper-footer {
     margin-top:-32px;
 }
 
-/* New Workshop pages */
-/*#content > div > div > div {*/
-/*    display: flex;*/
-/*    flex-wrap: wrap;*/
-/*    justify-content: space-between;*/
-/*    align-items: stretch;*/
-/*    padding-bottom: 2rem;*/
-/*}*/
+body > div > div.wrapper.wrapper-footer > footer > p {
+        color: #767676;
+}
 
-/*#content > div > div > div:after {*/
-/*    content: "";*/
-/*    flex-basis: 32%;*/
-/*}*/
+body > div > div.wrapper.wrapper-footer {
+    height: 6rem;
+    /*position:fixed;*/
+    /*width:100%;*/
+    padding-top: 0.5rem;
+}
 
-/*#content > div > div > div > div > section > > div{*/
-/*    border: 0px !important;*/
-/*}*/
+body > div > div.wrapper.wrapper-footer > footer > p {
+    margin:0;
+}
 
-/*#content > div > div > div > div > section > div > div > a > h5 {*/
-/* background-color:#ffffff !important;   */
-/*}*/
+#footer-openedx > div {
+    margin-bottom:-1rem;
+}
