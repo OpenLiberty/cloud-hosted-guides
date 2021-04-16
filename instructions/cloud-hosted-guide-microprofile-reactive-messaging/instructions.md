@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted-guide-microprofile-reactive-messaging!
+# Welcome to the Creating reactive Java microservices guide!
+
+Learn how to write reactive Java microservices using MicroProfile Reactive Messaging.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,12 +10,8 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Creating reactive Java microservices
 
-
-Learn how to write reactive Java microservices using MicroProfile Reactive Messaging.
-
-## What you'll learn
+# What you'll learn
 
 You will learn how to build reactive microservices that can send requests to other microservices, and asynchronously receive and process the responses. You will use an external messaging system to handle the asynchronous messages that are sent and received between the microservices as streams of events. MicroProfile Reactive Messaging makes it easy to write and configure your application to send, receive, and process the events efficiently.
 
@@ -552,18 +550,12 @@ Next, use the provided script to start the application in Docker containers. The
 
 # Testing the application
 
+The application might take several minutes to become available.
 After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint of the **inventory** service. 
 
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
 
 
 Go to the http://localhost:9085/inventory/systems URL to access the inventory microservice. You see the CPU **systemLoad** property for all the systems:
@@ -642,9 +634,18 @@ rm -fr guide-microprofile-reactive-messaging
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/pulls)
+
+
+
+
+## Where to next? 
+
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+
+
+## Log out of the session
+
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
-
-
-# Where to next? 
-
-- [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
