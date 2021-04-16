@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted-guide-microprofile-rest-client!
+# Welcome to the Consuming RESTful services with template interfaces guide!
+
+Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,13 +10,9 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Consuming RESTful services with template interfaces
 
 
-Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
-
-
-## What you'll learn
+# What you'll learn
 
 You will learn how to build a MicroProfile Rest Client to access remote RESTful services. You will create a template interface that maps to the remote service that you want to call.
 MicroProfile Rest Client automatically generates a client instance based on what is defined and annotated in the template interface.
@@ -27,9 +25,9 @@ service on that host. The **system** service simulates a remote service in the a
 You will instantiate the client and use it in the **inventory** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/ref/general/#contexts_dependency_injection.html) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method.
 In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
 
- - When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with CDI method.
+ * When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with a CDI method.
 
- - When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose **RestClientBuilder** method.
+ * When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose **RestClientBuilder** method.
 
 
 # Getting started
@@ -77,21 +75,14 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
-You can access the following microservices:
-
+The **system** microservice simulates a service that returns the system
+property information for the host. 
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
 
-```
-cd /home/project
-```
-{: codeblock}
-
-
- The http://localhost:9080/system/properties microservice simulates the remote **system** service that retrieves the system property information for a specific host. In this case, **localhost** is a specific host name.
+The **system** service is accessible at the http://localhost:9080/system/properties URL. In this case, **localhost** is the host name.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -103,9 +94,10 @@ curl http://localhost:9080/system/properties
 
 
 
+The **inventory** microservice makes a request to the **system** microservice and
+stores the system property information. 
 
-
- The http://localhost:9080/inventory/systems/localhost microservice is the **inventory** service that invokes the http://localhost:9080/system/properties microservice to retrieves the system property information.
+To fetch and store your system information, enter the http://localhost:9080/inventory/systems/localhost URL into your browser. 
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -118,17 +110,11 @@ curl http://localhost:9080/inventory/systems/localhost
 
 
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+You can also use the **http://localhost:9080/inventory/systems/{your_hostname}** URL. In Windows,
+MacOS, and Linux, get your fully qualified domain name (FQDN) by entering
+**hostname** into your command-line. Visit the URL by replacing **{your_hostname}**
+with your FQDN.
 
-```
-curl http://localhost:9080/system/properties
-```
-{: codeblock}
-
-
-
-* The http://localhost:9080/inventory/systems/{your_hostname} microservice is the **inventory** service that invokes the http://{your_hostname}:9080/system/properties microservice. In Windows, Mac OS, and Linux, get your fully qualified domain name (FQDN) by entering **hostname** from your terminal. Visit the URL by replacing **{your_hostname}** with your FQDN.
-You will see the same system property information, but the process of getting the information is different.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -222,7 +208,7 @@ The MicroProfile Rest Client feature automatically builds and generates a client
 Notice the **SystemClient** interface inherits the **AutoCloseable** interface.
 This allows the user to explicitly close the client instance by invoking the **close()** method or to implicitly close the client instance using a try-with-resources block. When the client instance is closed, all underlying resources associated with the client instance are cleaned up. Refer to the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases) for more details.
 
-When the **getProperties()** method is invoked, the **SystemClient** instance sends a GET request to the **<baseUrl>/properties** endpoint, where **<baseUrl>** is the default base URL of the **system** service. You will see how to configure the base URL in the next section.
+When the **getProperties()** method is invoked, the **SystemClient** instance sends a GET request to the **`<baseUrl>/properties`** endpoint, where **`<baseUrl>`** is the default base URL of the **system** service. You will see how to configure the base URL in the next section.
 
 The **@Produces** annotation specifies the media (MIME) type of the expected response. The default value is **`MediaType.APPLICATION_JSON`**.
 
@@ -515,8 +501,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 When the server is running, select either approach to fetch your system properties:
 
 
-
-Visit the http://localhost:9080/inventory/systems/localhost URL. The URL retrieves the system property information for **localhost** host name by invoking the http://localhost:9080/system/properties service.
+ Visit the http://localhost:9080/inventory/systems/localhost URL. The URL retrieves the system property information for the **localhost** host name by making a request to the **system** service at **http://localhost:9080/system/properties**.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -529,17 +514,7 @@ curl http://localhost:9080/inventory/systems/localhost
 
 
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/system/properties
-```
-{: codeblock}
-
-
-
- Get your FQDN first. Then, visit the http://localhost:9080/inventory/systems/{your_hostname} URL by replacing **`{your_hostname}`** with your FQDN, which retrieves your system properties by invoking the http://{your_hostname}:9080/system/properties service.
-
+Or, get your FQDN first. Then, visit the **http://localhost:9080/inventory/systems/{your_hostname}** URL by replacing **{your_hostname}** with your FQDN, which retrieves your system properties by making a request to the **system** service at **http://{your_hostname}:9080/system/properties**.
 
 
 # Testing the application
@@ -715,12 +690,21 @@ rm -fr guide-microprofile-rest-client
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-rest-client/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-rest-client/pulls)
+
+
+
+
+## Where to next? 
+
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
+
+
+## Log out of the session
+
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
-
-
-# Where to next? 
-
-- [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-- [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-- [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-- [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
