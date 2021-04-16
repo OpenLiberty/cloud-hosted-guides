@@ -1,5 +1,7 @@
 
-# Welcome to the cloud-hosted-guide-rest-intro!
+# Welcome to the Creating a RESTful web service guide!
+
+Learn how to create a REST service with JAX-RS, JSON-B, and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -8,14 +10,10 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# Creating a RESTful web service
-
-
-Learn how to create a REST service with JAX-RS, JSON-B, and Open Liberty.
 
 
 
-## What you'll learn
+# What you'll learn
 
 You will learn how to build and test a simple REST service with JAX-RS and JSON-B, which will expose
 the JVM's system properties. The REST service will respond to **GET** requests made to the **http://localhost:9080/LibertyProject/System/properties** URL.
@@ -81,20 +79,12 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Check out the service at the
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Run the following command to navigate to the **/home/project** directory:
 
-```
-cd /home/project
-```
-{: codeblock}
-
-
-http://localhost:9080/LibertyProject/System/properties URL. 
+Check out the service at the http://localhost:9080/LibertyProject/System/properties URL. 
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -274,11 +264,11 @@ Replace the server configuration file.
 
 The configuration does the following actions:
 
-. Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
-. Configures the server to resolve the HTTP port numbers from variables, which are then specified in
-the Maven **pom.xml** file. This is specified in the **<httpEndpoint/>** element. Variables use the **${variableName}** syntax.
-. Configures the server to run the produced web application on a context root specified in the 
-**pom.xml** file. This is specified in the **<webApplication/>** element.
+* Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
+* Configures the server to resolve the HTTP port numbers from variables, which are then specified in
+the Maven **pom.xml** file. This is specified in the **`<httpEndpoint/>`** element. Variables use the **${variableName}** syntax.
+* Configures the server to run the produced web application on a context root specified in the 
+**pom.xml** file. This is specified in the **`<webApplication/>`** element.
 
 
 The variables that are being used in the **server.xml** file are provided by the properties set in the Maven **pom.xml** file. The properties must be formatted as **liberty.var.variableName**.
@@ -288,9 +278,8 @@ The variables that are being used in the **server.xml** file are provided by the
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
-Check out the service that you created at the
 
-http://localhost:9080/LibertyProject/System/properties URL. 
+Check out the service that you created at the http://localhost:9080/LibertyProject/System/properties URL. 
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -305,19 +294,9 @@ curl http://localhost:9080/LibertyProject/System/properties
 
 # Testing the service
 
+
 You can test this service manually by starting a server and pointing a web browser at the
-
 http://localhost:9080/LibertyProject/System/properties URL. However, automated tests are a 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/LibertyProject/System/properties
-```
-{: codeblock}
-
-
 much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS 
 Client API provide a simple environment to test the application.
 
@@ -393,7 +372,7 @@ The test method is indicated with the **@Test** annotation.
 The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the server configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven **pom.xml** file. Refer to the **pom.xml** file to see how the application information such as the **default.http.port**, **default.https.port** and **app.context.root** elements are provided in the file.
 
 
-These Maven properties are then passed to the Java test program as the **<systemPropertyVariables/>** element in the **pom.xml** file.
+These Maven properties are then passed to the Java test program as the **`<systemPropertyVariables/>`** element in the **pom.xml** file.
 
 Getting the values to create a representation of the URL is simple. The test class uses the **getProperty** method
 to get the application details.
@@ -457,10 +436,19 @@ rm -fr guide-rest-intro
 ```
 {: codeblock}
 
+## What could make this guide better?
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-rest-intro/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-rest-intro/pulls)
+
+
+
+
+## Where to next? 
+
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+
+
+## Log out of the session
+
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
-
-
-# Where to next? 
-
-- [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-- [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
