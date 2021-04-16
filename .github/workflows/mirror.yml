@@ -3,7 +3,7 @@ name: Mirror to GitLab Repos
 # Triggers the workflow on push events but only for the master branch.
 on:
   push:
-    branches: [ master ]
+    branches: [ prod ]
 
 jobs:
   deploy:
@@ -15,11 +15,6 @@ jobs:
               # Add new cloud-hosted-guides here to add them to the mirror process.
               # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
         repo: 
-          - {"github":"cloud-hosted-draft-guide-contract-testing","gitlab":"cloud-hosted-guide-contract-testing"}
-          - {"github":"cloud-hosted-draft-guide-development-1","gitlab":"cloud-hosted-draft-guide-development-1"}
-          - {"github":"cloud-hosted-draft-guide-development-2","gitlab":"cloud-hosted-draft-guide-development-2"}
-          - {"github":"cloud-hosted-draft-guide-development-3","gitlab":"cloud-hosted-draft-guide-development-3"}
-          - {"github":"cloud-hosted-draft-guide-development-4","gitlab":"cloud-hosted-draft-guide-development-4"}
           - {"github":"cloud-hosted-guide-cdi-intro","gitlab":"cloud-hosted-guide-cdi-intro"}
           - {"github":"cloud-hosted-guide-containerize","gitlab":"cloud-hosted-guide-containerize"}
           - {"github":"cloud-hosted-guide-docker","gitlab":"cloud-hosted-guide-docker"}
