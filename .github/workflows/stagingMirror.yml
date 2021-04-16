@@ -15,7 +15,6 @@ jobs:
               # Add new cloud-hosted-guides here to add them to the mirror process.
               # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
         repo: 
-          - {"github":"cloud-hosted-draft-guide-contract-testing","gitlab":"cloud-hosted-guide-contract-testing"}
           - {"github":"cloud-hosted-draft-guide-development-1","gitlab":"cloud-hosted-draft-guide-development-1"}
           - {"github":"cloud-hosted-draft-guide-development-2","gitlab":"cloud-hosted-draft-guide-development-2"}
           - {"github":"cloud-hosted-draft-guide-development-3","gitlab":"cloud-hosted-draft-guide-development-3"}
