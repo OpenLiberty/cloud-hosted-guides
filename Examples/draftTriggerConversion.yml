@@ -9,6 +9,7 @@ on:
       - 'main'
       - 'dev'
       - 'draft'
+      - 'staging'
     paths:
       - 'README.adoc'
       - 'start/**'
