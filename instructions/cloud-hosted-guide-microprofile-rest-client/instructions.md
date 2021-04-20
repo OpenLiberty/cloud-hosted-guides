@@ -97,7 +97,7 @@ curl http://localhost:9080/system/properties
 The **inventory** microservice makes a request to the **system** microservice and
 stores the system property information. 
 
-To fetch and store your system information, enter the http://localhost:9080/inventory/systems/localhost URL into your browser. 
+To fetch and store your system information, visit the http://localhost:9080/inventory/systems/localhost URL.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
