@@ -254,7 +254,7 @@ Your app URL will look something like the following:
 rest-quicklab-sn-labs-<your-userID>.sn-labs-user-sandbox-pr-a45631dc5778dc6371c67d206ba9ae5c-0000.tor01.containers.appdomain.cloud
 ```
   
-Navigate to that URL (refresh the page if it didn't load on the first try) and you should see the OpenLiberty page that gets generated from the base image. Append "/LibertyProject" after the URL and you should see a page with "Welcome to your Liberty Application" message. Finally, "/LibertyProject/System/properties" subURL should show you a list of system properties from the machine the OpenLiberty server is running on. For best viewing result, you can install a JSON viewer tool to your browser.
+Navigate to that URL (refresh the page if it didn't load on the first try) and you should see the OpenLiberty page that gets generated from the base image. Append **/LibertyProject** after the URL and you should see a page with "Welcome to your Liberty Application" message. Finally, **/LibertyProject/System/properties-new** subURL should show you a list of system properties from the machine the OpenLiberty server is running on. For best viewing result, you can install a JSON viewer tool to your browser.
 
 ### Troubleshooting (optional)
 
