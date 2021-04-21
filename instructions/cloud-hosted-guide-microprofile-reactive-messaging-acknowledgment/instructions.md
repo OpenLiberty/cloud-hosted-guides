@@ -99,7 +99,12 @@ the **MANUAL** acknowledgment strategy would be beneficial
 # Implementing the MANUAL acknowledgment strategy
 
 
-Navigate to the **start** directory to begin.
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd /home/project/guide-microprofile-reactive-messaging-acknowledgment/start
+```
+{: codeblock}
 
 Update the **SystemService.sendProperty** method to use the **MANUAL** acknowledgment strategy, which fits the method processing
 requirements better than the default **`PRE_PROCESSING`** strategy.
