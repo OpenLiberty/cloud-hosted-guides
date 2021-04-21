@@ -9,6 +9,7 @@ on:
       - 'main'
       - 'dev'
       - 'draft'
+      - 'staging'
     paths:
       - 'README.adoc'
       - 'start/**'
@@ -35,4 +36,4 @@ jobs:
         repo: OpenLiberty/cloud-hosted-guides
         token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
         inputs: '{ "branch": "${{ github.ref }}", "guide_name": "${{ github.event.repository.name }}" }'
-        ref: "refs/heads/master"
+        ref: "refs/heads/prod"
