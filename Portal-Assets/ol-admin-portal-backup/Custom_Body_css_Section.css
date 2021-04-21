@@ -79,7 +79,7 @@ body {
     font-weight: 550;
     letter-spacing: 0;
     margin:0;
-    padding: 32px 0;
+    padding-top: 50px;
 }
 .row.course-details-content p {
     @import url('https://fonts.googleapis.com/css2?family=Asap:wght@400;500;600;700&display=swap');
