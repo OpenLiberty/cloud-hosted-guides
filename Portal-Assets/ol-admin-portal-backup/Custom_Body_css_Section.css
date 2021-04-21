@@ -184,14 +184,23 @@ body {
 /*        align-items: center;*/
 /*    }*/
 
-
+/*
 body > div > div.wrapper.wrapper-footer {
-  max-width: 100%;
+    max-width: 100%;
     overflow:hidden;
     position:relative;
-     /*negative value of footer height */
+    // negative value of footer height
     height:120px;
     margin-top:-32px;
+}
+*/
+
+body > div > div.wrapper.wrapper-footer {
+    overflow:hidden;
+    width: 100%;
+    position:absolute;
+    bottom: 0%;
+    height:120px;
 }
 
 body > div > div.wrapper.wrapper-footer > footer > p {
