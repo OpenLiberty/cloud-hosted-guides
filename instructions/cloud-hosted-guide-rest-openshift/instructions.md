@@ -307,6 +307,8 @@ In this lab, you learned:
 2. How to build and run the app locally
 3. How to build and deploy the app on Red Hat OpenShift 4.X
 
+Nice work! You have learned how to develop a REST service in Open Liberty by using JAX-RS and JSON-B and then deployed the application on OpenShift 4.x.
+
 ## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
