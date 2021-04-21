@@ -1,6 +1,6 @@
 # Building and deploying a RESTful web service on OpenShift 4.x
 
-When you create a new REST application, the design of the API is important. The JAX-RS APIs can be used to create JSON-RPC, or XML-RPC APIs, but it wouldn't be a RESTful service. A good RESTful service is designed around the resources that are exposed, and on how to create, read, update, and delete the resources. The service responds to **GET** requests to the **/LibertyProject/System/properties** path. The **GET** request should return a **200 OK** response that contains all of the JVM's system properties.
+When you create a new REST application, the design of the API is important. A good RESTful service is designed around the resources that are exposed, and on how to create, read, update, and delete the resources. The service responds to **GET** requests to the **/LibertyProject/System/properties** path. The **GET** request should return a **200 OK** response that contains all of the JVM's system properties.
 
 The platform where your application is deployed to is equally important as the design of your application/API. OpenShift provides a secure, scalable and universal way to build and deploy your application. Regardless of the infrastructure, OpenShift can run your application on private cloud, public cloud or physical machines. Although OpenShift offers multiple ways to build your application, you'll be building from your local files using a binary build process that matches close to a typical developer workflow. To learn more about OpenShift 4.X build processes, refer to [this link](https://docs.openshift.com/container-platform/4.3/builds/understanding-image-builds.html). 
 
@@ -127,7 +127,7 @@ Next update the **server** config file.
 
 ```
   <!-- tag::webApplication[] -->
-  <webApplication location="guide-rest-intro.war" contextRoot="/LibertyProject"/>
+  <webApplication location="guide-docker.war" contextRoot="/LibertyProject"/>
   <!-- end::webApplication[] -->
 ```
 {: codeblock}
