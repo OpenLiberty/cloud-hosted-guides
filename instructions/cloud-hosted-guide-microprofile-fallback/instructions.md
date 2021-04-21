@@ -98,22 +98,16 @@ When you run this curl command, some of these system properties, such as the OS 
 
 
 Update the **CustomConfigSource** configuration file.
+Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
 
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json
 
-
-
 ```
 {"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":false}
+"io_openliberty_guides_system_inMaintenance":true}
 ```
 {: codeblock}
-
-
-
-
-Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
 
 
 You do not need to restart the server. 
@@ -128,23 +122,19 @@ You see the cached properties for this localhost.
 
 When you are done checking out the application, go to the **CustomConfigSource.json** file again.
 
+
 Update the **CustomConfigSource** configuration file.
+Change the **`io_openliberty_guides_system_inMaintenance`** property from **true** to **false** to set this
+condition back to its original value.
 
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json
-
-
 
 ```
 {"config_ordinal":500,
 "io_openliberty_guides_system_inMaintenance":false}
 ```
 {: codeblock}
-
-
-
-Change the **`io_openliberty_guides_system_inMaintenance`** property from **true** to **false** to set this
-condition back to its original value.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -385,24 +375,20 @@ application_ft_io_openliberty_guides_inventory_InventoryManager_get_fallback_cal
 
 You can test the fault tolerance mechanism of your microservices by dynamically changing
 the **`io_openliberty_guides_system_inMaintenance`** property value to **true** in the
-**resources/CustomConfigSource.json** file, which turns the **system** service in maintenance.
+**resources/CustomConfigSource.json** file, which puts the **system** service in maintenance.
+
 
 Update the configuration file.
+Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
 
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
 
-
-
-
 ```
 {"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":false}
+"io_openliberty_guides_system_inMaintenance":true}
 ```
 {: codeblock}
-
-
-Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
 
 
 
@@ -448,24 +434,19 @@ data indicates that the **get()** was called twice including the previous call b
 The **`ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total`** data
 indicates that the **fallbackForGet()** method was called once.
 
+
 Update the configuration file.
+After you finish, change the **`io_openliberty_guides_system_inMaintenance`**
+property value back to **false** in the **resources/CustomConfigSource.json** file.
 
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
-
-
-
 
 ```
 {"config_ordinal":500,
 "io_openliberty_guides_system_inMaintenance":false}
 ```
 {: codeblock}
-
-
-After you finish, change the **`io_openliberty_guides_system_inMaintenance`**
-property value back to **false** in the **resources/CustomConfigSource.json** file.
-
 
 
 # Testing the application
