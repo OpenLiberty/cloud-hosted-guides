@@ -198,8 +198,8 @@ body > div > div.wrapper.wrapper-footer {
 body > div > div.wrapper.wrapper-footer {
     width: 100%;
     position:relative;
-    bottom: 0%;
-    padding-top: 0rem;
+    padding-top: 0.2rem;
+    padding-bottom: 3.3rem;
 }
 
 body > div > div.wrapper.wrapper-footer > footer > p {
