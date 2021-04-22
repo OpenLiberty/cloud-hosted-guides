@@ -199,7 +199,7 @@ body > div > div.wrapper.wrapper-footer {
     width: 100%;
     position:relative;
     padding-top: 0.2rem;
-    padding-bottom: 3.3rem;
+    padding-bottom: 1.3rem;
 }
 
 body > div > div.wrapper.wrapper-footer > footer > p {
@@ -236,4 +236,14 @@ body > div > div.wrapper.wrapper-footer > footer > p {
 
 #content > div > div > div > div > section > div > div > a > div.developer--card__body > h2 {
     font-size: 1.5rem !important;
+}
+
+
+body, .window-wrap {
+  min-height: 100vh;
+}
+.wrapper-footer {
+  position: sticky !important;
+  top: 100vh;
+  right: 0;
 }
