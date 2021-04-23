@@ -270,8 +270,7 @@ Clearly, there are many more OpenAPI annotations now, so let’s break them down
 
 | *Annotation*    | *Description*
 | ---| ---
-| **@APIResponses** | A container for multiple responses from an API operation. This annotation is
-optional, but it can be helpful to organize a method with multiple responses.
+| **@APIResponses** | A container for multiple responses from an API operation. This annotation is optional, but it can be helpful to organize a method with multiple responses.
 | **@APIResponse**  | Describes a single response from an API operation.
 | **@Content**      | Provides a schema and examples for a particular media type.
 | **@Schema**       | Defines the input and output data types.
