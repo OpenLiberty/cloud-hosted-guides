@@ -12,8 +12,6 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
-
 # What you'll learn
 
 You will learn how to document and filter RESTful APIs from annotations, POJOs, and static OpenAPI
@@ -92,11 +90,13 @@ curl http://localhost:9080/openapi
 {: codeblock}
 
 A UI is also available for a more interactive view of the deployed APIs.
-To visit the UI, select **Launch Application** from the menu of the IDE, type in **9080** to specify the port number 
-and click the **OK** button. You’re redirected to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
-where **accountname** is your account name. Click the **interactive UI** link on the welcome page. 
-This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swagger-ui)
-renders the generated **/openapi** document into a very user friendly page.
+To visit the UI, select **Launch Application** from the menu of the IDE, 
+type in **9080** to specify the port number and click the **OK** button. 
+You’re redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`**, 
+where **accountname** is your account name. 
+Click the **interactive UI** link on the welcome page. 
+This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swagger-ui), 
+which renders the generated **/openapi** document into a very user friendly page.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -149,8 +149,9 @@ curl http://localhost:9080/openapi
 ```
 {: codeblock}
 
-To visit the UI for a more interactive view of the APIs, select **Launch Application** from the menu of the IDE, type in **9080** to specify the port number 
-and click the **OK** button. You’re redirected to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL.
+To visit the UI for a more interactive view of the APIs, select **Launch Application** from the menu of the IDE, 
+type in **9080** to specify the port number and click the **OK** button. 
+You’re redirected to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL.
 Click the **interactive UI** link on the welcome page. 
 
 ### Augmenting the existing JAX-RS annotations with OpenAPI annotations
@@ -259,7 +260,9 @@ public class InventoryResource {
 
 
 
-Add OpenAPI **@APIResponses**, **@Operation** and **@Parameter** annotations to the two JAX-RS methods, **getPropertiesForHost()** and **listContents()**.
+Add OpenAPI **@APIResponses**, **@Operation** 
+and **@Parameter** annotations to the two JAX-RS methods, 
+**getPropertiesForHost()** and **listContents()**.
 
 
 
@@ -276,7 +279,8 @@ optional, but it can be helpful to organize a method with multiple responses.
 | **@Parameter**    | Describes a single operation parameter.
 
 
-Since the Open Liberty server was started in development mode at the beginning of the guide, your changes were automatically picked up. 
+Since the Open Liberty server was started in development mode at the beginning of the guide, 
+your changes were automatically picked up. 
 Run the following curl command to see the updated OpenAPI tree:
 ```
 curl http://localhost:9080/openapi
@@ -326,10 +330,13 @@ The two endpoints at which your JAX-RS methods are served are now more meaningfu
 ```
 
 
-OpenAPI annotations can also be added to POJOs to describe what they represent. Currently, your OpenAPI
-document doesn't have a very meaningful description of the **InventoryList** POJO and hence it's very
-difficult to tell exactly what that POJO is used for. To describe the **InventoryList** POJO in more detail, augment the
-**src/main/java/io/openliberty/guides/inventory/model/InventoryList.java** file with some OpenAPI annotations.
+OpenAPI annotations can also be added to POJOs to describe what they represent. 
+Currently, your OpenAPI document doesn't have a very meaningful description of the 
+**InventoryList** POJO and hence it's very difficult to tell 
+exactly what that POJO is used for. 
+To describe the **InventoryList** POJO in more detail, 
+augment the **src/main/java/io/openliberty/guides/inventory/model/InventoryList.java** 
+file with some OpenAPI annotations.
 
 Update the **InventoryList** class.
 
@@ -368,7 +375,8 @@ public class InventoryList {
 
 
 
-Add OpenAPI **@Schema** annotations to the **InventoryList** class and the **systems** variable.
+Add OpenAPI **@Schema** annotations to 
+the **InventoryList** class and the **systems** variable.
 
 
 Likewise, annotate the **src/main/java/io/openliberty/guides/inventory/model/SystemData.java** POJO,
@@ -423,7 +431,9 @@ public class SystemData {
 
 
 
-Add OpenAPI **@Schema** annotations to the **SystemData** class, the **hostname** variable and the **properties** variable.
+Add OpenAPI **@Schema** annotations 
+to the **SystemData** class, 
+the **hostname** variable and the **properties** variable.
 
 
 
@@ -546,13 +556,13 @@ In this case, you are matching the **404** response that is returned by the **/i
 endpoint and setting the previously missing description. To remove an **APIResponse** element
 or another filterable element, simply return **null**.
 
-The **filterOpenAPI()** method allows filtering of the singleton **OpenAPI** element. Unlike other filter
-methods, when you override **filterOpenAPI()**, it is called only once as the last method
-for a particular filter. Hence, make sure that it doesn't override any other filter operations that are
-called before it. Your current OpenAPI document doesn't provide much information on the application
-itself or on what server and port it runs on. This information is usually provided in the **info**
-and **servers** elements, which are currently missing. Use the **OASFactory** class to manually set these
-and other elements of the OpenAPI tree from the **org.eclipse.microprofile.openapi.models**
+The **filterOpenAPI()** method allows filtering of the singleton **OpenAPI** element. 
+Unlike other filter methods, when you override **filterOpenAPI()**, 
+it is called only once as the last method for a particular filter. 
+Hence, make sure that it doesn't override any other filter operations that are called before it. 
+Your current OpenAPI document doesn't provide much information on the application itself or on what server and port it runs on. 
+This information is usually provided in the **info** and **servers** elements, which are currently missing. 
+Use the **OASFactory** class to manually set these and other elements of the OpenAPI tree from the **org.eclipse.microprofile.openapi.models**
 package. The **OpenAPI** element is the only element that cannot be removed since that would mean
 removing the whole OpenAPI tree.
 
@@ -617,7 +627,7 @@ servers:
     text/plain: {}
 ```
 
-For more information about which elements you can filter, see the [MicroProfile API](https://openliberty.io/docs/ref/microprofile/).
+For more information about which elements you can filter, see the [MicroProfile API documentation](https://openliberty.io/docs/ref/microprofile/).
 
 To learn more about MicroProfile Config, visit the MicroProfile Config [GitHub repository](https://github.com/eclipse/microprofile-config)
 and try one of the MicroProfile Config [guides](https://openliberty.io/guides/?search=Config).
@@ -832,7 +842,8 @@ Results :
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
+The warning and error messages are expected and result from a request to a bad or an unknown hostname. 
+This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
 
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
