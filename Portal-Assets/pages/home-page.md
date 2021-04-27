@@ -1,7 +1,7 @@
-Title:
+#Title:
 Welcome to the Skills Network for Open Liberty cloud-hosted guides
 
-Content:
+#Content:
 IBM Developer Skills Network for Open Liberty is an online platform for tutorials and guided workshops that relate to Open Liberty. 
 This platform includes a plethora of content that covers Open Liberty integration with Docker, Kubernetes, OpenShift, MicroProfile, and more. 
 Visit the [Open Liberty Guides](https://openliberty.io/guides) to browse the guides that interest you. 
