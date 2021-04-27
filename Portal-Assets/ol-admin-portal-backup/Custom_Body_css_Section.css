@@ -20,8 +20,8 @@ body {
 }
 .content-wrapper {
     background: #fbfbfb;
-    margin-top: 3.5rem;
-    margin-bottom: 1rem;
+    /* margin-top: 3.5rem; */
+    /* margin-bottom: 1rem; */
 }
 .wrapper-footer {
     background: #d6d6d6;
@@ -79,7 +79,7 @@ body {
     font-weight: 550;
     letter-spacing: 0;
     margin:0;
-    padding: 0;
+    padding-top: 50px;
 }
 .row.course-details-content p {
     @import url('https://fonts.googleapis.com/css2?family=Asap:wght@400;500;600;700&display=swap');
@@ -169,7 +169,7 @@ body {
     
 /*#content > div > div > div > div > section {*/
 /*        flex: 0 32%;*/
-        margin-bottom: 2%; /* (100-32*3)/2 */
+/*        margin-bottom: 2%;  (100-32*3)/2 */
 /*        position: relative;*/
 /*        padding: 1rem;*/
 /*        background-color: #ffffff;*/
@@ -184,28 +184,26 @@ body {
 /*        align-items: center;*/
 /*    }*/
 
-
+/* 
 body > div > div.wrapper.wrapper-footer {
-  max-width: 100%;
+    max-width: 100%;
     overflow:hidden;
     position:relative;
-     /*negative value of footer height */
+    // negative value of footer height
     height:120px;
     margin-top:-32px;
 }
-
-body > div > div.wrapper.wrapper-footer > footer > p {
-        color: #767676;
-}
+*/
 
 body > div > div.wrapper.wrapper-footer {
-    height: 6rem;
-    /*position:fixed;*/
-    /*width:100%;*/
-    padding-top: 0.5rem;
+    width: 100%;
+    position:relative;
+    padding-top: 0.2rem;
+    padding-bottom: 1.3rem;
 }
 
 body > div > div.wrapper.wrapper-footer > footer > p {
+    color: #767676;
     margin:0;
 }
 
@@ -213,7 +211,7 @@ body > div > div.wrapper.wrapper-footer > footer > p {
     margin-bottom:-1rem;
 }
 
-/*Code to change the height of grid boxes*/
+/* Code to change the height of grid boxes */
 #content > div > div > div > div > section {
     padding-bottom: 3%;
     margin-bottom: -1%;
@@ -238,4 +236,14 @@ body > div > div.wrapper.wrapper-footer > footer > p {
 
 #content > div > div > div > div > section > div > div > a > div.developer--card__body > h2 {
     font-size: 1.5rem !important;
+}
+
+
+body, .window-wrap {
+  min-height: 100vh;
+}
+.wrapper-footer {
+  position: sticky !important;
+  top: 100vh;
+  right: 0;
 }
