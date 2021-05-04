@@ -1,12 +1,12 @@
 # Building and deploying a RESTful web service on OpenShift 4.x
 
-When you create a new REST application, the design of the API is important. A good RESTful service is designed around the resources that are exposed, and on how to create, read, update, and delete the resources. The service responds to **GET** requests to the **/LibertyProject/System/properties** path. The **GET** request should return a **200 OK** response that contains all of the JVM's system properties.
+When you create a new REST application, the design of the API is important. A good RESTful service is designed around the resources that are exposed, and on how to create, read, update, and delete the resources. The service responds to **GET** requests to the **/LibertyProject/system/properties-new** path. The **GET** request should return a **200 OK** response that contains all of the JVM's system properties.
 
 The platform where your application is deployed to is equally important as the design of your application/API. OpenShift provides a secure, scalable and universal way to build and deploy your application. Regardless of the infrastructure, OpenShift can run your application on private cloud, public cloud or physical machines. Although OpenShift offers multiple ways to build your application, you'll be building from your local files using a binary build process that matches close to a typical developer workflow. To learn more about OpenShift 4.X build processes, refer to [this link](https://docs.openshift.com/container-platform/4.3/builds/understanding-image-builds.html). 
 
 ## What you will learn
 
-Red Hat OpenShift is a leading hybrid cloud, enterprise Kubernetes application platform. In this lab, you will learn how to build and deploy a simple REST service with JAX-RS and JSON-B on OpenShift 4.X (the 'X' indicates that the lab can run on any OpenShift4 version). The REST service will respond to **GET** requests made to the /LibertyProject/System/properties endpoint.
+Red Hat OpenShift is a leading hybrid cloud, enterprise Kubernetes application platform. In this lab, you will learn how to build and deploy a simple REST service with JAX-RS and JSON-B on OpenShift 4.X (the 'X' indicates that the lab can run on any OpenShift4 version). The REST service will respond to **GET** requests made to the **/LibertyProject/system/properties-new** endpoint.
 
 The service responds to a **GET** request with a JSON representation of the system properties, where each property is a field in a JSON object like this:
 
@@ -65,9 +65,9 @@ Go to:
 
 This resource class has quite a bit of code in it, so let's break it down into manageable chunks.
 
-The **@Path** annotation on the class indicates that this resource responds to the **properties** path in the JAX-RS application. The **@ApplicationPath** annotation in the **SystemApplication** class together with the **@Path** annotation in this class indicates that the resource is available at the **System/properties** path.
+The **@Path** annotation on the class indicates that this resource responds to the **properties** path in the JAX-RS application. The **@ApplicationPath** annotation in the **SystemApplication** class together with the **@Path** annotation in this class indicates that the resource is available at the **system/properties-new** path.
 
-JAX-RS maps the HTTP methods on the URL to the methods on the class. The method to call is determined by the annotations that are specified on the methods. In the application you are building, an HTTP **GET** request to the **System/properties** path results in the system properties being returned.
+JAX-RS maps the HTTP methods on the URL to the methods on the class. The method to call is determined by the annotations that are specified on the methods. In the application you are building, an HTTP **GET** request to the **system/properties-new** path results in the system properties being returned.
 
 The **@GET** annotation on the method indicates that this method is to be called for the HTTP **GET** method. The **@Produces** annotation indicates the format of the content that will be returned. The value of the **@Produces** annotation will be specified in the HTTP **Content-Type** response header. For this application, a JSON structure is to be returned. The desired **Content-Type** for a JSON response is **application/json** with **MediaType.APPLICATION_JSON** instead of the **String** content type. Using a constant such as **MediaType.APPLICATION_JSON** is better because if there's a spelling error, a compile failure occurs.
 
@@ -93,7 +93,7 @@ The configuration does the following actions:
 
 1. Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
 2. Configures the server to resolve the HTTP port numbers from variables, which are then specified in the Maven **pom.xml** file. This is specified in the **<httpEndpoint/>** element. Variables use the **${variableName}** syntax. 
-3. Configures the server to run the produced web application on a context root specified in the **pom.xml** file. This is specified in the **<webApplication/>** element.
+3. Configures the server to run the produced web application on a context root specified in the **pom.xml** file. This is specified in the **`<webApplication/>`** element.
 
 Take a look at the pom.xml file. 
 
@@ -111,14 +111,11 @@ Update the **Pom** config file.
   **File** > **Open** > guide-docker/finish/pom.xml
 
 ```
-        <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
         <liberty.var.app.context.root>LibertyProject</liberty.var.app.context.root>
 ```
 {: codeblock}
 
-Add the above to the end of the **properties** section (Add a new line at the end of **line 21** and paste the above code in).
+Add the above to the end of the **properties** section (Add a new line at the end of **line 21** and paste the above code in). This specifies the context root for the application.
 
 Next update the **server** config file.
 
@@ -136,7 +133,7 @@ Replace **line 14** with the above code snippet.
 
 To try out the application locally, run the following Maven goal to build the application and deploy it to Open Liberty:
 ```
-cd guide-docker/finish/
+cd finish
 pwd
 ```
 {: codeblock}
@@ -153,7 +150,7 @@ Wait till you see the following message in the logs.
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Click on the **Launch Application** tab at the top and enter **9080** for the port. This will take you to the OpenLiberty landing page (some images might not load properly due to the page being loaded via proxy). To view the system properties, append **/LibertyProject/System/properties** after the URL and you should be seeing a long list of parameters like below:
+Click on the **Launch Application** tab at the top and enter **9080** for the port. This will take you to the OpenLiberty landing page (some images might not load properly due to the page being loaded via proxy). To view the system properties, append **/LibertyProject/system/properties-new** after the URL and you should be seeing a long list of parameters like below:
 
 {
   ...
@@ -164,7 +161,7 @@ Click on the **Launch Application** tab at the top and enter **9080** for the po
   ...
 }
 
-For better readability, install a plug-in for viewing JSON on your browser. Remember to stop the server when you're done by either pressing **ctrl=c** or from entering the following command into a new command line in the **guide-docker/finish** dir.
+For better readability, install a plug-in for viewing JSON on your browser. Remember to stop the server when you're done by either pressing **ctrl+c** or from entering the following command into a new command line in the **guide-docker/finish** dir.
 
 ```
 mvn liberty:stop
@@ -242,7 +239,7 @@ oc expose svc/rest-quicklab
 This command ensures that your app is accessible from the internet by a public URL.
 
 
-the next command outputs the publicly accessible route to your OpenLiberty application.
+The next command outputs the publicly accessible route to your OpenLiberty application.
 ```
 oc get routes
 ```
@@ -254,7 +251,12 @@ Your app URL will look something like the following:
 rest-quicklab-sn-labs-<your-userID>.sn-labs-user-sandbox-pr-a45631dc5778dc6371c67d206ba9ae5c-0000.tor01.containers.appdomain.cloud
 ```
   
-Navigate to that URL (refresh the page if it didn't load on the first try) and you should see the OpenLiberty page that gets generated from the base image. Append **/LibertyProject** after the URL and you should see a page with "Welcome to your Liberty Application" message. Finally, **/LibertyProject/System/properties-new** subURL should show you a list of system properties from the machine the OpenLiberty server is running on. For best viewing result, you can install a JSON viewer tool to your browser.
+Navigate to that URL (refresh the page if it didn't load on the first try) and you should see the OpenLiberty page that gets generated from the base image. Append **/LibertyProject** after the URL and you should see a page with "Welcome to your Liberty Application" message. Finally, the following subURL should show you a list of system properties from the machine the OpenLiberty server is running on. For best viewing result, you can install a JSON viewer tool to your browser.
+
+```
+/LibertyProject/system/properties-new
+```
+{: codeblock}
 
 ### Troubleshooting (optional)
 
