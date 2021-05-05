@@ -123,9 +123,7 @@ Next update the **server** config file.
   **File** > **Open** > guide-docker/finish/src/main/liberty/config/server.xml
 
 ```
-  <!-- tag::webApplication[] -->
   <webApplication location="rest.war" contextRoot="/LibertyProject"/>
-  <!-- end::webApplication[] -->
 ```
 {: codeblock}
 
