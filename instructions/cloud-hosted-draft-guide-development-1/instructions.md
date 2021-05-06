@@ -334,21 +334,21 @@ import org.eclipse.microprofile.health.HealthCheckResponse;
 @ApplicationScoped
 public class SystemReadinessCheck implements HealthCheck {
 
-    private static final String readinessCheck = SystemResource.class.getSimpleName() 
+    private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
                                                  + " Readiness Check";
 
     @Inject
     @ConfigProperty(name = "io_openliberty_guides_system_inMaintenance")
     Provider<String> inMaintenance;
-	
+
     @Override
     public HealthCheckResponse call() {
         if (inMaintenance != null && inMaintenance.get().equalsIgnoreCase("true")) {
-            return HealthCheckResponse.down(readinessCheck);
+            return HealthCheckResponse.down(READINESS_CHECK);
         }
-        return HealthCheckResponse.up(readinessCheck);
+        return HealthCheckResponse.up(READINESS_CHECK);
     }
-    
+
 }
 ```
 {: codeblock}
@@ -400,7 +400,7 @@ public class SystemLivenessCheck implements HealthCheck {
                                   .withData("memory max", memMax)
                                   .status(memUsed < memMax * 0.9).build();
     }
-    
+
 }
 ```
 {: codeblock}
