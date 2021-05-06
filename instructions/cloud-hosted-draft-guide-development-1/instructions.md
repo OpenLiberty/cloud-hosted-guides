@@ -329,7 +329,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.health.Readiness;
 import org.eclipse.microprofile.health.HealthCheck;
 import org.eclipse.microprofile.health.HealthCheckResponse;
-import org.eclipse.microprofile.health.HealthCheckResponseBuilder;
 
 @Readiness
 @ApplicationScoped
@@ -399,7 +398,7 @@ public class SystemLivenessCheck implements HealthCheck {
             SystemResource.class.getSimpleName() + " Liveness Check")
                                   .withData("memory used", memUsed)
                                   .withData("memory max", memMax)
-                                  .state(memUsed < memMax * 0.9).build();
+                                  .status(memUsed < memMax * 0.9).build();
     }
     
 }
