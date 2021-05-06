@@ -20,6 +20,7 @@ jobs:
           - {"github":"cloud-hosted-guide-docker","gitlab":"cloud-hosted-guide-docker"}
           - {"github":"cloud-hosted-guide-getting-started","gitlab":"cloud-hosted-guide-getting-started"}
           - {"github":"cloud-hosted-guide-kubernetes-intro","gitlab":"cloud-hosted-guide-kubernetes-intro"}
+          - {"github":"cloud-hosted-guide-masterclass","gitlab":"cloud-hosted-guide-masterclass"}
           - {"github":"cloud-hosted-guide-microprofile-config","gitlab":"cloud-hosted-guide-microprofile-config"}
           - {"github":"cloud-hosted-guide-microprofile-fallback","gitlab":"cloud-hosted-guide-microprofile-fallback"}
           - {"github":"cloud-hosted-guide-microprofile-health","gitlab":"cloud-hosted-guide-microprofile-health"}
