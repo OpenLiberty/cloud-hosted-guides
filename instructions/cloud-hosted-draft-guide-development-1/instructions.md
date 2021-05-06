@@ -1,7 +1,7 @@
 
-# Welcome to the Testing a MicroProfile or Jakarta EE application guide!
+# Welcome to the Getting started with Open Liberty guide!
 
-Learn how to use MicroShed Testing to test a MicroProfile or Jakarta EE application.
+Learn how to develop a Java application on Open Liberty with Maven and Docker.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -13,21 +13,29 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 # What you'll learn
 
-You'll start with an existing REST application that runs on Open Liberty and use [MicroShed Testing](https://microshed.org/microshed-testing/) 
-to write tests for the application that exercise the application inside of a Docker container.
+You will learn how to run and update a simple REST microservice on an Open Liberty server.
+You will use Maven throughout the guide to build and deploy the microservice as well as
+to interact with the running server instance.
 
-Sometimes tests might pass in development and testing (dev/test) environments, but fail in production because the application is
-running differently in production than it is in dev/test. Fortunately, you can minimize these parity issues between development and production
-by testing your application in the same Docker container that you'll use in production.
+Open Liberty is an application server designed for the cloud. It's small, lightweight,
+and designed with modern cloud-native application development in mind. It supports the
+full MicroProfile and Jakarta EE APIs and is composable, meaning that you can use only the
+features that you need, keeping the server lightweight, which is great for microservices.
+It also deploys to every major cloud platform, including Docker, Kubernetes, and Cloud
+Foundry.
 
-### What is Docker?
+Maven is an automation build tool that provides an efficient way to develop Java applications.
+Using Maven, you will build a simple microservice, called **system**, that collects basic
+system properties from your laptop and displays them on an endpoint that you can access
+in your web browser. 
 
-Docker is a tool that you can use to deploy and run applications with containers. You
-can think of Docker as a virtual machine that runs various applications. However, unlike with a typical virtual
-machine, you can run these applications simultaneously on a single system and independent of
-one another.
+You'll also explore how to package your application
+with the server runtime so that it can be deployed anywhere in one go. You will then make server configuration and code changes and see how
+they are picked up by a running server.
 
-Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
+Finally, you will package the application along with the server configuration into a Docker
+image and run that image as a container.
+
 
 # Getting started
 
@@ -41,11 +49,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microshed-testing.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-getting-started.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microshed-testing.git
-cd guide-microshed-testing
+git clone https://github.com/openliberty/guide-getting-started.git
+cd guide-getting-started
 ```
 {: codeblock}
 
@@ -54,178 +62,403 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-### Try what you'll build
-
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-First, review the **PersonServiceIT** class to see what the tests look like:
 
 
-To try out the application, go to the **finish** directory and run the following Maven 
-goal to build the application and run the integration tests on an Open Liberty server in a container:
+
+# Building and running the application
+
+Your application is configured to be built with Maven. Every Maven-configured project
+contains a **pom.xml** file, which defines the project configuration, dependencies, plug-ins,
+and so on.
+
+Your **pom.xml** file is located in the **start** directory and is configured to
+include the **liberty-maven-plugin**, which allows you
+to install applications into Open Liberty and manage the server instances.
 
 
-```
-cd /home/project/guide-microshed-testing/finish
-mvn verify
-```
-{: codeblock}
-
-This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty must download. If you 
-run the same command again, it will be faster.
-
-The previous example shows how you can run integration tests from a cold start. With Open Liberty development mode, you can use MicroShed Testing to run tests on
-an already running Open Liberty server. Run the following Maven goal to start Open Liberty in development mode:
+To begin, navigate to the **start** directory. Build the **system** microservice
+that is provided and deploy it to Open Liberty by running the Maven
+**liberty:run** goal:
 
 ```
-mvn liberty:dev
+cd start
+mvn liberty:run
 ```
 {: codeblock}
 
 
-After you see the following message, your application server in dev mode is ready:
+The **mvn** command initiates a Maven build, during which the **target** directory is created
+to store all build-related files.
+
+The **liberty:run** argument specifies the Open Liberty **run** goal, which
+starts an Open Liberty server instance in the foreground.
+As part of this phase, an Open Liberty server runtime is downloaded and installed into
+the **target/liberty/wlp** directory, a server instance is created and configured in the
+**target/liberty/wlp/usr/servers/defaultServer** directory, and the application is
+installed into that server via [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
+
+For more information about the Liberty Maven plug-in, see its [GitHub repository](https://github.com/WASdev/ci.maven).
+
+When the server begins starting up, various messages display in your command-line session. Wait
+for the following message, which indicates that the server startup is complete:
 
 ```
-************************************************************************
-*    Liberty is running in dev mode.
+[INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
 ```
 
-After the Open Liberty server starts and you see the **Press the Enter key to run tests on demand.** message, you can press the 
-**enter/return** key to run the integration tests. After the tests finish, you can press the **enter/return** key to run the tests again, or you 
-can make code changes to the application or tests. Development mode automatically
-recompiles and updates any application or test code changes that you make.
-
-After you are finished running tests, exit development mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
-
-# Bootstrapping your application for testing
-
-
-To begin, run the following command to navigate to the **start** directory:
-```
-cd /home/project/guide-microprofile-metrics/start
-```
-{: codeblock}
-
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-************************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
-
-Wait for the **Press the Enter key to run tests on demand.** message, and then press the **enter/return** key to run the tests. You see that one test runs:
-
-```
- Running integration tests...
-
- -------------------------------------------------------
-  T E S T S
- -------------------------------------------------------
- Running io.openliberty.guides.testing.PersonServiceIT
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.024 s - in io.openliberty.guides.testing.PersonServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
- Integration tests finished.
-```
-
-To begin bootstrapping, annotate the **src/test/java/io/openliberty/guides/testing/PersonServiceIT.java** class with the **@MicroShedTest** annotation. This annotation indicates that the test class uses MicroShed Testing.
-
-Update the **PersonServiceIT** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
-
-
-
-
-```
-package io.openliberty.guides.testing;
-
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.jupiter.MicroShedTest;
-
-@MicroShedTest
-public class PersonServiceIT {
-    
-    @Test
-    public void testCreatePerson() {
-    }
-    
-}
-```
-{: codeblock}
-
-
-Import the **MicroShedTest** annotation and annotate the **PersonServiceIT** class with **@MicroShedTest**.
-
-
-Next, the **PersonServiceIT** class outlines some basic information that informs how MicroShed Testing starts the application runtime and at which URL path the application will be available:
-
-Update the **PersonServiceIT** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
-
-
-
-
-```
-package io.openliberty.guides.testing;
-
-
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.junit.jupiter.Container;
-
-@MicroShedTest
-public class PersonServiceIT {
-
-
-    @Container
-    public static ApplicationContainer app = new ApplicationContainer()
-                    .withAppContextRoot("/guide-microshed-testing")
-                    .withReadinessPath("/health/ready");
-
-    @Test
-    public void testCreatePerson() {
-    }
-
-}
-```
-{: codeblock}
-
-
-Import the **ApplicationContainer** class and the **Container** annotation, create the **ApplicationContainer** application, and annotate the application with **@Container**.
-
-
-The **withAppContextRoot(String)** method indicates the base path of the application. The app context root is the portion of the URL after the hostname and port. In this case, the application is deployed at the **http://localhost:9080/guide-microshed-testing** URL, so the app context root is **/guide-microshed-testing**.
-
-
-The **withReadinessPath(String)** method indicates what path is polled by HTTP to determine application readiness. 
-MicroShed Testing automatically starts the ApplicationContainer application and waits for it to be ready before the tests start running. 
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-In this case, you are using the default application readiness check at the http://localhost:9080/health/ready URL, which is enabled by the **MicroProfile Health** feature in our server.xml configuration file. When the readiness URL returns **HTTP 200**, the application is considered ready and the tests begin running.
+To access the **system** microservice, see the http://localhost:9080/system/properties URL,
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
+
+
+and you see a list of the various system properties of your JVM:
+
+```
+{
+    "os.name": "Mac OS X",
+    "java.version": "1.8.0_151",
+    ...
+}
+```
+
+When you need to stop the server, press **CTRL+C** in the command-line session where
+you ran the server, or run the **liberty:stop** goal from the **start** directory in
+another command-line session:
+
+```
+mvn liberty:stop
+```
+{: codeblock}
+
+
+
+
+# Starting and stopping the Open Liberty server in the background
+
+Although you can start and stop the server in the foreground by using the Maven
+**liberty:run** goal, you can also start and stop the server in the background with
+the Maven **liberty:start** and **liberty:stop** goals:
+
+```
+mvn liberty:start
+mvn liberty:stop
+```
+{: codeblock}
+
+
+
+
+
+# Updating the server configuration without restarting the server
+
+The Open Liberty Maven plug-in includes a **dev** goal that listens for any changes in the project, 
+including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
+
+Stop the Open Liberty server if it is running, and start it in dev mode by running the **liberty:dev** goal in the **start** directory:
+
+```
+mvn liberty:dev
+```
+{: codeblock}
+
+
+Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the **enter/return** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the **enter/return** key to verify your change.
+
+
+As before, you can see that the application is running by going to the http://localhost:9080/system/properties URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
+
+
+
+Now try updating the server configuration while the server is running in dev mode.
+The **system** microservice does not currently include health monitoring to report whether the server and the microservice that it runs are healthy.
+You can add health reports with the MicroProfile Health feature, which adds a **/health** endpoint to your application.
+
+If you try to access this endpoint now at the http://localhost:9080/health/ URL, you see a 404 error because the **/health** endpoint does not yet exist:
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/health/
+```
+{: codeblock}
+
+
+
+```
+Error 404: java.io.FileNotFoundException: SRVE0190E: File not found: /health
+```
+
+To add the MicroProfile Health feature to the server, include the **mpHealth** feature in the **server.xml**.
+
+Replace the server configuration file.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
+
+
+
+
+```
+<server description="Sample Liberty server">
+    <featureManager>
+        <feature>jaxrs-2.1</feature>
+        <feature>jsonp-1.1</feature>
+        <feature>cdi-2.0</feature>
+        <feature>mpMetrics-3.0</feature>
+        <feature>mpHealth-3.0</feature>
+        <feature>mpConfig-2.0</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080"/>
+    <variable name="default.https.port" defaultValue="9443"/>
+
+    <webApplication location="guide-getting-started.war" contextRoot="/" />
+    
+    <mpMetrics authentication="false"/>
+
+
+    <httpEndpoint host="*" httpPort="${default.http.port}" 
+        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+
+    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
+</server>
+```
+{: codeblock}
+
+
+
+After you make the file changes, Open Liberty automatically reloads its configuration.
+When enabled, the **mpHealth** feature automatically adds a **/health** endpoint to the application.
+You can see the server being updated in the server log displayed in your command-line session:
+
+```
+[INFO] [AUDIT] CWWKG0016I: Starting server configuration update.
+[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
+[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
+[INFO] [AUDIT] CWWKG0017I: The server configuration was successfully updated in 0.284 seconds.
+[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/health/
+[INFO] [AUDIT] CWWKF0012I: The server installed the following features: [mpHealth-2.2].
+[INFO] [AUDIT] CWWKF0008I: Feature update completed in 0.285 seconds.
+[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
+[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.173 seconds.
+```
+
+
+Try to access the **/health** endpoint again by visiting the http://localhost:9080/health URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/health
+```
+{: codeblock}
+
+
+You see the following JSON:
+
+```
+{
+    "checks":[],
+    "status":"UP"
+}
+```
+
+Now you can verify whether your server is up and running.
+
+
+
+# Updating the source code without restarting the server
+
+The JAX-RS application that contains your **system** microservice runs in a server from its **.class** file and other artifacts.
+Open Liberty automatically monitors these artifacts, and whenever they are updated, it updates the running server without the need for the server to be restarted.
+
+Look at your **pom.xml** file.
+
+
+Try updating the source code while the server is running in dev mode.
+At the moment, the **/health** endpoint reports whether the server is running, but the endpoint doesn't provide any details on the microservices that are running inside of the server.
+
+MicroProfile Health offers health checks for both readiness and liveness.
+A readiness check allows third-party services, such as Kubernetes, to know if the microservice is ready to process requests.
+A liveness check allows third-party services to determine if the microservice is running.
+
+Create the **SystemReadinessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+
+
+
+
+```
+package io.openliberty.sample.system;
+
+import javax.enterprise.context.ApplicationScoped;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+import org.eclipse.microprofile.health.HealthCheckResponseBuilder;
+
+@Readiness
+@ApplicationScoped
+public class SystemReadinessCheck implements HealthCheck {
+
+    private static final String readinessCheck = SystemResource.class.getSimpleName() 
+                                                 + " Readiness Check";
+
+    @Inject
+    @ConfigProperty(name = "io_openliberty_guides_system_inMaintenance")
+    Provider<String> inMaintenance;
+	
+    @Override
+    public HealthCheckResponse call() {
+        if (inMaintenance != null && inMaintenance.get().equalsIgnoreCase("true")) {
+            return HealthCheckResponse.down(readinessCheck);
+        }
+        return HealthCheckResponse.up(readinessCheck);
+    }
+    
+}
+```
+{: codeblock}
+
+
+
+The **SystemReadinessCheck** class verifies that the 
+**system** microservice is not in maintenance by checking a config property.
+
+Create the **SystemLivenessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+
+
+
+
+```
+package io.openliberty.sample.system;
+
+import javax.enterprise.context.ApplicationScoped;
+
+import java.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
+
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class SystemLivenessCheck implements HealthCheck {
+
+    @Override
+    public HealthCheckResponse call() {
+        MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+        long memUsed = memBean.getHeapMemoryUsage().getUsed();
+        long memMax = memBean.getHeapMemoryUsage().getMax();
+
+        return HealthCheckResponse.named(
+            SystemResource.class.getSimpleName() + " Liveness Check")
+                                  .withData("memory used", memUsed)
+                                  .withData("memory max", memMax)
+                                  .state(memUsed < memMax * 0.9).build();
+    }
+    
+}
+```
+{: codeblock}
+
+
+
+The **SystemLivenessCheck** class reports a status of 
+**DOWN** if the microservice uses over 90% of the maximum amount of memory.
+
+After you make the file changes, Open Liberty automatically reloads its configuration and the **system** application.
+
+The following messages display in your first command-line session:
+
+```
+[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
+[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
+[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
+[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.136 seconds.
+```
+
+
+Access the **/health** endpoint again by going to the http://localhost:9080/health URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/health
+```
+{: codeblock}
+
+
+This time you see the overall status of your server and the aggregated data of the liveness and readiness checks for the **system** microservice:
+
+```
+{  
+   "checks":[  
+      {  
+         "data":{},
+         "name":"SystemResource Readiness Check",
+         "status":"UP"
+      },
+      {  
+         "data":{
+            "memory used":40434888,
+            "memory max":4294967296
+         },
+         "name":"SystemResource Liveness Check",
+         "status":"UP"
+      }
+   ],
+   "status":"UP"
+}
+```
+
+
+You can also access the **/health/ready** endpoint by going to the http://localhost:9080/health/ready URL to view the data from the readiness health check.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -237,704 +470,389 @@ curl http://localhost:9080/health/ready
 
 
 
-Save your changes to the **PersonServiceIT** class and press the **enter/return** key in your console window to rerun the tests. You still see only one test running, but the output is different. Notice that MicroShed Testing is using a **hollow** configuration mode. This configuration mode means that MicroShed Testing is reusing an existing application runtime for the test, not starting up a new application instance each time you initiate a test run.
-
-# Talking to your application with a REST client
-
-With MicroShed Testing, applications are exercised in a black box fashion. Black box means the tests cannot access the application internals. Instead, the application is exercised from the outside, usually with HTTP requests. To simplify the HTTP interactions, inject a REST client into the tests.
-
-Update the **PersonServiceIT** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+Similarly, access the **/health/live** endpoint by going to the http://localhost:9080/health/live URL to view the data from the liveness health check.
 
 
-
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-package io.openliberty.guides.testing;
-
-
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.junit.jupiter.Container;
-
-@MicroShedTest
-public class PersonServiceIT {
-
-    @RESTClient
-    public static PersonService personSvc;
-
-    @Container
-    public static ApplicationContainer app = new ApplicationContainer()
-                    .withAppContextRoot("/guide-microshed-testing")
-                    .withReadinessPath("/health/ready");
-
-    @Test
-    public void testCreatePerson() {
-    }
-
-}
-```
-{: codeblock}
-
-
-Import the **org.microshed.testing.jaxrs.RESTClient** annotation, create a **PersonService** REST client, and annotate the REST client with **@RESTClient**.
-
-
-In this example, the **PersonService** injected type is the same **io.openliberty.guides.testing.PersonService** class that is used in your application. However, the _instance_ that gets injected is a REST client proxy. So, if you call **personSvc.createPerson("Bob", 42)**, the REST client makes an HTTP POST request to the application that is running at **http://localhost:9080/guide-microshed-testing/people**, which triggers the corresponding Java method in the application.
-
-
-
-# Writing your first test
-
-Now that the setup is complete, you can write your first test case. Start by testing the basic "create person" use case for your REST-based application. To test this use case, use the REST client that's injected by MicroShed Testing to make the HTTP POST request to the application and read the response.
-
-Update the **PersonServiceIT** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
-
-
-
-
-```
-package io.openliberty.guides.testing;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.junit.jupiter.Container;
-
-@MicroShedTest
-public class PersonServiceIT {
-
-    @RESTClient
-    public static PersonService personSvc;
-
-    @Container
-    public static ApplicationContainer app = new ApplicationContainer()
-                    .withAppContextRoot("/guide-microshed-testing")
-                    .withReadinessPath("/health/ready");
-
-    @Test
-    public void testCreatePerson() {
-        Long createId = personSvc.createPerson("Hank", 42);
-        assertNotNull(createId);
-    }
-
-}
-```
-{: codeblock}
-
-
-Import the **assertNotNull** static method and write the test logic in the **testCreatePerson()** method.
-
-
-Save the changes. Then, press the **enter/return** key in your console window to run the test. You see that the test ran again and exercised the REST endpoint of your application, including the response of your application's endpoint:
-
-```
-[INFO] Building rest client for class io.openliberty.guides.testing.PersonService with base path: http://localhost:9080/guide-microshed-testing/ and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
-[INFO] Response from server: 1809686877352335426
-```
-
-Next, add more tests.
-
-Replace the **PersonServiceIT** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
-
-
-
-
-```
-package io.openliberty.guides.testing;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Collection;
-
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.junit.jupiter.Container;
-
-@MicroShedTest
-public class PersonServiceIT {
-
-    @RESTClient
-    public static PersonService personSvc;
-
-    @Container
-    public static ApplicationContainer app = new ApplicationContainer()
-                    .withAppContextRoot("/guide-microshed-testing")
-                    .withReadinessPath("/health/ready");
-
-    @Test
-    public void testCreatePerson() {
-        Long createId = personSvc.createPerson("Hank", 42);
-        assertNotNull(createId);
-    }
-
-    @Test
-    public void testMinSizeName() {
-        Long minSizeNameId = personSvc.createPerson("Ha", 42);
-        assertEquals(new Person("Ha", 42, minSizeNameId),
-                     personSvc.getPerson(minSizeNameId));
-    }
-
-    @Test
-    public void testMinAge() {
-        Long minAgeId = personSvc.createPerson("Newborn", 0);
-        assertEquals(new Person("Newborn", 0, minAgeId),
-                     personSvc.getPerson(minAgeId));
-    }
-
-    @Test
-    public void testGetPerson() {
-        Long bobId = personSvc.createPerson("Bob", 24);
-        Person bob = personSvc.getPerson(bobId);
-        assertEquals("Bob", bob.name);
-        assertEquals(24, bob.age);
-        assertNotNull(bob.id);
-    }
-
-    @Test
-    public void testGetAllPeople() {
-        Long person1Id = personSvc.createPerson("Person1", 1);
-        Long person2Id = personSvc.createPerson("Person2", 2);
-
-        Person expected1 = new Person("Person1", 1, person1Id);
-        Person expected2 = new Person("Person2", 2, person2Id);
-
-        Collection<Person> allPeople = personSvc.getAllPeople();
-        assertTrue(allPeople.size() >= 2,
-            "Expected at least 2 people to be registered, but there were only: " +
-            allPeople);
-        assertTrue(allPeople.contains(expected1),
-            "Did not find person " + expected1 + " in all people: " + allPeople);
-        assertTrue(allPeople.contains(expected2),
-            "Did not find person " + expected2 + " in all people: " + allPeople);
-    }
-
-    @Test
-    public void testUpdateAge() {
-        Long personId = personSvc.createPerson("newAgePerson", 1);
-
-        Person originalPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", originalPerson.name);
-        assertEquals(1, originalPerson.age);
-        assertEquals(personId, Long.valueOf(originalPerson.id));
-
-        personSvc.updatePerson(personId,
-            new Person(originalPerson.name, 2, originalPerson.id));
-        Person updatedPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", updatedPerson.name);
-        assertEquals(2, updatedPerson.age);
-        assertEquals(personId, Long.valueOf(updatedPerson.id));
-    }
-}
+curl http://localhost:9080/health/live
 ```
 {: codeblock}
 
 
 
-The following tests are added: **testMinSizeName()**, **testMinAge()**, **testGetPerson()**, **testGetAllPeople()**, and **testUpdateAge()**.
+Making code changes and recompiling is fast and straightforward.
+Open Liberty dev mode automatically picks up changes in the **.class** files and artifacts, without needing to be restarted.
+Alternatively, you can run the **run** goal and manually repackage or recompile the application by using the **mvn package** command or the **mvn compile** command while the server is running. Dev mode was added to further improve the developer experience by minimizing turnaround times.
 
 
-Save the changes, and  press the **enter/return** key in your console window to run the tests.
 
-# Testing outside of development mode
+# Checking the Open Liberty server logs
 
-Running tests in development mode is convenient for local development, but it can be tedious to test against a running Open Liberty server in non-development scenarios such as CI/CD pipelines. For this reason, MicroShed Testing can start and stop the application runtime before and after the tests are run. This process is primarily accomplished by using Docker and Testcontainers.
+While the server is running in the foreground, it displays various console messages in
+the command-line session. These messages are also logged to the **target/liberty/wlp/usr/servers/defaultServer/logs/console.log**
+file. You can find the complete server logs in the **target/liberty/wlp/usr/servers/defaultServer/logs**
+directory. The **console.log** and **messages.log** files are the primary log files that contain
+console output of the running application and the server. More logs are created when runtime errors 
+occur or whenever tracing is enabled. You can find the error logs in the
+**ffdc** directory and the tracing logs in the **trace.log** file.
 
-To test outside of development mode, exit development mode by pressing **CTRL+C** in the command-line session
+In addition to the log files that are generated automatically, you can enable logging of
+specific Java packages or classes by using the **`<logging/>`** element:
+
+```
+<logging traceSpecification="<component_1>=<level>:<component_2>=<level>:..."/>
+```
+
+The **component** element is a Java package or class, and the **level** element is one
+of the following logging levels: **off**, **fatal**, **severe**, **warning**, **audit**, **info**,
+**config**, **detail**, **fine**, **finer**, **finest**, **all**.
+
+Try enabling detailed logging of the MicroProfile Health feature by adding the
+**`<logging/>`** element to your configuration file.
+
+Replace the server configuration file.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
+
+
+
+
+```
+<server description="Sample Liberty server">
+    <featureManager>
+        <feature>jaxrs-2.1</feature>
+        <feature>jsonp-1.1</feature>
+        <feature>cdi-2.0</feature>
+        <feature>mpMetrics-3.0</feature>
+        <feature>mpHealth-3.0</feature>
+        <feature>mpConfig-2.0</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080"/>
+    <variable name="default.https.port" defaultValue="9443"/>
+
+    <webApplication location="guide-getting-started.war" contextRoot="/" />
+    
+    <mpMetrics authentication="false"/>
+
+    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
+
+    <httpEndpoint host="*" httpPort="${default.http.port}" 
+        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+
+    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
+</server>
+```
+{: codeblock}
+
+
+
+After you change the file, Open Liberty automatically reloads its configuration.
+
+Now, when you visit the **/health** endpoint, additional traces are logged in the **trace.log** file.
+
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
-Next, use the following Maven goal to run the tests from a cold start:
+
+# Running the application in a Docker container
+
+To run the application in a container, Docker needs to be installed. For installation
+instructions, see the [Official Docker Docs](https://docs.docker.com/install/).
+
+Make sure to start your Docker daemon before you proceed.
+
+To containerize the application, you need a **Dockerfile**. This file contains a collection
+of instructions that define how a Docker image is built, what files are packaged into it,
+what commands run when the image runs as a container, and other information. You can find a complete
+**Dockerfile** in the **start** directory. This **Dockerfile** copies the **.war** file into a Docker
+image that contains the Java runtime and a preconfigured Open Liberty server.
+
+Run the **mvn package** command from the **start** directory so that the **.war** file resides in the **target** directory.
+
 ```
-mvn verify
-```
-{: codeblock}
-
-
-Running tests from a cold start takes a little longer than running tests from development mode because the application runtime needs to start each time. However, tests that are run from a cold start use a clean instance on each run to ensure consistent results. These tests also automatically hook into existing build pipelines that are set up to run the **integration-test** phase.
-
-# Sharing configuration across multiple classes
-
-Typically, projects have multiple test classes that all use the same type of application deployment. For these cases, it is useful to reuse an existing configuration and application lifecycle across multiple test classes.
-
-First, create another test class.
-
-Create the **ErrorPathIT** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+mvn package
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
-
-
-
+Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```
-package io.openliberty.guides.testing;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.microshed.testing.jaxrs.RESTClient;
-
-@MicroShedTest
-public class ErrorPathIT {
-
-    @Container
-    public static ApplicationContainer app = new ApplicationContainer()
-                    .withAppContextRoot("/guide-microshed-testing")
-                    .withReadinessPath("/health/ready");
-
-    @RESTClient
-    public static PersonService personSvc;
-
-    @Test
-    public void testGetUnknownPerson() {
-        assertThrows(NotFoundException.class, () -> personSvc.getPerson(-1L));
-    }
-
-    @Test
-    public void testCreateBadPersonNullName() {
-        assertThrows(BadRequestException.class, () -> personSvc.createPerson(null, 5));
-    }
-
-    @Test
-    public void testCreateBadPersonNegativeAge() {
-        assertThrows(BadRequestException.class, () -> 
-          personSvc.createPerson("NegativeAgePersoN", -1));
-    }
-
-    @Test
-    public void testCreateBadPersonNameTooLong() {
-        assertThrows(BadRequestException.class, () -> 
-          personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson", 
-          5));
-    }
-}
+docker pull openliberty/open-liberty:full-java8-openj9-ubi
 ```
 {: codeblock}
 
 
+To build and containerize the application, run the
+following Docker build command in the **start** directory:
 
-The **ErrorPathIT** test class has the same **@Container** configuration and **PersonService** REST client as the **PersonServiceIT** class.
-
-Now, run the tests again outside of development mode:
 ```
-mvn verify
-```
-{: codeblock}
-
-
-Notice that tests for both the **PersonServiceIT** and **ErrorPathIT** classes run, but a new server starts for each test class, resulting in a longer test runtime.
-
-To solve this issue, common configuration can be placed in a class that implements **SharedContainerConfiguration**.
-
-Create the **AppDeploymentConfig** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
+docker build -t openliberty-getting-started:1.0-SNAPSHOT .
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
-
-
-
+The Docker **openliberty-getting-started:1.0-SNAPSHOT** image is also built from the **Dockerfile**.
+To verify that the image is built, run the **docker images** command to list all local Docker images:
 
 ```
-package io.openliberty.guides.testing;
+docker images
+```
+{: codeblock}
 
-import org.microshed.testing.SharedContainerConfiguration;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.junit.jupiter.Container;
 
-public class AppDeploymentConfig implements SharedContainerConfiguration {
-    
-    @Container
-    public static ApplicationContainer app = new ApplicationContainer()
-                    .withAppContextRoot("/guide-microshed-testing")
-                    .withReadinessPath("/health/ready");
+Your image should appear in the list of all Docker images:
 
-}
+```
+REPOSITORY                     TAG             IMAGE ID        CREATED         SIZE
+openliberty-getting-started    1.0-SNAPSHOT    85085141269b    21 hours ago    487MB
+```
+
+Next, run the image as a container:
+```
+docker run -d --name gettingstarted-app -p 9080:9080 openliberty-getting-started:1.0-SNAPSHOT
+```
+{: codeblock}
+
+
+There is a bit going on here, so here's a breakdown of the command:
+
+| *Flag* | *Description*
+| ---| ---
+| -d     | Runs the container in the background.
+| --name | Specifies a name for the container.
+| -p     | Maps the container ports to the host ports.
+
+The final argument in the **docker run** command is the Docker image name.
+
+Next, run the **docker ps** command to verify that your container started:
+```
+docker ps
+```
+{: codeblock}
+
+
+Make sure that your container is running and does not have **Exited** as its status:
+
+```
+CONTAINER ID    IMAGE                         CREATED          STATUS           NAMES
+4294a6bdf41b    openliberty-getting-started   9 seconds ago    Up 11 seconds    gettingstarted-app
+```
+
+
+To access the application, go to the http://localhost:9080/system/properties URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
 
 
-After the common configuration is created, the test classes can be updated to reference this shared configuration.
+To stop and remove the container, run the following commands:
+```
+docker stop gettingstarted-app && docker rm gettingstarted-app
+```
+{: codeblock}
 
-Remove the container code from the **PersonServiceIT** class.
-Update the **PersonServiceIT** class.
+
+To remove the image, run the following command:
+```
+docker rmi openliberty-getting-started:1.0-SNAPSHOT
+```
+{: codeblock}
+
+
+
+# Developing the application in a Docker container
+
+
+The Open Liberty Maven plug-in includes a **devc** goal that simplifies developing
+your application in a Docker container by starting dev mode with container
+support. This goal builds a Docker image, mounts the required directories, binds
+the required ports, and then runs the application inside of a container. Dev
+mode also listens for any changes in the application source code or
+configuration and rebuilds the image and restarts the container as necessary.
+
+Build and run the container by running the devc goal from the **start** directory:
+
+
+```
+mvn liberty:devc -DserverStartTimeout=300
+```
+{: codeblock}
+
+When you see the following message, Open Liberty is ready to run in dev mode:
+
+```
+************************************************************************
+*    Liberty is running in dev mode.
+```
+
+Open another command-line session and run the **docker ps** command to verify that your container started:
+```
+docker ps
+```
+{: codeblock}
+
+
+Your container should be running and have **Up** as its status:
+
+```
+CONTAINER ID        IMAGE                                 COMMAND                  CREATED             STATUS                         PORTS                                                                    NAMES
+17af26af0539        guide-getting-started-dev-mode        "/opt/ol/helpers/run…"   3 minutes ago       Up 3 minutes                   0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
+```
+
+
+To access the application, go to the http://localhost:9080/system/properties URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
+
+
+
+Dev mode automatically picks up changes that you make to your
+application and allows you to run tests by pressing the **enter/return** key in the
+active command-line session.
+
+Update the **server.xml** file to change the context root from **/** to **/dev**.
+
+Replace the server configuration file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+ **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
 
 ```
-package io.openliberty.guides.testing;
+<server description="Sample Liberty server">
+    <featureManager>
+        <feature>jaxrs-2.1</feature>
+        <feature>jsonp-1.1</feature>
+        <feature>cdi-2.0</feature>
+        <feature>mpMetrics-3.0</feature>
+        <feature>mpHealth-3.0</feature>
+        <feature>mpConfig-2.0</feature>
+    </featureManager>
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+    <variable name="default.http.port" defaultValue="9080"/>
+    <variable name="default.https.port" defaultValue="9443"/>
 
-import java.util.Collection;
-
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.junit.jupiter.Container;
-
-@MicroShedTest
-public class PersonServiceIT {
-
-    @RESTClient
-    public static PersonService personSvc;
-
-    @Container
-    public static ApplicationContainer app = new ApplicationContainer()
-                    .withAppContextRoot("/guide-microshed-testing")
-                    .withReadinessPath("/health/ready");
-
-    @Test
-    public void testCreatePerson() {
-        Long createId = personSvc.createPerson("Hank", 42);
-        assertNotNull(createId);
-    }
-
-    @Test
-    public void testMinSizeName() {
-        Long minSizeNameId = personSvc.createPerson("Ha", 42);
-        assertEquals(new Person("Ha", 42, minSizeNameId),
-                     personSvc.getPerson(minSizeNameId));
-    }
-
-    @Test
-    public void testMinAge() {
-        Long minAgeId = personSvc.createPerson("Newborn", 0);
-        assertEquals(new Person("Newborn", 0, minAgeId),
-                     personSvc.getPerson(minAgeId));
-    }
-
-    @Test
-    public void testGetPerson() {
-        Long bobId = personSvc.createPerson("Bob", 24);
-        Person bob = personSvc.getPerson(bobId);
-        assertEquals("Bob", bob.name);
-        assertEquals(24, bob.age);
-        assertNotNull(bob.id);
-    }
-
-    @Test
-    public void testGetAllPeople() {
-        Long person1Id = personSvc.createPerson("Person1", 1);
-        Long person2Id = personSvc.createPerson("Person2", 2);
-
-        Person expected1 = new Person("Person1", 1, person1Id);
-        Person expected2 = new Person("Person2", 2, person2Id);
-
-        Collection<Person> allPeople = personSvc.getAllPeople();
-        assertTrue(allPeople.size() >= 2,
-            "Expected at least 2 people to be registered, but there were only: " +
-            allPeople);
-        assertTrue(allPeople.contains(expected1),
-            "Did not find person " + expected1 + " in all people: " + allPeople);
-        assertTrue(allPeople.contains(expected2),
-            "Did not find person " + expected2 + " in all people: " + allPeople);
-    }
-
-    @Test
-    public void testUpdateAge() {
-        Long personId = personSvc.createPerson("newAgePerson", 1);
-
-        Person originalPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", originalPerson.name);
-        assertEquals(1, originalPerson.age);
-        assertEquals(personId, Long.valueOf(originalPerson.id));
-
-        personSvc.updatePerson(personId,
-            new Person(originalPerson.name, 2, originalPerson.id));
-        Person updatedPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", updatedPerson.name);
-        assertEquals(2, updatedPerson.age);
-        assertEquals(personId, Long.valueOf(updatedPerson.id));
-    }
-}
-```
-{: codeblock}
-
-
-Remove **import** statements and the **ApplicationContainer app** field.
-
-
-Annotate the **PersonServiceIT** class with the **@SharedContainerConfig** annotation that references the **AppDeploymentConfig** shared configuration class.
-Update the **PersonServiceIT** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
-
-
-
-
-```
-package io.openliberty.guides.testing;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Collection;
-
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-
-@MicroShedTest
-@SharedContainerConfig(AppDeploymentConfig.class)
-public class PersonServiceIT {
+    <webApplication location="guide-getting-started.war" contextRoot="/dev" />
     
-    @RESTClient
-    public static PersonService personSvc;
-    
-    @Test
-    public void testCreatePerson() {
-        Long createId = personSvc.createPerson("Hank", 42);
-        assertNotNull(createId);
-    }
+    <mpMetrics authentication="false"/>
 
-    @Test
-    public void testMinSizeName() {
-        Long minSizeNameId = personSvc.createPerson("Ha", 42);
-        assertEquals(new Person("Ha", 42, minSizeNameId),
-                     personSvc.getPerson(minSizeNameId));
-    }
+    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
 
-    @Test
-    public void testMinAge() {
-        Long minAgeId = personSvc.createPerson("Newborn", 0);
-        assertEquals(new Person("Newborn", 0, minAgeId),
-                     personSvc.getPerson(minAgeId));
-    }
+    <httpEndpoint host="*" httpPort="${default.http.port}" 
+        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
 
-    @Test
-    public void testGetPerson() {
-        Long bobId = personSvc.createPerson("Bob", 24);
-        Person bob = personSvc.getPerson(bobId);
-        assertEquals("Bob", bob.name);
-        assertEquals(24, bob.age);
-        assertNotNull(bob.id);
-    }
-
-    @Test
-    public void testGetAllPeople() {
-        Long person1Id = personSvc.createPerson("Person1", 1);
-        Long person2Id = personSvc.createPerson("Person2", 2);
-
-        Person expected1 = new Person("Person1", 1, person1Id);
-        Person expected2 = new Person("Person2", 2, person2Id);
-
-        Collection<Person> allPeople = personSvc.getAllPeople();
-        assertTrue(allPeople.size() >= 2,
-            "Expected at least 2 people to be registered, but there were only: " + 
-            allPeople);
-        assertTrue(allPeople.contains(expected1),
-            "Did not find person " + expected1 + " in all people: " + allPeople);
-        assertTrue(allPeople.contains(expected2),
-            "Did not find person " + expected2 + " in all people: " + allPeople);
-    }
-
-    @Test
-    public void testUpdateAge() {
-        Long personId = personSvc.createPerson("newAgePerson", 1);
-
-        Person originalPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", originalPerson.name);
-        assertEquals(1, originalPerson.age);
-        assertEquals(personId, Long.valueOf(originalPerson.id));
-
-        personSvc.updatePerson(personId, 
-            new Person(originalPerson.name, 2, originalPerson.id));
-        Person updatedPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", updatedPerson.name);
-        assertEquals(2, updatedPerson.age);
-        assertEquals(personId, Long.valueOf(updatedPerson.id));
-    }
-}
+    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
+</server>
 ```
 {: codeblock}
 
 
-Import the **SharedContainerConfig** annotation and annotate the **PersonServiceIT** class with **@SharedContainerConfig**. 
+After you make the file changes, Open Liberty automatically reloads its
+configuration. You can access the application at the
+
+http://localhost:9080/dev/system/properties
 
 
-Similarly, update the **ErrorPathIT** class to remove the container code.
-Update the **ErrorPathIT** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
-
-
-
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-package io.openliberty.guides.testing;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.microshed.testing.jaxrs.RESTClient;
-
-@MicroShedTest
-@SharedContainerConfig(AppDeploymentConfig.class)
-public class ErrorPathIT {
-
-    @Container
-    public static ApplicationContainer app = new ApplicationContainer()
-                    .withAppContextRoot("/guide-microshed-testing")
-                    .withReadinessPath("/health/ready");
-
-    @RESTClient
-    public static PersonService personSvc;
-
-    @Test
-    public void testGetUnknownPerson() {
-        assertThrows(NotFoundException.class, () -> personSvc.getPerson(-1L));
-    }
-
-    @Test
-    public void testCreateBadPersonNullName() {
-        assertThrows(BadRequestException.class, () -> personSvc.createPerson(null, 5));
-    }
-
-    @Test
-    public void testCreateBadPersonNegativeAge() {
-        assertThrows(BadRequestException.class, () -> 
-          personSvc.createPerson("NegativeAgePersoN", -1));
-    }
-
-    @Test
-    public void testCreateBadPersonNameTooLong() {
-        assertThrows(BadRequestException.class, () -> 
-          personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson", 
-          5));
-    }
-}
+curl http://localhost:9080/dev/system/properties
 ```
 {: codeblock}
 
 
-Remove **import** statements and the **ApplicationContainer app** field
+URL. Notice that context root is now **/dev**.
+
+When you are finished, exit dev mode by pressing **CTRL+C** in the
+command-line session that the container was started from, or by typing `q` and
+then pressing the **enter/return** key. Either of these options stops and 
+removes the container. To check that the container was stopped, run the **docker ps** command.
 
 
-Annotate the **ErrorPathIT** class with the **@SharedContainerConfig** annotation.
-Update the **ErrorPathIT** class.
+# Running the application from a minimal runnable JAR
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+So far, Open Liberty was running out of the **target/liberty/wlp** directory, which
+effectively contains an Open Liberty server installation and the deployed application. The
+final product of the Maven build is a server package for use in a continuous integration
+pipeline and, ultimately, a production deployment.
 
+Open Liberty supports a number of different server packages. The sample application
+currently generates a **usr** package that contains the servers and application to be
+extracted onto an Open Liberty installation.
 
-
-
+Instead of creating a server package, you can generate a runnable JAR file that contains
+the application along with a server runtime. This JAR file can then be run anywhere and deploy
+your application and server at the same time. To generate a runnable JAR file, override the 
+**include** property: 
 ```
-package io.openliberty.guides.testing;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-
-@MicroShedTest
-@SharedContainerConfig(AppDeploymentConfig.class)
-public class ErrorPathIT {
-    
-    @RESTClient
-    public static PersonService personSvc;
-    
-    @Test
-    public void testGetUnknownPerson() {
-        assertThrows(NotFoundException.class, () -> personSvc.getPerson(-1L));
-    }
-
-    @Test
-    public void testCreateBadPersonNullName() {
-        assertThrows(BadRequestException.class, () -> personSvc.createPerson(null, 5));
-    }
-
-    @Test
-    public void testCreateBadPersonNegativeAge() {
-        assertThrows(BadRequestException.class, () -> 
-          personSvc.createPerson("NegativeAgePersoN", -1));
-    }
-
-    @Test
-    public void testCreateBadPersonNameTooLong() {
-        assertThrows(BadRequestException.class, () ->
-           personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson", 
-           5));
-    }
-}
+mvn liberty:package -Dinclude=runnable
 ```
 {: codeblock}
 
 
-Import the **SharedContainerConfig** annotation and annotate the **ErrorPathIT** class with **@SharedContainerConfig**. 
+The packaging type is overridden from the **usr** package to the **runnable**
+package. This property then propagates to the **liberty-maven-plugin**
+plug-in, which generates the server package based on the **openliberty-kernel** package.
 
+When the build completes, you can find the minimal runnable **guide-getting-started.jar** file in the
+**target** directory. This JAR file contains only the **features** that you
+explicitly enabled in your **server.xml** file. As a result, the
+generated JAR file is only about 50 MB.
 
-If you rerun the tests now, they run in about half the time because the same server instance is being used for both test classes:
+To run the JAR file, first stop the server if it's running. Then, navigate to the **target**
+directory and run the **java -jar** command:
+
 ```
-mvn verify
+java -jar guide-getting-started.jar
 ```
 {: codeblock}
+
+
+
+When the server starts, go to the http://localhost:9080/dev/system/properties URL to access
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/dev/system/properties
+```
+{: codeblock}
+
+
+your application that is now running out of the minimal runnable JAR file.
+
+You can stop the server by pressing **CTRL+C** in the command-line session that the server runs in.
+
+
+
 
 
 # Summary
 
 ## Nice Work!
 
-You developed automated tests for a REST service in Open Liberty by using MicroShed Testing and Open Liberty development mode.
+You've learned the basics of deploying and updating an application on an Open Liberty server.
+
 
 
 
@@ -943,28 +861,26 @@ You developed automated tests for a REST service in Open Liberty by using MicroS
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microshed-testing** project by running the following commands:
+Delete the **guide-getting-started** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microshed-testing
+rm -fr guide-getting-started
 ```
 {: codeblock}
 
 ## What could make this guide better?
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microshed-testing/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microshed-testing/pulls)
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-getting-started/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-getting-started/pulls)
 
 
 
 
 ## Where to next? 
 
+* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-* [View the MicroShed Testing website](https://microshed.org/microshed-testing/)
-
 
 
 ## Log out of the session
