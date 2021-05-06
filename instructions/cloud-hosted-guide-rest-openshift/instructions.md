@@ -27,7 +27,7 @@ You should see a terminal running. In case a terminal window does not open, navi
 
 > Terminal -> New Terminal
 
-Check you are in the **home/project** folder:
+Check you are in the **/home/project** folder:
 ```
 pwd
 ```
@@ -150,6 +150,7 @@ The defaultServer server is ready to run a smarter planet.
 
 Click on the **Launch Application** tab at the top and enter **9080** for the port. This will take you to the OpenLiberty landing page (some images might not load properly due to the page being loaded via proxy). To view the system properties, append **/LibertyProject/system/properties-new** after the URL and you should be seeing a long list of parameters like below:
 
+```
 {
   ...
   "user.timezone": "Etc/UTC",
@@ -158,6 +159,7 @@ Click on the **Launch Application** tab at the top and enter **9080** for the po
   "server.output.dir": "/opt/ol/wlp/output/defaultServer/",
   ...
 }
+```
 
 For better readability, install a plug-in for viewing JSON on your browser. Remember to stop the server when you're done by either pressing **ctrl+c** or from entering the following command into a new command line in the **guide-docker/finish** dir.
 
@@ -216,6 +218,8 @@ oc logs -f build/rest-quicklab-1
 {: codeblock}
 
 This logs-stream should end with **Push successful** message (the build process might take between two to three minutes to complete) and this is the indication that the image was built and has been pushed to OpenShift internal image registry.
+
+Exit the logs by pressing **Ctrl+C**.
 
 
 Create a new OpenShift app from the build using the following command
