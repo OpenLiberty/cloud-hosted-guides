@@ -27,7 +27,7 @@ You should see a terminal running. In case a terminal window does not open, navi
 
 > Terminal -> New Terminal
 
-Check you are in the **home/project** folder:
+Check you are in the **/home/project** folder:
 ```
 pwd
 ```
@@ -150,6 +150,7 @@ The defaultServer server is ready to run a smarter planet.
 
 Click on the **Launch Application** tab at the top and enter **9080** for the port. This will take you to the OpenLiberty landing page (some images might not load properly due to the page being loaded via proxy). To view the system properties, append **/LibertyProject/system/properties-new** after the URL and you should be seeing a long list of parameters like below:
 
+```
 {
   ...
   "user.timezone": "Etc/UTC",
@@ -158,6 +159,7 @@ Click on the **Launch Application** tab at the top and enter **9080** for the po
   "server.output.dir": "/opt/ol/wlp/output/defaultServer/",
   ...
 }
+```
 
 For better readability, install a plug-in for viewing JSON on your browser. Remember to stop the server when you're done by either pressing **ctrl+c** or from entering the following command into a new command line in the **guide-docker/finish** dir.
 
@@ -217,6 +219,8 @@ oc logs -f build/rest-quicklab-1
 
 This logs-stream should end with **Push successful** message (the build process might take between two to three minutes to complete) and this is the indication that the image was built and has been pushed to OpenShift internal image registry.
 
+Exit the logs by pressing **Ctrl+C**.
+
 
 Create a new OpenShift app from the build using the following command
 
@@ -249,7 +253,11 @@ Your app URL will look something like the following:
 rest-quicklab-sn-labs-<your-userID>.sn-labs-user-sandbox-pr-a45631dc5778dc6371c67d206ba9ae5c-0000.tor01.containers.appdomain.cloud
 ```
   
-Navigate to that URL (refresh the page if it didn't load on the first try) and you should see the OpenLiberty page that gets generated from the base image. Append **/LibertyProject** after the URL and you should see a page with "Welcome to your Liberty Application" message. Finally, the following subURL should show you a list of system properties from the machine the OpenLiberty server is running on. For best viewing result, you can install a JSON viewer tool to your browser.
+Navigate to that URL.
+
+**NOTE: Please allow up to a couple minutes for your application page to launch.**
+
+You should see the OpenLiberty page that gets generated from the base image. Append **/LibertyProject** after the URL and you should see a page with "Welcome to your Liberty Application" message. Finally, the following subURL should show you a list of system properties from the machine the OpenLiberty server is running on. For best viewing result, you can install a JSON viewer tool to your browser.
 
 ```
 /LibertyProject/system/properties-new
