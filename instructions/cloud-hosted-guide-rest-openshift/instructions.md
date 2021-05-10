@@ -219,9 +219,6 @@ oc logs -f build/rest-quicklab-1
 
 This logs-stream should end with **Push successful** message (the build process might take between two to three minutes to complete) and this is the indication that the image was built and has been pushed to OpenShift internal image registry.
 
-Exit the logs by pressing **Ctrl+C**.
-
-
 Create a new OpenShift app from the build using the following command
 
 ```
@@ -284,6 +281,8 @@ oc logs -f rest-quicklab-1-25tgb
 {: codeblock}
 
 Note: Name of your application pod might be different.
+
+Exit the logs by pressing **Ctrl+C**.
 
 
 Let's clean up the resources we just created. You can execute the following commands:
