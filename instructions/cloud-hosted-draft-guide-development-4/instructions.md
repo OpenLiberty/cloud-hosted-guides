@@ -1,7 +1,7 @@
 
-# Welcome to the Integrating RESTful services with a reactive system guide!
+# Welcome to the Adding health reports to microservices guide!
 
-Learn how to integrate RESTful Java microservices with a reactive system by using MicroProfile Reactive Messaging.
+Explore how to report and check the health of a microservice with MicroProfile Health.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,29 +11,26 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 # What you'll learn
 
-You will learn how to integrate RESTful Java microservices with a reactive system by using MicroProfile Reactive
-Messaging. RESTful Java microservices don't use reactive concepts, so you will learn how to bridge the gap between the
-two using the RxJava library. In this guide, you will modify two microservices in an application so that when a user
-hits the RESTful endpoint, the microservice generates producer events.
+You will learn how to use MicroProfile Health to report the health status of microservices and take
+appropriate actions based on this report.
 
-The application in this guide consists of two microservices, **system** and **inventory**. The following diagram illustrates
-the application:
+MicroProfile Health allows services to report their health, and it publishes the overall health status to a defined
+endpoint. A service reports **UP** if it is available and reports **DOWN** if it is unavailable. MicroProfile Health reports
+an individual service status at the endpoint and indicates the overall status as **UP** if all the services are **UP**. A service
+orchestrator can then use the health statuses to make decisions.
 
-![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging-rest-integration/master/assets/reactive-messaging-system-inventory-rest.png)
+A service checks its own health by performing necessary self-checks and then reports its overall status by
+implementing the API provided by MicroProfile Health. A self-check can be a check on anything that the service needs, such
+as a dependency, a successful connection to an endpoint, a system property, a database connection, or
+the availability of required resources. MicroProfile offers checks for both liveness and readiness.
 
+You will add liveness and readiness checks to the **system** and **inventory** services, which
+are provided for you, and implement what is necessary to report health status by
+using MicroProfile Health.
 
-Every 15 seconds, the **system** microservice calculates and publishes events that contain its current average system load.
-The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems and
-their current system loads. The current inventory of systems can be accessed via the **/systems** REST endpoint.
-
-You will update the **inventory** microservice to subscribe to a **PUT** request response. This **PUT** request response
-accepts a specific system property in the request body, queries that system property on the **system** microservice, and
-provides the response. You will also update the **system** microservice to handle receiving and sending events that are
-produced by the new endpoint. You will configure new channels to handle the events that are sent and received by the new endpoint.
-To learn more about how the reactive Java services that are used in this guide work, check out the
-[Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 # Getting started
 
@@ -47,11 +44,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging-rest-integration.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-health.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-reactive-messaging-rest-integration.git
-cd guide-microprofile-reactive-messaging-rest-integration
+git clone https://github.com/openliberty/guide-microprofile-health.git
+cd guide-microprofile-health
 ```
 {: codeblock}
 
@@ -60,194 +57,188 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-# Adding a REST endpoint that produces events
 
+### Try what you'll build
 
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To begin, run the following command to navigate to the **start** directory:
+To try out the application, first go to the **finish** directory and run the following
+Maven goal to build the application and deploy it to Open Liberty:
+
 ```
-cd /home/project/guide-microprofile-reactive-messaging-rest-integration/start
+cd finish
+mvn liberty:run
 ```
 {: codeblock}
 
 
-The **inventory** microservice records and stores the average system load information from all of the connected
-system microservices. However, the **inventory** microservice does not contain an accessible REST endpoint to control the
-sending or receiving of reactive messages. Add the **/data** RESTful endpoint to the **inventory** service by replacing the
-**InventoryResource** class with an updated version of the class.
+After you see the following message, your application server is ready:
 
-Replace the **InventoryResource** class.
+```
+The defaultServer server is ready to run a smarter planet.
+```
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+To access the **system** service, run the following curl command:
+```
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
+
+To access the **inventory** service, run the following curl command:
+```
+curl http://localhost:9080/inventory/systems
+```
+{: codeblock}
+
+Visit the http://localhost:9080/health URL to see the
+overall health status of the application, as well as the aggregated data of the liveness
+and readiness checks. Run the following curl command:
+```
+curl http://localhost:9080/health
+```
+{: codeblock}
+
+Two checks show the state of the **system** service, and the other two
+checks show the state of the **inventory** service. As you might expect, both services are in the
+**UP** state, and the overall health status of the application is in the **UP** state.
+
+You can also access the **/health/ready** endpoint by visiting the http://localhost:9080/health/ready
+URL to view the data from the readiness health checks. Run the following curl command:
+```
+curl http://localhost:9080/health/ready
+```
+{: codeblock}
+
+Similarly, access the **/health/live** endpoint by visiting the http://localhost:9080/health/live
+URL to view the data from the liveness health checks. Run the following curl command:
+```
+curl http://localhost:9080/health/live
+```
+{: codeblock}
+
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
+in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
+from the **finish** directory in another shell session:
+
+```
+mvn liberty:stop
+```
+{: codeblock}
+
+
+
+# Adding health checks to microservices
+
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd /home/project/guide-microprofile-health/start
+```
+{: codeblock}
+
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
+deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```
+mvn liberty:dev
+```
+{: codeblock}
+
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+************************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
+or open the project in your editor.
+
+A health report will be generated automatically for all services that enable MicroProfile Health. The
+**mpHealth** feature has already been enabled for you in the **src/main/liberty/config/server.xml**
+file.
+
+All services must provide an implementation of the **HealthCheck** interface, which will be used to
+verify their health. MicroProfile Health offers health checks for both readiness and liveness.
+A readiness check allows third-party services, such as Kubernetes, to determine whether a microservice
+is ready to process requests. For example, a readiness check might check dependencies,
+such as database connections. A liveness check allows third-party services to determine
+whether a microservice is running. If the liveness check fails, the application can be
+terminated. For example, a liveness check might fail if the application runs out of memory.
+
+
+
+### Adding health checks to the system service
+
+Create the **SystemReadinessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
 
 
 
 
 ```
-package io.openliberty.guides.inventory;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
+package io.openliberty.guides.system;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
 
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.reactivestreams.Publisher;
-
-import io.openliberty.guides.models.PropertyMessage;
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.BackpressureStrategy;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.FlowableEmitter;
-
-
+@Readiness
 @ApplicationScoped
-@Path("/inventory")
-public class InventoryResource {
+public class SystemReadinessCheck implements HealthCheck {
 
-    private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
-    private FlowableEmitter<String> propertyNameEmitter;
-
-    @Inject
-    private InventoryManager manager;
-    
-    @GET
-    @Path("/systems")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystems() {
-        List<Properties> systems = manager.getSystems()
-                .values()
-                .stream()
-                .collect(Collectors.toList());
-        return Response
-                .status(Response.Status.OK)
-                .entity(systems)
-                .build();
+  private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
+                                               + " Readiness Check";
+  @Override
+  public HealthCheckResponse call() {
+    if (!System.getProperty("wlp.server.name").equals("defaultServer")) {
+      return HealthCheckResponse.down(READINESS_CHECK);
     }
-
-    @GET
-    @Path("/systems/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystem(@PathParam("hostname") String hostname) {
-        Optional<Properties> system = manager.getSystem(hostname);
-        if (system.isPresent()) {
-            return Response
-                    .status(Response.Status.OK)
-                    .entity(system)
-                    .build();
-        }
-        return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("hostname does not exist.")
-                .build();
-    }
-
-    @PUT
-    @Path("/data")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.TEXT_PLAIN)
-    public Response updateSystemProperty(String propertyName) {
-        logger.info("updateSystemProperty: " + propertyName);
-        propertyNameEmitter.onNext(propertyName);
-        return Response
-                   .status(Response.Status.OK)
-                   .entity("Request successful for the " + propertyName + " property\n")
-                   .build();
-    }
-
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response resetSystems() {
-        manager.resetSystems();
-        return Response
-                .status(Response.Status.OK)
-                .build();
-    }
-
-    @Incoming("systemLoad")
-    public void updateStatus(SystemLoad sl)  {
-        String hostname = sl.hostname;
-        if (manager.getSystem(hostname).isPresent()) {
-            manager.updateCpuStatus(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was updated: " + sl);
-        } else {
-            manager.addSystem(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was added: " + sl);
-        }
-    }
-    
-    @Incoming("addSystemProperty")
-    public void getPropertyMessage(PropertyMessage pm)  {
-        logger.info("getPropertyMessage: " + pm);
-        String hostId = pm.hostname;
-        if (manager.getSystem(hostId).isPresent()) {
-            manager.updatePropertyMessage(hostId, pm.key, pm.value);
-            logger.info("Host " + hostId + " was updated: " + pm);
-        } else {
-            manager.addSystem(hostId, pm.key, pm.value);
-            logger.info("Host " + hostId + " was added: " + pm);
-        }
-    }
-
-    @Outgoing("requestSystemProperty")
-    public Publisher<String> sendPropertyName() {
-        Flowable<String> flowable = Flowable.<String>create(emitter -> 
-            this.propertyNameEmitter = emitter, BackpressureStrategy.BUFFER);
-        return flowable;
-    }
+    return HealthCheckResponse.up(READINESS_CHECK);
+  }
 }
 ```
 {: codeblock}
 
 
-The **updateSystemProperty()** method creates the **/data** endpoint that accepts
-**PUT** requests with a system property name in the request body. The **propertyNameEmitter**
-variable is an RxJava **Emitter** interface that sends the property name request to the event stream, which is Apache
-Kafka in this case.
-
-The **sendPropertyName()** method contains the
-**Flowable.create()** RxJava method, which associates the emitter to a publisher
-that is responsible for publishing events to the event stream. The publisher in this example is then connected to the
-**@Outgoing("requestSystemProperty")** channel, which you will configure later in the
-guide. MicroProfile Reactive Messaging takes care of assigning the publisher to the channel.
-
-The **Flowable.create()** method also allows the configuration of a
-**BackpressureStrategy** object, which controls what the publisher does if the emitted events
-can't be consumed by the subscriber. In this example, the publisher used the **BackpressureStrategy.BUFFER** strategy. With
-this strategy, the publisher can buffer events until the subscriber can consume them.
-
-When the **inventory** service receives a request, it adds the system property name from the request body to the
-**propertyNameEmitter** **FlowableEmitter** interface.
-The property name sent to the emitter is then sent to the publisher. The publisher sends the event to the event channel
-by using the configured **BackpressureStrategy** object when necessary.
-
-# Adding an event processor to a reactive service
 
 
-The **system** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of
-events. Every 15 seconds, the **system** microservice publishes events that contain its calculation of the average system
-load, which is its CPU usage, for the last minute. Replace the **SystemService** class to add message processing of the
-system property request from the **inventory** microservice and publish it to the Kafka messaging system.
+The **@Readiness** annotation indicates that this particular bean is a readiness health check procedure.
+By pairing this annotation with the **ApplicationScoped** context from the Contexts and
+Dependency Injections API, the bean is discovered automatically when the http://localhost:9080/health
+endpoint receives a request.
 
-Replace the **SystemService** class.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+The **call()** method is used to return the health status of a particular service.
+In this case, you are simply checking if the server name is **defaultServer** and
+returning **UP** if it is, and **DOWN** otherwise.  
+Overall, this is a very simple implementation of the **call()**
+method. In a real environment, you would want to orchestrate more meaningful
+health checks.
+
+
+Create the **SystemLivenessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
 
 
 
@@ -256,293 +247,431 @@ Replace the **SystemService** class.
 package io.openliberty.guides.system;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
+import java.lang.management.MemoryMXBean;
+
+import javax.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class SystemLivenessCheck implements HealthCheck {
+
+  @Override
+  public HealthCheckResponse call() {
+    MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+    long memUsed = memBean.getHeapMemoryUsage().getUsed();
+    long memMax = memBean.getHeapMemoryUsage().getMax();
+
+    return HealthCheckResponse.named(
+      SystemResource.class.getSimpleName() + " Liveness Check")
+                              .withData("memory used", memUsed)
+                              .withData("memory max", memMax)
+                              .status(memUsed < memMax * 0.9).build();
+  }
+}
+```
+{: codeblock}
+
+
+
+The **@Liveness** annotation indicates that this is a liveness health check procedure.
+In this case, you are checking the heap memory usage. If more than 90% of the maximum memory
+is being used, a status of **DOWN** is returned.
+
+
+### Adding health checks to the inventory service
+
+Create the **InventoryReadinessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+
+
+
+
+```
+package io.openliberty.guides.inventory;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Readiness
+@ApplicationScoped
+public class InventoryReadinessCheck implements HealthCheck {
+
+  private static final String READINESS_CHECK = InventoryResource.class.getSimpleName()
+                                               + " Readiness Check";
+  @Inject
+  InventoryConfig config;
+
+  public boolean isHealthy() {
+    if (config.isInMaintenance()) {
+      return false;
+    }
+    try {
+      String url = InventoryUtils.buildUrl("http", "localhost", config.getPortNumber(),
+          "/system/properties");
+      Client client = ClientBuilder.newClient();
+      Response response = client.target(url).request(MediaType.APPLICATION_JSON).get();
+      if (response.getStatus() != 200) {
+        return false;
+      }
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  @Override
+  public HealthCheckResponse call() {
+    if (!isHealthy()) {
+      return HealthCheckResponse
+          .down(READINESS_CHECK);
+    }
+    return HealthCheckResponse
+        .up(READINESS_CHECK);
+  }
+
+}
+```
+{: codeblock}
+
+
+
+In the **isHealthy()** method, 
+you report the **inventory** service as not ready if the service is in maintenance or if its dependant service is unavailable.
+
+For simplicity, the custom **`io_openliberty_guides_inventory_inMaintenance`**
+MicroProfile Config property, which is defined in the **resources/CustomConfigSource.json**
+file, is used to indicate whether the service is in maintenance. This file was already
+created for you.
+
+Moreover, the readiness health check procedure makes an HTTP **GET** request to the **system** service and checks its status.
+If the request is successful, the **inventory** service is healthy and ready because its dependant service is available.
+Otherwise, the **inventory** service is not ready and an unhealthy readiness status is returned.
+
+If you are curious about the injected **inventoryConfig** object or if
+you want to learn more about MicroProfile Config, see
+[Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
+
+Create the **InventoryLivenessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+
+
+
+
+```
+package io.openliberty.guides.inventory;
 
 import javax.enterprise.context.ApplicationScoped;
 
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.reactivestreams.Publisher;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
 
-import io.openliberty.guides.models.PropertyMessage;
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.Flowable;
+import org.eclipse.microprofile.health.Liveness;
 
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
 @ApplicationScoped
-public class SystemService {
-    
-    private static Logger logger = Logger.getLogger(SystemService.class.getName());
+public class InventoryLivenessCheck implements HealthCheck {
+  @Override
+  public HealthCheckResponse call() {
+      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+      long memUsed = memBean.getHeapMemoryUsage().getUsed();
+      long memMax = memBean.getHeapMemoryUsage().getMax();
 
-    private static final OperatingSystemMXBean osMean = 
-            ManagementFactory.getOperatingSystemMXBean();
-    private static String hostname = null;
-
-    private static String getHostname() {
-        if (hostname == null) {
-            try {
-                return InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException e) {
-                return System.getenv("HOSTNAME");
-            }
-        }
-        return hostname;
-    }
-
-    @Outgoing("systemLoad")
-    public Publisher<SystemLoad> sendSystemLoad() {
-        return Flowable.interval(15, TimeUnit.SECONDS)
-                .map((interval -> new SystemLoad(getHostname(),
-                        osMean.getSystemLoadAverage())));
-    }
-    
-    @Incoming("propertyRequest")
-    @Outgoing("propertyResponse")
-    public PropertyMessage sendProperty(String propertyName) {
-        logger.info("sendProperty: " + propertyName);
-        if (propertyName == null || propertyName.isEmpty()) {
-            logger.warning(propertyName == null ? "Null" : "An empty string"
-                    + " is not System property.");
-            return null;
-        }
-        return new PropertyMessage(getHostname(),
-                propertyName,
-                System.getProperty(propertyName, "unknown"));
-    }
+      return HealthCheckResponse.named(
+        InventoryResource.class.getSimpleName() + " Liveness Check")
+                                .withData("memory used", memUsed)
+                                .withData("memory max", memMax)
+                                .status(memUsed < memMax * 0.9).build();
+  }
 }
 ```
 {: codeblock}
 
 
-A new method that is named **sendProperty()** receives a
-system property name from the **inventory** microservice over the **@Incoming("propertyRequest")**
-channel. The method calculates the requested property in real time and publishes it back to Kafka over the
-**@Outgoing("propertyResponse")** channel. In this scenario, the
-**sendProperty()** method acts as a processor. Next, you'll configure the channels that you need.
 
-# Configuring the MicroProfile Reactive Messaging connectors for Kafka
+As with the **system** liveness check, you are checking the heap memory usage. If more
+than 90% of the maximum memory is being used, a **DOWN** status is returned.
 
 
 
-The **system** and **inventory** microservices each have a MicroProfile Config property file in which the properties of their
-incoming and outgoing channels are defined. These properties include the names of channels, the topics in the Kafka
-messaging system, and the associated message serializers and deserializers. To complete the message loop created in the previous sections, four channels
-must be added and configured.
+# Running the application
 
-Replace the inventory/microprofile-config.properties file.
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+While the server is running, run the following curl command to find
+the aggregated liveness and readiness health reports on the two services:
+```
+curl http://localhost:9080/health
+```
+{: codeblock}
+
+You can also run the following curl command to view the readiness health report:
+```
+curl http://localhost:9080/health/ready
+```
+{: codeblock}
+
+or run the following curl command to view the liveness health report:
+```
+curl http://localhost:9080/health/live
+```
+{: codeblock}
+
+Put the **inventory** service in maintenance by setting the **`io_openliberty_guides_inventory_inMaintenance`**
+property to **true** in the **resources/CustomConfigSource.json** file. 
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/resources/META-INF/microprofile-config.properties
-
-
-
-
-```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
-
-mp.messaging.incoming.systemLoad.connector=liberty-kafka
-mp.messaging.incoming.systemLoad.topic=system.load
-mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
-mp.messaging.incoming.systemLoad.group.id=system-load-status
-
-mp.messaging.incoming.addSystemProperty.connector=liberty-kafka
-mp.messaging.incoming.addSystemProperty.topic=add.system.property
-mp.messaging.incoming.addSystemProperty.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.addSystemProperty.value.deserializer=io.openliberty.guides.models.PropertyMessage$PropertyMessageDeserializer
-mp.messaging.incoming.addSystemProperty.group.id=sys-property
-
-mp.messaging.outgoing.requestSystemProperty.connector=liberty-kafka
-mp.messaging.outgoing.requestSystemProperty.topic=request.system.property
-mp.messaging.outgoing.requestSystemProperty.key.serializer=org.apache.kafka.common.serialization.StringSerializer
-mp.messaging.outgoing.requestSystemProperty.value.serializer=org.apache.kafka.common.serialization.StringSerializer
-```
-{: codeblock}
-
-
-The newly created RESTful endpoint requires two new channels that move the requested messages between the **system**
-and **inventory** microservices. The **inventory** microservice **microprofile-config.properties**
-file now has two new channels, **requestSystemProperty** and
-**addSystemProperty**. The **requestSystemProperty**
-channel handles sending the system property request, and the **addSystemProperty** channel
-handles receiving the system property response.
-
-Replace the system/microprofile-config.properties file.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/resources/META-INF/microprofile-config.properties
-
-
-
-
-```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
-
-mp.messaging.outgoing.systemLoad.connector=liberty-kafka
-mp.messaging.outgoing.systemLoad.topic=system.load
-mp.messaging.outgoing.systemLoad.key.serializer=org.apache.kafka.common.serialization.StringSerializer
-mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.SystemLoad$SystemLoadSerializer
-
-mp.messaging.outgoing.propertyResponse.connector=liberty-kafka
-mp.messaging.outgoing.propertyResponse.topic=add.system.property
-mp.messaging.outgoing.propertyResponse.key.serializer=org.apache.kafka.common.serialization.StringSerializer
-mp.messaging.outgoing.propertyResponse.value.serializer=io.openliberty.guides.models.PropertyMessage$PropertyMessageSerializer
-
-mp.messaging.incoming.propertyRequest.connector=liberty-kafka
-mp.messaging.incoming.propertyRequest.topic=request.system.property
-mp.messaging.incoming.propertyRequest.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.propertyRequest.value.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.propertyRequest.group.id=property-name
-```
-{: codeblock}
-
-
-Replace the **system** microservice **microprofile-config.properties** file to add the two new
-**propertyRequest** and **propertyResponse**
-channels. The **propertyRequest** channel handles receiving the property request, and the
-**propertyResponse** channel handles sending the property response.
-
-# Building and running the application
-
-Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
-
-Start your Docker environment. Dockerfiles are provided for you to use.
-
-To build the application, run the Maven **install** and **package** goals from the command line in the **start** directory:
-
-```
-mvn -pl models install
-mvn package
-```
-{: codeblock}
-
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
-```
-{: codeblock}
-
-
-Run the following commands to containerize the microservices:
-
-```
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-{: codeblock}
-
-
-Next, use the provided script to start the application in Docker containers. The script creates a network for the
-containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the
-project. For simplicity, the script starts one instance of the **system** service.
-
-
-```
-./scripts/startContainers.sh
-```
-{: codeblock}
-
-
-
-# Testing the application
-
-After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint
-of the **inventory** service.
-
-
-Run the following curl command to access the  **inventory** microservice:
-```
-curl http://localhost:9085/inventory/systems
-```
-{: codeblock}
-
-You see the CPU **systemLoad** property for all the systems:
+ **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json
 
 ```
 {
-   "hostname":"30bec2b63a96",   
-   "systemLoad":1.44
+  "config_ordinal":700,
+  "io_openliberty_guides_system_inMaintenance":true
 }
 ```
+{: codeblock}
 
-
-You can revisit the **inventory** service after a while by running the following curl command, and you will notice the CPU **systemLoad**
-property for the systems changed:
+Because this configuration file is picked up dynamically, simply refresh the http://localhost:9080/health
+URL to see that the state of the **inventory** service changed to **DOWN**. Run the following curl command:
 ```
-curl http://localhost:9085/inventory/systems
+curl http://localhost:9080/health
 ```
 {: codeblock}
 
-Make a **PUT** request on the **http://localhost:9085/inventory/data** URL to add the value of a particular system
-property to the set of existing properties. For example, run the following **curl** command:
+The overall state of the application also changed to **DOWN** as a result. Run the following curl command
+ to verify that the **inventory** service is indeed in maintenance:
+```
+curl http://localhost:9080/inventory/systems
+```
+{: codeblock}
 
+Set the **`io_openliberty_guides_inventory_inMaintenance`**
+property back to **false** after you are done.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json
 
 ```
-curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-Type:text/plain"
+{
+  "config_ordinal":700,
+  "io_openliberty_guides_system_inMaintenance":false
+}
 ```
 {: codeblock}
 
 
 
-In this example, the **PUT** request with the **os.name** system property in the request body on the **http://localhost:9085/inventory/data**
-URL adds the **os.name** system property for your system.
+# Testing health checks
+
+You will implement several test methods to validate the health of the **system** and **inventory** services.
+
+Create the **HealthIT** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
+
+
+
+
+```
+package it.io.openliberty.guides.health;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.HashMap;
+
+import javax.json.JsonArray;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class HealthIT {
+
+  private JsonArray servicesStates;
+  private static HashMap<String, String> endpointData;
+
+  private String HEALTH_ENDPOINT = "health";
+  private String READINESS_ENDPOINT = "health/ready";
+  private String LIVENES_ENDPOINT = "health/live";
+
+  @BeforeEach
+  public void setup() {
+    endpointData = new HashMap<String, String>();
+  }
+
+  @Test
+  public void testIfServicesAreUp() {
+    endpointData.put("SystemResource Readiness Check", "UP");
+    endpointData.put("SystemResource Liveness Check", "UP");
+    endpointData.put("InventoryResource Readiness Check", "UP");
+    endpointData.put("InventoryResource Liveness Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, HEALTH_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  @Test
+  public void testReadiness() {
+    endpointData.put("SystemResource Readiness Check", "UP");
+    endpointData.put("InventoryResource Readiness Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, READINESS_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  @Test
+  public void testLiveness() {
+    endpointData.put("SystemResource Liveness Check", "UP");
+    endpointData.put("InventoryResource Liveness Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, LIVENES_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  @Test
+  public void testIfInventoryServiceIsDown() {
+    endpointData.put("SystemResource Readiness Check", "UP");
+    endpointData.put("SystemResource Liveness Check", "UP");
+    endpointData.put("InventoryResource Readiness Check", "UP");
+    endpointData.put("InventoryResource Liveness Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, HEALTH_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+
+    endpointData.put("InventoryResource Readiness Check", "DOWN");
+    HealthITUtil.changeInventoryProperty(HealthITUtil.INV_MAINTENANCE_FALSE,
+        HealthITUtil.INV_MAINTENANCE_TRUE);
+    servicesStates = HealthITUtil.connectToHealthEnpoint(503, HEALTH_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  private void checkStates(HashMap<String, String> testData, JsonArray servStates) {
+    testData.forEach((service, expectedState) -> {
+      assertEquals(expectedState, HealthITUtil.getActualState(service, servStates),
+          "The state of " + service + " service is not matching.");
+    });
+  }
+
+  @AfterEach
+  public void teardown() {
+    HealthITUtil.cleanUp();
+  }
+
+}
+```
+{: codeblock}
+
+
+
+
+Let's break down the test cases:
+
+* The **testIfServicesAreUp()** test case compares the generated health report
+with the actual status of the services.
+* The **testReadiness()** test case compares the generated health report for the
+readiness checks with the actual status of the services.
+* The **testLiveness()** test case compares the generated health report for the
+liveness checks with the actual status of the services.
+* The **testIfInventoryServiceIsDown()** test case puts the **inventory** service
+in maintenance by setting the **`io_openliberty_guides_inventory_inMaintenance`**
+property to **true** and comparing the generated health report with the actual status of
+the services.
+
+A few more tests were included to verify the basic functionality of the **system** and **inventory**
+services. They can be found under the **src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java**
+and **src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java** files.
+If a test failure occurs, then you might have introduced a bug into the code. These tests
+run automatically as a part of the integration test suite.
+
+
+
+
+
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
 You see the following output:
 
 ```
-Request successful for the os.name property
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running it.io.openliberty.guides.health.HealthIT
+[INFO] [WARNING ] CWMH0052W: The class com.ibm.ws.microprofile.health.impl.HealthCheckResponseImpl implementing HealthCheckResponse in the guide-microprofile-health application in module guide-microprofile-health.war, reported a DOWN status with data Optional[{}].
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.463 s - in it.io.openliberty.guides.health.HealthIT
+[INFO] Running it.io.openliberty.guides.system.SystemEndpointIT
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s - in it.io.openliberty.guides.system.SystemEndpointIT
+[INFO] Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+[INFO] [WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+[INFO] Could not send Message.
+[INFO] [err] The specified host is unknown.
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.102 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-The **system** service is available so the request to the service is successful and returns a **200** response code.
+The warning messages are expected. The first warning results from a request to a service that is under maintenance. This request is made in the **testIfInventoryServiceIsDown()** test from the **InventoryEndpointIT** integration test. The second warning and error results from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
 
+To see whether the tests detect a failure, manually change the configuration of
+**`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**
+in the **resources/CustomConfigSource.json** file. Rerun the tests to see a test failure occur.
+The test failure occurs because the initial status of the **inventory** service is **DOWN**.
 
-You can revisit the **inventory** service by running the following curl command:
-```
-curl http://localhost:9085/inventory/systems
-```
-{: codeblock}
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
+where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
-Notice that the **os.name** system property value is now included with the previous values:
-
-```
-{
-   "hostname":"30bec2b63a96",
-   "os.name":"Linux",
-   "systemLoad":1.44
-}
-```
-
-# Tearing down the environment
-
-Run the following script to stop the application:
-
-
-```
-./scripts/stopContainers.sh
-```
-{: codeblock}
-
-
-
-# Running multiple system instances
-
-
-This application has only one instance of the **system** service. The **inventory** service collects system properties of
-all **system** services in the application. As an exercise, start multiple **system** services to see how the application
-handles it. When you start the **system** instances, you must provide a unique **group.id**
-through the **`MP_MESSAGING_INCOMING_PROPERTYREQUEST_GROUP_ID`** environment variable.
 
 # Summary
 
 ## Nice Work!
 
-You successfully integrated a RESTful microservice with a reactive system by using MicroProfile Reactive Messaging.
+You just learned how to add health checks to report the states of microservices by using
 
+MicroProfile Health in Open Liberty. Then, you wrote tests to validate the generated
+health report.
+
+Feel free to try one of the related MicroProfile guides. They demonstrate additional
+technologies that you can learn and expand on top of what you built here.
 
 
 
@@ -550,25 +679,27 @@ You successfully integrated a RESTful microservice with a reactive system by usi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-reactive-messaging-rest-integration** project by running the following commands:
+Delete the **guide-microprofile-health** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-reactive-messaging-rest-integration
+rm -fr guide-microprofile-health
 ```
 {: codeblock}
 
 ## What could make this guide better?
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-rest-integration/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-rest-integration/pulls)
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-health/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-health/pulls)
 
 
 
 
 ## Where to next? 
 
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 
 
 ## Log out of the session
