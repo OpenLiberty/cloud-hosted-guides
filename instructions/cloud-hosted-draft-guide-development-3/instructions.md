@@ -1,7 +1,7 @@
 
-# Welcome to the Building fault-tolerant microservices with the @Fallback annotation guide!
+# Welcome to the Securing microservices with JSON Web Tokens guide!
 
-You'll explore how to manage the impact of failures using MicroProfile Fault Tolerance by adding fallback behavior to microservice dependencies.
+You'll explore how to control user and role access to microservices with MicroProfile JSON Web Token (MicroProfile JWT).
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,30 +14,45 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 # What you'll learn
 
-You will learn how to use MicroProfile (MP) Fault Tolerance to build resilient microservices
-that reduce the impact from failure and ensure continued operation of services.
+You will add token-based authentication mechanisms to authenticate, authorize,
+and verify users by implementing MicroProfile JWT in the **system** microservice.
 
-MP Fault Tolerance provides a simple and flexible solution to build fault-tolerant microservices.
-Fault tolerance leverages different strategies to guide the execution and result of logic.
-As stated in the [MicroProfile website](https://microprofile.io/project/eclipse/microprofile-fault-tolerance),
-retry policies, bulkheads, and circuit breakers are popular concepts in this area.
-They dictate whether and when executions take place, and fallbacks offer an alternative result
-when an execution does not complete successfully.
+A JSON Web Token (JWT) is a self-contained token that is designed to securely transmit
+information as a JSON object. The information in this JSON object is digitally
+signed and can be trusted and verified by the recipient.
 
-The application that you will be working with is an **inventory** service, which collects,
-stores, and returns the system properties.
-It uses the **system** service to retrieve the system properties for a particular host.
-You will add fault tolerance to the **inventory** service so that it reacts accordingly when the **system**
-service is unavailable.
+For microservices, a token-based authentication mechanism offers a lightweight
+way for security controls and security tokens to propagate user identities
+across different services. JSON Web Token is becoming the most common
+token format because it follows well-defined and known standards.
 
-You will use the **@Fallback** annotations from the MicroProfile Fault Tolerance
-specification to define criteria for when to provide an alternative solution for
-a failed execution.
+MicroProfile JWT standards define the required format of JWT for authentication
+and authorization. The standards also map JWT claims to various Jakarta EE
+container APIs and make the set of claims available through getter methods.
 
-You will also see the application metrics for the fault tolerance methods that are automatically enabled
-when you add the MicroProfile Metrics feature to the server.
+In this guide, the application uses JWTs to authenticate a user,
+allowing them to make authorized requests to a secure backend service.
+
+You will be working with two services, a **frontend** service and a secure 
+**system** backend service. The **frontend** service logs a user in, builds a JWT, and makes
+authorized requests to the secure **system** service for JVM system properties.
+The following diagram depicts the application that is used in this guide:
+
+![JWT frontend and system services](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-jwt/master/assets/JWT_Diagram.png)
 
 
+The user signs in to the **frontend** service with a username and a password,
+at which point a JWT is created. The **frontend** service then makes
+requests, with the JWT included, to the **system** backend service. The secure
+**system** service verifies the JWT to ensure that the request came
+from the authorized **frontend** service. After the JWT is validated, the information
+in the claims, such as the user's role, can be trusted and used to
+determine which system properties the user has access to.
+
+To learn more about JSON Web Tokens, check out the
+[jwt.io website](https://jwt.io/introduction/). If you want to learn more about how JWTs
+can be used for user authentication and authorization, check out the Open Liberty
+[Single Sign-on documentation](https://openliberty.io/docs/latest/single-sign-on.html).
 
 # Getting started
 
@@ -51,11 +66,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-fallback.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-jwt.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-fallback.git
-cd guide-microprofile-fallback
+git clone https://github.com/openliberty/guide-microprofile-jwt.git
+cd guide-microprofile-jwt
 ```
 {: codeblock}
 
@@ -64,102 +79,119 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-
 ### Try what you'll build
 
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+The **finish** directory contains the finished JWT security implementation for the
+services in the application. Try the finished application before you
+build your own.
 
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
+To try out the application, run the following commands to navigate to the **finish/frontend** directory and
+deploy the **frontend** service to Open Liberty:
 
 ```
-cd finish
+cd finish/frontend
 mvn liberty:run
 ```
 {: codeblock}
 
 
-After you see the following message, your application server is ready:
+Open another command-line session and run the following commands to navigate to the **finish/system** directory and
+deploy the **system** service to Open Liberty:
+
+```
+cd finish/system
+mvn liberty:run
+```
+{: codeblock}
+
+
+After you see the following message in both command-line sessions, both of your services are ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
 
+To launch the front-end web application, 
+select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
+and click the **OK** button. 
+You’re redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
+where **accountname** is your account name. Click the **Log in** link on the welcome page. From here, 
+you can log in to the application with the form-based login.
+
+Log in with one of the following usernames and its corresponding password:
+
+| *Username* | *Password* | *Role*
+| --- | --- | ---
+| bob | bobpwd | admin, user
+| alice | alicepwd | user
+| carl | carlpwd | user
+
+You're redirected to a page that displays information that the
+front end requested from the **system** service, such as the system username.
+If you log in as an **admin** user, the current OS is also shown. If you log in as
+a **user**, you instead see the **You are not authorized to access
+this system property** message. You see this message because the **user** role doesn't
+have sufficient privileges to view current OS information.
+
+Additionally, the **groups** claim of the JWT is read by the **system** service and
+requested by the front end to be displayed.
+
+
+You can try accessing these services without a JWT by going to the **system** endpoint. 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-To access the **inventory** service with a localhost hostname, run the following curl command:
+Run the following curl command from the terminal in the IDE:
 ```
-curl http://localhost:9080/inventory/systems/localhost
-```
-{: codeblock}
-
-You see the system properties for this host.
-When you run this curl command, some of these system properties, such as the OS name and user name, are automatically stored in the inventory.
-
-
-Update the **CustomConfigSource** configuration file.
-Change the `io_openliberty_guides_system_inMaintenance` property from `false` to `true` and save the file.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json
-
-```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":true}
+curl -k https://localhost:8443/system/properties/os
 ```
 {: codeblock}
 
-
-You do not need to restart the server. 
-Next, run the following curl command:
-```
-curl http://localhost:9080/inventory/systems/localhost
-```
-{: codeblock}
-
-The fallback mechanism is triggered because the **system** service is now in maintenance.
-You see the cached properties for this localhost.
-
-When you are done checking out the application, go to the **CustomConfigSource.json** file again.
-
-
-Update the **CustomConfigSource** configuration file.
-Change the **`io_openliberty_guides_system_inMaintenance`** property from **true** to **false** to set this
-condition back to its original value.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json
+The response is empty because you don't have access.
+Access is granted if a valid JWT is sent with the request.
+The following error also appears in the command-line session of the **system** service:
 
 ```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":false}
+[ERROR] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
 ```
-{: codeblock}
 
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
+When you are done with the application, stop both the **frontend** and **system**
+services by pressing **CTRL+C** in the command-line sessions where you ran them.
+Alternatively, you can run the following goals from the **finish** directory in
+another command-line session:
 
 ```
-mvn liberty:stop
+mvn -pl system liberty:stop
+mvn -pl frontend liberty:stop
 ```
 {: codeblock}
 
 
 
-# Enabling fault tolerance
+# Creating the secure system service
 
 
 To begin, run the following command to navigate to the **start** directory:
 ```
-cd /home/project/guide-microprofile-fallback/start
+cd /home/project/guide-microprofile-jwt/start
 ```
 {: codeblock}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in development mode, known as dev mode, the server
+listens for file changes and automatically recompiles and deploys your updates
+whenever you save a new change. Run the following commands to navigate to the
+**frontend** directory and start the **frontend** service in dev mode:
 
 ```
+cd frontend
+mvn liberty:dev
+```
+{: codeblock}
+
+
+Open another command-line session and run the following commands to navigate to the
+**system** directory and start the **system** service in dev mode:
+```
+cd system
 mvn liberty:dev
 ```
 {: codeblock}
@@ -172,463 +204,587 @@ After you see the following message, your application server in dev mode is read
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
+The **system** service provides endpoints for the **frontend** service to use to
+request system properties. This service is secure and requires a valid JWT to be
+included in requests that are made to it. The claims in the JWT are used to determine
+what properties the user has access to.
 
-The MicroProfile Fault Tolerance API is included in the MicroProfile dependency that is specified in your **pom.xml** file.
-Look for the dependency with the **microprofile** artifact ID.
-This dependency provides a library that allows you to use fault tolerance policies in your microservices.
-
-You can also find the **mpFaultTolerance** feature in your **src/main/liberty/config/server.xml** server configuration,
-which turns on MicroProfile Fault Tolerance capabilities in Open Liberty.
-
-To easily work through this guide, the two provided microservices are set up to run
-on the same server. To simulate the availability of the services and then to enable fault tolerance,
-dynamic configuration with MicroProfile Configuration is used so that you can easily take one service
-or the other down for maintenance. If you want to learn more about setting up dynamic configuration,
-see [Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
-
-The following two steps set up the dynamic configuration on the **system** service and its client.
-You can move on to the next section, which adds the fallback mechanism on the **inventory** service.
-
-First, the **src/main/java/io/openliberty/guides/system/SystemResource.java** file has
-the **isInMaintenance()** condition, which determines that the system properties are returned only if you set the **`io_openliberty_guides_system_inMaintenance`** configuration property
-to **false** in the **CustomConfigSource** file.
-Otherwise, the service returns a **`Status.SERVICE_UNAVAILABLE`** message, which makes it unavailable.
-
-Next, the **src/main/java/io/openliberty/guides/inventory/client/SystemClient.java** file
-makes a request to the **system** service through the MicroProfile Rest Client API.
-If you want to learn more about MicroProfile Rest Client,
-you can follow the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html) guide.
-The **system** service as described in the **SystemResource.java** file
-may return a **`Status.SERVICE_UNAVAILABLE`** message, which is a 503 status code.
-This code indicates that the server being called
-is unable to handle the request because of a temporary overload or scheduled maintenance, which would
-likely be alleviated after some delay. To simulate that the system is unavailable, an **IOException** is thrown.
-
-The **InventoryManager** class calls the **getProperties()** method
-in the **SystemClient.java** class.
-You will look into the **InventoryManager** class in more detail in the next section.
+Create the secure **system** service.
 
 
+Create the **SystemResource** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
+```
+{: codeblock}
 
 
-
-
-
-### Adding the @Fallback annotation
-
-The **inventory** service is now able to recognize that the **system** service
-was taken down for maintenance.
-An IOException is thrown to simulate the **system** service is unavailable.
-Now, set a fallback method to deal with this failure.
-
-
-Replace the **InventoryManager** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
 
 
 
 
 ```
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.system;
 
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.Properties;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import javax.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.faulttolerance.Fallback;
-import io.openliberty.guides.inventory.model.*;
+import javax.json.JsonArray;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.annotation.security.RolesAllowed;
 
-@ApplicationScoped
-public class InventoryManager {
+import org.eclipse.microprofile.jwt.Claim;
 
-    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-    private InventoryUtils invUtils = new InventoryUtils();
+@RequestScoped
+@Path("/properties")
+public class SystemResource {
 
-    @Fallback(fallbackMethod = "fallbackForGet",
-            applyOn = {IOException.class},
-            skipOn = {UnknownHostException.class})
-    public Properties get(String hostname) throws IOException {
-        return invUtils.getProperties(hostname);
+    @Inject
+    @Claim("groups")
+    private JsonArray roles;
+
+    @GET
+    @Path("/username")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin", "user" })
+    public String getUsername() {
+        return System.getProperties().getProperty("user.name");
     }
 
-    public Properties fallbackForGet(String hostname) {
-        Properties properties = findHost(hostname);
-        if (properties == null) {
-            Properties msgProp = new Properties();
-            msgProp.setProperty(hostname,
-                    "System is not found in the inventory or system is in maintenance");
-            return msgProp;
-        }
-        return properties;
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin" })
+    public String getOS() {
+        return System.getProperties().getProperty("os.name");
     }
 
-    public void add(String hostname, Properties systemProps) {
-        Properties props = new Properties();
-
-        String osName = systemProps.getProperty("os.name");
-        if (osName == null) {
-            return;
-        }
-
-        props.setProperty("os.name", systemProps.getProperty("os.name"));
-        props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-        SystemData system = new SystemData(hostname, props);
-        if (!systems.contains(system)) {
-            systems.add(system);
-        }
-    }
-
-    public InventoryList list() {
-        return new InventoryList(systems);
-    }
-
-    private Properties findHost(String hostname) {
-        for (SystemData system : systems) {
-            if (system.getHostname().equals(hostname)) {
-                return system.getProperties();
-            }
-        }
-        return null;
+    @GET
+    @Path("/jwtroles")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin", "user" })
+    public String getRoles() {
+        return roles.toString();
     }
 }
 ```
 {: codeblock}
 
 
+This class has role-based access control. The role names that are used in the
+**@RolesAllowed** annotations are mapped to group
+names in the **groups** claim of the JWT, which results in an authorization
+decision wherever the security constraint is applied.
 
-The **@Fallback** annotation dictates a method to call when the original method encounters a failed execution. In this
-example, use the **fallbackForGet()** method.
+The **/username** endpoint returns the system's username and is annotated with the
+**@RolesAllowed({"admin, "user"})**
+annotation. Only authenticated users with the role of **admin** or **user**
+can access this endpoint.
 
-The **@Fallback** annotation provides two parameters, **applyOn** and **skipOn**, which allow you to configure
-which exceptions trigger a fallback and which exceptions do not, respectively.
-In this example, the **get()** method throws **IOException** when the system service is unavailable, and throws
-**UnknownHostException** when the system service cannot be found on the specified host.
-The **fallbackForGet()** method can handle the first case, but not the second.
+The **/os** endpoint returns the system's current OS. Here,
+the **@RolesAllowed** annotation is limited to
+**admin**, meaning that only authenticated users with the role of **admin** are able to
+access the endpoint.
 
-The **fallbackForGet()** method, which is the designated fallback method for the original
-**get()** method, checks to see if the system's properties exist in the inventory.
-If the system properties entry is not found in the inventory, the method prints out a warning
-message in the browser. Otherwise, this method returns the cached property values from the inventory.
-
-You successfully set up your microservice to have fault tolerance capability.
-
-
-# Enabling metrics for the fault tolerance methods
-
-
-MicroProfile Fault Tolerance integrates with MicroProfile Metrics to provide metrics for the annotated fault tolerance methods.
-When both the **mpFaultTolerance** and the **mpMetrics** features are included in the **server.xml** configuration file,
-the **@Fallback** fault tolerance annotation provides metrics that count the following things: the total number of annotated method invocations, the total number of failed annotated method invocations, and the total number of the fallback method calls.
-
-The **mpMetrics** feature requires SSL and the configuration is provided for you. The **quickStartSecurity** configuration element provides basic security to secure the
-server. When you go to the **/metrics** endpoint, use the credentials that are defined in the server configuration to log in to view the data for the fault tolerance methods.
-
-You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [MicroProfile Fault Tolerance specification](https://github.com/eclipse/microprofile-fault-tolerance/releases).
+While the **@RolesAllowed** annotation automatically reads from the **groups** claim
+of the JWT to make an authorization decision, you can also manually access the
+claims of the JWT by using the **@Claim** annotation. In this
+case, the **groups** claim is injected into the **roles** JSON array.
+The roles that are parsed from the **groups** claim of the
+JWT are then exposed back to the front end at the **/jwtroles** endpoint.
+To read more about different claims and ways to
+access them, check out the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
 
 
-# Running the application
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+# Creating a client to access the secure system service
 
 
-When the server is running, run the following curl command:
+
+
+Create a RESTful client interface for the **frontend** service.
+
+Create the **SystemClient** class.
+
+> Run the following touch command in your terminal
 ```
-curl http://localhost:9080/inventory/systems/localhost
+touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
 ```
 {: codeblock}
 
-You receive the system properties of your local JVM from the **inventory** service.
 
-Next, run the following curl command which accesses the **system** service, to retrieve the system properties for the specific localhost:
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
+
+
+
+
 ```
-curl http://localhost:9080/system/properties
+package io.openliberty.guides.frontend.client;
+
+import javax.enterprise.context.RequestScoped;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.HeaderParam;
+
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+
+@RegisterRestClient(baseUri = "https://localhost:8443/system")
+@Path("/properties")
+@RequestScoped
+public interface SystemClient extends AutoCloseable{
+ 
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getOS(@HeaderParam("Authorization") String authHeader);
+
+    @GET
+    @Path("/username")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getUsername(@HeaderParam("Authorization") String authHeader);
+    
+    @GET
+    @Path("/jwtroles")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getJwtRoles(@HeaderParam("Authorization") String authHeader);
+}
 ```
 {: codeblock}
 
-Notice that the results from the two URLs are identical because the **inventory** service gets its results from
-calling the **system** service.
 
-To see the application metrics, run the following curl commmand. This command will Log in using **admin** user, and you will have to enter **adminpwd** as the password.
+This interface declares methods for accessing each of the endpoints that were
+previously set up in the **system** service.
+
+The MicroProfile Rest Client feature automatically builds and generates a client
+implementation based on what is defined in the **SystemClient** interface. You
+don't need to set up the client and connect with the remote service.
+
+As discussed, the **system** service is secured and requests made to it must
+include a valid JWT in the **Authorization** header. The **@HeaderParam** annotations
+include the JWT by specifying that the value of the **String authHeader**
+parameter, which contains the JWT, be used as the value for the **Authorization**
+header. This header is included in all of the requests that are made to the
+**system** service through this client.
+
+Create the application bean that the front-end UI uses to request data.
+
+Create the **ApplicationBean** class.
+
+> Run the following touch command in your terminal
 ```
-curl -k -u admin https://localhost:9443/metrics/application
+touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
 ```
 {: codeblock}
 
-See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
+
+
+
 
 ```
-# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_total counter
-application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_total 1
-# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_failed_total counter
-application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_failed_total 0
-# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_fallback_calls_total counter
-application_ft_io_openliberty_guides_inventory_InventoryManager_get_fallback_calls_total 0
+package io.openliberty.guides.frontend;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+
+import io.openliberty.guides.frontend.client.SystemClient;
+import io.openliberty.guides.frontend.util.SessionUtils;
+
+
+@ApplicationScoped
+@Named
+public class ApplicationBean { 
+
+    @Inject
+    @RestClient
+    private SystemClient defaultRestClient;
+
+    public String getJwt() {
+        String jwtTokenString = SessionUtils.getJwtToken();
+        String authHeader = "Bearer " + jwtTokenString;
+        return authHeader;
+    }
+    
+    public String getOs() {
+        String authHeader = getJwt();
+        String os;
+        try {
+            os = defaultRestClient.getOS(authHeader);
+        } catch(Exception e) {
+            return "You are not authorized to access this system property";
+        }
+        return os;
+    }
+
+    public String getUsername() {
+        String authHeader = getJwt();
+        return defaultRestClient.getUsername(authHeader);
+    }
+
+    public String getJwtRoles() {
+        String authHeader = getJwt();
+        return defaultRestClient.getJwtRoles(authHeader);
+    }
+
+}
 ```
-
-You can test the fault tolerance mechanism of your microservices by dynamically changing
-the **`io_openliberty_guides_system_inMaintenance`** property value to **true** in the
-**resources/CustomConfigSource.json** file, which turns the **system** service in maintenance.
+{: codeblock}
 
 
-Update the configuration file.
-Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
+The application bean is used to populate the table in the front end by making
+requests for data through the **defaultRestClient**, which
+is an injected instance of the **SystemClient** class
+that you created. The **getOs()**, **getUsername()**, and **getJwtRoles()** methods call
+their associated methods of the **SystemClient** class
+with the **authHeader** passed in as a parameter. The **authHeader** is a string that
+consists of the JWT with **Bearer** prefixed to it. The **authHeader** is included in the
+**Authorization** header of the subsequent requests that are made by the
+**defaultRestClient** instance.
+
+The JWT for these requests is retrieved from the session attributes with the
+**getJwt()** method. The JWT is stored in the session
+attributes by the provided **LoginBean** class. When the
+user logs in to the front end, the **doLogin()** method is
+called and builds the JWT. Then, the **setAttribute()**
+method stores it as an **HttpSession** attribute. The JWT is built by using the
+**JwtBuilder** APIs in the **buildJwt()** method.
+You can see that the **claim()** method is being used to set the **groups** claim of the token.
+This claim is used to provide the role-based access that you implemented.
+
+
+# Configuring MicroProfile JWT
+
+
+
+Configure the **mpJwt** feature in the **microprofile-config.properties** file for the **system** service.
+
+Create the microprofile-config.properties file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties
+
+
+
+
+```
+mp.jwt.verify.issuer=http://openliberty.io
+```
+{: codeblock}
+
+
+The **mp.jwt.verify.issuer** config property specifies the expected value of
+the issuer claim on an incoming JWT. Incoming JWTs with an issuer
+claim that's different from this expected value aren't considered valid.
+
+Next, add the MicroProfile JSON Web Token feature to the server configuration file for
+the **system** service.
+
+Replace the system server configuration file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
+ **File** > **Open** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml
+
+
+
 
 ```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":true}
-```
-{: codeblock}
+<server description="Sample Liberty server">
 
+  <featureManager>
+    <feature>jaxrs-2.1</feature>
+    <feature>jsonp-1.1</feature>
+    <feature>cdi-2.0</feature>
+    <feature>mpConfig-2.0</feature>
+    <feature>mpRestClient-2.0</feature>
+    <feature>appSecurity-3.0</feature>
+    <feature>servlet-4.0</feature>
+    <feature>mpJwt-1.2</feature>
+  </featureManager>
 
+  <variable name="default.http.port" defaultValue="8080"/>
+  <variable name="default.https.port" defaultValue="8443"/>
 
+  <keyStore id="defaultKeyStore" password="secret"/>
 
-After saving the file, run the following curl command to view the cached version of the properties:
-```
-curl http://localhost:9080/inventory/systems/localhost
-```
-{: codeblock}
+  <httpEndpoint host="*" httpPort="${default.http.port}" httpsPort="${default.https.port}"
+                id="defaultHttpEndpoint"/>
+                 
+  <webApplication location="system.war" contextRoot="/"/>
 
-The **fallbackForGet()** method, which is the designated fallback method, is called when the **system** service is not available.
-The cached system properties contain only the OS name and user name key and value pairs.
-
-
-To see that the **system** service is down, run the following curl command:
-```
-curl -I http://localhost:9080/system/properties
-```
-{: codeblock}
-
-You see that the service displays a 503 HTTP response code.
-
-
-Run the following curl command again and enter **adminpwd** as the password:
-```
-curl -k -u admin https://localhost:9443/metrics/application
+</server>
 ```
 {: codeblock}
 
-See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
 
+The **mpJwt** feature adds the libraries that are required for MicroProfile JWT implementation.
+
+
+# Building and running the application
+
+Because you are running the **frontend** and **system** services in dev mode, the changes that you made were automatically picked up. You're now ready to check out your application in your browser.
+
+
+To launch the front-end web application, 
+select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
+and click the **OK** button. You’re redirected to the **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
+where **accountname** is your account name. Click the **Log in** link on the welcome page. 
+Log in with one of the following usernames and its corresponding password:
+
+| *Username* | *Password* | *Role*
+| --- | --- | ---
+| bob | bobpwd | admin, user
+| alice | alicepwd | user
+| carl | carlpwd | user
+
+After you log in, you can see the information that's retrieved from the **system**
+service. With successfully implemented role-based access in the application, if
+you log in as a **user** role, you don't have access to the OS property.
+
+You can also see the value of the **groups** claim in the row with the **Roles:** label.
+These roles are read from the JWT and sent back to the front end to
+be displayed.
+
+
+You can check that the **system** service is secured against unauthenticated
+requests by going to the **system** endpoint.
+Run the following curl command from the terminal in the IDE:
 ```
-# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_total counter
-application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_total 2
-# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_failed_total counter
-application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_failed_total 0
-# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_fallback_calls_total counter
-application_ft_io_openliberty_guides_inventory_InventoryManager_get_fallback_calls_total 1
-```
-
-From the output, the **`ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total`**
-data indicates that the **get()** was called twice including the previous call before turning the **system** service in maintenance.
-The **`ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total`** data
-indicates that the **fallbackForGet()** method was called once.
-
-
-Update the configuration file.
-After you finish, change the **`io_openliberty_guides_system_inMaintenance`**
-property value back to **false** in the **resources/CustomConfigSource.json** file.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
-
-```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":false}
+curl -k https://localhost:8443/system/properties/os
 ```
 {: codeblock}
+
+You'll see an empty response because you didn't authenticate with a valid JWT. 
+
+In the front end, you see your JWT displayed in the row with the **JSON Web Token** label.
+
+To see the specific information that this JWT holds, you can enter it into the token reader on the [JWT.io website](https://JWT.io).
+The token reader shows you the header, which contains information about the JWT, as shown in the following example:
+
+```
+{
+  "kid": "NPzyG3ZMzljUwQgbzi44",
+  "typ": "JWT",
+  "alg": "RS256"
+}
+```
+
+The token reader also shows you the payload, which contains the claims information:
+
+```
+{
+  "token_type": "Bearer",
+  "sub": "bob",
+  "upn": "bob",
+  "groups": [ "admin", "user" ],
+  "iss": "http://openliberty.io",
+  "exp": 1596723489,
+  "iat": 1596637089
+}
+```
+
+You can learn more about these claims in the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
 
 
 # Testing the application
 
-You can test your application manually, but automated tests ensure code quality because they trigger a failure
-whenever a code change introduces a defect. JUnit and the JAX-RS Client API provide a simple environment for you to write tests.
 
-Create the **FaultToleranceIT** class.
+You can manually check that the **system** service is secure by making requests to
+each of the endpoints with and without valid JWTs. However, automated tests are a
+much better approach because they are more reliable and trigger a failure if a
+breaking change is introduced.
+
+Create the **SystemEndpointIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 
 
 
 
 ```
-package it.io.openliberty.guides.faulttolerance;
+package it.io.openliberty.guides.system;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import javax.json.JsonObject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.Response;
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import it.io.openliberty.guides.utils.TestUtils;
+import it.io.openliberty.guides.system.util.JwtBuilder;
 
-public class FaultToleranceIT {
+public class SystemEndpointIT {
 
-    private Response response;
-    private Client client;
+    static String authHeaderAdmin;
+    static String authHeaderUser;
+    static String urlOS;
+    static String urlUsername;
+    static String urlRoles;
 
-    @BeforeEach
-    public void setup() {
-        client = ClientBuilder.newClient();
-        client.register(JsrJsonpProvider.class);
+    @BeforeAll
+    private static void setup() throws Exception{
+        String urlBase = "http://" + System.getProperty("hostname")
+                 + ":" + System.getProperty("http.port")
+                 + "/system/properties";
+        urlOS = urlBase + "/os";
+        urlUsername = urlBase + "/username";
+        urlRoles = urlBase + "/jwtroles";
+
+        authHeaderAdmin = "Bearer " + new JwtBuilder().createAdminJwt("testUser");
+        authHeaderUser = "Bearer " + new JwtBuilder().createUserJwt("testUser");
     }
 
-    @AfterEach
-    public void teardown() {
-        client.close();
+    @Test
+    public void testOSEndpoint() {
+        Response response = makeRequest(urlOS, authHeaderAdmin);
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + urlOS);
+        assertEquals(System.getProperty("os.name"), response.readEntity(String.class),
+                "The system property for the local and remote JVM should match");
+
+        response = makeRequest(urlOS, authHeaderUser);
+        assertEquals(403, response.getStatus(), "Incorrect response code from " + urlOS);
+
+        response = makeRequest(urlOS, null);
+        assertEquals(401, response.getStatus(), "Incorrect response code from " + urlOS);
+
         response.close();
     }
-    /**
-     * testFallbackForGet - test for checking if the fallback is being called
-     * correctly 1. Return system properties for a hostname when inventory
-     * service is available. 2. Make System service down and get the system
-     * properties from inventory service when it is down. 3. Check if system
-     * properties for the specific host was returned when the inventory service
-     * was down by: Asserting if the total number of the system properties, when
-     * service is up, is greater than the total number of the system properties
-     * when service is down.
-     */
 
     @Test
-    public void testFallbackForGet() throws InterruptedException {
-        response = TestUtils.getResponse(client,
-                                         TestUtils.INVENTORY_LOCALHOST_URL);
-        assertResponse(TestUtils.baseUrl, response);
-        JsonObject obj = response.readEntity(JsonObject.class);
-        int propertiesSize = obj.size();
-        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_FALSE,
-                                       TestUtils.SYSTEM_MAINTENANCE_TRUE);
-        Thread.sleep(3000);
-        response = TestUtils.getResponse(client,
-                                         TestUtils.INVENTORY_LOCALHOST_URL);
-        assertResponse(TestUtils.baseUrl, response);
-        obj = response.readEntity(JsonObject.class);
-        int propertiesSizeFallBack = obj.size();
-        assertTrue(propertiesSize > propertiesSizeFallBack, 
-                   "The total number of properties from the @Fallback method "
-                 + "is not smaller than the number from the system service" 
-                 +  "as expected.");
-        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_TRUE,
-                                       TestUtils.SYSTEM_MAINTENANCE_FALSE);
-        Thread.sleep(3000);
+    public void testUsernameEndpoint() {
+        Response response = makeRequest(urlUsername, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
+
+        response = makeRequest(urlUsername, authHeaderUser);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
+
+        response = makeRequest(urlUsername, null);
+        assertEquals(401, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
+
+        response.close();
     }
 
-    /**
-     * testFallbackForGet - test for checking if the fallback skip mechanism is working as intended:
-     * 1. Access system properties for the wrong hostname (localhot)
-     * 2. Verify that the response code is 404
-     * 3. Verify that the response text contains an error
-     */
     @Test
-    public void testFallbackSkipForGet() {
-        response = TestUtils.getResponse(client,
-                TestUtils.INVENTORY_UNKNOWN_HOST_URL);
-        assertResponse(TestUtils.baseUrl, response, 404);
-        assertTrue(response.readEntity(String.class).contains("error"),
-                   "Incorrect response body from " + TestUtils.INVENTORY_UNKNOWN_HOST_URL);
+    public void testRolesEndpoint() {
+        Response response = makeRequest(urlRoles, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+        assertEquals("[\"admin\",\"user\"]", response.readEntity(String.class),
+                "Incorrect groups claim in token " + urlRoles);
+
+        response = makeRequest(urlRoles, authHeaderUser);
+        assertEquals(200, response.getStatus(), 
+                "Incorrect response code from " + urlRoles);
+        assertEquals("[\"user\"]", response.readEntity(String.class),
+                "Incorrect groups claim in token " + urlRoles);
+
+        response = makeRequest(urlRoles, null);
+        assertEquals(401, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+
+        response.close();
     }
 
-    /**
-     * Asserts that the given URL's response code matches the given status code.
-     */
-    private void assertResponse(String url, Response response, int status_code) {
-        assertEquals(status_code, response.getStatus(),
-                "Incorrect response code from " + url);
+    private Response makeRequest(String url, String authHeader) {
+        Client client = ClientBuilder.newClient();
+        Builder builder = client.target(url).request();
+        builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+        if (authHeader != null) {
+            builder.header(HttpHeaders.AUTHORIZATION, authHeader);
+        }
+        Response response = builder.get();
+        return response;
     }
 
-    /**
-     * Asserts that the given URL has the correct response code of 200.
-     */
-    private void assertResponse(String url, Response response) {
-        assertResponse(url, response, 200);
-    }
 }
 ```
 {: codeblock}
 
 
-The **@BeforeEach** and **@AfterEach** annotations indicate that this method runs either
-before or after the other test case.
-These methods are generally used to perform any setup and teardown tasks. In this case,
-the setup method creates a JAX-RS client, which makes HTTP requests to the **inventory** service. This
-client must also be registered with a JSON-P provider to process JSON resources.
-The teardown method simply destroys this client instance as well as the HTTP responses.
+The **testOSEndpoint()**, **testUsernameEndpoint()**, and **testRolesEndpoint()**
+tests test the **/os**, **/username**, and **/roles** endpoints.
 
-The **testFallbackForGet()** test case sends a request to the **inventory** service to get the systems properties for a
-hostname before and after the **system** service becomes unavailable. Then, it asserts outputs from the two requests
-to ensure that they are different from each other.
-
-The **testFallbackSkipForGet()** test case sends a request to the **inventory** service to
-get the system properties for an incorrect hostname (**unknown**). Then, it confirms that the fallback method has not been
-called by asserting that the response's status code is **404** with an error message in the response body.
-
-The **@Test** annotations indicate that the methods automatically execute when your test class runs.
-
-In addition, a few endpoint tests have been included for you to test the basic functionality of the
-**inventory** and **system** services. If a test failure occurs, then you might have introduced a bug into
-the code.
-
+Each test makes three requests to its associated endpoint. The first
+**makeRequest()** call has a JWT with the **admin** role. The second
+**makeRequest()** call has a JWT with the **user** role. The third
+**makeRequest()** call has no JWT at all. The responses to these
+requests are checked based on the role-based access rules for the endpoints. The
+**admin** requests should be successful on all endpoints. The **user** requests
+should be denied by the **/os** endpoint but successfully access the **/username**
+and **/jwtroles** endpoints. The requests that don't include a JWT should be
+denied access to all endpoints.
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+Because you started Open Liberty in dev mode, press the **enter/return** key from the
+command-line session of the **system** service to run the tests. You see the
+following output:
 
-If the tests pass, you see a similar output to the following example:
 ```
 -------------------------------------------------------
- T E S T S
+  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.faulttolerance.FaultToleranceIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.517 sec - in it.io.openliberty.guides.faulttolerance.FaultToleranceIT
 Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.937 sec - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.396 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.648 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
-Results :
+Results:
 
-Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-To see if the tests detect a failure, comment out the **changeSystemProperty()** methods
-in the **FaultToleranceIT.java** file. Rerun the tests to see that a test failure occurs for the
-**testFallbackForGet()** and **testFallbackSkipForGet()** test cases.
+The three errors in the output are expected and result from the **system** service successfully
+rejecting the requests that didn't include a JWT.
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
+When you are finished testing the application, stop both the **frontend** and **system**
+services by pressing **CTRL+C** in the command-line sessions where you ran them.
+Alternatively, you can run the following goals from the **start** directory in
+another command-line session:
+
+```
+mvn -pl system liberty:stop
+mvn -pl frontend liberty:stop
+```
+{: codeblock}
+
 
 
 # Summary
 
 ## Nice Work!
 
-You just learned how to build a fallback mechanism for a microservice with MicroProfile Fault Tolerance in Open Liberty and wrote a test to validate it.
-
-
-You can try one of the related MicroProfile guides. They demonstrate technologies that you can
-learn and expand on what you built here.
+You learned how to use MicroProfile JWT to validate JWTs, authenticate and authorize users to secure your microservices in Open Liberty.
 
 
 
@@ -637,27 +793,26 @@ learn and expand on what you built here.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-fallback** project by running the following commands:
+Delete the **guide-microprofile-jwt** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-fallback
+rm -fr guide-microprofile-jwt
 ```
 {: codeblock}
 
 ## What could make this guide better?
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-fallback/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-fallback/pulls)
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-jwt/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-jwt/pulls)
 
 
 
 
 ## Where to next? 
 
+* [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-* [Preventing repeated failed calls to microservices](https://openliberty.io/guides/circuit-breaker.html)
 
 
 ## Log out of the session
