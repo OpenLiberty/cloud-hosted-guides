@@ -1,7 +1,7 @@
 
-# Welcome to the Securing microservices with JSON Web Tokens guide!
+# Welcome to the Consuming RESTful services with template interfaces guide!
 
-You'll explore how to control user and role access to microservices with MicroProfile JSON Web Token (MicroProfile JWT).
+Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,45 +14,21 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 # What you'll learn
 
-You will add token-based authentication mechanisms to authenticate, authorize,
-and verify users by implementing MicroProfile JWT in the **system** microservice.
+You will learn how to build a MicroProfile Rest Client to access remote RESTful services. You will create a template interface that maps to the remote service that you want to call.
+MicroProfile Rest Client automatically generates a client instance based on what is defined and annotated in the template interface.
+Thus, you don't have to worry about all of the boilerplate code, such as setting up a client class, connecting to the remote server, or invoking the correct URI with the correct parameters.
 
-A JSON Web Token (JWT) is a self-contained token that is designed to securely transmit
-information as a JSON object. The information in this JSON object is digitally
-signed and can be trusted and verified by the recipient.
+The application that you will be working with is an **inventory** service, which fetches and stores the system property information for different hosts.
+Whenever a request is made to retrieve the system properties of a particular host, the **inventory** service will create a client to invoke the **system**
+service on that host. The **system** service simulates a remote service in the application.
 
-For microservices, a token-based authentication mechanism offers a lightweight
-way for security controls and security tokens to propagate user identities
-across different services. JSON Web Token is becoming the most common
-token format because it follows well-defined and known standards.
+You will instantiate the client and use it in the **inventory** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/ref/general/#contexts_dependency_injection.html) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method.
+In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
 
-MicroProfile JWT standards define the required format of JWT for authentication
-and authorization. The standards also map JWT claims to various Jakarta EE
-container APIs and make the set of claims available through getter methods.
+ * When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with a CDI method.
 
-In this guide, the application uses JWTs to authenticate a user,
-allowing them to make authorized requests to a secure backend service.
+ * When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose **RestClientBuilder** method.
 
-You will be working with two services, a **frontend** service and a secure 
-**system** backend service. The **frontend** service logs a user in, builds a JWT, and makes
-authorized requests to the secure **system** service for JVM system properties.
-The following diagram depicts the application that is used in this guide:
-
-![JWT frontend and system services](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-jwt/master/assets/JWT_Diagram.png)
-
-
-The user signs in to the **frontend** service with a username and a password,
-at which point a JWT is created. The **frontend** service then makes
-requests, with the JWT included, to the **system** backend service. The secure
-**system** service verifies the JWT to ensure that the request came
-from the authorized **frontend** service. After the JWT is validated, the information
-in the claims, such as the user's role, can be trusted and used to
-determine which system properties the user has access to.
-
-To learn more about JSON Web Tokens, check out the
-[jwt.io website](https://jwt.io/introduction/). If you want to learn more about how JWTs
-can be used for user authentication and authorization, check out the Open Liberty
-[Single Sign-on documentation](https://openliberty.io/docs/latest/single-sign-on.html).
 
 # Getting started
 
@@ -66,11 +42,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-jwt.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-jwt.git
-cd guide-microprofile-jwt
+git clone https://github.com/openliberty/guide-microprofile-rest-client.git
+cd guide-microprofile-rest-client
 ```
 {: codeblock}
 
@@ -81,117 +57,83 @@ The **finish** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-The **finish** directory contains the finished JWT security implementation for the
-services in the application. Try the finished application before you
-build your own.
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, run the following commands to navigate to the **finish/frontend** directory and
-deploy the **frontend** service to Open Liberty:
+To try out the application, first go to the **finish** directory and run the following
+Maven goal to build the application and deploy it to Open Liberty:
 
 ```
-cd finish/frontend
+cd finish
 mvn liberty:run
 ```
 {: codeblock}
 
 
-Open another command-line session and run the following commands to navigate to the **finish/system** directory and
-deploy the **system** service to Open Liberty:
-
-```
-cd finish/system
-mvn liberty:run
-```
-{: codeblock}
-
-
-After you see the following message in both command-line sessions, both of your services are ready:
+After you see the following message, your application server is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
-
-To launch the front-end web application, 
-select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
-and click the **OK** button. 
-You’re redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
-where **accountname** is your account name. Click the **Log in** link on the welcome page. From here, 
-you can log in to the application with the form-based login.
-
-Log in with one of the following usernames and its corresponding password:
-
-| *Username* | *Password* | *Role*
-| --- | --- | ---
-| bob | bobpwd | admin, user
-| alice | alicepwd | user
-| carl | carlpwd | user
-
-You're redirected to a page that displays information that the
-front end requested from the **system** service, such as the system username.
-If you log in as an **admin** user, the current OS is also shown. If you log in as
-a **user**, you instead see the **You are not authorized to access
-this system property** message. You see this message because the **user** role doesn't
-have sufficient privileges to view current OS information.
-
-Additionally, the **groups** claim of the JWT is read by the **system** service and
-requested by the front end to be displayed.
+The **system** microservice simulates a service that returns the system
+property information for the host. 
 
 
-You can try accessing these services without a JWT by going to the **system** endpoint. 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following curl command from the terminal in the IDE:
-```
-curl -k https://localhost:8443/system/properties/os
-```
-{: codeblock}
 
-The response is empty because you don't have access.
-Access is granted if a valid JWT is sent with the request.
-The following error also appears in the command-line session of the **system** service:
+
+The **system** service is accessible at the http://localhost:9080/system/properties URL. In this case, **localhost** is the host name.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-[ERROR] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-```
-
-When you are done with the application, stop both the **frontend** and **system**
-services by pressing **CTRL+C** in the command-line sessions where you ran them.
-Alternatively, you can run the following goals from the **finish** directory in
-another command-line session:
-
-```
-mvn -pl system liberty:stop
-mvn -pl frontend liberty:stop
+curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
 
 
-# Creating the secure system service
+The **inventory** microservice makes a request to the **system** microservice and
+stores the system property information. 
+
+To fetch and store your system information, visit the http://localhost:9080/inventory/systems/localhost URL.
 
 
-To begin, run the following command to navigate to the **start** directory:
-```
-cd /home/project/guide-microprofile-jwt/start
-```
-{: codeblock}
-
-When you run Open Liberty in development mode, known as dev mode, the server
-listens for file changes and automatically recompiles and deploys your updates
-whenever you save a new change. Run the following commands to navigate to the
-**frontend** directory and start the **frontend** service in dev mode:
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-cd frontend
-mvn liberty:dev
+curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
 
 
-Open another command-line session and run the following commands to navigate to the
-**system** directory and start the **system** service in dev mode:
+
+
+You can also use the **http://localhost:9080/inventory/systems/{your_hostname}** URL. In Windows,
+MacOS, and Linux, get your fully qualified domain name (FQDN) by entering
+**hostname** into your command-line. Visit the URL by replacing **{your_hostname}**
+with your FQDN.
+
+
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
+in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
+from the **finish** directory in another shell session:
+
 ```
-cd system
+mvn liberty:stop
+```
+{: codeblock}
+
+
+# Writing the RESTful client interface
+
+Now, navigate to the **start** directory to begin.
+
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
+deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```
 mvn liberty:dev
 ```
 {: codeblock}
@@ -204,588 +146,536 @@ After you see the following message, your application server in dev mode is read
 *    Liberty is running in dev mode.
 ```
 
-The **system** service provides endpoints for the **frontend** service to use to
-request system properties. This service is secure and requires a valid JWT to be
-included in requests that are made to it. The claims in the JWT are used to determine
-what properties the user has access to.
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
+or open the project in your editor.
 
-Create the secure **system** service.
+The MicroProfile Rest Client API is included in the MicroProfile dependency specified by your **pom.xml** file. Look for the dependency with the **microprofile** artifact ID.
 
 
-Create the **SystemResource** class.
+This dependency provides a library that is required to implement the MicroProfile Rest Client interface.
 
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
-```
-{: codeblock}
+The **mpRestClient** feature is also enabled in the **src/main/liberty/config/server.xml** file. This feature enables your Open Liberty server to use MicroProfile Rest Client to invoke RESTful microservices.
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
+The code for the **system** service in the **src/main/java/io/openliberty/guides/system** directory is provided for you. It simulates a remote RESTful service that the **inventory** service invokes.
 
-
-
-
-```
-package io.openliberty.guides.system;
-
-import javax.json.JsonArray;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.annotation.security.RolesAllowed;
-
-import org.eclipse.microprofile.jwt.Claim;
-
-@RequestScoped
-@Path("/properties")
-public class SystemResource {
-
-    @Inject
-    @Claim("groups")
-    private JsonArray roles;
-
-    @GET
-    @Path("/username")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin", "user" })
-    public String getUsername() {
-        return System.getProperties().getProperty("user.name");
-    }
-
-    @GET
-    @Path("/os")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin" })
-    public String getOS() {
-        return System.getProperties().getProperty("os.name");
-    }
-
-    @GET
-    @Path("/jwtroles")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin", "user" })
-    public String getRoles() {
-        return roles.toString();
-    }
-}
-```
-{: codeblock}
-
-
-This class has role-based access control. The role names that are used in the
-**@RolesAllowed** annotations are mapped to group
-names in the **groups** claim of the JWT, which results in an authorization
-decision wherever the security constraint is applied.
-
-The **/username** endpoint returns the system's username and is annotated with the
-**@RolesAllowed({"admin, "user"})**
-annotation. Only authenticated users with the role of **admin** or **user**
-can access this endpoint.
-
-The **/os** endpoint returns the system's current OS. Here,
-the **@RolesAllowed** annotation is limited to
-**admin**, meaning that only authenticated users with the role of **admin** are able to
-access the endpoint.
-
-While the **@RolesAllowed** annotation automatically reads from the **groups** claim
-of the JWT to make an authorization decision, you can also manually access the
-claims of the JWT by using the **@Claim** annotation. In this
-case, the **groups** claim is injected into the **roles** JSON array.
-The roles that are parsed from the **groups** claim of the
-JWT are then exposed back to the front end at the **/jwtroles** endpoint.
-To read more about different claims and ways to
-access them, check out the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
-
-
-# Creating a client to access the secure system service
-
-
-
-
-Create a RESTful client interface for the **frontend** service.
+Create a RESTful client interface for the **system** service. Write a template interface that maps the API of the remote **system** service.
+The template interface describes the remote service that you want to access. The interface defines the resource to access as a method by mapping its annotations, return type, list of arguments, and exception declarations.
 
 Create the **SystemClient** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 
 
 
 
 ```
-package io.openliberty.guides.frontend.client;
+package io.openliberty.guides.inventory.client;
 
-import javax.enterprise.context.RequestScoped;
+import java.util.Properties;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.HeaderParam;
 
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-@RegisterRestClient(baseUri = "https://localhost:8443/system")
+@RegisterRestClient(configKey = "systemClient", baseUri = "http://localhost:9080/system")
+@RegisterProvider(UnknownUriExceptionMapper.class)
 @Path("/properties")
-@RequestScoped
-public interface SystemClient extends AutoCloseable{
- 
-    @GET
-    @Path("/os")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getOS(@HeaderParam("Authorization") String authHeader);
+public interface SystemClient extends AutoCloseable {
 
-    @GET
-    @Path("/username")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getUsername(@HeaderParam("Authorization") String authHeader);
-    
-    @GET
-    @Path("/jwtroles")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getJwtRoles(@HeaderParam("Authorization") String authHeader);
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  public Properties getProperties() throws UnknownUriException, ProcessingException;
 }
 ```
 {: codeblock}
 
 
-This interface declares methods for accessing each of the endpoints that were
-previously set up in the **system** service.
 
-The MicroProfile Rest Client feature automatically builds and generates a client
-implementation based on what is defined in the **SystemClient** interface. You
-don't need to set up the client and connect with the remote service.
+The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the **SystemClient** interface. There is no need to set up the client and connect with the remote service.
 
-As discussed, the **system** service is secured and requests made to it must
-include a valid JWT in the **Authorization** header. The **@HeaderParam** annotations
-include the JWT by specifying that the value of the **String authHeader**
-parameter, which contains the JWT, be used as the value for the **Authorization**
-header. This header is included in all of the requests that are made to the
-**system** service through this client.
+Notice the **SystemClient** interface inherits the **AutoCloseable** interface.
+This allows the user to explicitly close the client instance by invoking the **close()** method or to implicitly close the client instance using a try-with-resources block. When the client instance is closed, all underlying resources associated with the client instance are cleaned up. Refer to the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases) for more details.
 
-Create the application bean that the front-end UI uses to request data.
+When the **getProperties()** method is invoked, the **SystemClient** instance sends a GET request to the **`<baseUrl>/properties`** endpoint, where **`<baseUrl>`** is the default base URL of the **system** service. You will see how to configure the base URL in the next section.
 
-Create the **ApplicationBean** class.
+The **@Produces** annotation specifies the media (MIME) type of the expected response. The default value is **`MediaType.APPLICATION_JSON`**.
+
+The **@RegisterProvider** annotation tells the framework to register the provider classes to be used when the framework invokes the interface. You can add as many providers as necessary.
+In the **SystemClient** interface, add a response exception mapper as a provider to map the **404** response code with the **UnknownUriException** exception.
+
+### Handling exceptions through ResponseExceptionMappers
+
+Error handling is an important step to ensure that the application can fail safely. If there is an error response such as **404 NOT FOUND** when invoking the remote service, you need to handle it. First, define an exception, and map the exception with the error response code. Then, register the exception mapper in the client interface.
+
+Look at the client interface again, the **@RegisterProvider** annotation registers the **UnknownUriExceptionMapper** response exception mapper.
+An exception mapper maps various response codes from the remote service to throwable exceptions.
+
+
+Implement the actual exception class and the mapper class to see how this mechanism works.
+
+Create the **UnknownUriException** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 
 
 
 
 ```
-package io.openliberty.guides.frontend;
+package io.openliberty.guides.inventory.client;
+
+public class UnknownUriException extends Exception {
+
+  private static final long serialVersionUID = 1L;
+
+  public UnknownUriException() {
+    super();
+  }
+
+  public UnknownUriException(String message) {
+    super(message);
+  }
+}
+```
+{: codeblock}
+
+
+
+Now, link the **UnknownUriException** class with the corresponding response code through a **ResponseExceptionMapper** mapper class.
+
+Create the **UnknownUriExceptionMapper** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+
+
+
+
+```
+package io.openliberty.guides.inventory.client;
+
+import java.util.logging.Logger;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.Provider;
+import org.eclipse.microprofile.rest.client.ext.ResponseExceptionMapper;
+
+@Provider
+public class UnknownUriExceptionMapper
+    implements ResponseExceptionMapper<UnknownUriException> {
+  Logger LOG = Logger.getLogger(UnknownUriExceptionMapper.class.getName());
+
+  @Override
+  public boolean handles(int status, MultivaluedMap<String, Object> headers) {
+    LOG.info("status = " + status);
+    return status == 404;
+  }
+
+  @Override
+  public UnknownUriException toThrowable(Response response) {
+    return new UnknownUriException();
+  }
+}
+```
+{: codeblock}
+
+
+
+The **handles()** method inspects the HTTP response code to determine whether an exception is thrown for the specific response, and the **toThrowable()** method returns the mapped exception.
+
+# Injecting the client with dependency injection
+
+Now, instantiate the **SystemClient** interface and use it in the **inventory** service. If you want to connect only with the default host name, you can easily instantiate the **SystemClient** with CDI annotations. CDI injection simplifies the process of bootstrapping the client.
+
+First, you need to define the base URL of the **SystemClient** instance.
+Configure the default base URL with the MicroProfile Config feature. This feature is enabled for you in the **server.xml** file.
+
+Create the configuration file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
+
+
+
+
+```
+systemClient/mp-rest/uri=http://localhost:9080/system
+```
+{: codeblock}
+
+
+
+The **mp-rest/uri** base URL config property is configured to the default **http://localhost:9080/system** URL.
+
+This configuration is automatically picked up by the MicroProfile Config API.
+
+Look at the annotations in the **SystemClient** interface again.
+
+
+The **@RegisterRestClient** annotation registers the interface as a RESTful client. The runtime creates a CDI managed bean for every interface that is annotated with the **@RegisterRestClient** annotation.
+
+The **configKey** value in the **@RegisterRestClient** annotation replaces the fully-qualified classname of the properties in the **microprofile-config.properties** configuration file.
+For example, the **<fully-qualified classname>/mp-rest/uri** property becomes **systemClient/mp-rest/uri**.
+The benefit of using Config Keys is when multiple client interfaces have the same **configKey** value, the interfaces can be configured with a single MP config property.
+
+The **baseUri** value can also be set in the **@RegisterRestClient** annotation. However, this value will be overridden by the base URI property defined in the **microprofile-config.properties** configuration file, which takes precedence. In a production environment, you can use the **baseUri** variable to specify a different URI for development and testing purposes.
+
+The **@RegisterRestClient** annotation, which is a bean defining annotation implies that the interface is manageable through CDI. You must have this annotation in order to inject the client.
+
+Inject the **SystemClient** interface into the **InventoryManager** class, which is another CDI managed bean.
+
+Replace the **InventoryManager** class.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+
+
+
+
+```
+package io.openliberty.guides.inventory;
+
+import java.net.ConnectException;
+import java.net.URI;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Named;
+import javax.ws.rs.ProcessingException;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import io.openliberty.guides.frontend.client.SystemClient;
-import io.openliberty.guides.frontend.util.SessionUtils;
-
+import io.openliberty.guides.inventory.client.SystemClient;
+import io.openliberty.guides.inventory.client.UnknownUriException;
+import io.openliberty.guides.inventory.client.UnknownUriExceptionMapper;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
 
 @ApplicationScoped
-@Named
-public class ApplicationBean { 
+public class InventoryManager {
 
-    @Inject
-    @RestClient
-    private SystemClient defaultRestClient;
+  private List<SystemData> systems = Collections.synchronizedList(
+                                       new ArrayList<SystemData>());
 
-    public String getJwt() {
-        String jwtTokenString = SessionUtils.getJwtToken();
-        String authHeader = "Bearer " + jwtTokenString;
-        return authHeader;
-    }
-    
-    public String getOs() {
-        String authHeader = getJwt();
-        String os;
-        try {
-            os = defaultRestClient.getOS(authHeader);
-        } catch(Exception e) {
-            return "You are not authorized to access this system property";
-        }
-        return os;
+  @Inject
+  @ConfigProperty(name = "default.http.port")
+  String DEFAULT_PORT;
+
+  @Inject
+  @RestClient
+  private SystemClient defaultRestClient;
+
+  public Properties get(String hostname) {
+    Properties properties = null;
+    if (hostname.equals("localhost")) {
+      properties = getPropertiesWithDefaultHostName();
+    } else {
+      properties = getPropertiesWithGivenHostName(hostname);
     }
 
-    public String getUsername() {
-        String authHeader = getJwt();
-        return defaultRestClient.getUsername(authHeader);
-    }
+    return properties;
+  }
 
-    public String getJwtRoles() {
-        String authHeader = getJwt();
-        return defaultRestClient.getJwtRoles(authHeader);
+  public void add(String hostname, Properties systemProps) {
+    Properties props = new Properties();
+    props.setProperty("os.name", systemProps.getProperty("os.name"));
+    props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+    SystemData host = new SystemData(hostname, props);
+    if (!systems.contains(host))
+      systems.add(host);
+  }
+
+  public InventoryList list() {
+    return new InventoryList(systems);
+  }
+
+  private Properties getPropertiesWithDefaultHostName() {
+    try {
+      return defaultRestClient.getProperties();
+    } catch (UnknownUriException e) {
+      System.err.println("The given URI is not formatted correctly.");
+    } catch (ProcessingException ex) {
+      handleProcessingException(ex);
     }
+    return null;
+  }
+
+  private Properties getPropertiesWithGivenHostName(String hostname) {
+    String customURIString = "http://" + hostname + ":" + DEFAULT_PORT + "/system";
+    URI customURI = null;
+    try {
+      customURI = URI.create(customURIString);
+      SystemClient customRestClient = RestClientBuilder.newBuilder()
+                                        .baseUri(customURI)
+                                        .register(UnknownUriExceptionMapper.class)
+                                        .build(SystemClient.class);
+      return customRestClient.getProperties();
+    } catch (ProcessingException ex) {
+      handleProcessingException(ex);
+    } catch (UnknownUriException e) {
+      System.err.println("The given URI is unreachable.");
+    }
+    return null;
+  }
+
+  private void handleProcessingException(ProcessingException ex) {
+    Throwable rootEx = ExceptionUtils.getRootCause(ex);
+    if (rootEx != null && (rootEx instanceof UnknownHostException
+        || rootEx instanceof ConnectException)) {
+      System.err.println("The specified host is unknown.");
+    } else {
+      throw ex;
+    }
+  }
 
 }
 ```
 {: codeblock}
 
 
-The application bean is used to populate the table in the front end by making
-requests for data through the **defaultRestClient**, which
-is an injected instance of the **SystemClient** class
-that you created. The **getOs()**, **getUsername()**, and **getJwtRoles()** methods call
-their associated methods of the **SystemClient** class
-with the **authHeader** passed in as a parameter. The **authHeader** is a string that
-consists of the JWT with **Bearer** prefixed to it. The **authHeader** is included in the
-**Authorization** header of the subsequent requests that are made by the
-**defaultRestClient** instance.
 
-The JWT for these requests is retrieved from the session attributes with the
-**getJwt()** method. The JWT is stored in the session
-attributes by the provided **LoginBean** class. When the
-user logs in to the front end, the **doLogin()** method is
-called and builds the JWT. Then, the **setAttribute()**
-method stores it as an **HttpSession** attribute. The JWT is built by using the
-**JwtBuilder** APIs in the **buildJwt()** method.
-You can see that the **claim()** method is being used to set the **groups** claim of the token.
-This claim is used to provide the role-based access that you implemented.
+**@Inject** and **@RestClient** annotations inject an instance of the **SystemClient** called **defaultRestClient** to the **InventoryManager** class.
+
+Because the **InventoryManager** class is **@ApplicationScoped**, and the **SystemClient** CDI bean maintains the same scope through the default dependent scope, the client is initialized once per application.
+
+If the **hostname** parameter is **localhost**, the service runs the **getPropertiesWithDefaultHostName()** helper function to fetch system properties.
+The helper function invokes the **system** service by calling the **defaultRestClient.getProperties()** method.
 
 
-# Configuring MicroProfile JWT
+# Building the client with RestClientBuilder
+
+The **inventory** service can also connect with a host other than the default **localhost** host, but you cannot configure a base URL that is not yet known.
+In this case, set the host name as a variable and build the client by using the **RestClientBuilder** method. You can customize the base URL from the host name attribute.
+
+Look at the **getPropertiesWithGivenHostName()** method in the **src/main/java/io/openliberty/guides/inventory/InventoryManager.java** file.
 
 
+The host name is provided as a parameter. This method first assembles the base URL that consists of the new host name.
+Then, the method instantiates a **RestClientBuilder** builder with the new URL, registers the response exception mapper, and builds the **SystemClient** instance.
 
-Configure the **mpJwt** feature in the **microprofile-config.properties** file for the **system** service.
-
-Create the microprofile-config.properties file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties
-```
-{: codeblock}
+Similarly, call the **customRestClient.getProperties()** method to invoke the **system** service.
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties
+# Running the application
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+When the server is running, select either approach to fetch your system properties:
 
 
+ Visit the http://localhost:9080/inventory/systems/localhost URL. The URL retrieves the system property information for the **localhost** host name by making a request to the **system** service at **http://localhost:9080/system/properties**.
 
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-mp.jwt.verify.issuer=http://openliberty.io
+curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
 
 
-The **mp.jwt.verify.issuer** config property specifies the expected value of
-the issuer claim on an incoming JWT. Incoming JWTs with an issuer
-claim that's different from this expected value aren't considered valid.
-
-Next, add the MicroProfile JSON Web Token feature to the server configuration file for
-the **system** service.
-
-Replace the system server configuration file.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml
 
 
-
-
-```
-<server description="Sample Liberty server">
-
-  <featureManager>
-    <feature>jaxrs-2.1</feature>
-    <feature>jsonp-1.1</feature>
-    <feature>cdi-2.0</feature>
-    <feature>mpConfig-2.0</feature>
-    <feature>mpRestClient-2.0</feature>
-    <feature>appSecurity-3.0</feature>
-    <feature>servlet-4.0</feature>
-    <feature>mpJwt-1.2</feature>
-  </featureManager>
-
-  <variable name="default.http.port" defaultValue="8080"/>
-  <variable name="default.https.port" defaultValue="8443"/>
-
-  <keyStore id="defaultKeyStore" password="secret"/>
-
-  <httpEndpoint host="*" httpPort="${default.http.port}" httpsPort="${default.https.port}"
-                id="defaultHttpEndpoint"/>
-                 
-  <webApplication location="system.war" contextRoot="/"/>
-
-</server>
-```
-{: codeblock}
-
-
-The **mpJwt** feature adds the libraries that are required for MicroProfile JWT implementation.
-
-
-# Building and running the application
-
-Because you are running the **frontend** and **system** services in dev mode, the changes that you made were automatically picked up. You're now ready to check out your application in your browser.
-
-
-To launch the front-end web application, 
-select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
-and click the **OK** button. You’re redirected to the **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
-where **accountname** is your account name. Click the **Log in** link on the welcome page. 
-Log in with one of the following usernames and its corresponding password:
-
-| *Username* | *Password* | *Role*
-| --- | --- | ---
-| bob | bobpwd | admin, user
-| alice | alicepwd | user
-| carl | carlpwd | user
-
-After you log in, you can see the information that's retrieved from the **system**
-service. With successfully implemented role-based access in the application, if
-you log in as a **user** role, you don't have access to the OS property.
-
-You can also see the value of the **groups** claim in the row with the **Roles:** label.
-These roles are read from the JWT and sent back to the front end to
-be displayed.
-
-
-You can check that the **system** service is secured against unauthenticated
-requests by going to the **system** endpoint.
-Run the following curl command from the terminal in the IDE:
-```
-curl -k https://localhost:8443/system/properties/os
-```
-{: codeblock}
-
-You'll see an empty response because you didn't authenticate with a valid JWT. 
-
-In the front end, you see your JWT displayed in the row with the **JSON Web Token** label.
-
-To see the specific information that this JWT holds, you can enter it into the token reader on the [JWT.io website](https://JWT.io).
-The token reader shows you the header, which contains information about the JWT, as shown in the following example:
-
-```
-{
-  "kid": "NPzyG3ZMzljUwQgbzi44",
-  "typ": "JWT",
-  "alg": "RS256"
-}
-```
-
-The token reader also shows you the payload, which contains the claims information:
-
-```
-{
-  "token_type": "Bearer",
-  "sub": "bob",
-  "upn": "bob",
-  "groups": [ "admin", "user" ],
-  "iss": "http://openliberty.io",
-  "exp": 1596723489,
-  "iat": 1596637089
-}
-```
-
-You can learn more about these claims in the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
+Or, get your FQDN first. Then, visit the **http://localhost:9080/inventory/systems/{your_hostname}** URL by replacing **{your_hostname}** with your FQDN, which retrieves your system properties by making a request to the **system** service at **http://{your_hostname}:9080/system/properties**.
 
 
 # Testing the application
 
-
-You can manually check that the **system** service is secure by making requests to
-each of the endpoints with and without valid JWTs. However, automated tests are a
-much better approach because they are more reliable and trigger a failure if a
-breaking change is introduced.
-
-Create the **SystemEndpointIT** class.
+Create the **RestClientIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 
 
 
 
 ```
-package it.io.openliberty.guides.system;
+package it.io.openliberty.guides.client;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import javax.json.JsonObject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-
-import org.junit.jupiter.api.Test;
+import javax.ws.rs.client.WebTarget;
+import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
-import it.io.openliberty.guides.system.util.JwtBuilder;
+public class RestClientIT {
 
-public class SystemEndpointIT {
+  private static String port;
 
-    static String authHeaderAdmin;
-    static String authHeaderUser;
-    static String urlOS;
-    static String urlUsername;
-    static String urlRoles;
+  private Client client;
 
-    @BeforeAll
-    private static void setup() throws Exception{
-        String urlBase = "http://" + System.getProperty("hostname")
-                 + ":" + System.getProperty("http.port")
-                 + "/system/properties";
-        urlOS = urlBase + "/os";
-        urlUsername = urlBase + "/username";
-        urlRoles = urlBase + "/jwtroles";
+  private final String INVENTORY_SYSTEMS = "inventory/systems";
 
-        authHeaderAdmin = "Bearer " + new JwtBuilder().createAdminJwt("testUser");
-        authHeaderUser = "Bearer " + new JwtBuilder().createUserJwt("testUser");
+  @BeforeAll
+  public static void oneTimeSetup() {
+    port = System.getProperty("http.port");
+  }
+
+  @BeforeEach
+  public void setup() {
+    client = ClientBuilder.newClient();
+    client.register(JsrJsonpProvider.class);
+  }
+
+  @AfterEach
+  public void teardown() {
+    client.close();
+  }
+
+  @Test
+  public void testSuite() {
+    this.testDefaultLocalhost();
+    this.testRestClientBuilder();
+  }
+
+  public void testDefaultLocalhost() {
+    String hostname = "localhost";
+
+    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
+
+    JsonObject obj = fetchProperties(url);
+
+    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
+                 "The system property for the local and remote JVM should match");
+  }
+
+  public void testRestClientBuilder() {
+    String hostname = null;
+    try{
+      hostname = InetAddress.getLocalHost().getHostAddress();
+    } catch (UnknownHostException e) {
+      System.err.println("Unknown Host.");
     }
 
-    @Test
-    public void testOSEndpoint() {
-        Response response = makeRequest(urlOS, authHeaderAdmin);
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + urlOS);
-        assertEquals(System.getProperty("os.name"), response.readEntity(String.class),
-                "The system property for the local and remote JVM should match");
+    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
 
-        response = makeRequest(urlOS, authHeaderUser);
-        assertEquals(403, response.getStatus(), "Incorrect response code from " + urlOS);
+    JsonObject obj = fetchProperties(url);
 
-        response = makeRequest(urlOS, null);
-        assertEquals(401, response.getStatus(), "Incorrect response code from " + urlOS);
+    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
+                 "The system property for the local and remote JVM should match");
+  }
 
-        response.close();
-    }
+  private JsonObject fetchProperties(String url) {
+    WebTarget target = client.target(url);
+    Response response = target.request().get();
 
-    @Test
-    public void testUsernameEndpoint() {
-        Response response = makeRequest(urlUsername, authHeaderAdmin);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
+    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
 
-        response = makeRequest(urlUsername, authHeaderUser);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
-
-        response = makeRequest(urlUsername, null);
-        assertEquals(401, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
-
-        response.close();
-    }
-
-    @Test
-    public void testRolesEndpoint() {
-        Response response = makeRequest(urlRoles, authHeaderAdmin);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlRoles);
-        assertEquals("[\"admin\",\"user\"]", response.readEntity(String.class),
-                "Incorrect groups claim in token " + urlRoles);
-
-        response = makeRequest(urlRoles, authHeaderUser);
-        assertEquals(200, response.getStatus(), 
-                "Incorrect response code from " + urlRoles);
-        assertEquals("[\"user\"]", response.readEntity(String.class),
-                "Incorrect groups claim in token " + urlRoles);
-
-        response = makeRequest(urlRoles, null);
-        assertEquals(401, response.getStatus(),
-                "Incorrect response code from " + urlRoles);
-
-        response.close();
-    }
-
-    private Response makeRequest(String url, String authHeader) {
-        Client client = ClientBuilder.newClient();
-        Builder builder = client.target(url).request();
-        builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-        if (authHeader != null) {
-            builder.header(HttpHeaders.AUTHORIZATION, authHeader);
-        }
-        Response response = builder.get();
-        return response;
-    }
+    JsonObject obj = response.readEntity(JsonObject.class);
+    response.close();
+    return obj;
+  }
 
 }
 ```
 {: codeblock}
 
 
-The **testOSEndpoint()**, **testUsernameEndpoint()**, and **testRolesEndpoint()**
-tests test the **/os**, **/username**, and **/roles** endpoints.
 
-Each test makes three requests to its associated endpoint. The first
-**makeRequest()** call has a JWT with the **admin** role. The second
-**makeRequest()** call has a JWT with the **user** role. The third
-**makeRequest()** call has no JWT at all. The responses to these
-requests are checked based on the role-based access rules for the endpoints. The
-**admin** requests should be successful on all endpoints. The **user** requests
-should be denied by the **/os** endpoint but successfully access the **/username**
-and **/jwtroles** endpoints. The requests that don't include a JWT should be
-denied access to all endpoints.
+Each test case tests one of the methods for instantiating a RESTful client.
+
+The **testDefaultLocalhost()** test fetches and compares system properties from the http://localhost:9080/inventory/systems/localhost URL.
+
+The **testRestClientBuilder()** test gets your IP address. Then, use your IP address as the host name to fetch your system properties and compare them.
+
+In addition, a few endpoint tests are provided for you to test the basic functionality of the **inventory** and **system** services. If a test failure occurs, you might have introduced a bug into the code.
+
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, press the **enter/return** key from the
-command-line session of the **system** service to run the tests. You see the
-following output:
+Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
 ```
 -------------------------------------------------------
-  T E S T S
+ T E S T S
 -------------------------------------------------------
 Running it.io.openliberty.guides.system.SystemEndpointIT
-[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.648 s - in it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.377 sec - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+Could not send Message.
+[err] The specified host is unknown.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.379 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Running it.io.openliberty.guides.client.RestClientIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.121 sec - in it.io.openliberty.guides.client.RestClientIT
 
-Results:
+Results :
 
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-The three errors in the output are expected and result from the **system** service successfully
-rejecting the requests that didn't include a JWT.
+The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
 
-When you are finished testing the application, stop both the **frontend** and **system**
-services by pressing **CTRL+C** in the command-line sessions where you ran them.
-Alternatively, you can run the following goals from the **start** directory in
-another command-line session:
+To see whether the tests detect a failure, change the base URL in the configuration file so that when the **inventory** service tries to access the invalid URL, an **UnknownUriException** is thrown.
+Rerun the tests to see a test failure occur.
 
-```
-mvn -pl system liberty:stop
-mvn -pl frontend liberty:stop
-```
-{: codeblock}
-
-
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
+where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 # Summary
 
 ## Nice Work!
 
-You learned how to use MicroProfile JWT to validate JWTs, authenticate and authorize users to secure your microservices in Open Liberty.
+You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
 
+
+MicroProfile Rest Client also provides a uniform way to configure SSL for the client.
+You can learn more in the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl) blog and the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases).
+
+Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
 
 
 
@@ -793,26 +683,27 @@ You learned how to use MicroProfile JWT to validate JWTs, authenticate and autho
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-jwt** project by running the following commands:
+Delete the **guide-microprofile-rest-client** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-jwt
+rm -fr guide-microprofile-rest-client
 ```
 {: codeblock}
 
 ## What could make this guide better?
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-jwt/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-jwt/pulls)
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-rest-client/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-rest-client/pulls)
 
 
 
 
 ## Where to next? 
 
-* [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 
 ## Log out of the session
