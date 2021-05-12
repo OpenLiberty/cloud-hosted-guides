@@ -226,8 +226,8 @@ import org.eclipse.microprofile.metrics.annotation.Counted;
 From your previous addition of the MicroProfile Metrics feature in the server.xml you should now see a message for a new metrics endpoint in the terminal that looks like:
 
 ```
-[INFO] [AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/metrics/
-```
+
+[INFO] [AUDIT   ] CWWKT0016I: Web application available (default_host): http://ACCOUNTNAME-9080.theiadocker-1.proxy.cognitiveclass.ai/metrics/
 
 Open the metrics endpoint in your browser. To do this select **Launch Application**, a box will appear where the port number is required. The application is running on port **9080**. The Open Liberty homepage will load. To access the **metrics** endpoint at the end of the URL type **/metrics**. The URL should look like: 
 
@@ -898,7 +898,7 @@ The test also contains the following Container configuration:
                     .withExposedPorts(9081)
                     .withReadinessPath("/health/ready");
 ```
-{: codeblock}
+
 
 You'll see that the unit test is like any other.
 
@@ -923,6 +923,7 @@ log4j.appender.stdout.layout.ConversionPattern=%r %p %c %x - %m%n
 
 log4j.logger.org.microshed=DEBUG
 ```
+{: codeblock}
 
 Rebuild and run the test:
 
@@ -1017,7 +1018,7 @@ mvn liberty:dev
 and the **coffee-shop** service:
 ```
 cd /home/project/open-liberty-masterclass/start/coffee-shop
-export DEFAULT_HTTP_PORT=
+export DEFAULT_HTTP_PORT=9080
 mvn clean
 mvn liberty:dev
 ```
