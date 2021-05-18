@@ -428,8 +428,8 @@ base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inven
 ```
 
 
-From the output, the **`base_ft_invocations_total{fallback="notApplied",\nmethod="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"}`** data shows that the **get()** method was called once without triggering a fallback method.
-The **`base_ft_invocations_total{fallback="applied",\nmethod="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"}`** data
+From the output, the **`base_ft_invocations_total{fallback="notApplied",`** **`method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"}`** data shows that the **get()** method was called once without triggering a fallback method.
+The **`base_ft_invocations_total{fallback="applied",`** **`method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"}`** data
 indicates that the **get()** method was called once and the fallback **fallbackForGet()** method was triggered.
 
 Update the configuration file.
