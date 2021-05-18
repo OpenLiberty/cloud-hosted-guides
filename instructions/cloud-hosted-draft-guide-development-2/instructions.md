@@ -1,7 +1,7 @@
 
-# Welcome to the Consuming a RESTful web service guide!
+# Welcome to the Building fault-tolerant microservices with the @Fallback annotation guide!
 
-Explore how to access a simple RESTful web service and consume its resources in Java
+You'll explore how to manage the impact of failures using MicroProfile Fault Tolerance by adding fallback behavior to microservice dependencies.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,29 +10,33 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-using JSON-B and JSON-P.
 
 
 # What you'll learn
 
-You will learn how to access a REST service, serialize a Java object that contains a
-list of artists and their albums, and use two different approaches to deserialize
-the returned JSON resources. The first approach consists of using the Java API for JSON Binding (JSON-B)
-to directly convert JSON messages into Java objects. The second approach consists of
-using the Java API for JSON Processing (JSON-P) to process the JSON.
+You will learn how to use MicroProfile (MP) Fault Tolerance to build resilient microservices
+that reduce the impact from failure and ensure continued operation of services.
 
-The REST service that provides the artists and albums resources is already written
-for you. When the server is running, this service is accessible at the **http://localhost:9080/artists** endpoint,
-which responds with the **artists.json** file.
+MP Fault Tolerance provides a simple and flexible solution to build fault-tolerant microservices.
+Fault tolerance leverages different strategies to guide the execution and result of logic.
+As stated in the [MicroProfile website](https://microprofile.io/project/eclipse/microprofile-fault-tolerance),
+retry policies, bulkheads, and circuit breakers are popular concepts in this area.
+They dictate whether and when executions take place, and fallbacks offer an alternative result
+when an execution does not complete successfully.
 
-You will implement the following two endpoints using the two deserialization approaches:
+The application that you will be working with is an **inventory** service, which collects,
+stores, and returns the system properties.
+It uses the **system** service to retrieve the system properties for a particular host.
+You will add fault tolerance to the **inventory** service so that it reacts accordingly when the **system**
+service is unavailable.
 
-* **.../artists/total** to return the total number of artists in the JSON
-* **.../artists/total/<artist>** to return the total number of albums in the JSON
-for the particular artist
+You will use the **@Fallback** annotations from the MicroProfile Fault Tolerance
+specification to define criteria for when to provide an alternative solution for
+a failed execution.
 
-If you are interested in learning more about REST services and how you can write them, read
-[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
+You will also see the application metrics for the fault tolerance methods that are automatically enabled
+when you add the MicroProfile Metrics feature to the server.
+
 
 
 # Getting started
@@ -47,11 +51,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-java.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-fallback.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-rest-client-java.git
-cd guide-rest-client-java
+git clone https://github.com/openliberty/guide-microprofile-fallback.git
+cd guide-microprofile-fallback
 ```
 {: codeblock}
 
@@ -83,23 +87,52 @@ The defaultServer server is ready to run a smarter planet.
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-You can find your service at the **http://localhost:9080/artists** endpoint by running the following curl command:
+To access the **inventory** service with a localhost hostname, run the following curl command:
 ```
-curl http://localhost:9080/artists
-```
-{: codeblock}
-
-Run the following curl command to retrieve the total number of artists:
-```
-curl http://localhost:9080/artists/total
+curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
 
-You can access the endpoint at **`http://localhost:9080/artists/total/<artist>`** to see a particular artist’s total number of albums.
-Run the following curl command to retrieve the artist **bar**'s total number of albums:
+You see the system properties for this host.
+When you run this curl command, some of these system properties, such as the OS name and user name, are automatically stored in the inventory.
+
+
+Update the **CustomConfigSource** configuration file.
+Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json
+
 ```
-curl http://localhost:9080/artists/total/bar
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":true}
+```
+{: codeblock}
+
+
+You do not need to restart the server. 
+Next, run the following curl command:
+```
+curl http://localhost:9080/inventory/systems/localhost
+```
+{: codeblock}
+
+The fallback mechanism is triggered because the **system** service is now in maintenance.
+You see the cached properties for this localhost.
+
+When you are done checking out the application, go to the **CustomConfigSource.json** file again.
+
+
+Update the **CustomConfigSource** configuration file.
+Change the **`io_openliberty_guides_system_inMaintenance`** property from **true** to **false** to set this
+condition back to its original value.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json
+
+```
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":false}
 ```
 {: codeblock}
 
@@ -114,12 +147,12 @@ mvn liberty:stop
 
 
 
-# Starting the service
+# Enabling fault tolerance
 
 
 To begin, run the following command to navigate to the **start** directory:
 ```
-cd /home/project/guide-rest-client-java/start
+cd /home/project/guide-microprofile-fallback/start
 ```
 {: codeblock}
 
@@ -142,508 +175,471 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
+The MicroProfile Fault Tolerance API is included in the MicroProfile dependency that is specified in your **pom.xml** file.
+Look for the dependency with the **microprofile** artifact ID.
+This dependency provides a library that allows you to use fault tolerance policies in your microservices.
 
-The application that you'll build upon was created for you. After your server is
-ready, run the following curl command to access the service:
-```
-curl http://localhost:9080/artists
-```
-{: codeblock}
+You can also find the **mpFaultTolerance** feature in your **src/main/liberty/config/server.xml** server configuration,
+which turns on MicroProfile Fault Tolerance capabilities in Open Liberty.
 
-# Creating POJOs
+To easily work through this guide, the two provided microservices are set up to run
+on the same server. To simulate the availability of the services and then to enable fault tolerance,
+dynamic configuration with MicroProfile Configuration is used so that you can easily take one service
+or the other down for maintenance. If you want to learn more about setting up dynamic configuration,
+see [Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
 
+The following two steps set up the dynamic configuration on the **system** service and its client.
+You can move on to the next section, which adds the fallback mechanism on the **inventory** service.
 
+First, the **src/main/java/io/openliberty/guides/system/SystemResource.java** file has
+the **isInMaintenance()** condition, which determines that the system properties are returned only if you set the **`io_openliberty_guides_system_inMaintenance`** configuration property
+to **false** in the **CustomConfigSource** file.
+Otherwise, the service returns a **`Status.SERVICE_UNAVAILABLE`** message, which makes it unavailable.
 
-To deserialize a JSON message, start with creating Plain Old Java Objects (POJOs) that represent what
-is in the JSON and whose instance members map to the keys in the JSON.
+Next, the **src/main/java/io/openliberty/guides/inventory/client/SystemClient.java** file
+makes a request to the **system** service through the MicroProfile Rest Client API.
+If you want to learn more about MicroProfile Rest Client,
+you can follow the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html) guide.
+The **system** service as described in the **SystemResource.java** file
+may return a **`Status.SERVICE_UNAVAILABLE`** message, which is a 503 status code.
+This code indicates that the server being called
+is unable to handle the request because of a temporary overload or scheduled maintenance, which would
+likely be alleviated after some delay. To simulate that the system is unavailable, an **IOException** is thrown.
 
-For the purpose of this guide, you are given two POJOs.
-The **Artist** object has two instance members **name** and **albums**, 
-which map to the artist name and the collection of the albums they have written. The **Album** object represents a 
-single object within the album collection, and contains three instance members **title**, **artistName**, and **totalTracks**, which map to the album title, the artist who wrote the album, and the number of tracks the album contains.
-
-# Introducing JSON-B and JSON-P
-
-JSON-B is a feature introduced with Java EE 8 and strengthens Java support for JSON.
-With JSON-B you directly serialize and deserialize POJOs. This API gives you a
-variety of options for working with JSON resources.
-
-In contrast, you need to use helper methods with JSON-P to process a JSON response.
-This tactic is more straightforward, but it can be cumbersome with more complex classes.
-
-JSON-B is built on top of the existing JSON-P API. JSON-B can do everything that JSON-P can do
-and allows for more customization for serializing and deserializing.
-
-### Using JSON-B
-
-JSON-B requires a POJO to have a public default no-argument constructor for deserialization
-and binding to work properly.
-
-The JSON-B engine includes a set of default mapping rules, which can be run without
-any customization annotations or custom configuration. In some instances, you might
-find it useful to deserialize a JSON message with only certain fields, specific
-field names, or classes with custom constructors. In these cases,
-annotations are necessary and recommended:
-
-* The **@JsonbProperty** annotation to map JSON keys to class instance members and vice versa.
-Without the use of this annotation, JSON-B will attempt to do POJO mapping, matching the keys in
-the JSON to the class instance members by name. JSON-B will attempt to match the JSON key 
-with a Java field or method annotated with **@JsonbProperty** where the value in the
-annotation exactly matches the JSON key. If no annotation exists with the given JSON key, 
-JSON-B will attempt to find a matching field with the same name. If no match is found, 
-JSON-B attempts to find a matching getter method for serialization or a matching setter 
-method for de-serialization. A match occurs when the property name of the method matches 
-the JSON key. If no matching getter or setter method is found, serialization or 
-de-serialization, respectively, fails with an exception. The Artist POJO does not require 
-this annotation because all instance members match the JSON keys by name.
-
-* The **@JsonbCreator** and **@JsonbProperty** annotations to annotate a custom constructor.
-These annotations are required for proper parameter substitution when a custom constructor is used.
-
-* The **@JsonbTransient** annotation to define an object property that does not map to a JSON
-property. While the use of this annotation is good practice, it is only necessary for serialization.
-
-For more information on customization with JSON-B, see the [official JSON-B site](http://json-b.net).
-
-
-# Consuming the REST resource
+The **InventoryManager** class calls the **getProperties()** method
+in the **SystemClient.java** class.
+You will look into the **InventoryManager** class in more detail in the next section.
 
 
 
 
-The **Artist** and **Album** POJOs are ready for deserialization. 
-Next, we'll learn to consume the JSON response from your REST service.
-
-Create the **Consumer** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java
 
 
 
+### Adding the @Fallback annotation
 
-```
-package io.openliberty.guides.consumingrest;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
-
-import io.openliberty.guides.consumingrest.model.Album;
-import io.openliberty.guides.consumingrest.model.Artist;
-
-public class Consumer {
-    public static Artist[] consumeWithJsonb(String targetUrl) {
-      Client client = ClientBuilder.newClient();
-      Response response = client.target(targetUrl).request().get();
-      Artist[] artists = response.readEntity(Artist[].class);
-
-      response.close();
-      client.close();
-
-      return artists;
-    }
-
-    public static Artist[] consumeWithJsonp(String targetUrl) {
-      Client client = ClientBuilder.newClient();
-      Response response = client.target(targetUrl).request().get();
-      JsonArray arr = response.readEntity(JsonArray.class);
-
-      response.close();
-      client.close();
-
-      return Consumer.collectArtists(arr);
-    }
-
-    private static Artist[] collectArtists(JsonArray artistArr) {
-      List<Artist> artists = artistArr.stream().map(artistJson -> {
-        JsonArray albumArr = ((JsonObject) artistJson).getJsonArray("albums");
-        Artist artist = new Artist(
-          ((JsonObject) artistJson).getString("name"),
-          Consumer.collectAlbums(albumArr));
-        return artist;
-      }).collect(Collectors.toList());
-
-      return artists.toArray(new Artist[artists.size()]);
-    }
-
-    private static Album[] collectAlbums(JsonArray albumArr) {
-      List<Album> albums = albumArr.stream().map(albumJson -> {
-        Album album = new Album(
-          ((JsonObject) albumJson).getString("title"),
-          ((JsonObject) albumJson).getString("artist"),
-          ((JsonObject) albumJson).getInt("ntracks") );
-        return album;
-      }).collect(Collectors.toList());
-
-      return albums.toArray(new Album[albums.size()]);
-    }
-}
-```
-{: codeblock}
+The **inventory** service is now able to recognize that the **system** service
+was taken down for maintenance.
+An IOException is thrown to simulate the **system** service is unavailable.
+Now, set a fallback method to deal with this failure.
 
 
-### Processing JSON using JSON-B
-
-
-JSON-B is a Java API that is used to serialize Java objects to JSON messages and vice versa.
-
-Open Liberty's JSON-B feature on Maven Central includes the JSON-B provider through transitive dependencies.
-The JSON-B APIs are provided by the MicroProfile dependency in your **pom.xml** file. 
-Look for the dependency with the **microprofile** artifact ID. 
-
-The **consumeWithJsonb()** method in the **Consumer** class makes a **GET** request to the
-running artist service and retrieves the JSON. To bind the JSON into an **Artist**
-array, use the **Artist[]** entity type in the **readEntity** call.
-
-### Processing JSON using JSON-P
-
-The **consumeWithJsonp()** method in the **Consumer** class makes a **GET** request
-to the running artist service and retrieves the JSON. This method then uses the
-**collectArtists** and **collectAlbums** helper methods. These helper methods will
-parse the JSON and collect its objects into individual POJOs. Notice that you can
-use the custom constructors to create instances of **Artist** and **Album**.
-
-# Creating additional REST resources
-
-
-Now that you can consume a JSON resource you can put that data to use.
-
-Replace the **ArtistResource** class.
+Replace the **InventoryManager** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java
+ **File** > **Open** > guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
 
 ```
-package io.openliberty.guides.consumingrest.service;
+package io.openliberty.guides.inventory;
 
-import javax.json.JsonArray;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.Properties;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import javax.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.faulttolerance.Fallback;
+import io.openliberty.guides.inventory.model.*;
 
-import io.openliberty.guides.consumingrest.model.Artist;
-import io.openliberty.guides.consumingrest.Consumer;
+@ApplicationScoped
+public class InventoryManager {
 
-@Path("artists")
-public class ArtistResource {
+    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+    private InventoryUtils invUtils = new InventoryUtils();
 
-    @Context
-    UriInfo uriInfo;
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray getArtists() {
-    	return Reader.getArtists();
+    @Fallback(fallbackMethod = "fallbackForGet",
+            applyOn = {IOException.class},
+            skipOn = {UnknownHostException.class})
+    public Properties get(String hostname) throws IOException {
+        return invUtils.getProperties(hostname);
     }
 
-    @GET
-    @Path("jsonString")
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getJsonString() {
-      Jsonb jsonb = JsonbBuilder.create();
-
-      Artist[] artists = Consumer.consumeWithJsonb(uriInfo.getBaseUri().toString() +
-        "artists");
-      String result = jsonb.toJson(artists);
-
-      return result;
-    }
-
-    @GET
-    @Path("total/{artist}")
-    @Produces(MediaType.TEXT_PLAIN)
-    public int getTotalAlbums(@PathParam("artist") String artist) {
-      Artist[] artists = Consumer.consumeWithJsonb(uriInfo.getBaseUri().toString()
-        + "artists");
-
-      for (int i = 0; i < artists.length; i++) {
-        if (artists[i].name.equals(artist)) {
-          return artists[i].albums.length;
+    public Properties fallbackForGet(String hostname) {
+        Properties properties = findHost(hostname);
+        if (properties == null) {
+            Properties msgProp = new Properties();
+            msgProp.setProperty(hostname,
+                    "System is not found in the inventory or system is in maintenance");
+            return msgProp;
         }
-      }
-      return -1;
+        return properties;
     }
 
-    @GET
-    @Path("total")
-    @Produces(MediaType.TEXT_PLAIN)
-    public int getTotalArtists() {
-      return Consumer.consumeWithJsonp(uriInfo.getBaseUri().toString() +
-        "artists").length;
+    public void add(String hostname, Properties systemProps) {
+        Properties props = new Properties();
+
+        String osName = systemProps.getProperty("os.name");
+        if (osName == null) {
+            return;
+        }
+
+        props.setProperty("os.name", systemProps.getProperty("os.name"));
+        props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+        SystemData system = new SystemData(hostname, props);
+        if (!systems.contains(system)) {
+            systems.add(system);
+        }
+    }
+
+    public InventoryList list() {
+        return new InventoryList(systems);
+    }
+
+    private Properties findHost(String hostname) {
+        for (SystemData system : systems) {
+            if (system.getHostname().equals(hostname)) {
+                return system.getProperties();
+            }
+        }
+        return null;
     }
 }
 ```
 {: codeblock}
 
 
-* The **getArtists()** method provides the raw JSON data service that you accessed at the
-beginning of this guide.
 
-* The **getJsonString()** method uses JSON-B to return the JSON as a string that will
-be used later for testing.
+The **@Fallback** annotation dictates a method to call when the original method encounters a failed execution. In this
+example, use the **fallbackForGet()** method.
 
-* The **getTotalAlbums()** method uses JSON-B to return the total number of albums present
-in the JSON for a particular artist. The method returns -1 if this artist does not exist.
+The **@Fallback** annotation provides two parameters, **applyOn** and **skipOn**, which allow you to configure
+which exceptions trigger a fallback and which exceptions do not, respectively.
+In this example, the **get()** method throws **IOException** when the system service is unavailable, and throws
+**UnknownHostException** when the system service cannot be found on the specified host.
+The **fallbackForGet()** method can handle the first case, but not the second.
 
-* The **getTotalArtists()** method uses JSON-P to return the total number of artists
-present in the JSON.
+The **fallbackForGet()** method, which is the designated fallback method for the original
+**get()** method, checks to see if the system's properties exist in the inventory.
+If the system properties entry is not found in the inventory, the method prints out a warning
+message in the browser. Otherwise, this method returns the cached property values from the inventory.
 
-The methods that you wrote in the **Consumer** class could be written directly in the
-**ArtistResource** class. However, if you are consuming a REST resource from a third
-party service, you should separate your **GET**/**POST** requests from your data consumption.
+You successfully set up your microservice to have fault tolerance capability.
+
+
+# Enabling metrics for the fault tolerance methods
+
+
+MicroProfile Fault Tolerance integrates with MicroProfile Metrics to provide metrics for the annotated fault tolerance methods.
+When both the **mpFaultTolerance** and the **mpMetrics** features are included in the **server.xml** configuration file,
+the **@Fallback** fault tolerance annotation provides metrics that count the following things: the total number of annotated method invocations, the total number of failed annotated method invocations, and the total number of the fallback method calls.
+
+The **mpMetrics** feature requires SSL and the configuration is provided for you. The **quickStartSecurity** configuration element provides basic security to secure the
+server. When you go to the **/metrics** endpoint, use the credentials that are defined in the server configuration to log in to view the data for the fault tolerance methods.
+
+You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [MicroProfile Fault Tolerance specification](https://github.com/eclipse/microprofile-fault-tolerance/releases).
 
 
 # Running the application
 
-The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-You can find your service at the **http://localhost:9080/artists** endpoint by running the following curl command:
+When the server is running, run the following curl command:
 ```
-curl http://localhost:9080/artists
-```
-{: codeblock}
-
-Run the following curl command to retrieve the total number of artists:
-```
-curl http://localhost:9080/artists/total
+curl http://localhost:9080/inventory/systems/localhost
 ```
 {: codeblock}
 
-You can access the endpoint at **`http://localhost:9080/artists/total/<artist>`** to see a particular artist’s total number of albums.
-Run the following curl command to retrieve the artist **bar**'s total number of albums:
+You receive the system properties of your local JVM from the **inventory** service.
+
+Next, run the following curl command which accesses the **system** service, to retrieve the system properties for the specific localhost:
 ```
-curl http://localhost:9080/artists/total/bar
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
+
+Notice that the results from the two URLs are identical because the **inventory** service gets its results from
+calling the **system** service.
+
+To see the application metrics, run the following curl commmand. This command will Log in using **admin** user, and you will have to enter **adminpwd** as the password.
+```
+curl -k -u admin https://localhost:9443/metrics/base
+```
+{: codeblock}
+
+See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
+
+```
+# TYPE base_ft_invocations_total counter
+base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 0
+base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+```
+
+You can test the fault tolerance mechanism of your microservices by dynamically changing
+the **`io_openliberty_guides_system_inMaintenance`** property value to **true** in the
+**resources/CustomConfigSource.json** file, which puts the **system** service in maintenance.
+
+
+Update the configuration file.
+Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
+
+```
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":true}
 ```
 {: codeblock}
 
 
-# Testing deserialization
 
-Create the **ConsumingRestIT** class.
+
+After saving the file, run the following curl command to view the cached version of the properties:
+```
+curl http://localhost:9080/inventory/systems/localhost
+```
+{: codeblock}
+
+The **fallbackForGet()** method, which is the designated fallback method, is called when the **system** service is not available.
+The cached system properties contain only the OS name and user name key and value pairs.
+
+
+To see that the **system** service is down, run the following curl command:
+```
+curl -I http://localhost:9080/system/properties
+```
+{: codeblock}
+
+You see that the service displays a 503 HTTP response code.
+
+
+Run the following curl command again and enter **adminpwd** as the password:
+```
+curl -k -u admin https://localhost:9443/metrics/base
+```
+{: codeblock}
+
+See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
+
+```
+# TYPE base_ft_invocations_total counter
+base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+```
+
+
+Update the configuration file.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
+
+
+
+
+```
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":false}
+```
+{: codeblock}
+
+
+After you finish, change the **`io_openliberty_guides_system_inMaintenance`**
+property value back to **false** in the **resources/CustomConfigSource.json** file.
+
+Update the configuration file.
+After you finish, change the **`io_openliberty_guides_system_inMaintenance`**
+property value back to **false** in the **resources/CustomConfigSource.json** file.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
+
+```
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":false}
+```
+{: codeblock}
+
+
+# Testing the application
+
+You can test your application manually, but automated tests ensure code quality because they trigger a failure
+whenever a code change introduces a defect. JUnit and the JAX-RS Client API provide a simple environment for you to write tests.
+
+Create the **FaultToleranceIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java 
+touch /home/project/guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java 
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
 
 
 
 
 ```
-package it.io.openliberty.guides.consumingrest;
+package it.io.openliberty.guides.faulttolerance;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import javax.json.JsonObject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
-
+import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import io.openliberty.guides.consumingrest.model.Artist;
+import it.io.openliberty.guides.utils.TestUtils;
 
-public class ConsumingRestIT {
+public class FaultToleranceIT {
 
-    private static String port;
-    private static String baseUrl;
-    private static String targetUrl;
-
-    private Client client;
     private Response response;
-
-    @BeforeAll
-    public static void oneTimeSetup() {
-      port = System.getProperty("http.port");
-      baseUrl = "http://localhost:" + port + "/artists/";
-      targetUrl = baseUrl + "total/";
-    }
+    private Client client;
 
     @BeforeEach
     public void setup() {
-      client = ClientBuilder.newClient();
+        client = ClientBuilder.newClient();
+        client.register(JsrJsonpProvider.class);
     }
 
     @AfterEach
     public void teardown() {
-      client.close();
-    }
-
-    @Test
-    public void testArtistDeserialization() {
-      response = client.target(baseUrl + "jsonString").request().get();
-      this.assertResponse(baseUrl + "jsonString", response);
-
-      Jsonb jsonb = JsonbBuilder.create();
-
-      String expectedString = "{\"name\":\"foo\",\"albums\":"
-        + "[{\"title\":\"album_one\",\"artist\":\"foo\",\"ntracks\":12}]}";
-      Artist expected = jsonb.fromJson(expectedString, Artist.class);
-
-      String actualString = response.readEntity(String.class);
-		  Artist[] actual = jsonb.fromJson(actualString, Artist[].class);
-
-      assertEquals(expected.name, actual[0].name, 
-        "Expected names of artists does not match");
-
-      response.close();
-    }
-
-    @Test
-    public void testJsonBAlbumCount() {
-      String[] artists = {"dj", "bar", "foo"};
-      for (int i = 0; i < artists.length; i++) {
-        response = client.target(targetUrl + artists[i]).request().get();
-        this.assertResponse(targetUrl + artists[i], response);
-
-        int expected = i;
-        int actual = response.readEntity(int.class);
-        assertEquals(expected, actual, "Album count for " + artists[i] + " does not match");
-
+        client.close();
         response.close();
-      }
     }
+    /**
+     * testFallbackForGet - test for checking if the fallback is being called
+     * correctly 1. Return system properties for a hostname when inventory
+     * service is available. 2. Make System service down and get the system
+     * properties from inventory service when it is down. 3. Check if system
+     * properties for the specific host was returned when the inventory service
+     * was down by: Asserting if the total number of the system properties, when
+     * service is up, is greater than the total number of the system properties
+     * when service is down.
+     */
 
     @Test
-    public void testJsonBAlbumCountForUnknownArtist() {
-      response = client.target(targetUrl + "unknown-artist").request().get();
-
-      int expected = -1;
-      int actual = response.readEntity(int.class);
-      assertEquals(expected, actual, "Unknown artist must have -1 albums");
-
-      response.close();
-    }
-
-    @Test
-    public void testJsonPArtistCount() {
-      response = client.target(targetUrl).request().get();
-      this.assertResponse(targetUrl, response);
-
-      int expected = 3;
-      int actual = response.readEntity(int.class);
-      assertEquals(expected, actual, "Expected number of artists does not match");
-
-      response.close();
+    public void testFallbackForGet() throws InterruptedException {
+        response = TestUtils.getResponse(client,
+                                         TestUtils.INVENTORY_LOCALHOST_URL);
+        assertResponse(TestUtils.baseUrl, response);
+        JsonObject obj = response.readEntity(JsonObject.class);
+        int propertiesSize = obj.size();
+        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_FALSE,
+                                       TestUtils.SYSTEM_MAINTENANCE_TRUE);
+        Thread.sleep(3000);
+        response = TestUtils.getResponse(client,
+                                         TestUtils.INVENTORY_LOCALHOST_URL);
+        assertResponse(TestUtils.baseUrl, response);
+        obj = response.readEntity(JsonObject.class);
+        int propertiesSizeFallBack = obj.size();
+        assertTrue(propertiesSize > propertiesSizeFallBack, 
+                   "The total number of properties from the @Fallback method "
+                 + "is not smaller than the number from the system service" 
+                 +  "as expected.");
+        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_TRUE,
+                                       TestUtils.SYSTEM_MAINTENANCE_FALSE);
+        Thread.sleep(3000);
     }
 
     /**
-     * Asserts that the given URL has the correct (200) response code.
+     * testFallbackForGet - test for checking if the fallback skip mechanism is working as intended:
+     * 1. Access system properties for the wrong hostname (localhot)
+     * 2. Verify that the response code is 404
+     * 3. Verify that the response text contains an error
+     */
+    @Test
+    public void testFallbackSkipForGet() {
+        response = TestUtils.getResponse(client,
+                TestUtils.INVENTORY_UNKNOWN_HOST_URL);
+        assertResponse(TestUtils.baseUrl, response, 404);
+        assertTrue(response.readEntity(String.class).contains("error"),
+                   "Incorrect response body from " + TestUtils.INVENTORY_UNKNOWN_HOST_URL);
+    }
+
+    /**
+     * Asserts that the given URL's response code matches the given status code.
+     */
+    private void assertResponse(String url, Response response, int status_code) {
+        assertEquals(status_code, response.getStatus(),
+                "Incorrect response code from " + url);
+    }
+
+    /**
+     * Asserts that the given URL has the correct response code of 200.
      */
     private void assertResponse(String url, Response response) {
-      assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+        assertResponse(url, response, 200);
     }
 }
 ```
 {: codeblock}
 
 
-Maven finds and executes all tests under the **src/test/java/it/** directory, 
-and each test method must be marked with the **@Test** annotation.
+The **@BeforeEach** and **@AfterEach** annotations indicate that this method runs either
+before or after the other test case.
+These methods are generally used to perform any setup and teardown tasks. In this case,
+the setup method creates a JAX-RS client, which makes HTTP requests to the **inventory** service. This
+client must also be registered with a JSON-P provider to process JSON resources.
+The teardown method simply destroys this client instance as well as the HTTP responses.
 
-You can use the **@BeforeAll** and **@AfterAll** annotations to perform any one-time setup and teardown
-tasks before and after all of your tests run. You can also use the **@BeforeEach** and **@AfterEach** annotations
-to perform setup and teardown tasks for individual test cases.
+The **testFallbackForGet()** test case sends a request to the **inventory** service to get the systems properties for a
+hostname before and after the **system** service becomes unavailable. Then, it asserts outputs from the two requests
+to ensure that they are different from each other.
 
-### Testing the binding process
+The **testFallbackSkipForGet()** test case sends a request to the **inventory** service to
+get the system properties for an incorrect hostname (**unknown**). Then, it confirms that the fallback method has not been
+called by asserting that the response's status code is **404** with an error message in the response body.
 
+The **@Test** annotations indicate that the methods automatically execute when your test class runs.
 
-The **yasson** dependency was added in your **pom.xml** file so that your test classes have access to JSON-B.
-
-The **testArtistDeserialization** test case checks that **Artist** instances created from
-the REST data and those that are hardcoded perform the same.
-
-The **assertResponse** helper method ensures that the response code you receive is valid (200).
-
-### Processing with JSON-B test
-
-The **testJsonBAlbumCount** and **testJsonBAlbumCountForUnknownArtist** tests both use the **total/{artist}**
-endpoint which invokes JSON-B.
-
-The **testJsonBAlbumCount** test case checks that deserialization with JSON-B was done correctly
-and that the correct number of albums is returned for each artist in the JSON.
-
-The **testJsonBAlbumCountForUnknownArtist** test case is similar to **testJsonBAlbumCount**
-but instead checks an artist that does not exist in the JSON and ensures that a
-value of `-1` is returned.
-
-### Processing with JSON-P test
-
-The **testJsonPArtistCount** test uses the **total** endpoint which invokes JSON-P. This test
-checks that deserialization with JSON-P was done correctly and that the correct number
-of artists is returned.
+In addition, a few endpoint tests have been included for you to test the basic functionality of the
+**inventory** and **system** services. If a test failure occurs, then you might have introduced a bug into
+the code.
 
 
 ### Running the tests
 
-Since you started Open Liberty in development mode at the start of the guide, press the **enter/return** key to run the tests.
+Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
 If the tests pass, you see a similar output to the following example:
-
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.consumingrest.ConsumingRestIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.59 sec - in it.io.openliberty.guides.consumingrest.ConsumingRestIT
+Running it.io.openliberty.guides.faulttolerance.FaultToleranceIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.517 sec - in it.io.openliberty.guides.faulttolerance.FaultToleranceIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.937 sec - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.396 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
 Results :
 
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are done checking out the service, exit development mode by typing `q` in the command-line session where you ran the server, 
-and then press the **enter/return** key.
+To see if the tests detect a failure, comment out the **changeSystemProperty()** methods
+in the **FaultToleranceIT.java** file. Rerun the tests to see that a test failure occurs for the
+**testFallbackForGet()** and **testFallbackSkipForGet()** test cases.
 
-# Building the application
-
-If you are satisfied with your application, run the Maven **package** goal to build the WAR file in the **target** directory:
-
-```
-mvn package
-```
-{: codeblock}
-
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
+where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
 # Summary
 
 ## Nice Work!
 
-You just accessed a simple RESTful web service and consumed its resources by using JSON-B and JSON-P in Open Liberty.
+You just learned how to build a fallback mechanism for a microservice with MicroProfile Fault Tolerance in Open Liberty and wrote a test to validate it.
 
 
+You can try one of the related MicroProfile guides. They demonstrate technologies that you can
+learn and expand on what you built here.
 
 
 
@@ -652,17 +648,17 @@ You just accessed a simple RESTful web service and consumed its resources by usi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-rest-client-java** project by running the following commands:
+Delete the **guide-microprofile-fallback** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-rest-client-java
+rm -fr guide-microprofile-fallback
 ```
 {: codeblock}
 
 ## What could make this guide better?
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-rest-client-java/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-rest-client-java/pulls)
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-fallback/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-fallback/pulls)
 
 
 
@@ -670,7 +666,9 @@ rm -fr guide-rest-client-java
 ## Where to next? 
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Preventing repeated failed calls to microservices](https://openliberty.io/guides/circuit-breaker.html)
 
 
 ## Log out of the session
