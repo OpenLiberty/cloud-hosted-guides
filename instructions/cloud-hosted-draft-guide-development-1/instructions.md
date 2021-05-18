@@ -1,7 +1,7 @@
 
-# Welcome to the Building fault-tolerant microservices with the @Fallback annotation guide!
+# Welcome to the Deploying microservices to Kubernetes guide!
 
-You'll explore how to manage the impact of failures using MicroProfile Fault Tolerance by adding fallback behavior to microservice dependencies.
+Deploy microservices in Open Liberty Docker containers to Kubernetes and manage them with the Kubernetes CLI, kubectl.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -12,31 +12,66 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
+# What is Kubernetes?
+
+Kubernetes is an open source container orchestrator that automates many tasks involved in deploying,
+managing, and scaling containerized applications.
+
+Over the years, Kubernetes has become a major tool in containerized environments as containers are being
+further leveraged for all steps of a continuous delivery pipeline.
+
+### Why use Kubernetes?
+
+Managing individual containers can be challenging. 
+A small team can easily manage a few containers for development but 
+managing hundreds of containers can be a headache, even for a large team of experienced developers.
+Kubernetes is a tool for deployment in containerized environments. 
+It handles scheduling, deployment, as well as mass deletion and creation of containers. 
+It provides update rollout abilities on a large scale that would otherwise prove extremely tedious to do. 
+Imagine that you updated a Docker image, which now needs to propagate to a dozen containers. 
+While you could destroy and then re-create these containers, you can also run a short one-line
+command to have Kubernetes make all those updates for you. Of course, this is just a simple example.
+Kubernetes has a lot more to offer.
+
+### Architecture
+
+Deploying an application to Kubernetes means deploying an application to a Kubernetes cluster.
+
+A typical Kubernetes cluster is a collection of physical or virtual machines called nodes that run
+containerized applications. A cluster is made up of one master node that manages the cluster, and
+many worker nodes that run the actual application instances inside Kubernetes objects called pods.
+
+A pod is a basic building block in a Kubernetes cluster. It represents a single running process that
+encapsulates a container or in some scenarios many closely coupled containers. Pods can be
+replicated to scale applications and handle more traffic. From the perspective of a cluster, a set
+of replicated pods is still one application instance, although it might be made up of dozens of
+instances of itself. A single pod or a group of replicated pods are managed by Kubernetes objects
+called controllers. A controller handles replication, self-healing, rollout of updates, and general
+management of pods. One example of a controller that you will use in this guide is a deployment.
+
+A pod or a group of replicated pods are abstracted through Kubernetes objects called services
+that define a set of rules by which the pods can be accessed. In a basic scenario, a Kubernetes
+service exposes a node port that can be used together with the cluster IP address to access
+the pods encapsulated by the service.
+
+To learn about the various Kubernetes resources that you can configure, 
+see the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/).
+
+
 # What you'll learn
 
-You will learn how to use MicroProfile (MP) Fault Tolerance to build resilient microservices
-that reduce the impact from failure and ensure continued operation of services.
+You will learn how to deploy two microservices in Open Liberty containers to a local Kubernetes cluster.
+You will then manage your deployed microservices using the **kubectl** command line interface for Kubernetes. 
+The **kubectl** CLI is your primary tool for communicating with and managing your Kubernetes cluster.
 
-MP Fault Tolerance provides a simple and flexible solution to build fault-tolerant microservices.
-Fault tolerance leverages different strategies to guide the execution and result of logic.
-As stated in the [MicroProfile website](https://microprofile.io/project/eclipse/microprofile-fault-tolerance),
-retry policies, bulkheads, and circuit breakers are popular concepts in this area.
-They dictate whether and when executions take place, and fallbacks offer an alternative result
-when an execution does not complete successfully.
+The two microservices you will deploy are called **system** and **inventory**. The **system** microservice
+returns the JVM system properties of the running container and it returns the pod's name in the HTTP header
+making replicas easy to distinguish from each other. The **inventory** microservice
+adds the properties from the **system** microservice to the inventory. 
+This process demonstrates how communication can be established between pods inside a cluster.
 
-The application that you will be working with is an **inventory** service, which collects,
-stores, and returns the system properties.
-It uses the **system** service to retrieve the system properties for a particular host.
-You will add fault tolerance to the **inventory** service so that it reacts accordingly when the **system**
-service is unavailable.
-
-You will use the **@Fallback** annotations from the MicroProfile Fault Tolerance
-specification to define criteria for when to provide an alternative solution for
-a failed execution.
-
-You will also see the application metrics for the fault tolerance methods that are automatically enabled
-when you add the MicroProfile Metrics feature to the server.
-
+You will use a local single-node Kubernetes cluster.
 
 
 # Getting started
@@ -51,11 +86,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-fallback.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-intro.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-fallback.git
-cd guide-microprofile-fallback
+git clone https://github.com/openliberty/guide-kubernetes-intro.git
+cd guide-kubernetes-intro
 ```
 {: codeblock}
 
@@ -65,567 +100,531 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-### Try what you'll build
 
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+# Logging into your cluster
 
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
+For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
+Get the name of your namespace with the following command:
 
 ```
-cd finish
-mvn liberty:run
+bx cr namespace-list
 ```
 {: codeblock}
 
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-To access the **inventory** service with a localhost hostname, run the following curl command:
-```
-curl http://localhost:9080/inventory/systems/localhost
-```
-{: codeblock}
-
-You see the system properties for this host.
-When you run this curl command, some of these system properties, such as the OS name and user name, are automatically stored in the inventory.
-
-
-Update the **CustomConfigSource** configuration file.
-Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json
+Look for output that is similar to the following:
 
 ```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":true}
+Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
+
+Namespace
+sn-labs-yourname
+```
+
+Store the namespace name in a variable.
+Use the namespace name that was obtained from the previous command.
+
+```
+NAMESPACE_NAME={namespace_name}
 ```
 {: codeblock}
 
-
-You do not need to restart the server. 
-Next, run the following curl command:
-```
-curl http://localhost:9080/inventory/systems/localhost
-```
-{: codeblock}
-
-The fallback mechanism is triggered because the **system** service is now in maintenance.
-You see the cached properties for this localhost.
-
-When you are done checking out the application, go to the **CustomConfigSource.json** file again.
-
-
-Update the **CustomConfigSource** configuration file.
-Change the **`io_openliberty_guides_system_inMaintenance`** property from **true** to **false** to set this
-condition back to its original value.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json
+Verify that the variable contains your namespace name:
 
 ```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":false}
+echo $NAMESPACE_NAME
 ```
 {: codeblock}
 
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
-
+Log in to the registry with the following command:
 ```
-mvn liberty:stop
+bx cr login
 ```
 {: codeblock}
 
 
 
-# Enabling fault tolerance
+# Building and containerizing the microservices
 
+The first step of deploying to Kubernetes is to build your microservices and containerize them with Docker.
 
-To begin, run the following command to navigate to the **start** directory:
+The starting Java project, which you can find in the **start** directory, is a multi-module Maven
+project that's made up of the **system** and **inventory** microservices. 
+Each microservice resides in its own directory, **start/system** and **start/inventory**. 
+Each of these directories also contains a Dockerfile, which is necessary for building Docker images. 
+If you're unfamiliar with Dockerfiles, check out the
+[Containerizing Microservices](https://openliberty.io/guides/containerize.html) guide,
+which covers Dockerfiles in depth.
+
+Navigate to the **start** directory and build the applications by running the following commands:
 ```
-cd /home/project/guide-microprofile-fallback/start
+cd start
+mvn clean package
 ```
 {: codeblock}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```
-mvn liberty:dev
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
 
-After you see the following message, your application server in dev mode is ready:
-
+Next, run the **docker build** commands to build container images for your application:
 ```
-************************************************************************
-*    Liberty is running in dev mode.
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
-
-The MicroProfile Fault Tolerance API is included in the MicroProfile dependency that is specified in your **pom.xml** file.
-Look for the dependency with the **microprofile** artifact ID.
-This dependency provides a library that allows you to use fault tolerance policies in your microservices.
-
-You can also find the **mpFaultTolerance** feature in your **src/main/liberty/config/server.xml** server configuration,
-which turns on MicroProfile Fault Tolerance capabilities in Open Liberty.
-
-To easily work through this guide, the two provided microservices are set up to run
-on the same server. To simulate the availability of the services and then to enable fault tolerance,
-dynamic configuration with MicroProfile Configuration is used so that you can easily take one service
-or the other down for maintenance. If you want to learn more about setting up dynamic configuration,
-see [Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
-
-The following two steps set up the dynamic configuration on the **system** service and its client.
-You can move on to the next section, which adds the fallback mechanism on the **inventory** service.
-
-First, the **src/main/java/io/openliberty/guides/system/SystemResource.java** file has
-the **isInMaintenance()** condition, which determines that the system properties are returned only if you set the **`io_openliberty_guides_system_inMaintenance`** configuration property
-to **false** in the **CustomConfigSource** file.
-Otherwise, the service returns a **`Status.SERVICE_UNAVAILABLE`** message, which makes it unavailable.
-
-Next, the **src/main/java/io/openliberty/guides/inventory/client/SystemClient.java** file
-makes a request to the **system** service through the MicroProfile Rest Client API.
-If you want to learn more about MicroProfile Rest Client,
-you can follow the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html) guide.
-The **system** service as described in the **SystemResource.java** file
-may return a **`Status.SERVICE_UNAVAILABLE`** message, which is a 503 status code.
-This code indicates that the server being called
-is unable to handle the request because of a temporary overload or scheduled maintenance, which would
-likely be alleviated after some delay. To simulate that the system is unavailable, an **IOException** is thrown.
-
-The **InventoryManager** class calls the **getProperties()** method
-in the **SystemClient.java** class.
-You will look into the **InventoryManager** class in more detail in the next section.
+{: codeblock}
 
 
+The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format.
+The tag for an image describes the specific image version. 
+If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
 
-
-
-
-
-### Adding the @Fallback annotation
-
-The **inventory** service is now able to recognize that the **system** service
-was taken down for maintenance.
-An IOException is thrown to simulate the **system** service is unavailable.
-Now, set a fallback method to deal with this failure.
-
-
-Replace the **InventoryManager** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
-
-
-
-
+During the build, you'll see various Docker messages describing what images are being downloaded and built. 
+When the build finishes, run the following command to list all local Docker images:
 ```
-package io.openliberty.guides.inventory;
-
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.Properties;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import javax.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.faulttolerance.Fallback;
-import io.openliberty.guides.inventory.model.*;
-
-@ApplicationScoped
-public class InventoryManager {
-
-    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-    private InventoryUtils invUtils = new InventoryUtils();
-
-    @Fallback(fallbackMethod = "fallbackForGet",
-            applyOn = {IOException.class},
-            skipOn = {UnknownHostException.class})
-    public Properties get(String hostname) throws IOException {
-        return invUtils.getProperties(hostname);
-    }
-
-    public Properties fallbackForGet(String hostname) {
-        Properties properties = findHost(hostname);
-        if (properties == null) {
-            Properties msgProp = new Properties();
-            msgProp.setProperty(hostname,
-                    "System is not found in the inventory or system is in maintenance");
-            return msgProp;
-        }
-        return properties;
-    }
-
-    public void add(String hostname, Properties systemProps) {
-        Properties props = new Properties();
-
-        String osName = systemProps.getProperty("os.name");
-        if (osName == null) {
-            return;
-        }
-
-        props.setProperty("os.name", systemProps.getProperty("os.name"));
-        props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-        SystemData system = new SystemData(hostname, props);
-        if (!systems.contains(system)) {
-            systems.add(system);
-        }
-    }
-
-    public InventoryList list() {
-        return new InventoryList(systems);
-    }
-
-    private Properties findHost(String hostname) {
-        for (SystemData system : systems) {
-            if (system.getHostname().equals(hostname)) {
-                return system.getProperties();
-            }
-        }
-        return null;
-    }
-}
+docker images
 ```
 {: codeblock}
 
 
 
-The **@Fallback** annotation dictates a method to call when the original method encounters a failed execution. In this
-example, use the **fallbackForGet()** method.
-
-The **@Fallback** annotation provides two parameters, **applyOn** and **skipOn**, which allow you to configure
-which exceptions trigger a fallback and which exceptions do not, respectively.
-In this example, the **get()** method throws **IOException** when the system service is unavailable, and throws
-**UnknownHostException** when the system service cannot be found on the specified host.
-The **fallbackForGet()** method can handle the first case, but not the second.
-
-The **fallbackForGet()** method, which is the designated fallback method for the original
-**get()** method, checks to see if the system's properties exist in the inventory.
-If the system properties entry is not found in the inventory, the method prints out a warning
-message in the browser. Otherwise, this method returns the cached property values from the inventory.
-
-You successfully set up your microservice to have fault tolerance capability.
-
-
-# Enabling metrics for the fault tolerance methods
-
-
-MicroProfile Fault Tolerance integrates with MicroProfile Metrics to provide metrics for the annotated fault tolerance methods.
-When both the **mpFaultTolerance** and the **mpMetrics** features are included in the **server.xml** configuration file,
-the **@Fallback** fault tolerance annotation provides metrics that count the following things: the total number of annotated method invocations, the total number of failed annotated method invocations, and the total number of the fallback method calls.
-
-The **mpMetrics** feature requires SSL and the configuration is provided for you. The **quickStartSecurity** configuration element provides basic security to secure the
-server. When you go to the **/metrics** endpoint, use the credentials that are defined in the server configuration to log in to view the data for the fault tolerance methods.
-
-You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [MicroProfile Fault Tolerance specification](https://github.com/eclipse/microprofile-fault-tolerance/releases).
-
-
-# Running the application
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-When the server is running, run the following curl command:
-```
-curl http://localhost:9080/inventory/systems/localhost
-```
-{: codeblock}
-
-You receive the system properties of your local JVM from the **inventory** service.
-
-Next, run the following curl command which accesses the **system** service, to retrieve the system properties for the specific localhost:
-```
-curl http://localhost:9080/system/properties
-```
-{: codeblock}
-
-Notice that the results from the two URLs are identical because the **inventory** service gets its results from
-calling the **system** service.
-
-To see the application metrics, run the following curl commmand. This command will Log in using **admin** user, and you will have to enter **adminpwd** as the password.
-```
-curl -k -u admin https://localhost:9443/metrics/base
-```
-{: codeblock}
-
-See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
+Verify that the `system:1.0-SNAPSHOT` and `inventory:1.0-SNAPSHOT` images are listed among them, for example:
 
 ```
-# TYPE base_ft_invocations_total counter
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 0
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+REPOSITORY                                TAG                       
+inventory                                 1.0-SNAPSHOT
+system                                    1.0-SNAPSHOT
+openliberty/open-liberty                  full-java8-openj9-ubi
 ```
 
-You can test the fault tolerance mechanism of your microservices by dynamically changing
-the **`io_openliberty_guides_system_inMaintenance`** property value to **true** in the
-**resources/CustomConfigSource.json** file, which puts the **system** service in maintenance.
-
-
-Update the configuration file.
-Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
+If you don't see the `system:1.0-SNAPSHOT` and `inventory:1.0-SNAPSHOT` images, then check the Maven
+build log for any potential errors.
+If the images built without errors, push them to your container registry on IBM Cloud with the following commands:
 
 ```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":true}
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 ```
 {: codeblock}
 
 
+# Deploying the microservices
 
+Now that your Docker images are built, deploy them using a Kubernetes resource definition.
 
-After saving the file, run the following curl command to view the cached version of the properties:
-```
-curl http://localhost:9080/inventory/systems/localhost
-```
-{: codeblock}
+A Kubernetes resource definition is a yaml file that contains a description of all your deployments, services, 
+or any other resources that you want to deploy. 
+All resources can also be deleted from the cluster by using the same yaml file that you used to deploy them.
 
-The **fallbackForGet()** method, which is the designated fallback method, is called when the **system** service is not available.
-The cached system properties contain only the OS name and user name key and value pairs.
-
-
-To see that the **system** service is down, run the following curl command:
-```
-curl -I http://localhost:9080/system/properties
-```
-{: codeblock}
-
-You see that the service displays a 503 HTTP response code.
-
-
-Run the following curl command again and enter **adminpwd** as the password:
-```
-curl -k -u admin https://localhost:9443/metrics/base
-```
-{: codeblock}
-
-See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
-
-```
-# TYPE base_ft_invocations_total counter
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
-```
-
-From the output, the **`base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"}`** data shows that the **get()** method was called once without triggering fallback.
-The **`base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"}`** data
-indicates that the the **get()** method was called once triggering the fallback **fallbackForGet()** method.
-
-
-Update the configuration file.
-After you finish, change the **`io_openliberty_guides_system_inMaintenance`**
-property value back to **false** in the **resources/CustomConfigSource.json** file.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
-
-```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":false}
-```
-{: codeblock}
-
-
-# Testing the application
-
-You can test your application manually, but automated tests ensure code quality because they trigger a failure
-whenever a code change introduces a defect. JUnit and the JAX-RS Client API provide a simple environment for you to write tests.
-
-Create the **FaultToleranceIT** class.
+Create the Kubernetes configuration file.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+touch /home/project/guide-kubernetes-intro/start/kubernetes.yaml
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-intro/start/kubernetes.yaml
 
 
 
 
 ```
-package it.io.openliberty.guides.faulttolerance;
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  # tag::labels1[]
+  labels:
+  # end::labels1[]
+    # tag::app1[]
+    app: system
+    # end::app1[]
+spec:
+  selector:
+    matchLabels:
+      # tag::app2[]
+      app: system
+      # end::app2[]
+  template:
+    metadata:
+      # tag::labels2[]
+      labels:
+      # end::labels2[]
+        # tag::app3[]
+        app: system
+        # end::app3[]
+    spec:
+      containers:
+      - name: system-container
+        # tag::image1[]
+        image: system:1.0-SNAPSHOT
+        # end::image1[]
+        ports:
+        # tag::containerPort1[]
+        - containerPort: 9080
+        # end::containerPort1[]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  # tag::labels3[]
+  labels:
+  # end::labels3[]
+    # tag::app4[]
+    app: inventory
+    # end::app4[]
+spec:
+  selector:
+    matchLabels:
+      # tag::app5[]
+      app: inventory
+      # end::app5[]
+  template:
+    metadata:
+      # tag::labels4[]
+      labels:
+      # end::labels4[]
+        # tag::app6[]
+        app: inventory
+        # end::app6[]
+    spec:
+      containers:
+      - name: inventory-container
+        # tag::image2[]
+        image: inventory:1.0-SNAPSHOT
+        # end::image2[]
+        ports:
+        # tag::containerPort2[]
+        - containerPort: 9080
+        # end::containerPort2[]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  # tag::NodePort1[]
+  type: NodePort
+  # end::NodePort1[]
+  selector:
+    # tag::app7[]
+    app: system
+    # end::app7[]
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    # tag::nodePort1[]
+    nodePort: 31000
+    # end::nodePort1[]
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import javax.json.JsonObject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import it.io.openliberty.guides.utils.TestUtils;
-
-public class FaultToleranceIT {
-
-    private Response response;
-    private Client client;
-
-    @BeforeEach
-    public void setup() {
-        client = ClientBuilder.newClient();
-        client.register(JsrJsonpProvider.class);
-    }
-
-    @AfterEach
-    public void teardown() {
-        client.close();
-        response.close();
-    }
-    /**
-     * testFallbackForGet - test for checking if the fallback is being called
-     * correctly 1. Return system properties for a hostname when inventory
-     * service is available. 2. Make System service down and get the system
-     * properties from inventory service when it is down. 3. Check if system
-     * properties for the specific host was returned when the inventory service
-     * was down by: Asserting if the total number of the system properties, when
-     * service is up, is greater than the total number of the system properties
-     * when service is down.
-     */
-
-    @Test
-    public void testFallbackForGet() throws InterruptedException {
-        response = TestUtils.getResponse(client,
-                                         TestUtils.INVENTORY_LOCALHOST_URL);
-        assertResponse(TestUtils.baseUrl, response);
-        JsonObject obj = response.readEntity(JsonObject.class);
-        int propertiesSize = obj.size();
-        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_FALSE,
-                                       TestUtils.SYSTEM_MAINTENANCE_TRUE);
-        Thread.sleep(3000);
-        response = TestUtils.getResponse(client,
-                                         TestUtils.INVENTORY_LOCALHOST_URL);
-        assertResponse(TestUtils.baseUrl, response);
-        obj = response.readEntity(JsonObject.class);
-        int propertiesSizeFallBack = obj.size();
-        assertTrue(propertiesSize > propertiesSizeFallBack, 
-                   "The total number of properties from the @Fallback method "
-                 + "is not smaller than the number from the system service" 
-                 +  "as expected.");
-        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_TRUE,
-                                       TestUtils.SYSTEM_MAINTENANCE_FALSE);
-        Thread.sleep(3000);
-    }
-
-    /**
-     * testFallbackForGet - test for checking if the fallback skip mechanism is working as intended:
-     * 1. Access system properties for the wrong hostname (localhot)
-     * 2. Verify that the response code is 404
-     * 3. Verify that the response text contains an error
-     */
-    @Test
-    public void testFallbackSkipForGet() {
-        response = TestUtils.getResponse(client,
-                TestUtils.INVENTORY_UNKNOWN_HOST_URL);
-        assertResponse(TestUtils.baseUrl, response, 404);
-        assertTrue(response.readEntity(String.class).contains("error"),
-                   "Incorrect response body from " + TestUtils.INVENTORY_UNKNOWN_HOST_URL);
-    }
-
-    /**
-     * Asserts that the given URL's response code matches the given status code.
-     */
-    private void assertResponse(String url, Response response, int status_code) {
-        assertEquals(status_code, response.getStatus(),
-                "Incorrect response code from " + url);
-    }
-
-    /**
-     * Asserts that the given URL has the correct response code of 200.
-     */
-    private void assertResponse(String url, Response response) {
-        assertResponse(url, response, 200);
-    }
-}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  # tag::NodePort2[]
+  type: NodePort
+  # end::NodePort2[]
+  selector:
+    # tag::app8[]
+    app: inventory
+    # end::app8[]
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    # tag::nodePort2[]
+    nodePort: 32000
+    # end::nodePort2[]
 ```
 {: codeblock}
 
 
-The **@BeforeEach** and **@AfterEach** annotations indicate that this method runs either
-before or after the other test case.
-These methods are generally used to perform any setup and teardown tasks. In this case,
-the setup method creates a JAX-RS client, which makes HTTP requests to the **inventory** service. This
-client must also be registered with a JSON-P provider to process JSON resources.
-The teardown method simply destroys this client instance as well as the HTTP responses.
 
-The **testFallbackForGet()** test case sends a request to the **inventory** service to get the systems properties for a
-hostname before and after the **system** service becomes unavailable. Then, it asserts outputs from the two requests
-to ensure that they are different from each other.
+This file defines four Kubernetes resources. It defines two deployments and two services. 
+A Kubernetes deployment is a resource that controls the creation and management of pods. 
+A service exposes your deployment so that you can make requests to your containers. 
+Three key items to look at when creating the deployments are the **labels**, 
+**image**, and **containerPort** fields. 
+The **labels** is a way for a Kubernetes service to reference specific deployments. 
+The **image** is the name and tag of the Docker image that you want to use for this container. 
+Finally, the **containerPort** is the port that your container exposes to access your application.
+For the services, the key point to understand is that they expose your deployments.
+The binding between deployments and services is specified by labels -- in this case the 
+**app** label.
+You will also notice the service has a type of **NodePort**.
+This means you can access these services from outside of your cluster via a specific port.
+In this case, the ports are **31000** and **32000**, but port numbers can also be randomized if the
+**nodePort** field is not used.
 
-The **testFallbackSkipForGet()** test case sends a request to the **inventory** service to
-get the system properties for an incorrect hostname (**unknown**). Then, it confirms that the fallback method has not been
-called by asserting that the response's status code is **404** with an error message in the response body.
+Update the image names so that the images in your IBM Cloud container registry are used:
 
-The **@Test** annotations indicate that the methods automatically execute when your test class runs.
+```
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
+```
+{: codeblock}
 
-In addition, a few endpoint tests have been included for you to test the basic functionality of the
-**inventory** and **system** services. If a test failure occurs, then you might have introduced a bug into
-the code.
+Run the following commands to deploy the resources as defined in kubernetes.yaml:
+```
+kubectl apply -f kubernetes.yaml
+```
+{: codeblock}
 
 
-### Running the tests
+When the apps are deployed, run the following command to check the status of your pods:
+```
+kubectl get pods
+```
+{: codeblock}
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
-If the tests pass, you see a similar output to the following example:
+You'll see an output similar to the following if all the pods are healthy and running:
+
+```
+NAME                                    READY     STATUS    RESTARTS   AGE
+system-deployment-6bd97d9bf6-4ccds      1/1       Running   0          15s
+inventory-deployment-645767664f-nbtd9   1/1       Running   0          15s
+```
+
+You can also inspect individual pods in more detail by running the following command:
+```
+kubectl describe pods
+```
+{: codeblock}
+
+
+You can also issue the **kubectl get** and **kubectl describe** commands on other Kubernetes resources, so feel
+free to inspect all other resources.
+
+
+Run the following command to get the node IP for the `system` service:
+
+```
+kubectl describe pod system | grep Node
+```
+{: codeblock}
+
+The output shows the node IP that is later used to access the service. 
+It appears in a format similar to the following:
+
+```
+Node:         10.114.85.140/10.114.85.140
+Node-Selectors:  <none>
+```
+
+The IP for the system service is `10.114.85.140`.
+Store the IP in a variable.
+
+```
+SYSTEM_HOST={system-node-ip}
+```
+{: codeblock}
+
+Use another `kubectl` command to get the node IP for the `inventory` service:
+
+```
+kubectl describe pod inventory | grep Node
+```
+{: codeblock}
+
+Store this IP in a variable as well.
+
+```
+INVENTORY_HOST={inventory-node-ip}
+```
+{: codeblock}
+
+Verify that the variables that contain the IPs are set correctly:
+
+```
+echo $SYSTEM_HOST && echo $INVENTORY_HOST
+```
+{: codeblock}
+
+Then use the following `curl` commands to access your microservices:
+
+```
+curl http://$SYSTEM_HOST:31000/system/properties
+```
+{: codeblock}
+
+```
+curl http://$INVENTORY_HOST:32000/inventory/systems/system-service
+```
+{: codeblock}
+
+The first URL returns system properties and the name of the pod in an HTTP header called `X-Pod-Name`.
+To view the header, you can use the `-I` option in the `curl` command when you make a request to the
+`http://$SYSTEM_HOST:31000/system/properties` URL.
+The second URL adds properties from `system-service` to the inventory Kubernetes Service. 
+Making a request to the `http://$INVENTORY_HOST:32000/inventory/systems/[kube-service]` URL in general 
+adds to the inventory depending on whether `kube-service` is a valid Kubernetes service that can be accessed.
+
+
+# Scaling a deployment
+
+To use load balancing, you need to scale your deployments. 
+When you scale a deployment, you replicate its pods, creating more running instances of your applications. 
+Scaling is one of the primary advantages of Kubernetes because you can replicate your application to accommodate more traffic, 
+and then descale your deployments to free up resources when the traffic decreases.
+
+As an example, scale the **system** deployment to three pods by running the following command:
+```
+kubectl scale deployment/system-deployment --replicas=3
+```
+{: codeblock}
+
+
+Use the following command to verify that two new pods have been created.
+```
+kubectl get pods
+```
+{: codeblock}
+
+
+```
+NAME                                    READY     STATUS    RESTARTS   AGE
+system-deployment-6bd97d9bf6-4ccds      1/1       Running   0          1m
+system-deployment-6bd97d9bf6-jf9rs      1/1       Running   0          25s
+system-deployment-6bd97d9bf6-x4zth      1/1       Running   0          25s
+inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
+```
+
+
+Wait for your two new pods to be in the ready state, then make the following `curl` command:
+
+```
+curl -I http://$SYSTEM_HOST:31000/system/properties
+```
+{: codeblock}
+
+Notice that the **X-Pod-Name** header has a different value when you call it multiple times.
+The value changes because three pods that all serve the **system** application are now running.
+Similarly, to descale your deployments you can use the same scale command with fewer replicas.
+
+```
+kubectl scale deployment/system-deployment --replicas=1
+```
+{: codeblock}
+
+
+# Redeploy microservices
+
+When you're building your application, you might want to quickly test a change. 
+To run a quick test, you can rebuild your Docker images then delete and re-create your Kubernetes resources. 
+Note that there is only one **system** pod after you redeploy since you're deleting all of the existing pods.
+
+
+```
+mvn clean package
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+
+kubectl delete -f kubernetes.yaml
+kubectl apply -f kubernetes.yaml
+```
+{: codeblock}
+
+Updating your applications in this way is fine for development environments, but it is not suitable for production.
+If you want to deploy an updated image to a production cluster, 
+you can update the container in your deployment with a new image. 
+Once the new container is ready, Kubernetes automates both the creation of a new container and the decommissioning of the old one.
+
+
+# Testing microservices that are running on Kubernetes
+
+A few tests are included for you to test the basic functionality of the microservices. 
+If a test failure occurs, then you might have introduced a bug into the code. 
+To run the tests, wait for all pods to be in the ready state before proceeding further. 
+The default properties defined in the **pom.xml** are:
+
+| *Property*                        | *Description*
+| ---| ---
+| **cluster.ip**            | IP or host name for your cluster, **localhost** by default, which is appropriate when using Docker Desktop.
+| **system.kube.service**     | Name of the Kubernetes Service wrapping the **system** pods, **system-service** by default.
+| **system.node.port**        | The NodePort of the Kubernetes Service **system-service**, 31000 by default.
+| **inventory.node.port**        | The NodePort of the Kubernetes Service **inventory-service**, 32000 by default.
+
+Navigate back to the **start** directory.
+
+
+Update the `pom.xml` files so that the `cluster.ip` properties match the values of your node IPs.
+
+```
+sed -i 's=localhost='"$INVENTORY_HOST"'=g' inventory/pom.xml
+sed -i 's=localhost='"$SYSTEM_HOST"'=g' system/pom.xml
+```
+{: codeblock}
+
+Run the integration tests by using the following command:
+
+```
+mvn failsafe:integration-test
+```
+{: codeblock}
+
+If the tests pass, you'll see an output similar to the following for each service respectively:
+
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.faulttolerance.FaultToleranceIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.517 sec - in it.io.openliberty.guides.faulttolerance.FaultToleranceIT
 Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.937 sec - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.396 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.372 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
-Results :
+Results:
 
-Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-To see if the tests detect a failure, comment out the **changeSystemProperty()** methods
-in the **FaultToleranceIT.java** file. Rerun the tests to see that a test failure occurs for the
-**testFallbackForGet()** and **testFallbackSkipForGet()** test cases.
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.714 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
+Results:
+
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+```
+
+
+# Tearing down the environment
+
+When you no longer need your deployed microservices, 
+you can delete all Kubernetes resources by running the **kubectl delete** command:
+```
+kubectl delete -f kubernetes.yaml
+```
+{: codeblock}
+
+
 
 
 # Summary
 
 ## Nice Work!
 
-You just learned how to build a fallback mechanism for a microservice with MicroProfile Fault Tolerance in Open Liberty and wrote a test to validate it.
+You have just deployed two microservices that are running in Open Liberty to Kubernetes.
 
-
-You can try one of the related MicroProfile guides. They demonstrate technologies that you can
-learn and expand on what you built here.
+You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
 
 
 
@@ -634,27 +633,25 @@ learn and expand on what you built here.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-fallback** project by running the following commands:
+Delete the **guide-kubernetes-intro** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-fallback
+rm -fr guide-kubernetes-intro
 ```
 {: codeblock}
 
 ## What could make this guide better?
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-fallback/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-fallback/pulls)
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-kubernetes-intro/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-kubernetes-intro/pulls)
 
 
 
 
 ## Where to next? 
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-* [Preventing repeated failed calls to microservices](https://openliberty.io/guides/circuit-breaker.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Managing microservice traffic using Istio](https://openliberty.io/guides/istio-intro.html)
 
 
 ## Log out of the session
