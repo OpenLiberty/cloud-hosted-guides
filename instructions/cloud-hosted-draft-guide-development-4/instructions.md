@@ -1,7 +1,7 @@
 
-# Welcome to the Creating a RESTful web service guide!
+# Welcome to the Injecting dependencies into microservices guide!
 
-Learn how to create a REST service with JAX-RS, JSON-B, and Open Liberty.
+Learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies into microservices.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,28 +11,38 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
-
 # What you'll learn
 
-You will learn how to build and test a simple REST service with JAX-RS and JSON-B, which will expose
-the JVM's system properties. The REST service will respond to **GET** requests made to the **http://localhost:9080/LibertyProject/System/properties** URL.
+You will learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies in a simple inventory management application.
 
-The service responds to a **GET** request with a JSON representation of the system properties, where
-each property is a field in a JSON object like this:
+The application that you will be working with is an **inventory** service,
+which stores the information about various JVMs that run on different systems.
+Whenever a request is made to the **inventory** service to retrieve the JVM
+system properties of a particular host, the **inventory** service communicates with the **system**
+service on that host to get these system properties. The system properties are then stored and returned.
 
-```
-{
-  "os.name":"Mac",
-  "java.version": "1.8"
-}
-```
+You will use scopes to bind objects in this application to their well-defined contexts.
+CDI provides a variety of scopes for you to work with and while you will not use all of them in this guide,
+there is one for almost every scenario that you may encounter. Scopes are defined by using CDI annotations.
+You will also use dependency injection to inject one bean into another to make use of its functionalities.
+This enables you to inject the bean in its specified context without having to instantiate it yourself.
 
-The design of an HTTP API is essential when creating a web application. The REST API has 
-become the go-to architectural style for building an HTTP API. The JAX-RS API offers 
-functionality for creating, reading, updating, and deleting exposed resources. The JAX-RS API 
-supports the creation of RESTful web services that come with desirable properties, 
-such as performance, scalability, and modifiability.
+The implementation of the application and its services are provided for you in the **start/src** directory.
+The **system** service can be found in the **start/src/main/java/io/openliberty/guides/system** directory, 
+and the **inventory** service can be found in the **start/src/main/java/io/openliberty/guides/inventory** directory. 
+If you want to learn more about RESTful web services and how to build them, see
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the **system** service.
+The **inventory** service is built in a similar way.
+
+### What is CDI?
+
+Contexts and Dependency Injection (CDI) defines a rich set of complementary services that improve the application structure.
+The most fundamental services that are provided by CDI are contexts that bind the lifecycle of stateful components to well-defined contexts,
+and dependency injection that is the ability to inject components into an application in a typesafe way.
+With CDI, the container does all the daunting work of instantiating dependencies, and
+controlling exactly when and how these components are instantiated and destroyed.
+
+
 
 # Getting started
 
@@ -46,11 +56,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cdi-intro.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-rest-intro.git
-cd guide-rest-intro
+git clone https://github.com/openliberty/guide-cdi-intro.git
+cd guide-cdi-intro
 ```
 {: codeblock}
 
@@ -84,17 +94,48 @@ The defaultServer server is ready to run a smarter planet.
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-Check out the service at the http://localhost:9080/LibertyProject/System/properties URL. 
+Point your browser to the http://localhost:9080/inventory/systems URL.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/LibertyProject/System/properties
+curl http://localhost:9080/inventory/systems
 ```
 {: codeblock}
 
 
+This is the starting point of the **inventory** service and it displays the current contents of the inventory. 
+As you might expect, these are empty since nothing is stored in the inventory yet. 
+
+Next, point your browser to the http://localhost:9080/inventory/systems/localhost URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/inventory/systems/localhost
+```
+{: codeblock}
+
+
+You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
+properties are automatically stored in the inventory. 
+
+Go back to http://localhost:9080/inventory/systems 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/inventory/systems
+```
+{: codeblock}
+
+
+and you see a new entry for **localhost**. For simplicity, only the OS name and username are shown here for
+each host. You can repeat this process for your own hostname or any other machine that is running
+the **system** service.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -106,8 +147,11 @@ mvn liberty:stop
 {: codeblock}
 
 
+# Handling dependencies in the application
 
-# Creating a JAX-RS application
+You will use CDI to inject dependencies into the inventory manager application and learn how to manage the life cycles of your objects.
+
+### Managing scopes and contexts
 
 Navigate to the **start** directory to begin.
 
@@ -130,297 +174,446 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
-JAX-RS has two key concepts for creating REST APIs. The most obvious one is the resource itself, which is
-modelled as a class. The second is a JAX-RS application, which groups all exposed resources under a
-common path. You can think of the JAX-RS application as a wrapper for all of your resources.
-
-
-Replace the **SystemApplication** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
-
-
-
-
-```
-package io.openliberty.guides.rest;
-
-import javax.ws.rs.core.Application;
-import javax.ws.rs.ApplicationPath;
-
-@ApplicationPath("System")
-public class SystemApplication extends Application {
-
-}
-```
-{: codeblock}
-
-
-The **SystemApplication** class extends the **Application** class, which associates all JAX-RS resource classes in the WAR file with this JAX-RS application. These resources become available under the common path that's specified with the **@ApplicationPath** 
-annotation. The **@ApplicationPath** annotation has a value that indicates the path in the WAR file that 
-the JAX-RS application accepts requests from.
-
-
-
-
-# Creating the JAX-RS resource
-
-In JAX-RS, a single class should represent a single resource, or a group of resources of the same type.
-In this application, a resource might be a system property, or a set of system properties. It is easy
-to have a single class handle multiple different resources, but keeping a clean separation between types
-of resources helps with maintainability in the long run.
-
-Create the **PropertiesResource** class.
+Create the **InventoryManager** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
 
 ```
-package io.openliberty.guides.rest;
+package io.openliberty.guides.inventory;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+import javax.enterprise.context.ApplicationScoped;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+@ApplicationScoped
+public class InventoryManager {
 
-@Path("properties")
-public class PropertiesResource {
+  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Properties getProperties() {
-        return System.getProperties();
+  public void add(String hostname, Properties systemProps) {
+    Properties props = new Properties();
+    props.setProperty("os.name", systemProps.getProperty("os.name"));
+    props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+    SystemData system = new SystemData(hostname, props);
+    if (!systems.contains(system)) {
+      systems.add(system);
     }
+  }
 
+  public InventoryList list() {
+    return new InventoryList(systems);
+  }
 }
 ```
 {: codeblock}
 
 
-This resource class has quite a bit of code in it, so let's break it down into manageable chunks.
 
-The **@Path** annotation on the class indicates that this resource responds to the **properties** path
-in the JAX-RS application. The **@ApplicationPath** annotation in the **SystemApplication** class together with
-the **@Path** annotation in this class indicates that the resource is available at the **System/properties**
-path.
+This bean contains two simple functions. 
+The **add()** function is for adding entries to the inventory.
+The **list()** function is for listing all the entries currently stored in the inventory.
 
-JAX-RS maps the HTTP methods on the URL to the methods of the class by using annotations. 
-Your application uses the **GET** annotation to map an HTTP **GET** request
-to the **System/properties** path.
+This bean must be persistent between all of the clients, which means multiple clients need to share the same instance.
+To achieve this by using CDI, you can simply add the **@ApplicationScoped** annotation onto the class.
 
-The **@GET** annotation on the method indicates that this method is to be called for the HTTP **GET**
-method. The **@Produces** annotation indicates the format of the content that will be returned. The
-value of the **@Produces** annotation will be specified in the HTTP **Content-Type** response header.
-For this application, a JSON structure is to be returned. The desired **Content-Type** for a JSON
-response is **application/json** with **`MediaType.APPLICATION_JSON`** instead of the **String** content type. Using a constant such as **`MediaType.APPLICATION_JSON`** is better because if there's a spelling error, a compile failure occurs.
+This annotation indicates that this particular bean is to be initialized once per application.
+By making it application-scoped, the container ensures that the same instance of the bean is used whenever
+it is injected into the application.
 
-JAX-RS supports a number of ways to marshal JSON. The JAX-RS 2.1 specification mandates JSON-Binding
-(JSON-B). The method body returns the result of **System.getProperties()**, which is of type **java.util.Properties**. Since the method 
-is annotated with **`@Produces(MediaType.APPLICATION_JSON)`**, JAX-RS uses JSON-B to automatically convert the returned object
-to JSON data in the HTTP response.
+Create the **InventoryResource** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+```
+{: codeblock}
 
 
-
-
-
-# Configuring the server
-
-To get the service running, the Liberty server needs to be correctly configured.
-
-Replace the server configuration file.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-rest-intro/start/src/main/liberty/config/server.xml
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
 
 ```
-<server description="Intro REST Guide Liberty server">
-  <featureManager>
-      <feature>jaxrs-2.1</feature>
-  </featureManager>
+package io.openliberty.guides.inventory;
 
-  <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
-                id="defaultHttpEndpoint" host="*" />
+import java.util.Properties;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.client.SystemClient;
 
-  <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
-</server>
+@ApplicationScoped
+@Path("/systems")
+public class InventoryResource {
+
+  @Inject
+  InventoryManager manager;
+
+  @Inject
+  SystemClient systemClient;
+
+  @GET
+  @Path("/{hostname}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
+    Properties props = systemClient.getProperties(hostname);
+    if (props == null) {
+      return Response.status(Response.Status.NOT_FOUND)
+                     .entity("{ \"error\" : \"Unknown hostname " + hostname
+                             + " or the inventory service may not be running "
+                             + "on the host machine \" }")
+                     .build();
+    }
+
+    manager.add(hostname, props);
+    return Response.ok(props).build();
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  public InventoryList listContents() {
+    return manager.list();
+  }
+}
 ```
 {: codeblock}
 
 
 
-The configuration does the following actions:
+The inventory resource is a RESTful service that is served at the **inventory/systems** endpoint. 
 
-* Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
-* Configures the server to resolve the HTTP port numbers from variables, which are then specified in
-the Maven **pom.xml** file. This is specified in the **`<httpEndpoint/>`** element. Variables use the **${variableName}** syntax.
-* Configures the server to run the produced web application on a context root specified in the 
-**pom.xml** file. This is specified in the **`<webApplication/>`** element.
+Annotating a class with the **@ApplicationScoped** annotation indicates that the bean is initialized once and is shared between all requests while the application runs.
+
+If you want this bean to be initialized once for every request, you can annotate the class with the **@RequestScoped** annotation instead. With the **@RequestScoped** annotation, the bean is instantiated when the request is received and destroyed when a response is sent back to the client. A request scope is short-lived.
+
+### Injecting a dependency
+
+Refer to the **InventoryResource** class you created above.
+
+The **@Inject** annotation indicates a dependency injection.
+You are injecting your **InventoryManager** and **SystemClient** beans into the **InventoryResource** class.
+This injects the beans in their specified context and makes all of their functionalities
+available without the need of instantiating them yourself.
+The injected bean **InventoryManager** can then be invoked directly through the **manager.add(hostname, props)**
+and **manager.list()** function calls.  The injected bean **SystemClient** can be invoked through the 
+**systemClient.getProperties(hostname)** function call.
+
+Finally, you have a client component **SystemClient** that can be found in the
+**src/main/java/io/openliberty/guides/inventory/client** directory. This class communicates 
+with the **system** service to retrieve the JVM system properties for a particular host 
+that exposes them. This class also contains detailed Javadocs that you can read for reference.
+
+Your inventory application is now completed.
 
 
-The variables that are being used in the **server.xml** file are provided by the properties set in the Maven **pom.xml** file. The properties must be formatted as **liberty.var.variableName**.
 
 
 # Running the application
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
+You can find the **inventory** and **system** services at the following URLs:
 
-Check out the service that you created at the http://localhost:9080/LibertyProject/System/properties URL. 
+
+ http://localhost:9080/inventory/systems
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/LibertyProject/System/properties
+curl http://localhost:9080/inventory/systems
+```
+{: codeblock}
+
+
+
+ http://localhost:9080/system/properties
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
 
 
 
-# Testing the service
+# Testing the inventory application
 
+While you can test your application manually, you should rely on automated tests since they trigger
+a failure whenever a code change introduces a defect.
+Since the application is a RESTful web service application, you can use
+JUnit and the RESTful web service Client API to write tests.
+In testing the functionality of the application, the scopes and dependencies are being tested.
 
-You can test this service manually by starting a server and pointing a web browser at the
-http://localhost:9080/LibertyProject/System/properties URL. However, automated tests are a 
-much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS 
-Client API provide a simple environment to test the application.
-
-You can write tests for the individual units of code outside of a running application server, or they
-can be written to call the application server directly. In this example, you will create a test that
-does the latter.
-
-Create the **EndpointIT** class.
+Create the **InventoryEndpointIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+touch /home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
 
 
 ```
-package it.io.openliberty.guides.rest;
+package it.io.openliberty.guides.inventory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Properties;
-
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
-public class EndpointIT {
-    
-    private static final Jsonb jsonb = JsonbBuilder.create();
+@TestMethodOrder(OrderAnnotation.class)
+public class InventoryEndpointIT {
 
-    @Test
-    public void testGetProperties() {
-        String port = System.getProperty("http.port");
-        String context = System.getProperty("context.root");
-        String url = "http://localhost:" + port + "/" + context + "/";
+  private static String port;
+  private static String baseUrl;
 
-        Client client = ClientBuilder.newClient();
+  private Client client;
 
-        WebTarget target = client.target(url + "System/properties");
-        Response response = target.request().get();
+  private final String SYSTEM_PROPERTIES = "system/properties";
+  private final String INVENTORY_SYSTEMS = "inventory/systems";
 
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
-                     "Incorrect response code from " + url);
+  @BeforeAll
+  public static void oneTimeSetup() {
+    port = System.getProperty("http.port");
+    baseUrl = "http://localhost:" + port + "/";
+  }
 
-        String json = response.readEntity(String.class);
-        Properties sysProps = jsonb.fromJson(json, Properties.class);
+  @BeforeEach
+  public void setup() {
+    client = ClientBuilder.newClient();
+    client.register(JsrJsonpProvider.class);
+  }
 
-        assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
-                     "The system property for the local and remote JVM should match");
-        response.close();
+  @AfterEach
+  public void teardown() {
+    client.close();
+  }
+
+  @Test
+  @Order(1)
+  public void testHostRegistration() {
+    this.visitLocalhost();
+
+    Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
+    this.assertResponse(baseUrl, response);
+
+    JsonObject obj = response.readEntity(JsonObject.class);
+
+    JsonArray systems = obj.getJsonArray("systems");
+
+    boolean localhostExists = false;
+    for (int n = 0; n < systems.size(); n++) {
+      localhostExists = systems.getJsonObject(n)
+                                .get("hostname").toString()
+                                .contains("localhost");
+      if (localhostExists) {
+          break;
+      }
     }
+    assertTrue(localhostExists, 
+              "A host was registered, but it was not localhost");
+
+    response.close();
+  }
+
+  @Test
+  @Order(2)
+  public void testSystemPropertiesMatch() {
+    Response invResponse = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
+    Response sysResponse = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
+
+    this.assertResponse(baseUrl, invResponse);
+    this.assertResponse(baseUrl, sysResponse);
+
+    JsonObject jsonFromInventory = (JsonObject) invResponse.readEntity(JsonObject.class)
+                                                           .getJsonArray("systems")
+                                                           .getJsonObject(0)
+                                                           .get("properties");
+
+    JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
+
+    String osNameFromInventory = jsonFromInventory.getString("os.name");
+    String osNameFromSystem = jsonFromSystem.getString("os.name");
+    this.assertProperty("os.name", "localhost", osNameFromSystem,
+                        osNameFromInventory);
+
+    String userNameFromInventory = jsonFromInventory.getString("user.name");
+    String userNameFromSystem = jsonFromSystem.getString("user.name");
+    this.assertProperty("user.name", "localhost", userNameFromSystem,
+                        userNameFromInventory);
+
+    invResponse.close();
+    sysResponse.close();
+  }
+
+  @Test
+  @Order(3)
+  public void testUnknownHost() {
+    Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
+    this.assertResponse(baseUrl, response);
+
+    Response badResponse = client.target(baseUrl + INVENTORY_SYSTEMS + "/"
+        + "badhostname").request(MediaType.APPLICATION_JSON).get();
+
+    assertEquals(404, badResponse.getStatus(),
+        "BadResponse expected status: 404. Response code not as expected.");
+
+    String obj = badResponse.readEntity(String.class);
+
+    boolean isError = obj.contains("error");
+    assertTrue(isError, 
+              "badhostname is not a valid host but it didn't raise an error");
+
+    response.close();
+    badResponse.close();
+  }
+
+  private Response getResponse(String url) {
+    return client.target(url).request().get();
+  }
+
+  private void assertResponse(String url, Response response) {
+    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+  }
+
+  private void assertProperty(String propertyName, String hostname,
+      String expected, String actual) {
+    assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
+        + "in the system service does not match the one stored in "
+        + "the inventory service for " + hostname);
+  }
+
+  private void visitLocalhost() {
+    Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
+    this.assertResponse(baseUrl, response);
+    response.close();
+
+    Response targetResponse = client.target(baseUrl + INVENTORY_SYSTEMS
+        + "/localhost").request().get();
+    targetResponse.close();
+  }
 }
 ```
 {: codeblock}
 
 
+The **@BeforeAll** annotation is placed on a method that runs before any of the test cases.
+In this case, the **oneTimeSetup()** method retrieves the port number for the Open Liberty server and builds
+a base URL string that is used throughout the tests.
 
-This test class has more lines of code than the resource implementation. This situation is common.
-The test method is indicated with the **@Test** annotation.
+The **@BeforeEach** and **@AfterEach** annotations are placed on methods that run before and after every test case.
+These methods are generally used to perform any setup and teardown tasks. In this case, the **setup()** method
+creates a JAX-RS client, which makes HTTP requests to the **inventory** service. This client must
+also be registered with a JSON-P provider (**JsrJsonpProvider**) to process JSON resources. The **teardown()**
+method simply destroys this client instance.
+
+See the following descriptions of the test cases:
+
+* **testHostRegistration()** verifies that a host is correctly added to the inventory.
+
+* **testSystemPropertiesMatch()** verifies that the JVM system properties returned by the **system** service match
+the ones stored in the **inventory** service.
+
+* **testUnknownHost()** verifies that an unknown host or a host that does not expose their JVM system
+properties is correctly handled as an error.
+
+To force these test cases to run in a particular order, annotate your **InventoryEndpointIT** test class with the **@TestMethodOrder(OrderAnnotation.class)** annotation.
+**OrderAnnotation.class** runs test methods in numerical order, 
+according to the values specified in the **@Order** annotation. 
+You can also create a custom **MethodOrderer** class or use built-in **MethodOrderer** implementations, 
+such as **OrderAnnotation.class**, **Alphanumeric.class**, or **Random.class**. Label your test cases
+with the **@Test** annotation so that they automatically run when your test class runs.
+
+Finally, the **src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java** file
+is included for you to test the basic functionality of the **system** service.
+If a test failure occurs, then you might have introduced a bug into the code.
 
 
-The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the server configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven **pom.xml** file. Refer to the **pom.xml** file to see how the application information such as the **default.http.port**, **default.https.port** and **app.context.root** elements are provided in the file.
 
-
-These Maven properties are then passed to the Java test program as the **`<systemPropertyVariables/>`** element in the **pom.xml** file.
-
-Getting the values to create a representation of the URL is simple. The test class uses the **getProperty** method
-to get the application details.
-
-To call the JAX-RS service using the JAX-RS client, first create a **WebTarget** object by calling
-the **target** method that provides the URL. To cause the HTTP request to occur, the **request().get()** method
-is called on the **WebTarget** object. The **get** method
-call is a synchronous call that blocks until a response is received. This call returns a **Response**
-object, which can be inspected to determine whether the request was successful.
-
-The first thing to check is that a **200** response was received. The JUnit **assertEquals** method can be used for this check.
-
-Check the response body to ensure it returned the right information. Since the client and the server
-are running on the same machine, it is reasonable to expect that the system properties for the local
-and remote JVM would be the same. In this case, an **assertEquals** assertion is made so that the **os.name** system property
-for both JVMs is the same. You can write additional assertions to check for more values.
 
 ### Running the tests
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
-You will see the following output:
+If the tests pass, you see a similar output to the following example:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.rest.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.99 sec - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+[WARNING ] Interceptor for {http://badhostname:9080/system/properties}WebClient has thrown exception, unwinding now
+Could not send Message.
+[err] Runtime exception: java.net.UnknownHostException: UnknownHostException invoking http://badhostname:9080/system/properties: badhostname
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.325 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
 Results :
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-To see whether the tests detect a failure, add an assertion that you know fails, or change the existing
-assertion to a constant value that doesn't match the **os.name** system property.
+The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
+
+To see whether the tests detect a failure, change the **endpoint** for the **inventory** service in
+the **src/main/java/io/openliberty/guides/inventory/InventoryResource.java** file to something else. Then,
+run the tests again to see that a test failure occurs.
+
 
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
-
 
 # Summary
 
 ## Nice Work!
 
-You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
+You just used CDI services in Open Liberty to build a simple inventory application.
 
 
 
@@ -429,25 +622,24 @@ You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-rest-intro** project by running the following commands:
+Delete the **guide-cdi-intro** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-rest-intro
+rm -fr guide-cdi-intro
 ```
 {: codeblock}
 
 ## What could make this guide better?
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-rest-intro/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-rest-intro/pulls)
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-cdi-intro/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-cdi-intro/pulls)
 
 
 
 
 ## Where to next? 
 
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 
 
 ## Log out of the session
