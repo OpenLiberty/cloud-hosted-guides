@@ -427,8 +427,8 @@ base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.in
 base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
 ```
 
-From the output, the **base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"}** data shows that the **get()** method was called once without triggering fallback.
-The **base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"}** data
+From the output, the **`base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"}`** data shows that the **get()** method was called once without triggering fallback.
+The **`base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"}`** data
 indicates that the the **get()** method was called once triggering the fallback **fallbackForGet()** method.
 
 
