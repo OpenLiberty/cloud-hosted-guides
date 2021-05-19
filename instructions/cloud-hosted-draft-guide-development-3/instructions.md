@@ -32,9 +32,8 @@ an existing distributed tracing system.
 
 You'll configure the provided **inventory** and **system** services to use distributed tracing with
 MicroProfile OpenTracing. You'll run these services in two separate JVMs made of two server instances
-to demonstrate tracing in a distributed environment. If all the components were to run on a single  
-server, then any logging software would do the trick.
-
+to demonstrate tracing in a distributed environment. 
+If all the components were to run on a single server, then any logging software would do the trick.
 
 # Getting started
 
@@ -65,7 +64,7 @@ For this guide, Zipkin is used as the distributed tracing system.
 You can find the installation instructions for Zipkin at the Zipkin [quickstart page](https://zipkin.io/pages/quickstart.html). 
 You're not required to use Zipkin.
 You may choose to use another tracing system.
-However, this guide is written using Zipkin through Docker.
+However, this guide is written using Zipkin.
 If you use a different tracing system, the required instructions may differ.
 
 
@@ -229,19 +228,19 @@ Update the **InventoryManager** class.
 package io.openliberty.guides.inventory;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+
 import io.openliberty.guides.inventory.client.SystemClient;
 import io.openliberty.guides.inventory.model.InventoryList;
 import io.openliberty.guides.inventory.model.SystemData;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import java.util.List;
-import java.util.Collections;
-
-import org.eclipse.microprofile.opentracing.Traced;
-
 import io.opentracing.Scope;
 import io.opentracing.Tracer;
+
+import org.eclipse.microprofile.opentracing.Traced;
 
 @ApplicationScoped
 public class InventoryManager {
@@ -323,19 +322,19 @@ Update the **InventoryResource** class
 package io.openliberty.guides.inventory;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+
 import io.openliberty.guides.inventory.client.SystemClient;
 import io.openliberty.guides.inventory.model.InventoryList;
 import io.openliberty.guides.inventory.model.SystemData;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import java.util.List;
-import java.util.Collections;
-
-import org.eclipse.microprofile.opentracing.Traced;
-
 import io.opentracing.Scope;
 import io.opentracing.Tracer;
+
+import org.eclipse.microprofile.opentracing.Traced;
 
 @ApplicationScoped
 public class InventoryManager {
