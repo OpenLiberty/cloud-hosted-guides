@@ -150,7 +150,8 @@ mvn liberty:dev
 After you see the following message, your application server in dev mode is ready:
 
 ```
-Press the Enter key to run tests on demand.
+************************************************************************
+*    Liberty is running in dev mode.
 ```
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
@@ -198,15 +199,14 @@ import org.eclipse.microprofile.health.HealthCheckResponse;
 @ApplicationScoped
 public class SystemReadinessCheck implements HealthCheck {
 
-  private static final String readinessCheck = SystemResource.class.getSimpleName() 
+  private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
                                                + " Readiness Check";
-
   @Override
   public HealthCheckResponse call() {
     if (!System.getProperty("wlp.server.name").equals("defaultServer")) {
-      return HealthCheckResponse.down(readinessCheck);
+      return HealthCheckResponse.down(READINESS_CHECK);
     }
-    return HealthCheckResponse.up(readinessCheck);
+    return HealthCheckResponse.up(READINESS_CHECK);
   }
 }
 ```
@@ -264,10 +264,11 @@ public class SystemLivenessCheck implements HealthCheck {
     long memUsed = memBean.getHeapMemoryUsage().getUsed();
     long memMax = memBean.getHeapMemoryUsage().getMax();
 
-    return HealthCheckResponse.named(SystemResource.class.getSimpleName() + " Liveness Check")
+    return HealthCheckResponse.named(
+      SystemResource.class.getSimpleName() + " Liveness Check")
                               .withData("memory used", memUsed)
                               .withData("memory max", memMax)
-                              .state(memUsed < memMax * 0.9).build();
+                              .status(memUsed < memMax * 0.9).build();
   }
 }
 ```
@@ -313,9 +314,8 @@ import org.eclipse.microprofile.health.HealthCheckResponse;
 @ApplicationScoped
 public class InventoryReadinessCheck implements HealthCheck {
 
-  private static final String readinessCheck = InventoryResource.class.getSimpleName() 
+  private static final String READINESS_CHECK = InventoryResource.class.getSimpleName()
                                                + " Readiness Check";
-
   @Inject
   InventoryConfig config;
 
@@ -341,10 +341,10 @@ public class InventoryReadinessCheck implements HealthCheck {
   public HealthCheckResponse call() {
     if (!isHealthy()) {
       return HealthCheckResponse
-          .down(readinessCheck);
+          .down(READINESS_CHECK);
     }
     return HealthCheckResponse
-        .up(readinessCheck);
+        .up(READINESS_CHECK);
   }
 
 }
@@ -399,17 +399,17 @@ import org.eclipse.microprofile.health.HealthCheckResponse;
 @Liveness
 @ApplicationScoped
 public class InventoryLivenessCheck implements HealthCheck {
- 
   @Override
   public HealthCheckResponse call() {
       MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
       long memUsed = memBean.getHeapMemoryUsage().getUsed();
       long memMax = memBean.getHeapMemoryUsage().getMax();
 
-      return HealthCheckResponse.named(InventoryResource.class.getSimpleName() + " Liveness Check")
+      return HealthCheckResponse.named(
+        InventoryResource.class.getSimpleName() + " Liveness Check")
                                 .withData("memory used", memUsed)
                                 .withData("memory max", memMax)
-                                .state(memUsed < memMax * 0.9).build();
+                                .status(memUsed < memMax * 0.9).build();
   }
 }
 ```
