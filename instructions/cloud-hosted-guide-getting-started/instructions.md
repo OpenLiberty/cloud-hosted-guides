@@ -224,9 +224,9 @@ Replace the server configuration file.
         <feature>jaxrs-2.1</feature>
         <feature>jsonp-1.1</feature>
         <feature>cdi-2.0</feature>
-        <feature>mpMetrics-2.3</feature>
-        <feature>mpHealth-2.2</feature>
-        <feature>mpConfig-1.4</feature>
+        <feature>mpMetrics-3.0</feature>
+        <feature>mpHealth-3.0</feature>
+        <feature>mpConfig-2.0</feature>
     </featureManager>
 
     <variable name="default.http.port" defaultValue="9080"/>
@@ -257,7 +257,7 @@ You can see the server being updated in the server log displayed in your command
 [INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
 [INFO] [AUDIT] CWWKG0017I: The server configuration was successfully updated in 0.284 seconds.
 [INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/health/
-[INFO] [AUDIT] CWWKF0012I: The server installed the following features: [mpHealth-2.2].
+[INFO] [AUDIT] CWWKF0012I: The server installed the following features: [mpHealth-3.0].
 [INFO] [AUDIT] CWWKF0008I: Feature update completed in 0.285 seconds.
 [INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
 [INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.173 seconds.
@@ -329,27 +329,26 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.health.Readiness;
 import org.eclipse.microprofile.health.HealthCheck;
 import org.eclipse.microprofile.health.HealthCheckResponse;
-import org.eclipse.microprofile.health.HealthCheckResponseBuilder;
 
 @Readiness
 @ApplicationScoped
 public class SystemReadinessCheck implements HealthCheck {
 
-    private static final String readinessCheck = SystemResource.class.getSimpleName() 
+    private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
                                                  + " Readiness Check";
 
     @Inject
     @ConfigProperty(name = "io_openliberty_guides_system_inMaintenance")
     Provider<String> inMaintenance;
-	
+
     @Override
     public HealthCheckResponse call() {
         if (inMaintenance != null && inMaintenance.get().equalsIgnoreCase("true")) {
-            return HealthCheckResponse.down(readinessCheck);
+            return HealthCheckResponse.down(READINESS_CHECK);
         }
-        return HealthCheckResponse.up(readinessCheck);
+        return HealthCheckResponse.up(READINESS_CHECK);
     }
-    
+
 }
 ```
 {: codeblock}
@@ -399,9 +398,9 @@ public class SystemLivenessCheck implements HealthCheck {
             SystemResource.class.getSimpleName() + " Liveness Check")
                                   .withData("memory used", memUsed)
                                   .withData("memory max", memMax)
-                                  .state(memUsed < memMax * 0.9).build();
+                                  .status(memUsed < memMax * 0.9).build();
     }
-    
+
 }
 ```
 {: codeblock}
@@ -526,9 +525,9 @@ Replace the server configuration file.
         <feature>jaxrs-2.1</feature>
         <feature>jsonp-1.1</feature>
         <feature>cdi-2.0</feature>
-        <feature>mpMetrics-2.3</feature>
-        <feature>mpHealth-2.2</feature>
-        <feature>mpConfig-1.4</feature>
+        <feature>mpMetrics-3.0</feature>
+        <feature>mpHealth-3.0</feature>
+        <feature>mpConfig-2.0</feature>
     </featureManager>
 
     <variable name="default.http.port" defaultValue="9080"/>
@@ -582,7 +581,7 @@ mvn package
 Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```
-docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
@@ -743,9 +742,9 @@ Replace the server configuration file.
         <feature>jaxrs-2.1</feature>
         <feature>jsonp-1.1</feature>
         <feature>cdi-2.0</feature>
-        <feature>mpMetrics-2.3</feature>
-        <feature>mpHealth-2.2</feature>
-        <feature>mpConfig-1.4</feature>
+        <feature>mpMetrics-3.0</feature>
+        <feature>mpHealth-3.0</feature>
+        <feature>mpConfig-2.0</feature>
     </featureManager>
 
     <variable name="default.http.port" defaultValue="9080"/>
