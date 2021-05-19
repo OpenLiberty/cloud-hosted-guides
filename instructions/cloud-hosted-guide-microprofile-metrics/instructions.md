@@ -373,7 +373,7 @@ is called to return the size of the inventory. Note the additional metadata fiel
 | ---| ---
 
 Additional information about these annotations, relevant metadata fields, and more are available at
-the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/ref/microprofile/4.0/#package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=org/eclipse/microprofile/metrics/annotation/package-summary.html).
+the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-4.0-javadoc.html#package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=org/eclipse/microprofile/metrics/annotation/package-summary.html).
 
 
 # Enabling vendor metrics for the microservices
