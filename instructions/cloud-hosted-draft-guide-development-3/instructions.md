@@ -321,55 +321,51 @@ Update the **InventoryResource** class
 ```
 package io.openliberty.guides.inventory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Properties;
-import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-
-import io.openliberty.guides.inventory.client.SystemClient;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-import io.opentracing.Scope;
-import io.opentracing.Tracer;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.eclipse.microprofile.opentracing.Traced;
 
-@ApplicationScoped
-public class InventoryManager {
+import io.openliberty.guides.inventory.model.InventoryList;
 
-    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-    private SystemClient systemClient = new SystemClient();
-    @Inject Tracer tracer;
+@RequestScoped
+@Path("/systems")
+public class InventoryResource {
 
-    public Properties get(String hostname) {
-        systemClient.init(hostname, 9080);
-        Properties properties = systemClient.getProperties();
-        return properties;
-    }
+    @Inject InventoryManager manager;
 
-    public void add(String hostname, Properties systemProps) {
-        Properties props = new Properties();
-        props.setProperty("os.name", systemProps.getProperty("os.name"));
-        props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-        SystemData system = new SystemData(hostname, props);
-        if (!systems.contains(system)) {
-            try (Scope childScope = tracer.activateSpan(
-                    tracer.buildSpan("add() Span").start())) {
-                systems.add(system);
-            }
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
+        Properties props = manager.get(hostname);
+        if (props == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                           .entity("{ \"error\" : \"Unknown hostname or the system service " 
+                           + "may not be running on " + hostname + "\" }")
+                           .build();
         }
+        manager.add(hostname, props);
+        return Response.ok(props).build();
     }
-
-    @Traced(value = true, operationName = "InventoryManager.list")
-    public InventoryList list() {
-        return new InventoryList(systems);
+    
+    @GET
+    @Traced(false)
+    @Produces(MediaType.APPLICATION_JSON)
+    public InventoryList listContents() {
+        return manager.list();
     }
 }
 ```
 {: codeblock}
+
 
 
 Setting **@Traced(false)** disables tracing of 
