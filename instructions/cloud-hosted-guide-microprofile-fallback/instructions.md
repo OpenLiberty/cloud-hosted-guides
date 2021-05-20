@@ -432,23 +432,6 @@ From the output, the **`base_ft_invocations_total{fallback="notApplied",`** **`m
 The **`base_ft_invocations_total{fallback="applied",`** **`method="io.openliberty.guides.inventory.InventoryManager.get",`** **`result="valueReturned"}`** data
 indicates that the **get()** method was called once and the fallback **fallbackForGet()** method was triggered.
 
-Update the configuration file.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
-
-
-
-
-```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":false}
-```
-{: codeblock}
-
-
-After you finish, change the **`io_openliberty_guides_system_inMaintenance`**
-property value back to **false** in the **resources/CustomConfigSource.json** file.
 
 Update the configuration file.
 After you finish, change the **`io_openliberty_guides_system_inMaintenance`**
