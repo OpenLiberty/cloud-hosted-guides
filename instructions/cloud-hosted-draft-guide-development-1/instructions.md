@@ -634,6 +634,10 @@ rm -fr guide-microprofile-reactive-messaging
 ```
 {: codeblock}
 
+## What did you think of this guide?
+To give us your feedback, click the **Support** button at the right edge of the IDE, select **Give feedback** option,
+fill in the fields, choose **General** category, and click the **Post Idea** button.
+
 ## What could make this guide better?
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/pulls)
