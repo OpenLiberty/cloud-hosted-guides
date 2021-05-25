@@ -1,7 +1,7 @@
 
-# Welcome to the Building fault-tolerant microservices with the @Fallback annotation guide!
+# Welcome to the Consuming RESTful services asynchronously with template interfaces guide!
 
-You'll explore how to manage the impact of failures using MicroProfile Fault Tolerance by adding fallback behavior to microservice dependencies.
+Learn how to use MicroProfile Rest Client to invoke RESTful microservices asynchronously over HTTP.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,33 +11,43 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 # What you'll learn
 
-You will learn how to use MicroProfile (MP) Fault Tolerance to build resilient microservices
-that reduce the impact from failure and ensure continued operation of services.
+You will learn how to build a MicroProfile Rest Client to access remote RESTful services using asynchronous method calls. 
+You'll update the template interface for a MicroProfile Rest Client to use the **CompletionStage** return type. 
+The template interface maps to the remote service that you want to call. 
+A **CompletionStage** interface allows you to work with the result of your remote service call asynchronously.
 
-MP Fault Tolerance provides a simple and flexible solution to build fault-tolerant microservices.
-Fault tolerance leverages different strategies to guide the execution and result of logic.
-As stated in the [MicroProfile website](https://microprofile.io/project/eclipse/microprofile-fault-tolerance),
-retry policies, bulkheads, and circuit breakers are popular concepts in this area.
-They dictate whether and when executions take place, and fallbacks offer an alternative result
-when an execution does not complete successfully.
+*What is asynchronous programming?*
 
-The application that you will be working with is an **inventory** service, which collects,
-stores, and returns the system properties.
-It uses the **system** service to retrieve the system properties for a particular host.
-You will add fault tolerance to the **inventory** service so that it reacts accordingly when the **system**
-service is unavailable.
+Imagine asynchronous programming as a restaurant. 
+After you're seated, a waiter takes your order. 
+Then, you must wait a few minutes for your food to be prepared. 
+While your food is being prepared, your waiter may take more orders or serve other tables. 
+After your food is ready, your waiter brings out the food to your table. However, in a synchronous model, the waiter must wait for your food to be prepared before serving any other customers. 
+This method blocks other customers from placing orders or receiving their food.
 
-You will use the **@Fallback** annotations from the MicroProfile Fault Tolerance
-specification to define criteria for when to provide an alternative solution for
-a failed execution.
+You can perform lengthy operations, such as input/output (I/O), without blocking with asynchronous methods. 
+The I/O operation can occur in the background and a callback notifies the caller to continue its computation when the original request is complete. 
+As a result, the original thread frees up so it can handle other work rather than wait for the I/O to complete. 
+Revisiting the restaurant analogy, food is prepared asynchronously in the kitchen and your waiter is freed up to attend to other tables.
 
-You will also see the application metrics for the fault tolerance methods that are automatically enabled
-when you add the MicroProfile Metrics feature to the server.
+In the context of REST clients, HTTP request calls can be time consuming. 
+The network might be slow, or maybe the upstream service is overwhelmed and can't respond quickly. 
+These lengthy operations can block the execution of your thread when it's in use and prevent other work from being completed.
+
+The application in this guide consists of three microservices, **system**, **inventory**, and **query**. 
+Every 15 seconds the **system** microservice calculates and publishes an event that contains its average system load. 
+The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. 
+
+![Reactive Inventory System](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-rest-client-async/master/assets/QueryService.png)
 
 
+The microservice that you will modify is the **query** service.
+It communicates with the **inventory** service to determine which system has the highest system load and which system has the lowest system load. 
+
+The **system** and **inventory** microservices use MicroProfile Reactive Messaging to send and receive the system load events. 
+If you want to learn more about reactive messaging, see the [Creating Reactive Java Microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 # Getting started
 
@@ -51,11 +61,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-fallback.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client-async.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-fallback.git
-cd guide-microprofile-fallback
+git clone https://github.com/openliberty/guide-microprofile-rest-client-async.git
+cd guide-microprofile-rest-client-async
 ```
 {: codeblock}
 
@@ -64,239 +74,175 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-
-### Try what you'll build
-
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
-
-```
-cd finish
-mvn liberty:run
-```
-{: codeblock}
-
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-To access the **inventory** service with a localhost hostname, run the following curl command:
-```
-curl http://localhost:9080/inventory/systems/localhost
-```
-{: codeblock}
-
-You see the system properties for this host.
-When you run this curl command, some of these system properties, such as the OS name and user name, are automatically stored in the inventory.
-
-
-Update the **CustomConfigSource** configuration file.
-Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json
-
-```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":true}
-```
-{: codeblock}
-
-
-You do not need to restart the server. 
-Next, run the following curl command:
-```
-curl http://localhost:9080/inventory/systems/localhost
-```
-{: codeblock}
-
-The fallback mechanism is triggered because the **system** service is now in maintenance.
-You see the cached properties for this localhost.
-
-When you are done checking out the application, go to the **CustomConfigSource.json** file again.
-
-
-Update the **CustomConfigSource** configuration file.
-Change the **`io_openliberty_guides_system_inMaintenance`** property from **true** to **false** to set this
-condition back to its original value.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json
-
-```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":false}
-```
-{: codeblock}
-
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
-
-```
-mvn liberty:stop
-```
-{: codeblock}
-
-
-
-# Enabling fault tolerance
+# Updating the template interface of a REST client to use asynchronous methods
 
 
 To begin, run the following command to navigate to the **start** directory:
 ```
-cd /home/project/guide-microprofile-fallback/start
+cd /home/project/guide-microprofile-rest-client-async/start
 ```
 {: codeblock}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+The **query** service uses a MicroProfile Rest Client to access the **inventory** service.
+You will update the methods in the template interface for this client to be asynchronous.
 
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-************************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
-
-The MicroProfile Fault Tolerance API is included in the MicroProfile dependency that is specified in your **pom.xml** file.
-Look for the dependency with the **microprofile** artifact ID.
-This dependency provides a library that allows you to use fault tolerance policies in your microservices.
-
-You can also find the **mpFaultTolerance** feature in your **src/main/liberty/config/server.xml** server configuration,
-which turns on MicroProfile Fault Tolerance capabilities in Open Liberty.
-
-To easily work through this guide, the two provided microservices are set up to run
-on the same server. To simulate the availability of the services and then to enable fault tolerance,
-dynamic configuration with MicroProfile Configuration is used so that you can easily take one service
-or the other down for maintenance. If you want to learn more about setting up dynamic configuration,
-see [Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
-
-The following two steps set up the dynamic configuration on the **system** service and its client.
-You can move on to the next section, which adds the fallback mechanism on the **inventory** service.
-
-First, the **src/main/java/io/openliberty/guides/system/SystemResource.java** file has
-the **isInMaintenance()** condition, which determines that the system properties are returned only if you set the **`io_openliberty_guides_system_inMaintenance`** configuration property
-to **false** in the **CustomConfigSource** file.
-Otherwise, the service returns a **`Status.SERVICE_UNAVAILABLE`** message, which makes it unavailable.
-
-Next, the **src/main/java/io/openliberty/guides/inventory/client/SystemClient.java** file
-makes a request to the **system** service through the MicroProfile Rest Client API.
-If you want to learn more about MicroProfile Rest Client,
-you can follow the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html) guide.
-The **system** service as described in the **SystemResource.java** file
-may return a **`Status.SERVICE_UNAVAILABLE`** message, which is a 503 status code.
-This code indicates that the server being called
-is unable to handle the request because of a temporary overload or scheduled maintenance, which would
-likely be alleviated after some delay. To simulate that the system is unavailable, an **IOException** is thrown.
-
-The **InventoryManager** class calls the **getProperties()** method
-in the **SystemClient.java** class.
-You will look into the **InventoryManager** class in more detail in the next section.
-
-
-
-
-
-
-
-### Adding the @Fallback annotation
-
-The **inventory** service is now able to recognize that the **system** service
-was taken down for maintenance.
-An IOException is thrown to simulate the **system** service is unavailable.
-Now, set a fallback method to deal with this failure.
-
-
-Replace the **InventoryManager** class.
+Replace the **InventoryClient** interface.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+ **File** > **Open** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
 
 
 
 
 ```
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.query.client;
 
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.Properties;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.CompletionStage;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+
+@Path("/inventory")
+@RegisterRestClient(configKey = "InventoryClient", baseUri = "http://localhost:9085")
+public interface InventoryClient extends AutoCloseable {
+
+    @GET
+    @Path("/systems")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<String> getSystems();
+
+    @GET
+    @Path("/systems/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public CompletionStage<Properties> getSystem(@PathParam("hostname") String hostname);
+
+}
+```
+{: codeblock}
+
+
+
+The changes involve the **getSystem** method. 
+Change the return type to **CompletionStage<Properties>** to make the method asynchronous.
+Since the method now has the return type of **CompletionStage<Properties>**, you aren't able to directly manipulate the **Properties** inner type. 
+As you will see in the next section, you're able to indirectly use the **Properties** by chaining callbacks.
+
+# Updating a REST resource to asynchronously handle HTTP requests
+
+To reduce the processing time, you will update the **/query/systemLoad** endpoint to asynchronously send the requests. 
+Multiple client requests will be sent synchronously in a loop.
+Since asynchronous calls do not block the program, the endpoint needs to ensure that all calls are completed and all returned data is processed before proceeding.
+
+Replace the **QueryResource** class.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
+
+
+
+
+```
+package io.openliberty.guides.query;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import javax.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.faulttolerance.Fallback;
-import io.openliberty.guides.inventory.model.*;
+import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+
+import io.openliberty.guides.query.client.InventoryClient;
 
 @ApplicationScoped
-public class InventoryManager {
+@Path("/query")
+public class QueryResource {
+    
+    @Inject
+    @RestClient
+    private InventoryClient inventoryClient;
 
-    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-    private InventoryUtils invUtils = new InventoryUtils();
+    @GET
+    @Path("/systemLoad")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, Properties> systemLoad() {
+        List<String> systems = inventoryClient.getSystems();
+        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
+        final Holder systemLoads = new Holder();
 
-    @Fallback(fallbackMethod = "fallbackForGet",
-            applyOn = {IOException.class},
-            skipOn = {UnknownHostException.class})
-    public Properties get(String hostname) throws IOException {
-        return invUtils.getProperties(hostname);
+        for (String system : systems) {
+            inventoryClient.getSystem(system)
+                           .thenAcceptAsync(p -> {
+                                if (p != null) {
+                                    systemLoads.updateValues(p);
+                                }
+                                remainingSystems.countDown();
+                           })
+                           .exceptionally(ex -> {
+                                ex.printStackTrace();
+                                remainingSystems.countDown();
+                                return null;
+                           });
+        }
+
+        try {
+            remainingSystems.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return systemLoads.getValues();
     }
 
-    public Properties fallbackForGet(String hostname) {
-        Properties properties = findHost(hostname);
-        if (properties == null) {
-            Properties msgProp = new Properties();
-            msgProp.setProperty(hostname,
-                    "System is not found in the inventory or system is in maintenance");
-            return msgProp;
-        }
-        return properties;
-    }
+    private class Holder {
+        private volatile Map<String, Properties> values;
 
-    public void add(String hostname, Properties systemProps) {
-        Properties props = new Properties();
-
-        String osName = systemProps.getProperty("os.name");
-        if (osName == null) {
-            return;
+        public Holder() {
+            this.values = new ConcurrentHashMap<String, Properties>();
+            init();
         }
 
-        props.setProperty("os.name", systemProps.getProperty("os.name"));
-        props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-        SystemData system = new SystemData(hostname, props);
-        if (!systems.contains(system)) {
-            systems.add(system);
+        public Map<String, Properties> getValues() {
+            return this.values;
         }
-    }
 
-    public InventoryList list() {
-        return new InventoryList(systems);
-    }
+        public void updateValues(Properties p) {
+            final BigDecimal load = (BigDecimal) p.get("systemLoad");
 
-    private Properties findHost(String hostname) {
-        for (SystemData system : systems) {
-            if (system.getHostname().equals(hostname)) {
-                return system.getProperties();
-            }
+            this.values.computeIfPresent("lowest", (key, curr_val) -> {
+                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(lowest) < 0 ? p : curr_val;
+            });
+            this.values.computeIfPresent("highest", (key, curr_val) -> {
+                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(highest) > 0 ? p : curr_val;
+            });
         }
-        return null;
+
+        private void init() {
+            this.values.put("highest", new Properties());
+            this.values.put("lowest", new Properties());
+            this.values.get("highest").put("hostname", "temp_max");
+            this.values.get("lowest").put("hostname", "temp_min");
+            this.values.get("highest").put("systemLoad", new BigDecimal(Double.MIN_VALUE));
+            this.values.get("lowest").put("systemLoad", new BigDecimal(Double.MAX_VALUE));
+        }
     }
 }
 ```
@@ -304,346 +250,262 @@ public class InventoryManager {
 
 
 
-The **@Fallback** annotation dictates a method to call when the original method encounters a failed execution. In this
-example, use the **fallbackForGet()** method.
+First, the **systemLoad** endpoint first gets all the hostnames by calling **getSystems()**.
+In the **getSystem()** method, multiple requests are sent asynchronously to the **inventory** service for each hostname.
+When the requests return, the **thenAcceptAsync()** method processes the returned data with the **CompletionStage<Properties>** interface.
 
-The **@Fallback** annotation provides two parameters, **applyOn** and **skipOn**, which allow you to configure
-which exceptions trigger a fallback and which exceptions do not, respectively.
-In this example, the **get()** method throws **IOException** when the system service is unavailable, and throws
-**UnknownHostException** when the system service cannot be found on the specified host.
-The **fallbackForGet()** method can handle the first case, but not the second.
+The **CompletionStage<Properties>** interface represents a unit of computation.
+After a computation is complete, it can either be finished or it can be chained with more **CompletionStage<Properties>** interfaces using the **thenAcceptAsync()** method. 
+Exceptions are handled in a callback that is provided to the **exceptionally()** method, which behaves like a catch block.
+When you return a **CompletionStage<Properties>** type in the resource, it doesn’t necessarily mean that the computation completed and the response was built.
+JAX-RS responds to the caller after the computation completes.
 
-The **fallbackForGet()** method, which is the designated fallback method for the original
-**get()** method, checks to see if the system's properties exist in the inventory.
-If the system properties entry is not found in the inventory, the method prints out a warning
-message in the browser. Otherwise, this method returns the cached property values from the inventory.
+In the **systemLoad()** method a **CountDownLatch** object is used to track asynchronous requests. 
+The **countDown()** method is called whenever a request is complete.
+When the **CountDownLatch** is at zero, it indicates that all asynchronous requests are complete.
+By using the **await()** method of the **CountDownLatch**, the program waits for all the asynchronous requests to be complete.
+When all asynchronous requests are complete, the program resumes execution with all required data processed. 
 
-You successfully set up your microservice to have fault tolerance capability.
-
-
-# Enabling metrics for the fault tolerance methods
-
-
-MicroProfile Fault Tolerance integrates with MicroProfile Metrics to provide metrics for the annotated fault tolerance methods.
-When both the **mpFaultTolerance** and the **mpMetrics** features are included in the **server.xml** configuration file,
-the **@Fallback** fault tolerance annotation provides metrics that count the following things: the total number of annotated method invocations, the total number of failed annotated method invocations, and the total number of the fallback method calls.
-
-The **mpMetrics** feature requires SSL and the configuration is provided for you. The **quickStartSecurity** configuration element provides basic security to secure the
-server. When you go to the **/metrics** endpoint, use the credentials that are defined in the server configuration to log in to view the data for the fault tolerance methods.
-
-You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [MicroProfile Fault Tolerance specification](https://github.com/eclipse/microprofile-fault-tolerance/releases).
+A **Holder** class is used to wrap a variable called **values** that has the **volatile** keyword.
+The **values** variable is instantiated as a **ConcurrentHashMap** object.
+Together, the **volatile** keyword and **ConcurrentHashMap** type allow the **Holder** class to store system information and safely access it asynchronously from multiple threads.
 
 
-# Running the application
+# Building and running the application
 
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+You will build and run the **system**, **inventory**, and **query** microservices in Docker containers. 
+You can learn more about containerizing microservices with Docker in the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
 
+Start your Docker environment. Dockerfiles are provided for you to use.
 
-When the server is running, run the following curl command:
+To build the application, run the Maven **install** and **package** goals from the command-line session in the **start** directory:
+
 ```
-curl http://localhost:9080/inventory/systems/localhost
+mvn -pl models install
+mvn package
 ```
 {: codeblock}
 
-You receive the system properties of your local JVM from the **inventory** service.
 
-Next, run the following curl command which accesses the **system** service, to retrieve the system properties for the specific localhost:
-```
-curl http://localhost:9080/system/properties
-```
-{: codeblock}
+Run the following command to download or update to the latest Open Liberty Docker image:
 
-Notice that the results from the two URLs are identical because the **inventory** service gets its results from
-calling the **system** service.
-
-To see the application metrics, run the following curl commmand. This command will Log in using **admin** user, and you will have to enter **adminpwd** as the password.
 ```
-curl -k -u admin https://localhost:9443/metrics/base
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
-See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
+
+Run the following commands to containerize the microservices:
 
 ```
-# TYPE base_ft_invocations_total counter
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 0
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+docker build -t query:1.0-SNAPSHOT query/.
 ```
-
-You can test the fault tolerance mechanism of your microservices by dynamically changing
-the **`io_openliberty_guides_system_inMaintenance`** property value to **true** in the
-**resources/CustomConfigSource.json** file, which puts the **system** service in maintenance.
+{: codeblock}
 
 
-Update the configuration file.
-Change the **`io_openliberty_guides_system_inMaintenance`** property from **false** to **true** and save the file.
+Next, use the provided **startContainers** script to start the application in Docker containers. 
+The script creates containers for Kafka, Zookeeper, and all of the microservices in the project, in addition to a network for the containers to communicate with each other.
+The script also creates three instances of the **system** microservice. 
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
 
 ```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":true}
+./scripts/startContainers.sh
 ```
 {: codeblock}
 
 
 
 
-After saving the file, run the following curl command to view the cached version of the properties:
+The services might take several minutes to become available.
+You can access the application by making requests to the **query/systemLoad** endpoint by running the following curl command:
 ```
-curl http://localhost:9080/inventory/systems/localhost
-```
-{: codeblock}
-
-The **fallbackForGet()** method, which is the designated fallback method, is called when the **system** service is not available.
-The cached system properties contain only the OS name and user name key and value pairs.
-
-
-To see that the **system** service is down, run the following curl command:
-```
-curl -I http://localhost:9080/system/properties
+curl http://localhost:9080/query/systemLoad
 ```
 {: codeblock}
 
-You see that the service displays a 503 HTTP response code.
-
-
-Run the following curl command again and enter **adminpwd** as the password:
-```
-curl -k -u admin https://localhost:9443/metrics/base
-```
-{: codeblock}
-
-See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
+When the service is ready, you see an output similar to the following example which was formatted for readability. 
 
 ```
-# TYPE base_ft_invocations_total counter
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+{
+    "highest": {
+        "hostname" : "8841bd7d6fcd",
+        "systemLoad" : 6.96
+    },
+    "lowest": {
+        "hostname" : "37140ec44c9b",
+        "systemLoad" : 6.4
+    }
+}
 ```
 
+Switching to an asynchronous programming model freed up the thread that handles requests to the **inventory** service. 
+While requests process, the thread can handle other work or requests.
+In the **/query/systemLoad** endpoint, multiple systems are read and compared at once.
 
-From the output, the **`base_ft_invocations_total{fallback="notApplied",`** **`method="io.openliberty.guides.inventory.InventoryManager.get",`** **`result="valueReturned"}`** data shows that the **get()** method was called once without triggering a fallback method.
-The **`base_ft_invocations_total{fallback="applied",`** **`method="io.openliberty.guides.inventory.InventoryManager.get",`** **`result="valueReturned"}`** data
-indicates that the **get()** method was called once and the fallback **fallbackForGet()** method was triggered.
-
-Update the configuration file.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
-
-
+When you are done checking out the application, run the following script to stop the application:
 
 
 ```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":false}
+./scripts/stopContainers.sh
 ```
 {: codeblock}
 
 
-After you finish, change the **`io_openliberty_guides_system_inMaintenance`**
-property value back to **false** in the **resources/CustomConfigSource.json** file.
-
-Update the configuration file.
-After you finish, change the **`io_openliberty_guides_system_inMaintenance`**
-property value back to **false** in the **resources/CustomConfigSource.json** file.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json
-
-```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":false}
-```
-{: codeblock}
 
 
-# Testing the application
+# Testing the query microservice
 
-You can test your application manually, but automated tests ensure code quality because they trigger a failure
-whenever a code change introduces a defect. JUnit and the JAX-RS Client API provide a simple environment for you to write tests.
+You will create an endpoint test to test the basic functionality of the **query** microservice. 
+If a test failure occurs, then you might have introduced a bug into the code.
 
-Create the **FaultToleranceIT** class.
+Create the **QueryServiceIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+touch /home/project/guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
 
 
 
 
 ```
-package it.io.openliberty.guides.faulttolerance;
+package it.io.openliberty.guides.query;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import javax.json.JsonObject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+
+import java.util.Map;
+import java.util.Properties;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.microshed.testing.jaxrs.RESTClient;
+import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.SharedContainerConfig;
+import org.mockserver.model.HttpRequest;
+import org.mockserver.model.HttpResponse;
 
-import it.io.openliberty.guides.utils.TestUtils;
+import io.openliberty.guides.query.QueryResource;
 
-public class FaultToleranceIT {
+@MicroShedTest
+@SharedContainerConfig(AppContainerConfig.class)
+public class QueryServiceIT {
 
-    private Response response;
-    private Client client;
+    @RESTClient
+    public static QueryResource queryResource;
 
-    @BeforeEach
-    public void setup() {
-        client = ClientBuilder.newClient();
-        client.register(JsrJsonpProvider.class);
+    private static String testHost1 = 
+        "{" + 
+            "\"hostname\" : \"testHost1\"," +
+            "\"systemLoad\" : 1.23" +
+        "}";
+    private static String testHost2 = 
+        "{" + 
+            "\"hostname\" : \"testHost2\"," +
+            "\"systemLoad\" : 3.21" +
+        "}";
+    private static String testHost3 =
+        "{" + 
+            "\"hostname\" : \"testHost3\"," +
+            "\"systemLoad\" : 2.13" +
+        "}";
+
+    @BeforeAll
+    public static void setup() throws InterruptedException {
+        AppContainerConfig.mockClient.when(HttpRequest.request()
+                                         .withMethod("GET")
+                                         .withPath("/inventory/systems"))
+                                     .respond(HttpResponse.response()
+                                         .withStatusCode(200)
+                                         .withBody("[\"testHost1\"," + 
+                                                    "\"testHost2\"," +
+                                                    "\"testHost3\"]")
+                                         .withHeader("Content-Type", "application/json"));
+
+        AppContainerConfig.mockClient.when(HttpRequest.request()
+                                         .withMethod("GET")
+                                         .withPath("/inventory/systems/testHost1"))
+                                     .respond(HttpResponse.response()
+                                         .withStatusCode(200)
+                                         .withBody(testHost1)
+                                         .withHeader("Content-Type", "application/json"));
+
+        AppContainerConfig.mockClient.when(HttpRequest.request()
+                                         .withMethod("GET")
+                                         .withPath("/inventory/systems/testHost2"))
+                                     .respond(HttpResponse.response()
+                                         .withStatusCode(200)
+                                         .withBody(testHost2)
+                                         .withHeader("Content-Type", "application/json"));
+
+        AppContainerConfig.mockClient.when(HttpRequest.request()
+                                         .withMethod("GET")
+                                         .withPath("/inventory/systems/testHost3"))
+                                     .respond(HttpResponse.response()
+                                         .withStatusCode(200)
+                                         .withBody(testHost3)
+                                         .withHeader("Content-Type", "application/json"));
     }
-
-    @AfterEach
-    public void teardown() {
-        client.close();
-        response.close();
-    }
-    /**
-     * testFallbackForGet - test for checking if the fallback is being called
-     * correctly 1. Return system properties for a hostname when inventory
-     * service is available. 2. Make System service down and get the system
-     * properties from inventory service when it is down. 3. Check if system
-     * properties for the specific host was returned when the inventory service
-     * was down by: Asserting if the total number of the system properties, when
-     * service is up, is greater than the total number of the system properties
-     * when service is down.
-     */
 
     @Test
-    public void testFallbackForGet() throws InterruptedException {
-        response = TestUtils.getResponse(client,
-                                         TestUtils.INVENTORY_LOCALHOST_URL);
-        assertResponse(TestUtils.baseUrl, response);
-        JsonObject obj = response.readEntity(JsonObject.class);
-        int propertiesSize = obj.size();
-        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_FALSE,
-                                       TestUtils.SYSTEM_MAINTENANCE_TRUE);
-        Thread.sleep(3000);
-        response = TestUtils.getResponse(client,
-                                         TestUtils.INVENTORY_LOCALHOST_URL);
-        assertResponse(TestUtils.baseUrl, response);
-        obj = response.readEntity(JsonObject.class);
-        int propertiesSizeFallBack = obj.size();
-        assertTrue(propertiesSize > propertiesSizeFallBack, 
-                   "The total number of properties from the @Fallback method "
-                 + "is not smaller than the number from the system service" 
-                 +  "as expected.");
-        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_TRUE,
-                                       TestUtils.SYSTEM_MAINTENANCE_FALSE);
-        Thread.sleep(3000);
+    public void testLoads() {
+        Map<String, Properties> response = queryResource.systemLoad();
+
+        assertEquals(
+            "testHost2",
+            response.get("highest").get("hostname"),
+            "Returned highest system load incorrect"
+        );
+        assertEquals(
+            "testHost1",
+            response.get("lowest").get("hostname"),
+            "Returned lowest system load incorrect"
+        );
     }
 
-    /**
-     * testFallbackForGet - test for checking if the fallback skip mechanism is working as intended:
-     * 1. Access system properties for the wrong hostname (localhot)
-     * 2. Verify that the response code is 404
-     * 3. Verify that the response text contains an error
-     */
-    @Test
-    public void testFallbackSkipForGet() {
-        response = TestUtils.getResponse(client,
-                TestUtils.INVENTORY_UNKNOWN_HOST_URL);
-        assertResponse(TestUtils.baseUrl, response, 404);
-        assertTrue(response.readEntity(String.class).contains("error"),
-                   "Incorrect response body from " + TestUtils.INVENTORY_UNKNOWN_HOST_URL);
-    }
-
-    /**
-     * Asserts that the given URL's response code matches the given status code.
-     */
-    private void assertResponse(String url, Response response, int status_code) {
-        assertEquals(status_code, response.getStatus(),
-                "Incorrect response code from " + url);
-    }
-
-    /**
-     * Asserts that the given URL has the correct response code of 200.
-     */
-    private void assertResponse(String url, Response response) {
-        assertResponse(url, response, 200);
-    }
 }
 ```
 {: codeblock}
 
 
-The **@BeforeEach** and **@AfterEach** annotations indicate that this method runs either
-before or after the other test case.
-These methods are generally used to perform any setup and teardown tasks. In this case,
-the setup method creates a JAX-RS client, which makes HTTP requests to the **inventory** service. This
-client must also be registered with a JSON-P provider to process JSON resources.
-The teardown method simply destroys this client instance as well as the HTTP responses.
+The **testLoads()** test case verifies that the **query** service can calculate the highest and lowest system loads. 
 
-The **testFallbackForGet()** test case sends a request to the **inventory** service to get the systems properties for a
-hostname before and after the **system** service becomes unavailable. Then, it asserts outputs from the two requests
-to ensure that they are different from each other.
-
-The **testFallbackSkipForGet()** test case sends a request to the **inventory** service to
-get the system properties for an incorrect hostname (**unknown**). Then, it confirms that the fallback method has not been
-called by asserting that the response's status code is **404** with an error message in the response body.
-
-The **@Test** annotations indicate that the methods automatically execute when your test class runs.
-
-In addition, a few endpoint tests have been included for you to test the basic functionality of the
-**inventory** and **system** services. If a test failure occurs, then you might have introduced a bug into
-the code.
 
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
-If the tests pass, you see a similar output to the following example:
+Run the following commands to navigate to the **query** directory and verify that the tests pass by using the Maven **verify** goal:
+
+```
+cd /home/project/guide-microprofile-rest-client-async/start/query
+mvn verify
+```
+{: codeblock}
+
+The tests might take a few minutes to complete. When the tests succeed, you see output similar to the following example:
+
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.faulttolerance.FaultToleranceIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.517 sec - in it.io.openliberty.guides.faulttolerance.FaultToleranceIT
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.937 sec - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.396 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Running it.io.openliberty.guides.query.QueryServiceIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.123 s - in it.io.openliberty.guides.query.QueryServiceIT
 
-Results :
+Results:
 
-Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
-
-To see if the tests detect a failure, comment out the **changeSystemProperty()** methods
-in the **FaultToleranceIT.java** file. Rerun the tests to see that a test failure occurs for the
-**testFallbackForGet()** and **testFallbackSkipForGet()** test cases.
-
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
-
 
 # Summary
 
 ## Nice Work!
 
-You just learned how to build a fallback mechanism for a microservice with MicroProfile Fault Tolerance in Open Liberty and wrote a test to validate it.
-
-
-You can try one of the related MicroProfile guides. They demonstrate technologies that you can
-learn and expand on what you built here.
+You have just modified an application to make asynchronous HTTP requests using Open Liberty and MicroProfile Rest Client.
 
 
 
@@ -652,27 +514,25 @@ learn and expand on what you built here.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-fallback** project by running the following commands:
+Delete the **guide-microprofile-rest-client-async** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-fallback
+rm -fr guide-microprofile-rest-client-async
 ```
 {: codeblock}
 
 ## What could make this guide better?
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-fallback/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-fallback/pulls)
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-rest-client-async/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-rest-client-async/pulls)
 
 
 
 
 ## Where to next? 
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-* [Preventing repeated failed calls to microservices](https://openliberty.io/guides/circuit-breaker.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Consuming RESTful services using the reactive JAX-RS client](https://openliberty.io/guides/reactive-rest-client.html)
 
 
 ## Log out of the session
