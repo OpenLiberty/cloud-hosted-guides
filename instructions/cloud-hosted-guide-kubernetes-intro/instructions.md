@@ -166,7 +166,7 @@ mvn clean package
 Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```
-docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
@@ -198,7 +198,7 @@ Verify that the `system:1.0-SNAPSHOT` and `inventory:1.0-SNAPSHOT` images are li
 REPOSITORY                                TAG                       
 inventory                                 1.0-SNAPSHOT
 system                                    1.0-SNAPSHOT
-openliberty/open-liberty                  kernel-java8-openj9-ubi
+openliberty/open-liberty                  full-java8-openj9-ubi
 ```
 
 If you don't see the `system:1.0-SNAPSHOT` and `inventory:1.0-SNAPSHOT` images, then check the Maven
