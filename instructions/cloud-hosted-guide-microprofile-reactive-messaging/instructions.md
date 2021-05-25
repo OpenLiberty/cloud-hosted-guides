@@ -423,13 +423,13 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>2.7.0</version>
+            <version>2.8.0</version>
         </dependency>
         <!-- tag::rxjava[] -->
         <dependency>
             <groupId>io.reactivex.rxjava3</groupId>
             <artifactId>rxjava</artifactId>
-            <version>3.0.0</version>
+            <version>3.0.12</version>
         </dependency>
         <!-- For tests -->
         <dependency>
@@ -441,13 +441,13 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>kafka</artifactId>
-            <version>1.15.1</version>
+            <version>1.15.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.6.2</version>
+            <version>5.7.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -458,7 +458,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.2.3</version>
+                <version>3.3.1</version>
                 <configuration>
                     <packagingExcludes>pom.xml</packagingExcludes>
                 </configuration>
@@ -524,7 +524,7 @@ mvn package
 Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```
-docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
