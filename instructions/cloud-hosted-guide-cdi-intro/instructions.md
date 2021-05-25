@@ -167,7 +167,8 @@ mvn liberty:dev
 After you see the following message, your application server in dev mode is ready:
 
 ```
-Press the Enter key to run tests on demand.
+************************************************************************
+*    Liberty is running in dev mode.
 ```
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
@@ -336,7 +337,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 You can find the **inventory** and **system** services at the following URLs:
 
 
-http://localhost:9080/inventory/systems
+ http://localhost:9080/inventory/systems
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -348,7 +349,7 @@ curl http://localhost:9080/inventory/systems
 
 
 
-http://localhost:9080/system/properties
+ http://localhost:9080/system/properties
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
