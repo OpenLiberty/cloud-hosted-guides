@@ -5,7 +5,7 @@ on:
       branch:
         description: 'Branch pushed to'     
         required: true
-        default: 'qa'
+        default: 'staging'
       GuideConverterBranch:
         description: 'GuideConverter branch to use'
         required: true
@@ -50,7 +50,7 @@ jobs:
     strategy:
       matrix:
         guides: ${{fromJson(needs.matrix.outputs.matrix)}}
-    if: contains(github.event.inputs.branch, 'master') || contains(github.event.inputs.branch, 'main') || contains(github.event.inputs.branch, 'prod')
+    if: contains(github.event.inputs.branch, 'main') || contains(github.event.inputs.branch, 'prod')
 
     steps:
 
@@ -163,7 +163,7 @@ jobs:
     strategy:
       matrix: 
         guides: ${{fromJson(needs.matrix.outputs.matrix)}}
-    if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging')
+    if: contains(github.event.inputs.branch, 'staging')
 
     steps:
       # Any prerequisite steps
@@ -179,7 +179,7 @@ jobs:
       - name: Checkout guide repo
         uses: actions/checkout@v2
         with:
-          ref: qa
+          ref: staging
           repository: OpenLiberty/${{matrix.guides.guide}}
           path: GuideConverter/${{matrix.guides.guide}}
 
