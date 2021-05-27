@@ -10,19 +10,19 @@ do
   cd $guide/finish
   if [[ -f ../scripts/testAppSN.sh ]]; then
     chmod +x ../scripts/testAppSN.sh
-    ../scripts/testAppSN.sh > /home/project/test-logs/$guide.log
+    ../scripts/testAppSN.sh > /home/project/test-logs/$guide.log 2>&1
   else
     if [[ -f ../scripts/testApp.sh ]]; then
       chmod +x ../scripts/testApp.sh
-      ../scripts/testApp.sh > /home/project/test-logs/$guide.log
+      ../scripts/testApp.sh > /home/project/test-logs/$guide.log 2>&1
     fi
     if [[ -f ../scripts/testAppFinish.sh ]]; then
       chmod +x ../scripts/testAppFinish.sh
-      ../scripts/testAppFinish.sh > /home/project/test-logs/$guide.log
+      ../scripts/testAppFinish.sh > /home/project/test-logs/$guide.log 2>&1
     fi
     if [[ -f ../scripts/testAppStart.sh ]]; then
       chmod +x ../scripts/testAppStart.sh
-      ../scripts/testAppStart.sh > /home/project/test-logs/$guide.log
+      ../scripts/testAppStart.sh > /home/project/test-logs/$guide.log 2>&1
     fi
   fi
 done < /home/project/allGuideIDs.txt
