@@ -629,7 +629,12 @@ rm -fr guide-cdi-intro
 ```
 {: codeblock}
 
+## What did you think of this guide?
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
+select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+
 ## What could make this guide better?
+You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-cdi-intro/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-cdi-intro/pulls)
 
