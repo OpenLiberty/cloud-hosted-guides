@@ -1,3 +1,4 @@
+guide-cdi-intro
 guide-containerize
 guide-getting-started
 guide-rest-client-java
