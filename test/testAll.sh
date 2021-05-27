@@ -1,28 +1,29 @@
 #!/bin/bash
 set -euxo pipefail
-mkdir /home/project/test-logs
+
+if [[ ! -d /home/project/test-logs ]]; then
+  mkdir /home/project/test-logs
+fi
+
 while IFS= read -r guide
 do
   cd /home/project
   rm -fr $guide
   echo testing $guide ...
   git clone https://github.com/openliberty/$guide.git -b $1
+  chmod +x $guide/scripts/*.sh
   cd $guide/finish
   if [[ -f ../scripts/testAppSN.sh ]]; then
-    chmod +x ../scripts/testAppSN.sh
     ../scripts/testAppSN.sh > /home/project/test-logs/$guide.log 2>&1
   else
     if [[ -f ../scripts/testApp.sh ]]; then
-      chmod +x ../scripts/testApp.sh
       ../scripts/testApp.sh > /home/project/test-logs/$guide.log 2>&1
     fi
     if [[ -f ../scripts/testAppFinish.sh ]]; then
-      chmod +x ../scripts/testAppFinish.sh
-      ../scripts/testAppFinish.sh > /home/project/test-logs/$guide.log 2>&1
+      ../scripts/testAppFinish.sh > /home/project/test-logs/$guide.finish.log 2>&1
     fi
     if [[ -f ../scripts/testAppStart.sh ]]; then
-      chmod +x ../scripts/testAppStart.sh
-      ../scripts/testAppStart.sh > /home/project/test-logs/$guide.log 2>&1
+      ../scripts/testAppStart.sh > /home/project/test-logs/$guide.start.log 2>&1
     fi
   fi
 done < /home/project/allGuideIDs.txt
