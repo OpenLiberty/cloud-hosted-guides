@@ -2,7 +2,7 @@
 
 To confirm their applications work fine:
 
-- start a cloud-hosted lab
+- start a cloud-hosted lab from staging OLSN
 - new a terminal
 - run the following commands
 ```
