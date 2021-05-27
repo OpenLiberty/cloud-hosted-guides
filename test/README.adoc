@@ -19,4 +19,4 @@ chmod +x testAll.sh
 ```
 ./testAll.sh staging
 ```
-- check out the console and the .log files at `/home/project/test-logs` directory
+- check out the console output and the .log files at `/home/project/test-logs` directory
