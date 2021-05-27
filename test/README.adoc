@@ -8,7 +8,7 @@ To confirm their applications work fine:
 ```
 cd /home/project
 curl https://raw.githubusercontent.com/OpenLiberty/cloud-hosted-guides/prod/test/allGuideIDs.txt --output allGuideIDs.txt
-curl https://raw.githubusercontent.com/OpenLiberty/cloud-hosted-guides/prod/test/testAll.sh --output allGuideIDs.txt
+curl https://raw.githubusercontent.com/OpenLiberty/cloud-hosted-guides/prod/test/testAll.sh --output testAll.sh
 chmod +x testAll.sh
 ```
 - run the following command to test the guides' prod branch
