@@ -229,31 +229,6 @@ Replace the server configuration file.
 
 
 
-
-```
-<server description="Sample Liberty server">
-
-  <featureManager>
-    <feature>jaxrs-2.1</feature>
-    <feature>jsonp-1.1</feature>
-    <feature>cdi-2.0</feature>
-    <feature>mpMetrics-2.3</feature>
-    <feature>mpRestClient-1.4</feature>
-  </featureManager>
-
-  <variable name="default.http.port" defaultValue="9080"/>
-  <variable name="default.https.port" defaultValue="9443"/>
-
-  <applicationManager autoExpand="true" />
-  <quickStartSecurity userName="admin" userPassword="adminpwd"/>
-  <httpEndpoint host="*" httpPort="${default.http.port}"
-      httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-  <webApplication location="guide-microprofile-metrics.war" contextRoot="/"/>
-</server>
-```
-{: codeblock}
-
-
 The **mpMetrics** feature enables MicroProfile Metrics support in Open Liberty. Note that this
 feature requires SSL and the configuration has been provided for you.
 
@@ -268,76 +243,6 @@ Replace the **InventoryManager** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-
-import javax.enterprise.context.ApplicationScoped;
-
-import org.eclipse.microprofile.metrics.MetricUnits;
-import org.eclipse.microprofile.metrics.annotation.Counted;
-import org.eclipse.microprofile.metrics.annotation.Gauge;
-import org.eclipse.microprofile.metrics.annotation.Timed;
-import org.eclipse.microprofile.metrics.annotation.SimplyTimed;
-
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-
-@ApplicationScoped
-public class InventoryManager {
-
-  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-  private InventoryUtils invUtils = new InventoryUtils();
-
-  @Timed(name = "inventoryProcessingTime",
-         tags = {"method=get"},
-         absolute = true,
-         description = "Time needed to process the inventory")
-  public Properties get(String hostname) {
-    return invUtils.getProperties(hostname);
-  }
-
-  @SimplyTimed(name = "inventoryAddingTime", 
-    absolute=true,
-    description = "Time needed to add system properties to the inventory")
-  public void add(String hostname, Properties systemProps) {
-    Properties props = new Properties();
-    props.setProperty("os.name", systemProps.getProperty("os.name"));
-    props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-    SystemData host = new SystemData(hostname, props);
-    if (!systems.contains(host))
-      systems.add(host);
-  }
-
-  @Timed(name = "inventoryProcessingTime",
-         tags = {"method=list"},
-         absolute = true,
-         description = "Time needed to process the inventory")
-  @Counted(name = "inventoryAccessCount",
-           absolute = true,
-           description = "Number of times the list of systems method is requested")
-  public InventoryList list() {
-    return new InventoryList(systems);
-  }
-
-  @Gauge(unit = MetricUnits.NONE,
-         name = "inventorySizeGauge",
-         absolute = true,
-         description = "Number of systems in the inventory")
-  public int getTotal() {
-    return systems.size();
-  }
-}
-```
-{: codeblock}
 
 
 
@@ -452,208 +357,6 @@ touch /home/project/guide-microprofile-metrics/start/src/test/java/it/io/openlib
 
 
 
-
-```
-package it.io.openliberty.guides.metrics;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-
-@TestMethodOrder(OrderAnnotation.class)
-public class MetricsIT {
-
-  private static final String KEYSTORE_PATH = System.getProperty("user.dir")
-                              + "/target/liberty/wlp/usr/servers/"
-                              + "defaultServer/resources/security/key.p12";
-  private static final String SYSTEM_ENV_PATH =  System.getProperty("user.dir")
-                              + "/target/liberty/wlp/usr/servers/"
-                              + "defaultServer/server.env";
-
-  private static String httpPort;
-  private static String httpsPort;
-  private static String baseHttpUrl;
-  private static String baseHttpsUrl;
-  private static KeyStore keystore;
-
-  private List<String> metrics;
-  private Client client;
-
-  private final String INVENTORY_HOSTS = "inventory/systems";
-  private final String INVENTORY_HOSTNAME = "inventory/systems/localhost";
-  private final String METRICS_APPLICATION = "metrics/application";
-
-  @BeforeAll
-  public static void oneTimeSetup() throws Exception {
-    httpPort = System.getProperty("http.port");
-    httpsPort = System.getProperty("https.port");
-    baseHttpUrl = "http://localhost:" + httpPort + "/";
-    baseHttpsUrl = "https://localhost:" + httpsPort + "/";
-    loadKeystore();
-  }
-
-  private static void loadKeystore() throws Exception {
-    Properties sysEnv = new Properties();
-    sysEnv.load(new FileInputStream(SYSTEM_ENV_PATH));
-    char[] password = sysEnv.getProperty("keystore_password").toCharArray();
-    keystore = KeyStore.getInstance("PKCS12");
-    keystore.load(new FileInputStream(KEYSTORE_PATH), password);
-  }
-
-  @BeforeEach
-  public void setup() {
-    client = ClientBuilder.newBuilder().trustStore(keystore).build();
-    client.register(JsrJsonpProvider.class);
-  }
-
-  @AfterEach
-  public void teardown() {
-    client.close();
-  }
-
-  @Test
-  @Order(1)
-  public void testPropertiesRequestTimeMetric() {
-    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
-    metrics = getMetrics();
-    for (String metric : metrics) {
-      if (metric.startsWith(
-          "application_inventoryProcessingTime_rate_per_second")) {
-        float seconds = Float.parseFloat(metric.split(" ")[1]);
-        assertTrue(4 > seconds);
-      }
-    }
-  }
-
-  @Test
-  @Order(2)
-  public void testInventoryAccessCountMetric() {
-    metrics = getMetrics();
-    Map<String, Integer> accessCountsBefore = getIntMetrics(metrics,
-            "application_inventoryAccessCount_total");
-    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTS);
-    metrics = getMetrics();
-    Map<String, Integer> accessCountsAfter = getIntMetrics(metrics,
-            "application_inventoryAccessCount_total");
-    for (String key : accessCountsBefore.keySet()) {
-      Integer accessCountBefore = accessCountsBefore.get(key);
-      Integer accessCountAfter = accessCountsAfter.get(key);
-      assertTrue(accessCountAfter > accessCountBefore);
-    }
-  }
-
-  @Test
-  @Order(3)
-  public void testInventorySizeGaugeMetric() {
-    metrics = getMetrics();
-    Map<String, Integer> inventorySizeGauges = getIntMetrics(metrics,
-            "application_inventorySizeGauge");
-    for (Integer value : inventorySizeGauges.values()) {
-      assertTrue(1 <= value);
-    }
-  }
-
-  @Test
-  @Order(4)
-  public void testPropertiesAddSimplyTimeMetric() {
-    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
-    metrics = getMetrics();
-    boolean checkMetric = false;
-    for (String metric : metrics) {
-      if (metric.startsWith(
-          "application_inventoryAddingTime_total")) {
-            checkMetric = true;
-      }
-    }
-    assertTrue(checkMetric);
-  }
-
-  public void connectToEndpoint(String url) {
-    Response response = this.getResponse(url);
-    this.assertResponse(url, response);
-    response.close();
-  }
-
-  private List<String> getMetrics() {
-    String usernameAndPassword = "admin" + ":" + "adminpwd";
-    String authorizationHeaderValue = "Basic "
-        + java.util.Base64.getEncoder()
-                          .encodeToString(usernameAndPassword.getBytes());
-    Response metricsResponse = client.target(baseHttpsUrl + METRICS_APPLICATION)
-                                     .request(MediaType.TEXT_PLAIN)
-                                     .header("Authorization",
-                                         authorizationHeaderValue)
-                                     .get();
-
-    BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)
-    metricsResponse.getEntity()));
-    List<String> result = new ArrayList<String>();
-    try {
-      String input;
-      while ((input = br.readLine()) != null) {
-        result.add(input);
-      }
-      br.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-      fail();
-    }
-
-    metricsResponse.close();
-    return result;
-  }
-
-  private Response getResponse(String url) {
-    return client.target(url).request().get();
-  }
-
-  private void assertResponse(String url, Response response) {
-    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-  }
-
-  private Map<String, Integer> getIntMetrics(List<String> metrics, String metricName) {
-    Map<String, Integer> output = new HashMap<String, Integer>();
-    for (String metric : metrics) {
-      if (metric.startsWith(metricName)) {
-        String[] mSplit = metric.split(" ");
-        String key = mSplit[0];
-        Integer value = Integer.parseInt(mSplit[mSplit.length - 1]);
-        output.put(key, value);
-      }
-    }
-    return output;
-  }
-}
-```
-{: codeblock}
-
-
 * The **testPropertiesRequestTimeMetric()** test case validates the **@Timed** metric. The test case sends a request to the
 **http://localhost:9080/inventory/systems/localhost** URL to access the **inventory** service, which adds
 the **localhost** host to the inventory. Next, the test case makes a connection to the
@@ -753,7 +456,12 @@ rm -fr guide-microprofile-metrics
 ```
 {: codeblock}
 
+## What did you think of this guide?
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
+select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+
 ## What could make this guide better?
+You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-metrics/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-metrics/pulls)
 

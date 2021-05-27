@@ -236,122 +236,6 @@ touch /home/project/guide-kubernetes-intro/start/kubernetes.yaml
 
 
 
-```
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  # tag::labels1[]
-  labels:
-  # end::labels1[]
-    # tag::app1[]
-    app: system
-    # end::app1[]
-spec:
-  selector:
-    matchLabels:
-      # tag::app2[]
-      app: system
-      # end::app2[]
-  template:
-    metadata:
-      # tag::labels2[]
-      labels:
-      # end::labels2[]
-        # tag::app3[]
-        app: system
-        # end::app3[]
-    spec:
-      containers:
-      - name: system-container
-        # tag::image1[]
-        image: system:1.0-SNAPSHOT
-        # end::image1[]
-        ports:
-        # tag::containerPort1[]
-        - containerPort: 9080
-        # end::containerPort1[]
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  # tag::labels3[]
-  labels:
-  # end::labels3[]
-    # tag::app4[]
-    app: inventory
-    # end::app4[]
-spec:
-  selector:
-    matchLabels:
-      # tag::app5[]
-      app: inventory
-      # end::app5[]
-  template:
-    metadata:
-      # tag::labels4[]
-      labels:
-      # end::labels4[]
-        # tag::app6[]
-        app: inventory
-        # end::app6[]
-    spec:
-      containers:
-      - name: inventory-container
-        # tag::image2[]
-        image: inventory:1.0-SNAPSHOT
-        # end::image2[]
-        ports:
-        # tag::containerPort2[]
-        - containerPort: 9080
-        # end::containerPort2[]
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  # tag::NodePort1[]
-  type: NodePort
-  # end::NodePort1[]
-  selector:
-    # tag::app7[]
-    app: system
-    # end::app7[]
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    # tag::nodePort1[]
-    nodePort: 31000
-    # end::nodePort1[]
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  # tag::NodePort2[]
-  type: NodePort
-  # end::NodePort2[]
-  selector:
-    # tag::app8[]
-    app: inventory
-    # end::app8[]
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    # tag::nodePort2[]
-    nodePort: 32000
-    # end::nodePort2[]
-```
-{: codeblock}
-
-
-
 This file defines four Kubernetes resources. It defines two deployments and two services. 
 A Kubernetes deployment is a resource that controls the creation and management of pods. 
 A service exposes your deployment so that you can make requests to your containers. 
@@ -641,7 +525,12 @@ rm -fr guide-kubernetes-intro
 ```
 {: codeblock}
 
+## What did you think of this guide?
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
+select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+
 ## What could make this guide better?
+You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-kubernetes-intro/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-kubernetes-intro/pulls)
 

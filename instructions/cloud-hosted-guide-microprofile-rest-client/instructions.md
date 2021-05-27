@@ -175,34 +175,6 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 
 
 
-```
-package io.openliberty.guides.inventory.client;
-
-import java.util.Properties;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.ProcessingException;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
-import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-
-@RegisterRestClient(configKey = "systemClient", baseUri = "http://localhost:9080/system")
-@RegisterProvider(UnknownUriExceptionMapper.class)
-@Path("/properties")
-public interface SystemClient extends AutoCloseable {
-
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  public Properties getProperties() throws UnknownUriException, ProcessingException;
-}
-```
-{: codeblock}
-
-
-
 The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the **SystemClient** interface. There is no need to set up the client and connect with the remote service.
 
 Notice the **SystemClient** interface inherits the **AutoCloseable** interface.
@@ -239,26 +211,6 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 
 
 
-```
-package io.openliberty.guides.inventory.client;
-
-public class UnknownUriException extends Exception {
-
-  private static final long serialVersionUID = 1L;
-
-  public UnknownUriException() {
-    super();
-  }
-
-  public UnknownUriException(String message) {
-    super(message);
-  }
-}
-```
-{: codeblock}
-
-
-
 Now, link the **UnknownUriException** class with the corresponding response code through a **ResponseExceptionMapper** mapper class.
 
 Create the **UnknownUriExceptionMapper** class.
@@ -272,36 +224,6 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
 
-
-
-
-```
-package io.openliberty.guides.inventory.client;
-
-import java.util.logging.Logger;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.Provider;
-import org.eclipse.microprofile.rest.client.ext.ResponseExceptionMapper;
-
-@Provider
-public class UnknownUriExceptionMapper
-    implements ResponseExceptionMapper<UnknownUriException> {
-  Logger LOG = Logger.getLogger(UnknownUriExceptionMapper.class.getName());
-
-  @Override
-  public boolean handles(int status, MultivaluedMap<String, Object> headers) {
-    LOG.info("status = " + status);
-    return status == 404;
-  }
-
-  @Override
-  public UnknownUriException toThrowable(Response response) {
-    return new UnknownUriException();
-  }
-}
-```
-{: codeblock}
 
 
 
@@ -325,13 +247,6 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/webapp/META-IN
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
 
-
-
-
-```
-systemClient/mp-rest/uri=http://localhost:9080/system
-```
-{: codeblock}
 
 
 
@@ -359,116 +274,6 @@ Replace the **InventoryManager** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import java.net.ConnectException;
-import java.net.URI;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.ProcessingException;
-
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.eclipse.microprofile.rest.client.RestClientBuilder;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import io.openliberty.guides.inventory.client.SystemClient;
-import io.openliberty.guides.inventory.client.UnknownUriException;
-import io.openliberty.guides.inventory.client.UnknownUriExceptionMapper;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-
-@ApplicationScoped
-public class InventoryManager {
-
-  private List<SystemData> systems = Collections.synchronizedList(
-                                       new ArrayList<SystemData>());
-
-  @Inject
-  @ConfigProperty(name = "default.http.port")
-  String DEFAULT_PORT;
-
-  @Inject
-  @RestClient
-  private SystemClient defaultRestClient;
-
-  public Properties get(String hostname) {
-    Properties properties = null;
-    if (hostname.equals("localhost")) {
-      properties = getPropertiesWithDefaultHostName();
-    } else {
-      properties = getPropertiesWithGivenHostName(hostname);
-    }
-
-    return properties;
-  }
-
-  public void add(String hostname, Properties systemProps) {
-    Properties props = new Properties();
-    props.setProperty("os.name", systemProps.getProperty("os.name"));
-    props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-    SystemData host = new SystemData(hostname, props);
-    if (!systems.contains(host))
-      systems.add(host);
-  }
-
-  public InventoryList list() {
-    return new InventoryList(systems);
-  }
-
-  private Properties getPropertiesWithDefaultHostName() {
-    try {
-      return defaultRestClient.getProperties();
-    } catch (UnknownUriException e) {
-      System.err.println("The given URI is not formatted correctly.");
-    } catch (ProcessingException ex) {
-      handleProcessingException(ex);
-    }
-    return null;
-  }
-
-  private Properties getPropertiesWithGivenHostName(String hostname) {
-    String customURIString = "http://" + hostname + ":" + DEFAULT_PORT + "/system";
-    URI customURI = null;
-    try {
-      customURI = URI.create(customURIString);
-      SystemClient customRestClient = RestClientBuilder.newBuilder()
-                                        .baseUri(customURI)
-                                        .register(UnknownUriExceptionMapper.class)
-                                        .build(SystemClient.class);
-      return customRestClient.getProperties();
-    } catch (ProcessingException ex) {
-      handleProcessingException(ex);
-    } catch (UnknownUriException e) {
-      System.err.println("The given URI is unreachable.");
-    }
-    return null;
-  }
-
-  private void handleProcessingException(ProcessingException ex) {
-    Throwable rootEx = ExceptionUtils.getRootCause(ex);
-    if (rootEx != null && (rootEx instanceof UnknownHostException
-        || rootEx instanceof ConnectException)) {
-      System.err.println("The specified host is unknown.");
-    } else {
-      throw ex;
-    }
-  }
-
-}
-```
-{: codeblock}
 
 
 
@@ -530,97 +335,6 @@ touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/ope
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 
-
-
-
-```
-package it.io.openliberty.guides.client;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import javax.json.JsonObject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.client.WebTarget;
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
-public class RestClientIT {
-
-  private static String port;
-
-  private Client client;
-
-  private final String INVENTORY_SYSTEMS = "inventory/systems";
-
-  @BeforeAll
-  public static void oneTimeSetup() {
-    port = System.getProperty("http.port");
-  }
-
-  @BeforeEach
-  public void setup() {
-    client = ClientBuilder.newClient();
-    client.register(JsrJsonpProvider.class);
-  }
-
-  @AfterEach
-  public void teardown() {
-    client.close();
-  }
-
-  @Test
-  public void testSuite() {
-    this.testDefaultLocalhost();
-    this.testRestClientBuilder();
-  }
-
-  public void testDefaultLocalhost() {
-    String hostname = "localhost";
-
-    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
-
-    JsonObject obj = fetchProperties(url);
-
-    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
-                 "The system property for the local and remote JVM should match");
-  }
-
-  public void testRestClientBuilder() {
-    String hostname = null;
-    try{
-      hostname = InetAddress.getLocalHost().getHostAddress();
-    } catch (UnknownHostException e) {
-      System.err.println("Unknown Host.");
-    }
-
-    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
-
-    JsonObject obj = fetchProperties(url);
-
-    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
-                 "The system property for the local and remote JVM should match");
-  }
-
-  private JsonObject fetchProperties(String url) {
-    WebTarget target = client.target(url);
-    Response response = target.request().get();
-
-    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-
-    JsonObject obj = response.readEntity(JsonObject.class);
-    response.close();
-    return obj;
-  }
-
-}
-```
-{: codeblock}
 
 
 
@@ -690,7 +404,12 @@ rm -fr guide-microprofile-rest-client
 ```
 {: codeblock}
 
+## What did you think of this guide?
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
+select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+
 ## What could make this guide better?
+You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-rest-client/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-rest-client/pulls)
 

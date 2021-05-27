@@ -186,34 +186,6 @@ touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty
 
 
 
-```
-package io.openliberty.guides.system;
-
-import javax.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Readiness
-@ApplicationScoped
-public class SystemReadinessCheck implements HealthCheck {
-
-  private static final String readinessCheck = SystemResource.class.getSimpleName() 
-                                               + " Readiness Check";
-
-  @Override
-  public HealthCheckResponse call() {
-    if (!System.getProperty("wlp.server.name").equals("defaultServer")) {
-      return HealthCheckResponse.down(readinessCheck);
-    }
-    return HealthCheckResponse.up(readinessCheck);
-  }
-}
-```
-{: codeblock}
-
-
-
 
 The **@Readiness** annotation indicates that this particular bean is a readiness health check procedure.
 By pairing this annotation with the **ApplicationScoped** context from the Contexts and
@@ -243,38 +215,6 @@ touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty
 
 
 
-```
-package io.openliberty.guides.system;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-
-import javax.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class SystemLivenessCheck implements HealthCheck {
-
-  @Override
-  public HealthCheckResponse call() {
-    MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-    long memUsed = memBean.getHeapMemoryUsage().getUsed();
-    long memMax = memBean.getHeapMemoryUsage().getMax();
-
-    return HealthCheckResponse.named(SystemResource.class.getSimpleName() + " Liveness Check")
-                              .withData("memory used", memUsed)
-                              .withData("memory max", memMax)
-                              .state(memUsed < memMax * 0.9).build();
-  }
-}
-```
-{: codeblock}
-
-
-
 The **@Liveness** annotation indicates that this is a liveness health check procedure.
 In this case, you are checking the heap memory usage. If more than 90% of the maximum memory
 is being used, a status of **DOWN** is returned.
@@ -293,63 +233,6 @@ touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
 
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Readiness
-@ApplicationScoped
-public class InventoryReadinessCheck implements HealthCheck {
-
-  private static final String readinessCheck = InventoryResource.class.getSimpleName() 
-                                               + " Readiness Check";
-
-  @Inject
-  InventoryConfig config;
-
-  public boolean isHealthy() {
-    if (config.isInMaintenance()) {
-      return false;
-    }
-    try {
-      String url = InventoryUtils.buildUrl("http", "localhost", config.getPortNumber(),
-          "/system/properties");
-      Client client = ClientBuilder.newClient();
-      Response response = client.target(url).request(MediaType.APPLICATION_JSON).get();
-      if (response.getStatus() != 200) {
-        return false;
-      }
-      return true;
-    } catch (Exception e) {
-      return false;
-    }
-  }
-
-  @Override
-  public HealthCheckResponse call() {
-    if (!isHealthy()) {
-      return HealthCheckResponse
-          .down(readinessCheck);
-    }
-    return HealthCheckResponse
-        .up(readinessCheck);
-  }
-
-}
-```
-{: codeblock}
 
 
 
@@ -380,40 +263,6 @@ touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
 
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import javax.enterprise.context.ApplicationScoped;
-
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
-
-import org.eclipse.microprofile.health.Liveness;
-
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class InventoryLivenessCheck implements HealthCheck {
- 
-  @Override
-  public HealthCheckResponse call() {
-      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-      long memUsed = memBean.getHeapMemoryUsage().getUsed();
-      long memMax = memBean.getHeapMemoryUsage().getMax();
-
-      return HealthCheckResponse.named(InventoryResource.class.getSimpleName() + " Liveness Check")
-                                .withData("memory used", memUsed)
-                                .withData("memory max", memMax)
-                                .state(memUsed < memMax * 0.9).build();
-  }
-}
-```
-{: codeblock}
 
 
 
@@ -508,97 +357,6 @@ touch /home/project/guide-microprofile-health/start/src/test/java/it/io/openlibe
 
 
 
-```
-package it.io.openliberty.guides.health;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.HashMap;
-
-import javax.json.JsonArray;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-public class HealthIT {
-
-  private JsonArray servicesStates;
-  private static HashMap<String, String> endpointData;
-
-  private String HEALTH_ENDPOINT = "health";
-  private String READINESS_ENDPOINT = "health/ready";
-  private String LIVENES_ENDPOINT = "health/live";
-
-  @BeforeEach
-  public void setup() {
-    endpointData = new HashMap<String, String>();
-  }
-
-  @Test
-  public void testIfServicesAreUp() {
-    endpointData.put("SystemResource Readiness Check", "UP");
-    endpointData.put("SystemResource Liveness Check", "UP");
-    endpointData.put("InventoryResource Readiness Check", "UP");
-    endpointData.put("InventoryResource Liveness Check", "UP");
-
-    servicesStates = HealthITUtil.connectToHealthEnpoint(200, HEALTH_ENDPOINT);
-    checkStates(endpointData, servicesStates);
-  }
-
-  @Test
-  public void testReadiness() {
-    endpointData.put("SystemResource Readiness Check", "UP");
-    endpointData.put("InventoryResource Readiness Check", "UP");
-
-    servicesStates = HealthITUtil.connectToHealthEnpoint(200, READINESS_ENDPOINT);
-    checkStates(endpointData, servicesStates);
-  }
-
-  @Test
-  public void testLiveness() {
-    endpointData.put("SystemResource Liveness Check", "UP");
-    endpointData.put("InventoryResource Liveness Check", "UP");
-
-    servicesStates = HealthITUtil.connectToHealthEnpoint(200, LIVENES_ENDPOINT);
-    checkStates(endpointData, servicesStates);
-  }
-
-  @Test
-  public void testIfInventoryServiceIsDown() {
-    endpointData.put("SystemResource Readiness Check", "UP");
-    endpointData.put("SystemResource Liveness Check", "UP");
-    endpointData.put("InventoryResource Readiness Check", "UP");
-    endpointData.put("InventoryResource Liveness Check", "UP");
-
-    servicesStates = HealthITUtil.connectToHealthEnpoint(200, HEALTH_ENDPOINT);
-    checkStates(endpointData, servicesStates);
-
-    endpointData.put("InventoryResource Readiness Check", "DOWN");
-    HealthITUtil.changeInventoryProperty(HealthITUtil.INV_MAINTENANCE_FALSE,
-        HealthITUtil.INV_MAINTENANCE_TRUE);
-    servicesStates = HealthITUtil.connectToHealthEnpoint(503, HEALTH_ENDPOINT);
-    checkStates(endpointData, servicesStates);
-  }
-
-  private void checkStates(HashMap<String, String> testData, JsonArray servStates) {
-    testData.forEach((service, expectedState) -> {
-      assertEquals(expectedState, HealthITUtil.getActualState(service, servStates),
-          "The state of " + service + " service is not matching.");
-    });
-  }
-
-  @AfterEach
-  public void teardown() {
-    HealthITUtil.cleanUp();
-  }
-
-}
-```
-{: codeblock}
-
-
-
 
 Let's break down the test cases:
 
@@ -687,7 +445,12 @@ rm -fr guide-microprofile-health
 ```
 {: codeblock}
 
+## What did you think of this guide?
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
+select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+
 ## What could make this guide better?
+You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-health/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-health/pulls)
 

@@ -232,78 +232,6 @@ Replace the **InventoryManager** class.
 
 
 
-```
-package io.openliberty.guides.inventory;
-
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.Properties;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import javax.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.faulttolerance.Fallback;
-import io.openliberty.guides.inventory.model.*;
-
-@ApplicationScoped
-public class InventoryManager {
-
-    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-    private InventoryUtils invUtils = new InventoryUtils();
-
-    @Fallback(fallbackMethod = "fallbackForGet",
-            applyOn = {IOException.class},
-            skipOn = {UnknownHostException.class})
-    public Properties get(String hostname) throws IOException {
-        return invUtils.getProperties(hostname);
-    }
-
-    public Properties fallbackForGet(String hostname) {
-        Properties properties = findHost(hostname);
-        if (properties == null) {
-            Properties msgProp = new Properties();
-            msgProp.setProperty(hostname,
-                    "System is not found in the inventory or system is in maintenance");
-            return msgProp;
-        }
-        return properties;
-    }
-
-    public void add(String hostname, Properties systemProps) {
-        Properties props = new Properties();
-
-        String osName = systemProps.getProperty("os.name");
-        if (osName == null) {
-            return;
-        }
-
-        props.setProperty("os.name", systemProps.getProperty("os.name"));
-        props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-        SystemData system = new SystemData(hostname, props);
-        if (!systems.contains(system)) {
-            systems.add(system);
-        }
-    }
-
-    public InventoryList list() {
-        return new InventoryList(systems);
-    }
-
-    private Properties findHost(String hostname) {
-        for (SystemData system : systems) {
-            if (system.getHostname().equals(hostname)) {
-                return system.getProperties();
-            }
-        }
-        return null;
-    }
-}
-```
-{: codeblock}
-
-
-
 The **@Fallback** annotation dictates a method to call when the original method encounters a failed execution. In this
 example, use the **fallbackForGet()** method.
 
@@ -467,108 +395,6 @@ touch /home/project/guide-microprofile-fallback/start/src/test/java/it/io/openli
 
 
 
-
-```
-package it.io.openliberty.guides.faulttolerance;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import javax.json.JsonObject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import it.io.openliberty.guides.utils.TestUtils;
-
-public class FaultToleranceIT {
-
-    private Response response;
-    private Client client;
-
-    @BeforeEach
-    public void setup() {
-        client = ClientBuilder.newClient();
-        client.register(JsrJsonpProvider.class);
-    }
-
-    @AfterEach
-    public void teardown() {
-        client.close();
-        response.close();
-    }
-    /**
-     * testFallbackForGet - test for checking if the fallback is being called
-     * correctly 1. Return system properties for a hostname when inventory
-     * service is available. 2. Make System service down and get the system
-     * properties from inventory service when it is down. 3. Check if system
-     * properties for the specific host was returned when the inventory service
-     * was down by: Asserting if the total number of the system properties, when
-     * service is up, is greater than the total number of the system properties
-     * when service is down.
-     */
-
-    @Test
-    public void testFallbackForGet() throws InterruptedException {
-        response = TestUtils.getResponse(client,
-                                         TestUtils.INVENTORY_LOCALHOST_URL);
-        assertResponse(TestUtils.baseUrl, response);
-        JsonObject obj = response.readEntity(JsonObject.class);
-        int propertiesSize = obj.size();
-        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_FALSE,
-                                       TestUtils.SYSTEM_MAINTENANCE_TRUE);
-        Thread.sleep(3000);
-        response = TestUtils.getResponse(client,
-                                         TestUtils.INVENTORY_LOCALHOST_URL);
-        assertResponse(TestUtils.baseUrl, response);
-        obj = response.readEntity(JsonObject.class);
-        int propertiesSizeFallBack = obj.size();
-        assertTrue(propertiesSize > propertiesSizeFallBack, 
-                   "The total number of properties from the @Fallback method "
-                 + "is not smaller than the number from the system service" 
-                 +  "as expected.");
-        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_TRUE,
-                                       TestUtils.SYSTEM_MAINTENANCE_FALSE);
-        Thread.sleep(3000);
-    }
-
-    /**
-     * testFallbackForGet - test for checking if the fallback skip mechanism is working as intended:
-     * 1. Access system properties for the wrong hostname (localhot)
-     * 2. Verify that the response code is 404
-     * 3. Verify that the response text contains an error
-     */
-    @Test
-    public void testFallbackSkipForGet() {
-        response = TestUtils.getResponse(client,
-                TestUtils.INVENTORY_UNKNOWN_HOST_URL);
-        assertResponse(TestUtils.baseUrl, response, 404);
-        assertTrue(response.readEntity(String.class).contains("error"),
-                   "Incorrect response body from " + TestUtils.INVENTORY_UNKNOWN_HOST_URL);
-    }
-
-    /**
-     * Asserts that the given URL's response code matches the given status code.
-     */
-    private void assertResponse(String url, Response response, int status_code) {
-        assertEquals(status_code, response.getStatus(),
-                "Incorrect response code from " + url);
-    }
-
-    /**
-     * Asserts that the given URL has the correct response code of 200.
-     */
-    private void assertResponse(String url, Response response) {
-        assertResponse(url, response, 200);
-    }
-}
-```
-{: codeblock}
-
-
 The **@BeforeEach** and **@AfterEach** annotations indicate that this method runs either
 before or after the other test case.
 These methods are generally used to perform any setup and teardown tasks. In this case,
@@ -645,7 +471,12 @@ rm -fr guide-microprofile-fallback
 ```
 {: codeblock}
 
+## What did you think of this guide?
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
+select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+
 ## What could make this guide better?
+You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-fallback/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-fallback/pulls)
 

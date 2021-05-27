@@ -307,68 +307,6 @@ Update the **InventoryManager** class.
 
 
 
-
-```
-package io.openliberty.guides.inventory;
-
-import java.util.ArrayList;
-import java.util.Properties;
-import io.openliberty.guides.inventory.client.SystemClient;
-import io.openliberty.guides.inventory.model.InventoryList;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import java.util.List;
-import java.util.Collections;
-
-import org.eclipse.microprofile.opentracing.Traced;
-
-import io.opentracing.Scope;
-import io.opentracing.Tracer;
-import io.openliberty.guides.inventory.model.*;
-
-@ApplicationScoped
-public class InventoryManager {
-    
-    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-    private SystemClient systemClient = new SystemClient();
-    @Inject Tracer tracer;
-
-    public Properties get(String hostname) {
-        systemClient.init(hostname, 9080);
-        Properties properties = systemClient.getProperties();
-        
-        return properties;
-    }
-
-    public void add(String hostname, Properties systemProps) {
-        Properties props = new Properties();
-        props.setProperty("os.name", systemProps.getProperty("os.name"));
-        props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-        SystemData system = new SystemData(hostname, props);
-        if (!systems.contains(system)) {
-            try (Scope childScope = tracer.buildSpan("add() Span")
-                                              .startActive(true)) {
-                systems.add(system);
-            }
-        }
-    }
-
-    @Traced(operationName = "InventoryManager.list")
-    public InventoryList list() {
-        return new InventoryList(systems);
-    }
-
-    int clear() {
-        int propertiesClearedCount = systems.size();
-        systems.clear();
-        return propertiesClearedCount;
-    }
-}
-```
-{: codeblock}
-
-
 Enable tracing of the **list()** non-JAX-RS method by updating **@Traced** as shown.
 
 
@@ -404,66 +342,6 @@ Update the **InventoryResource** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import java.util.Properties;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import org.eclipse.microprofile.opentracing.Traced;
-
-import io.openliberty.guides.inventory.model.InventoryList;
-
-@RequestScoped
-@Path("/systems")
-public class InventoryResource {
-
-    @Inject InventoryManager manager;
-
-    @GET
-    @Path("/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
-        Properties props = manager.get(hostname);
-        if (props == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                           .entity("{ \"error\" : \"Unknown hostname or the system service " 
-                           + "may not be running on " + hostname + "\" }")
-                           .build();
-        }
-        manager.add(hostname, props);
-        return Response.ok(props).build();
-    }
-    
-    @GET
-    @Traced(false)
-    @Produces(MediaType.APPLICATION_JSON)
-    public InventoryList listContents() {
-        return manager.list();
-    }
-
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response clearContents() {
-        int cleared = manager.clear();
-
-        if (cleared == 0) {
-            return Response.status(Response.Status.NOT_MODIFIED)
-                    .build();
-        }
-        return Response.status(Response.Status.OK)
-                .build();
-    }
-}
-```
-{: codeblock}
 
 
 Disable tracing of the **listContents()** JAX-RS method by setting **@Traced(false)**.
@@ -502,68 +380,6 @@ Replace the **InventoryManager** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import java.util.ArrayList;
-import java.util.Properties;
-import io.openliberty.guides.inventory.client.SystemClient;
-import io.openliberty.guides.inventory.model.InventoryList;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import java.util.List;
-import java.util.Collections;
-
-import org.eclipse.microprofile.opentracing.Traced;
-
-import io.opentracing.Scope;
-import io.opentracing.Tracer;
-import io.openliberty.guides.inventory.model.*;
-
-@ApplicationScoped
-public class InventoryManager {
-    
-    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-    private SystemClient systemClient = new SystemClient();
-    @Inject Tracer tracer;
-
-    public Properties get(String hostname) {
-        systemClient.init(hostname, 9080);
-        Properties properties = systemClient.getProperties();
-        
-        return properties;
-    }
-
-    public void add(String hostname, Properties systemProps) {
-        Properties props = new Properties();
-        props.setProperty("os.name", systemProps.getProperty("os.name"));
-        props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-        SystemData system = new SystemData(hostname, props);
-        if (!systems.contains(system)) {
-            try (Scope childScope = tracer.buildSpan("add() Span")
-                                              .startActive(true)) {
-                systems.add(system);
-            }
-        }
-    }
-
-    @Traced(operationName = "InventoryManager.list")
-    public InventoryList list() {
-        return new InventoryList(systems);
-    }
-
-    int clear() {
-        int propertiesClearedCount = systems.size();
-        systems.clear();
-        return propertiesClearedCount;
-    }
-}
-```
-{: codeblock}
 
 
 
@@ -647,7 +463,12 @@ rm -fr guide-microprofile-opentracing-jaeger
 ```
 {: codeblock}
 
+## What did you think of this guide?
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
+select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+
 ## What could make this guide better?
+You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-opentracing-jaeger/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-opentracing-jaeger/pulls)
 
