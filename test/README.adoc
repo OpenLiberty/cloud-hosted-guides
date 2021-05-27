@@ -10,5 +10,5 @@ cd /home/project
 curl https://raw.githubusercontent.com/OpenLiberty/cloud-hosted-guides/prod/test/allGuideIDs.txt --output allGuideIDs.txt
 curl https://raw.githubusercontent.com/OpenLiberty/cloud-hosted-guides/prod/test/testAll.sh --output allGuideIDs.txt
 chmod +x testAll.sh
-./testAll.sh
+./testAll.sh prod
 ```
