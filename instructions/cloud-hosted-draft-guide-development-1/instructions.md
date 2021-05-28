@@ -651,6 +651,11 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
 
 
+<a href="http://www.google.com" target="_blank">
+  <img src="https://openliberty.io/img/1_Extreme_Dislike.png" width="100" height="100"" border="0" align="center"  />
+</a>
+
+
 ## Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
