@@ -198,7 +198,7 @@ Verify that the `system:1.0-SNAPSHOT` and `inventory:1.0-SNAPSHOT` images are li
 REPOSITORY                                TAG                       
 inventory                                 1.0-SNAPSHOT
 system                                    1.0-SNAPSHOT
-openliberty/open-liberty                  full-java8-openj9-ubi
+openliberty/open-liberty                  full-java11-openj9-ubi
 ```
 
 If you don't see the `system:1.0-SNAPSHOT` and `inventory:1.0-SNAPSHOT` images, then check the Maven
@@ -528,6 +528,8 @@ Note that there is only one **system** pod after you redeploy since you're delet
 
 
 ```
+kubectl delete -f kubernetes.yaml
+
 mvn clean package
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
@@ -536,7 +538,6 @@ docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
 docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 
-kubectl delete -f kubernetes.yaml
 kubectl apply -f kubernetes.yaml
 ```
 {: codeblock}
