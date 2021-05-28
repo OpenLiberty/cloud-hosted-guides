@@ -315,20 +315,20 @@ import java.util.ArrayList;
 import java.util.Properties;
 import io.openliberty.guides.inventory.client.SystemClient;
 import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Collections;
 
 import org.eclipse.microprofile.opentracing.Traced;
-
 import io.opentracing.Scope;
 import io.opentracing.Tracer;
-import io.openliberty.guides.inventory.model.*;
+import io.opentracing.Span;
 
 @ApplicationScoped
 public class InventoryManager {
-    
+
     private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
     private SystemClient systemClient = new SystemClient();
     @Inject Tracer tracer;
@@ -336,7 +336,6 @@ public class InventoryManager {
     public Properties get(String hostname) {
         systemClient.init(hostname, 9080);
         Properties properties = systemClient.getProperties();
-        
         return properties;
     }
 
@@ -347,8 +346,8 @@ public class InventoryManager {
 
         SystemData system = new SystemData(hostname, props);
         if (!systems.contains(system)) {
-            try (Scope childScope = tracer.buildSpan("add() Span")
-                                              .startActive(true)) {
+            Span span = tracer.buildSpan("add() Span").start();
+            try (Scope childScope = tracer.activateSpan(span)) {
                 systems.add(system);
             }
         }
@@ -512,20 +511,20 @@ import java.util.ArrayList;
 import java.util.Properties;
 import io.openliberty.guides.inventory.client.SystemClient;
 import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Collections;
 
 import org.eclipse.microprofile.opentracing.Traced;
-
 import io.opentracing.Scope;
 import io.opentracing.Tracer;
-import io.openliberty.guides.inventory.model.*;
+import io.opentracing.Span;
 
 @ApplicationScoped
 public class InventoryManager {
-    
+
     private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
     private SystemClient systemClient = new SystemClient();
     @Inject Tracer tracer;
@@ -533,7 +532,6 @@ public class InventoryManager {
     public Properties get(String hostname) {
         systemClient.init(hostname, 9080);
         Properties properties = systemClient.getProperties();
-        
         return properties;
     }
 
@@ -544,8 +542,8 @@ public class InventoryManager {
 
         SystemData system = new SystemData(hostname, props);
         if (!systems.contains(system)) {
-            try (Scope childScope = tracer.buildSpan("add() Span")
-                                              .startActive(true)) {
+            Span span = tracer.buildSpan("add() Span").start();
+            try (Scope childScope = tracer.activateSpan(span)) {
                 systems.add(system);
             }
         }
