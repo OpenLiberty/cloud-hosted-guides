@@ -19,7 +19,8 @@ chmod +x testAll.sh
 ```
 ./testAll.sh staging
 ```
-- check out the console output and the .log files at `/home/project/test-logs` directory
+- check out the console output 
+- run the following command to check the .log files at `/home/project/test-logs` directory. Expect returns all like `[INFO] BUILD SUCCESS`
 ```
-grep "BUILD SUCCESS" test-logs/*.log
+grep "BUILD " test-logs/*.log
 ```
