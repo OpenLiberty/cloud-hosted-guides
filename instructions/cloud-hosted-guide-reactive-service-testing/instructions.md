@@ -147,7 +147,7 @@ mvn -pl models install
 If you don't have the latest Docker image, pull it by running the following command:
 
 ```
-docker pull openliberty/open-liberty:full-java8-openj9-ubi
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
