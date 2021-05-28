@@ -91,7 +91,7 @@ jobs:
           rm -f instructions/cloud-hosted-${{matrix.guides.guide}}/README.md
           cd GuideConverter
           mvn compiler:compile
-          mvn exec:java -Dexec.args="${{matrix.guides.guide}} ${branchName:11}"
+          mvn exec:java -Dexec.args="${{matrix.guides.guide}} ${branchName}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
