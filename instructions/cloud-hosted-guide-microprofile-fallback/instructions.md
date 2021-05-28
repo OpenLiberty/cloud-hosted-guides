@@ -358,19 +358,18 @@ calling the **system** service.
 
 To see the application metrics, run the following curl commmand. This command will Log in using **admin** user, and you will have to enter **adminpwd** as the password.
 ```
-curl -k -u admin https://localhost:9443/metrics/application
+curl -k -u admin https://localhost:9443/metrics/base
 ```
 {: codeblock}
 
 See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
 
 ```
-# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_total counter
-application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_total 1
-# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_failed_total counter
-application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_failed_total 0
-# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_fallback_calls_total counter
-application_ft_io_openliberty_guides_inventory_InventoryManager_get_fallback_calls_total 0
+# TYPE base_ft_invocations_total counter
+base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 0
+base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
 ```
 
 You can test the fault tolerance mechanism of your microservices by dynamically changing
@@ -414,25 +413,24 @@ You see that the service displays a 503 HTTP response code.
 
 Run the following curl command again and enter **adminpwd** as the password:
 ```
-curl -k -u admin https://localhost:9443/metrics/application
+curl -k -u admin https://localhost:9443/metrics/base
 ```
 {: codeblock}
 
 See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
 
 ```
-# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_total counter
-application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_total 2
-# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_failed_total counter
-application_ft_io_openliberty_guides_inventory_InventoryManager_get_invocations_failed_total 0
-# TYPE application_ft_io_openliberty_guides_inventory_InventoryManager_get_fallback_calls_total counter
-application_ft_io_openliberty_guides_inventory_InventoryManager_get_fallback_calls_total 1
+# TYPE base_ft_invocations_total counter
+base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
 ```
 
-From the output, the **`ft_io_openliberty_guides_inventory_inventory_manager_get_invocations_total`**
-data indicates that the **get()** was called twice including the previous call before turning the **system** service in maintenance.
-The **`ft_io_openliberty_guides_inventory_inventory_manager_get_fallback_calls_total`** data
-indicates that the **fallbackForGet()** method was called once.
+
+From the output, the **`base_ft_invocations_total{fallback="notApplied",`** **`method="io.openliberty.guides.inventory.InventoryManager.get",`** **`result="valueReturned"}`** data shows that the **get()** method was called once without triggering a fallback method.
+The **`base_ft_invocations_total{fallback="applied",`** **`method="io.openliberty.guides.inventory.InventoryManager.get",`** **`result="valueReturned"}`** data
+indicates that the **get()** method was called once and the fallback **fallbackForGet()** method was triggered.
 
 
 Update the configuration file.
