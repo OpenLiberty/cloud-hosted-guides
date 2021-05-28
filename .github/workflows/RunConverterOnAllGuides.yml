@@ -27,7 +27,6 @@ jobs:
           echo "${{ github.event.inputs.branch }}"
           echo "${{ github.event.inputs.GuideConverterBranch }}"
           echo "${{ github.event.inputs.PRNumber }}"
-
   matrix:
     runs-on: ubuntu-latest
     outputs:
@@ -91,7 +90,7 @@ jobs:
           rm -f instructions/cloud-hosted-${{matrix.guides.guide}}/README.md
           cd GuideConverter
           mvn compiler:compile
-          mvn exec:java -Dexec.args="${{matrix.guides.guide}} ${branchName:11}"
+          mvn exec:java -Dexec.args="${{matrix.guides.guide}} ${branchName}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
@@ -102,7 +101,6 @@ jobs:
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
-
       - uses: actions/upload-artifact@v2
         with:
           name: cloud-hosted-${{matrix.guides.guide}}
@@ -129,7 +127,7 @@ jobs:
           token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
           body: "Updated by github actions, triggered by GuideConverter repo ([PR](https://github.com/OpenLiberty/cloud-hosted-guide-converter/pull/${{ github.event.inputs.PRNumber }}))."
           branch: "cloud-hosted-Manual-ALL/staging"
-          base: "staging"
+          base: "prod"
           labels: "TestAll"
 
   createPullRequestProd0:
@@ -153,7 +151,7 @@ jobs:
           token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
           body: "Updated by github actions, triggered Manually."
           branch: "cloud-hosted-Manual-ALL/staging"
-          base: "staging"
+          base: "prod"
           labels: "TestAll"
 
   convertStaging:
@@ -213,7 +211,6 @@ jobs:
           bash .github/workflows/draftRemoval.sh cloud-hosted-${{matrix.guides.guide}}
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
-
       - uses: actions/upload-artifact@v2
         with:
           name: cloud-hosted-${{matrix.guides.guide}}
