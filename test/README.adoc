@@ -20,3 +20,6 @@ chmod +x testAll.sh
 ./testAll.sh staging
 ```
 - check out the console output and the .log files at `/home/project/test-logs` directory
+```
+grep "BUILD SUCCESS" test-logs/*.log
+```
