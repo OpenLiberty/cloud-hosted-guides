@@ -237,8 +237,8 @@ Replace the server configuration file.
     <feature>jaxrs-2.1</feature>
     <feature>jsonp-1.1</feature>
     <feature>cdi-2.0</feature>
-    <feature>mpMetrics-2.3</feature>
-    <feature>mpRestClient-1.4</feature>
+    <feature>mpMetrics-3.0</feature>
+    <feature>mpRestClient-2.0</feature>
   </featureManager>
 
   <variable name="default.http.port" defaultValue="9080"/>
@@ -373,7 +373,7 @@ is called to return the size of the inventory. Note the additional metadata fiel
 | ---| ---
 
 Additional information about these annotations, relevant metadata fields, and more are available at
-the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/ref/microprofile/3.0/#package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=org/eclipse/microprofile/metrics/annotation/package-summary.html).
+the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-4.0-javadoc.html#package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=org/eclipse/microprofile/metrics/annotation/package-summary.html).
 
 
 # Enabling vendor metrics for the microservices
