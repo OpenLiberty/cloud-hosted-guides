@@ -510,11 +510,11 @@ Replace the system server configuration file.
     <feature>jaxrs-2.1</feature>
     <feature>jsonp-1.1</feature>
     <feature>cdi-2.0</feature>
-    <feature>mpConfig-1.4</feature>
-    <feature>mpRestClient-1.4</feature>
+    <feature>mpConfig-2.0</feature>
+    <feature>mpRestClient-2.0</feature>
     <feature>appSecurity-3.0</feature>
     <feature>servlet-4.0</feature>
-    <feature>mpJwt-1.1</feature>
+    <feature>mpJwt-1.2</feature>
   </featureManager>
 
   <variable name="default.http.port" defaultValue="8080"/>
