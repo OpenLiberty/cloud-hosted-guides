@@ -88,6 +88,12 @@ curl http://localhost:9081/inventory/systems
 ```
 {: codeblock}
 
+After you see the following message in both command-line sessions, both of your services are ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
 The **system** service shows the system properties of the running JVM and can be found by running the following curl command:
 ```
 curl http://localhost:9080/system/properties
