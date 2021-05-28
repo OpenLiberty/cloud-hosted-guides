@@ -870,7 +870,7 @@ rm -fr guide-getting-started
 {: codeblock}
 
 ## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
 ## What could make this guide better?
