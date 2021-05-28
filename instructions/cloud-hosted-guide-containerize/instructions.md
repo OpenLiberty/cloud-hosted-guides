@@ -153,7 +153,7 @@ touch /home/project/guide-containerize/start/inventory/Dockerfile
 
 
 ```
-FROM openliberty/open-liberty:kernel-java8-openj9-ubi
+FROM openliberty/open-liberty:full-java11-openj9-ubi
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
@@ -196,7 +196,7 @@ RUN configure.sh
 The **FROM** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use **FROM scratch**, which makes your image a base image. 
 
 In this case, you're using the recommended production image,
-**openliberty/open-liberty:kernel-java8-openj9-ubi**, as your parent image. If you
+**openliberty/open-liberty:full-java11-openj9-ubi**, as your parent image. If you
 don't want any additional runtime features for your **kernel** image, define the
 **FROM** instruction as **FROM open-liberty:kernel**. To use the default image that
 comes with the Open Liberty runtime, define the **FROM** instruction as **FROM open-liberty**. 
@@ -210,7 +210,7 @@ They copy local files into the specified destination within your Docker image.
 In this case, the **inventory** server configuration files that are located at **src/main/liberty/config** are copied to the **/config/** destination directory.
 The **inventory** application WAR file **inventory.war**, which was created from running **mvn package**, is copied to the **/config/apps** destination directory.
 
-The **COPY** instructions use the **1001** user ID  and **0** group because the **openliberty/open-liberty:kernel-java8-openj9-ubi** image runs by default with the **USER 1001** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user.
+The **COPY** instructions use the **1001** user ID  and **0** group because the **openliberty/open-liberty:full-java11-openj9-ubi** image runs by default with the **USER 1001** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user.
 
 Place the **RUN configure.sh** command at the end to get a pre-warmed Docker image. It improves the startup time of running your Docker container.
 
@@ -231,7 +231,7 @@ touch /home/project/guide-containerize/start/system/Dockerfile
 
 
 ```
-FROM openliberty/open-liberty:kernel-java8-openj9-ubi
+FROM openliberty/open-liberty:full-java11-openj9-ubi
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
@@ -267,7 +267,7 @@ Now that your microservices are packaged and you have written your Dockerfiles, 
 Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```
-docker pull openliberty/open-liberty:kernel-java8-openj9-ubi
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
