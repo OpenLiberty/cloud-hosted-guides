@@ -93,7 +93,7 @@ docker run -d --name jaeger \
 {: codeblock}
 
 You can find information about the Jaeger server and instructions for starting the all-in-one executable file in the
-[Jaeger documentation](https://www.jaegertracing.io/docs/1.17/getting-started/#all-in-one).
+[Jaeger documentation](https://www.jaegertracing.io/docs/1.22/getting-started/#all-in-one).
 
 Before you proceed, make sure that your Jaeger server is up and running. 
 Select **Launch Application** from the menu of the IDE, 
