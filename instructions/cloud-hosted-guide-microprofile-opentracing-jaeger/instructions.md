@@ -141,8 +141,8 @@ To view the traces, go to the **`https://accountname-16686.theiadocker-4.proxy.c
 You can view the traces for the inventory or system services under the **Search** tab.
 Select the services in the **Select a service** menu and click the **Find Traces** button at the end of the section.
 
-If you only see the **jaeger-query** listed in the dropdown, you might need to wait a little longer and refresh the page
-to see the application services.
+If you only see the **jaeger-query** option listed in the dropdown, 
+you might need to wait a little longer and refresh the page to see the application services.
 
 View the traces for **inventory**. You'll see the following trace:
 
@@ -200,7 +200,8 @@ mvn liberty:dev
 
 After you see the following message, your application server in dev mode is ready:
 ```
-Press the Enter key to run tests on demand.
+************************************************************************
+*    Liberty is running in dev mode.
 ```
 
 Dev mode holds your command-line session to listen for file changes.
@@ -321,6 +322,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Collections;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.opentracing.Traced;
 import io.opentracing.Scope;
 import io.opentracing.Tracer;
@@ -329,12 +331,16 @@ import io.opentracing.Span;
 @ApplicationScoped
 public class InventoryManager {
 
+    @Inject
+    @ConfigProperty(name = "system.http.port")
+    int SYSTEM_PORT;
+
     private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
     private SystemClient systemClient = new SystemClient();
     @Inject Tracer tracer;
 
     public Properties get(String hostname) {
-        systemClient.init(hostname, 9080);
+        systemClient.init(hostname, SYSTEM_PORT);
         Properties properties = systemClient.getProperties();
         return properties;
     }
@@ -349,6 +355,8 @@ public class InventoryManager {
             Span span = tracer.buildSpan("add() Span").start();
             try (Scope childScope = tracer.activateSpan(span)) {
                 systems.add(system);
+            } finally {
+                span.finish();
             }
         }
     }
@@ -465,7 +473,8 @@ public class InventoryResource {
 {: codeblock}
 
 
-Disable tracing of the **listContents()** JAX-RS method by setting **@Traced(false)**.
+Disable tracing of the **listContents()** JAX-RS method
+by setting **@Traced(false)**.
 
 
 Run the following curl command:
@@ -490,8 +499,8 @@ Verify that you see the following span:
 ### Injecting a custom Tracer object
 
 The MicroProfile OpenTracing specification also makes the underlying OpenTracing **Tracer** instance
-available for use. You can access the configured **Tracer** by injecting it into a bean by using the **@Inject**
-annotation from the Contexts and Dependency Injections API.
+available for use. You can access the configured **Tracer** by injecting it into a bean by using the
+**@Inject** annotation from the Contexts and Dependency Injections API.
 
 Inject the **Tracer** object into the **inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java** file.
 Then, use it to define a new child scope in the **add()** call.
@@ -517,6 +526,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Collections;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.opentracing.Traced;
 import io.opentracing.Scope;
 import io.opentracing.Tracer;
@@ -525,12 +535,16 @@ import io.opentracing.Span;
 @ApplicationScoped
 public class InventoryManager {
 
+    @Inject
+    @ConfigProperty(name = "system.http.port")
+    int SYSTEM_PORT;
+
     private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
     private SystemClient systemClient = new SystemClient();
     @Inject Tracer tracer;
 
     public Properties get(String hostname) {
-        systemClient.init(hostname, 9080);
+        systemClient.init(hostname, SYSTEM_PORT);
         Properties properties = systemClient.getProperties();
         return properties;
     }
@@ -545,6 +559,8 @@ public class InventoryManager {
             Span span = tracer.buildSpan("add() Span").start();
             try (Scope childScope = tracer.activateSpan(span)) {
                 systems.add(system);
+            } finally {
+                span.finish();
             }
         }
     }
