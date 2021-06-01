@@ -650,34 +650,41 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 * [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
 
+<script>
+function run_script() {
 
-<a href="http://www.google.com" target="_blank">
-  <img src="https://openliberty.io/img/1_Extreme_Dislike.png" width="100" height="100"" border="0" align="center"  />
-</a>
+global.fetch = require("node-fetch");
 
-<!DOCTYPE html>
-<html>
-  <head>
- <!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-KTRJ86B');</script>
-<!-- End Google Tag Manager -->
-  </head>
-  <body>
-    <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KTRJ86B"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
-  </body>
-</html>
+const measurement_id = `G-T394NPE4G1`;
+const api_secret = `2-_zVGdETrWtZZNdVdBBwA`;
 
-<a href="http://www.google.com" target="_blank">
-  <img src="https://openliberty.io/img/1_Extreme_Dislike.png" width="100" height="100"" border="0" align="center"  />
-</a>
+fetch(`https://www.google-analytics.com/mp/collect?measurement_id=${measurement_id}&api_secret=${api_secret}`, {
+  method: "POST",
+  body: JSON.stringify({
+    "client_id": "Lab_faces",
+    "non_personalized_ads": false,
+    "events": [
+      {
+        "name": "rate_lab",
+        "params": {
+          "Rating": 1
+        }
+      }
+    ]
+})
+});
+}
+    
+    function myFunction() {
+  alert("I am an alert box!");
+}
 
+$("#dislike").click(myFunction);
+   
+
+</script>
+
+<img src="https://openliberty.io/img/1_Extreme_Dislike.png" width="100" height="100" />
 
 ## Log out of the session
 
