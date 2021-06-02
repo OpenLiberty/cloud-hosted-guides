@@ -1,7 +1,7 @@
 
-# Welcome to the Acknowledging messages using MicroProfile Reactive Messaging guide!
+# Welcome to the Enabling distributed tracing in microservices with Zipkin guide!
 
-Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
+Explore how to enable and customize tracing of JAX-RS and non-JAX-RS methods by using MicroProfile OpenTracing and the Zipkin tracing system.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,25 +11,29 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 # What you'll learn
 
-MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive
-Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged
-after they are processed. Every message that gets sent out must be acknowledged. This way, any messages that were delivered
-to the target service but not processed, for example, due to a system failure, can be identified and sent again.
+You'll learn how to enable automatic tracing for JAX-RS methods as well as create custom tracers
+for non-JAX-RS methods by using MicroProfile OpenTracing.
 
-The application in this guide consists of two microservices, **system** and **inventory**. Every 15 seconds, the **system**
-microservice calculates and publishes events that contain its current average system load. The **inventory** microservice
-subscribes to that information so that it can keep an updated list of all the systems and their current system loads.
-You can get the current inventory of systems by accessing the **/systems** REST endpoint. The following diagram depicts
-the application that is used in this guide:
+OpenTracing is a standard API for instrumenting microservices for distributed tracing. 
+Distributed tracing helps troubleshoot microservices by examining and logging requests as they propagate through a distributed system. 
+This allows developers to tackle the otherwise difficult task of debugging these requests.
+Without a distributed tracing system in place, analyzing the workflows of operations becomes difficult.
+Pinpointing when and where a request is received, as well as when responses are sent back becomes difficult.
 
-![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/master/assets/reactive-messaging-system-inventory-rest.png)
+MicroProfile OpenTracing enables distributed tracing in microservices without adding any explicit
+distributed tracing code to the application.
+Note that the MicroProfile OpenTracing specification does not address the problem of
+defining, implementing, or configuring the underlying distributed tracing system. 
+Rather, the specification makes it easier to instrument services with distributed tracing given
+an existing distributed tracing system.
 
-
-You will explore the acknowledgment strategies that are available with MicroProfile Reactive Messaging, and you'll implement
-your own manual acknowledgment strategy. To learn more about how the reactive Java services used in this guide work, check
-out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+You'll configure the provided **inventory** and **system** services to use distributed tracing with
+MicroProfile OpenTracing. You'll run these services in two separate JVMs made of two server instances
+to demonstrate tracing in a distributed environment. 
+If all the components were to run on a single server, then any logging software would do the trick.
 
 # Getting started
 
@@ -43,11 +47,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-opentracing.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git
-cd guide-microprofile-reactive-messaging-acknowledgment
+git clone https://github.com/openliberty/guide-microprofile-opentracing.git
+cd guide-microprofile-opentracing
 ```
 {: codeblock}
 
@@ -56,172 +60,172 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-# Choosing an acknowledgment strategy
+For this guide, Zipkin is used as the distributed tracing system. 
+You can find the installation instructions for Zipkin at the Zipkin [quickstart page](https://zipkin.io/pages/quickstart.html). 
+You're not required to use Zipkin.
+You may choose to use another tracing system.
+However, this guide is written using Zipkin.
+If you use a different tracing system, the required instructions may differ.
 
 
-Messages must be acknowledged in reactive applications. Messages are either acknowledged explicitly, or messages are acknowledged
-implicitly by MicroProfile Reactive Messaging. Acknowledgment for incoming messages is controlled by the **@Acknowledgment**
-annotation in MicroProfile Reactive Messaging. If the **@Acknowledgment** annotation isn't explicitly defined, then the
-default acknowledgment strategy applies, which depends on the method signature. Only methods that receive incoming messages
-and are annotated with the **@Incoming** annotation must acknowledge messages. Methods that are annotated only with the
-**@Outgoing** annotation don't need to acknowledge messages because messages aren't being received and MicroProfile Reactive
-Messaging requires only that _received_ messages are acknowledged.
-
-Almost all of the methods in this application that require message acknowledgment are assigned the **`POST_PROCESSING`** strategy
-by default. If the acknowledgment strategy is set to **`POST_PROCESSING`**, then MicroProfile Reactive Messaging acknowledges
-the message based on whether the annotated method emits data:
-
-* If the method emits data, the incoming message is acknowledged after the outgoing message is acknowledged.
-* If the method doesn't emit data, the incoming message is acknowledged after the method or processing completes.
-
-It’s important that the methods use the **`POST_PROCESSING`** strategy because it fulfills the requirement that a message isn't
-acknowledged until after the message is fully processed. This processing strategy is beneficial in situations where messages
-must reliably not get lost. When the **`POST_PROCESSING`** acknowledgment strategy can’t be used, the **MANUAL** strategy can
-be used to fulfill the same requirement. In situations where message acknowledgment reliability isn't important and losing
-messages is acceptable, the **`PRE_PROCESSING`** strategy might be appropriate.
-
-The only method in the guide that doesn't default to the **`POST_PROCESSING`** strategy is the
-**sendProperty()** method in the **system** service. The **sendProperty()**
-method receives property requests from the **inventory** service. For each property request, if the property that's being
-requested is valid, then the method **returns** a property response with the value of the property.
-However, if the requested property **doesn't exist**, the request is ignored and no property response
-is **returned**.
-
-A key difference exists between when a property response is returned and when a property response isn't returned. In the
-case where a property response is returned, the request doesn't finish processing until the response is sent and safely
-stored by the Kafka broker. Only then is the incoming message acknowledged. However, in the case where the requested
-property doesn’t exist and a property response isn't returned, the method finishes processing the request message so the
-message must be acknowledged immediately.
-
-This case where a message either needs to be acknowledged immediately or some time later is one of the situations where
-the **MANUAL** acknowledgment strategy would be beneficial
-
-# Implementing the MANUAL acknowledgment strategy
-
-
-
-To begin, run the following command to navigate to the **start** directory:
+Start Zipkin by running the following command:
 ```
-cd /home/project/guide-microprofile-reactive-messaging-acknowledgment/start
+docker run -d --name zipkin -p 9411:9411 openzipkin/zipkin
 ```
 {: codeblock}
 
-Update the **SystemService.sendProperty** method to use the **MANUAL** acknowledgment strategy, which fits the method processing
-requirements better than the default **`PRE_PROCESSING`** strategy.
+Before you continue, make sure your Zipkin server is up and running.
+Select **Launch Application** from the menu of the IDE and 
+type **9411** to specify the port number for the Zipkin service. Click the **OK** button. 
+Zipkin can also be found at the **`https://accountname-9411.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
+where **accountname** is your account name.
 
-Replace the **SystemService** class.
+### Try what you'll build
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+The **finish** directory in the root directory of this guide contains two services that are configured
+to use MicroProfile OpenTracing. Give them a try before you continue.
 
-
-
-
+To try out the services, navigate to the **finish** directory and run the Maven **install** phase to build the services
 ```
-package io.openliberty.guides.system;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
-
-import javax.enterprise.context.ApplicationScoped;
-
-import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.eclipse.microprofile.reactive.streams.operators.PublisherBuilder;
-import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
-import org.reactivestreams.Publisher;
-
-import io.openliberty.guides.models.PropertyMessage;
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.Flowable;
-
-@ApplicationScoped
-public class SystemService {
-    
-    private static Logger logger = Logger.getLogger(SystemService.class.getName());
-
-    private static final OperatingSystemMXBean osMean = 
-            ManagementFactory.getOperatingSystemMXBean();
-    private static String hostname = null;
-
-    private static String getHostname() {
-        if (hostname == null) {
-            try {
-                return InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException e) {
-                return System.getenv("HOSTNAME");
-            }
-        }
-        return hostname;
-    }
-
-    @Outgoing("systemLoad")
-    public Publisher<SystemLoad> sendSystemLoad() {
-        return Flowable.interval(15, TimeUnit.SECONDS)
-                .map((interval -> new SystemLoad(getHostname(),
-                        osMean.getSystemLoadAverage())));
-    }
-
-    @Incoming("propertyRequest")
-    @Outgoing("propertyResponse")
-    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public PublisherBuilder<Message<PropertyMessage>>
-    sendProperty(Message<String> propertyMessage) {
-        String propertyName = propertyMessage.getPayload();
-        String propertyValue = System.getProperty(propertyName, "unknown");
-        logger.info("sendProperty: " + propertyValue);
-        if (propertyName == null || propertyName.isEmpty() || propertyValue == "unknown") {
-            logger.warning("Provided property: " +
-                    propertyName + " is not a system property");
-            propertyMessage.ack();
-            return ReactiveStreams.empty();
-        }
-        Message<PropertyMessage> message = Message.of(
-                new PropertyMessage(getHostname(),
-                        propertyName,
-                        propertyValue),
-                propertyMessage::ack
-        );
-        return ReactiveStreams.of(message);
-    }
-}
+cd finish
+mvn install
 ```
 {: codeblock}
 
 
-The **sendProperty()** method needs to manually acknowledge the incoming messages, so it is
-annotated with the **@Acknowledgment(Acknowledgment.Strategy.MANUAL)**
-annotation. This annotation sets the method up to expect an incoming message. To meet the requirements of acknowledgment,
-the method parameter is updated to receive and return a **Message** of type **String**, rather
-than just a **String**. Then, the message **payload** is extracted and checked for validity.
-One of the following outcomes occurs:
-
-* If the system property **isn't valid**, the method **acknowledges**
-  the incoming message and **returns** an empty reactive stream. 
-  The processing is complete.
-* If the system property is valid, the method creates a **message** with the value of the
-  requested system property and sends it to the proper channel. The method acknowledges the incoming message only
-  after the sent message is acknowledged.
-
-# Waiting for a message to be acknowledged
+Then, run the Maven **liberty:start-server** goal to start them in two Open Liberty servers:
+```
+mvn liberty:start-server
+```
+{: codeblock}
 
 
-The **inventory** service contains an endpoint that accepts **PUT** requests. When a **PUT** request that contains a system property
-is made to the **inventory** service, the **inventory** service sends a message to the **system** service. The message from the
-**inventory** service requests the value of the system property from the system service. Currently, a **200** response code
-is returned without confirming whether the sent message was acknowledged. Replace the **inventory** service to return a **200**
-response only after the outgoing message is acknowledged.
 
-Replace the **InventoryResource** class.
+Make sure your Zipkin server is running and run the following curl command:
+```
+curl http://localhost:9081/inventory/systems/localhost
+```
+{: codeblock}
+
+When you make this curl request, you make two HTTP GET requests, one to the **system** service and 
+one to the **inventory** service. 
+Because tracing is configured for both these requests, a new trace is recorded in Zipkin.
+Visit the **`https://accountname-9411.theiadocker-4.proxy.cognitiveclass.ai`** URL.
+Run an empty query and sort the traces by latest start time first. 
+
+Verify the new trace contains three spans with the following names:
+
+* **get:io.openliberty.guides.inventory.inventoryresource.getpropertiesforhost**
+* **get:io.openliberty.guides.system.systemresource.getproperties**
+* **add() span**
+
+You can inspect each span by clicking it to reveal more detailed information, such as the time
+at which the request was received and the time at which a response was sent back.
+
+If you examine the other traces, you might notice a red trace entry, 
+which indicates the span caught an error. 
+In this case, one of the tests accesses the **/inventory/systems/badhostname**
+endpoint, which is invalid, so an error is thrown. This behavior is expected.
+
+When you're done checking out the services, stop both Open Liberty servers using the Maven
+**liberty:stop-server** goal:
+
+```
+mvn liberty:stop-server
+```
+{: codeblock}
+
+
+
+# Running the services
+
+Navigate to the **start** directory to begin.
+
+You'll need to start the services to see basic traces appear in Zipkin. 
+So, before you proceed, build and start the provided **system** and **inventory**
+services in the starting project by running the Maven **install** goal:
+
+```
+mvn install
+```
+{: codeblock}
+
+
+Then, run the **liberty:start-server** goal:
+
+```
+mvn liberty:start-server
+```
+{: codeblock}
+
+
+
+When the servers start, you can access the **system** service by running the following curl command:
+```
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
+
+and access the **inventory** service by running the following curl command:
+```
+curl http://localhost:9081/inventory/systems
+```
+{: codeblock}
+
+
+# Existing Tracer implementation
+
+To collect traces across your systems, you need to implement the OpenTracing **Tracer** interface. 
+For this guide, you can access a bare-bones **Tracer** implementation for
+the Zipkin server in the form of a user feature for Open Liberty.
+
+This feature is already configured for you in your **pom.xml** and **server.xml** files. 
+It's automatically downloaded and installed into each service when you run a Maven build. 
+You can find the **opentracingZipkin** feature enabled
+in your **server.xml** file.
+
+The **download-maven-plugin** Maven plug-in in your **pom.xml**
+downloads and installs the **opentracingZipkin** feature.s
+
+If you want to install this feature yourself, see
+[Enabling distributed tracing](https://www.ibm.com/docs/en/was-liberty/base?topic=environment-enabling-distributed-tracing)
+in the IBM Knowledge Centre.
+
+
+
+
+# Enabling distributed tracing
+
+The MicroProfile OpenTracing feature enables tracing of all JAX-RS methods by default.
+To further control and customize these traces, use the **@Traced** annotation to enable and disable
+tracing of particular methods. You can also inject a custom **Tracer** object to create and customize spans.
+
+### Enabling distributed tracing without code instrumentation
+
+Because tracing is enabled by default for all JAX-RS methods, you need to enable only the
+**mpOpenTracing** feature and the
+**usr:opentracingZipkin** user feature in the **server.xml** file
+to see some basic traces in Zipkin.
+
+Both of these features are already enabled in the **inventory** and **system** configuration files.
+
+Make sure your services are running. 
+Then, point your browser to any of their endpoints and check your Zipkin server for traces.
+
+
+### Enabling explicit distributed tracing
+
+The **@Traced** annotation defines explicit span creation for specific classes and methods.
+If you place the annotation on a class, then it's automatically applied to all methods within that class.
+If you place the annotation on a method, then it overrides the class annotation if one exists.
+
+Enable tracing of the **list()** non-JAX-RS method by adding the
+**@Traced** annotation to the method.
+
+Replace the **InventoryManager** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+ **File** > **Open** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -229,295 +233,330 @@ Replace the **InventoryResource** class.
 ```
 package io.openliberty.guides.inventory;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
+
+import io.openliberty.guides.inventory.client.SystemClient;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+import io.opentracing.Scope;
+import io.opentracing.Span;
+import io.opentracing.Tracer;
+
+import org.eclipse.microprofile.opentracing.Traced;
+
+@ApplicationScoped
+public class InventoryManager {
+
+    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+    private SystemClient systemClient = new SystemClient();
+    @Inject Tracer tracer;
+
+    public Properties get(String hostname) {
+        systemClient.init(hostname, 9080);
+        Properties properties = systemClient.getProperties();
+        return properties;
+    }
+
+    public void add(String hostname, Properties systemProps) {
+        Properties props = new Properties();
+        props.setProperty("os.name", systemProps.getProperty("os.name"));
+        props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+        SystemData system = new SystemData(hostname, props);
+        if (!systems.contains(system)) {
+            Span span = tracer.buildSpan("add() Span").start();
+            try (Scope childScope = tracer.scopeManager()
+                                          .activate(span)
+                ) {
+                systems.add(system);
+            } finally {
+                span.finish();
+            }
+        }
+    }
+
+    @Traced(value = true, operationName = "InventoryManager.list")
+    public InventoryList list() {
+        return new InventoryList(systems);
+    }
+}
+```
+{: codeblock}
+
+
+The **@Traced** annotation can be configured with the following two parameters:
+
+* The **value=[true|false]** parameter indicates whether a particular class or method is traced. 
+For example, while all JAX-RS methods are traced by default,
+you can disable their tracing by using the **@Traced(false)** annotation. 
+This parameter is set to **true** by default.
+* The **operationName=<Span name>** parameter indicates the name of the span that is assigned to the
+particular method that is traced. If you omit this parameter, the span will be named with the following
+form: **`<package name>.<class name>.<method name>`**. If you use this parameter at a class level, then
+all methods within that class will have the same span name unless they're explicitly overridden by
+another **@Traced** annotation.
+
+Next, run the following command from the **start** directory to recompile your services. 
+```
+mvn compile
+```
+{: codeblock}
+
+
+
+Run the following curl command, check your Zipkin server, and sort the traces by newest first:
+```
+curl http://localhost:9081/inventory/systems
+```
+{: codeblock}
+
+Look for a new trace record that is two spans long with one span for the 
+**listContents()** JAX-RS method in the **InventoryResource**
+class and another span for the **list()** method in the **InventoryManager** class. 
+Verify that these spans have the following names:
+
+* **get:io.openliberty.guides.inventory.inventoryresource.listcontents**
+* **inventorymanager.list**
+
+Now, disable tracing on the **InventoryResource** class by setting **@Traced(false)**
+on the **listContents()** JAX-RS method.
+
+Replace the **InventoryResource** class.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+
+
+
+
+```
+package io.openliberty.guides.inventory;
+
+import java.util.Properties;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.reactivestreams.Publisher;
+import org.eclipse.microprofile.opentracing.Traced;
 
-import io.openliberty.guides.models.PropertyMessage;
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.BackpressureStrategy;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.FlowableEmitter;
+import io.openliberty.guides.inventory.model.InventoryList;
 
-
-@ApplicationScoped
-@Path("/inventory")
+@RequestScoped
+@Path("/systems")
 public class InventoryResource {
 
-    private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
-    private FlowableEmitter<Message<String>> propertyNameEmitter;
+    @Inject InventoryManager manager;
 
-    @Inject
-    private InventoryManager manager;
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
+        Properties props = manager.get(hostname);
+        if (props == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                           .entity("{ \"error\" : \"Unknown hostname or the system service " 
+                           + "may not be running on " + hostname + "\" }")
+                           .build();
+        }
+        manager.add(hostname, props);
+        return Response.ok(props).build();
+    }
     
     @GET
-    @Path("/systems")
+    @Traced(false)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystems() {
-        List<Properties> systems = manager.getSystems()
-                .values()
-                .stream()
-                .collect(Collectors.toList());
-        return Response
-                .status(Response.Status.OK)
-                .entity(systems)
-                .build();
-    }
-
-    @GET
-    @Path("/systems/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystem(@PathParam("hostname") String hostname) {
-        Optional<Properties> system = manager.getSystem(hostname);
-        if (system.isPresent()) {
-            return Response
-                    .status(Response.Status.OK)
-                    .entity(system)
-                    .build();
-        }
-        return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("hostname does not exist.")
-                .build();
-    }
-
-    @PUT
-    @Path("/data")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.TEXT_PLAIN)
-    /* This method sends a message and returns a CompletionStage that doesn't
-        complete until the message is acknowledged. */
-    public CompletionStage<Response> updateSystemProperty(String propertyName) {
-        logger.info("updateSystemProperty: " + propertyName);
-        CompletableFuture<Void> result = new CompletableFuture<>();
-
-        Message<String> message = Message.of(
-                propertyName,
-                () -> {
-                    /* This is the ack callback, which runs when the outgoing
-                        message is acknowledged. After the outgoing message is
-                        acknowledged, complete the "result" CompletableFuture. */
-                    result.complete(null);
-                    /* An ack callback must return a CompletionStage that says
-                        when it's complete. Asynchronous processing isn't necessary 
-                        so a completed CompletionStage is returned to indicate that 
-                        the work here is done. */
-                    return CompletableFuture.completedFuture(null);
-                }
-        );
-
-        propertyNameEmitter.onNext(message);
-        /* Set up what happens when the message is acknowledged and the "result"
-            CompletableFuture is completed. When "result" completes, the Response 
-            object is created with the status code and message. */
-        return result.thenApply(a -> Response
-                .status(Response.Status.OK)
-                .entity("Request successful for the " + propertyName + " property\n")
-                .build());
-    }
-
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response resetSystems() {
-        manager.resetSystems();
-        return Response
-                .status(Response.Status.OK)
-                .build();
-    }
-
-    @Incoming("systemLoad")
-    public void updateStatus(SystemLoad sl)  {
-        String hostname = sl.hostname;
-        if (manager.getSystem(hostname).isPresent()) {
-            manager.updateCpuStatus(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was updated: " + sl);
-        } else {
-            manager.addSystem(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was added: " + sl);
-        }
-    }
-
-    @Incoming("addSystemProperty")
-    public void getPropertyMessage(PropertyMessage pm)  {
-        logger.info("getPropertyMessage: " + pm);
-        String hostId = pm.hostname;
-        if (manager.getSystem(hostId).isPresent()) {
-            manager.updatePropertyMessage(hostId, pm.key, pm.value);
-            logger.info("Host " + hostId + " was updated: " + pm);
-        } else {
-            manager.addSystem(hostId, pm.key, pm.value);
-            logger.info("Host " + hostId + " was added: " + pm);
-        }
-    }
-
-    @Outgoing("requestSystemProperty")
-    public Publisher<Message<String>> sendPropertyName() {
-        Flowable<Message<String>> flowable = Flowable.create(emitter ->
-                this.propertyNameEmitter = emitter, BackpressureStrategy.BUFFER);
-        return flowable;
+    public InventoryList listContents() {
+        return manager.list();
     }
 }
 ```
 {: codeblock}
 
 
-The **sendPropertyName()** method is updated to return a
-**Message<String>** instead of just a **String**. This return type allows the method to set a callback
-that runs after the outgoing message is acknowledged. In addition to updating the **sendPropertyName()**
-method, the **propertyNameEmitter** variable is updated to send a **Message<String>** type.
-
-The **updateSystemProperty()** method now returns a
-**CompletionStage** object wrapped around a Response type. This return type allows for a response
-object to be returned after the outgoing message is acknowledged. The outgoing **message** is created
-with the requested property name as the **payload** and an acknowledgment
-**callback** to execute an action after the message is acknowledged. The method creates a
-**CompletableFuture** variable that returns a **200** response
-code after the variable is completed in the **callback** function.
-
-# Building and running the application
-
-Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
-
-Start your Docker environment. Dockerfiles are provided for you to use.
-
-To build the application, run the Maven **install** and **package** goals from the command-line session in the **start** directory:
-
+Again, run the **mvn compile** command from the **start** directory to recompile your services:
 ```
-mvn -pl models install
-mvn package
-```
-{: codeblock}
-
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
-
-
-Run the following commands to containerize the microservices:
-
-```
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-{: codeblock}
-
-
-Next, use the provided script to start the application in Docker containers. The script creates a network for the
-containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices 
-in the project. For simplicity, the script starts one instance of the **system** service.
-
-
-```
-./scripts/startContainers.sh
+mvn compile
 ```
 {: codeblock}
 
 
 
-# Testing the application
 
-After the application is up and running, you can access the application by making a GET request to the **/systems** 
-endpoint of the **inventory** service.
-
-
-Run the following curl command to access the **inventory** microservice:
+Run the following curl command again, check your Zipkin server, and sort the traces by newest first:
 ```
-curl http://localhost:9085/inventory/systems
+curl http://localhost:9081/inventory/systems
 ```
 {: codeblock}
 
-Look for the CPU **systemLoad** property for all the systems:
+Look for a new trace record that is just one span long for the remaining **list()** 
+method in the **InventoryManager** class. 
+Verify that this span has the following name:
+
+* **inventorymanager.list**
+
+
+
+### Injecting a custom Tracer object
+
+The MicroProfile OpenTracing specification also makes the underlying OpenTracing **Tracer** instance available.
+The configured **Tracer** is accessed by injecting it into a bean by using the
+**@Inject** annotation from the Contexts and Dependency Injections API.
+
+After injecting it, the **Tracer** will be used to build a **Span**.
+The **Span** will be activated and used in a **Scope**.
+
+Replace the **InventoryManager** class.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+
+
+
 
 ```
-{
-   "hostname":"30bec2b63a96",
-   "systemLoad":1.44
+package io.openliberty.guides.inventory;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+
+import io.openliberty.guides.inventory.client.SystemClient;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+import io.opentracing.Scope;
+import io.opentracing.Span;
+import io.opentracing.Tracer;
+
+import org.eclipse.microprofile.opentracing.Traced;
+
+@ApplicationScoped
+public class InventoryManager {
+
+    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+    private SystemClient systemClient = new SystemClient();
+    @Inject Tracer tracer;
+
+    public Properties get(String hostname) {
+        systemClient.init(hostname, 9080);
+        Properties properties = systemClient.getProperties();
+        return properties;
+    }
+
+    public void add(String hostname, Properties systemProps) {
+        Properties props = new Properties();
+        props.setProperty("os.name", systemProps.getProperty("os.name"));
+        props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+        SystemData system = new SystemData(hostname, props);
+        if (!systems.contains(system)) {
+            Span span = tracer.buildSpan("add() Span").start();
+            try (Scope childScope = tracer.scopeManager()
+                                          .activate(span)
+                ) {
+                systems.add(system);
+            } finally {
+                span.finish();
+            }
+        }
+    }
+
+    @Traced(value = true, operationName = "InventoryManager.list")
+    public InventoryList list() {
+        return new InventoryList(systems);
+    }
 }
 ```
-
-The **system** service sends messages to the **inventory** service every 15 seconds. The **inventory** service processes and
-acknowledges each incoming message, ensuring that no **system** message is lost.
-
-
-If you run the curl command again after a while, notice that the CPU **systemLoad** property for the systems changed.
-```
-curl http://localhost:9085/inventory/systems
-```
 {: codeblock}
 
-Make a **PUT** request to the **http://localhost:9085/inventory/data** URL to add the value of a particular system property
-to the set of existing properties. For example, run the following **curl** command:
 
+The **Scope** is used in a **try** block.
+The **try** block that you see here is called a **try-with-resources** statement, 
+meaning that the **Scope** object is closed at the end of the statement.
+Defining custom spans inside such statements is a good practice.
+Otherwise, any exceptions that are thrown before the span is closed will leak the active span.
+The **finish()** method sets the ending timestamp and records the span.
 
+Next, run the following command from the **start** directory to recompile your services. 
 ```
-curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-Type:text/plain"
+mvn compile
 ```
 {: codeblock}
 
 
 
-In this example, the **PUT** request with the **os.name** system property in the request body on the 
-**http://localhost:9085/inventory/data** URL adds the **os.name** system property for your system. 
-The **inventory** service sends a message that contains the requested system property to the **system** service. 
-The **inventory** service then waits until the message is acknowledged before it sends a response back.
 
-You see the following output:
-
+Run the following curl command, check your Zipkin server, and sort the traces by newest first:
 ```
-Request successful for the os.name property
-```
-
-The previous example response is confirmation that the sent request message was acknowledged.
-
-
-Run the following curl command again:
-```
-curl http://localhost:9085/inventory/systems
+curl http://localhost:9081/inventory/systems/localhost
 ```
 {: codeblock}
 
-The **os.name** system property value is now included with the previous values:
+Look for two new trace records, one for the **system** service and one for the **inventory** service. 
+The **system** trace contains one span for the **getProperties()** 
+method in the **SystemResource** class. 
+The **inventory** trace contains two spans. 
+The first span is for the **getPropertiesForHost()** method 
+in the **InventoryResource** class. 
+The second span is the custom span that you created around the **add()** call. 
+Verify that all of these spans have the following names:
+
+The **system** trace:
+
+* **get:io.openliberty.guides.system.systemresource.getproperties**
+
+The **inventory** trace:
+
+* **get:io.openliberty.guides.inventory.inventoryresource.getpropertiesforhost**
+* **add() span**
+
+This simple example shows what you can do with the injected **Tracer** object. 
+More configuration options are available, 
+including setting a timestamp for when a span was created and destroyed.
+However, these options require an implementation of their own, 
+which does not come as a part of the Zipkin user feature that is provided. 
+In a real-world scenario, implement all the OpenTracing interfaces that you consider necessary, 
+which might include the **SpanBuilder** interface. 
+You can use this interface for span creation and customization, including setting timestamps.
+
+
+
+
+
+# Testing the services
+
+No automated tests are provided to verify the correctness of the traces.
+Manually verify these traces by viewing them on the Zipkin server.
+
+A few tests are included for you to test the basic functionality of the services. 
+If a test failure occurs, then you might have introduced a bug into the code. 
+These tests will run automatically as a part of the Maven build process when you run the **mvn install** command. 
+You can also run these tests separately from the build by using the **mvn verify** command,
+but first make sure  the servers are stopped.
+
+When you're done checking out the services, stop the server by using the Maven **liberty:stop-server** goal:
 
 ```
-{
-   "hostname":"30bec2b63a96",
-   "os.name":"Linux",
-   "systemLoad":1.44
-}
+mvn liberty:stop-server
 ```
-
-# Tearing down the environment
-
-Finally, run the following script to stop the application:
+{: codeblock}
 
 
+Stop the Zipkin service by running the following command:
 ```
-./scripts/stopContainers.sh
+docker stop zipkin
 ```
 {: codeblock}
 
@@ -527,43 +566,41 @@ Finally, run the following script to stop the application:
 
 ## Nice Work!
 
-You developed an application by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
+You have just used MicroProfile OpenTracing in Open Liberty to customize how and which traces are delivered to Zipkin.
 
 
+Feel free to try one of the related MicroProfile guides. They demonstrate additional technologies that you
+can learn to expand on top of what you built here.
 
 
 ## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-reactive-messaging-acknowledgment** project by running the following commands:
+Delete the **guide-microprofile-opentracing** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-reactive-messaging-acknowledgment
+rm -fr guide-microprofile-opentracing
 ```
 {: codeblock}
 
+## What did you think of this guide?
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+
 ## What could make this guide better?
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/pulls)
+You can also provide feedback or contribute to this guide from GitHub.
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-opentracing/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-opentracing/pulls)
 
 
 
 
 ## Where to next? 
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest.html)
-* [Streaming updates to a client using Server-Sent Events](https://openliberty.io/guides/reactive-messaging-sse.html)
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
-* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html)
-
-* [View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/apidocs/)
-
-* [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
-
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Enabling distributed tracing in microservices with Jaeger](https://openliberty.io/guides/microprofile-opentracing-jaeger.html)
 
 
 ## Log out of the session
