@@ -352,7 +352,6 @@ public class InventoryManager {
 
         SystemData system = new SystemData(hostname, props);
         if (!systems.contains(system)) {
-            Span span = tracer.buildSpan("add() Span").start();
             try (Scope childScope = tracer.activateSpan(span)) {
                 systems.add(system);
             } finally {
