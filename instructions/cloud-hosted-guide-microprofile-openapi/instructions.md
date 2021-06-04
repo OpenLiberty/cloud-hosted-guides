@@ -586,6 +586,7 @@ touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/mi
 
 
 ```
+mp.openapi.scan.disable = true
 mp.openapi.filter = io.openliberty.guides.inventory.filter.InventoryOASFilter
 ```
 {: codeblock}

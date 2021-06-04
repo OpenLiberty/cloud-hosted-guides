@@ -186,14 +186,25 @@ public class InventoryConfig {
   @ConfigProperty(name = "io_openliberty_guides_port_number")
   private int portNumber;
 
+  @Inject
+  @ConfigProperty(name = "io_openliberty_guides_inventory_inMaintenance")
   private Provider<Boolean> inMaintenance;
 
+  @Inject
+  @ConfigProperty(name = "io_openliberty_guides_email")
+  private Provider<Email> email;
 
   public int getPortNumber() {
     return portNumber;
   }
 
+  public boolean isInMaintenance() {
+    return inMaintenance.get();
+  }
 
+  public Email getEmail() {
+    return email.get();
+  }
 }
 ```
 {: codeblock}
@@ -397,6 +408,9 @@ public class InventoryConfig {
   @ConfigProperty(name = "io_openliberty_guides_inventory_inMaintenance")
   private Provider<Boolean> inMaintenance;
 
+  @Inject
+  @ConfigProperty(name = "io_openliberty_guides_email")
+  private Provider<Email> email;
 
   public int getPortNumber() {
     return portNumber;
@@ -406,6 +420,9 @@ public class InventoryConfig {
     return inMaintenance.get();
   }
 
+  public Email getEmail() {
+    return email.get();
+  }
 }
 ```
 {: codeblock}
