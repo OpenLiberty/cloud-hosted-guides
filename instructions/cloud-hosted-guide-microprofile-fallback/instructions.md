@@ -498,16 +498,6 @@ public class FaultToleranceIT {
         client.close();
         response.close();
     }
-    /**
-     * testFallbackForGet - test for checking if the fallback is being called
-     * correctly 1. Return system properties for a hostname when inventory
-     * service is available. 2. Make System service down and get the system
-     * properties from inventory service when it is down. 3. Check if system
-     * properties for the specific host was returned when the inventory service
-     * was down by: Asserting if the total number of the system properties, when
-     * service is up, is greater than the total number of the system properties
-     * when service is down.
-     */
 
     @Test
     public void testFallbackForGet() throws InterruptedException {
@@ -533,12 +523,6 @@ public class FaultToleranceIT {
         Thread.sleep(3000);
     }
 
-    /**
-     * testFallbackForGet - test for checking if the fallback skip mechanism is working as intended:
-     * 1. Access system properties for the wrong hostname (localhot)
-     * 2. Verify that the response code is 404
-     * 3. Verify that the response text contains an error
-     */
     @Test
     public void testFallbackSkipForGet() {
         response = TestUtils.getResponse(client,
@@ -548,17 +532,11 @@ public class FaultToleranceIT {
                    "Incorrect response body from " + TestUtils.INVENTORY_UNKNOWN_HOST_URL);
     }
 
-    /**
-     * Asserts that the given URL's response code matches the given status code.
-     */
     private void assertResponse(String url, Response response, int status_code) {
         assertEquals(status_code, response.getStatus(),
                 "Incorrect response code from " + url);
     }
 
-    /**
-     * Asserts that the given URL has the correct response code of 200.
-     */
     private void assertResponse(String url, Response response) {
         assertResponse(url, response, 200);
     }
