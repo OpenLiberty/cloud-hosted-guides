@@ -1,7 +1,7 @@
 
-# Welcome to the Testing reactive Java microservices guide!
+# Welcome to the Using Docker containers to develop microservices guide!
 
-Learn how to test reactive Java microservices in true-to-production environments using MicroShed Testing.
+Learn how to use Docker containers for iterative development.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,30 +11,59 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
+
 # What you'll learn
 
-You will learn how to write integration tests for reactive Java microservices and to run the tests in true-to-production
-environments by using containers with [MicroShed Testing](https://microshed.org/microshed-testing/). MicroShed Testing tests
-your containerized application from outside the container so that you are testing the exact same image that runs in
-production. The reactive application in this guide sends and receives messages between services by using an external message
-broker, [Apache Kafka](https://kafka.apache.org/). Using an external message broker enables asynchronous communications
-between services so that requests are non-blocking and decoupled from responses. You can learn more about reactive Java 
-services that use an external message broker to manage communications in the
-[Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+You will learn how to set up, run, and iteratively develop a simple REST application in a container with Open Liberty and Docker.
 
-![Reactive system inventory application](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-service-testing/master/assets/reactive-messaging-system-inventory.png)
+Open Liberty is an application server designed for the cloud.
+It’s small, lightweight, and designed with modern cloud-native application development in mind.
+Open Liberty simplifies the development process for these applications by automating 
+the repetitive actions associated with running applications inside containers,
+like rebuilding the image and stopping and starting the container. 
 
+You'll also learn how to create and run automated tests for your application and container.
 
-*True-to-production integration testing with MicroShed Testing*
+The implementation of the REST application can be found in the
+**start/src** directory. To learn more about this application and how to build it, check out the
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
 
-Tests sometimes pass during the development and testing stages of an application's lifecycle but then fail in production
-because of differences between your development and production environments. While you can create mock objects and custom
-setups to minimize differences between environments, it is difficult to mimic a production system for an application
-that uses an external messaging system. MicroShed Testing addresses this problem by enabling the testing of applications
-in the same Docker containers that you’ll use in production. As a result, your environment remains the same throughout
-the application’s lifecycle – from development, through testing, and into production.
-You can learn more about MicroShed Testing in the
-[Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html) guide.
+### What is Docker?
+
+Docker is a tool that you can use to deploy and run applications with containers. You
+can think of Docker like a virtual machine that runs various applications. However, unlike a typical virtual
+machine, you can run these applications simultaneously on a single system and independent of
+one another.
+
+Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
+
+### What is a container?
+
+A container is a lightweight, stand-alone package that contains a piece of software that is bundled together
+with the entire environment that it needs to run. Containers are small compared to regular images and can
+run on any environment where Docker is set up. Moreover, you can run multiple containers on a single
+machine at the same time in isolation from each other.
+
+Learn more about containers on the [official Docker website](https://www.docker.com/what-container).
+
+### Why use a container to develop?
+
+Consider a scenario where you need to deploy your application on another environment. Your application
+works on your local machine, but when you try to run it on your cloud production environment, it breaks.
+You do some debugging and discover that you built your application with Java 8,
+but this cloud production environment has only Java 11 installed.
+Although this issue is generally easy to fix, 
+you don't want your application to be missing dozens of version-specific dependencies.
+You can develop your application in this cloud environment, but that 
+requires you to rebuild and repackage your application every time you update your code and wish to test it.
+
+To avoid this kind of problem, you can instead choose to develop your application in a container locally,
+bundled together with the entire environment that it needs to run.
+By doing this, you know that at any point in your iterative development process,
+the application can run inside that container.
+This helps avoid any unpleasant surprises when you go to test or deploy your application down the road.
+Containers run quickly and do not have a major impact on the speed of your iterative development.
 
 # Getting started
 
@@ -48,11 +77,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-service-testing.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-docker.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-reactive-service-testing.git
-cd guide-reactive-service-testing
+git clone https://github.com/openliberty/guide-docker.git
+cd guide-docker
 ```
 {: codeblock}
 
@@ -61,438 +90,279 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-### Try what you'll build
 
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the tests, go to the **finish** directory and run the following Maven goal to install the **models** artifact to
-the local Maven repository:
-
-```
-cd finish
-mvn -pl models install
-```
-{: codeblock}
-
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
-
-
-Next, navigate to the **finish/system** directory and run the following Maven goal to build the **system** service and run
-the integration tests on an Open Liberty server in a container:
-
-```
-cd system
-mvn verify
-```
-{: codeblock}
-
-
-You will see the following output:
-
-```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 33.001 s - in it.io.openliberty.guides.system.SystemServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
-
- --- maven-failsafe-plugin:2.22.2:verify (verify) @ system ---
- ------------------------------------------------------------------------
- BUILD SUCCESS
- ------------------------------------------------------------------------
- Total time:  52.817 s
- Finished at: 2020-03-13T16:28:55-04:00
- ------------------------------------------------------------------------
-```
-
-This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty
-must download. If you run the same command again, it will be faster.
-
-You can also try out the **inventory** integration tests by repeating the same commands in the **finish/inventory** directory.
-
-# Testing with the Kafka consumer client
+# Creating the Dockerfile
 
 
 
-
-
-
+The first step to running your application inside of a Docker container is creating a Dockerfile.
+A Dockerfile is a collection of instructions for building a Docker image that can then be run as a
+container. Every Dockerfile begins with a parent or base image on top of which various commands
+are run. For example, you can start your image from scratch and run commands that download and
+install Java, or you can start from an image that already contains a Java installation.
 
 Navigate to the **start** directory to begin.
 
-The example reactive application consists of the **system** and **inventory** microservices. The **system** microservice produces
-messages to the Kafka message broker, and the **inventory** microservice consumes messages from the Kafka message broker.
-You will write integration tests to see how you can use the Kafka consumer and producer client APIs to test each service.
-MicroShed Testing and Kafka Testcontainers have already been included as required test dependencies in your Maven **pom.xml**
-files for the **system** and **inventory** services.
+Create the **Dockerfile**.
 
-The **start** directory contains three directories: the **system** service directory, the **inventory** service directory, and the
-**models** directory. The **models** directory contains the model class that defines the structure of the system load data that is
-used in the application. Run the following Maven goal to install the packaged **models** artifact to the local Maven repository
-so it can be used later by the **system** and **inventory** services:
-
+> Run the following touch command in your terminal
 ```
-mvn -pl models install
+touch /home/project/guide-docker/start/Dockerfile
 ```
 {: codeblock}
 
 
-If you don't have the latest Docker image, pull it by running the following command:
+> Then from the menu of the IDE, select **File** > **Open** > guide-docker/start/Dockerfile
+
+
+
 
 ```
-docker pull openliberty/open-liberty:full-java8-openj9-ubi
+FROM openliberty/open-liberty:full-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="IBM" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-docker" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Docker Guide" \
+  # tag::description[]
+  description="This image contains the system microservice running with the Open Liberty runtime."
+  # end::description[]
+
+USER root
+
+COPY --chown=1001:0 src/main/liberty/config/server.xml /config/
+COPY --chown=1001:0 target/*.war /config/apps/
+USER 1001
 ```
 {: codeblock}
 
 
-With Open Liberty development mode, known as dev mode, you can use MicroShed Testing to run tests on an already running
-Open Liberty server. Navigate to the **start/system** directory.
+The **FROM** instruction initializes a new build stage and indicates the parent image from which your
+image is built. If you don't need a parent image, then use **FROM scratch**, which makes your image a
+base image. 
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+In this case, you’re using the **openliberty/open-liberty:full-java8-openj9-ubi** image as your parent image, 
+which comes with the latest Open Liberty runtime.
+
+The **COPY** instructions are structured as **COPY** 
+**`[--chown=<user>:<group>]`** **`<source>`** **`<destination>`**. 
+They copy local files into the specified destination within your Docker image.
+In this case, the server configuration file that is located at **src/main/liberty/config/server.xml** 
+is copied to the **/config/** destination directory.
+
+### Writing a .dockerignore file
+
+When Docker runs a build, it sends all of the files and directories that are
+located in the same directory as the Dockerfile to its build context, making
+them available for use in instructions like **ADD** and **COPY**. If there are files
+or directories you wish to exclude from the build context, you can add them
+to a **.dockerignore** file. By adding files that aren't nessecary for building your
+image to the **.dockerignore** file, you can decrease the image's size and speed
+up the building process. You may also want to exclude files that contain
+sensitive information, such as a **.git** folder or private keys, from the build context. 
+
+A **.dockerignore** file is available to you in the **start** directory. This file includes 
+the **pom.xml** file and some system files.
+
+
+# Launching Open Liberty in dev mode
+
+The Open Liberty Maven plug-in includes a **devc** goal that builds a Docker image, mounts the required directories,
+binds the required ports, and then runs the application inside of a container.
+This development mode, known as dev mode, also listens for any changes in the application source code or
+configuration and rebuilds the image and restarts the container as necessary.
+
+Build and run the container by running the **devc** goal from the **start** directory:
 
 ```
-mvn liberty:dev
+mvn liberty:devc
 ```
 {: codeblock}
 
 
 After you see the following message, your application server in dev mode is ready:
-
 ```
 ************************************************************************
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
+Open another command-line session and run the following command to make sure that your
+container is running and didn’t crash:
 
-Now you can add your test files.
-
-The running **system** service searches for a Kafka topic to push its messages to. Because there are not yet any running Kafka
-services, the **system** service throws errors. Later in the guide, you will write and run tests that start a Kafka
-Testcontainer that can communicate with the **system** service. This will resolve the errors that you see now.
-
-### Configuring your containers
-
-Create a class to externalize your container configurations.
-
-Create the **AppContainerConfig** class.
-
-> Run the following touch command in your terminal
 ```
-touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/AppContainerConfig.java
+docker ps 
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/AppContainerConfig.java
-
-
-
+You should see something similar to the following output:
 
 ```
-package it.io.openliberty.guides.system;
+CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS              PORTS                                                                    NAMES
+ee2daf0b33e1        guide-docker-dev-mode   "/opt/ol/helpers/run…"   2 minutes ago       Up 2 minutes        0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
+```
 
-import java.time.Duration;
 
-import org.microshed.testing.SharedContainerConfiguration;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.junit.jupiter.Container;
+To view a full list of all available containers, you can run the **docker ps -a** command.
 
-public class AppContainerConfig implements SharedContainerConfiguration {
 
-    private static Network network = Network.newNetwork();
+If your server runs without problems, run the following `curl` command to get a JSON file
+that contains the system properties of the JVM in your container.
 
-    @Container
-    public static KafkaContainer kafka = new KafkaContainer()
-                    .withNetwork(network);
-
-    @Container
-    public static ApplicationContainer system = new ApplicationContainer()
-                    .withAppContextRoot("/")
-                    .withExposedPorts(9083)
-                    .withReadinessPath("/health/ready")
-                    .withNetwork(network)
-                    .withStartupTimeout(Duration.ofMinutes(3))
-                    .dependsOn(kafka);
-}
+```
+curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
 
-The **AppContainerConfig** class externalizes test container setup and configuration, so
-you can use the same application containers across multiple tests.The **@Container**
-annotation denotes an application container that is started up and used in the tests.
-
-Two containers are used for testing the **system** service: the **system** container, which you built,
-and the **kafka** container, which receives messages from the **system** service.
-
-The **dependsOn()** method specifies that the **system** service container must wait until the **kafka**
-container is ready before it can start.
-
-### Testing your containers
-
-Now you can start writing the test that uses the configured containers.
+# Updating the application while the container is running
 
 
-Create the **SystemServiceIT** class.
+With your container running, make the following update to the source code:
 
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
-```
-{: codeblock}
+Update the **PropertiesResource** class.
 
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 
 
 
 ```
-package it.io.openliberty.guides.system;
+package io.openliberty.guides.rest;
 
-import static org.junit.Assert.assertNotNull;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.GET;
+import javax.ws.rs.Produces;
 
-import java.time.Duration;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.Json;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.kafka.KafkaConsumerClient;
+@Path("properties-new")
+public class PropertiesResource {
 
-import io.openliberty.guides.models.SystemLoad;
-import io.openliberty.guides.models.SystemLoad.SystemLoadDeserializer;
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject getProperties() {
 
-@MicroShedTest
-@SharedContainerConfig(AppContainerConfig.class)
-public class SystemServiceIT {
+        JsonObjectBuilder builder = Json.createObjectBuilder();
 
-    @KafkaConsumerClient(valueDeserializer = SystemLoadDeserializer.class,
-                         groupId = "system-load-status",
-                         topics = "system.load",
-                         properties = ConsumerConfig.AUTO_OFFSET_RESET_CONFIG
-                                      + "=earliest")
-    public static KafkaConsumer<String, SystemLoad> consumer;
+        System.getProperties()
+              .entrySet()
+              .stream()
+              .forEach(entry -> builder.add((String)entry.getKey(),
+                                            (String)entry.getValue()));
 
-    @Test
-    public void testCpuStatus() {
-        ConsumerRecords<String, SystemLoad> records =
-                consumer.poll(Duration.ofMillis(30 * 1000));
-        System.out.println("Polled " + records.count() + " records from Kafka:");
-
-        for (ConsumerRecord<String, SystemLoad> record : records) {
-            SystemLoad sl = record.value();
-            System.out.println(sl);
-            assertNotNull(sl.hostname);
-            assertNotNull(sl.loadAverage);
-        }
-
-        consumer.commitAsync();
+       return builder.build();
     }
 }
 ```
 {: codeblock}
 
 
+Change the endpoint of your application from **properties** to **properties-new** by changing the **@Path**
+annotation to **"properties-new"**.
 
-The test uses the **KafkaConsumer** client API and
-is configured by using the **@KafkaConsumerClient** annotation. The consumer client is configured
-to consume messages from the **system.load** topic in the **kafka** container.
-To learn more about Kafka APIs and how to use them, check out the
-[official Kafka Documentation](https://kafka.apache.org/documentation/#api).
 
-To consume messages from a stream, the messages need to be deserialized from bytes. Kafka has its own default deserializer,
-but a custom deserializer is provided for you. The deserializer is configured to the consumer’s
-**valueDeserializer** and is implemented in the
-**SystemLoad** class.
-
-The running **system** service container produces messages to the **systemLoad** Kafka topic,
-as denoted by the **@Outgoing** annotation. The **testCpuStatus()**
-test method **polls** a record from Kafka every 3 seconds until the timeout limit. It then
-**verifies** that the record polled matches the expected record.
-
-### Running the tests
-
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
-
-You will see the following output:
+After you make the file changes, Open Liberty automatically updates the application.
+To see the changes reflected in the application, run the following command in a terminal:
 
 ```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.674 s - in it.io.openliberty.guides.system.SystemServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
- Integration tests finished.
-```
-
-After you are finished running tests, stop the Open Liberty server by typing `q` in the command-line session where you ran
-the server, and then press the **enter/return** key.
-
-If you aren't running in dev mode, you can run the tests by running the following command:
-
-```
-mvn verify
+curl http://localhost:9080/system/properties-new
 ```
 {: codeblock}
 
 
-You will see the following output:
+# Testing the container 
+
+
+
+You can test this service manually by starting a server and running the following `curl` command:
 
 ```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 33.001 s - in it.io.openliberty.guides.system.SystemServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
-
- --- maven-failsafe-plugin:2.22.2:verify (verify) @ system ---
- ------------------------------------------------------------------------
- BUILD SUCCESS
- ------------------------------------------------------------------------
- Total time:  52.817 s
- Finished at: 2020-03-13T16:28:55-04:00
- ------------------------------------------------------------------------
-```
-
-# Testing with the Kafka producer client
-
-
-
-
-The **inventory** service is tested in the same way as the **system** service. The only difference is that the **inventory** service
-consumes messages, which means that tests are written to use the Kafka producer client.
-
-### Configuring your containers
-
-Navigate to the **start/inventory** directory.
-
-The **AppContainerConfig** class is provided, and it is configured in the same way as it was for the **system** service. The two
-containers that are configured for use in the **inventory** service integration test are the **kafka** and **inventory** containers.
-
-### Testing your containers
-
-As you did with the **system** service, run Open Liberty in dev mode to listen for file changes:
-
-```
-mvn liberty:dev
+curl http://localhost:9080/system/properties-new
 ```
 {: codeblock}
 
+However, automated tests are a much better approach because they trigger a failure if a change introduces a bug.
+JUnit and the JAX-RS Client API provide a simple environment to test the application. 
+You can write tests for the individual units of code outside of a running application server,
+or they can be written to call the application server directly.
+In this example, you will create a test that calls the application server directly.
 
-Now you can create your integrated test.
-
-Create the **InventoryServiceIT** class.
+Create the **EndpointIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
+touch /home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
 
 
 
 ```
-package it.io.openliberty.guides.inventory;
+package it.io.openliberty.guides.rest;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Properties;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import javax.ws.rs.core.GenericType;
+import org.junit.jupiter.api.Test;
+
+import javax.json.JsonObject;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.kafka.KafkaProducerClient;
+import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
 
-import io.openliberty.guides.inventory.InventoryResource;
-import io.openliberty.guides.models.SystemLoad;
-import io.openliberty.guides.models.SystemLoad.SystemLoadSerializer;
-
-@MicroShedTest
-@SharedContainerConfig(AppContainerConfig.class)
-@TestMethodOrder(OrderAnnotation.class)
-public class InventoryServiceIT {
-
-    @RESTClient
-    public static InventoryResource inventoryResource;
-
-    @KafkaProducerClient(valueSerializer = SystemLoadSerializer.class)
-    public static KafkaProducer<String, SystemLoad> producer;
-
-    @AfterAll
-    public static void cleanup() {
-        inventoryResource.resetSystems();
-    }
+public class EndpointIT {
 
     @Test
-    public void testCpuUsage() throws InterruptedException {
-        SystemLoad sl = new SystemLoad("localhost", 1.1);
-        producer.send(new ProducerRecord<String, SystemLoad>("system.load", sl));
-        Thread.sleep(5000);
-        Response response = inventoryResource.getSystems();
-        List<Properties> systems =
-                response.readEntity(new GenericType<List<Properties>>() { });
-        Assertions.assertEquals(200, response.getStatus(),
-                "Response should be 200");
-        Assertions.assertEquals(systems.size(), 1);
-        for (Properties system : systems) {
-            Assertions.assertEquals(sl.hostname, system.get("hostname"),
-                    "Hostname doesn't match!");
-            BigDecimal systemLoad = (BigDecimal) system.get("systemLoad");
-            Assertions.assertEquals(sl.loadAverage, systemLoad.doubleValue(),
-                    "CPU load doesn't match!");
-        }
+    public void testGetProperties() {
+        String port = System.getProperty("liberty.test.port");
+        String url = "http://localhost:" + port + "/";
+
+        Client client = ClientBuilder.newClient();
+        client.register(JsrJsonpProvider.class);
+
+        WebTarget target = client.target(url + "system/properties-new");
+        Response response = target.request().get();
+        JsonObject obj = response.readEntity(JsonObject.class);
+
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+
+        assertEquals("/opt/ol/wlp/output/defaultServer/",
+                     obj.getString("server.output.dir"),
+                     "The system property for the server output directory should match "
+                     + "the Open Liberty container image.");
+
+        response.close();
     }
 }
 ```
 {: codeblock}
 
 
-The **InventoryServiceIT** class uses the **KafkaProducer**
-client API to produce messages in the test environment for the **inventory** service container to consume. The
-**@KafkaProducerClient** annotation configures the producer to use the custom serializer provided in
-the **SystemLoad** class. The **@KafkaProducerClient** annotation
-doesn't include a topic that the client produces messages to because it has the flexibility to produce messages to any topic.
-In this example, it is configured to produce messages to the **system.load** topic.
-
-The **testCpuUsage** test method produces a message to Kafka and then
-**verifies** that the response from the **inventory** service matches what is expected.
-
-The **@RESTClient** annotation injects a REST client proxy of the
-**InventoryResource** class, which allows HTTP requests to be made to the running application.
-To learn more about REST clients, check out the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html)
-guide.
+This test makes a request to the **/system/properties-new** endpoint and checks to
+make sure that the response has a valid status code, and that the information in
+the response is correct. 
 
 ### Running the tests
 
@@ -501,79 +371,86 @@ Because you started Open Liberty in dev mode, press the **enter/return** key to 
 You will see the following output:
 
 ```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.564 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.rest.EndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
 
- Results:
+Results :
 
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
- Integration tests finished.
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-After you are finished running tests, stop the Open Liberty server by typing `q` in the command-line session where you ran
-the server, and then press the **enter/return** key.
+When you are finished, press **CTRL+C** in the session that the dev mode was
+started from to stop and remove the container.
 
-If you aren't running in dev mode, you can run the tests by running the following command:
+
+# Starting dev mode with run options
+
+Another useful feature of dev mode with a container is the ability to pass additional options
+to the **docker run** command. You can do this by adding the **`<dockerRunOpts>`** tag to the **pom.xml** file under 
+the **`<configuration>`** tag of the Liberty Maven Plugin. Here is an example of an environment variable 
+being passed in:
 
 ```
-mvn verify
+<groupId>io.openliberty.tools</groupId>
+<artifactId>liberty-maven-plugin</artifactId>
+<version>3.3.4</version>
+<configuration>
+    <dockerRunOpts>-e ENV_VAR=exampleValue</dockerRunOpts>
+</configuration>
 ```
+
+If the Dockerfile isn't located in the directory that the **devc** goal is being
+run from, you can add the **`<dockerfile>`** tag to specify the location. Using this
+parameter sets the context for building the Docker image to the directory that
+contains this file.
+
+Additionally, both of these options can be passed from the command line when running the **devc** goal by
+adding `-D` as such:
+
+```
+mvn liberty:devc \
+-DdockerRunOpts="-e ENV_VAR=exampleValue" \
 {: codeblock}
 
-
-You will see the following output:
-
-```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 42.345 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
-
- --- maven-failsafe-plugin:2.22.2:verify (verify) @ inventory ---
- ------------------------------------------------------------------------
- BUILD SUCCESS
- ------------------------------------------------------------------------
- Total time:  48.213 s
- Finished at: 2020-03-13T16:43:34-04:00
- ------------------------------------------------------------------------
+-Ddockerfile="./path/to/file"
 ```
 
-# Summary
-
-## Nice Work!
-
-You just tested two reactive Java microservices using MicroShed Testing.
-
-
+To learn more about dev mode with a container and its different
+features, check out the  
+https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode[Documentation].
 
 
 ## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-reactive-service-testing** project by running the following commands:
+Delete the **guide-docker** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-reactive-service-testing
+rm -fr guide-docker
 ```
 {: codeblock}
 
+## What did you think of this guide?
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+
 ## What could make this guide better?
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-reactive-service-testing/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-reactive-service-testing/pulls)
+You can also provide feedback or contribute to this guide from GitHub.
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-docker/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-docker/pulls)
 
 
 
 
 ## Where to next? 
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
-* [Visit the official MicroShed Testing website](https://microshed.org/microshed-testing/)
-
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
 
 
 ## Log out of the session
