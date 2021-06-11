@@ -44,11 +44,38 @@ The **inventory** microservice retrieves specific properties from the **system**
 You will learn how to use the Pact framework to write contract tests for the **inventory** microservice
 that will then be verified by the **system** microservice.
 
+# Getting started
+
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
+
+Run the following command to navigate to the **/home/project** directory:
+
+```
+cd /home/project
+```
+{: codeblock}
+
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-contract-testing.git) and use the projects that are provided inside:
+
+```
+git clone https://github.com/openliberty/guide-contract-testing.git
+cd guide-contract-testing
+```
+{: codeblock}
+
+
+The **start** directory contains the starting project that you will build upon.
+
+The **finish** directory contains the finished project that you will build.
+
+### Starting the Pact Broker
+
+Run the following command to start the Pact Broker:
 ```
 docker-compose -f "pact-broker/docker-compose.yml" up -d --build
 ```
 {: codeblock}
-
 
 
 When the Pact Broker is running, you'll see the following output:
