@@ -1,7 +1,7 @@
 
-# Welcome to the Enabling distributed tracing in microservices with Jaeger guide!
+# Welcome to the Checking the health of microservices on Kubernetes guide!
 
-Explore how to enable and customize tracing of JAX-RS and non-JAX-RS methods by using MicroProfile OpenTracing and Jaeger.
+Learn how to check the health of microservices on Kubernetes by setting up readiness and liveness probes to inspect MicroProfile Health Check endpoints.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -13,41 +13,34 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 # What you'll learn
 
-You will learn how to enable automatic tracing for JAX-RS methods and create custom tracers
-for non-JAX-RS methods by using MicroProfile OpenTracing.
+You will learn how to create health check endpoints for your microservices. Then, you 
+will configure Kubernetes to use these endpoints to keep your microservices running smoothly.
 
-OpenTracing is a standard API for instrumenting microservices for distributed tracing. Distributed
-tracing helps troubleshoot microservices by examining and logging requests as they propagate through a
-distributed system, allowing developers to tackle the otherwise difficult task of debugging these requests.
-Without a distributed tracing system in place, analyzing the workflows of operations becomes difficult, particularly in
-regard to pinpointing when and by whom a request is received or when a response is sent back.
+MicroProfile Health allows services to report their health, and it publishes the overall 
+health status to defined endpoints. If a service reports **UP**, then it's available. If 
+the service reports **DOWN**, then it's unavailable. MicroProfile Health reports an individual 
+service status at the endpoint and indicates the overall status as **UP** if all the services 
+are **UP**. A service orchestrator can then use the health statuses to make decisions.
 
-**Tracer** and **Span** are two critical types in the OpenTracing specification.
-The **Span** type is the primary building block of a distributed trace, representing an individual unit of work done
-in a distributed system.
-The **Trace** type in OpenTracing can be thought of as a directed acyclic graph (DAG) of **Spans**, where the edges between
-**Spans** are called References.
-The **Tracer** interface creates **Spans** and **Traces** and understands how to serialize and deserialize their metadata
-across process boundaries.
+Kubernetes provides liveness and readiness probes that are used to check the health of your 
+containers. These probes can check certain files in your containers, check a TCP socket, 
+or make HTTP requests. MicroProfile Health exposes readiness and liveness endpoints on 
+your microservices. Kubernetes polls these endpoints as specified by the probes to react 
+appropriately to any change in the microservice's status. Read the 
+[Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) 
+guide to learn more about MicroProfile Health.
 
-MicroProfile OpenTracing enables distributed tracing in microservices. The MicroProfile OpenTracing specification
-doesn’t address the problem of defining, implementing, or configuring the underlying distributed tracing system.
-Rather, the specification makes it easier to instrument services with distributed tracing given an existing distributed
-tracing system.
+The two microservices you will work with are called **system** and **inventory**. The **system** microservice
+returns the JVM system properties of the running container and it returns the pod's name in the HTTP header
+making replicas easy to distinguish from each other. The **inventory** microservice
+adds the properties from the **system** microservice to the inventory. This demonstrates
+how communication can be established between pods inside a cluster.
 
-[Jaeger](https://www.jaegertracing.io/) is an open source distributed tracing system that is compatible with the
-OpenTracing specification.
-Jaeger also provides an implementation of **Tracer** in the client package that is compatible with MicroProfile
-OpenTracing.
 
-You’ll configure the provided **inventory** and **system** services to use Jaeger for distributed tracing with MicroProfile
-OpenTracing.
-You’ll run these services in two separate JVMs made of two server instances to demonstrate tracing in a distributed
-environment.
-If all the components were run on a single server, then any logging software would be sufficient.
+
+
 
 # Getting started
 
@@ -61,11 +54,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-opentracing-jaeger.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-health.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-opentracing-jaeger.git
-cd guide-microprofile-opentracing-jaeger
+git clone https://github.com/openliberty/guide-kubernetes-microprofile-health.git
+cd guide-kubernetes-microprofile-health
 ```
 {: codeblock}
 
@@ -74,237 +67,61 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-### Try what you'll build
 
-Run the following docker command to start Jaeger server:
-```
-docker run -d --name jaeger \
-  -e COLLECTOR_ZIPKIN_HTTP_PORT=9411 \
-  -p 5775:5775/udp \
-  -p 6831:6831/udp \
-  -p 6832:6832/udp \
-  -p 5778:5778 \
-  -p 16686:16686 \
-  -p 14268:14268 \
-  -p 14250:14250 \
-  -p 9411:9411 \
-  jaegertracing/all-in-one:1.22
-```
-{: codeblock}
+# Starting and preparing your cluster for deployment
 
-You can find information about the Jaeger server and instructions for starting the all-in-one executable file in the
-[Jaeger documentation](https://www.jaegertracing.io/docs/1.22/getting-started/#all-in-one).
-
-Before you proceed, make sure that your Jaeger server is up and running. 
-Select **Launch Application** from the menu of the IDE, 
-type in **16686** to specify the port number for the Jaeger service, and click the **OK** button. 
-Jaeger can be found at the **`https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
-where **accountname** is your account name.
-
-The **finish** directory in the root of this guide contains the finished application.
-Give it a try before you proceed.
+Start your Kubernetes cluster.
 
 
-Navigate to the **finish/inventory** directory.
-Run the following Maven goal to build the **inventory** service and deploy it to Open Liberty:
-```
-cd /home/project/guide-microprofile-opentracing-jaeger/finish/inventory
-mvn liberty:run
-```
-{: codeblock}
-
-Open another command-line session and navigate to the **finish/system** directory.
-Run the following Maven goal to build the **system** service and deploy it to Open Liberty:
-```
-cd /home/project/guide-microprofile-opentracing-jaeger/finish/system
-mvn liberty:run
-```
-{: codeblock}
-
-After you see the following message in both command-line sessions, both of your services are ready:
+Run the following command from a command-line session:
 
 ```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-Open another command-line session and run the following curl command from the terminal:
-```
-curl http://localhost:9081/inventory/systems/localhost
-```
-{: codeblock}
-
-When you visit this endpoint, you make two GET HTTP requests, one to the **system** service and one to the **inventory**
-service. Both of these requests are configured to be traced, so a new trace is recorded in Jaeger.
-
-To view the traces, go to the **`https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai`** URL.
-You can view the traces for the inventory or system services under the **Search** tab.
-Select the services in the **Select a service** menu and click the **Find Traces** button at the end of the section.
-
-If you only see the **jaeger-query** option listed in the dropdown, 
-you might need to wait a little longer and refresh the page to see the application services.
-
-View the traces for **inventory**. You'll see the following trace:
-
-![Trace result](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/tracelist.png)
-
-
-The trace has four spans, three from inventory and one from system.
-Click the trace to view its details.
-Under **Service & Operation**, you see the spans in this trace.
-You can inspect each span by clicking it to reveal more detailed information, such as the time at which a request was
-received and the time at which a response was sent back.
-
-Verify that there are three spans from **inventory** and one span from **system**:
-
-![Finished application's trace](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/trace01.png)
-
-
-After you’re finished reviewing the application, stop the Open Liberty servers by pressing **CTRL+C** in the command-line
-sessions where you ran the system and inventory services.
-Alternatively, you can run the following goals from the **finish** directory in another command-line session:
-
-
-```
-cd /home/project/guide-microprofile-opentracing-jaeger/finish
-mvn -pl system liberty:stop
-mvn -pl inventory liberty:stop
-```
-{: codeblock}
-
-# Building the application
-
-You need to start the services to see basic traces appear in Jaeger.
-
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically
-recompiles and deploys your updates whenever you save a new change.
-
-Open a command-line session and navigate to the **start/inventory** directory.
-Run the following Maven goal to start the **inventory** service in dev mode:
-
-```
-cd /home/project/guide-microprofile-opentracing-jaeger/start/inventory
-mvn liberty:dev
+minikube start
 ```
 {: codeblock}
 
 
-Open a command-line session and navigate to the **start/system** directory.
-Run the following Maven goal to start the **system** service in dev mode:
-
-```
-cd /home/project/guide-microprofile-opentracing-jaeger/start/system
-mvn liberty:dev
-```
-{: codeblock}
-
-After you see the following message, your application server in dev mode is ready:
-```
-************************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes.
-Open another command-line session to continue, or open the project in your editor.
 
 
-When the servers start, you can find the **system** service by running the following curl command:
-```
-curl http://localhost:9080/system/properties
-```
-{: codeblock}
 
-and the **inventory** service by running the following curl command:
+Next, validate that you have a healthy Kubernetes environment by running the following command from the active command-line session.
 ```
-curl http://localhost:9081/inventory/systems
+kubectl get nodes
 ```
 {: codeblock}
 
 
-# Enabling existing Tracer implementation
+This command should return a **Ready** status for the master node.
 
-To collect traces across your systems, you need to implement the OpenTracing **Tracer**
-interface.
-Jaeger provides a **Tracer** implementation for the Jaeger server in the **jaeger-client** package.
 
-This package is already added as a dependency for you in your **pom.xml** file.
-It's downloaded and installed automatically into each service when you run a Maven build.
-
-### Configuring the Jaeger client
-
-In a development environment, it is important that every trace is sampled.
-When every trace is sampled, all spans are available in the Jaeger UI.
-
-The **`JAEGER_SAMPLER_TYPE`** and **`JAEGER_SAMPLER_TYPE`** environment variables are set as
-Open Liberty **configuration properties** to sample all traces.
-
-The **const** value for **`JAEGER_SAMPLER_TYPE`** environment variable configures the Jaeger client sampler to make the same
-sampling decision for each trace, based on the sampler parameter.
-If the sampler parameter is 1, it samples all traces.
-If the sampler parameter is 0, it doesn't sample any traces.
-
-The **1** value for **`JAEGER_SAMPLER_PARAM`** variable configures the Jaeger sampler to sample
-all traces.
-
-In a production environment, this configuration might cause a lot of overhead on the application and a lower sampling
-rate can be used. The different values for client sampling configuration can be found in the
-[sampling documentation](https://www.jaegertracing.io/docs/1.18/sampling/#client-sampling-configuration).
-
-Similarly, in a production environment, Jaeger might not be running in the same host as the application.
-In this case, set the hostname of the Jaeger server to the **`JAEGER_AGENT_HOST`** environment variable and set the port
-that communicates with the Jaeger host to the **`JAEGER_AGENT_PORT`** environment variable.
-
-You can view the configuration environment variables at the
-[Jaeger Java client documentation](https://github.com/jaegertracing/jaeger-client-java/tree/master/jaeger-core#configuration-via-environment).
+Run the following command to configure the Docker CLI to use Minikube's Docker daemon.
+After you run this command, you will be able to interact with Minikube's Docker daemon and build new
+images directly to it from your host machine:
+```
+eval $(minikube docker-env)
+```
+{: codeblock}
 
 
 
+# Adding health checks to the inventory microservice
 
-# Enabling and disabling distributed tracing
+Navigate to **start** directory to begin.
 
-The [MicroProfile OpenTracing feature](https://github.com/eclipse/microprofile-opentracing) enables tracing of all JAX-RS methods by default.
-To further control and customize these traces, use the **@Traced** annotation to enable and disable
-tracing of particular methods. You can also inject a custom **Tracer** object to create and customize spans.
+The **inventory** microservice should be healthy only when **system** is available. To add this 
+check to the **/health/ready** endpoint, you will create a class that is annotated with the
+**@Readiness** annotation and implements the **HealthCheck** interface.
 
-This feature is already enabled in the **inventory** and **system** configuration files.
+Create the **InventoryReadinessCheck** class.
 
-### Enabling distributed tracing without code instrumentation
-
-Because tracing of all JAX-RS methods is enabled by default, you only need to enable the
-**MicroProfile OpenTracing** feature in the **server.xml** file
-to see some basic traces in Jaeger.
-
-The OpenTracing API is exposed as a third-party API in Open Liberty.
-To add the visibility of OpenTracing APIs to the application, add **third-party** to the types of API packages
-that this class loader supports.
-Instead of explicitly configuring a list of API packages that includes **third-party**, set the **+third-party** value
-to the **apiTypeVisibility** attribute in the **`<classLoader />`** configuration.
-This configuration adds **third-party** to the default list of API package types that are supported.
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+```
+{: codeblock}
 
 
-Make sure that your services are running. Then, point your browser to any of the services' endpoints and
-check your Jaeger server for traces.
-
-### Enabling explicit distributed tracing
-
-Use the **@Traced** annotation to define explicit span creation for specific classes and methods.
-If you place the annotation on a class, then the annotation is automatically applied to all methods within that class.
-If you place the annotation on a method, then the annotation overrides the class annotation if one exists.
-
-The **@Traced** annotation can be configured with the following two parameters:
-
-* The **value=[true|false]** parameter indicates whether a particular class or method is
-traced. For example, while all JAX-RS methods are traced by default, you can disable their tracing by
-using the **@Traced(false)** annotation. This parameter is set to **true** by default.
-* The **operationName=<Span name>** parameter indicates the name of the span that is assigned to the method that is traced.
-If you omit this parameter, the span is named with the **`<package name>.<class name>.<method name>`** format.
-If you use this parameter at a class level, then all methods within that class have the same span name unless they are
-explicitly overridden by another **@Traced** annotation.
-
-Update the **InventoryManager** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
 
 
 
@@ -312,104 +129,71 @@ Update the **InventoryManager** class.
 ```
 package io.openliberty.guides.inventory;
 
-import java.util.ArrayList;
-import java.util.Properties;
-import io.openliberty.guides.inventory.client.SystemClient;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.util.List;
-import java.util.Collections;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.opentracing.Traced;
-import io.opentracing.Scope;
-import io.opentracing.Tracer;
-import io.opentracing.Span;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
 
+@Readiness
 @ApplicationScoped
-public class InventoryManager {
+public class InventoryReadinessCheck implements HealthCheck {
+
+    private static final String READINESS_CHECK = InventoryResource.class
+                                                .getSimpleName()
+                                                + " Readiness Check";
 
     @Inject
-    @ConfigProperty(name = "system.http.port")
-    int SYSTEM_PORT;
+    @ConfigProperty(name = "SYS_APP_HOSTNAME")
+    private String hostname;
 
-    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-    private SystemClient systemClient = new SystemClient();
-    @Inject Tracer tracer;
-
-    public Properties get(String hostname) {
-        systemClient.init(hostname, SYSTEM_PORT);
-        Properties properties = systemClient.getProperties();
-        return properties;
-    }
-
-    public void add(String hostname, Properties systemProps) {
-        Properties props = new Properties();
-        props.setProperty("os.name", systemProps.getProperty("os.name"));
-        props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-        SystemData system = new SystemData(hostname, props);
-        if (!systems.contains(system)) {
-            Span span = tracer.buildSpan("add() Span").start();
-            try (Scope childScope = tracer.activateSpan(span)) {
-                systems.add(system);
-            } finally {
-                span.finish();
-            }
+    public HealthCheckResponse call() {
+        if (isSystemServiceReachable()) {
+            return HealthCheckResponse.up(READINESS_CHECK);
+        } else {
+            return HealthCheckResponse.down(READINESS_CHECK);
         }
     }
 
-    @Traced(operationName = "InventoryManager.list")
-    public InventoryList list() {
-        return new InventoryList(systems);
-    }
+    private boolean isSystemServiceReachable() {
+        try {
+            Client client = ClientBuilder.newClient();
+            client
+                .target("http://" + hostname + ":9080/system/properties")
+                .request()
+                .post(null);
 
-    int clear() {
-        int propertiesClearedCount = systems.size();
-        systems.clear();
-        return propertiesClearedCount;
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
     }
 }
 ```
 {: codeblock}
 
 
-Enable tracing of the **list()** non-JAX-RS method by updating **@Traced** as shown.
 
+This health check verifies that the **system** microservice is available at 
+**http://system-service:9080/**. The **system-service** host name is only accessible from 
+inside the cluster, you can't access it yourself. If it's available, then it returns an 
+**UP** status. Similarly, if it's unavailable then it returns a **DOWN** status. When the 
+status is **DOWN**, the microservice is considered to be unhealthy.
 
-Run the following curl command:
+Create the **InventoryLivenessCheck** class.
+
+> Run the following touch command in your terminal
 ```
-curl http://localhost:9081/inventory/systems
+touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
 ```
 {: codeblock}
 
-Check your Jaeger server at the **`https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai`** URL.
-If you have the Jaeger UI open from a previous step, refresh the page.
-Select the **inventory** traces and click the **Find Traces** button.
 
-You see a new trace record that is two spans long. One span is for the
-**listContents()** JAX-RS method in the
-**InventoryResource** class, and the other span is for the **list()**
-method in the **InventoryManager** class.
-
-Verify that you see the following spans:
-
-![Explicit trace span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/trace02.png)
-
-
-
-
-### Disable automatic distributed tracing
-
-You can use the **@Traced** annotation with a value of **false** to disable automatic distributed tracing of JAX-RS
-methods.
-
-Update the **InventoryResource** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
 
 
 
@@ -417,235 +201,523 @@ Update the **InventoryResource** class.
 ```
 package io.openliberty.guides.inventory;
 
-import java.util.Properties;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import org.eclipse.microprofile.opentracing.Traced;
-
-import io.openliberty.guides.inventory.model.InventoryList;
-
-@RequestScoped
-@Path("/systems")
-public class InventoryResource {
-
-    @Inject InventoryManager manager;
-
-    @GET
-    @Path("/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
-        Properties props = manager.get(hostname);
-        if (props == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                           .entity("{ \"error\" : \"Unknown hostname or the system service " 
-                           + "may not be running on " + hostname + "\" }")
-                           .build();
-        }
-        manager.add(hostname, props);
-        return Response.ok(props).build();
-    }
-    
-    @GET
-    @Traced(false)
-    @Produces(MediaType.APPLICATION_JSON)
-    public InventoryList listContents() {
-        return manager.list();
-    }
-
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response clearContents() {
-        int cleared = manager.clear();
-
-        if (cleared == 0) {
-            return Response.status(Response.Status.NOT_MODIFIED)
-                    .build();
-        }
-        return Response.status(Response.Status.OK)
-                .build();
-    }
-}
-```
-{: codeblock}
-
-
-Disable tracing of the **listContents()** JAX-RS method
-by setting **@Traced(false)**.
-
-
-Run the following curl command:
-```
-curl http://localhost:9081/inventory/systems
-```
-{: codeblock}
-
-Check your Jaeger server at the **`https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai`** URL.
-If you have the Jaeger UI open from a previous step, refresh the page.
-Select the **inventory** traces and click the **Find Traces** button.
-You see a new trace record that is just one span long for the remaining **list()** method in the
-**InventoryManager** class.
-
-Verify that you see the following span:
-
-![Disable trace span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/trace03.png)
-
-
-
-
-### Injecting a custom Tracer object
-
-The MicroProfile OpenTracing specification also makes the underlying OpenTracing **Tracer** instance
-available for use. You can access the configured **Tracer** by injecting it into a bean by using the
-**@Inject** annotation from the Contexts and Dependency Injections API.
-
-Inject the **Tracer** object into the **inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java** file.
-Then, use it to define a new child scope in the **add()** call.
-
-Replace the **InventoryManager** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
-
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import java.util.ArrayList;
-import java.util.Properties;
-import io.openliberty.guides.inventory.client.SystemClient;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import java.util.List;
-import java.util.Collections;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.opentracing.Traced;
-import io.opentracing.Scope;
-import io.opentracing.Tracer;
-import io.opentracing.Span;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
 
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
 @ApplicationScoped
-public class InventoryManager {
+public class InventoryLivenessCheck implements HealthCheck {
 
-    @Inject
-    @ConfigProperty(name = "system.http.port")
-    int SYSTEM_PORT;
+  @Override
+  public HealthCheckResponse call() {
+      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+      long memUsed = memBean.getHeapMemoryUsage().getUsed();
+      long memMax = memBean.getHeapMemoryUsage().getMax();
 
-    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-    private SystemClient systemClient = new SystemClient();
-    @Inject Tracer tracer;
-
-    public Properties get(String hostname) {
-        systemClient.init(hostname, SYSTEM_PORT);
-        Properties properties = systemClient.getProperties();
-        return properties;
-    }
-
-    public void add(String hostname, Properties systemProps) {
-        Properties props = new Properties();
-        props.setProperty("os.name", systemProps.getProperty("os.name"));
-        props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-        SystemData system = new SystemData(hostname, props);
-        if (!systems.contains(system)) {
-            Span span = tracer.buildSpan("add() Span").start();
-            try (Scope childScope = tracer.activateSpan(span)) {
-                systems.add(system);
-            } finally {
-                span.finish();
-            }
-        }
-    }
-
-    @Traced(operationName = "InventoryManager.list")
-    public InventoryList list() {
-        return new InventoryList(systems);
-    }
-
-    int clear() {
-        int propertiesClearedCount = systems.size();
-        systems.clear();
-        return propertiesClearedCount;
-    }
+      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
+                                      + " Liveness Check")
+                                .withData("memory used", memUsed)
+                                .withData("memory max", memMax)
+                                .status(memUsed < memMax * 0.9).build();
+  }
 }
 ```
 {: codeblock}
 
 
 
-This **try** block is called a **try-with-resources** statement, meaning that the
-**childScope** object is closed at the end of the statement.
-It's good practice to define custom spans inside such statements.
-Otherwise, any exceptions that are thrown before the span closes will leak the active span.
+This liveness check verifies that the heap memory usage is below 90% of the maximum memory.
+If more than 90% of the maximum memory is used, a status of **DOWN** will be returned. 
 
+The health checks for the **system** microservice were already been implemented. The **system**
+microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. 
+This endpoint has been provided for you to observe the results of an unhealthy pod and how 
+Kubernetes reacts.
 
-Run the following curl command:
+# Configuring readiness and liveness probes
+
+You will configure Kubernetes readiness and liveness probes.
+Readiness probes are responsible for determining that your application is ready to accept requests.
+If it's not ready, traffic won't be routed to the container.
+Liveness probes are responsible for determining when a container needs to be restarted. 
+
+Create the kubernetes configuration file.
+
+> Run the following touch command in your terminal
 ```
-curl http://localhost:9081/inventory/systems/localhost
+touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/kubernetes.yaml
+
+
+
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: system
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        # system probes
+        readinessProbe:
+          httpGet:
+            # tag::ready1[]
+            path: /health/ready
+            # end::ready1[]
+            port: 9080
+          # tag::delay1[]
+          initialDelaySeconds: 30
+          # end::delay1[]
+          # tag::period1[]
+          periodSeconds: 10
+          # end::period1[]
+          # tag::timeout1[]
+          timeoutSeconds: 3
+          # end::timeout1[]
+          # tag::threshold1[]
+          failureThreshold: 1
+          # end::threshold1[]
+        livenessProbe:
+          httpGet:
+            # tag::live1[]
+            path: /health/live
+            # end::live1[]
+            port: 9080
+          # tag::delay2[]
+          initialDelaySeconds: 60
+          # end::delay2[]
+          # tag::period2[]
+          periodSeconds: 10
+          # end::period2[]
+          # tag::timeout2[]
+          timeoutSeconds: 3
+          # end::timeout2[]
+          # tag::threshold2[]
+          failureThreshold: 1
+          # end::threshold2[]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+        # inventory probe
+        readinessProbe:
+          httpGet:
+            # tag::ready2[]
+            path: /health/ready
+            # end::ready2[]
+            port: 9080
+          # tag::delay3[]
+          initialDelaySeconds: 30
+          # end::delay3[]
+          # tag::period3[]
+          periodSeconds: 10
+          # end::period3[]
+          # tag::timeout3[]
+          timeoutSeconds: 3
+          # end::timeout3[]
+          # tag::threshold3[]
+          failureThreshold: 1
+          # end::threshold3[]
+        livenessProbe:
+          httpGet:
+            # tag::live2[]
+            path: /health/live
+            # end::live2[]
+            port: 9080
+          # tag::delay4[]
+          initialDelaySeconds: 60
+          # end::delay4[]
+          # tag::period4[]
+          periodSeconds: 10
+          # end::period4[]
+          # tag::timeout4[]
+          timeoutSeconds: 3
+          # end::timeout4[]
+          # tag::threshold4[]
+          failureThreshold: 1
+          # end::threshold4[]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 31000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 32000
 ```
 {: codeblock}
 
-Check your Jaeger server at the **`https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai`** URL.
-If you have the Jaeger UI open from a previous step, refresh the page.
-Select the **inventory** traces and click the **Find Traces** button.
-
-Verify that there are three spans from **inventory** and one span from **system**:
-
-![Trace with custom span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/master/assets/trace01.png)
 
 
-This simple example shows what you can do with the injected **Tracer** object. More configuration
-options are available to you, including setting a timestamp for when a span was created and destroyed.
-However, these options require an implementation of their own, which doesn't come as a part of the Jaeger
-user feature that is provided. In a real-world scenario, implement all the OpenTracing interfaces that
-you deem necessary, which might include the **SpanBuilder** interface. You can use this interface for span
-creation and customization, including setting timestamps.
+The readiness and liveness probes are configured for the containers running the **system** 
+and **inventory** microservices.
 
+The readiness probes are configured to poll the **/health/ready** endpoint.
+The readiness probe determines the READY status of the container as seen in the **kubectl get pods** output.
+The **initialDelaySeconds** field defines how long the probe should wait before it 
+starts to poll so the probe does not start making requests before the server has started. 
+The **failureThreshold** option defines how many times the probe should fail 
+before the state should be changed from ready to not ready. The **timeoutSeconds** 
+option defines how many seconds before the probe times out. The **periodSeconds** 
+option defines how often the probe should poll the given endpoint.
 
+The liveness probes are configured to poll the **/health/live** endpoint.
+The liveness probes determine when a container needs to be restarted.
+Similar to the readiness probes, the liveness probes also define
+**initialDelaySeconds**,
+**failureThreshold**,
+**timeoutSeconds**,
+and **periodSeconds**.
 
+# Deploying the microservices
 
-# Testing the services
+To build these microservices, navigate to the **start** directory and run the following 
+command.
 
-No automated tests are provided to verify the correctness of the traces. Manually verify these traces
-by viewing them on the Jaeger server.
-
-A few tests are included for you to test the basic functionality of the services. If a test failure
-occurs, then you might have introduced a bug into the code.
-
-### Running the tests
-
-Since you started Open Liberty in dev mode, run the tests for the system and inventory services by pressing the
-**enter/return** key in the command-line sessions where you started the services.
-
-When you are done checking out the services, exit dev mode by pressing **CTRL+C** in the shell sessions where you
-ran the **system** and **inventory** services,  or by typing **q** and then pressing the **enter/return key**.
-
-
-Finally, stop the **Jaeger** service that you started in the previous step.
 ```
-docker stop jaeger
-docker rm jaeger
+mvn package
 ```
 {: codeblock}
+
+
+Run the following command to download or update to the latest Open Liberty Docker image:
+
+```
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
+```
+{: codeblock}
+
+
+Next, run the **docker build** commands to build container images for your application:
+```
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+{: codeblock}
+
+
+The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
+The tag for an image describes the specific image version. 
+If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
+
+When the builds succeed, run the following command to deploy the necessary Kubernetes 
+resources to serve the applications.
+
+```
+kubectl apply -f kubernetes.yaml
+```
+{: codeblock}
+
+
+Use the following command to view the status of the pods. There will be two **system** pods 
+and one **inventory** pod, later you'll observe their behavior as the **system** pods become unhealthy.
+
+```
+kubectl get pods
+```
+{: codeblock}
+
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          59s
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          59s
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          59s
+```
+
+Wait until the pods are ready. After the pods are ready, you will make requests to your 
+services.
+
+
+Make a request to the system service to see the JVM system properties with the following command:
+
+```
+curl http://$(minikube ip):31000/system/properties
+```
+{: codeblock}
+
+The readiness probe ensures the READY state won't be `1/1`
+until the container is available to accept requests.
+Without a readiness probe, you may notice an unsuccessful response from the server.
+This scenario can occur when the container has started,
+but the application server hasn't fully initialized.
+With the readiness probe, you can be certain the pod will only accept traffic
+when the microservice has fully started.
+
+Similarly, access the inventory service and observe the successful request with the following command:
+
+```
+curl http://$(minikube ip):32000/inventory/systems/system-service
+```
+{: codeblock}
+
+# Changing the ready state of the system microservice
+
+
+An endpoint has been provided under the `system` microservice to set it to an unhealthy 
+state in the health check. The unhealthy state will cause the readiness probe to fail.
+Use the `curl` command to invoke this endpoint by making a POST request to the
+`/system/properties/unhealthy` endpoint.
+
+```
+curl -X POST http://$(minikube ip):31000/system/properties/unhealthy
+```
+{: codeblock}
+
+Run the following command to view the state of the pods:
+
+```
+kubectl get pods
+```
+{: codeblock}
+
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          1m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          1m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
+```
+
+
+You will notice that one of the two `system` pods is no longer in the ready state.
+Make a request to the `/system/properties` endpoint with the following command:
+
+```
+curl http://$(minikube ip):31000/system/properties
+```
+{: codeblock}
+
+Observe that your request will still be successful because you have two replicas and one is still healthy.
+
+### Observing the effects on the inventory microservice
+
+
+Wait until the `system` pod is ready again.
+Make two POST requests to `/system/properties/unhealthy` endpoint with the following command:
+
+```
+curl -X POST http://$(minikube ip):31000/system/properties/unhealthy
+```
+{: codeblock}
+
+If you see the same pod name twice, make the request again until you see that the second 
+pod has been made unhealthy. You may see the same pod twice because there's a delay 
+between a pod becoming unhealthy and the readiness probe noticing it.
+Therefore, traffic may still be routed to the unhealthy service for approximately 5 seconds.
+Continue to observe the output of `kubectl get pods`.
+
+```
+kubectl get pods
+```
+{: codeblock}
+
+You will see both pods are no longer ready. 
+During this process, the readiness probe for the `inventory` microservice will also fail. 
+Observe it's no longer in the ready state either.
+
+First, both **system** pods will no longer be ready because the readiness probe failed.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     0/1       Running   0          5m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          5m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          5m
+```
+
+Next, the **inventory** pod is no longer ready because the readiness probe failed. The probe 
+failed because **system-service** is now unavailable.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     0/1       Running   0          6m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          6m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          6m
+```
+
+Then, the **system** pods will start to become healthy again after 60 seconds.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          7m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
+```
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          7m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
+```
+
+Finally, you will see all of the pods have recovered.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          8m
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          8m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
+```
+
+# Testing the microservices
+
+
+Run the tests by running the following command:
+
+```
+mvn failsafe:integration-test -Dcluster.ip=$(minikube ip)
+```
+{: codeblock}
+
+A few tests are included for you to test the basic functions of the microservices.
+If a test failure occurs, then you might have introduced a bug into the code.
+To run the tests, wait for all pods to be in the ready state before proceeding further.
+
+When the tests succeed, you should see output similar to the following in your console.
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.65 s - in it.io.openliberty.guides.system.SystemEndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+```
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results:
+
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+```
+
+# Tearing down the environment
+
+To remove all of the resources created during this guide, run the following command to 
+delete all of the resources that you created.
+
+```
+kubectl delete -f kubernetes.yaml
+```
+{: codeblock}
+
+
+
+
+Perform the following steps to return your environment to a clean state.
+
+. Point the Docker daemon back to your local machine:
++
+```
+eval $(minikube docker-env -u)
+```
+. Stop your Minikube cluster:
++
+```
+minikube stop
+```
+{: codeblock}
+
+
+. Delete your cluster:
++
+```
+minikube delete
+```
+{: codeblock}
+
+
+
+
+
+
+
+
 
 
 # Summary
 
 ## Nice Work!
 
-You just used MicroProfile OpenTracing in Open Liberty to customize how and which traces are delivered to Jaeger.
+You have used MicroProfile Health and Open Liberty to create endpoints that report on 
 
+your microservice's status. Then, you observed how Kubernetes uses the **/health/ready** and
+**/health/live** endpoints to keep your microservices running smoothly.
 
-Try out one of the related MicroProfile guides. These guides demonstrate more technologies that you can learn to expand
-on what you built in this guide.
 
 
 
@@ -653,32 +725,30 @@ on what you built in this guide.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-opentracing-jaeger** project by running the following commands:
+Delete the **guide-kubernetes-microprofile-health** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-opentracing-jaeger
+rm -fr guide-kubernetes-microprofile-health
 ```
 {: codeblock}
 
 ## What did you think of this guide?
-We want to hear from you. 
-* [Rate this guide](https://ol-staging.skillsnetwork.site/quicklab/cloud-hosted-guide-microprofile-opentracing-jaeger-staging?rate=true). 
-* To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
 ## What could make this guide better?
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-opentracing-jaeger/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-opentracing-jaeger/pulls)
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/pulls)
 
 
 
 
 ## Where to next? 
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Enabling distributed tracing in microservices with Zipkin](https://openliberty.io/guides/microprofile-opentracing.html)
+* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
 ## Log out of the session
