@@ -1,7 +1,7 @@
 
-# Welcome to the Consuming RESTful services asynchronously with template interfaces guide!
+# Welcome to the Configuring microservices running in Kubernetes guide!
 
-Learn how to use MicroProfile Rest Client to invoke RESTful microservices asynchronously over HTTP.
+Explore how to externalize configuration using MicroProfile Config and configure your microservices using Kubernetes ConfigMaps and Secrets.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,43 +11,23 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
+
 # What you'll learn
+You will learn how and why to externalize your microservice's configuration.
+Externalized configuration is useful because configuration usually changes depending on your environment.
+You will also learn how to configure the environment by providing required values to your application using Kubernetes.
+Using environment variables allows for easier deployment to different environments.
 
-You will learn how to build a MicroProfile Rest Client to access remote RESTful services using asynchronous method calls. 
-You'll update the template interface for a MicroProfile Rest Client to use the **CompletionStage** return type. 
-The template interface maps to the remote service that you want to call. 
-A **CompletionStage** interface allows you to work with the result of your remote service call asynchronously.
+MicroProfile Config provides useful annotations that you can use to inject configured values into your code.
+These values can come from any configuration source, such as environment variables.
+To learn more about MicroProfile Config,
+read the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide.
 
-*What is asynchronous programming?*
+Furthermore, you'll learn how to set these environment variables with ConfigMaps and Secrets.
+These resources are provided by Kubernetes and act as a data source for your environment variables.
+You can use a ConfigMap or Secret to set environment variables for any number of containers.
 
-Imagine asynchronous programming as a restaurant. 
-After you're seated, a waiter takes your order. 
-Then, you must wait a few minutes for your food to be prepared. 
-While your food is being prepared, your waiter may take more orders or serve other tables. 
-After your food is ready, your waiter brings out the food to your table. However, in a synchronous model, the waiter must wait for your food to be prepared before serving any other customers. 
-This method blocks other customers from placing orders or receiving their food.
-
-You can perform lengthy operations, such as input/output (I/O), without blocking with asynchronous methods. 
-The I/O operation can occur in the background and a callback notifies the caller to continue its computation when the original request is complete. 
-As a result, the original thread frees up so it can handle other work rather than wait for the I/O to complete. 
-Revisiting the restaurant analogy, food is prepared asynchronously in the kitchen and your waiter is freed up to attend to other tables.
-
-In the context of REST clients, HTTP request calls can be time consuming. 
-The network might be slow, or maybe the upstream service is overwhelmed and can't respond quickly. 
-These lengthy operations can block the execution of your thread when it's in use and prevent other work from being completed.
-
-The application in this guide consists of three microservices, **system**, **inventory**, and **query**. 
-Every 15 seconds the **system** microservice calculates and publishes an event that contains its average system load. 
-The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. 
-
-![Reactive Inventory System](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-rest-client-async/master/assets/QueryService.png)
-
-
-The microservice that you will modify is the **query** service.
-It communicates with the **inventory** service to determine which system has the highest system load and which system has the lowest system load. 
-
-The **system** and **inventory** microservices use MicroProfile Reactive Messaging to send and receive the system load events. 
-If you want to learn more about reactive messaging, see the [Creating Reactive Java Microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 # Getting started
 
@@ -61,11 +41,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client-async.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-config.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-rest-client-async.git
-cd guide-microprofile-rest-client-async
+git clone https://github.com/openliberty/guide-kubernetes-microprofile-config.git
+cd guide-kubernetes-microprofile-config
 ```
 {: codeblock}
 
@@ -74,215 +54,54 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-# Updating the template interface of a REST client to use asynchronous methods
+
+# Starting and preparing your cluster for deployment
+
+Start your Kubernetes cluster.
 
 
-To begin, run the following command to navigate to the **start** directory:
-```
-cd /home/project/guide-microprofile-rest-client-async/start
-```
-{: codeblock}
-
-The **query** service uses a MicroProfile Rest Client to access the **inventory** service.
-You will update the methods in the template interface for this client to be asynchronous.
-
-Replace the **InventoryClient** interface.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
-
-
-
+Run the following command from a command-line session:
 
 ```
-package io.openliberty.guides.query.client;
-
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.CompletionStage;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-
-@Path("/inventory")
-@RegisterRestClient(configKey = "InventoryClient", baseUri = "http://localhost:9085")
-public interface InventoryClient extends AutoCloseable {
-
-    @GET
-    @Path("/systems")
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<String> getSystems();
-
-    @GET
-    @Path("/systems/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public CompletionStage<Properties> getSystem(@PathParam("hostname") String hostname);
-
-}
+minikube start
 ```
 {: codeblock}
 
 
 
-The changes involve the **getSystem** method. 
-Change the return type to **CompletionStage<Properties>** to make the method asynchronous.
-Since the method now has the return type of **CompletionStage<Properties>**, you aren't able to directly manipulate the **Properties** inner type. 
-As you will see in the next section, you're able to indirectly use the **Properties** by chaining callbacks.
-
-# Updating a REST resource to asynchronously handle HTTP requests
-
-To reduce the processing time, you will update the **/query/systemLoad** endpoint to asynchronously send the requests. 
-Multiple client requests will be sent synchronously in a loop.
-Since asynchronous calls do not block the program, the endpoint needs to ensure that all calls are completed and all returned data is processed before proceeding.
-
-Replace the **QueryResource** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
 
 
-
-
+Next, validate that you have a healthy Kubernetes environment by running the following command from the active command-line session.
 ```
-package io.openliberty.guides.query;
+kubectl get nodes
+```
+{: codeblock}
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+This command should return a **Ready** status for the master node.
 
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 
-import io.openliberty.guides.query.client.InventoryClient;
-
-@ApplicationScoped
-@Path("/query")
-public class QueryResource {
-    
-    @Inject
-    @RestClient
-    private InventoryClient inventoryClient;
-
-    @GET
-    @Path("/systemLoad")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Properties> systemLoad() {
-        List<String> systems = inventoryClient.getSystems();
-        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
-        final Holder systemLoads = new Holder();
-
-        for (String system : systems) {
-            inventoryClient.getSystem(system)
-                           .thenAcceptAsync(p -> {
-                                if (p != null) {
-                                    systemLoads.updateValues(p);
-                                }
-                                remainingSystems.countDown();
-                           })
-                           .exceptionally(ex -> {
-                                ex.printStackTrace();
-                                remainingSystems.countDown();
-                                return null;
-                           });
-        }
-
-        try {
-            remainingSystems.await(30, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return systemLoads.getValues();
-    }
-
-    private class Holder {
-        private volatile Map<String, Properties> values;
-
-        public Holder() {
-            this.values = new ConcurrentHashMap<String, Properties>();
-            init();
-        }
-
-        public Map<String, Properties> getValues() {
-            return this.values;
-        }
-
-        public void updateValues(Properties p) {
-            final BigDecimal load = (BigDecimal) p.get("systemLoad");
-
-            this.values.computeIfPresent("lowest", (key, curr_val) -> {
-                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(lowest) < 0 ? p : curr_val;
-            });
-            this.values.computeIfPresent("highest", (key, curr_val) -> {
-                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(highest) > 0 ? p : curr_val;
-            });
-        }
-
-        private void init() {
-            this.values.put("highest", new Properties());
-            this.values.put("lowest", new Properties());
-            this.values.get("highest").put("hostname", "temp_max");
-            this.values.get("lowest").put("hostname", "temp_min");
-            this.values.get("highest").put("systemLoad", new BigDecimal(Double.MIN_VALUE));
-            this.values.get("lowest").put("systemLoad", new BigDecimal(Double.MAX_VALUE));
-        }
-    }
-}
+Run the following command to configure the Docker CLI to use Minikube's Docker daemon.
+After you run this command, you will be able to interact with Minikube's Docker daemon and build new
+images directly to it from your host machine:
+```
+eval $(minikube docker-env)
 ```
 {: codeblock}
 
 
 
-First, the **systemLoad** endpoint first gets all the hostnames by calling **getSystems()**.
-In the **getSystem()** method, multiple requests are sent asynchronously to the **inventory** service for each hostname.
-When the requests return, the **thenAcceptAsync()** method processes the returned data with the **CompletionStage<Properties>** interface.
+# Deploying the microservices
 
-The **CompletionStage<Properties>** interface represents a unit of computation.
-After a computation is complete, it can either be finished or it can be chained with more **CompletionStage<Properties>** interfaces using the **thenAcceptAsync()** method. 
-Exceptions are handled in a callback that is provided to the **exceptionally()** method, which behaves like a catch block.
-When you return a **CompletionStage<Properties>** type in the resource, it doesn’t necessarily mean that the computation completed and the response was built.
-JAX-RS responds to the caller after the computation completes.
-
-In the **systemLoad()** method a **CountDownLatch** object is used to track asynchronous requests. 
-The **countDown()** method is called whenever a request is complete.
-When the **CountDownLatch** is at zero, it indicates that all asynchronous requests are complete.
-By using the **await()** method of the **CountDownLatch**, the program waits for all the asynchronous requests to be complete.
-When all asynchronous requests are complete, the program resumes execution with all required data processed. 
-
-A **Holder** class is used to wrap a variable called **values** that has the **volatile** keyword.
-The **values** variable is instantiated as a **ConcurrentHashMap** object.
-Together, the **volatile** keyword and **ConcurrentHashMap** type allow the **Holder** class to store system information and safely access it asynchronously from multiple threads.
-
-
-# Building and running the application
-
-You will build and run the **system**, **inventory**, and **query** microservices in Docker containers. 
-You can learn more about containerizing microservices with Docker in the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
-
-Start your Docker environment. Dockerfiles are provided for you to use.
-
-To build the application, run the Maven **install** and **package** goals from the command-line session in the **start** directory:
+The two microservices you will deploy are called **system** and **inventory**. The **system** microservice
+returns the JVM system properties of the running container. The **inventory** microservice
+adds the properties from the **system** microservice to the inventory. This demonstrates
+how communication can be established between pods inside a cluster.
+To build these applications, navigate to the **start** directory and run the following command.
 
 ```
-mvn -pl models install
-mvn package
+cd start
+mvn clean package
 ```
 {: codeblock}
 
@@ -295,217 +114,648 @@ docker pull openliberty/open-liberty:full-java11-openj9-ubi
 {: codeblock}
 
 
-Run the following commands to containerize the microservices:
-
+Next, run the **docker build** commands to build container images for your application:
 ```
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
-docker build -t query:1.0-SNAPSHOT query/.
 ```
 {: codeblock}
 
 
-Next, use the provided **startContainers** script to start the application in Docker containers. 
-The script creates containers for Kafka, Zookeeper, and all of the microservices in the project, in addition to a network for the containers to communicate with each other.
-The script also creates three instances of the **system** microservice. 
+The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
+The tag for an image describes the specific image version.
+If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
 
-
+Run the following command to deploy the necessary Kubernetes resources to serve the applications.
 ```
-./scripts/startContainers.sh
-```
-{: codeblock}
-
-
-
-
-The services might take several minutes to become available.
-You can access the application by making requests to the **query/systemLoad** endpoint by running the following curl command:
-```
-curl http://localhost:9080/query/systemLoad
-```
-{: codeblock}
-
-When the service is ready, you see an output similar to the following example which was formatted for readability. 
-
-```
-{
-    "highest": {
-        "hostname" : "8841bd7d6fcd",
-        "systemLoad" : 6.96
-    },
-    "lowest": {
-        "hostname" : "37140ec44c9b",
-        "systemLoad" : 6.4
-    }
-}
-```
-
-Switching to an asynchronous programming model freed up the thread that handles requests to the **inventory** service. 
-While requests process, the thread can handle other work or requests.
-In the **/query/systemLoad** endpoint, multiple systems are read and compared at once.
-
-When you are done checking out the application, run the following script to stop the application:
-
-
-```
-./scripts/stopContainers.sh
+kubectl apply -f kubernetes.yaml
 ```
 {: codeblock}
 
 
-
-
-# Testing the query microservice
-
-You will create an endpoint test to test the basic functionality of the **query** microservice. 
-If a test failure occurs, then you might have introduced a bug into the code.
-
-Create the **QueryServiceIT** class.
-
-> Run the following touch command in your terminal
+When this command finishes, wait for the pods to be in the Ready state.
+Run the following command to view the status of the pods.
 ```
-touch /home/project/guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
+kubectl get pods
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
+When the pods are ready, the output shows **1/1** for READY and **Running** for STATUS.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-6bd97d9bf6-6d2cj     1/1       Running   0          34s
+inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
+```
+
+After the pods are ready, you will make requests to your services.
+
+
+Run the following `curl` command to access the system microservice.
+The `-u` option is used to pass in the username `bob` and the password `bobpwd`.
+
+```
+curl http://$(minikube ip):31000/system/properties -u bob:bobpwd
+```
+{: codeblock}
+
+Run the following `curl` command to add the system to the inventory microservice.
+
+```
+curl http://$(minikube ip):32000/inventory/systems/system-service
+```
+{: codeblock}
+
+# Modifying system microservice
+
+
+The **system** service is hardcoded to use a single forward slash as the context root.
+The context root is set in the **webApplication**
+element where the **contextRoot** attribute is specified as **"/"**.
+You'll make the value of the **contextRoot** attribute configurable by
+implementing it as a variable.
+
+Replace the **server.xml** file.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml
 
 
 
 
 ```
-package it.io.openliberty.guides.query;
+<server description="Sample Liberty server">
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+  <featureManager>
+    <feature>jaxrs-2.1</feature>
+    <feature>cdi-2.0</feature>
+    <feature>jsonp-1.1</feature>
+    <feature>mpConfig-2.0</feature>
+    <feature>appSecurity-3.0</feature>
+  </featureManager>
 
-import java.util.Map;
+  <variable name="default.http.port" defaultValue="9080"/>
+  <variable name="default.https.port" defaultValue="9443"/>
+  <variable name="system.app.username" defaultValue="bob"/>
+  <variable name="system.app.password" defaultValue="bobpwd"/>
+  <variable name="context.root" defaultValue="/"/>
+
+  <httpEndpoint host="*" httpPort="${default.http.port}" 
+    httpsPort="${default.https.port}" id="defaultHttpEndpoint" />
+
+  <webApplication location="system.war" contextRoot="${context.root}"/>
+
+  <basicRegistry id="basic" realm="BasicRegistry">
+    <user name="${system.app.username}" password="${system.app.password}" />
+  </basicRegistry>
+
+</server>
+```
+{: codeblock}
+
+
+The **contextRoot** attribute in the **webApplication**
+element now gets its value from the **context.root** variable.
+To find a value for the **context.root** variable,
+Open Liberty will look for the following environment variables, in order:
+
+* **context.root**
+* **`context_root`**
+* **`CONTEXT_ROOT`**
+
+
+# Modifying inventory microservice
+
+The **inventory** service is hardcoded to use **bob** and **bobpwd** as the credentials to authenticate against the **system** service.
+You'll make these credentials configurable. 
+
+Replace the **SystemClient** class.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+
+
+
+
+```
+package io.openliberty.guides.inventory.client;
+
+import java.net.URI;
+import java.util.Base64;
 import java.util.Properties;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.SharedContainerConfig;
-import org.mockserver.model.HttpRequest;
-import org.mockserver.model.HttpResponse;
 
-import io.openliberty.guides.query.QueryResource;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
-@MicroShedTest
-@SharedContainerConfig(AppContainerConfig.class)
-public class QueryServiceIT {
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-    @RESTClient
-    public static QueryResource queryResource;
+@RequestScoped
+public class SystemClient {
 
-    private static String testHost1 = 
-        "{" + 
-            "\"hostname\" : \"testHost1\"," +
-            "\"systemLoad\" : 1.23" +
-        "}";
-    private static String testHost2 = 
-        "{" + 
-            "\"hostname\" : \"testHost2\"," +
-            "\"systemLoad\" : 3.21" +
-        "}";
-    private static String testHost3 =
-        "{" + 
-            "\"hostname\" : \"testHost3\"," +
-            "\"systemLoad\" : 2.13" +
-        "}";
+  private final String SYSTEM_PROPERTIES = "/system/properties";
+  private final String PROTOCOL = "http";
 
-    @BeforeAll
-    public static void setup() throws InterruptedException {
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody("[\"testHost1\"," + 
-                                                    "\"testHost2\"," +
-                                                    "\"testHost3\"]")
-                                         .withHeader("Content-Type", "application/json"));
+  @Inject
+  @ConfigProperty(name = "CONTEXT_ROOT", defaultValue = "")
+  String CONTEXT_ROOT;
 
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems/testHost1"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody(testHost1)
-                                         .withHeader("Content-Type", "application/json"));
+  @Inject
+  @ConfigProperty(name = "default.http.port")
+  String DEFAULT_PORT;
 
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems/testHost2"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody(testHost2)
-                                         .withHeader("Content-Type", "application/json"));
+  @Inject
+  @ConfigProperty(name = "SYSTEM_APP_USERNAME")
+  private String username;
 
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems/testHost3"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody(testHost3)
-                                         .withHeader("Content-Type", "application/json"));
+  @Inject
+  @ConfigProperty(name = "SYSTEM_APP_PASSWORD")
+  private String password;
+
+  public Properties getProperties(String hostname) {
+    String url = buildUrl(PROTOCOL,
+                          hostname,
+                          Integer.valueOf(DEFAULT_PORT),
+                          CONTEXT_ROOT + SYSTEM_PROPERTIES);
+    Builder clientBuilder = buildClientBuilder(url);
+    return getPropertiesHelper(clientBuilder);
+  }
+
+  /**
+   * Builds the URI string to the system service for a particular host.
+   * @param protocol
+   *          - http or https.
+   * @param host
+   *          - name of host.
+   * @param port
+   *          - port number.
+   * @param path
+   *          - Note that the path needs to start with a slash!!!
+   * @return String representation of the URI to the system properties service.
+   */
+  protected String buildUrl(String protocol, String host, int port, String path) {
+    try {
+      URI uri = new URI(protocol, null, host, port, path, null, null);
+      return uri.toString();
+    } catch (Exception e) {
+      System.err.println("Exception thrown while building the URL: " + e.getMessage());
+      return null;
     }
+  }
 
-    @Test
-    public void testLoads() {
-        Map<String, Properties> response = queryResource.systemLoad();
-
-        assertEquals(
-            "testHost2",
-            response.get("highest").get("hostname"),
-            "Returned highest system load incorrect"
-        );
-        assertEquals(
-            "testHost1",
-            response.get("lowest").get("hostname"),
-            "Returned lowest system load incorrect"
-        );
+  protected Builder buildClientBuilder(String urlString) {
+    try {
+      Client client = ClientBuilder.newClient();
+      Builder builder = client.target(urlString).request();
+      return builder
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, getAuthHeader());
+    } catch (Exception e) {
+      System.err.println("Exception thrown while building the client: "
+                         + e.getMessage());
+      return null;
     }
+  }
 
+  protected Properties getPropertiesHelper(Builder builder) {
+    try {
+      Response response = builder.get();
+      if (response.getStatus() == Status.OK.getStatusCode()) {
+        return response.readEntity(Properties.class);
+      } else {
+        System.err.println("Response Status is not OK.");
+      }
+    } catch (RuntimeException e) {
+      System.err.println("Runtime exception: " + e.getMessage());
+    } catch (Exception e) {
+      System.err.println("Exception thrown while invoking the request: "
+                         + e.getMessage());
+    }
+    return null;
+  }
+
+  private String getAuthHeader() {
+    String usernamePassword = username + ":" + password;
+    String encoded = Base64.getEncoder().encodeToString(usernamePassword.getBytes());
+    return "Basic " + encoded;
+  }
 }
 ```
 {: codeblock}
 
 
-The **testLoads()** test case verifies that the **query** service can calculate the highest and lowest system loads. 
+
+The changes introduced here use MicroProfile Config and CDI to inject the value of the
+environment variables **`SYSTEM_APP_USERNAME`** and
+**`SYSTEM_APP_PASSWORD`** into the **SystemClient** class.
 
 
+# Creating a ConfigMap and Secret
 
-### Running the tests
+There are several ways to configure an environment variable in a Docker container.
+You can set it directly in the **Dockerfile** with the **ENV** command.
+You can also set it in your **kubernetes.yaml** file by specifying a
+name and a value for the environment variable you want to set for a specific container.
+With these options in mind, you're going to use a ConfigMap and Secret to set these values.
+These are resources provided by Kubernetes that are used as a way to provide configuration values to your containers.
+A benefit is that they can be reused across many different containers,
+even if they all require different environment variables to be set with the same value.
 
-
-Run the following commands to navigate to the **query** directory and verify that the tests pass by using the Maven **verify** goal:
-
+Create a ConfigMap to configure the app name with the following **kubectl** command.
 ```
-cd /home/project/guide-microprofile-rest-client-async/start/query
-mvn verify
+kubectl create configmap sys-app-root --from-literal contextRoot=/dev
 ```
 {: codeblock}
 
-The tests might take a few minutes to complete. When the tests succeed, you see output similar to the following example:
+
+This command deploys a ConfigMap named **sys-app-root** to your cluster.
+It has a key called **contextRoot** with a value of **/dev**.
+The **--from-literal** flag allows you to specify individual key-value pairs to store in this ConfigMap.
+Other available options, such as **--from-file** and **--from-env-file**,
+provide more versatility as to what you want to configure.
+Details about these options can be found in the
+[Kubernetes CLI documentation](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-configmap-em-).
+
+Create a Secret to configure the new credentials that **inventory** will use to
+authenticate against **system** with the following **kubectl** command.
+```
+kubectl create secret generic sys-app-credentials --from-literal username=alice --from-literal password=wonderland
+```
+{: codeblock}
+
+
+This command looks similar to the command to create a ConfigMap, but one difference is the word **generic**.
+This word creates a Secret that doesn't store information in any specialized way.
+There are different types of secrets, such as secrets to store Docker credentials
+and secrets to store public and private key pairs.
+
+A Secret is similar to a ConfigMap.
+A key difference is that a Secret is used for confidential information such as credentials.
+One of the main differences is that you must explicitly tell **kubectl** to show you the contents of a Secret.
+Additionally, when it does show you the information,
+it only shows you a Base64 encoded version so that a casual onlooker doesn't accidentally see any sensitive data.
+Secrets don't provide any encryption by default,
+that is something you'll either need to do yourself or find an alternate option to configure.
+
+
+
+# Updating Kubernetes resources
+
+Next, you will update your Kubernetes deployments to set the environment variables in your containers
+based on the values configured in the ConfigMap and Secret created previously. 
+
+Replace the kubernetes file.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-kubernetes-microprofile-config/start/kubernetes.yaml
+
+
+
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  selector:
+    matchLabels:
+      app: system
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      # tag::system-container[]
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        # Set the environment variables
+        # tag::env1[]
+        env:
+        # end::env1[]
+        # tag::contextRoot1[]
+        - name: CONTEXT_ROOT
+          # tag::valueFrom1[]
+          valueFrom:
+          # end::valueFrom1[]
+            # tag::configRef1[]
+            configMapKeyRef:
+              # tag::root1[]
+              name: sys-app-root
+              # end::root1[]
+              # tag::contextRootKey1[]
+              key: contextRoot
+              # end::contextRootKey1[]
+            # end::configRef1[]
+        # end::contextRoot1[]
+        # tag::sysUsername1[]
+        - name: SYSTEM_APP_USERNAME
+          # tag::valueFrom2[]
+          valueFrom:
+          # end::valueFrom2[]
+            # tag::secretRef1[]
+            secretKeyRef:
+              # tag::credentials1[]
+              name: sys-app-credentials
+              # end::credentials1[]
+              # tag::username1[]
+              key: username
+              # end::username1[]
+            # end::secretRef1[]
+        # end::sysUsername1[]
+        # tag::sysPassword1[]
+        - name: SYSTEM_APP_PASSWORD
+          # tag::valueFrom3[]
+          valueFrom:
+          # end::valueFrom3[]
+            # tag::secretRef2[]
+            secretKeyRef:
+              # tag::credentials2[]
+              name: sys-app-credentials
+              # end::credentials2[]
+              # tag::password1[]
+              key: password
+              # end::password1[]
+            # end::secretRef2[]
+        # end::sysPassword1[]
+      # end::system-container[]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      # tag::inventory-container[]
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        # Set the environment variables
+        # tag::env2[]
+        env:
+        # end::env2[]
+        # tag::contextRoot2[]
+        - name: CONTEXT_ROOT
+          # tag::valueFrom4[]
+          valueFrom:
+          # end::valueFrom4[]
+            # tag::configRef2[]
+            configMapKeyRef:
+              # tag::root2[]
+              name: sys-app-root
+              # end::root2[]
+              # tag::contextRootKey2[]
+              key: contextRoot
+              # end::contextRootKey2[]
+            # end::configRef2[]
+        # end::contextRoot2[]
+        # tag::sysUsername2[]
+        - name: SYSTEM_APP_USERNAME
+          # tag::valueFrom5[]
+          valueFrom:
+          # end::valueFrom5[]
+            # tag::secretRef3[]
+            secretKeyRef:
+              # tag::credentials3[]
+              name: sys-app-credentials
+              # end::credentials3[]
+              # tag::username2[]
+              key: username
+              # end::username2[]
+            # end::secretRef3[]
+        # end::sysUsername2[]
+        # tag::sysPassword2[]
+        - name: SYSTEM_APP_PASSWORD
+          # tag::valueFrom6[]
+          valueFrom:
+          # end::valueFrom6[]
+            # tag::secretRef4[]
+            secretKeyRef:
+              # tag::credentials4[]
+              name: sys-app-credentials
+              # end::credentials4[]
+              # tag::password2[]
+              key: password
+              # end::password2[]
+            # end::secretRef4[]
+        # end::sysPassword2[]
+      # end::inventory-container[]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 31000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 32000
+```
+{: codeblock}
+
+
+
+The **`CONTEXT_ROOT`**,
+**`SYSTEM_APP_USERNAME`**, and
+**`SYSTEM_APP_PASSWORD`** environment
+variables are set in the **env** sections of
+**system-container** and
+**inventory-container**.
+
+Using the **valueFrom** field,
+you can specify the value of an environment variable from various sources. These sources
+include a ConfigMap, a Secret, and information about the cluster. In this
+example **configMapKeyRef** gets the
+value **contextRoot** from the
+**sys-app-root** ConfigMap. Similarly,
+**secretKeyRef**
+gets the values **username** and
+**password** from the
+**sys-app-credentials** Secret.
+
+# Deploying your changes
+
+Rebuild the application using **mvn clean package**.
+```
+mvn clean package
+```
+{: codeblock}
+
+
+Run the **docker build** commands to rebuild container images for your application:
+```
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+{: codeblock}
+
+
+Run the following command to deploy your changes to the Kubernetes cluster.
+```
+kubectl replace --force -f kubernetes.yaml
+```
+{: codeblock}
+
+
+
+Your application will now be available at the `http://$(minikube ip):31000/dev/system/properties` URL.
+You now need to use the new username, `alice`, and the new password `wonderland`.
+Access your application with the following command:
+
+```
+curl http://$(minikube ip):31000/dev/system/properties -u alice:wonderland
+```
+{: codeblock}
+
+Notice that the URL you are using to reach the application now has **/dev** as the context root. 
+
+
+Verify the inventory service is working as intended by using the following command:
+
+```
+curl http://$(minikube ip):32000/inventory/systems/system-service
+```
+{: codeblock}
+
+If it is not working, then check the configuration of the credentials.
+
+# Testing the microservices
+
+
+
+
+Run the integration tests by running the following command:
+
+```
+mvn failsafe:integration-test -Dsystem.context.root=/dev -Dcluster.ip=$(minikube ip)
+```
+{: codeblock}
+
+
+The tests for **inventory** verify that the service can communicate with **system**
+using the configured credentials. If the credentials are misconfigured, then the
+**inventory** test fails, so the **inventory** test indirectly verifies that the
+credentials are correctly configured.
+
+After the tests succeed, you should see output similar to the following in your console.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.query.QueryServiceIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.123 s - in it.io.openliberty.guides.query.QueryServiceIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.706 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
 Results:
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 ```
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.696 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results:
+
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+```
+
+# Tearing down the environment
+
+Run the following commands to delete all the resources that you created.
+
+```
+kubectl delete -f kubernetes.yaml
+kubectl delete configmap sys-app-root
+kubectl delete secret sys-app-credentials
+```
+{: codeblock}
+
+
+
+
+Perform the following steps to return your environment to a clean state.
+
+. Point the Docker daemon back to your local machine:
++
+```
+eval $(minikube docker-env -u)
+```
+. Stop your Minikube cluster:
++
+```
+minikube stop
+```
+{: codeblock}
+
+
+. Delete your cluster:
++
+```
+minikube delete
+```
+{: codeblock}
+
+
+
+
+
+
+
+
+
 
 # Summary
 
 ## Nice Work!
 
-You have just modified an application to make asynchronous HTTP requests using Open Liberty and MicroProfile Rest Client.
+You have used MicroProfile Config to externalize the configuration of two microservices,
+
+and then you configured them by creating a ConfigMap and Secret in your Kubernetes cluster.
 
 
 
@@ -514,25 +764,32 @@ You have just modified an application to make asynchronous HTTP requests using O
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-rest-client-async** project by running the following commands:
+Delete the **guide-kubernetes-microprofile-config** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-rest-client-async
+rm -fr guide-kubernetes-microprofile-config
 ```
 {: codeblock}
 
+## What did you think of this guide?
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+
 ## What could make this guide better?
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-rest-client-async/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-rest-client-async/pulls)
+You can also provide feedback or contribute to this guide from GitHub.
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/pulls)
 
 
 
 
 ## Where to next? 
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Consuming RESTful services using the reactive JAX-RS client](https://openliberty.io/guides/reactive-rest-client.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
 ## Log out of the session
