@@ -55,41 +55,6 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-# Starting and preparing your cluster for deployment
-
-Start your Kubernetes cluster.
-
-
-Run the following command from a command-line session:
-
-```
-minikube start
-```
-{: codeblock}
-
-
-
-
-
-Next, validate that you have a healthy Kubernetes environment by running the following command from the active command-line session.
-```
-kubectl get nodes
-```
-{: codeblock}
-
-
-This command should return a **Ready** status for the master node.
-
-
-Run the following command to configure the Docker CLI to use Minikube's Docker daemon.
-After you run this command, you will be able to interact with Minikube's Docker daemon and build new
-images directly to it from your host machine:
-```
-eval $(minikube docker-env)
-```
-{: codeblock}
-
-
 
 # Deploying the microservices
 
