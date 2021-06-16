@@ -91,11 +91,13 @@ Click the **OK** button.
 The Pact Broker can also be found at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
 where **accountname** is your account name.
 
-Confirm you can you use the user interface of the Pact Broker, as shown in the following image:
+Confirm you can use the user interface of the Pact Broker.
 The Pact Broker appears similarly to the following image:
 
 ![Pact Broker webpage](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-webpage.png)
 
+
+{empty} +
 
 You can refer to the [official Pact Broker documentation](https://docs.pact.io/pact_broker/docker_images/pactfoundation)
 for more information about the components of the Docker Compose file.
@@ -468,7 +470,7 @@ mvn pact:publish
 
 After the file is published, you'll see a similar output to the following example:
 ```
---- maven:4.1.0:publish (default-cli) @ inventory ---
+--- maven:4.1.21:publish (default-cli) @ inventory ---
 Publishing 'Inventory-System.json' with tags 'open-liberty-pact' ... OK
 ```
 
@@ -482,6 +484,8 @@ by the `system` microservice.
 
 ![Pact Broker webpage for new entry](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-webpage-refresh.png)
 
+
+{empty} +
 
 
 You can see detailed insights about each interaction by going to the
@@ -512,7 +516,7 @@ After you see the following message, your application server in dev mode is read
 ************************************************************************
 *    Liberty is running in dev mode.
 ```
-
+{empty} +
 Create the SystemBrokerIT class file.
 
 > Run the following touch command in your terminal
@@ -593,7 +597,8 @@ The connection information for the Pact Broker is provided with the **@PactBroke
 The dependency also provides a JUnit5 Invocation Context Provider with the
 **pactVerificationTestTemplate()** method to generate a test for each of the interactions.
 
-The **pact.verifier.publishResults** property is set to **true** so that the results are sent to the Pact Broker after the tests are completed.
+The **pact.verifier.publishResults** property is set to **true** so
+that the results are sent to the Pact Broker after the tests are completed.
 
 The test target is defined in the **PactVerificationContext** context to point to the running endpoint of the **system** microservice.
 
@@ -711,16 +716,16 @@ the **mvn failsafe:integration-test** goal can be used to verify the pact file f
 
 The tests fail with the following errors:
 ```
-[ERROR] Failures:
-[ERROR]   SystemBrokerIT.pactVerificationTestTemplate:44
+[ERROR] Failures: 
+[ERROR]   SystemBrokerIT.pactVerificationTestTemplate:28 Pact between Inventory (1.0-SNAPSHOT) and System - Upon a request for the version 
 Failures:
 
-1) Verifying a pact between Inventory and System - a request for the version
+1) Verifying a pact between Inventory and System - a request for the version has a matching body
 
-    1.1) BodyMismatch: $.0.system.properties.version BodyMismatch: $.0.system.properties.version Expected "1.1" (String) to be a decimal number
+    1.1) body: $.system.properties.version Expected "1.1" (String) to be a decimal number
 
 
-[INFO]
+[INFO] 
 [ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0
 ```
 
@@ -798,6 +803,8 @@ public class SystemResource {
 
 
 
+Press the **enter/return** key to rerun the tests from the command-line session where you started the **system** microservice.
+
 If the tests are successful, you'll see a similar output to the following example:
 ```
 ...
@@ -825,6 +832,8 @@ Confirm that there's now a timestamp in the last verified column:
 
 ![Pact Broker webpage for verified](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-webpage-verified.png)
 
+
+{empty} +
 
 The pact file that's created by the **inventory** microservice was successfully verified by the **system** microservice through the Pact Broker.
 This ensures that responses from the **system** microservice meet the expectations of the **inventory** microservice.
