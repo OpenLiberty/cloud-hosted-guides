@@ -216,7 +216,7 @@ ee2daf0b33e1        guide-docker-dev-mode   "/opt/ol/helpers/run…"   2 minutes
 To view a full list of all available containers, you can run the **docker ps -a** command.
 
 
-If your server runs without problems, run the following `curl` command to get a JSON file
+If your container runs without problems, run the following *curl* command to get a JSON response
 that contains the system properties of the JVM in your container.
 
 ```
@@ -289,13 +289,8 @@ curl http://localhost:9080/system/properties-new
 
 
 
-You can test this service manually by starting a server and running the following `curl` command:
-
-```
-curl http://localhost:9080/system/properties-new
-```
-{: codeblock}
-
+You can test this service manually by starting a server and going to the 
+**http://localhost:9080/system/properties-new** URL.
 However, automated tests are a much better approach because they trigger a failure if a change introduces a bug.
 JUnit and the JAX-RS Client API provide a simple environment to test the application. 
 You can write tests for the individual units of code outside of a running application server,
@@ -421,6 +416,15 @@ mvn liberty:devc \
 To learn more about dev mode with a container and its different
 features, check out the  
 https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode[Documentation].
+
+# Summary
+
+## Nice Work!
+
+You have just iteratively developed a simple REST application in a container with Open Liberty and Docker.
+
+
+
 
 
 ## Clean up your environment
