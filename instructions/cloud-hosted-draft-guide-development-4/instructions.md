@@ -216,7 +216,7 @@ ee2daf0b33e1        guide-docker-dev-mode   "/opt/ol/helpers/run…"   2 minutes
 To view a full list of all available containers, you can run the **docker ps -a** command.
 
 
-If your container runs without problems, run the following *curl* command to get a JSON response
+If your container runs without problems, run the following **curl** command to get a JSON response
 that contains the system properties of the JVM in your container.
 
 ```
@@ -413,9 +413,8 @@ mvn liberty:devc \
 -Ddockerfile="./path/to/file"
 ```
 
-To learn more about dev mode with a container and its different
-features, check out the  
-https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode[Documentation].
+To learn more about dev mode with a container and its different features, 
+check out the [Documentation](http://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode).
 
 # Summary
 
