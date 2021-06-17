@@ -55,40 +55,47 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-# Starting and preparing your cluster for deployment
-
-Start your Kubernetes cluster.
 
 
-Run the following command from a command-line session:
+# Logging into your cluster
+
+For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
+Get the name of your namespace with the following command:
 
 ```
-minikube start
-```
-{: codeblock}
-
-
-
-
-
-Next, validate that you have a healthy Kubernetes environment by running the following command from the active command-line session.
-```
-kubectl get nodes
+bx cr namespace-list
 ```
 {: codeblock}
 
+Look for output that is similar to the following:
 
-This command should return a **Ready** status for the master node.
-
-
-Run the following command to configure the Docker CLI to use Minikube's Docker daemon.
-After you run this command, you will be able to interact with Minikube's Docker daemon and build new
-images directly to it from your host machine:
 ```
-eval $(minikube docker-env)
+Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
+
+Namespace
+sn-labs-yourname
+```
+
+Store the namespace name in a variable.
+Use the namespace name that was obtained from the previous command.
+
+```
+NAMESPACE_NAME={namespace_name}
 ```
 {: codeblock}
 
+Verify that the variable contains your namespace name:
+
+```
+echo $NAMESPACE_NAME
+```
+{: codeblock}
+
+Log in to the registry with the following command:
+```
+bx cr login
+```
+{: codeblock}
 
 
 # Deploying the microservices
