@@ -134,9 +134,7 @@ LABEL \
   name="system" \
   version="$VERSION-$REVISION" \
   summary="The system microservice from the Docker Guide" \
-  # tag::description[]
   description="This image contains the system microservice running with the Open Liberty runtime."
-  # end::description[]
 
 USER root
 
@@ -408,10 +406,9 @@ adding `-D` as such:
 ```
 mvn liberty:devc \
 -DdockerRunOpts="-e ENV_VAR=exampleValue" \
-{: codeblock}
-
 -Ddockerfile="./path/to/file"
 ```
+{: codeblock}
 
 To learn more about dev mode with a container and its different features, 
 check out the [Documentation](http://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode).
