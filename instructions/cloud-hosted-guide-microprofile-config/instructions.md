@@ -170,36 +170,6 @@ touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty
 
 
 
-```
-package io.openliberty.guides.inventory;
-
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import io.openliberty.guides.config.Email;
-
-@RequestScoped
-public class InventoryConfig {
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_port_number")
-  private int portNumber;
-
-  private Provider<Boolean> inMaintenance;
-
-
-  public int getPortNumber() {
-    return portNumber;
-  }
-
-
-}
-```
-{: codeblock}
-
-
-
 Inject the **`io_openliberty_guides_port_number`** property, and add the **getPortNumber()** class method to the **InventoryConfig.java** file.
 
 The **@Inject** annotation injects the port number directly, the injection value is static and fixed on application starting.
@@ -235,108 +205,6 @@ touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty
 
 
 
-```
-package io.openliberty.guides.config;
-
-import javax.json.stream.JsonParser;
-import javax.json.stream.JsonParser.Event;
-import javax.json.Json;
-import java.math.BigDecimal;
-import java.util.*;
-import java.io.StringReader;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import org.eclipse.microprofile.config.spi.ConfigSource;
-
-/**
- * User-provided ConfigSources are dynamic.
- * The getProperties() method will be periodically invoked by the runtime
- * to retrieve up-to-date values. The frequency is controlled by
- * the microprofile.config.refresh.rate Java system property,
- * which is in milliseconds and can be customized.
- */
-public class CustomConfigSource implements ConfigSource {
-
-  String fileLocation = System.getProperty("user.dir").split("target")[0]
-      + "resources/CustomConfigSource.json";
-
-  @Override
-  public int getOrdinal() {
-    return Integer.parseInt(getProperties().get("config_ordinal"));
-  }
-
-  @Override
-  public Set<String> getPropertyNames() {
-    return getProperties().keySet();
-  }
-
-  @Override
-  public String getValue(String key) {
-    return getProperties().get(key);
-  }
-
-  @Override
-  public String getName() {
-    return "Custom Config Source: file:" + this.fileLocation;
-  }
-
-  public Map<String, String> getProperties() {
-    Map<String, String> m = new HashMap<String, String>();
-    String jsonData = this.readFile(this.fileLocation);
-    JsonParser parser = Json.createParser(new StringReader(jsonData));
-    String key = null;
-    while (parser.hasNext()) {
-      final Event event = parser.next();
-      switch (event) {
-      case KEY_NAME:
-        key = parser.getString();
-        break;
-      case VALUE_STRING:
-        String string = parser.getString();
-        m.put(key, string);
-        break;
-      case VALUE_NUMBER:
-        BigDecimal number = parser.getBigDecimal();
-        m.put(key, number.toString());
-        break;
-      case VALUE_TRUE:
-        m.put(key, "true");
-        break;
-      case VALUE_FALSE:
-        m.put(key, "false");
-        break;
-      default:
-        break;
-      }
-    }
-    parser.close();
-    return m;
-  }
-
-  public String readFile(String fileName) {
-    String result = "";
-    try {
-      BufferedReader br = new BufferedReader(new FileReader(fileName));
-      StringBuilder sb = new StringBuilder();
-      String line = br.readLine();
-      while (line != null) {
-        sb.append(line);
-        line = br.readLine();
-      }
-      result = sb.toString();
-      br.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return result;
-  }
-}
-```
-{: codeblock}
-
-
-
 The **getProperties()** method reads the key value pairs from the **resources/CustomConfigSource.json** JSON file and writes the information into a map.
 
 Finally, register the custom configuration source.
@@ -355,13 +223,6 @@ touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/
 
 
 
-```
-io.openliberty.guides.config.CustomConfigSource
-```
-{: codeblock}
-
-
-
 
 
 ### Enabling dynamic configuration injection
@@ -374,41 +235,6 @@ Replace the **InventoryConfig.java** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
 
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import io.openliberty.guides.config.Email;
-
-@RequestScoped
-public class InventoryConfig {
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_port_number")
-  private int portNumber;
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_inventory_inMaintenance")
-  private Provider<Boolean> inMaintenance;
-
-
-  public int getPortNumber() {
-    return portNumber;
-  }
-
-  public boolean isInMaintenance() {
-    return inMaintenance.get();
-  }
-
-}
-```
-{: codeblock}
 
 
 Inject the **`io_openliberty_guides_inventory_inMaintenance`** property, and add the **isInMaintenance()** class method.
@@ -433,39 +259,6 @@ Replace the **Email** Class.
 
 
 
-```
-
-package io.openliberty.guides.config;
-
-public class Email {
-  private String name;
-  private String domain;
-
-  public Email(String value) {
-    String[] components = value.split("@");
-    if (components.length == 2) {
-      name = components[0];
-      domain = components[1];
-    }
-  }
-
-  public String getEmailName() {
-    return name;
-  }
-
-  public String getEmailDomain() {
-    return domain;
-  }
-
-  public String toString() {
-    return name + "@" + domain;
-  }
-}
-```
-{: codeblock}
-
-
-
 To use this **Email** class type, add a custom converter by implementing the generic interface **org.eclipse.microprofile.config.spi.Converter<T>**.
 The Type parameter of the interface is the target type the String is converted to.
 
@@ -480,25 +273,6 @@ touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java
 
-
-
-
-```
-package io.openliberty.guides.config;
-
-import org.eclipse.microprofile.config.spi.Converter;
-import io.openliberty.guides.config.Email;
-
-public class CustomEmailConverter implements Converter<Email> {
-
-  @Override
-  public Email convert(String value) {
-    return new Email(value);
-  }
-
-}
-```
-{: codeblock}
 
 
 
@@ -519,60 +293,12 @@ touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/
 
 
 
-```
-io.openliberty.guides.config.CustomEmailConverter
-```
-{: codeblock}
-
-
-
 To use the custom **Email** converter,
 Replace the **InventoryConfig** class.
 
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
 
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import io.openliberty.guides.config.Email;
-
-@RequestScoped
-public class InventoryConfig {
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_port_number")
-  private int portNumber;
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_inventory_inMaintenance")
-  private Provider<Boolean> inMaintenance;
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_email")
-  private Provider<Email> email;
-
-  public int getPortNumber() {
-    return portNumber;
-  }
-
-  public boolean isInMaintenance() {
-    return inMaintenance.get();
-  }
-
-  public Email getEmail() {
-    return email.get();
-  }
-}
-```
-{: codeblock}
 
 
 Inject the **`io_openliberty_guides_email`** property, and add the **getEmail()** method.
@@ -585,76 +311,6 @@ Replace the **InventoryResource** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import java.util.Properties;
-
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import io.openliberty.guides.inventory.InventoryConfig;
-
-@RequestScoped
-@Path("systems")
-public class InventoryResource {
-
-  @Inject
-  InventoryManager manager;
-
-  @Inject
-  InventoryConfig inventoryConfig;
-
-  @GET
-  @Path("{hostname}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
-
-    if (!inventoryConfig.isInMaintenance()) {
-      Properties props = manager.get(hostname, inventoryConfig.getPortNumber());
-      if (props == null) {
-        return Response.status(Response.Status.NOT_FOUND)
-                       .entity("{ \"error\" : \"Unknown hostname or the system service " 
-                       + "may not be running on " + hostname + "\" }")
-                       .build();
-      }
-
-      manager.add(hostname, props);
-      return Response.ok(props).build();
-    } else {
-      return Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                     .entity("{ \"error\" : \"Service is currently in maintenance. " 
-                     + "Contact: " + inventoryConfig.getEmail().toString() + "\" }")
-                     .build();
-    }
-  }
-
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response listContents() {
-    if (!inventoryConfig.isInMaintenance()) {
-      return Response.ok(manager.list()).build();
-    } else {
-      return Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                     .entity("{ \"error\" : \"Service is currently in maintenance. " 
-                     + "Contact: " + inventoryConfig.getEmail().toString() + "\" }")
-                     .build();
-    }
-  }
-
-}
-
-```
-{: codeblock}
 
 
 To add configuration to the **inventory** service, the **InventoryConfig** object is injected to the existing class.
@@ -726,118 +382,6 @@ touch /home/project/guide-microprofile-config/start/src/test/java/it/io/openlibe
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java
 
-
-
-
-```
-package it.io.openliberty.guides.config;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
-
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-
-@TestMethodOrder(OrderAnnotation.class)
-public class ConfigurationIT {
-
-  private String port;
-  private String baseUrl;
-  private Client client;
-
-  private final String INVENTORY_HOSTS = "inventory/systems";
-  private final String USER_DIR = System.getProperty("user.dir");
-  private final String DEFAULT_CONFIG_FILE = USER_DIR
-      + "/src/main/resources/META-INF/microprofile-config.properties";
-  private final String CUSTOM_CONFIG_FILE = USER_DIR.split("target")[0]
-      + "/resources/CustomConfigSource.json";
-  private final String INV_MAINTENANCE_PROP = "io_openliberty_guides"
-      + "_inventory_inMaintenance";
-
-  @BeforeEach
-  public void setup() {
-    port = System.getProperty("default.http.port");
-    baseUrl = "http://localhost:" + port + "/";
-    ConfigITUtil.setDefaultJsonFile(CUSTOM_CONFIG_FILE);
-
-    client = ClientBuilder.newClient();
-    client.register(JsrJsonpProvider.class);
-  }
-
-  @AfterEach
-  public void teardown() {
-    ConfigITUtil.setDefaultJsonFile(CUSTOM_CONFIG_FILE);
-    client.close();
-  }
-
-  @Test
-  @Order(1)
-  public void testInitialServiceStatus() {
-    boolean status = Boolean.valueOf(ConfigITUtil.readPropertyValueInFile(
-        INV_MAINTENANCE_PROP, DEFAULT_CONFIG_FILE));
-    if (!status) {
-      Response response = ConfigITUtil.getResponse(client, baseUrl + INVENTORY_HOSTS);
-
-      int expected = Response.Status.OK.getStatusCode();
-      int actual = response.getStatus();
-      assertEquals(expected, actual);
-    } else {
-      assertEquals(
-        "{ \"error\" : \"Service is currently in maintenance. Contact: admin@guides.openliberty.io\" }",
-          ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS),
-          "The Inventory Service should be in maintenance");
-    }
-  }
-
-  @Test
-  @Order(2)
-  public void testPutServiceInMaintenance() {
-    Response response = ConfigITUtil.getResponse(client, baseUrl + INVENTORY_HOSTS);
-
-    int expected = Response.Status.OK.getStatusCode();
-    int actual = response.getStatus();
-    assertEquals(expected, actual);
-
-    ConfigITUtil.switchInventoryMaintenance(CUSTOM_CONFIG_FILE, true);
-
-    String error = ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS);
-
-    assertEquals(
-      "{ \"error\" : \"Service is currently in maintenance. Contact: admin@guides.openliberty.io\" }",
-        error, "The inventory service should be down in the end");
-  }
-
-  @Test
-  @Order(3)
-  public void testChangeEmail() {
-    ConfigITUtil.switchInventoryMaintenance(CUSTOM_CONFIG_FILE, true);
-
-    String error = ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS);
-
-    assertEquals(
-      "{ \"error\" : \"Service is currently in maintenance. Contact: admin@guides.openliberty.io\" }",
-        error, "The email should be admin@guides.openliberty.io in the beginning");
-
-    ConfigITUtil.changeEmail(CUSTOM_CONFIG_FILE, "service@guides.openliberty.io");
-
-    error = ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS);
-
-    assertEquals(
-      "{ \"error\" : \"Service is currently in maintenance. Contact: service@guides.openliberty.io\" }",
-        error, "The email should be service@guides.openliberty.io in the beginning");
-  }
-
-}
-```
-{: codeblock}
 
 
 

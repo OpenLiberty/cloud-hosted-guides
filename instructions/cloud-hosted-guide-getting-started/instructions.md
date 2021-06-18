@@ -218,35 +218,6 @@ Replace the server configuration file.
 
 
 
-```
-<server description="Sample Liberty server">
-    <featureManager>
-        <feature>jaxrs-2.1</feature>
-        <feature>jsonp-1.1</feature>
-        <feature>cdi-2.0</feature>
-        <feature>mpMetrics-3.0</feature>
-        <feature>mpHealth-3.0</feature>
-        <feature>mpConfig-2.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/" />
-    
-    <mpMetrics authentication="false"/>
-
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-{: codeblock}
-
-
-
 After you make the file changes, Open Liberty automatically reloads its configuration.
 When enabled, the **mpHealth** feature automatically adds a **/health** endpoint to the application.
 You can see the server being updated in the server log displayed in your command-line session:
@@ -317,44 +288,6 @@ touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sam
 
 
 
-```
-package io.openliberty.sample.system;
-
-import javax.enterprise.context.ApplicationScoped;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Readiness
-@ApplicationScoped
-public class SystemReadinessCheck implements HealthCheck {
-
-    private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
-                                                 + " Readiness Check";
-
-    @Inject
-    @ConfigProperty(name = "io_openliberty_guides_system_inMaintenance")
-    Provider<String> inMaintenance;
-
-    @Override
-    public HealthCheckResponse call() {
-        if (inMaintenance != null && inMaintenance.get().equalsIgnoreCase("true")) {
-            return HealthCheckResponse.down(READINESS_CHECK);
-        }
-        return HealthCheckResponse.up(READINESS_CHECK);
-    }
-
-}
-```
-{: codeblock}
-
-
-
 The **SystemReadinessCheck** class verifies that the 
 **system** microservice is not in maintenance by checking a config property.
 
@@ -369,41 +302,6 @@ touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sam
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
 
-
-
-
-```
-package io.openliberty.sample.system;
-
-import javax.enterprise.context.ApplicationScoped;
-
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
-
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class SystemLivenessCheck implements HealthCheck {
-
-    @Override
-    public HealthCheckResponse call() {
-        MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-        long memUsed = memBean.getHeapMemoryUsage().getUsed();
-        long memMax = memBean.getHeapMemoryUsage().getMax();
-
-        return HealthCheckResponse.named(
-            SystemResource.class.getSimpleName() + " Liveness Check")
-                                  .withData("memory used", memUsed)
-                                  .withData("memory max", memMax)
-                                  .status(memUsed < memMax * 0.9).build();
-    }
-
-}
-```
-{: codeblock}
 
 
 
@@ -516,36 +414,6 @@ Replace the server configuration file.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
-
-
-
-```
-<server description="Sample Liberty server">
-    <featureManager>
-        <feature>jaxrs-2.1</feature>
-        <feature>jsonp-1.1</feature>
-        <feature>cdi-2.0</feature>
-        <feature>mpMetrics-3.0</feature>
-        <feature>mpHealth-3.0</feature>
-        <feature>mpConfig-2.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/" />
-    
-    <mpMetrics authentication="false"/>
-
-    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-{: codeblock}
 
 
 
@@ -733,36 +601,6 @@ Replace the server configuration file.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
-
-
-
-```
-<server description="Sample Liberty server">
-    <featureManager>
-        <feature>jaxrs-2.1</feature>
-        <feature>jsonp-1.1</feature>
-        <feature>cdi-2.0</feature>
-        <feature>mpMetrics-3.0</feature>
-        <feature>mpHealth-3.0</feature>
-        <feature>mpConfig-2.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/dev" />
-    
-    <mpMetrics authentication="false"/>
-
-    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-{: codeblock}
 
 
 After you make the file changes, Open Liberty automatically reloads its
