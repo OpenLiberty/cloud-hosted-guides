@@ -178,20 +178,12 @@ LABEL \
   description="This image contains the inventory microservice running with the Open Liberty runtime."
 
 COPY --chown=1001:0 \
-    # tag::inventory-config[]
     src/main/liberty/config \
-    # end::inventory-config[]
-    # tag::config[]
     /config/
-    # end::config[]
 
 COPY --chown=1001:0 \
-    # tag::inventory-war[]
     target/inventory.war \
-    # end::inventory-war[]
-    # tag::config-apps[]
     /config/apps
-    # end::config-apps[]
 
 RUN configure.sh
 ```
