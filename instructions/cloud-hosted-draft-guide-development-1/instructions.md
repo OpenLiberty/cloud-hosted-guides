@@ -700,15 +700,6 @@ minikube delete
 ```
 {: codeblock}
 
-
-
-
-
-
-
-
-
-
 # Summary
 
 ## Nice Work!
