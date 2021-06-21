@@ -92,5 +92,5 @@ jobs:
             body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
             branch: "cloud-hosted-draft-guide-development-${{ github.event.inputs.devGuide }}/staging"
             base: "staging" 
-            labels: "RunTests"
+            labels: "RunTestsDev"
         name: Create Pull Request
