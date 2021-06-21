@@ -133,6 +133,24 @@ The **-t** flag in the **docker build** command allows the Docker image to be la
 The tag for an image describes the specific image version.
 If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
 
+Push your images to the container registry on IBM Cloud with the following commands:
+
+```
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+```
+{: codeblock}
+
+Update the image names so that the images in your IBM Cloud container registry are used:
+
+```
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
+```
+{: codeblock}
+
 Run the following command to deploy the necessary Kubernetes resources to serve the applications.
 ```
 kubectl apply -f kubernetes.yaml
@@ -157,6 +175,8 @@ inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
 ```
 
 After the pods are ready, you will make requests to your services.
+
+
 
 
 Run the following `curl` command to access the system microservice.
@@ -443,61 +463,27 @@ spec:
         app: system
     spec:
       containers:
-      # tag::system-container[]
       - name: system-container
         image: system:1.0-SNAPSHOT
         ports:
         - containerPort: 9080
         # Set the environment variables
-        # tag::env1[]
         env:
-        # end::env1[]
-        # tag::contextRoot1[]
         - name: CONTEXT_ROOT
-          # tag::valueFrom1[]
           valueFrom:
-          # end::valueFrom1[]
-            # tag::configRef1[]
             configMapKeyRef:
-              # tag::root1[]
               name: sys-app-root
-              # end::root1[]
-              # tag::contextRootKey1[]
               key: contextRoot
-              # end::contextRootKey1[]
-            # end::configRef1[]
-        # end::contextRoot1[]
-        # tag::sysUsername1[]
         - name: SYSTEM_APP_USERNAME
-          # tag::valueFrom2[]
           valueFrom:
-          # end::valueFrom2[]
-            # tag::secretRef1[]
             secretKeyRef:
-              # tag::credentials1[]
               name: sys-app-credentials
-              # end::credentials1[]
-              # tag::username1[]
               key: username
-              # end::username1[]
-            # end::secretRef1[]
-        # end::sysUsername1[]
-        # tag::sysPassword1[]
         - name: SYSTEM_APP_PASSWORD
-          # tag::valueFrom3[]
           valueFrom:
-          # end::valueFrom3[]
-            # tag::secretRef2[]
             secretKeyRef:
-              # tag::credentials2[]
               name: sys-app-credentials
-              # end::credentials2[]
-              # tag::password1[]
               key: password
-              # end::password1[]
-            # end::secretRef2[]
-        # end::sysPassword1[]
-      # end::system-container[]
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -515,61 +501,27 @@ spec:
         app: inventory
     spec:
       containers:
-      # tag::inventory-container[]
       - name: inventory-container
         image: inventory:1.0-SNAPSHOT
         ports:
         - containerPort: 9080
         # Set the environment variables
-        # tag::env2[]
         env:
-        # end::env2[]
-        # tag::contextRoot2[]
         - name: CONTEXT_ROOT
-          # tag::valueFrom4[]
           valueFrom:
-          # end::valueFrom4[]
-            # tag::configRef2[]
             configMapKeyRef:
-              # tag::root2[]
               name: sys-app-root
-              # end::root2[]
-              # tag::contextRootKey2[]
               key: contextRoot
-              # end::contextRootKey2[]
-            # end::configRef2[]
-        # end::contextRoot2[]
-        # tag::sysUsername2[]
         - name: SYSTEM_APP_USERNAME
-          # tag::valueFrom5[]
           valueFrom:
-          # end::valueFrom5[]
-            # tag::secretRef3[]
             secretKeyRef:
-              # tag::credentials3[]
               name: sys-app-credentials
-              # end::credentials3[]
-              # tag::username2[]
               key: username
-              # end::username2[]
-            # end::secretRef3[]
-        # end::sysUsername2[]
-        # tag::sysPassword2[]
         - name: SYSTEM_APP_PASSWORD
-          # tag::valueFrom6[]
           valueFrom:
-          # end::valueFrom6[]
-            # tag::secretRef4[]
             secretKeyRef:
-              # tag::credentials4[]
               name: sys-app-credentials
-              # end::credentials4[]
-              # tag::password2[]
               key: password
-              # end::password2[]
-            # end::secretRef4[]
-        # end::sysPassword2[]
-      # end::inventory-container[]
 ---
 apiVersion: v1
 kind: Service
