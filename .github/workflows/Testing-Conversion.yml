@@ -97,7 +97,7 @@ jobs:
           removeEnd="${removeStart% *}"
           echo $removeEnd
           cd GuideConverter
-          mvn -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"
+          mvn -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/$removeEnd/instructions"
 
 
   testingConversionAllGuides:
