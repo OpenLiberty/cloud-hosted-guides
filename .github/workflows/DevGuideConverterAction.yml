@@ -59,7 +59,7 @@ jobs:
 
       - uses: actions/setup-java@v1
         with:
-          java-version: '15' # The JDK version to make available on the path.
+          java-version: '16' # The JDK version to make available on the path.
           java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
 
@@ -89,8 +89,8 @@ jobs:
         with:
             title: "To Staging: Change to cloud-hosted-draft-guide-development-${{ github.event.inputs.devGuide }} for ${{ github.event.inputs.guide_name }}"
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
+            body: "Updated by github actions, triggered to the cloud-hosted-draft-guide-development-${{ github.event.inputs.devGuide }} repo."
             branch: "cloud-hosted-draft-guide-development-${{ github.event.inputs.devGuide }}/staging"
             base: "staging" 
-            labels: "RunTests"
+            labels: "RunTestsDev"
         name: Create Pull Request
