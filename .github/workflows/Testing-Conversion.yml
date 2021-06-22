@@ -61,6 +61,45 @@ jobs:
           mvn -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"
 
 
+  testingDevConversion:
+    runs-on: ubuntu-latest
+    if: github.event.label.name == 'RunTestsDev'
+
+    steps:
+
+      - uses: actions/checkout@master
+        
+      - name: Checkout Guide Converter repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/cloud-hosted-guide-converter
+          path: GuideConverter
+
+        
+      - name: Checkout instructions
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/cloud-hosted-guides
+          path: GuideConverter/cloud-hosted-guides
+          ref: ${{ github.event.pull_request.branch }}
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '15' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+
+      - name: Get Guide name
+        run: |
+          echo ${{ github.event.pull_request.body }}
+          prText="${{ github.event.pull_request.body }}"
+          removeStart="${prText:44}"
+          removeEnd="${removeStart% *}"
+          echo $removeEnd
+          cd GuideConverter
+          mvn -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"
+
+
   testingConversionAllGuides:
     needs: matrix
     runs-on: ubuntu-latest

@@ -19,6 +19,8 @@ jobs:
           - {"github":"cloud-hosted-draft-guide-development-2","gitlab":"cloud-hosted-draft-guide-development-2"}
           - {"github":"cloud-hosted-draft-guide-development-3","gitlab":"cloud-hosted-draft-guide-development-3"}
           - {"github":"cloud-hosted-draft-guide-development-4","gitlab":"cloud-hosted-draft-guide-development-4"}
+          - {"github":"cloud-hosted-draft-guide-development-5","gitlab":"cloud-hosted-draft-guide-development-5"}
+          - {"github":"cloud-hosted-draft-guide-development-6","gitlab":"cloud-hosted-draft-guide-development-6"}
           - {"github":"cloud-hosted-guide-cdi-intro","gitlab":"cloud-hosted-guide-cdi-intro"}
           - {"github":"cloud-hosted-guide-containerize","gitlab":"cloud-hosted-guide-containerize"}
           - {"github":"cloud-hosted-guide-docker","gitlab":"cloud-hosted-guide-docker"}
