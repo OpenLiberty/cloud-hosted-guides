@@ -68,40 +68,47 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-# Starting and preparing your cluster for deployment
-
-Start your Kubernetes cluster.
 
 
-Run the following command from a command-line session:
+# Logging into your cluster
+
+For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
+Get the name of your namespace with the following command:
 
 ```
-minikube start
-```
-{: codeblock}
-
-
-
-
-
-Next, validate that you have a healthy Kubernetes environment by running the following command from the active command-line session.
-```
-kubectl get nodes
+bx cr namespace-list
 ```
 {: codeblock}
 
+Look for output that is similar to the following:
 
-This command should return a **Ready** status for the master node.
-
-
-Run the following command to configure the Docker CLI to use Minikube's Docker daemon.
-After you run this command, you will be able to interact with Minikube's Docker daemon and build new
-images directly to it from your host machine:
 ```
-eval $(minikube docker-env)
+Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
+
+Namespace
+sn-labs-yourname
+```
+
+Store the namespace name in a variable.
+Use the namespace name that was obtained from the previous command.
+
+```
+NAMESPACE_NAME={namespace_name}
 ```
 {: codeblock}
 
+Verify that the variable contains your namespace name:
+
+```
+echo $NAMESPACE_NAME
+```
+{: codeblock}
+
+Log in to the registry with the following command:
+```
+bx cr login
+```
+{: codeblock}
 
 
 # Adding health checks to the inventory microservice
@@ -286,40 +293,20 @@ spec:
         # system probes
         readinessProbe:
           httpGet:
-            # tag::ready1[]
             path: /health/ready
-            # end::ready1[]
             port: 9080
-          # tag::delay1[]
           initialDelaySeconds: 30
-          # end::delay1[]
-          # tag::period1[]
           periodSeconds: 10
-          # end::period1[]
-          # tag::timeout1[]
           timeoutSeconds: 3
-          # end::timeout1[]
-          # tag::threshold1[]
           failureThreshold: 1
-          # end::threshold1[]
         livenessProbe:
           httpGet:
-            # tag::live1[]
             path: /health/live
-            # end::live1[]
             port: 9080
-          # tag::delay2[]
           initialDelaySeconds: 60
-          # end::delay2[]
-          # tag::period2[]
           periodSeconds: 10
-          # end::period2[]
-          # tag::timeout2[]
           timeoutSeconds: 3
-          # end::timeout2[]
-          # tag::threshold2[]
           failureThreshold: 1
-          # end::threshold2[]
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -347,40 +334,20 @@ spec:
         # inventory probe
         readinessProbe:
           httpGet:
-            # tag::ready2[]
             path: /health/ready
-            # end::ready2[]
             port: 9080
-          # tag::delay3[]
           initialDelaySeconds: 30
-          # end::delay3[]
-          # tag::period3[]
           periodSeconds: 10
-          # end::period3[]
-          # tag::timeout3[]
           timeoutSeconds: 3
-          # end::timeout3[]
-          # tag::threshold3[]
           failureThreshold: 1
-          # end::threshold3[]
         livenessProbe:
           httpGet:
-            # tag::live2[]
             path: /health/live
-            # end::live2[]
             port: 9080
-          # tag::delay4[]
           initialDelaySeconds: 60
-          # end::delay4[]
-          # tag::period4[]
           periodSeconds: 10
-          # end::period4[]
-          # tag::timeout4[]
           timeoutSeconds: 3
-          # end::timeout4[]
-          # tag::threshold4[]
           failureThreshold: 1
-          # end::threshold4[]
 ---
 apiVersion: v1
 kind: Service
@@ -699,6 +666,15 @@ minikube stop
 minikube delete
 ```
 {: codeblock}
+
+
+
+
+
+
+
+
+
 
 # Summary
 
