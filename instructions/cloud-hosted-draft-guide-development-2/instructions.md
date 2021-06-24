@@ -177,20 +177,60 @@ inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
 After the pods are ready, you will make requests to your services.
 
 
-
-
-Run the following `curl` command to access the system microservice.
-The `-u` option is used to pass in the username `bob` and the password `bobpwd`.
+Run the following command to get the node IP for the `system` service:
 
 ```
-curl http://$(minikube ip):31000/system/properties -u bob:bobpwd
+kubectl describe pod system | grep Node
 ```
 {: codeblock}
 
-Run the following `curl` command to add the system to the inventory microservice.
+The output shows the node IP that is later used to access the service. 
+It appears in a format similar to the following:
 
 ```
-curl http://$(minikube ip):32000/inventory/systems/system-service
+Node:         10.114.85.140/10.114.85.140
+Node-Selectors:  <none>
+```
+
+The IP for the system service is `10.114.85.140`.
+Store the IP in a variable.
+
+```
+SYSTEM_HOST={system-node-ip}
+```
+{: codeblock}
+
+Use another `kubectl` command to get the node IP for the `inventory` service:
+
+```
+kubectl describe pod inventory | grep Node
+```
+{: codeblock}
+
+Store this IP in a variable as well.
+
+```
+INVENTORY_HOST={inventory-node-ip}
+```
+{: codeblock}
+
+Verify that the variables that contain the IPs are set correctly:
+
+```
+echo $SYSTEM_HOST && echo $INVENTORY_HOST
+```
+{: codeblock}
+
+Then use the following `curl` commands to access your microservices.
+The `-u` option is used to pass in the username `bob` and the password `bobpwd`.
+
+```
+curl http://$SYSTEM_HOST:31000/system/properties -u bob:bobpwd
+```
+{: codeblock}
+
+```
+curl http://$INVENTORY_HOST:32000/inventory/systems/system-service
 ```
 {: codeblock}
 
@@ -598,12 +638,11 @@ kubectl replace --force -f kubernetes.yaml
 
 
 
-Your application will now be available at the `http://$(minikube ip):31000/dev/system/properties` URL.
 You now need to use the new username, `alice`, and the new password `wonderland`.
 Access your application with the following command:
 
 ```
-curl http://$(minikube ip):31000/dev/system/properties -u alice:wonderland
+curl http://$SYSTEM_HOST:31000/dev/system/properties -u alice:wonderland
 ```
 {: codeblock}
 
@@ -613,7 +652,7 @@ Notice that the URL you are using to reach the application now has **/dev** as t
 Verify the inventory service is working as intended by using the following command:
 
 ```
-curl http://$(minikube ip):32000/inventory/systems/system-service
+curl http://$INVENTORY_HOST:32000/inventory/systems/system-service
 ```
 {: codeblock}
 
@@ -623,14 +662,20 @@ If it is not working, then check the configuration of the credentials.
 
 
 
-
-Run the integration tests by running the following command:
+Update the `pom.xml` files so that the `cluster.ip` properties match the values of your node IPs.
 
 ```
-mvn failsafe:integration-test -Dsystem.context.root=/dev -Dcluster.ip=$(minikube ip)
+sed -i 's=localhost='"$INVENTORY_HOST"'=g' inventory/pom.xml
+sed -i 's=localhost='"$SYSTEM_HOST"'=g' system/pom.xml
 ```
 {: codeblock}
 
+Run the integration tests by using the following command:
+
+```
+mvn failsafe:integration-test
+```
+{: codeblock}
 
 The tests for **inventory** verify that the service can communicate with **system**
 using the configured credentials. If the credentials are misconfigured, then the
