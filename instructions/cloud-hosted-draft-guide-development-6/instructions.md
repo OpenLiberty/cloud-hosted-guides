@@ -868,9 +868,7 @@ rm -fr guide-getting-started
 ```
 {: codeblock}
 
-(space)
-
-(space)
+<br/><br/>
 ## **What did you think of this guide?**
 We want to hear from you. To provide feedback, click the following link.
 
@@ -878,9 +876,7 @@ We want to hear from you. To provide feedback, click the following link.
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
-(space)
-
-(space)
+<br/><br/>
 ## **What could make this guide better?**
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-getting-started/issues)
@@ -888,18 +884,14 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-(space)
-
-(space)
+<br/><br/>
 ## **Where to next?**
 
 * [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
-(space)
-
-(space)
+<br/><br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
