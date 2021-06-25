@@ -432,6 +432,24 @@ The **-t** flag in the **docker build** command allows the Docker image to be la
 The tag for an image describes the specific image version. 
 If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
 
+Push your images to the container registry on IBM Cloud with the following commands:
+
+```
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+```
+{: codeblock}
+
+Update the image names so that the images in your IBM Cloud container registry are used:
+
+```
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
+```
+{: codeblock}
+
 When the builds succeed, run the following command to deploy the necessary Kubernetes 
 resources to serve the applications.
 
@@ -461,10 +479,54 @@ Wait until the pods are ready. After the pods are ready, you will make requests 
 services.
 
 
+Run the following command to get the node IP for the `system` service:
+
+```
+kubectl describe pod system | grep Node
+```
+{: codeblock}
+
+The output shows the node IP that is later used to access the service. 
+It appears in a format similar to the following:
+
+```
+Node:         10.114.85.140/10.114.85.140
+Node-Selectors:  <none>
+```
+
+The IP for the system service is `10.114.85.140`.
+Store the IP in a variable.
+
+```
+SYSTEM_HOST={system-node-ip}
+```
+{: codeblock}
+
+Use another `kubectl` command to get the node IP for the `inventory` service:
+
+```
+kubectl describe pod inventory | grep Node
+```
+{: codeblock}
+
+Store this IP in a variable as well.
+
+```
+INVENTORY_HOST={inventory-node-ip}
+```
+{: codeblock}
+
+Verify that the variables that contain the IPs are set correctly:
+
+```
+echo $SYSTEM_HOST && echo $INVENTORY_HOST
+```
+{: codeblock}
+
 Make a request to the system service to see the JVM system properties with the following command:
 
 ```
-curl http://$(minikube ip):31000/system/properties
+curl http://$SYSTEM_HOST:31000/system/properties
 ```
 {: codeblock}
 
@@ -479,7 +541,7 @@ when the microservice has fully started.
 Similarly, access the inventory service and observe the successful request with the following command:
 
 ```
-curl http://$(minikube ip):32000/inventory/systems/system-service
+curl http://$INVENTORY_HOST:32000/inventory/systems/system-service
 ```
 {: codeblock}
 
@@ -492,7 +554,7 @@ Use the `curl` command to invoke this endpoint by making a POST request to the
 `/system/properties/unhealthy` endpoint.
 
 ```
-curl -X POST http://$(minikube ip):31000/system/properties/unhealthy
+curl -X POST http://$SYSTEM_HOST:31000/system/properties/unhealthy
 ```
 {: codeblock}
 
@@ -529,7 +591,7 @@ Wait until the `system` pod is ready again.
 Make two POST requests to `/system/properties/unhealthy` endpoint with the following command:
 
 ```
-curl -X POST http://$(minikube ip):31000/system/properties/unhealthy
+curl -X POST http://$SYSTEM_HOST:31000/system/properties/unhealthy
 ```
 {: codeblock}
 
@@ -595,10 +657,18 @@ inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
 # Testing the microservices
 
 
-Run the tests by running the following command:
+Update the `pom.xml` files so that the `cluster.ip` properties match the values of your node IPs.
 
 ```
-mvn failsafe:integration-test -Dcluster.ip=$(minikube ip)
+sed -i 's=localhost='"$INVENTORY_HOST"'=g' inventory/pom.xml
+sed -i 's=localhost='"$SYSTEM_HOST"'=g' system/pom.xml
+```
+{: codeblock}
+
+Run the integration tests by using the following command:
+
+```
+mvn failsafe:integration-test
 ```
 {: codeblock}
 
@@ -641,37 +711,6 @@ delete all of the resources that you created.
 kubectl delete -f kubernetes.yaml
 ```
 {: codeblock}
-
-
-
-
-Perform the following steps to return your environment to a clean state.
-
-. Point the Docker daemon back to your local machine:
-+
-```
-eval $(minikube docker-env -u)
-```
-. Stop your Minikube cluster:
-+
-```
-minikube stop
-```
-{: codeblock}
-
-
-. Delete your cluster:
-+
-```
-minikube delete
-```
-{: codeblock}
-
-
-
-
-
-
 
 
 
