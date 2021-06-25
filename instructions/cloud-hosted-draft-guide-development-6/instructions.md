@@ -871,7 +871,7 @@ rm -fr guide-getting-started
 (space)
 
 (space)
-## ~~What did you think of this guide?~~
+## **What did you think of this guide?**
 We want to hear from you. To provide feedback, click the following link.
 
 * [Give us feedback](https://ol-staging.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Getting%20started%20with%20Open%20Liberty&guide-id=cloud-hosted-guide-getting-started)
@@ -881,7 +881,7 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 (space)
 
 (space)
-## ~~What could make this guide better?~~
+## **What could make this guide better?**
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-getting-started/issues)
 * [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-getting-started/pulls)
@@ -891,7 +891,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 (space)
 
 (space)
-## ~~Where to next?~~
+## **Where to next?**
 
 * [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
@@ -900,6 +900,6 @@ You can also provide feedback or contribute to this guide from GitHub.
 (space)
 
 (space)
-## ~~Log out of the session~~
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
