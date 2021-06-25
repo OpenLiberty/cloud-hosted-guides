@@ -145,9 +145,9 @@ USER 1001
 {: codeblock}
 
 
-The **FROM** instruction initializes a new build stage and indicates the parent image from which your
-image is built. If you don't need a parent image, then use **FROM scratch**, which makes your image a
-base image. 
+The **FROM** instruction initializes a new build stage
+and indicates the parent image from which your image is built.
+If you don't need a parent image, then use **FROM scratch**, which makes your image a base image. 
 
 In this case, you’re using the **openliberty/open-liberty:full-java8-openj9-ubi** image as your parent image, 
 which comes with the latest Open Liberty runtime.
@@ -292,7 +292,7 @@ You can test this service manually by starting a server and going to the
 However, automated tests are a much better approach because they trigger a failure if a change introduces a bug.
 JUnit and the JAX-RS Client API provide a simple environment to test the application. 
 You can write tests for the individual units of code outside of a running application server,
-or they can be written to call the application server directly.
+or you can write them to call the application server directly.
 In this example, you will create a test that calls the application server directly.
 
 Create the **EndpointIT** class.
@@ -417,7 +417,7 @@ check out the [Documentation](http://github.com/OpenLiberty/ci.maven/blob/main/d
 
 ## Nice Work!
 
-You have just iteratively developed a simple REST application in a container with Open Liberty and Docker.
+You just iteratively developed a simple REST application in a container with Open Liberty and Docker.
 
 
 
