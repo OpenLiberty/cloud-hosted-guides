@@ -24,9 +24,6 @@
         "guide": "guide-containerize"
     },
     {
-        "guide": "guide-reactive-messaging-openshift"
-    },
-    {
         "guide": "guide-microshed-testing"
     },
     {
@@ -73,8 +70,5 @@
     },
     {
         "guide": "guide-reactive-rest-client"
-    },
-    {
-        "guide": "guide-rest-openshift"
     }
 ]
