@@ -6,6 +6,9 @@
         "guide": "guide-cdi-intro"
     },
     {
+        "guide": "guide-docker"
+    },
+    {
         "guide": "guide-rest-intro"
     },
     {
@@ -21,10 +24,16 @@
         "guide": "guide-containerize"
     },
     {
+        "guide": "guide-reactive-messaging-openshift"
+    },
+    {
         "guide": "guide-microshed-testing"
     },
     {
         "guide": "guide-kubernetes-intro"
+    },
+    {
+        "guide": "guide-kubernetes-microprofile-health"
     },
     {
         "guide": "guide-microprofile-health"
@@ -61,5 +70,11 @@
     },
     {
         "guide": "guide-rest-client-java"
+    },
+    {
+        "guide": "guide-reactive-rest-client"
+    },
+    {
+        "guide": "guide-rest-openshift"
     }
 ]
