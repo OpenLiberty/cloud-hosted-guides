@@ -1,7 +1,7 @@
 
 # Welcome to the Open Liberty Masterclass guide!
 
-== Table of Contents
+## Table of Contents
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
