@@ -1108,13 +1108,24 @@ rm -fr open-liberty-masterclass
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-## What could make this guide better?
+## **What could make this guide better?**
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/open-liberty-masterclass/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/open-liberty-masterclass/pulls)
 
-null
+
 
 ## Log out of the session
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-getting-started/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-getting-started/pulls)
+
+
+## **Where to next?**
+
+* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
