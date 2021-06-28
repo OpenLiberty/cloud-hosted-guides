@@ -2,7 +2,7 @@
 
 # **Welcome to the Open Liberty Masterclass guide!**
 
-## Table of Contents
+
 
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
@@ -11,25 +11,6 @@ This panel contains the step-by-step guide instructions. You can customize these
 
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
-
-
-* <<open,Open Liberty Masterclass>>
-* <<toc,Table of Contents>>
-* <<before,Before you begin>>
-* <<prereq,Install Pre-requisites>>
-* <<info,Prime Maven and Docker Caches>>
-* <<app,The Application>>
-* <<m1,Module 1: Build>>
-* <<m2,Module 2: Dev Mode>>
-* <<m3,Module 3: Application APIs>>
-* <<m4,Module 4: Server Configuration>>
-* <<m5,Module 5: Externalizing Configuration>>
-* <<m6,Module 6: Integration Testing>>
-* <<m7,Module 7: Docker>>
-* <<serverConfig,Overriding Dev Server Configuration>>
-* <<m8,Module 8: Testing in Containers>>
-* <<m9,Module 9: Support Licensing>>
-* <<conclusion,Conclusion>>
 
 # **Before you begin**
 
