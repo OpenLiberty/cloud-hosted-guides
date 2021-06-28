@@ -1,7 +1,9 @@
 
+
 # **Welcome to the Open Liberty Masterclass guide!**
 
 ## Table of Contents
+
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -33,6 +35,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ### **Install Pre-requisites**
 
+
 * A Java 8/11 JDK (e.g. https://adoptopenjdk.net/?variant=openjdk8&jvmVariant=openj9)
 * Apache Maven (https://maven.apache.org/)
 * A git client (https://git-scm.com/downloads)
@@ -40,6 +43,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 * Docker
 * **Windows:** Set up Docker for Windows as described at https://docs.docker.com/docker-for-windows/.
 *  **Mac:** Set up Docker for Mac as described at https://docs.docker.com/docker-for-mac/.
+
 
 ### **Prime Maven and Docker Caches**
 
@@ -73,6 +77,7 @@ cd ..
 
 
 # **The Application**
+
 
 The application consists of two Microservices; **coffee-shop** and **barista**.  The **coffee-shop** service allows you to place an order and the **barista** service services the making of the coffee.
 
@@ -287,8 +292,13 @@ import org.eclipse.microprofile.metrics.annotation.Counted;
 ```
 {: codeblock}
 
+You'll also need to add the following package import:
+```
+import org.eclipse.microprofile.metrics.annotation.Counted;
+```
+{: codeblock}
 
-# Module 4: Server Configuration
+# **Module 4: Server Configuration**
 
 From your previous addition of the MicroProfile Metrics feature in the server.xml you should now see a message for a new metrics endpoint in the terminal that looks like:
 
@@ -479,8 +489,6 @@ default_barista_base_url=http://localhost:9082
 Visit the following url again:
 
 http://localhost:9080/health/ready
-
-
 You'll find out from the **coffee-shop** service is ready now:
 ```
 {"checks":[{"data":{},"name":"CoffeeShopReadinessCheck Readiness Check","status":"UP"}],"status":"UP"}
@@ -628,7 +636,6 @@ Once the test has finished, shut down both microservices by typing `q` in both t
 # Module 7: Docker
 
 We're now going to dockerize the two services and show how we can override the defaults to re-wire the two services.  We're going to use a Docker user-defined network (see https://docs.docker.com/network/network-tutorial-standalone/#use-user-defined-bridge-networks) because by using Docker user-defined networks we are able to connect the two containers to the same network and have them communicate using only the others IP address or name.  For real-world production deployments you would use a Kubernetes environment, such as Red Hat OpenShift or IBM Cloud Kubernetes Service.
-
 Take a look at the **open-liberty-masterclass/start/coffee-shop/Dockerfile**:
 
 ```
@@ -771,7 +778,6 @@ docker stop coffee-shop
 docker rm coffee-shop
 ```
 {: codeblock}
-
 
 
 ### **Overriding Dev Server Configuration**
@@ -1088,6 +1094,7 @@ The **barista** service should be started at the port **9082** and the **coffee-
 Then, try the service out using the Open API Web page and you should see the behavior is identical.  Not surprising since the code is identical, from the same build, just built into WebSphere Liberty.
 
 # **Conclusion**
+
 Thanks for trying the Open Liberty Masterclass. If you're interested in finding out more, please visit the [Open Liberty website](http://openliberty.io), and for more hands-on experience, why not try the [Open Liberty Guides](http://openliberty.io/guides).
 
 
@@ -1105,6 +1112,7 @@ rm -fr open-liberty-masterclass
 {: codeblock}
 
 ## **What did you think of this guide?**
+
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
@@ -1112,7 +1120,6 @@ select **Give feedback** option, fill in the fields, choose **General** category
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/open-liberty-masterclass/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/open-liberty-masterclass/pulls)
-
 
 
 ## **Log out of the session**
