@@ -622,13 +622,16 @@ rm -fr guide-microprofile-fallback
 {: codeblock}
 
 ## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
-select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+We want to hear from you. To provide feedback, click the following link.
+
+* [Give us feedback](https://ol-staging.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20fault-tolerant%20microservices%20with%20the%20@Fallback%20annotation&guide-id=cloud-hosted-guide-microprofile-fallback)
+
+Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ## What could make this guide better?
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-fallback/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-fallback/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-fallback/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-fallback/pulls)
 
 
 
