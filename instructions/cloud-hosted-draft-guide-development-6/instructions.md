@@ -1,7 +1,9 @@
 
-# Welcome to the Open Liberty Masterclass guide!
 
-== Table of Contents
+# **Welcome to the Open Liberty Masterclass guide!**
+
+## Table of Contents
+
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -29,9 +31,10 @@ The other panel displays the IDE that you will use to create files, edit the cod
 * <<m9,Module 9: Support Licensing>>
 * <<conclusion,Conclusion>>
 
-# Before you begin
+# **Before you begin**
 
-### Install Pre-requisites
+### **Install Pre-requisites**
+
 
 * A Java 8/11 JDK (e.g. https://adoptopenjdk.net/?variant=openjdk8&jvmVariant=openj9)
 * Apache Maven (https://maven.apache.org/)
@@ -41,7 +44,8 @@ The other panel displays the IDE that you will use to create files, edit the cod
 * **Windows:** Set up Docker for Windows as described at https://docs.docker.com/docker-for-windows/.
 *  **Mac:** Set up Docker for Mac as described at https://docs.docker.com/docker-for-mac/.
 
-### Prime Maven and Docker Caches
+
+### **Prime Maven and Docker Caches**
 
 If you will be taking the Masterclass at a location with limited network bandwidth, it is recommended you do the following beforehand in order to populate your local **.m2** repo and Docker cache.
 
@@ -72,7 +76,8 @@ cd ..
 
 
 
-# The Application
+# **The Application**
+
 
 The application consists of two Microservices; **coffee-shop** and **barista**.  The **coffee-shop** service allows you to place an order and the **barista** service services the making of the coffee.
 
@@ -87,7 +92,7 @@ The application consists of two Microservices; **coffee-shop** and **barista**. 
 ```
 The completed code for the Masterclass is provided in the **open-liberty-masterclass/finish** directory.  To work through the Masterclass you will develop in the **open-liberty-masterclass/start** directory.
 
-# Module 1: Build
+# **Module 1: Build**
 
 Liberty has support for building and deploying applications using Maven and Gradle.  The source and documentation for these plugins can be found here:
 * https://github.com/OpenLiberty/ci.maven
@@ -133,7 +138,7 @@ Click on **Execute**
 
 Scroll down and you should see the server response code of **200**.  This says that the barista request to make an **ESPRESSO** was successfully **Created**. If you go back to the terminal you will also see the message **starting to brew: EXPRESSO**. Now leave this terminal with the Open Liberty server running and open up a new terminal to continue this masterclass from the same directory.
 
-# Module 2: Dev Mode
+# **Module 2: Dev Mode**
 
 The Open Liberty Maven plug-in includes a dev goal that listens for any changes in the project, including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal -- dev mode -- allows for quicker turnarounds and an improved developer experience by providing hot deploy, hot testing and hot debug capabilities.
 
@@ -243,7 +248,7 @@ As with the barista service, this is an Open API UI page that lets to try out th
 
 For a full list of all the features available, see https://openliberty.io/docs/ref/feature/.
 
-# Module 3: Application APIs
+# **Module 3: Application APIs**
 
 Open Liberty has support for many standard APIs out of the box, including Java EE 7 & 8, Jakarta EE 8 and the latest MicroProfile APIs.
 
@@ -287,8 +292,13 @@ import org.eclipse.microprofile.metrics.annotation.Counted;
 ```
 {: codeblock}
 
+You'll also need to add the following package import:
+```
+import org.eclipse.microprofile.metrics.annotation.Counted;
+```
+{: codeblock}
 
-# Module 4: Server Configuration
+# **Module 4: Server Configuration**
 
 From your previous addition of the MicroProfile Metrics feature in the server.xml you should now see a message for a new metrics endpoint in the terminal that looks like:
 
@@ -345,7 +355,7 @@ application:com_sebastian_daschner_coffee_shop_boundary_orders_resource_order 3
 ```
 Now go to the terminal and type **q** followed by **Enter** to shut down the server.
 
-# Module 5: Externalizing Configuration
+# **Module 5: Externalizing Configuration**
 
 If you're familiar with the concept of 12-factor applications (see http://12factor.net) you'll know that factor III states that an application's configuration should be stored in the environment. Configuration here, is referring to variables which vary between development, staging and production. In doing so, you can build the deployment artefact once and deploy it in different environments unchanged.
 
@@ -479,8 +489,6 @@ default_barista_base_url=http://localhost:9082
 Visit the following url again:
 
 http://localhost:9080/health/ready
-
-
 You'll find out from the **coffee-shop** service is ready now:
 ```
 {"checks":[{"data":{},"name":"CoffeeShopReadinessCheck Readiness Check","status":"UP"}],"status":"UP"}
@@ -488,7 +496,7 @@ You'll find out from the **coffee-shop** service is ready now:
 
 You can set the **`default_barista_base_url`** value through the **`default_barista_base_url`** environment variable but you'll need to restart the **coffee-shop** service.
 
-# Module 6: Integration Testing
+# **Module 6: Integration Testing**
 
 Tests are essential for developing maintainable code. Developing your application using bean-based component models like CDI makes your code easily unit-testable. Integration Tests are a little more challenging. In this section you'll add a **barista** service integration test using the **maven-failsafe-plugin**. During the build, the Liberty server will be started along with the **barista** application deployed, the test will be run and then the server will be stopped.
 
@@ -628,7 +636,6 @@ Once the test has finished, shut down both microservices by typing `q` in both t
 # Module 7: Docker
 
 We're now going to dockerize the two services and show how we can override the defaults to re-wire the two services.  We're going to use a Docker user-defined network (see https://docs.docker.com/network/network-tutorial-standalone/#use-user-defined-bridge-networks) because by using Docker user-defined networks we are able to connect the two containers to the same network and have them communicate using only the others IP address or name.  For real-world production deployments you would use a Kubernetes environment, such as Red Hat OpenShift or IBM Cloud Kubernetes Service.
-
 Take a look at the **open-liberty-masterclass/start/coffee-shop/Dockerfile**:
 
 ```
@@ -773,8 +780,7 @@ docker rm coffee-shop
 {: codeblock}
 
 
-
-### Overriding Dev Server Configuration
+### **Overriding Dev Server Configuration**
 
 The above works fine, but still has a metrics endpoint with authentication turned off.  We'll now show how **configDropins/overrides** can be used to override existing, or add new, server configuration.  For example, this can be used to add server configuration in a production environment. The approach we're going to take is to use a Docker volume for simplicity. Docker Volumes are the preferred mechanism for persisting data generated by and used by Docker containers. While bind mounts are dependent on the directory structure and OS of the host machine, volumes are completely managed by Docker. .In a real-world scenario you would use Kubernetes ConfigMaps and secrets to include the production server configuration, security configuration and environment variables.
 
@@ -856,7 +862,7 @@ docker network rm masterclass-net
 
 
 
-# Module 8: Testing in Containers
+# **Module 8: Testing in Containers**
 
 We saw in an earlier module, how to perform Integration Tests against the application running in the server.  We then showed how to package the application and server and run them inside a Docker container.  Assuming we're going to deploy our application in production inside Containers it would be a good idea to actually perform tests against that configuration.  The more we can make our development and test environments the same as production, the less likely we are to encounter issues in production. [MicroShed Testing](microshed.org) is a project that enables us to do just that.
 
@@ -1035,7 +1041,7 @@ You should see the following output:
 [INFO]
 ```
 
-# Module 9: Support Licensing
+# **Module 9: Support Licensing**
 
 Open Liberty is Open Source under the Eclipse Public License v1, as a result there is no fee to use in production.  Community support is available via StackOverflow, Gitter, or the mail list, and bugs can be raised in [GitHub](https://github.com/openliberty/open-liberty). Commercial support from IBM is available for Open Liberty, you can find out more on the [IBM Marketplace](https://www.ibm.com/uk-en/marketplace/elite-support-for-open-liberty). The WebSphere Liberty product is built on Open Liberty, there is no migration required to use WebSphere Liberty, you simply point to WebSphere Liberty in your build.  Users of WebSphere Liberty get support for the packaged Open Liberty function.
 
@@ -1087,12 +1093,13 @@ mvn liberty:dev
 The **barista** service should be started at the port **9082** and the **coffee-shop** service at the port **9080**.
 Then, try the service out using the Open API Web page and you should see the behavior is identical.  Not surprising since the code is identical, from the same build, just built into WebSphere Liberty.
 
-# Conclusion
+# **Conclusion**
+
 Thanks for trying the Open Liberty Masterclass. If you're interested in finding out more, please visit the [Open Liberty website](http://openliberty.io), and for more hands-on experience, why not try the [Open Liberty Guides](http://openliberty.io/guides).
 
 
 
-## Clean up your environment
+## **Clean up your environment**
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -1104,7 +1111,8 @@ rm -fr open-liberty-masterclass
 ```
 {: codeblock}
 
-## What did you think of this guide?
+## **What did you think of this guide?**
+
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
@@ -1113,18 +1121,6 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/open-liberty-masterclass/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/open-liberty-masterclass/pulls)
 
-
-
-## Log out of the session
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-getting-started/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-getting-started/pulls)
-
-
-## **Where to next?**
-
-* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 ## **Log out of the session**
 
