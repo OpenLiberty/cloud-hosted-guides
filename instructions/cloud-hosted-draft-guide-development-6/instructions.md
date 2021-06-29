@@ -1,5 +1,5 @@
 
-# Welcome to the Getting started with Open Liberty guide!
+# **Welcome to the Getting started with Open Liberty guide!**
 
 Learn how to develop a Java application on Open Liberty with Maven and Docker.
 
@@ -11,7 +11,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to run and update a simple REST microservice on Open Liberty.
 You will use Maven throughout the guide to build and deploy the microservice as well as
