@@ -1,9 +1,7 @@
 
+# Welcome to the Getting started with Open Liberty guide!
 
-# **Welcome to the Open Liberty Masterclass guide!**
-
-
-
+Learn how to develop a Java application on Open Liberty with Maven and Docker.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -12,1097 +10,884 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-# **Before you begin**
 
-### **Install Pre-requisites**
+# What you'll learn
+
+You will learn how to run and update a simple REST microservice on Open Liberty.
+You will use Maven throughout the guide to build and deploy the microservice as well as
+to interact with the running Liberty instance.
+
+Open Liberty is an open application framework designed for the cloud. It's small, lightweight,
+and designed with modern cloud-native application development in mind. It supports the
+full MicroProfile and Jakarta EE APIs and is composable, meaning that you can use only the
+features that you need, keeping everything lightweight, which is great for microservices.
+It also deploys to every major cloud platform, including Docker, Kubernetes, and Cloud
+Foundry.
+
+Maven is an automation build tool that provides an efficient way to develop Java applications.
+Using Maven, you will build a simple microservice, called **system**, that collects basic
+system properties from your laptop and displays them on an endpoint that you can access
+in your web browser. 
+
+You'll also explore how to package your application with Open Liberty
+so that it can be deployed anywhere in one go. You will then make Liberty configuration and code changes and see how
+they are immediately picked up by a running instance.
+
+Finally, you will package the application along with the server configuration into a Docker
+image and run that image as a container.
 
 
-* A Java 8/11 JDK (e.g. https://adoptopenjdk.net/?variant=openjdk8&jvmVariant=openj9)
-* Apache Maven (https://maven.apache.org/)
-* A git client (https://git-scm.com/downloads)
-* An editor with Java support (e.g. Eclipse, VS Code, IntelliJ)
-* Docker
-* **Windows:** Set up Docker for Windows as described at https://docs.docker.com/docker-for-windows/.
-*  **Mac:** Set up Docker for Mac as described at https://docs.docker.com/docker-for-mac/.
+# Getting started
 
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
 
-### **Prime Maven and Docker Caches**
-
-If you will be taking the Masterclass at a location with limited network bandwidth, it is recommended you do the following beforehand in order to populate your local **.m2** repo and Docker cache.
+Run the following command to navigate to the **/home/project** directory:
 
 ```
-git clone https://github.com/OpenLiberty/open-liberty-masterclass.git
-cd open-liberty-masterclass/finish/coffee-shop
-mvn package liberty:create liberty:install-feature
-docker build -t masterclass:coffee-shop .
+cd /home/project
+```
+{: codeblock}
+
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-getting-started.git) and use the projects that are provided inside:
+
+```
+git clone https://github.com/openliberty/guide-getting-started.git
+cd guide-getting-started
 ```
 {: codeblock}
 
 
 
-```
-cd ../barista
-mvn package liberty:create liberty:install-feature
-docker build -t masterclass:barista .
-```
-{: codeblock}
+The **start** directory contains the starting project that you will build upon.
+
+The **finish** directory contains the finished project that you will build.
 
 
 
 
-```
-cd ..
-```
-{: codeblock}
+# Building and running the application
+
+Your application is configured to be built with Maven. Every Maven-configured project
+contains a **pom.xml** file, which defines the project configuration, dependencies, plug-ins,
+and so on.
+
+Your **pom.xml** file is located in the **start** directory and is configured to
+include the **liberty-maven-plugin**, which allows you
+to install applications into Open Liberty and manage the server instances.
 
 
-
-# **The Application**
-
-
-The application consists of two Microservices; **coffee-shop** and **barista**.  The **coffee-shop** service allows you to place an order and the **barista** service services the making of the coffee.
-
-```
-                ^|
-                || orderCoffee()
-                ||
-                ||
-            ┌───|v────────┐   startCoffeeBrew()   ┌─────────────┐
-            │ coffee-shop │---------------------->│   barista   │
-            └─────────────┘<----------------------└─────────────┘
-```
-The completed code for the Masterclass is provided in the **open-liberty-masterclass/finish** directory.  To work through the Masterclass you will develop in the **open-liberty-masterclass/start** directory.
-
-# **Module 1: Build**
-
-Liberty has support for building and deploying applications using Maven and Gradle.  The source and documentation for these plugins can be found here:
-* https://github.com/OpenLiberty/ci.maven
-* https://github.com/OpenLiberty/ci.gradle
-
-The Masterclass will make use of the **liberty-maven-plugin**.
-
-Take a look at the Maven build file for the coffee-shop project: **open-liberty-masterclass/start/barista/pom.xml**
-
-Go to the barista project:
+To begin, navigate to the **start** directory. Build the **system** microservice
+that is provided and deploy it to Open Liberty by running the Maven
+**liberty:run** goal:
 
 ```
-cd start/barista
-```
-{: codeblock}
-
-
-
-Build and run the barista service:
-
-```
+cd start
 mvn liberty:run
 ```
 {: codeblock}
 
 
+The **mvn** command initiates a Maven build, during which the **target** directory is created
+to store all build-related files.
 
-Visit: http://localhost:9081/openapi/ui
+The **liberty:run** argument specifies the Open Liberty **run** goal, which
+starts an Open Liberty server instance in the foreground.
+As part of this phase, an Open Liberty server runtime is downloaded and installed into
+the **target/liberty/wlp** directory, a server instance is created and configured in the
+**target/liberty/wlp/usr/servers/defaultServer** directory, and the application is
+installed into that server via [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
 
-This page is an OpenAPI UI that lets you try out the barista service.
+For more information about the Liberty Maven plug-in, see its [GitHub repository](https://github.com/WASdev/ci.maven).
 
-Click on **POST** and then **Try it out**
+When the server begins starting up, various messages display in your command-line session. Wait
+for the following message, which indicates that the server startup is complete:
 
-Under **Example Value** specify:
+```
+[INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
+```
+
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+
+To access the **system** microservice, see the http://localhost:9080/system/properties URL,
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
+
+
+and you see a list of the various system properties of your JVM:
 
 ```
 {
-  "type": "ESPRESSO"
+    "os.name": "Mac OS X",
+    "java.version": "1.8.0_151",
+    ...
 }
 ```
 
-Click on **Execute**
-
-Scroll down and you should see the server response code of **200**.  This says that the barista request to make an **ESPRESSO** was successfully **Created**. If you go back to the terminal you will also see the message **starting to brew: EXPRESSO**. Now leave this terminal with the Open Liberty server running and open up a new terminal to continue this masterclass from the same directory.
-
-# **Module 2: Dev Mode**
-
-The Open Liberty Maven plug-in includes a dev goal that listens for any changes in the project, including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal -- dev mode -- allows for quicker turnarounds and an improved developer experience by providing hot deploy, hot testing and hot debug capabilities.
-
-We are going to make changes to the coffee-shop project.
-
-Navigate to the coffee-shop project and start the server up in dev mode and make some changes to the configuration. This will need to install new features while the server is still running:
+When you need to stop the server, press **CTRL+C** in the command-line session where
+you ran the server, or run the **liberty:stop** goal from the **start** directory in
+another command-line session:
 
 ```
-cd ../coffee-shop
-mvn liberty:dev
+mvn liberty:stop
 ```
 {: codeblock}
 
 
 
-Take a look at the Maven build file for the coffee-shop project: **open-liberty-masterclass/start/coffee-shop/pom.xml**
 
-The Open Liberty Maven plugin must be version 3.x or above to use dev mode.
+# Starting and stopping the Open Liberty server in the background
 
-```
-    <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-war-plugin</artifactId>
-        <version>3.3.1</version>
-    </plugin>
-    <plugin>
-        <groupId>io.openliberty.tools</groupId>
-        <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.3.4</version>
-    </plugin>
-    <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.22.2</version>
-    </plugin>
-    <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.2</version>
-    </plugin>
-```
-
-In the same **coffee-shop/pom.xml** locate the **`<dependencies/>`** section. All the features we are using in this Masterclass are part of Jakarta EE and MicroProfile. By having the two dependencies below means that at build time these are available for Maven to use and then it will install any of the features you requests in your server.xml but we will get to that shortly.
+Although you can start and stop the server in the foreground by using the Maven
+**liberty:run** goal, you can also start and stop the server in the background with
+the Maven **liberty:start** and **liberty:stop** goals:
 
 ```
-    <dependencies>
-      <!--Open Liberty features -->
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-web-api</artifactId>
-            <version>8.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>4.0.1</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        ...
-    </dependencies>
+mvn liberty:start
+mvn liberty:stop
 ```
+{: codeblock}
 
-Let's add the dependency on the **MicroProfile OpenAPI** feature so we can try the **coffee-shop** service out.
 
-We have already loaded the MicroProfile 4.0 feature in the pom that will include the latest version of MicroProfile OpenAPI so we just need to configure the Open Liberty server.
 
-Open the file **open-liberty-masterclass/start/coffee-shop/src/main/liberty/config/server.xml**
 
-This file is the configuration for the **coffee-shop** server.
 
-Near the top of the file, you'll see the following **`<featureManager/>`** entry:
+# Updating the server configuration without restarting the server
+
+The Open Liberty Maven plug-in includes a **dev** goal that listens for any changes in the project, 
+including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
+
+Stop the Open Liberty server if it is running, and start it in dev mode by running the **liberty:dev** goal in the **start** directory:
 
 ```
+mvn liberty:dev
+```
+{: codeblock}
+
+
+Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the **enter/return** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the **enter/return** key to verify your change.
+
+
+As before, you can see that the application is running by going to the http://localhost:9080/system/properties URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/system/properties
+```
+{: codeblock}
+
+
+
+Now try updating the server configuration while the server is running in dev mode.
+The **system** microservice does not currently include health monitoring to report whether the server and the microservice that it runs are healthy.
+You can add health reports with the MicroProfile Health feature, which adds a **/health** endpoint to your application.
+
+If you try to access this endpoint now at the http://localhost:9080/health/ URL, you see a 404 error because the **/health** endpoint does not yet exist:
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/health/
+```
+{: codeblock}
+
+
+
+```
+Error 404: java.io.FileNotFoundException: SRVE0190E: File not found: /health
+```
+
+To add the MicroProfile Health feature to the server, include the **mpHealth** feature in the **server.xml**.
+
+Replace the server configuration file.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
+
+
+
+
+```
+<server description="Sample Liberty server">
     <featureManager>
         <feature>jaxrs-2.1</feature>
-        <feature>ejbLite-3.2</feature>
+        <feature>jsonp-1.1</feature>
         <feature>cdi-2.0</feature>
-        <feature>beanValidation-2.0</feature>
+        <feature>mpMetrics-3.0</feature>
         <feature>mpHealth-3.0</feature>
         <feature>mpConfig-2.0</feature>
-        <feature>mpRestClient-2.0</feature>
-        <feature>jsonp-1.1</feature>
     </featureManager>
-```
-{: codeblock}
+
+    <variable name="default.http.port" defaultValue="9080"/>
+    <variable name="default.https.port" defaultValue="9443"/>
+
+    <webApplication location="guide-getting-started.war" contextRoot="/" />
+    
+    <mpMetrics authentication="false"/>
 
 
-This entry lists all the features to be loaded by the server.
+    <httpEndpoint host="*" httpPort="${default.http.port}" 
+        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
 
-Replace the following entry inside the **`<featureManager/>`** element:
-
-```
-        <feature>mpOpenAPI-2.0</feature>
-```
-{: codeblock}
-
-
-If you now go back to your terminal you should notice Open Liberty installing the new features without shutting down. You can also re-run tests by simply pressing enter in the Terminal.
-
-Lets go have a look at the new application you installed due to installing the Open API feature:
-
-Visit: http://localhost:9080/openapi/ui
-
-As with the barista service, this is an Open API UI page that lets to try out the service API for the coffee-shop service.
-
-For a full list of all the features available, see https://openliberty.io/docs/ref/feature/.
-
-# **Module 3: Application APIs**
-
-Open Liberty has support for many standard APIs out of the box, including Java EE 7 & 8, Jakarta EE 8 and the latest MicroProfile APIs.
-
-As you have seen in the previous section, the API dependencies that you need to use MicroProfile or Jakarta EE APIs have been added as dependencies to the POM file. You are all set to use these APIs, as you need as you write your code.
-
-Then, we need to enable the corresponding features in Liberty's server configuration for Liberty to load and use what you have chosen for your application. With Liberty's modular and composable architecture, only the features specified in the server configuration will be loaded giving you a lightweight and performant runtime.
-
-We're now going to add Metrics to the **coffee-shop**.  Edit the **open-liberty-masterclass/start/coffee-shop/src/main/liberty/config/server.xml** file and add the following dependency in the featureManager section like we did above:
-
-```
-        <feature>mpMetrics-3.0</feature>
-```
-{: codeblock}
-
-
-You should see that the server has been automatically updates, the following features are installed, and include mpMetrics-3.0:
-
-```
-[INFO] [AUDIT   ] CWWKF0012I: The server installed the following features: [beanValidation-2.0, cdi-2.0, distributedMap-1.0, ejbLite-3.2, el-3.0, jaxrs-2.1, jaxrsClient-2.1, jndi-1.0, json-1.0, jsonp-1.1, mpConfig-1.3, mpHealth-2.2, mpMetrics-2.0, mpOpenAPI-1.1, mpRestClient-1.3, servlet-4.0, ssl-1.0].
-```
-Now we have the API available, we can update the application to include a metric which will count the number of times a coffee order is requested. In the file **open-liberty-masterclass/start/coffee-shop/src/main/java/com/sebastian_daschner/coffee_shop/boundary/OrdersResource.java**, add the following **@Counted** annotation to the **orderCoffee** method:
-
-```
-@Counted(name="order", displayName="Order count", description="Number of times orders requested.")
-```
-{: codeblock}
-
-It should look like:
-
-```
-    @POST
-    @Counted(name="order", displayName="Order count", description="Number of times orders requested.")
-    public Response orderCoffee(@Valid @NotNull CoffeeOrder order) {
-        ...
-    }
-```
-
-You'll also need to add the following package import:
-```
-import org.eclipse.microprofile.metrics.annotation.Counted;
-```
-{: codeblock}
-
-You'll also need to add the following package import:
-```
-import org.eclipse.microprofile.metrics.annotation.Counted;
-```
-{: codeblock}
-
-# **Module 4: Server Configuration**
-
-From your previous addition of the MicroProfile Metrics feature in the server.xml you should now see a message for a new metrics endpoint in the terminal that looks like:
-
-```
-[INFO] [AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/metrics/
-
-```
-
-Open the metrics endpoint in your browser http://localhost:9080/metrics/.  You should see a message like this:
-
-```
-Error 403: Resource must be accessed with a secure connection try again using an HTTPS connection.
-```
-or a **Username** and **Password** will be required
-
-It's one thing to configure the server to load a feature, but many Liberty features require additional configuration.  The complete set of Liberty features and their configuration can be found here: https://openliberty.io/docs/ref/config/.
-
-The error message suggests we need to add a **keyStore** and one route to solve this would be to add a **keyStore** and user registry (e.g. a **basicRegistry** for test purposes).  However, if we take a look at the configuration for [mpMetrics](https://openliberty.io/docs/ref/config/#mpMetrics.html) we can see that it has an option to turn the metrics endpoint authentication off.
-
-
-```
-    <mpMetrics authentication="false" />
-```
-
-Now restart your server and visit the metrics endpoint:
-
-http://localhost:9080/metrics/
-
-You should see a number of metrics automatically generated by the JVM:
-
-```
-TYPE base:classloader_total_loaded_class_count counter
-# HELP base:classloader_total_loaded_class_count Displays the total number of classes that have been loaded since the Java virtual machine has started execution.
-base:classloader_total_loaded_class_count 10616
-...
-```
-This doesn't contain the metrics you added because the service hasn't been called and so no application metrics have been recorded. Use the OpenAPI UI (http://localhost:9080/openapi/ui/) to send a few requests to the service.
-
-As with the **barista** service, you'll need to specify the following payload for the **POST** request:
-
-```
-{
-  "type": "ESPRESSO"
-}
-```
-
-Reload the metrics page and at the bottom of the metrics results you should see:
-
-```
-...
-# TYPE application:com_sebastian_daschner_coffee_shop_boundary_orders_resource_order counter
-# HELP application:com_sebastian_daschner_coffee_shop_boundary_orders_resource_order Number of times orders requested.
-application:com_sebastian_daschner_coffee_shop_boundary_orders_resource_order 3
-```
-Now go to the terminal and type **q** followed by **Enter** to shut down the server.
-
-# **Module 5: Externalizing Configuration**
-
-If you're familiar with the concept of 12-factor applications (see http://12factor.net) you'll know that factor III states that an application's configuration should be stored in the environment. Configuration here, is referring to variables which vary between development, staging and production. In doing so, you can build the deployment artefact once and deploy it in different environments unchanged.
-
-Liberty lets your application pick up configuration from a number of sources, such as environment variables, bootstrap.properties and Kubernetes configuration.
-
-Stop the **barista** service by pressing **CTRL+C** in the command-line session where you ran it at the module 1.
-
-We now need to change the server configuration to externalize the ports.
-
-Open the **open-liberty-masterclass/start/barista/src/main/liberty/config/server.xml** file, change these lines:
-
-```
-   <httpEndpoint id="defaultHttpEndpoint" host="*"
-        httpPort="9081"
-        httpsPort="9444"/>
-```
-
-To:
-
-```
-    <variable name="default.http.port" defaultValue="9081"/>
-    <variable name="default.https.port" defaultValue="9444"/>
-
-    <httpEndpoint id="defaultHttpEndpoint" host="*"
-        httpPort="${default.http.port}"
-        httpsPort="${default.https.port}"/>
-```
-{: codeblock}
-
-
-Start the **barista** service by running the following curl commands:
-```
-export DEFAULT_HTTP_PORT=9082
-mvn liberty:dev
+    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
+</server>
 ```
 {: codeblock}
 
 
 
-If you take a look at the **barista** server output, you should find out that the **barista** service is running on the port **9082** now:
-```
-[INFO] [AUDIT   ] CWWKT0016I: Web application available (default_host): http://192.000.0.00:9082/openapi/
-[INFO] [AUDIT   ] CWWKT0016I: Web application available (default_host): http://192.000.0.00:9082/health/
-[INFO] [AUDIT   ] CWWKT0016I: Web application available (default_host): http://192.000.0.00:9082/openapi/ui/
-[INFO] [AUDIT   ] CWWKT0016I: Web application available (default_host): http://192.000.0.00:9082/barista/
-```
-
-Next we'll use the **`default_barista_base_url`** in the code to avoid hard-coding the location of the **barista** service for the **coffee-shop** service.
-
-Edit the file **open-liberty-masterclass/start/coffee-shop/src/main/java/com/sebastian_daschner/coffee_shop/control/Barista.java**
-
-Change:
+After you make the file changes, Open Liberty automatically reloads its configuration.
+When enabled, the **mpHealth** feature automatically adds a **/health** endpoint to the application.
+You can see the server being updated in the server log displayed in your command-line session:
 
 ```
-    String baristaBaseURL = "http://localhost:9081";
+[INFO] [AUDIT] CWWKG0016I: Starting server configuration update.
+[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
+[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
+[INFO] [AUDIT] CWWKG0017I: The server configuration was successfully updated in 0.284 seconds.
+[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/health/
+[INFO] [AUDIT] CWWKF0012I: The server installed the following features: [mpHealth-3.0].
+[INFO] [AUDIT] CWWKF0008I: Feature update completed in 0.285 seconds.
+[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
+[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.173 seconds.
 ```
 
-To:
 
-```
-    @Inject
-    @ConfigProperty(name="default_barista_base_url")
-    String baristaBaseURL;
-```
-{: codeblock}
+Try to access the **/health** endpoint again by visiting the http://localhost:9080/health URL.
 
 
-You'll also need to add the following imports:
-
-```
-import javax.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-```
-{: codeblock}
-
-
-This is using the MicroProfile Config specification to inject the configuration value. Configuration can come from a number of sources.
-
-Open the **coffee-shop/src/main/webapp/META-INF/microprofile-config.properties** MicroProfile configuration file. Add the following value:
-```
-default_barista_base_url=http://localhost:9081
-```
-{: codeblock}
-
-
-We also need to make the same changes to the CoffeeShopReadinessCheck of the **coffee-shop** service.
-
-Edit the file: **open-liberty-masterclass/start/coffee-shop/src/main/java/com/sebastian_daschner/coffee_shop/health/CoffeeShopReadinessCheck.java**
-
-Change:
-
-```
-    String baristaBaseURL = "http://localhost:9081";
-```
-
-To:
-
-```
-  @Inject
-  @ConfigProperty(name="default_barista_base_url")
-  String baristaBaseURL;
-```
-{: codeblock}
-
-
-You'll now need to add the following imports:
-
-```
-import javax.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-```
-{: codeblock}
-
-
-For more information on MicroProfile Config see https://openliberty.io/guides/microprofile-config.html.
-
-Visit the following URL to check the health of your service:
-
-http://localhost:9080/health/ready
-
-You'll find out from the **coffee-shop** service is not ready because the **barista** is not running on the port **9081**:
-```
-{"checks":[{"data":{},"name":"CoffeeShopReadinessCheck Readiness Check","status":"DOWN"}],"status":"DOWN"}
-```
-
-Update the **coffee-shop/src/main/webapp/META-INF/microprofile-config.properties** MicroProfile configuration file. Change the port to 9082 as the following:
-```
-default_barista_base_url=http://localhost:9082
-```
-
-Visit the following url again:
-
-http://localhost:9080/health/ready
-You'll find out from the **coffee-shop** service is ready now:
-```
-{"checks":[{"data":{},"name":"CoffeeShopReadinessCheck Readiness Check","status":"UP"}],"status":"UP"}
-```
-
-You can set the **`default_barista_base_url`** value through the **`default_barista_base_url`** environment variable but you'll need to restart the **coffee-shop** service.
-
-# **Module 6: Integration Testing**
-
-Tests are essential for developing maintainable code. Developing your application using bean-based component models like CDI makes your code easily unit-testable. Integration Tests are a little more challenging. In this section you'll add a **barista** service integration test using the **maven-failsafe-plugin**. During the build, the Liberty server will be started along with the **barista** application deployed, the test will be run and then the server will be stopped.
-
-Because we're going to be testing a REST **POST** request, we need JAX-RS client support and also support for serializing **json** into the request. We also need **junit** for writing the test.
-
-
-
-```
-        <!-- Test dependencies -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.7.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-rs-mp-client</artifactId>
-            <version>3.4.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.jaxrs</groupId>
-            <artifactId>jackson-jaxrs-json-provider</artifactId>
-            <version>2.12.3</version>
-            <scope>test</scope>
-        </dependency>
-```
-
-Note the **`<scope/>`** of the dependencies is set to **test** because we only want the dependencies to be used during testing.
-
-```
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <liberty.test.port>9082</liberty.test.port>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-```
-
-Note, this configuration makes the port of the server available to the test as a system property called **liberty.test.port**.
-
-Finally, add the test code.  Create a file called, **open-liberty-masterclass/start/barista/src/test/java/com/sebastian_daschner/barista/it/BaristaIT.java** and add the following:
-
-```
-package com.sebastian_daschner.barista.it;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import javax.inject.Inject;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.MediaType;
-
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-
-import com.sebastian_daschner.barista.boundary.BrewsResource;
-import com.sebastian_daschner.barista.entity.CoffeeBrew;
-import com.sebastian_daschner.barista.entity.CoffeeType;
-
-public class BaristaIT {
-    private static String URL;
-
-    @BeforeAll
-    public static void init() {
-        String port = System.getProperty("liberty.test.port");
-        URL = "http://localhost:" + port + "/barista/resources/brews";
-    }
-    @Test
-    public void testService() throws Exception {
-
-        Client client = null;
-        WebTarget target = null;
-        try {
-            client = ClientBuilder.newClient().register(JacksonJsonProvider.class);
-            target = client.target(URL);
-
-        } catch (Exception e) {
-            client.close();
-            throw e;
-        }
-
-        CoffeeBrew brew = new CoffeeBrew();
-        brew.setType(CoffeeType.POUR_OVER);
-
-        Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(brew));
-
-        try {
-            if (response == null) {
-                assertNotNull(response, "GreetingService response must not be NULL");
-            } else {
-                assertEquals( 200, response.getStatus(), "Response must be 200 OK");
-            }
-
-        } finally {
-            response.close();
-        }
-    }
-}
-
-```
-{: codeblock}
-
-
-This test sends a **json** request to the **barista** service and checks for a **200 OK** response.
-
-Run the tests by pressing **Enter** on your running server terminal.
-
-In the output of the build, you should see:
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running com.sebastian_daschner.barista.it.BaristaIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.365 sec - in com.sebastian_daschner.barista.it.BaristaIT
-
-Results :
-
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-```
-
-Once the test has finished, shut down both microservices by typing `q` in both terminals, then press the Enter key and restart the terminal to pick up any environmental changes you have previously set.
-
-# Module 7: Docker
-
-We're now going to dockerize the two services and show how we can override the defaults to re-wire the two services.  We're going to use a Docker user-defined network (see https://docs.docker.com/network/network-tutorial-standalone/#use-user-defined-bridge-networks) because by using Docker user-defined networks we are able to connect the two containers to the same network and have them communicate using only the others IP address or name.  For real-world production deployments you would use a Kubernetes environment, such as Red Hat OpenShift or IBM Cloud Kubernetes Service.
-Take a look at the **open-liberty-masterclass/start/coffee-shop/Dockerfile**:
-
-```
-FROM openliberty/open-liberty:full-java8-openj9-ubi
-
-COPY src/main/liberty/config /config/
-ADD target/barista.war /config/dropins
-
-RUN configure.sh
-```
-
-The **FROM** statement is building this image using the Open Liberty kernel image (see https://hub.docker.com/_/open-liberty/ for the available images).
-
-The **COPY** statement is copying over the server.xml file we mentioned earlier to the Docker image.
-
-The **ADD** statement is copying our application into the Docker image.
-
-The **RUN** command runs a script that is already located on the image that will add the requested XML snippets, grow the image to be fit-for-purpose and apply interim fixes.
-
-Let's build the docker image.  In the **open-liberty-masterclass/start/coffee-shop** directory run:
-
-```
-mvn package
-docker build -t masterclass:coffee-shop .
-```
-{: codeblock}
-
-
-In the **open-liberty-masterclass/start/barista** directory, run (note the period (**.**) at the end of the line is important):
-
-```
-mvn package
-docker build -t masterclass:barista .
-```
-{: codeblock}
-
-
-
-Next, create the user-defined bridge network:
-
-```
-docker network create --driver bridge masterclass-net
-```
-{: codeblock}
-
-
-
-You can now run the two Docker containers and get them to join the same bridge network.  Providing names to the containers makes those names available for DNS resolution within the bridge network so there's no need to use IP addresses.
-
-Run the **barista** container:
-
-```
-docker run -d --network=masterclass-net --name=barista masterclass:barista
-```
-{: codeblock}
-
-
-Note, we don't need to map the **barista** service ports outside the container because the bridge network gives access to the other containers on the same network.
-
-Next, we're going to run the **coffee-shop** container.  For it to work,The approach we're going to take is to use a Docker volume we'll need to provide new values for ports and the location of the barista service.  Run the **coffee-shop** container
-
-```
-docker run -d -p 9080:9080 -p 9445:9443 --network=masterclass-net --name=coffee-shop \
-  -e default_barista_base_url='http://barista:9081' \
-  -e default_http_port=9080 \
-  -e default_https_port=9443 masterclass:coffee-shop
-```
-{: codeblock}
-
-
-You can take a look at the bridge network using:
-
-```
-docker network inspect masterclass-net
-```
-{: codeblock}
-
-
-
-You'll see something like:
-
-```
-[
-    {
-        "Name": "masterclass-net",
-        ...
-        "IPAM": {
-            "Driver": "default",
-            "Options": {},
-            "Config": [
-                {
-                    "Subnet": "172.19.0.0/16",
-                    "Gateway": "172.19.0.1"
-                }
-            ]
-        },
-        ...
-        "Containers": {
-            "0fc740d52f2ed8dfdb04127fe3e49366dcbeb7924fee6b0cbf6f891c0909b0e8": {
-                "Name": "coffee-shop",
-                "EndpointID": "157d697fb4bff2722d654c68e3a5e5fe7554a91e860213d22362cd7cc074fc8f",
-                "MacAddress": "02:42:ac:13:00:02",
-                "IPv4Address": "172.19.0.2/16",
-                "IPv6Address": ""
-            },
-            "2b78ebf13596147042c8f2f5bd3171ca1c6f77241f419472010ddc2f28fd7a0c": {
-                "Name": "barista",
-                "EndpointID": "c93163547eb7e3c2c84dd0f72beb77127cfc319b6d9d7f6d9d99e17b85ff6d30",
-                "MacAddress": "02:42:ac:13:00:03",
-                "IPv4Address": "172.19.0.3/16",
-                "IPv6Address": ""
-            }
-        },
-        "Options": {},
-        "Labels": {}
-    }
-]
-```
-
-You should now be able to load the **coffee-shop** service's Open API page and call the service.  Give it a try.
-
-http://localhost:9080/openapi/ui
-
-Or, you can run the following curl commands to try out the services running in containers:
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
 curl http://localhost:9080/health
-curl -X POST "http://localhost:9080/coffee-shop/resources/orders" \
-     -H  "accept: */*" -H  "Content-Type: application/json" \
-     -d "{\"status\":\"FINISHED\",\"type\":\"ESPRESSO\"}"
-curl http://localhost:9080/coffee-shop/resources/orders
 ```
 {: codeblock}
 
 
-Now, let's stop and remove the **coffee-shop**  container for the following section:
+You see the following JSON:
 
 ```
-docker stop coffee-shop
-docker rm coffee-shop
+{
+    "checks":[],
+    "status":"UP"
+}
+```
+
+Now you can verify whether your server is up and running.
+
+
+
+# Updating the source code without restarting the server
+
+The JAX-RS application that contains your **system** microservice runs in a server from its **.class** file and other artifacts.
+Open Liberty automatically monitors these artifacts, and whenever they are updated, it updates the running server without the need for the server to be restarted.
+
+Look at your **pom.xml** file.
+
+
+Try updating the source code while the server is running in dev mode.
+At the moment, the **/health** endpoint reports whether the server is running, but the endpoint doesn't provide any details on the microservices that are running inside of the server.
+
+MicroProfile Health offers health checks for both readiness and liveness.
+A readiness check allows third-party services, such as Kubernetes, to know if the microservice is ready to process requests.
+A liveness check allows third-party services to determine if the microservice is running.
+
+Create the **SystemReadinessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 ```
 {: codeblock}
 
 
-### **Overriding Dev Server Configuration**
+> Then from the menu of the IDE, select **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
 
-The above works fine, but still has a metrics endpoint with authentication turned off.  We'll now show how **configDropins/overrides** can be used to override existing, or add new, server configuration.  For example, this can be used to add server configuration in a production environment. The approach we're going to take is to use a Docker volume for simplicity. Docker Volumes are the preferred mechanism for persisting data generated by and used by Docker containers. While bind mounts are dependent on the directory structure and OS of the host machine, volumes are completely managed by Docker. .In a real-world scenario you would use Kubernetes ConfigMaps and secrets to include the production server configuration, security configuration and environment variables.
 
-In fact, unlike what we have done here, the best practice is to build an image that does not contain any environment specific configuration (such as the unsecured endpoint in our example) and then add those things through external configuration in the development, staging and production environments.  The goal is to ensure deployment of the image without configuration doesn't not cause undesirable results such as security vulnerabilities or talking to the wrong data sources.
 
-Take a look at the file **open-liberty-masterclass/start/coffee-shop/configDropins/overrides/metrics-prod.xml**:
 
 ```
-<?xml version="1.0" encoding="UTF-8"?>
-<server description="Coffee Shop Server">
+package io.openliberty.sample.system;
 
+import javax.enterprise.context.ApplicationScoped;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Readiness
+@ApplicationScoped
+public class SystemReadinessCheck implements HealthCheck {
+
+    private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
+                                                 + " Readiness Check";
+
+    @Inject
+    @ConfigProperty(name = "io_openliberty_guides_system_inMaintenance")
+    Provider<String> inMaintenance;
+
+    @Override
+    public HealthCheckResponse call() {
+        if (inMaintenance != null && inMaintenance.get().equalsIgnoreCase("true")) {
+            return HealthCheckResponse.down(READINESS_CHECK);
+        }
+        return HealthCheckResponse.up(READINESS_CHECK);
+    }
+
+}
+```
+{: codeblock}
+
+
+
+The **SystemReadinessCheck** class verifies that the 
+**system** microservice is not in maintenance by checking a config property.
+
+Create the **SystemLivenessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+
+
+
+
+```
+package io.openliberty.sample.system;
+
+import javax.enterprise.context.ApplicationScoped;
+
+import java.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
+
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class SystemLivenessCheck implements HealthCheck {
+
+    @Override
+    public HealthCheckResponse call() {
+        MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+        long memUsed = memBean.getHeapMemoryUsage().getUsed();
+        long memMax = memBean.getHeapMemoryUsage().getMax();
+
+        return HealthCheckResponse.named(
+            SystemResource.class.getSimpleName() + " Liveness Check")
+                                  .withData("memory used", memUsed)
+                                  .withData("memory max", memMax)
+                                  .status(memUsed < memMax * 0.9).build();
+    }
+
+}
+```
+{: codeblock}
+
+
+
+The **SystemLivenessCheck** class reports a status of 
+**DOWN** if the microservice uses over 90% of the maximum amount of memory.
+
+After you make the file changes, Open Liberty automatically reloads its configuration and the **system** application.
+
+The following messages display in your first command-line session:
+
+```
+[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
+[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
+[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
+[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.136 seconds.
+```
+
+
+Access the **/health** endpoint again by going to the http://localhost:9080/health URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/health
+```
+{: codeblock}
+
+
+This time you see the overall status of your server and the aggregated data of the liveness and readiness checks for the **system** microservice:
+
+```
+{  
+   "checks":[  
+      {  
+         "data":{},
+         "name":"SystemResource Readiness Check",
+         "status":"UP"
+      },
+      {  
+         "data":{
+            "memory used":40434888,
+            "memory max":4294967296
+         },
+         "name":"SystemResource Liveness Check",
+         "status":"UP"
+      }
+   ],
+   "status":"UP"
+}
+```
+
+
+You can also access the **/health/ready** endpoint by going to the http://localhost:9080/health/ready URL to view the data from the readiness health check.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/health/ready
+```
+{: codeblock}
+
+
+
+Similarly, access the **/health/live** endpoint by going to the http://localhost:9080/health/live URL to view the data from the liveness health check.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/health/live
+```
+{: codeblock}
+
+
+
+Making code changes and recompiling is fast and straightforward.
+Open Liberty dev mode automatically picks up changes in the **.class** files and artifacts, without needing to be restarted.
+Alternatively, you can run the **run** goal and manually repackage or recompile the application by using the **mvn package** command or the **mvn compile** command while the server is running. Dev mode was added to further improve the developer experience by minimizing turnaround times.
+
+
+
+# Checking the Open Liberty server logs
+
+While the server is running in the foreground, it displays various console messages in
+the command-line session. These messages are also logged to the **target/liberty/wlp/usr/servers/defaultServer/logs/console.log**
+file. You can find the complete server logs in the **target/liberty/wlp/usr/servers/defaultServer/logs**
+directory. The **console.log** and **messages.log** files are the primary log files that contain
+console output of the running application and the server. More logs are created when runtime errors 
+occur or whenever tracing is enabled. You can find the error logs in the
+**ffdc** directory and the tracing logs in the **trace.log** file.
+
+In addition to the log files that are generated automatically, you can enable logging of
+specific Java packages or classes by using the **`<logging/>`** element:
+
+```
+<logging traceSpecification="<component_1>=<level>:<component_2>=<level>:..."/>
+```
+
+The **component** element is a Java package or class, and the **level** element is one
+of the following logging levels: **off**, **fatal**, **severe**, **warning**, **audit**, **info**,
+**config**, **detail**, **fine**, **finer**, **finest**, **all**.
+
+Try enabling detailed logging of the MicroProfile Health feature by adding the
+**`<logging/>`** element to your configuration file.
+
+Replace the server configuration file.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
+
+
+
+
+```
+<server description="Sample Liberty server">
     <featureManager>
+        <feature>jaxrs-2.1</feature>
+        <feature>jsonp-1.1</feature>
+        <feature>cdi-2.0</feature>
         <feature>mpMetrics-3.0</feature>
+        <feature>mpHealth-3.0</feature>
+        <feature>mpConfig-2.0</feature>
     </featureManager>
 
-    <mpMetrics authentication="true" />
+    <variable name="default.http.port" defaultValue="9080"/>
+    <variable name="default.https.port" defaultValue="9443"/>
 
-     <!--
-     Note, this configuration is for demo purposes
-     only and MUST NOT BE USED IN PRODUCTION AS IT
-     IS INSECURE. -->
-    <variable name="admin.password" value="change_it" />
+    <webApplication location="guide-getting-started.war" contextRoot="/" />
+    
+    <mpMetrics authentication="false"/>
 
-    <quickStartSecurity userName="admin" userPassword="${admin.password}"/>
+    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
 
+    <httpEndpoint host="*" httpPort="${default.http.port}" 
+        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+
+    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
 </server>
 ```
-
-You'll see that this turns metrics authentication on and sets up some simple security required for securing/accessing the metrics endpoint.  Note, this configuration really is **NOT FOR PRODUCTION**, it's simply aiming to show how to override, or provide new, server configuration.
-
-If you're on a unix-based OS, in the **open-liberty-masterclass/start/coffee-shop** directory, run the **coffee-shop** container:
-
-```
-docker run -d -p 9080:9080 -p 9445:9443 --network=masterclass-net --name=coffee-shop \
-  -e default_barista_base_url='http://barista:9081' \
-  -e default_http_port=9080 \
-  -e default_https_port=9443 \
-  -v $(pwd)/configDropins/overrides:/opt/ol/wlp/usr/servers/defaultServer/configDropins/overrides masterclass:coffee-shop
-```
-{: codeblock}
-
-
-The above relies on **pwd** to fill in the docker volume source path.  If you're on Windows, replace **$(pwd)** with the absolute path to the **open-liberty-masterclass/start/coffee-shop** directory in the above command.
-
-You should see the following message as the server is starting if you look at the logs:
-
-```
-docker logs coffee-shop
-```
 {: codeblock}
 
 
 
-```
-[AUDIT ] CWWKG0093A: Processing configuration drop-ins resource: /opt/ol/wlp/usr/servers/defaultServer/configDropins/overrides/metrics-prod.xml
-```
+After you change the file, Open Liberty automatically reloads its configuration.
 
-This shows that we have turned metrics authentication back on.
+Now, when you visit the **/health** endpoint, additional traces are logged in the **trace.log** file.
 
-Access the metrics endpoint at: https://localhost:9445/metrics
-
-You will see that the browser complains about the certificate.  This is a self-signed certificate generated by Liberty for test purposes.  Accept the exception (note,  Firefox may not allow you to do this in which case you'll need to use a different browser).  You'll be presented with a login prompt.  Sign in with userid **admin** and password **`change_it`** (the values in the **metrics-prod.xml**).
-
-Or, you can run the following curl command to retrieve the metrics:
-```
-curl -k --user admin:change_it https://localhost:9445/metrics
-```
-{: codeblock}
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
+where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
-Now, let's stop and remove the **barista** and **coffee-shop** containers and the network:
+# Running the application in a Docker container
 
-```
-docker stop barista coffee-shop
-docker rm barista coffee-shop
-docker network rm masterclass-net
-```
-{: codeblock}
+To run the application in a container, Docker needs to be installed. For installation
+instructions, see the [Official Docker Docs](https://docs.docker.com/install/).
 
+Make sure to start your Docker daemon before you proceed.
 
+To containerize the application, you need a **Dockerfile**. This file contains a collection
+of instructions that define how a Docker image is built, what files are packaged into it,
+what commands run when the image runs as a container, and other information. You can find a complete
+**Dockerfile** in the **start** directory. This **Dockerfile** copies the **.war** file into a Docker
+image that contains the Java runtime and a preconfigured Open Liberty server.
 
-# **Module 8: Testing in Containers**
-
-We saw in an earlier module, how to perform Integration Tests against the application running in the server.  We then showed how to package the application and server and run them inside a Docker container.  Assuming we're going to deploy our application in production inside Containers it would be a good idea to actually perform tests against that configuration.  The more we can make our development and test environments the same as production, the less likely we are to encounter issues in production. [MicroShed Testing](microshed.org) is a project that enables us to do just that.
-
-Firstly let's start by deleting the tests we created earlier. We would not normally have integration tests done with MicroShed testing and the way we previously looked at. This can be achieved but it is not best practice. The reason for deleting the old tests is because without extra configuration maven will try to run those tests against MicroShed but as these tests run in a container the configuration for connecting to our application will be different.
-
-Delete the file **open-liberty-masterclass/start/barista/src/test/java/com/sebastian_daschner/barista/it/BaristaIT.java**
-
-Now let's create a new Integration Test that will perform the same test, but inside a running container.  In the Barista project, add the following dependencies to the **open-liberty-masterclass/start/barista/pom.xml** file in the **`<dependencies>`** element:
+Run the **mvn package** command from the **start** directory so that the **.war** file resides in the **target** directory.
 
 ```
-          <!-- For MicroShed Testing -->
-        <dependency>
-            <groupId>org.microshed</groupId>
-            <artifactId>microshed-testing-liberty</artifactId>
-            <version>0.9.1</version>
-        <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.30</version>
-            <scope>test</scope>
-        </dependency>
+mvn package
 ```
 {: codeblock}
 
 
-Create a new Integration Test called **BaristaContainerIT.java** in the directory **`start/barista/src/test/java/com/sebastian_daschner/barista/it`** and add the following code:
+Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```
-package com.sebastian_daschner.barista.it;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.time.Duration;
-
-import javax.ws.rs.core.Response;
-
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.junit.jupiter.Container;
-
-import com.sebastian_daschner.barista.boundary.BrewsResource;
-import com.sebastian_daschner.barista.entity.CoffeeBrew;
-import com.sebastian_daschner.barista.entity.CoffeeType;
-
-@MicroShedTest
-public class BaristaContainerIT {
-
-    @Container
-    public static ApplicationContainer app = new ApplicationContainer()
-                    .withAppContextRoot("/barista")
-                    .withExposedPorts(9081)
-                    .withReadinessPath("/health/ready");
-
-    @RESTClient
-    public static BrewsResource brews;
-
-    @Test
-    public void testService() throws Exception {
-        CoffeeBrew brew = new CoffeeBrew();
-        brew.setType(CoffeeType.POUR_OVER);
-        Response response = brews.startCoffeeBrew(brew);
-
-        try {
-            if (response == null) {
-            	assertNotNull(response, "GreetingService response must not be NULL");
-            } else {
-            	assertEquals( 200, response.getStatus(), "Response must be 200 OK");
-            }
-        } finally {
-            response.close();
-        }
-    }
-}
-
-
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
 
-You'll see that the class is marked as a MicroShed test with the **@MicroShedTest** annotation.
-
-The test also contains the following Container configuration:
-
-```
-    @Container
-    public static MicroProfileApplication app = new MicroProfileApplication()
-                    .withAppContextRoot("/barista")
-                    .withExposedPorts(9081)
-                    .withReadinessPath("/health");
-```
-
-
-You'll see that the unit test is like any other.
-
-We need to configure **log4j** in order to see the detailed progress of the MicroShed test.  In the directory **start/barista/src/test/resources/** create the file **log4j.properties** and add the following configuration to it:
-
-You can create this file using the following **touch** command:
+To build and containerize the application, run the
+following Docker build command in the **start** directory:
 
 ```
-touch home/project/start/barista/src/test/resources//log4j.properties
+docker build -t openliberty-getting-started:1.0-SNAPSHOT .
 ```
 {: codeblock}
 
 
+The Docker **openliberty-getting-started:1.0-SNAPSHOT** image is also built from the **Dockerfile**.
+To verify that the image is built, run the **docker images** command to list all local Docker images:
+
 ```
-log4j.rootLogger=INFO, stdout
-
-log4j.appender=org.apache.log4j.ConsoleAppender
-log4j.appender.layout=org.apache.log4j.PatternLayout
-
-log4j.appender.stdout=org.apache.log4j.ConsoleAppender
-log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
-log4j.appender.stdout.layout.ConversionPattern=%r %p %c %x - %m%n
-
-log4j.logger.org.microshed=DEBUG
+docker images
 ```
 {: codeblock}
 
 
-Start the server in Dev Mode and run the tests by pressing **Enter** after the server has started:
+Your image should appear in the list of all Docker images:
 
 ```
-mvn liberty:dev
+REPOSITORY                     TAG             IMAGE ID        CREATED         SIZE
+openliberty-getting-started    1.0-SNAPSHOT    85085141269b    21 hours ago    487MB
+```
+
+Next, run the image as a container:
+```
+docker run -d --name gettingstarted-app -p 9080:9080 openliberty-getting-started:1.0-SNAPSHOT
+```
+{: codeblock}
+
+
+There is a bit going on here, so here's a breakdown of the command:
+
+| *Flag* | *Description*
+| ---| ---
+| -d     | Runs the container in the background.
+| --name | Specifies a name for the container.
+| -p     | Maps the container ports to the host ports.
+
+The final argument in the **docker run** command is the Docker image name.
+
+Next, run the **docker ps** command to verify that your container started:
+```
+docker ps
+```
+{: codeblock}
+
+
+Make sure that your container is running and does not have **Exited** as its status:
+
+```
+CONTAINER ID    IMAGE                         CREATED          STATUS           NAMES
+4294a6bdf41b    openliberty-getting-started   9 seconds ago    Up 11 seconds    gettingstarted-app
+```
+
+
+To access the application, go to the http://localhost:9080/system/properties URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
 
 
-You should see the following output:
-
+To stop and remove the container, run the following commands:
 ```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running com.sebastian_daschner.barista.it.BaristaContainerIT
-0 INFO org.microshed.testing.jupiter.MicroShedTestExtension  - Using ApplicationEnvironment class: org.microshed.testing.testcontainers.config.HollowTestcontainersConfiguration
-70 INFO org.testcontainers.dockerclient.DockerClientProviderStrategy  - Loaded org.testcontainers.dockerclient.UnixSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
-710 INFO org.testcontainers.dockerclient.UnixSocketClientProviderStrategy  - Accessing docker with local Unix socket
-710 INFO org.testcontainers.dockerclient.DockerClientProviderStrategy  - Found Docker environment with local Unix socket (unix:///var/run/docker.sock)
-868 INFO org.testcontainers.DockerClientFactory  - Docker host IP address is localhost
-914 INFO org.testcontainers.DockerClientFactory  - Connected to docker:
-  Server Version: 19.03.1
-  API Version: 1.40
-  Operating System: Docker Desktop
-  Total Memory: 1998 MB
-1638 INFO org.testcontainers.utility.RegistryAuthLocator  - Credential helper/store (docker-credential-desktop) does not have credentials for quay.io
-2627 INFO org.testcontainers.DockerClientFactory  - Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
-        ℹ︎ Checking the system...
-        ✔ Docker version should be at least 1.6.0
-        ✔ Docker environment should have more than 2GB free disk space
-2827 INFO org.microshed.testing.testcontainers.MicroProfileApplication  - Discovered ServerAdapter: class org.testcontainers.containers.liberty.LibertyAdapter
-2828 INFO org.microshed.testing.testcontainers.MicroProfileApplication  - Using ServerAdapter: org.testcontainers.containers.liberty.LibertyAdapter
-2834 DEBUG org.microshed.testing.testcontainers.config.TestcontainersConfiguration  - No networks explicitly defined. Using shared network for all containers in class com.sebastian_daschner.barista.it.BaristaContainerIT
-2842 INFO org.microshed.testing.testcontainers.config.HollowTestcontainersConfiguration  - exposing port: 9081 for container alpine:3.5
-2843 INFO org.microshed.testing.testcontainers.config.HollowTestcontainersConfiguration  - exposing port: 9444 for container alpine:3.5
-2844 INFO org.microshed.testing.testcontainers.config.TestcontainersConfiguration  - Starting containers in parallel for class com.sebastian_daschner.barista.it.BaristaContainerIT
-2845 INFO org.microshed.testing.testcontainers.config.TestcontainersConfiguration  -   java.util.concurrent.CompletableFuture@465232e9[Completed normally]
-2848 INFO org.microshed.testing.testcontainers.config.TestcontainersConfiguration  - All containers started in 3ms
-2868 DEBUG org.microshed.testing.jaxrs.RestClientBuilder  - no classes implementing Application found in pkg: com.sebastian_daschner.barista.boundary
-2868 DEBUG org.microshed.testing.jaxrs.RestClientBuilder  - checking in pkg: com.sebastian_daschner.barista
-2873 DEBUG org.microshed.testing.jaxrs.RestClientBuilder  - Using ApplicationPath of 'resources'
-2874 INFO org.microshed.testing.jaxrs.RestClientBuilder  - Building rest client for class com.sebastian_daschner.barista.boundary.BrewsResource with base path: http://localhost:9081/barista/resources and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
-3273 DEBUG org.microshed.testing.jupiter.MicroShedTestExtension  - Injecting rest client for public static com.sebastian_daschner.barista.boundary.BrewsResource com.sebastian_daschner.barista.it.BaristaContainerIT.brews
-3419 INFO org.microshed.testing.jaxrs.JsonBProvider  - Sending data to server: {"type":"POUR_OVER"}
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.93 s - in com.sebastian_daschner.barista.it.BaristaContainerIT
-[INFO]
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-[INFO]
-[INFO]
-```
-
-# **Module 9: Support Licensing**
-
-Open Liberty is Open Source under the Eclipse Public License v1, as a result there is no fee to use in production.  Community support is available via StackOverflow, Gitter, or the mail list, and bugs can be raised in [GitHub](https://github.com/openliberty/open-liberty). Commercial support from IBM is available for Open Liberty, you can find out more on the [IBM Marketplace](https://www.ibm.com/uk-en/marketplace/elite-support-for-open-liberty). The WebSphere Liberty product is built on Open Liberty, there is no migration required to use WebSphere Liberty, you simply point to WebSphere Liberty in your build.  Users of WebSphere Liberty get support for the packaged Open Liberty function.
-
-WebSphere Liberty is also available in [Maven Central](https://search.maven.org/search?q=g:com.ibm.websphere.appserver.runtime).
-
-You can use WebSphere Liberty for development even if you haven't purchased it, but if you have production entitlement you can easily change to use it, as follows:
-
-In the **open-liberty-masterclass/start/barista/pom.xml** and **open-liberty-masterclass/start/coffee-shop/pom.xml**, add the **`<configuration>...</configuration>`** as the following:
-
-```
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.3.4</version>
-                <configuration>
-                  <runtimeArtifact>
-                      <groupId>com.ibm.websphere.appserver.runtime</groupId>
-                      <artifactId>wlp-kernel</artifactId>
-                      <version>[21.0.0.4,)</version>
-                      <type>zip</type>
-                  </runtimeArtifact>
-                </configuration>
-            </plugin>
+docker stop gettingstarted-app && docker rm gettingstarted-app
 ```
 {: codeblock}
 
 
-Rebuild and re-start the **barista** service:
-
+To remove the image, run the following command:
 ```
-export DEFAULT_HTTP_PORT=9082
-mvn clean
-mvn liberty:dev
+docker rmi openliberty-getting-started:1.0-SNAPSHOT
 ```
 {: codeblock}
 
 
 
-and the **coffee-shop** service:
+# Developing the application in a Docker container
+
+
+The Open Liberty Maven plug-in includes a **devc** goal that simplifies developing
+your application in a Docker container by starting dev mode with container
+support. This goal builds a Docker image, mounts the required directories, binds
+the required ports, and then runs the application inside of a container. Dev
+mode also listens for any changes in the application source code or
+configuration and rebuilds the image and restarts the container as necessary.
+
+Build and run the container by running the devc goal from the **start** directory:
+
+
 ```
-export DEFAULT_HTTP_PORT=9080
-mvn clean
-mvn liberty:dev
+mvn liberty:devc -DserverStartTimeout=300
+```
+{: codeblock}
+
+When you see the following message, Open Liberty is ready to run in dev mode:
+
+```
+************************************************************************
+*    Liberty is running in dev mode.
+```
+
+Open another command-line session and run the **docker ps** command to verify that your container started:
+```
+docker ps
+```
+{: codeblock}
+
+
+Your container should be running and have **Up** as its status:
+
+```
+CONTAINER ID        IMAGE                                 COMMAND                  CREATED             STATUS                         PORTS                                                                    NAMES
+17af26af0539        guide-getting-started-dev-mode        "/opt/ol/helpers/run…"   3 minutes ago       Up 3 minutes                   0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
+```
+
+
+To access the application, go to the http://localhost:9080/system/properties URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
 
 
-The **barista** service should be started at the port **9082** and the **coffee-shop** service at the port **9080**.
-Then, try the service out using the Open API Web page and you should see the behavior is identical.  Not surprising since the code is identical, from the same build, just built into WebSphere Liberty.
+Dev mode automatically picks up changes that you make to your
+application and allows you to run tests by pressing the **enter/return** key in the
+active command-line session.
 
-# **Conclusion**
+Update the **server.xml** file to change the context root from **/** to **/dev**.
 
-Thanks for trying the Open Liberty Masterclass. If you're interested in finding out more, please visit the [Open Liberty website](http://openliberty.io), and for more hands-on experience, why not try the [Open Liberty Guides](http://openliberty.io/guides).
+Replace the server configuration file.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
-## **Clean up your environment**
+
+```
+<server description="Sample Liberty server">
+    <featureManager>
+        <feature>jaxrs-2.1</feature>
+        <feature>jsonp-1.1</feature>
+        <feature>cdi-2.0</feature>
+        <feature>mpMetrics-3.0</feature>
+        <feature>mpHealth-3.0</feature>
+        <feature>mpConfig-2.0</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080"/>
+    <variable name="default.https.port" defaultValue="9443"/>
+
+    <webApplication location="guide-getting-started.war" contextRoot="/dev" />
+    
+    <mpMetrics authentication="false"/>
+
+    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
+
+    <httpEndpoint host="*" httpPort="${default.http.port}" 
+        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+
+    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
+</server>
+```
+{: codeblock}
+
+
+After you make the file changes, Open Liberty automatically reloads its
+configuration. You can access the application at the
+
+http://localhost:9080/dev/system/properties
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/dev/system/properties
+```
+{: codeblock}
+
+
+URL. Notice that context root is now **/dev**.
+
+When you are finished, exit dev mode by pressing **CTRL+C** in the
+command-line session that the container was started from, or by typing `q` and
+then pressing the **enter/return** key. Either of these options stops and 
+removes the container. To check that the container was stopped, run the **docker ps** command.
+
+
+# Running the application from a minimal runnable JAR
+
+So far, Open Liberty was running out of the **target/liberty/wlp** directory, which
+effectively contains an Open Liberty server installation and the deployed application. The
+final product of the Maven build is a server package for use in a continuous integration
+pipeline and, ultimately, a production deployment.
+
+Open Liberty supports a number of different server packages. The sample application
+currently generates a **usr** package that contains the servers and application to be
+extracted onto an Open Liberty installation.
+
+Instead of creating a server package, you can generate a runnable JAR file that contains
+the application along with a server runtime. This JAR file can then be run anywhere and deploy
+your application and server at the same time. To generate a runnable JAR file, override the 
+**include** property: 
+```
+mvn liberty:package -Dinclude=runnable
+```
+{: codeblock}
+
+
+The packaging type is overridden from the **usr** package to the **runnable**
+package. This property then propagates to the **liberty-maven-plugin**
+plug-in, which generates the server package based on the **openliberty-kernel** package.
+
+When the build completes, you can find the minimal runnable **guide-getting-started.jar** file in the
+**target** directory. This JAR file contains only the **features** that you
+explicitly enabled in your **server.xml** file. As a result, the
+generated JAR file is only about 50 MB.
+
+To run the JAR file, first stop the server if it's running. Then, navigate to the **target**
+directory and run the **java -jar** command:
+
+```
+java -jar guide-getting-started.jar
+```
+{: codeblock}
+
+
+
+When the server starts, go to the http://localhost:9080/dev/system/properties URL to access
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/dev/system/properties
+```
+{: codeblock}
+
+
+your application that is now running out of the minimal runnable JAR file.
+
+You can stop the server by pressing **CTRL+C** in the command-line session that the server runs in.
+
+
+
+
+
+# Summary
+
+## Nice Work!
+
+You've learned the basics of deploying and updating an application on an Open Liberty server.
+
+
+
+
+
+## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **open-liberty-masterclass** project by running the following commands:
+Delete the **guide-getting-started** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr open-liberty-masterclass
+rm -fr guide-getting-started
 ```
 {: codeblock}
 
-## **What did you think of this guide?**
-
+## What did you think of this guide?
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-## **What could make this guide better?**
+## What could make this guide better?
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/open-liberty-masterclass/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/open-liberty-masterclass/pulls)
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-getting-started/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-getting-started/pulls)
 
 
-## **Log out of the session**
+
+
+## Where to next? 
+
+* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+
+
+## Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
