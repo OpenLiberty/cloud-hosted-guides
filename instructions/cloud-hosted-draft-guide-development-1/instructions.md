@@ -328,7 +328,7 @@ In this case, the ports are **31000** and **32000**, but port numbers can also b
 **nodePort** field is not used.
 
 Update the image names so that the images in your IBM Cloud container registry are used,
-and remove the `nodePort` fields so that the ports can be generated automatically:
+and remove the **nodePort** fields so that the ports can be generated automatically:
 
 ```
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
@@ -371,7 +371,7 @@ You can also issue the **kubectl get** and **kubectl describe** commands on othe
 free to inspect all other resources.
 
 
-In this execise, access services by using Kubernetes API.
+In this execise, you need to access the services by using Kubernetes API.
 Run the following command to start a proxy to the Kubernetes API server:
 
 ```
@@ -380,7 +380,7 @@ kubectl proxy
 {: codeblock}
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following commands to store the proxy path of the **system-service** and **inventory-service** services.
+Run the following commands to store the proxy path of the **system** and **inventory** services.
 ```
 NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
 SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
@@ -391,8 +391,7 @@ INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/invent
 Run the following echo commands to verify the variables:
 
 ```
-echo $SYSTEM_PROXY
-echo $INVENTORY_PROXY
+echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
 ```
 {: codeblock}
 
@@ -404,24 +403,32 @@ localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
 localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
 ```
 
-Then use the following `curl` commands to access your microservices:
+Then use the following **curl** command to access your **system** microservice:
 
 ```
 curl http://$SYSTEM_PROXY/system/properties | jq
 ```
 {: codeblock}
 
+and use the following **curl** command to access your **inventory** microservice:
+
 ```
 curl http://$INVENTORY_PROXY/inventory/systems/system-service | jq
 ```
 {: codeblock}
 
-The first URL returns system properties and the name of the pod in an HTTP header called `X-Pod-Name`.
-To view the header, you can use the `-I` option in the `curl` command when you make a request to the
-`http://$SYSTEM_PROXY/system/properties` URL.
-The second URL adds properties from `system-service` to the inventory Kubernetes Service. 
-Making a request to the `http://$INVENTORY_PROXY/inventory/systems/[kube-service]` URL in general 
-adds to the inventory depending on whether `kube-service` is a valid Kubernetes service that can be accessed.
+The first URL returns system properties and the name of the pod in an HTTP header called **X-Pod-Name**.
+To view the header, you can use the **-I** option in the **curl** command when you make a request to the
+**http://$SYSTEM_PROXY/system/properties** URL.
+
+```
+curl -I http://$SYSTEM_PROXY/system/properties
+```
+{: codeblock}
+
+The second URL adds properties from **system-service** to the inventory Kubernetes Service. 
+Making a request to the **http://$INVENTORY_PROXY/inventory/systems/[kube-service]** URL in general 
+adds to the inventory depending on whether **kube-service** is a valid Kubernetes service that can be accessed.
 
 
 # Scaling a deployment
@@ -454,10 +461,10 @@ inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
 ```
 
 
-Wait for your two new pods to be in the ready state, then make the following `curl` command:
+Wait for your two new pods to be in the ready state, then make the following **curl** command:
 
 ```
-curl -I http://$SYSTEM_PROXY/system/properties | jq
+curl -I http://$SYSTEM_PROXY/system/properties
 ```
 {: codeblock}
 
@@ -479,6 +486,7 @@ Note that there is only one **system** pod after you redeploy since you're delet
 
 
 ```
+cd /home/project/guide-kubernetes-intro/start
 kubectl delete -f kubernetes.yaml
 
 mvn clean package
@@ -515,8 +523,8 @@ The default properties defined in the **pom.xml** are:
 Navigate back to the **start** directory.
 
 
-Update the `pom.xml` files so that the `system.service.root` and `inventory.service.root` properties
-match the values to access the `system-service` and `inventory-service` services.
+Update the **pom.xml** files so that the **system.service.root** and **inventory.service.root** properties
+match the values to access the **system** and **inventory** services.
 
 ```
 sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' inventory/pom.xml
@@ -569,6 +577,8 @@ kubectl delete -f kubernetes.yaml
 {: codeblock}
 
 
+
+Press **CTRL+C** to stop the proxy server that was started at step 7.
 
 
 # Summary
