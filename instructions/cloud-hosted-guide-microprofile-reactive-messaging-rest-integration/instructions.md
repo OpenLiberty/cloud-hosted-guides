@@ -1,5 +1,5 @@
 
-# Welcome to the Integrating RESTful services with a reactive system guide!
+# **Welcome to the Integrating RESTful services with a reactive system guide!**
 
 Learn how to integrate RESTful Java microservices with a reactive system by using MicroProfile Reactive Messaging.
 
@@ -11,7 +11,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to integrate RESTful Java microservices with a reactive system by using MicroProfile Reactive
 Messaging. RESTful Java microservices don't use reactive concepts, so you will learn how to bridge the gap between the
@@ -35,7 +35,7 @@ produced by the new endpoint. You will configure new channels to handle the even
 To learn more about how the reactive Java services that are used in this guide work, check out the
 [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -60,7 +60,7 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-# Adding a REST endpoint that produces events
+# **Adding a REST endpoint that produces events**
 
 
 
@@ -236,7 +236,7 @@ When the **inventory** service receives a request, it adds the system property n
 The property name sent to the emitter is then sent to the publisher. The publisher sends the event to the event channel
 by using the configured **BackpressureStrategy** object when necessary.
 
-# Adding an event processor to a reactive service
+# **Adding an event processor to a reactive service**
 
 
 The **system** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of
@@ -323,7 +323,7 @@ channel. The method calculates the requested property in real time and publishes
 **@Outgoing("propertyResponse")** channel. In this scenario, the
 **sendProperty()** method acts as a processor. Next, you'll configure the channels that you need.
 
-# Configuring the MicroProfile Reactive Messaging connectors for Kafka
+# **Configuring the MicroProfile Reactive Messaging connectors for Kafka**
 
 
 
@@ -405,7 +405,7 @@ Replace the **system** microservice **microprofile-config.properties** file to a
 channels. The **propertyRequest** channel handles receiving the property request, and the
 **propertyResponse** channel handles sending the property response.
 
-# Building and running the application
+# **Building and running the application**
 
 Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
 
@@ -449,7 +449,7 @@ project. For simplicity, the script starts one instance of the **system** servic
 
 
 
-# Testing the application
+# **Testing the application**
 
 After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint
 of the **inventory** service.
@@ -518,7 +518,7 @@ Notice that the **os.name** system property value is now included with the previ
 }
 ```
 
-# Tearing down the environment
+# **Tearing down the environment**
 
 Run the following script to stop the application:
 
@@ -530,7 +530,7 @@ Run the following script to stop the application:
 
 
 
-# Running multiple system instances
+# **Running multiple system instances**
 
 
 This application has only one instance of the **system** service. The **inventory** service collects system properties of
@@ -540,9 +540,9 @@ through the **`MP_MESSAGING_INCOMING_PROPERTYREQUEST_GROUP_ID`** environment var
 
 # Summary
 
-## Nice Work!
+## **Nice Work!
 
-You successfully integrated a RESTful microservice with a reactive system by using MicroProfile Reactive Messaging.
+You successfully integrated a RESTful microservice with a reactive system by using MicroProfile Reactive Messaging.**
 
 
 

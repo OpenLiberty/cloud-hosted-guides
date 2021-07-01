@@ -1,5 +1,5 @@
 
-# Welcome to the Acknowledging messages using MicroProfile Reactive Messaging guide!
+# **Welcome to the Acknowledging messages using MicroProfile Reactive Messaging guide!**
 
 Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
 
@@ -11,7 +11,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive
 Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged
@@ -31,7 +31,7 @@ You will explore the acknowledgment strategies that are available with MicroProf
 your own manual acknowledgment strategy. To learn more about how the reactive Java services used in this guide work, check
 out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -56,7 +56,7 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-# Choosing an acknowledgment strategy
+# **Choosing an acknowledgment strategy**
 
 
 Messages must be acknowledged in reactive applications. Messages are either acknowledged explicitly, or messages are acknowledged
@@ -96,7 +96,7 @@ message must be acknowledged immediately.
 This case where a message either needs to be acknowledged immediately or some time later is one of the situations where
 the **MANUAL** acknowledgment strategy would be beneficial
 
-# Implementing the MANUAL acknowledgment strategy
+# **Implementing the MANUAL acknowledgment strategy**
 
 
 
@@ -209,7 +209,7 @@ One of the following outcomes occurs:
   requested system property and sends it to the proper channel. The method acknowledges the incoming message only
   after the sent message is acknowledged.
 
-# Waiting for a message to be acknowledged
+# **Waiting for a message to be acknowledged**
 
 
 The **inventory** service contains an endpoint that accepts **PUT** requests. When a **PUT** request that contains a system property
@@ -395,7 +395,7 @@ with the requested property name as the **payload** and an acknowledgment
 **CompletableFuture** variable that returns a **200** response
 code after the variable is completed in the **callback** function.
 
-# Building and running the application
+# **Building and running the application**
 
 Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
 
@@ -439,7 +439,7 @@ in the project. For simplicity, the script starts one instance of the **system**
 
 
 
-# Testing the application
+# **Testing the application**
 
 After the application is up and running, you can access the application by making a GET request to the **/systems** 
 endpoint of the **inventory** service.
@@ -511,7 +511,7 @@ The **os.name** system property value is now included with the previous values:
 }
 ```
 
-# Tearing down the environment
+# **Tearing down the environment**
 
 Finally, run the following script to stop the application:
 
@@ -525,9 +525,9 @@ Finally, run the following script to stop the application:
 
 # Summary
 
-## Nice Work!
+## **Nice Work!
 
-You developed an application by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
+You developed an application by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.**
 
 
 

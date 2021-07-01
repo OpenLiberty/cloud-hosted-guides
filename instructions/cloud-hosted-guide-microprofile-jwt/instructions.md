@@ -1,5 +1,5 @@
 
-# Welcome to the Securing microservices with JSON Web Tokens guide!
+# **Welcome to the Securing microservices with JSON Web Tokens guide!**
 
 You'll explore how to control user and role access to microservices with MicroProfile JSON Web Token (MicroProfile JWT).
 
@@ -12,7 +12,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will add token-based authentication mechanisms to authenticate, authorize,
 and verify users by implementing MicroProfile JWT in the **system** microservice.
@@ -54,7 +54,7 @@ To learn more about JSON Web Tokens, check out the
 can be used for user authentication and authorization, check out the Open Liberty
 [Single Sign-on documentation](https://openliberty.io/docs/latest/single-sign-on.html).
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -79,7 +79,10 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-### Try what you'll build
+### **Try what you'll build**
+
+
+
 
 The **finish** directory contains the finished JWT security implementation for the
 services in the application. Try the finished application before you
@@ -167,7 +170,7 @@ mvn -pl frontend liberty:stop
 
 
 
-# Creating the secure system service
+# **Creating the secure system service**
 
 
 To begin, run the following command to navigate to the **start** directory:
@@ -301,7 +304,7 @@ To read more about different claims and ways to
 access them, check out the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
 
 
-# Creating a client to access the secure system service
+# **Creating a client to access the secure system service**
 
 
 
@@ -462,7 +465,7 @@ You can see that the **claim()** method is being used to set the **groups** clai
 This claim is used to provide the role-based access that you implemented.
 
 
-# Configuring MicroProfile JWT
+# **Configuring MicroProfile JWT**
 
 
 
@@ -535,7 +538,7 @@ Replace the system server configuration file.
 The **mpJwt** feature adds the libraries that are required for MicroProfile JWT implementation.
 
 
-# Building and running the application
+# **Building and running the application**
 
 Because you are running the **frontend** and **system** services in dev mode, the changes that you made were automatically picked up. You're now ready to check out your application in your browser.
 
@@ -601,7 +604,7 @@ The token reader also shows you the payload, which contains the claims informati
 You can learn more about these claims in the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
 
 
-# Testing the application
+# **Testing the application**
 
 
 You can manually check that the **system** service is secure by making requests to
@@ -743,7 +746,10 @@ should be denied by the **/os** endpoint but successfully access the **/username
 and **/jwtroles** endpoints. The requests that don't include a JWT should be
 denied access to all endpoints.
 
-### Running the tests
+### **Running the tests**
+
+
+
 
 Because you started Open Liberty in dev mode, press the **enter/return** key from the
 command-line session of the **system** service to run the tests. You see the
@@ -782,9 +788,9 @@ mvn -pl frontend liberty:stop
 
 # Summary
 
-## Nice Work!
+## **Nice Work!
 
-You learned how to use MicroProfile JWT to validate JWTs, authenticate and authorize users to secure your microservices in Open Liberty.
+You learned how to use MicroProfile JWT to validate JWTs, authenticate and authorize users to secure your microservices in Open Liberty.**
 
 
 
