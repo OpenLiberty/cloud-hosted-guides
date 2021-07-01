@@ -1,5 +1,5 @@
 
-# Welcome to the Testing a MicroProfile or Jakarta EE application guide!
+# **Welcome to the Testing a MicroProfile or Jakarta EE application guide!**
 
 Learn how to use MicroShed Testing to test a MicroProfile or Jakarta EE application.
 
@@ -11,7 +11,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You'll start with an existing REST application that runs on Open Liberty and use [MicroShed Testing](https://microshed.org/microshed-testing/) 
 to write tests for the application that exercise the application inside of a Docker container.
@@ -20,7 +20,10 @@ Sometimes tests might pass in development and testing (dev/test) environments, b
 running differently in production than it is in dev/test. Fortunately, you can minimize these parity issues between development and production
 by testing your application in the same Docker container that you'll use in production.
 
-### What is Docker?
+### **What is Docker?**
+
+
+
 
 Docker is a tool that you can use to deploy and run applications with containers. You
 can think of Docker as a virtual machine that runs various applications. However, unlike with a typical virtual
@@ -29,7 +32,7 @@ one another.
 
 Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -54,7 +57,10 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-### Try what you'll build
+### **Try what you'll build**
+
+
+
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -98,7 +104,7 @@ recompiles and updates any application or test code changes that you make.
 After you are finished running tests, exit development mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
-# Bootstrapping your application for testing
+# **Bootstrapping your application for testing**
 
 
 To begin, run the following command to navigate to the **start** directory:
@@ -243,7 +249,7 @@ Notice that MicroShed Testing is using a **hollow** configuration mode.
 This configuration mode means that MicroShed Testing is reusing an existing application runtime for the test, 
 not starting up a new application instance each time you initiate a test run.
 
-# Talking to your application with a REST client
+# **Talking to your application with a REST client**
 
 With MicroShed Testing, applications are exercised in a black box fashion. Black box means the tests cannot access the application internals. 
 Instead, the application is exercised from the outside, usually with HTTP requests. To simplify the HTTP interactions, inject a REST client into the tests.
@@ -298,7 +304,7 @@ that is running at **http://localhost:9080/guide-microshed-testing/people**, whi
 
 
 
-# Writing your first test
+# **Writing your first test**
 
 Now that the setup is complete, you can write your first test case. Start by testing the basic "create person" use case for your REST-based application. To test this use case, use the REST client that's injected by MicroShed Testing to make the HTTP POST request to the application and read the response.
 
@@ -463,7 +469,7 @@ The following tests are added: **testMinSizeName()**, **testMinAge()**, **testGe
 
 Save the changes, and  press the **enter/return** key in your console window to run the tests.
 
-# Testing outside of development mode
+# **Testing outside of development mode**
 
 Running tests in development mode is convenient for local development, but it can be tedious to test against a running Open Liberty server in non-development scenarios such as CI/CD pipelines. For this reason, MicroShed Testing can start and stop the application runtime before and after the tests are run. This process is primarily accomplished by using Docker and Testcontainers.
 
@@ -479,7 +485,7 @@ mvn verify
 
 Running tests from a cold start takes a little longer than running tests from development mode because the application runtime needs to start each time. However, tests that are run from a cold start use a clean instance on each run to ensure consistent results. These tests also automatically hook into existing build pipelines that are set up to run the **integration-test** phase.
 
-# Sharing configuration across multiple classes
+# **Sharing configuration across multiple classes**
 
 Typically, projects have multiple test classes that all use the same type of application deployment. For these cases, it is useful to reuse an existing configuration and application lifecycle across multiple test classes.
 
@@ -942,9 +948,9 @@ mvn verify
 
 # Summary
 
-## Nice Work!
+## **Nice Work!
 
-You developed automated tests for a REST service in Open Liberty by using MicroShed Testing and Open Liberty development mode.
+You developed automated tests for a REST service in Open Liberty by using MicroShed Testing and Open Liberty development mode.**
 
 
 

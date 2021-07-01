@@ -1,5 +1,5 @@
 
-# Welcome to the Adding health reports to microservices guide!
+# **Welcome to the Adding health reports to microservices guide!**
 
 Explore how to report and check the health of a microservice with MicroProfile Health.
 
@@ -12,7 +12,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to use MicroProfile Health to report the health status of microservices and take
 appropriate actions based on this report.
@@ -32,7 +32,7 @@ are provided for you, and implement what is necessary to report health status by
 using MicroProfile Health.
 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -58,7 +58,10 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-### Try what you'll build
+### **Try what you'll build**
+
+
+
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -129,7 +132,7 @@ mvn liberty:stop
 
 
 
-# Adding health checks to microservices
+# **Adding health checks to microservices**
 
 
 To begin, run the following command to navigate to the **start** directory:
@@ -171,7 +174,10 @@ terminated. For example, a liveness check might fail if the application runs out
 
 
 
-### Adding health checks to the system service
+### **Adding health checks to the system service**
+
+
+
 
 Create the **SystemReadinessCheck** class.
 
@@ -281,7 +287,10 @@ In this case, you are checking the heap memory usage. If more than 90% of the ma
 is being used, a status of **DOWN** is returned.
 
 
-### Adding health checks to the inventory service
+### **Adding health checks to the inventory service**
+
+
+
 
 Create the **InventoryReadinessCheck** class.
 
@@ -422,7 +431,7 @@ than 90% of the maximum memory is being used, a **DOWN** status is returned.
 
 
 
-# Running the application
+# **Running the application**
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
@@ -490,7 +499,7 @@ property back to **false** after you are done.
 
 
 
-# Testing health checks
+# **Testing health checks**
 
 You will implement several test methods to validate the health of the **system** and **inventory** services.
 
@@ -624,7 +633,10 @@ run automatically as a part of the integration test suite.
 
 
 
-### Running the tests
+### **Running the tests**
+
+
+
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -663,9 +675,9 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 
 # Summary
 
-## Nice Work!
+## **Nice Work!
 
-You just learned how to add health checks to report the states of microservices by using
+You just learned how to add health checks to report the states of microservices by using**
 
 MicroProfile Health in Open Liberty. Then, you wrote tests to validate the generated
 health report.

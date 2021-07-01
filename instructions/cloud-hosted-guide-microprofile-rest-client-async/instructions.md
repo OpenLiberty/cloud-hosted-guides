@@ -1,5 +1,5 @@
 
-# Welcome to the Consuming RESTful services asynchronously with template interfaces guide!
+# **Welcome to the Consuming RESTful services asynchronously with template interfaces guide!**
 
 Learn how to use MicroProfile Rest Client to invoke RESTful microservices asynchronously over HTTP.
 
@@ -11,7 +11,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to build a MicroProfile Rest Client to access remote RESTful services using asynchronous method calls. 
 You'll update the template interface for a MicroProfile Rest Client to use the **CompletionStage** return type. 
@@ -49,7 +49,7 @@ It communicates with the **inventory** service to determine which system has the
 The **system** and **inventory** microservices use MicroProfile Reactive Messaging to send and receive the system load events. 
 If you want to learn more about reactive messaging, see the [Creating Reactive Java Microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -74,7 +74,7 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-# Updating the template interface of a REST client to use asynchronous methods
+# **Updating the template interface of a REST client to use asynchronous methods**
 
 
 To begin, run the following command to navigate to the **start** directory:
@@ -134,7 +134,7 @@ Change the return type to **CompletionStage<Properties>** to make the method asy
 Since the method now has the return type of **CompletionStage<Properties>**, you aren't able to directly manipulate the **Properties** inner type. 
 As you will see in the next section, you're able to indirectly use the **Properties** by chaining callbacks.
 
-# Updating a REST resource to asynchronously handle HTTP requests
+# **Updating a REST resource to asynchronously handle HTTP requests**
 
 To reduce the processing time, you will update the **/query/systemLoad** endpoint to asynchronously send the requests. 
 Multiple client requests will be sent synchronously in a loop.
@@ -271,7 +271,7 @@ The **values** variable is instantiated as a **ConcurrentHashMap** object.
 Together, the **volatile** keyword and **ConcurrentHashMap** type allow the **Holder** class to store system information and safely access it asynchronously from multiple threads.
 
 
-# Building and running the application
+# **Building and running the application**
 
 You will build and run the **system**, **inventory**, and **query** microservices in Docker containers. 
 You can learn more about containerizing microservices with Docker in the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
@@ -355,7 +355,7 @@ When you are done checking out the application, run the following script to stop
 
 
 
-# Testing the query microservice
+# **Testing the query microservice**
 
 You will create an endpoint test to test the basic functionality of the **query** microservice. 
 If a test failure occurs, then you might have introduced a bug into the code.
@@ -476,7 +476,10 @@ The **testLoads()** test case verifies that the **query** service can calculate 
 
 
 
-### Running the tests
+### **Running the tests**
+
+
+
 
 
 Run the following commands to navigate to the **query** directory and verify that the tests pass by using the Maven **verify** goal:
@@ -503,9 +506,9 @@ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 
 # Summary
 
-## Nice Work!
+## **Nice Work!
 
-You have just modified an application to make asynchronous HTTP requests using Open Liberty and MicroProfile Rest Client.
+You have just modified an application to make asynchronous HTTP requests using Open Liberty and MicroProfile Rest Client.**
 
 
 

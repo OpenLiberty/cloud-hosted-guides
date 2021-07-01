@@ -1,42 +1,88 @@
-# Using Docker containers to develop microservices
 
-### What you’ll learn
+# **Welcome to the Using Docker containers to develop microservices guide!**
 
-You will learn how to set up, run, and iteratively develop a simple REST application in a container with Docker and Open Liberty.
+Learn how to use Docker containers for iterative development.
 
-### What is Docker?
-Docker is a tool that you can use to deploy and run applications with containers. You can think of Docker like a virtual machine that runs various applications. However, unlike a typical virtual machine, you can run these applications simultaneously on a single system and independent of one another.
+In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
-If you are interested, learn more about Docker on the [official Docker website.](https://www.docker.com/why-docker)
+This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
 
-### What is a container?
-A container is a lightweight, stand-alone package that contains a piece of software that is bundled together with the entire environment that it needs to run. Containers are small compared to regular images and can run on any environment where Docker is set up. Moreover, you can run multiple containers on a single machine at the same time in isolation from each other.
+The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
-Learn more about containers on the [official Docker website.](https://www.docker.com/resources/what-container)
 
-### Why use containers?
-Consider a scenario where you need to deploy your application on another environment. Your application works on your local machine, but when you try to run it on a different environment, it breaks. You do some debugging and discover that you built your application with Java 8, but this new environment has only Java 11 installed. Although this issue is generally easy to fix, you don’t want your application to be missing dozens of version-specific dependencies. You can create a virtual machine specifically for testing your application, but VM images generally take up a huge amount of space and are slow to run.
 
-To solve the problem, you can containerize your application by bundling it together with the entire environment that it needs to run. You can then run this container on any machine that is running Docker regardless of how that machine’s environment is set up. You can also run multiple containers on a single machine in isolation from one another so that two containers that have different versions of Java do not interfere with each other. Containers are quick to run compared to individual VMs, and they take up only a fraction of the memory of a single virtual machine image.
 
-The implementation of this REST application can be found in the **finish/src** directory. To learn more about this application and how to build it, read Creating a [RESTful web service](https://openliberty.io/guides/rest-intro.html).
 
-To iteratively develop your application in a container, first build it with Maven and add it to the server of your choice. Second, create a Docker image that contains an Open Liberty runtime. Third, run this image and mount a single server directory or the directory that contains all of your servers to the container’s file system. Finally, run one of the mounted servers inside of a container.
+# **What you'll learn**
 
-## Getting Started
+You will learn how to set up, run, and iteratively develop a simple REST application in a container with Open Liberty and Docker.
 
-If a terminal window does not open navigate:
+Open Liberty is an application server designed for the cloud. It’s small, lightweight, and designed with modern cloud-native
+application development in mind. Open Liberty simplifies the development process for these applications by automating 
+the repetitive actions associated with running applications inside containers, like rebuilding the image and stopping and starting 
+the container. 
 
-> Terminal -> New Terminal
+You'll also learn how to create and run automated tests for your application and container.
 
-Check you are in the **home/project** folder:
+The implementation of the REST application can be found in the
+**start/src** directory. To learn more about this application and how to build it, check out the
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
+
+### **What is Docker?**
+
+
+
+
+Docker is a tool that you can use to deploy and run applications with containers. You
+can think of Docker like a virtual machine that runs various applications. However, unlike a typical virtual
+machine, you can run these applications simultaneously on a single system and independent of
+one another.
+
+Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
+
+### **What is a container?**
+
+
+
+
+A container is a lightweight, stand-alone package that contains a piece of software that is bundled together
+with the entire environment that it needs to run. Containers are small compared to regular images and can
+run on any environment where Docker is set up. Moreover, you can run multiple containers on a single
+machine at the same time in isolation from each other.
+
+Learn more about containers on the [official Docker website](https://www.docker.com/what-container).
+
+### **Why use a container to develop?**
+
+
+
+
+Consider a scenario where you need to deploy your application on another environment. Your application
+works on your local machine, but when you try to run it on your cloud production environment, it breaks. You do
+some debugging and discover that you built your application with Java 8, but this cloud production environment has only 
+Java 11 installed. Although this issue is generally easy to fix, you don't want your application to be missing 
+dozens of version-specific dependencies. You can develop your application in this cloud environment, but that 
+requires you to rebuild and repackage your application every time you update your code and wish to test it.
+
+To avoid this kind of problem, you can instead choose to develop your application in a container locally, bundled together with the
+entire environment that it needs to run. By doing this, you know that at any point in your iterative development process,
+the application can run inside that container. This helps avoid any unpleasant surprises when you go to test or
+deploy your application down the road. Containers run quickly and do not have a major impact on the speed
+of your iterative development. 
+
+# **Getting started**
+
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
+
+Run the following command to navigate to the **/home/project** directory:
 
 ```
-pwd
+cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the Git repository and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-docker.git) and use the projects that are provided inside:
 
 ```
 git clone https://github.com/openliberty/guide-docker.git
@@ -44,218 +90,179 @@ cd guide-docker
 ```
 {: codeblock}
 
+
 The **start** directory contains the starting project that you will build upon.
 
-# Building your application
+The **finish** directory contains the finished project that you will build.
 
-Navigate to the **start** directory and run the Maven install goal to build your application:
 
+# **Creating the Dockerfile**
+
+
+
+The first step to running your application inside of a Docker container is creating a Dockerfile.
+A Dockerfile is a collection of instructions for building a Docker image that can then be run as a
+container. Every Dockerfile begins with a parent or base image on top of which various commands
+are run. For example, you can start your image from scratch and run commands that download and
+install Java, or you can start from an image that already contains a Java installation.
+
+Navigate to the **start** directory to begin.
+
+Create the **Dockerfile**.
+
+> Run the following touch command in your terminal
 ```
-cd start
-mvn install
-```
-{: codeblock}
-
-Your **pom.xml** file is already configured to add your REST application to the **defaultServer.** But you can tweak this configuration or add your own for another server by updating the **<execution/>** element.
-
-The install-apps goal copies the application into the specified directory of the specified server. In this case, the goal copies the **rest.war** file into the apps directory of the **defaultServer** server.
-
-To learn more about this goal on the official [Maven Liberty plug-in repository.](https://github.com/OpenLiberty/ci.maven/blob/2.x/docs/install-apps.md)
-
-# Creating the Dockerfile
-
-A Dockerfile is a collection of instructions for building a Docker image that can then be run as a container. Every Dockerfile begins with a parent or base image on top of which various commands are run. For example, you can start your image from scratch and execute commands that download and install Java, or you can start from an image that already contains a Java installation.
-
-Create the Dockerfile.
-
-```
-touch dockerfile
+touch /home/project/guide-docker/start/Dockerfile
 ```
 {: codeblock}
 
-Open the **dockerfile**
 
-> [File -> open] guide-docker/start/dockerfile
+> Then from the menu of the IDE, select **File** > **Open** > guide-docker/start/Dockerfile
 
-Add the contents into the **dockerfile**
+
+
 
 ```
-# Start with OL runtime.
-FROM open-liberty
+FROM openliberty/open-liberty:full-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="IBM" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-docker" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Docker Guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
 
 USER root
-# Symlink servers directory for easier mounts.
-RUN ln -s /opt/ol/wlp/usr/servers /servers
+
+COPY --chown=1001:0 src/main/liberty/config/server.xml /config/
+COPY --chown=1001:0 target/*.war /config/apps/
 USER 1001
-
-# Run the server script and start the defaultServer by default.
-ENTRYPOINT ["/opt/ol/wlp/bin/server", "run"]
-CMD ["defaultServer"]
 ```
 {: codeblock}
 
-Save the **dockerfile**.
 
-### A breakdown of the dockerfile
+The **FROM** instruction initializes a new build stage and indicates the parent image from which your
+image is built. If you don't need a parent image, then use **FROM scratch**, which makes your image a
+base image. 
 
-#### FROM
+In this case, you’re using the **openliberty/open-liberty:full-java8-openj9-ubi** image as your parent image, 
+which comes with the latest Open Liberty runtime.
 
-This instruction initializes a new build stage and indicates the parent image from which your image is built. 
+The **COPY** instructions are structured as **COPY** 
+**`[--chown=<user>:<group>]`** **`<source>`** **`<destination>`**. 
+They copy local files into the specified destination within your Docker image.
+In this case, the server configuration file that is located at **src/main/liberty/config/server.xml** 
+is copied to the **/config/** destination directory.
 
-In this case, you’re using the **openliberty/open-liberty:javaee8** image as your parent image, which comes with the latest Open Liberty runtime.
+### **Writing a .dockerignore file**
 
-#### RUN
 
-The **RUN** instruction executes various shell commands in a new layer on top of the current image. In this case, you create a symlink between the **/opt/ol/wlp/usr/servers** directory and the **/servers** directory. This way, you can mount your servers more easily because you don’t need to use long path names. Note that since the Open Liberty Docker image runs by default with user 1001 (which is a non-root user), you must temporarily switch to the **root** user to create the symlink. This is done by using the **USER** instruction.
 
-#### ENTRYPOINT
 
-The ****ENTRYPOINT**** and **CMD** instructions define a default command that executes when the image runs as a container. These two instructions function the same way, except that the **CMD** instruction is overridden with any arguments that are passed at the end of the docker run command. In contrast, the **ENTRYPOINT** instruction requires the **--entrypoint flag** to be overridden. In this case, you use the **ENTRYPOINT** instruction to start an Open Liberty server and the **CMD** instruction to indicate which server to start. Because the **CMD** instruction is easily overridden, starting any server is convenient.
+When Docker runs a build, it sends all of the files and directories that are
+located in the same directory as the Dockerfile to its build context, making
+them available for use in instructions like **ADD** and **COPY**. If there are files
+or directories you wish to exclude from the build context, you can add them
+to a **.dockerignore** file. By adding files that aren't nessecary for building your
+image to the **.dockerignore** file, you can decrease the image's size and speed
+up the building process. You may also want to exclude files that contain
+sensitive information, such as a **.git** folder or private keys, from the build context. 
 
-For a complete list of available instructions, see the [Docker documentation.](https://docs.docker.com/engine/reference/builder/)
+A **.dockerignore** file is available to you in the **start** directory. This file includes 
+the **pom.xml** file and some system files.
 
-### Optional: Writing a .dockerignore file
 
-When Docker runs a build, it sends all of the files and directories that are located in the same directory as the Dockerfile to its build context, making them available for use in instructions like **ADD** and **COPY**. To make image building faster, add all files and directories that aren’t necessary for building your image to a **.dockerignore** file. This excludes them from the build context.
+# **Launching Open Liberty in dev mode**
 
-A **.dockerignore** file is available to you in the **start** directory. This file includes the **src** directory, the **pom.xml** file, and some system files. 
+The Open Liberty Maven plug-in includes a **devc** goal that builds a Docker image, mounts the required directories,
+binds the required ports, and then runs the application inside of a container. This development mode, known as dev mode, also listens for any 
+changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
 
-# Building the image
-
-If you execute your build from the same directory as your Dockerfile, (which you are) you can use the period character (.) notation to specify the location for the build context. Otherwise, (if you weren't you could) use the **-f** flag to point to your Dockerfile.
-
-Run 
-
-```
-docker build -t ol-runtime .
-```
-{: codeblock}
-
-Using the **-t** flag gives the image an optional name. In this case, **ol-runtime** is the name of your image.
-
-The first build usually takes much longer to complete than subsequent builds because Docker needs to download all dependencies that your image requires, including the parent image.
-
-If your build runs successfully, you’ll see an output similar to the following:
+Build and run the container by running the **devc** goal from the **start** directory:
 
 ```
-...
-Digest: sha256:b7576e4278030537765d4185c4641ee2769194226263f979109ed4fa0e1aa4e4
-Status: Downloaded newer image for open-liberty:latest
- ---> 45d4b67ace5b
-Step 2/4 : RUN ln -s /opt/ol/wlp/usr/servers /servers
- ---> Running in cbeb275770ab
-Removing intermediate container cbeb275770ab
- ---> 937183f8460b
-Step 3/4 : ENTRYPOINT ["/opt/ol/wlp/bin/server", "run"]
- ---> Running in 856a4bdec82b
-Removing intermediate container 856a4bdec82b
- ---> 6cf732381877
-Step 4/4 : CMD ["defaultServer"]
- ---> Running in 1a543a9e37d8
-Removing intermediate container 1a543a9e37d8
- ---> 8fdcad065d25
-Successfully built 8fdcad065d25
-Successfully tagged ol-runtime:latest
-```
-
-Each step of the build has a unique ID, which represents the ID of an intermediate image. For example, step 2 has the ID **937183f8460b**, and step 4 has the ID **8fdcad065d25**, which is also the ID of the final image. During the first build of your image, Docker caches every new layer as a separate image and uses them for future builds for layers that didn’t change. For example, if you run the build again, Docker uses the images that are cached for steps 2 - 4. However, if you make a change in your Dockerfile, Docker would need to rebuild the subsequent layer since this layer also changed.
-
-### The '**no-cache=true flag**'
-
-However, you can also completely disable the caching of intermediate layers by running the build with the **--no-cache=true flag**
-
-```
-docker build -t ol-runtime --no-cache=true .
+mvn liberty:devc
 ```
 {: codeblock}
 
-# Running your application in Docker container
 
-Now that your image is built, execute the Docker **run** command
-
+After you see the following message, your application server in dev mode is ready:
 ```
-docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v $(pwd)/target/liberty/wlp/usr/servers:/servers -u `id -u` ol-runtime
-```
-{: codeblock}
-
-### A breakdown of the flags
-
-**-d** | Flag tells Docker to run the container in the background. Without this flag, Docker runs the container in the foreground.
-
-**--name** | Flag specifies a name for the container.
-
-**-p** | Flag maps the container ports to the host ports.
-
-**-v** | This flag mounts a directory or file to the file system of the container.
-
-As an insight you can pass in an optional server name at the end of the **run** command to override the **defaultServer** server in the **CMD** instruction. For example, if your servers directory also contains a server called **testServer**, then it can be started as shown in the following example:
-
-```
-docker run -d --name rest-app -p 9080:9080 -p 9443:9443 -v /home/project/guide-docker/start/target/liberty/wlp/usr/servers:/servers ol-runtime testServer
+************************************************************************
+*    Liberty is running in dev mode.
 ```
 
-# Testing the container
-
-Check the container is running:
+Open another command-line session and run the following command to make sure that your
+container is running and didn’t crash:
 
 ```
-docker ps
+docker ps 
 ```
 {: codeblock}
 
-Output:
-```
-theia@theiadocker:/home/project/guide-docker/finish$ docker ps
-CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                                            NAMES
-ff0209191be9        ol-runtime          "/opt/ol/wlp/bin/ser…"   2 minutes ago       Up 2 minutes        0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   rest-app
-```
 
-You can view the logs and see the Open Liberty server starting to identify any errors when starting the container. Replace <Container ID> with the container ID from your output.
+You should see something similar to the following output:
 
 ```
-docker logs <Container ID>
+CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS              PORTS                                                                    NAMES
+ee2daf0b33e1        guide-docker-dev-mode   "/opt/ol/helpers/run…"   2 minutes ago       Up 2 minutes        0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
+```
+
+
+To view a full list of all available containers, you can run the **docker ps -a** command.
+
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+
+If your container runs without problems, go to the http://localhost:9080/system/properties URL 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/system/properties
 ```
 {: codeblock}
 
+
+where you can see a JSON file that contains the system properties of the JVM in your container.
+
+
+# **Updating the application while the container is running**
+
+
+With your container running, make the following update to the source code:
+
+Update the **PropertiesResource** class.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+
+
+
+
 ```
-[AUDIT   ] CWWKF0013I: The server removed the following features: [el-3.0, jsp-2.3, servlet-3.1].
-[AUDIT   ] CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 4.371 seconds.
-```
-
-Access the **/System/properties** endpoint where you can see a JSON file containing the system properties of the JVM in your container.
-
-```
-curl http://localhost:9080/LibertyProject/System/properties
-```
-{: codeblock}
-
-### Update the PropertiesResource class.
-
-To open the file click the the file button in the top left hand corner
-
-> [File -> Open] guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
-
-Note the endpoint of your application is going to change from **properties** to **properties-new**. This has been updated by the **@Path** annotation being changed.
-
-Replace the existing code with:
-
-```java
 package io.openliberty.guides.rest;
-
-import java.util.Properties;
-import java.util.Map;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.GET;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import javax.json.JsonArray;
 import javax.json.Json;
-import javax.json.JsonNumber;
 
 @Path("properties-new")
 public class PropertiesResource {
@@ -278,50 +285,199 @@ public class PropertiesResource {
 ```
 {: codeblock}
 
-Save the **PropertiesResource.java** by pressing the 'x' button and pressing 'save'.
 
-Rebuild the application 
+Change the endpoint of your application from **properties** to **properties-new** by changing the **@Path**
+annotation to **"properties-new"**.
 
-Ensure you are in **/home/project/guide-docker/start**
+After you make the file changes, Open Liberty automatically updates the application. To see these changes reflected in the application, 
 
-Run: 
+go to the http://localhost:9080/system/properties-new URL.
 
-```
-mvn package
-```
-{: codeblock}
 
-View the changes reflected in the container, and point your browser to `/System/properties-new`.
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/LibertyProject/System/properties-new
+curl http://localhost:9080/system/properties-new
 ```
 {: codeblock}
 
-You see the same JSON file that you saw previously.
 
-To stop your container, run:
 
-```
-docker stop rest-app
-```
-{: codeblock}
 
-# Summary 
+# **Testing the container **
 
-### Clean up your environment 
 
-Delete the **guide-docker** project by navigating to the **/home/project/** directory
+You can test this service manually by starting a server and going to the 
+
+http://localhost:9080/system/properties-new URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-cd ../..
-rm -r -f guide-docker
+curl http://localhost:9080/system/properties-new
 ```
 {: codeblock}
 
-### Well done
 
-Congratulations, you have successfully completed the lab. 
+However, automated tests are a much better approach because they trigger a failure if a change introduces a bug.
+JUnit and the JAX-RS Client API provide a simple environment to test the application. 
+You can write tests for the individual units of code outside of a running application server, or they
+can be written to call the application server directly. In this example, you will create a test that calls the application server directly.
 
-From this lab you should now have an understanding of: what Docker is, why you would use containers and  what a **dockerfile** is, creating a dockerfile, building the image, running the container to see the JVM output and updating the container. 
+Create the **EndpointIT** class.
 
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+
+
+
+
+```
+package it.io.openliberty.guides.rest;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
+
+import javax.json.JsonObject;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+
+import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
+
+public class EndpointIT {
+
+    @Test
+    public void testGetProperties() {
+        String port = System.getProperty("liberty.test.port");
+        String url = "http://localhost:" + port + "/";
+
+        Client client = ClientBuilder.newClient();
+        client.register(JsrJsonpProvider.class);
+
+        WebTarget target = client.target(url + "system/properties-new");
+        Response response = target.request().get();
+        JsonObject obj = response.readEntity(JsonObject.class);
+
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+
+        assertEquals("/opt/ol/wlp/output/defaultServer/",
+                     obj.getString("server.output.dir"),
+                     "The system property for the server output directory should match "
+                     + "the Open Liberty container image.");
+
+        response.close();
+    }
+}
+```
+{: codeblock}
+
+
+This test makes a request to the **/system/properties-new** endpoint and checks to
+make sure that the response has a valid status code, and that the information in
+the response is correct. 
+
+### **Running the tests**
+
+
+
+
+Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+
+You will see the following output:
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.rest.EndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
+
+Results :
+
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+```
+
+When you are finished, press **CTRL+C** in the session that the dev mode was
+started from to stop and remove the container.
+
+
+# **Starting dev mode with run options**
+
+Another useful feature of dev mode with a container is the ability to pass additional options
+to the **docker run** command. You can do this by adding the **`<dockerRunOpts>`** tag to the **pom.xml** file under 
+the **`<configuration>`** tag of the Liberty Maven Plugin. Here is an example of an environment variable 
+being passed in:
+
+```
+<groupId>io.openliberty.tools</groupId>
+<artifactId>liberty-maven-plugin</artifactId>
+<version>3.3.2</version>
+<configuration>
+    <dockerRunOpts>-e ENV_VAR=exampleValue</dockerRunOpts>
+</configuration>
+```
+
+If the Dockerfile isn't located in the directory that the **devc** goal is being
+run from, you can add the **`<dockerfile>`** tag to specify the location. Using this
+parameter sets the context for building the Docker image to the directory that
+contains this file.
+
+Additionally, both of these options can be passed from the command line when running the **devc** goal by
+adding `-D` as such:
+
+```
+mvn liberty:devc \
+-DdockerRunOpts="-e ENV_VAR=exampleValue" \
+-Ddockerfile="./path/to/file"
+```
+{: codeblock}
+
+To learn more about dev mode with a container and its different
+features, check out the  
+https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode[Documentation].
+
+
+## Clean up your environment
+
+Clean up your online environment so that it is ready to be used with the next guide:
+
+Delete the **guide-docker** project by running the following commands:
+
+```
+cd /home/project
+rm -fr guide-docker
+```
+{: codeblock}
+
+## What did you think of this guide?
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+
+## What could make this guide better?
+You can also provide feedback or contribute to this guide from GitHub.
+* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-docker/issues)
+* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-docker/pulls)
+
+
+
+
+## Where to next? 
+
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
+
+
+## Log out of the session
+
+Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

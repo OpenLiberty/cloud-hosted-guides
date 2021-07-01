@@ -1,5 +1,5 @@
 
-# Welcome to the Deploying microservices to Kubernetes guide!
+# **Welcome to the Deploying microservices to Kubernetes guide!**
 
 Deploy microservices in Open Liberty Docker containers to Kubernetes and manage them with the Kubernetes CLI, kubectl.
 
@@ -13,7 +13,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What is Kubernetes?
+# **What is Kubernetes?**
 
 Kubernetes is an open source container orchestrator that automates many tasks involved in deploying,
 managing, and scaling containerized applications.
@@ -21,7 +21,10 @@ managing, and scaling containerized applications.
 Over the years, Kubernetes has become a major tool in containerized environments as containers are being
 further leveraged for all steps of a continuous delivery pipeline.
 
-### Why use Kubernetes?
+### **Why use Kubernetes?**
+
+
+
 
 Managing individual containers can be challenging. 
 A small team can easily manage a few containers for development but 
@@ -34,7 +37,10 @@ While you could destroy and then re-create these containers, you can also run a 
 command to have Kubernetes make all those updates for you. Of course, this is just a simple example.
 Kubernetes has a lot more to offer.
 
-### Architecture
+### **Architecture**
+
+
+
 
 Deploying an application to Kubernetes means deploying an application to a Kubernetes cluster.
 
@@ -59,7 +65,7 @@ To learn about the various Kubernetes resources that you can configure,
 see the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/).
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to deploy two microservices in Open Liberty containers to a local Kubernetes cluster.
 You will then manage your deployed microservices using the **kubectl** command line interface for Kubernetes. 
@@ -74,7 +80,7 @@ This process demonstrates how communication can be established between pods insi
 You will use a local single-node Kubernetes cluster.
 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -143,7 +149,7 @@ bx cr login
 
 
 
-# Building and containerizing the microservices
+# **Building and containerizing the microservices**
 
 The first step of deploying to Kubernetes is to build your microservices and containerize them with Docker.
 
@@ -214,7 +220,7 @@ docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 {: codeblock}
 
 
-# Deploying the microservices
+# **Deploying the microservices**
 
 Now that your Docker images are built, deploy them using a Kubernetes resource definition.
 
@@ -433,7 +439,7 @@ Making a request to the `http://$INVENTORY_HOST:32000/inventory/systems/[kube-se
 adds to the inventory depending on whether `kube-service` is a valid Kubernetes service that can be accessed.
 
 
-# Scaling a deployment
+# **Scaling a deployment**
 
 To use load balancing, you need to scale your deployments. 
 When you scale a deployment, you replicate its pods, creating more running instances of your applications. 
@@ -480,7 +486,7 @@ kubectl scale deployment/system-deployment --replicas=1
 {: codeblock}
 
 
-# Redeploy microservices
+# **Redeploy microservices**
 
 When you're building your application, you might want to quickly test a change. 
 To run a quick test, you can rebuild your Docker images then delete and re-create your Kubernetes resources. 
@@ -508,7 +514,7 @@ you can update the container in your deployment with a new image.
 Once the new container is ready, Kubernetes automates both the creation of a new container and the decommissioning of the old one.
 
 
-# Testing microservices that are running on Kubernetes
+# **Testing microservices that are running on Kubernetes**
 
 A few tests are included for you to test the basic functionality of the microservices. 
 If a test failure occurs, then you might have introduced a bug into the code. 
@@ -567,7 +573,7 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 
-# Tearing down the environment
+# **Tearing down the environment**
 
 When you no longer need your deployed microservices, 
 you can delete all Kubernetes resources by running the **kubectl delete** command:
@@ -581,9 +587,9 @@ kubectl delete -f kubernetes.yaml
 
 # Summary
 
-## Nice Work!
+## **Nice Work!
 
-You have just deployed two microservices that are running in Open Liberty to Kubernetes.
+You have just deployed two microservices that are running in Open Liberty to Kubernetes.**
 
 You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
 

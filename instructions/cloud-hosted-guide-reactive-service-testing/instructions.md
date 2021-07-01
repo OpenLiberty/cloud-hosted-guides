@@ -1,5 +1,5 @@
 
-# Welcome to the Testing reactive Java microservices guide!
+# **Welcome to the Testing reactive Java microservices guide!**
 
 Learn how to test reactive Java microservices in true-to-production environments using MicroShed Testing.
 
@@ -11,7 +11,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to write integration tests for reactive Java microservices and to run the tests in true-to-production
 environments by using containers with [MicroShed Testing](https://microshed.org/microshed-testing/). MicroShed Testing tests
@@ -36,7 +36,7 @@ the application’s lifecycle – from development, through testing, and into pr
 You can learn more about MicroShed Testing in the
 [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html) guide.
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -61,7 +61,10 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-### Try what you'll build
+### **Try what you'll build**
+
+
+
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -117,7 +120,7 @@ must download. If you run the same command again, it will be faster.
 
 You can also try out the **inventory** integration tests by repeating the same commands in the **finish/inventory** directory.
 
-# Testing with the Kafka consumer client
+# **Testing with the Kafka consumer client**
 
 
 
@@ -180,7 +183,10 @@ The running **system** service searches for a Kafka topic to push its messages t
 services, the **system** service throws errors. Later in the guide, you will write and run tests that start a Kafka
 Testcontainer that can communicate with the **system** service. This will resolve the errors that you see now.
 
-### Configuring your containers
+### **Configuring your containers**
+
+
+
 
 Create a class to externalize your container configurations.
 
@@ -240,7 +246,10 @@ and the **kafka** container, which receives messages from the **system** service
 The **dependsOn()** method specifies that the **system** service container must wait until the **kafka**
 container is ready before it can start.
 
-### Testing your containers
+### **Testing your containers**
+
+
+
 
 Now you can start writing the test that uses the configured containers.
 
@@ -326,7 +335,10 @@ as denoted by the **@Outgoing** annotation. The **testCpuStatus()**
 test method **polls** a record from Kafka every 3 seconds until the timeout limit. It then
 **verifies** that the record polled matches the expected record.
 
-### Running the tests
+### **Running the tests**
+
+
+
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -372,7 +384,7 @@ You will see the following output:
  ------------------------------------------------------------------------
 ```
 
-# Testing with the Kafka producer client
+# **Testing with the Kafka producer client**
 
 
 
@@ -380,14 +392,20 @@ You will see the following output:
 The **inventory** service is tested in the same way as the **system** service. The only difference is that the **inventory** service
 consumes messages, which means that tests are written to use the Kafka producer client.
 
-### Configuring your containers
+### **Configuring your containers**
+
+
+
 
 Navigate to the **start/inventory** directory.
 
 The **AppContainerConfig** class is provided, and it is configured in the same way as it was for the **system** service. The two
 containers that are configured for use in the **inventory** service integration test are the **kafka** and **inventory** containers.
 
-### Testing your containers
+### **Testing your containers**
+
+
+
 
 As you did with the **system** service, run Open Liberty in dev mode to listen for file changes:
 
@@ -494,7 +512,10 @@ The **@RESTClient** annotation injects a REST client proxy of the
 To learn more about REST clients, check out the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html)
 guide.
 
-### Running the tests
+### **Running the tests**
+
+
+
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -542,9 +563,9 @@ You will see the following output:
 
 # Summary
 
-## Nice Work!
+## **Nice Work!
 
-You just tested two reactive Java microservices using MicroShed Testing.
+You just tested two reactive Java microservices using MicroShed Testing.**
 
 
 
