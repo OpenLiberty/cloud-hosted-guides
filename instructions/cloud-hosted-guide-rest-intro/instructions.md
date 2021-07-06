@@ -59,8 +59,10 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-<br/><br/>
 ### **Try what you'll build**
+
+
+
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -392,8 +394,10 @@ are running on the same machine, it is reasonable to expect that the system prop
 and remote JVM would be the same. In this case, an **assertEquals** assertion is made so that the **os.name** system property
 for both JVMs is the same. You can write additional assertions to check for more values.
 
-<br/><br/>
 ### **Running the tests**
+
+
+
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -429,6 +433,8 @@ You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
 <br/><br/>
 ## **Clean up your environment**
 
+## **Clean up your environment**
+
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -440,14 +446,12 @@ rm -fr guide-rest-intro
 ```
 {: codeblock}
 
-<br/><br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-<br/><br/>
 ## **What could make this guide better?**
 
 
@@ -457,14 +461,14 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/><br/>
-## **Where to next?**
+
+## **Where to next?** 
+
 
 * [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
 * [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
-<br/><br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

@@ -55,8 +55,10 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-<br/><br/>
 ### **Try what you'll build**
+
+
+
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -262,8 +264,10 @@ The **quickStartSecurity** configuration element provides basic security to secu
 When you visit the **/metrics** endpoint, use the credentials defined in the server configuration to log in and view the data.
 
 
-<br/><br/>
 ### **Adding the annotations**
+
+
+
 
 Replace the **InventoryManager** class.
 
@@ -700,8 +704,10 @@ test the basic functionality of the **inventory** and **system** services. If a 
 introduced a bug into the code.
 
 
-<br/><br/>
 ### **Running the tests**
+
+
+
 
 Because you started Open Liberty in development mode at the start of the guide, press the **enter/return** key to run the tests and see the following output:
 
@@ -746,6 +752,8 @@ and wrote tests to validate them in Open Liberty.
 <br/><br/>
 ## **Clean up your environment**
 
+## **Clean up your environment**
+
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -757,14 +765,12 @@ rm -fr guide-microprofile-metrics
 ```
 {: codeblock}
 
-<br/><br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-<br/><br/>
 ## **What could make this guide better?**
 
 
@@ -774,15 +780,15 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/><br/>
-## **Where to next?**
+
+## **Where to next?** 
+
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
-<br/><br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

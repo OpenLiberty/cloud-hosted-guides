@@ -21,8 +21,10 @@ managing, and scaling containerized applications.
 Over the years, Kubernetes has become a major tool in containerized environments as containers are being
 further leveraged for all steps of a continuous delivery pipeline.
 
-<br/><br/>
 ### **Why use Kubernetes?**
+
+
+
 
 Managing individual containers can be challenging. 
 A small team can easily manage a few containers for development but 
@@ -35,8 +37,10 @@ While you could destroy and then re-create these containers, you can also run a 
 command to have Kubernetes make all those updates for you. Of course, this is just a simple example.
 Kubernetes has a lot more to offer.
 
-<br/><br/>
 ### **Architecture**
+
+
+
 
 Deploying an application to Kubernetes means deploying an application to a Kubernetes cluster.
 
@@ -594,6 +598,8 @@ You then scaled a microservice and ran integration tests against miroservices th
 <br/><br/>
 ## **Clean up your environment**
 
+## **Clean up your environment**
+
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -605,14 +611,12 @@ rm -fr guide-kubernetes-intro
 ```
 {: codeblock}
 
-<br/><br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-<br/><br/>
 ## **What could make this guide better?**
 
 
@@ -622,14 +626,14 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/><br/>
-## **Where to next?**
+
+## **Where to next?** 
+
 
 * [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 * [Managing microservice traffic using Istio](https://openliberty.io/guides/istio-intro.html)
 
 
-<br/><br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

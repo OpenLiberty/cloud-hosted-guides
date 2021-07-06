@@ -604,6 +604,7 @@ public class InventoryClient {
 
 The return type of the **getSystem()** method is now an **Observable** object instead of a **CompletionStage** interface. 
 
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
@@ -914,8 +915,10 @@ The **testSystemLoad()** test case verifies that the **query** service can corre
 
 
 
-<br/><br/>
 ### **Running the tests**
+
+
+
 
 Navigate to the **query** directory, then verify that the tests pass by running the Maven **verify** goal:
 
@@ -948,7 +951,7 @@ You modified an application to make HTTP requests by using a reactive JAX-RS cli
 
 
 
-<br/><br/>
+
 ## **Clean up your environment**
 
 
@@ -962,14 +965,12 @@ rm -fr guide-reactive-rest-client
 ```
 {: codeblock}
 
-<br/><br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-<br/><br/>
 ## **What could make this guide better?**
 
 
@@ -979,14 +980,14 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/><br/>
-## **Where to next?**
+
+## **Where to next?** 
+
 
 * [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
 * [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 
-<br/><br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

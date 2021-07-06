@@ -58,8 +58,10 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-<br/><br/>
 ### **Try what you'll build**
+
+
+
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -172,8 +174,10 @@ terminated. For example, a liveness check might fail if the application runs out
 
 
 
-<br/><br/>
 ### **Adding health checks to the system service**
+
+
+
 
 Create the **SystemReadinessCheck** class.
 
@@ -283,8 +287,10 @@ In this case, you are checking the heap memory usage. If more than 90% of the ma
 is being used, a status of **DOWN** is returned.
 
 
-<br/><br/>
 ### **Adding health checks to the inventory service**
+
+
+
 
 Create the **InventoryReadinessCheck** class.
 
@@ -627,8 +633,10 @@ run automatically as a part of the integration test suite.
 
 
 
-<br/><br/>
 ### **Running the tests**
+
+
+
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -681,6 +689,8 @@ technologies that you can learn and expand on top of what you built here.
 <br/><br/>
 ## **Clean up your environment**
 
+## **Clean up your environment**
+
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -692,14 +702,12 @@ rm -fr guide-microprofile-health
 ```
 {: codeblock}
 
-<br/><br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-<br/><br/>
 ## **What could make this guide better?**
 
 
@@ -709,8 +717,9 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/><br/>
-## **Where to next?**
+
+## **Where to next?** 
+
 
 * [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 * [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
@@ -718,7 +727,6 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 
 
-<br/><br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

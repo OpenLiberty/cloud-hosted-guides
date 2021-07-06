@@ -141,8 +141,10 @@ Every **Dockerfile** begins with a parent or base image over which various comma
 
 Learn more about Docker on the [official Docker page](https://www.docker.com/what-docker).
 
-<br/><br/>
 ### **Creating your Dockerfiles**
+
+
+
 You will be creating two Docker images to run the **inventory** service and **system** service. The first step is to create Dockerfiles for both services.
 
 Create the **Dockerfile** for the inventory service.
@@ -259,8 +261,10 @@ RUN configure.sh
 
 
 
-<br/><br/>
 ### **Building your Docker image**
+
+
+
 
 Now that your microservices are packaged and you have written your Dockerfiles, you will build your Docker images by using the **docker build** command.
 
@@ -754,8 +758,10 @@ public class InventoryEndpointIT {
 * The **testUnknownHost()** method checks that an error is raised if an unknown host name is being added into the **inventory** service.
 * The **systemServiceIp** variable has the same value as what you retrieved in the previous section when manually adding the **system** service into the **inventory** service. This value of the IP address is passed in when you run the tests.
 
-<br/><br/>
 ### **Running the tests**
+
+
+
 
 Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by setting **-Dsystem.ip** to the IP address that you determined previously.
 
@@ -811,6 +817,8 @@ You have just built Docker images and run two microservices on Open Liberty in c
 <br/><br/>
 ## **Clean up your environment**
 
+## **Clean up your environment**
+
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -822,14 +830,12 @@ rm -fr guide-containerize
 ```
 {: codeblock}
 
-<br/><br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-<br/><br/>
 ## **What could make this guide better?**
 
 
@@ -839,14 +845,14 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/><br/>
-## **Where to next?**
+
+## **Where to next?** 
+
 
 * [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 * [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
-<br/><br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
