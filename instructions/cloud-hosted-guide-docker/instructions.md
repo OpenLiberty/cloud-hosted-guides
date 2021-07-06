@@ -306,6 +306,14 @@ http://localhost:9080/system/properties-new URL.
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
+However, automated tests are a much better approach because they trigger a failure if a change introduces a bug.
+JUnit and the JAX-RS Client API provide a simple environment to test the application. 
+You can write tests for the individual units of code outside of a running application server, or they
+can be written to call the application server directly. In this example, you will create a test that calls the application server directly.
+
+Create the **EndpointIT** class.
+
+> Run the following touch command in your terminal
 ```
 curl http://localhost:9080/system/properties-new
 ```
@@ -331,9 +339,6 @@ touch /home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/re
 
 
 
-Create the **EndpointIT** class.
-
-> Run the following touch command in your terminal
 ```
 package it.io.openliberty.guides.rest;
 
@@ -389,9 +394,6 @@ Because you started Open Liberty in dev mode, press the **enter/return** key to 
 
 You will see the following output:
 
-Create the **EndpointIT** class.
-
-> Run the following touch command in your terminal
 ```
 -------------------------------------------------------
  T E S T S
@@ -437,7 +439,6 @@ mvn liberty:devc \
 -DdockerRunOpts="-e ENV_VAR=exampleValue" \
 -Ddockerfile="./path/to/file"
 ```
-{: codeblock}
 
 To learn more about dev mode with a container and its different
 features, check out the  
