@@ -389,6 +389,9 @@ Because you started Open Liberty in dev mode, press the **enter/return** key to 
 
 You will see the following output:
 
+Create the **EndpointIT** class.
+
+> Run the following touch command in your terminal
 ```
 -------------------------------------------------------
  T E S T S
