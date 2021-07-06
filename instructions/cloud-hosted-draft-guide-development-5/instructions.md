@@ -121,7 +121,7 @@ The defaultServer server is ready to run a smarter planet.
 
 Select **Launch Application** from the menu of the IDE, 
 type in **9080** to specify the port number for the microservice, and click the **OK** button. 
-You can now check out the service by going to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
+You can now check out the service by going to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/mongo/`** URL, 
 where **accountname** is your account name.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
@@ -725,7 +725,7 @@ After you replace the **server.xml** file, the Open Liberty configuration is aut
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-Go to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL where **accountname** is your account name,
+Go to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/openapi/ui/`** URL where **accountname** is your account name,
 to see the OpenAPI user interface (UI) that provides API documentation and a client to test the API endpoints that you create 
 after you see a message similar to the following example:
 
@@ -833,7 +833,7 @@ You'll receive a response that contains the object **id** of the deleted crew me
 }
 ```
 
-Now, you can check out the microservice that you created by going to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
+Now, you can check out the microservice that you created by going to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/mongo/`** URL, 
 where **accountname** is your account name.
 
 
