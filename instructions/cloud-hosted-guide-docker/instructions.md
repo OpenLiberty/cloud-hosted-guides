@@ -28,10 +28,8 @@ The implementation of the REST application can be found in the
 **start/src** directory. To learn more about this application and how to build it, check out the
 [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
 
+<br/>
 ### **What is Docker?**
-
-
-
 
 Docker is a tool that you can use to deploy and run applications with containers. You
 can think of Docker like a virtual machine that runs various applications. However, unlike a typical virtual
@@ -40,10 +38,8 @@ one another.
 
 Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
 
+<br/>
 ### **What is a container?**
-
-
-
 
 A container is a lightweight, stand-alone package that contains a piece of software that is bundled together
 with the entire environment that it needs to run. Containers are small compared to regular images and can
@@ -52,10 +48,8 @@ machine at the same time in isolation from each other.
 
 Learn more about containers on the [official Docker website](https://www.docker.com/what-container).
 
+<br/>
 ### **Why use a container to develop?**
-
-
-
 
 Consider a scenario where you need to deploy your application on another environment. Your application
 works on your local machine, but when you try to run it on your cloud production environment, it breaks. You do
@@ -163,10 +157,8 @@ They copy local files into the specified destination within your Docker image.
 In this case, the server configuration file that is located at **src/main/liberty/config/server.xml** 
 is copied to the **/config/** destination directory.
 
+<br/>
 ### **Writing a .dockerignore file**
-
-
-
 
 When Docker runs a build, it sends all of the files and directories that are
 located in the same directory as the Dockerfile to its build context, making
@@ -339,11 +331,6 @@ touch /home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/re
 
 
 
-However, automated tests are a much better approach because they trigger a failure if a change introduces a bug.
-JUnit and the JAX-RS Client API provide a simple environment to test the application. 
-You can write tests for the individual units of code outside of a running application server, or they
-can be written to call the application server directly. In this example, you will create a test that calls the application server directly.
-
 Create the **EndpointIT** class.
 
 > Run the following touch command in your terminal
@@ -395,10 +382,8 @@ This test makes a request to the **/system/properties-new** endpoint and checks 
 make sure that the response has a valid status code, and that the information in
 the response is correct. 
 
+<br/>
 ### **Running the tests**
-
-
-
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -455,7 +440,7 @@ To learn more about dev mode with a container and its different
 features, check out the  
 https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode[Documentation].
 
-
+<br/>
 ## **Clean up your environment**
 
 
@@ -469,12 +454,14 @@ rm -fr guide-docker
 ```
 {: codeblock}
 
+<br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
+<br/>
 ## **What could make this guide better?**
 
 
@@ -484,14 +471,14 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-
-## **Where to next?** 
-
+<br/>
+## **Where to next?**
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Containerizing microservices](https://openliberty.io/guides/containerize.html)
 
 
+<br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

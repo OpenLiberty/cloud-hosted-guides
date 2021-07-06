@@ -65,10 +65,8 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
+<br/>
 ### **Try what you'll build**
-
-
-
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -219,10 +217,8 @@ You will look into the **InventoryManager** class in more detail in the next sec
 
 
 
+<br/>
 ### **Adding the @Fallback annotation**
-
-
-
 
 The **inventory** service is now able to recognize that the **system** service
 was taken down for maintenance.
@@ -573,10 +569,8 @@ In addition, a few endpoint tests have been included for you to test the basic f
 the code.
 
 
+<br/>
 ### **Running the tests**
-
-
-
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -617,9 +611,7 @@ learn and expand on what you built here.
 
 
 
-<br/><br/>
-## **Clean up your environment**
-
+<br/>
 ## **Clean up your environment**
 
 
@@ -633,12 +625,14 @@ rm -fr guide-microprofile-fallback
 ```
 {: codeblock}
 
+<br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
+<br/>
 ## **What could make this guide better?**
 
 
@@ -648,9 +642,8 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-
-## **Where to next?** 
-
+<br/>
+## **Where to next?**
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
@@ -658,6 +651,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Preventing repeated failed calls to microservices](https://openliberty.io/guides/circuit-breaker.html)
 
 
+<br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

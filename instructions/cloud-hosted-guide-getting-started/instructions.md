@@ -855,9 +855,7 @@ You've learned the basics of deploying and updating an application on an Open Li
 
 
 
-<br/><br/>
-## **Clean up your environment**
-
+<br/>
 ## **Clean up your environment**
 
 
@@ -871,12 +869,14 @@ rm -fr guide-getting-started
 ```
 {: codeblock}
 
+<br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
+<br/>
 ## **What could make this guide better?**
 
 
@@ -886,15 +886,15 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-
-## **Where to next?** 
-
+<br/>
+## **Where to next?**
 
 * [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
+<br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

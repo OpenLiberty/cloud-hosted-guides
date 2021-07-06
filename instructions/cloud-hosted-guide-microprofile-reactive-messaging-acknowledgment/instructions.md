@@ -531,9 +531,7 @@ You developed an application by using MicroProfile Reactive Messaging, Open Libe
 
 
 
-<br/><br/>
-## **Clean up your environment**
-
+<br/>
 ## **Clean up your environment**
 
 
@@ -547,12 +545,14 @@ rm -fr guide-microprofile-reactive-messaging-acknowledgment
 ```
 {: codeblock}
 
+<br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
+<br/>
 ## **What could make this guide better?**
 
 
@@ -562,9 +562,8 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-
-## **Where to next?** 
-
+<br/>
+## **Where to next?**
 
 * [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
 * [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest.html)
@@ -579,6 +578,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
+<br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
