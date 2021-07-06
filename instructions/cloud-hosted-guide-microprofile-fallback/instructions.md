@@ -1,5 +1,5 @@
 
-# Welcome to the Building fault-tolerant microservices with the @Fallback annotation guide!
+# **Welcome to the Building fault-tolerant microservices with the @Fallback annotation guide!**
 
 You'll explore how to manage the impact of failures using MicroProfile Fault Tolerance by adding fallback behavior to microservice dependencies.
 
@@ -12,7 +12,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to use MicroProfile (MP) Fault Tolerance to build resilient microservices
 that reduce the impact from failure and ensure continued operation of services.
@@ -39,7 +39,7 @@ when you add the MicroProfile Metrics feature to the server.
 
 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -65,7 +65,10 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-### Try what you'll build
+### **Try what you'll build**
+
+
+
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -147,7 +150,7 @@ mvn liberty:stop
 
 
 
-# Enabling fault tolerance
+# **Enabling fault tolerance**
 
 
 To begin, run the following command to navigate to the **start** directory:
@@ -216,7 +219,10 @@ You will look into the **InventoryManager** class in more detail in the next sec
 
 
 
-### Adding the @Fallback annotation
+### **Adding the @Fallback annotation**
+
+
+
 
 The **inventory** service is now able to recognize that the **system** service
 was taken down for maintenance.
@@ -321,7 +327,7 @@ message in the browser. Otherwise, this method returns the cached property value
 You successfully set up your microservice to have fault tolerance capability.
 
 
-# Enabling metrics for the fault tolerance methods
+# **Enabling metrics for the fault tolerance methods**
 
 
 MicroProfile Fault Tolerance integrates with MicroProfile Metrics to provide metrics for the annotated fault tolerance methods.
@@ -334,7 +340,7 @@ server. When you go to the **/metrics** endpoint, use the credentials that are d
 You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [MicroProfile Fault Tolerance specification](https://github.com/eclipse/microprofile-fault-tolerance/releases).
 
 
-# Running the application
+# **Running the application**
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
@@ -365,7 +371,7 @@ curl -k -u admin https://localhost:9443/metrics/base
 See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
 
 ```
-# TYPE base_ft_invocations_total counter
+# **TYPE base_ft_invocations_total counter**
 base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
 base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 0
 base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
@@ -420,7 +426,7 @@ curl -k -u admin https://localhost:9443/metrics/base
 See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
 
 ```
-# TYPE base_ft_invocations_total counter
+# **TYPE base_ft_invocations_total counter**
 base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
 base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
 base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
@@ -447,7 +453,7 @@ property value back to **false** in the **resources/CustomConfigSource.json** fi
 {: codeblock}
 
 
-# Testing the application
+# **Testing the application**
 
 You can test your application manually, but automated tests ensure code quality because they trigger a failure
 whenever a code change introduces a defect. JUnit and the JAX-RS Client API provide a simple environment for you to write tests.
@@ -567,7 +573,10 @@ In addition, a few endpoint tests have been included for you to test the basic f
 the code.
 
 
-### Running the tests
+### **Running the tests**
+
+
+
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -596,9 +605,9 @@ When you are done checking out the service, exit dev mode by pressing **CTRL+C**
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You just learned how to build a fallback mechanism for a microservice with MicroProfile Fault Tolerance in Open Liberty and wrote a test to validate it.
 
@@ -609,7 +618,8 @@ learn and expand on what you built here.
 
 
 
-## Clean up your environment
+## **Clean up your environment**
+
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -621,11 +631,15 @@ rm -fr guide-microprofile-fallback
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+## **What did you think of this guide?**
+
+
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-## What could make this guide better?
+## **What could make this guide better?**
+
+
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-fallback/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-fallback/pulls)
@@ -633,7 +647,8 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-## Where to next? 
+## **Where to next?** 
+
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
@@ -641,6 +656,6 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Preventing repeated failed calls to microservices](https://openliberty.io/guides/circuit-breaker.html)
 
 
-## Log out of the session
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

@@ -1,5 +1,5 @@
 
-# Welcome to the Getting started with Open Liberty guide!
+# **Welcome to the Getting started with Open Liberty guide!**
 
 Learn how to develop a Java application on Open Liberty with Maven and Docker.
 
@@ -11,7 +11,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to run and update a simple REST microservice on Open Liberty.
 You will use Maven throughout the guide to build and deploy the microservice as well as
@@ -37,7 +37,7 @@ Finally, you will package the application along with the server configuration in
 image and run that image as a container.
 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -65,7 +65,7 @@ The **finish** directory contains the finished project that you will build.
 
 
 
-# Building and running the application
+# **Building and running the application**
 
 Your application is configured to be built with Maven. Every Maven-configured project
 contains a **pom.xml** file, which defines the project configuration, dependencies, plug-ins,
@@ -144,7 +144,7 @@ mvn liberty:stop
 
 
 
-# Starting and stopping the Open Liberty server in the background
+# **Starting and stopping the Open Liberty server in the background**
 
 Although you can start and stop the server in the foreground by using the Maven
 **liberty:run** goal, you can also start and stop the server in the background with
@@ -160,7 +160,7 @@ mvn liberty:stop
 
 
 
-# Updating the server configuration without restarting the server
+# **Updating the server configuration without restarting the server**
 
 The Open Liberty Maven plug-in includes a **dev** goal that listens for any changes in the project, 
 including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
@@ -288,7 +288,7 @@ Now you can verify whether your server is up and running.
 
 
 
-# Updating the source code without restarting the server
+# **Updating the source code without restarting the server**
 
 The JAX-RS application that contains your **system** microservice runs in a server from its **.class** file and other artifacts.
 Open Liberty automatically monitors these artifacts, and whenever they are updated, it updates the running server without the need for the server to be restarted.
@@ -487,7 +487,7 @@ Alternatively, you can run the **run** goal and manually repackage or recompile 
 
 
 
-# Checking the Open Liberty server logs
+# **Checking the Open Liberty server logs**
 
 While the server is running in the foreground, it displays various console messages in
 the command-line session. These messages are also logged to the **target/liberty/wlp/usr/servers/defaultServer/logs/console.log**
@@ -557,7 +557,7 @@ When you are done checking out the service, exit dev mode by pressing **CTRL+C**
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
-# Running the application in a Docker container
+# **Running the application in a Docker container**
 
 To run the application in a container, Docker needs to be installed. For installation
 instructions, see the [Official Docker Docs](https://docs.docker.com/install/).
@@ -670,7 +670,7 @@ docker rmi openliberty-getting-started:1.0-SNAPSHOT
 
 
 
-# Developing the application in a Docker container
+# **Developing the application in a Docker container**
 
 
 The Open Liberty Maven plug-in includes a **devc** goal that simplifies developing
@@ -787,7 +787,7 @@ then pressing the **enter/return** key. Either of these options stops and
 removes the container. To check that the container was stopped, run the **docker ps** command.
 
 
-# Running the application from a minimal runnable JAR
+# **Running the application from a minimal runnable JAR**
 
 So far, Open Liberty was running out of the **target/liberty/wlp** directory, which
 effectively contains an Open Liberty server installation and the deployed application. The
@@ -846,9 +846,9 @@ You can stop the server by pressing **CTRL+C** in the command-line session that 
 
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You've learned the basics of deploying and updating an application on an Open Liberty server.
 
@@ -856,7 +856,8 @@ You've learned the basics of deploying and updating an application on an Open Li
 
 
 
-## Clean up your environment
+## **Clean up your environment**
+
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -868,11 +869,15 @@ rm -fr guide-getting-started
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+## **What did you think of this guide?**
+
+
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-## What could make this guide better?
+## **What could make this guide better?**
+
+
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-getting-started/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-getting-started/pulls)
@@ -880,13 +885,14 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-## Where to next? 
+## **Where to next?** 
+
 
 * [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
-## Log out of the session
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

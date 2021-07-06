@@ -1,5 +1,5 @@
 
-# Welcome to the Consuming a RESTful web service guide!
+# **Welcome to the Consuming a RESTful web service guide!**
 
 Explore how to access a simple RESTful web service and consume its resources in Java
 
@@ -13,7 +13,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 using JSON-B and JSON-P.
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to access a REST service, serialize a Java object that contains a
 list of artists and their albums, and use two different approaches to deserialize
@@ -35,7 +35,7 @@ If you are interested in learning more about REST services and how you can write
 [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -61,7 +61,10 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-### Try what you'll build
+### **Try what you'll build**
+
+
+
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -114,7 +117,7 @@ mvn liberty:stop
 
 
 
-# Starting the service
+# **Starting the service**
 
 
 To begin, run the following command to navigate to the **start** directory:
@@ -150,7 +153,7 @@ curl http://localhost:9080/artists
 ```
 {: codeblock}
 
-# Creating POJOs
+# **Creating POJOs**
 
 
 
@@ -162,7 +165,7 @@ The **Artist** object has two instance members **name** and **albums**,
 which map to the artist name and the collection of the albums they have written. The **Album** object represents a 
 single object within the album collection, and contains three instance members **title**, **artistName**, and **totalTracks**, which map to the album title, the artist who wrote the album, and the number of tracks the album contains.
 
-# Introducing JSON-B and JSON-P
+# **Introducing JSON-B and JSON-P**
 
 JSON-B is a feature introduced with Java EE 8 and strengthens Java support for JSON.
 With JSON-B you directly serialize and deserialize POJOs. This API gives you a
@@ -174,7 +177,10 @@ This tactic is more straightforward, but it can be cumbersome with more complex 
 JSON-B is built on top of the existing JSON-P API. JSON-B can do everything that JSON-P can do
 and allows for more customization for serializing and deserializing.
 
-### Using JSON-B
+### **Using JSON-B**
+
+
+
 
 JSON-B requires a POJO to have a public default no-argument constructor for deserialization
 and binding to work properly.
@@ -206,7 +212,7 @@ property. While the use of this annotation is good practice, it is only necessar
 For more information on customization with JSON-B, see the [official JSON-B site](http://json-b.net).
 
 
-# Consuming the REST resource
+# **Consuming the REST resource**
 
 
 
@@ -294,7 +300,10 @@ public class Consumer {
 {: codeblock}
 
 
-### Processing JSON using JSON-B
+### **Processing JSON using JSON-B**
+
+
+
 
 
 JSON-B is a Java API that is used to serialize Java objects to JSON messages and vice versa.
@@ -307,7 +316,10 @@ The **consumeWithJsonb()** method in the **Consumer** class makes a **GET** requ
 running artist service and retrieves the JSON. To bind the JSON into an **Artist**
 array, use the **Artist[]** entity type in the **readEntity** call.
 
-### Processing JSON using JSON-P
+### **Processing JSON using JSON-P**
+
+
+
 
 The **consumeWithJsonp()** method in the **Consumer** class makes a **GET** request
 to the running artist service and retrieves the JSON. This method then uses the
@@ -315,7 +327,7 @@ to the running artist service and retrieves the JSON. This method then uses the
 parse the JSON and collect its objects into individual POJOs. Notice that you can
 use the custom constructors to create instances of **Artist** and **Album**.
 
-# Creating additional REST resources
+# **Creating additional REST resources**
 
 
 Now that you can consume a JSON resource you can put that data to use.
@@ -414,7 +426,7 @@ The methods that you wrote in the **Consumer** class could be written directly i
 party service, you should separate your **GET**/**POST** requests from your data consumption.
 
 
-# Running the application
+# **Running the application**
 
 The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
 
@@ -439,7 +451,7 @@ curl http://localhost:9080/artists/total/bar
 {: codeblock}
 
 
-# Testing deserialization
+# **Testing deserialization**
 
 Create the **ConsumingRestIT** class.
 
@@ -575,7 +587,10 @@ You can use the **@BeforeAll** and **@AfterAll** annotations to perform any one-
 tasks before and after all of your tests run. You can also use the **@BeforeEach** and **@AfterEach** annotations
 to perform setup and teardown tasks for individual test cases.
 
-### Testing the binding process
+### **Testing the binding process**
+
+
+
 
 
 The **yasson** dependency was added in your **pom.xml** file so that your test classes have access to JSON-B.
@@ -585,7 +600,10 @@ the REST data and those that are hardcoded perform the same.
 
 The **assertResponse** helper method ensures that the response code you receive is valid (200).
 
-### Processing with JSON-B test
+### **Processing with JSON-B test**
+
+
+
 
 The **testJsonBAlbumCount** and **testJsonBAlbumCountForUnknownArtist** tests both use the **total/{artist}**
 endpoint which invokes JSON-B.
@@ -597,14 +615,20 @@ The **testJsonBAlbumCountForUnknownArtist** test case is similar to **testJsonBA
 but instead checks an artist that does not exist in the JSON and ensures that a
 value of `-1` is returned.
 
-### Processing with JSON-P test
+### **Processing with JSON-P test**
+
+
+
 
 The **testJsonPArtistCount** test uses the **total** endpoint which invokes JSON-P. This test
 checks that deserialization with JSON-P was done correctly and that the correct number
 of artists is returned.
 
 
-### Running the tests
+### **Running the tests**
+
+
+
 
 Since you started Open Liberty in development mode at the start of the guide, press the **enter/return** key to run the tests.
 
@@ -626,7 +650,7 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 When you are done checking out the service, exit development mode by typing `q` in the command-line session where you ran the server, 
 and then press the **enter/return** key.
 
-# Building the application
+# **Building the application**
 
 If you are satisfied with your application, run the Maven **package** goal to build the WAR file in the **target** directory:
 
@@ -637,9 +661,9 @@ mvn package
 
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You just accessed a simple RESTful web service and consumed its resources by using JSON-B and JSON-P in Open Liberty.
 
@@ -648,7 +672,8 @@ You just accessed a simple RESTful web service and consumed its resources by usi
 
 
 
-## Clean up your environment
+## **Clean up your environment**
+
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -660,11 +685,15 @@ rm -fr guide-rest-client-java
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+## **What did you think of this guide?**
+
+
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-## What could make this guide better?
+## **What could make this guide better?**
+
+
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-rest-client-java/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-rest-client-java/pulls)
@@ -672,12 +701,13 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-## Where to next? 
+## **Where to next?** 
+
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
-## Log out of the session
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
