@@ -1,5 +1,5 @@
 
-# Welcome to the Using Docker containers to develop microservices guide!
+# **Welcome to the Using Docker containers to develop microservices guide!**
 
 Learn how to use Docker containers for iterative development.
 
@@ -13,7 +13,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to set up, run, and iteratively develop a simple REST application in a container with Open Liberty and Docker.
 
@@ -29,7 +29,8 @@ The implementation of the REST application can be found in the
 **start/src** directory. To learn more about this application and how to build it, check out the
 [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
 
-### What is Docker?
+<br/>
+### **What is Docker?**
 
 Docker is a tool that you can use to deploy and run applications with containers. You
 can think of Docker like a virtual machine that runs various applications. However, unlike a typical virtual
@@ -38,7 +39,8 @@ one another.
 
 Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
 
-### What is a container?
+<br/>
+### **What is a container?**
 
 A container is a lightweight, stand-alone package that contains a piece of software that is bundled together
 with the entire environment that it needs to run. Containers are small compared to regular images and can
@@ -47,7 +49,8 @@ machine at the same time in isolation from each other.
 
 Learn more about containers on the [official Docker website](https://www.docker.com/what-container).
 
-### Why use a container to develop?
+<br/>
+### **Why use a container to develop?**
 
 Consider a scenario where you need to deploy your application on another environment. Your application
 works on your local machine, but when you try to run it on your cloud production environment, it breaks.
@@ -65,7 +68,7 @@ the application can run inside that container.
 This helps avoid any unpleasant surprises when you go to test or deploy your application down the road.
 Containers run quickly and do not have a major impact on the speed of your iterative development.
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -91,7 +94,7 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-# Creating the Dockerfile
+# **Creating the Dockerfile**
 
 
 
@@ -158,7 +161,8 @@ They copy local files into the specified destination within your Docker image.
 In this case, the server configuration file that is located at **src/main/liberty/config/server.xml** 
 is copied to the **/config/** destination directory.
 
-### Writing a .dockerignore file
+<br/>
+### **Writing a .dockerignore file**
 
 When Docker runs a build, it sends all of the files and directories that are
 located in the same directory as the Dockerfile to its build context, making
@@ -173,7 +177,7 @@ A **.dockerignore** file is available to you in the **start** directory. This fi
 the **pom.xml** file and some system files.
 
 
-# Launching Open Liberty in dev mode
+# **Launching Open Liberty in dev mode**
 
 The Open Liberty Maven plug-in includes a **devc** goal that builds a Docker image, mounts the required directories,
 binds the required ports, and then runs the application inside of a container.
@@ -223,7 +227,7 @@ curl http://localhost:9080/system/properties
 {: codeblock}
 
 
-# Updating the application while the container is running
+# **Updating the application while the container is running**
 
 
 With your container running, make the following update to the source code:
@@ -283,7 +287,7 @@ curl http://localhost:9080/system/properties-new
 {: codeblock}
 
 
-# Testing the container 
+# **Testing the container **
 
 
 
@@ -357,7 +361,8 @@ This test makes a request to the **/system/properties-new** endpoint and checks 
 make sure that the response has a valid status code, and that the information in
 the response is correct. 
 
-### Running the tests
+<br/>
+### **Running the tests**
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -379,7 +384,7 @@ When you are finished, press **CTRL+C** in the session that the dev mode was
 started from to stop and remove the container.
 
 
-# Starting dev mode with run options
+# **Starting dev mode with run options**
 
 Another useful feature of dev mode with a container is the ability to pass additional options
 to the **docker run** command. You can do this by adding the **`<dockerRunOpts>`** tag to the **pom.xml** file under 
@@ -413,17 +418,17 @@ mvn liberty:devc \
 To learn more about dev mode with a container and its different features, 
 check out the [Documentation](http://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode).
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You just iteratively developed a simple REST application in a container with Open Liberty and Docker.
 
 
 
+<br/>
+## **Clean up your environment**
 
-
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -435,24 +440,31 @@ rm -fr guide-docker
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+<br/>
+## **What did you think of this guide?**
+
+
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-## What could make this guide better?
+<br/>
+## **What could make this guide better?**
+
+
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-docker/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-docker/pulls)
 
 
 
-
-## Where to next? 
+<br/>
+## **Where to next?**
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Containerizing microservices](https://openliberty.io/guides/containerize.html)
 
 
-## Log out of the session
+<br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
