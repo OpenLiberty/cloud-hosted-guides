@@ -413,7 +413,6 @@ mvn liberty:devc \
 -DdockerRunOpts="-e ENV_VAR=exampleValue" \
 -Ddockerfile="./path/to/file"
 ```
-{: codeblock}
 
 To learn more about dev mode with a container and its different features, 
 check out the [Documentation](http://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode).
