@@ -1,5 +1,5 @@
 
-# Welcome to the Configuring microservices guide!
+# **Welcome to the Configuring microservices guide!**
 
 Learn how to provide external configuration to microservices using MicroProfile Config.
 
@@ -12,7 +12,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 You will learn how to externalize and inject both static and dynamic configuration properties for microservices using MicroProfile Config.
 
 You will learn to aggregate multiple configuration sources, assign prioritization values to these sources, merge configuration values, and create custom configuration sources.
@@ -23,7 +23,7 @@ system properties of a particular host, the **inventory** service will communica
 service on that host to get these system properties. You will add configuration properties to simulate if a service is down for maintenance.
 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -48,7 +48,8 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-### Try what you'll build
+<br/><br/>
+### **Try what you'll build**
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -99,7 +100,7 @@ mvn liberty:stop
 {: codeblock}
 
 
-# Ordering multiple configuration sources
+# **Ordering multiple configuration sources**
 
 
 To begin, run the following command to navigate to the **start** directory:
@@ -142,7 +143,7 @@ The following four sources are the default configuration sources:
 Access the **src/main/resources/META-INF/microprofile-config.properties** local configuration file. This configuration file is the default configuration source for an application that uses MicroProfile Config.
 
 
-# Injecting static configuration
+# **Injecting static configuration**
 
 The MicroProfile Config API is included in the MicroProfile dependency that is specified in your **pom.xml** file. Look for the dependency with the **microprofile** artifact ID. This dependency provides a library that allows you to use the MicroProfile Config API to externalize configurations for your microservices.
 The **mpConfig** feature is also enabled in the **src/main/liberty/config/server.xml** file.
@@ -206,12 +207,13 @@ The **@Inject** annotation injects the port number directly, the injection value
 
 The **getPortNumber()** method directly returns the value of **portNumber** because it has been injected.
 
-# Injecting dynamic configuration
+# **Injecting dynamic configuration**
 
 Note that three default config sources mentioned above are static and fixed on application starting, so the properties within them cannot be modified while the server is running.
 However, you can externalize configuration data out of the application package, through the creation of custom configuration sources, so that the service updates configuration changes dynamically.
 
-### Creating custom configuration sources
+<br/><br/>
+### **Creating custom configuration sources**
 
 Custom configuration sources can be created by implementing the **org.eclipse.microprofile.config.spi.ConfigSource** interface and using the **java.util.ServiceLoader** mechanism.
 
@@ -364,7 +366,8 @@ io.openliberty.guides.config.CustomConfigSource
 
 
 
-### Enabling dynamic configuration injection
+<br/><br/>
+### **Enabling dynamic configuration injection**
 
 Now that the custom configuration source has successfully been set up, you can enable dynamic configuration injection of the properties being set in this ConfigSource.
 To enable this dynamic injection,
@@ -420,7 +423,7 @@ Every time that you invoke the **inMaintenance.get()** method, the **Provider<>*
 latest value of the **`io_openliberty_guides_inventory_inMaintenance`** property from configuration sources.
 
 
-# Creating custom converters
+# **Creating custom converters**
 Configuration values are purely Strings. MicroProfile Config API has built-in converters that automatically converts configured Strings into target types such as **int**, **Integer**, **boolean**, **Boolean**, **float**, **Float**, **double** and **Double**.
 Therefore, in the previous section, it is type-safe to directly set the variable type to **Provider<Boolean>**.
 
@@ -577,7 +580,7 @@ public class InventoryConfig {
 
 Inject the **`io_openliberty_guides_email`** property, and add the **getEmail()** method.
 
-# Adding configuration to the microservice
+# **Adding configuration to the microservice**
 
 To use externalized configuration in the **inventory** service,
 Replace the **InventoryResource** class.
@@ -668,7 +671,7 @@ The email configuration value can be obtained by calling **inventoryConfig.getEm
 
 
 
-# Running the application
+# **Running the application**
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
@@ -713,7 +716,7 @@ The following message displays: **ERROR: Service is currently in maintenance**.
 
 
 
-# Testing the application
+# **Testing the application**
 
 Create the **ConfigurationIT** class.
 
@@ -856,7 +859,8 @@ In addition, a few endpoint tests have been provided for you to test the basic f
 Remember that you must register the custom configuration source and custom converter in the **src/main/resources/META-INF/services/** directory. If you don't complete these steps, the tests will fail. These tests run automatically as a part of the integration test suite.
 
 
-### Running the tests
+<br/><br/>
+### **Running the tests**
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -891,9 +895,9 @@ When you are done checking out the service, exit dev mode by pressing **CTRL+C**
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You just built and tested a MicroProfile application with MicroProfile Config in Open Liberty.
 
@@ -902,8 +906,9 @@ Feel free to try one of the related guides. They demonstrate new technologies th
 expand on top what you built in this guide.
 
 
+<br/><br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -915,25 +920,32 @@ rm -fr guide-microprofile-config
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+<br/><br/>
+## **What did you think of this guide?**
+
+
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-## What could make this guide better?
+<br/><br/>
+## **What could make this guide better?**
+
+
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-config/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-config/pulls)
 
 
 
-
-## Where to next? 
+<br/><br/>
+## **Where to next?**
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
 
 
-## Log out of the session
+<br/><br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

@@ -1,5 +1,5 @@
 
-# Welcome to the Documenting RESTful APIs guide!
+# **Welcome to the Documenting RESTful APIs guide!**
 
 Explore how to document and filter RESTful APIs from code or static files by using MicroProfile OpenAPI.
 
@@ -12,7 +12,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to document and filter RESTful APIs from annotations, POJOs, and static OpenAPI
 files by using MicroProfile OpenAPI.
@@ -34,7 +34,7 @@ running on the same server. In other words, you must stick to one JAX-RS applica
 as the behaviour for handling multiple applications is currently undefined.
 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -59,7 +59,8 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-### Try what you'll build
+<br/><br/>
+### **Try what you'll build**
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -109,7 +110,7 @@ mvn liberty:stop
 
 
 
-# Generating the OpenAPI document for the inventory service
+# **Generating the OpenAPI document for the inventory service**
 
 You can generate an OpenAPI document in various ways. First, because
 all JAX-RS annotations are processed by default, you can augment your existing JAX-RS annotations with
@@ -155,7 +156,8 @@ type in **9080** to specify the port number and click the **OK** button.
 You’re redirected to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL.
 Click the **interactive UI** link on the welcome page. 
 
-### Augmenting the existing JAX-RS annotations with OpenAPI annotations
+<br/><br/>
+### **Augmenting the existing JAX-RS annotations with OpenAPI annotations**
 
 Because all JAX-RS annotations are processed by default, you can augment the existing code with OpenAPI
 annotations without needing to rewrite portions of the OpenAPI document that are already covered by
@@ -478,7 +480,8 @@ components:
 ```
 
 
-### Filtering the OpenAPI tree elements
+<br/><br/>
+### **Filtering the OpenAPI tree elements**
 
 Filtering of certain elements and fields of the generated OpenAPI document can be done by using the
 **OASFilter** interface.
@@ -634,7 +637,7 @@ and try one of the MicroProfile Config [guides](https://openliberty.io/guides/?s
 
 
 
-# Using pregenerated OpenAPI documents
+# **Using pregenerated OpenAPI documents**
 
 As an alternative to generating the OpenAPI model tree from code, you can provide a valid pregenerated
 OpenAPI document to describe your APIs. This document must be named **openapi** with a **yml**, **yaml**, or **json**
@@ -809,7 +812,7 @@ curl http://localhost:9080/openapi
 
 
 
-# Testing the service
+# **Testing the service**
 
 
 No automated tests are provided to verify the correctness of the generated OpenAPI document. Manually
@@ -819,7 +822,8 @@ A few tests are included for you to test the basic functionality of the **invent
 failure occurs, then you might have introduced a bug into the code. These tests will run automatically
 as a part of the integration test suite.
 
-### Running the tests
+<br/><br/>
+### **Running the tests**
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -850,9 +854,9 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You have just documented and filtered the APIs of the **inventory** service from both the code and a static
 
@@ -867,8 +871,9 @@ MicroProfile OpenAPI
 
 
 
+<br/><br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -880,24 +885,31 @@ rm -fr guide-microprofile-openapi
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+<br/><br/>
+## **What did you think of this guide?**
+
+
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-## What could make this guide better?
+<br/><br/>
+## **What could make this guide better?**
+
+
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-openapi/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-openapi/pulls)
 
 
 
-
-## Where to next? 
+<br/><br/>
+## **Where to next?**
 
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 
 
-## Log out of the session
+<br/><br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
