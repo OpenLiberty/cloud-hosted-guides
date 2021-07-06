@@ -78,8 +78,10 @@ type **9411** to specify the port number for the Zipkin service. Click the **OK*
 Zipkin can also be found at the **`https://accountname-9411.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
 where **accountname** is your account name.
 
-<br/><br/>
 ### **Try what you'll build**
+
+
+
 
 The **finish** directory in the root directory of this guide contains two services that are configured
 to use MicroProfile OpenTracing. Give them a try before you continue.
@@ -198,8 +200,10 @@ The MicroProfile OpenTracing feature enables tracing of all JAX-RS methods by de
 To further control and customize these traces, use the **@Traced** annotation to enable and disable
 tracing of particular methods. You can also inject a custom **Tracer** object to create and customize spans.
 
-<br/><br/>
 ### **Enabling distributed tracing without code instrumentation**
+
+
+
 
 Because tracing is enabled by default for all JAX-RS methods, you need to enable only the
 **mpOpenTracing** feature and the **usr:opentracingZipkin**
@@ -211,8 +215,10 @@ Make sure your services are running.
 Then, point your browser to any of their endpoints and check your Zipkin server for traces.
 
 
-<br/><br/>
 ### **Enabling explicit distributed tracing**
+
+
+
 
 The **@Traced** annotation defines explicit span creation for specific classes and methods.
 If you place the annotation on a class, then it's automatically applied to all methods within that class.
@@ -394,8 +400,10 @@ Verify that this span has the following name:
 
 
 
-<br/><br/>
 ### **Injecting a custom Tracer object**
+
+
+
 
 The MicroProfile OpenTracing specification also makes the underlying OpenTracing **Tracer** instance
 available. The configured **Tracer** is accessed by injecting it into a bean by using the
@@ -561,6 +569,8 @@ can learn to expand on top of what you built here.
 <br/><br/>
 ## **Clean up your environment**
 
+## **Clean up your environment**
+
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -572,14 +582,12 @@ rm -fr guide-microprofile-opentracing
 ```
 {: codeblock}
 
-<br/><br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-<br/><br/>
 ## **What could make this guide better?**
 
 
@@ -589,14 +597,14 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/><br/>
-## **Where to next?**
+
+## **Where to next?** 
+
 
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Enabling distributed tracing in microservices with Jaeger](https://openliberty.io/guides/microprofile-opentracing-jaeger.html)
 
 
-<br/><br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

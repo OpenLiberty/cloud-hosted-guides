@@ -299,8 +299,10 @@ You will notice that one of the two **system** pods is no longer in the ready st
 to **http://[hostname]:31000/system/properties/properties**. Observe that your request will still be successful because you have two 
 replicas and one is still healthy.
 
-<br/><br/>
 ### **Observing the effects on the inventory microservice**
+
+
+
 
 Wait until the **system** pod is ready again. Make two POST requests to **http://[hostname]:31000/system/properties/unhealthy**.
  If you see the same pod name twice, make the request again until you see that the second 
@@ -451,7 +453,7 @@ your microservice's status. Then, you observed how Kubernetes uses the **/health
 
 
 
-<br/><br/>
+
 ## **Clean up your environment**
 
 
@@ -465,14 +467,12 @@ rm -fr guide-kubernetes-microprofile-health
 ```
 {: codeblock}
 
-<br/><br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-<br/><br/>
 ## **What could make this guide better?**
 
 
@@ -482,14 +482,14 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/><br/>
-## **Where to next?**
+
+## **Where to next?** 
+
 
 * [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
 * [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
-<br/><br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

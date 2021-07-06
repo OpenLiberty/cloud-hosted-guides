@@ -59,8 +59,10 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-<br/><br/>
 ### **Try what you'll build**
+
+
+
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -156,8 +158,10 @@ type in **9080** to specify the port number and click the **OK** button.
 You’re redirected to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL.
 Click the **interactive UI** link on the welcome page. 
 
-<br/><br/>
 ### **Augmenting the existing JAX-RS annotations with OpenAPI annotations**
+
+
+
 
 Because all JAX-RS annotations are processed by default, you can augment the existing code with OpenAPI
 annotations without needing to rewrite portions of the OpenAPI document that are already covered by
@@ -480,8 +484,10 @@ components:
 ```
 
 
-<br/><br/>
 ### **Filtering the OpenAPI tree elements**
+
+
+
 
 Filtering of certain elements and fields of the generated OpenAPI document can be done by using the
 **OASFilter** interface.
@@ -822,8 +828,10 @@ A few tests are included for you to test the basic functionality of the **invent
 failure occurs, then you might have introduced a bug into the code. These tests will run automatically
 as a part of the integration test suite.
 
-<br/><br/>
 ### **Running the tests**
+
+
+
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -874,6 +882,8 @@ MicroProfile OpenAPI
 <br/><br/>
 ## **Clean up your environment**
 
+## **Clean up your environment**
+
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -885,14 +895,12 @@ rm -fr guide-microprofile-openapi
 ```
 {: codeblock}
 
-<br/><br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-<br/><br/>
 ## **What could make this guide better?**
 
 
@@ -902,14 +910,14 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/><br/>
-## **Where to next?**
+
+## **Where to next?** 
+
 
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 
 
-<br/><br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

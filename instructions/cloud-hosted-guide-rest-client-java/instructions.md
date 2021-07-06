@@ -61,8 +61,10 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-<br/><br/>
 ### **Try what you'll build**
+
+
+
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -175,8 +177,10 @@ This tactic is more straightforward, but it can be cumbersome with more complex 
 JSON-B is built on top of the existing JSON-P API. JSON-B can do everything that JSON-P can do
 and allows for more customization for serializing and deserializing.
 
-<br/><br/>
 ### **Using JSON-B**
+
+
+
 
 JSON-B requires a POJO to have a public default no-argument constructor for deserialization
 and binding to work properly.
@@ -296,8 +300,10 @@ public class Consumer {
 {: codeblock}
 
 
-<br/><br/>
 ### **Processing JSON using JSON-B**
+
+
+
 
 
 JSON-B is a Java API that is used to serialize Java objects to JSON messages and vice versa.
@@ -310,8 +316,10 @@ The **consumeWithJsonb()** method in the **Consumer** class makes a **GET** requ
 running artist service and retrieves the JSON. To bind the JSON into an **Artist**
 array, use the **Artist[]** entity type in the **readEntity** call.
 
-<br/><br/>
 ### **Processing JSON using JSON-P**
+
+
+
 
 The **consumeWithJsonp()** method in the **Consumer** class makes a **GET** request
 to the running artist service and retrieves the JSON. This method then uses the
@@ -579,8 +587,10 @@ You can use the **@BeforeAll** and **@AfterAll** annotations to perform any one-
 tasks before and after all of your tests run. You can also use the **@BeforeEach** and **@AfterEach** annotations
 to perform setup and teardown tasks for individual test cases.
 
-<br/><br/>
 ### **Testing the binding process**
+
+
+
 
 
 The **yasson** dependency was added in your **pom.xml** file so that your test classes have access to JSON-B.
@@ -590,8 +600,10 @@ the REST data and those that are hardcoded perform the same.
 
 The **assertResponse** helper method ensures that the response code you receive is valid (200).
 
-<br/><br/>
 ### **Processing with JSON-B test**
+
+
+
 
 The **testJsonBAlbumCount** and **testJsonBAlbumCountForUnknownArtist** tests both use the **total/{artist}**
 endpoint which invokes JSON-B.
@@ -603,16 +615,20 @@ The **testJsonBAlbumCountForUnknownArtist** test case is similar to **testJsonBA
 but instead checks an artist that does not exist in the JSON and ensures that a
 value of `-1` is returned.
 
-<br/><br/>
 ### **Processing with JSON-P test**
+
+
+
 
 The **testJsonPArtistCount** test uses the **total** endpoint which invokes JSON-P. This test
 checks that deserialization with JSON-P was done correctly and that the correct number
 of artists is returned.
 
 
-<br/><br/>
 ### **Running the tests**
+
+
+
 
 Since you started Open Liberty in development mode at the start of the guide, press the **enter/return** key to run the tests.
 
@@ -658,6 +674,8 @@ You just accessed a simple RESTful web service and consumed its resources by usi
 <br/><br/>
 ## **Clean up your environment**
 
+## **Clean up your environment**
+
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -669,14 +687,12 @@ rm -fr guide-rest-client-java
 ```
 {: codeblock}
 
-<br/><br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-<br/><br/>
 ## **What could make this guide better?**
 
 
@@ -686,14 +702,14 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/><br/>
-## **Where to next?**
+
+## **Where to next?** 
+
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
-<br/><br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

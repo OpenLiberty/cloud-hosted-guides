@@ -79,8 +79,10 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-<br/><br/>
 ### **Try what you'll build**
+
+
+
 
 The **finish** directory contains the finished JWT security implementation for the
 services in the application. Try the finished application before you
@@ -744,8 +746,10 @@ should be denied by the **/os** endpoint but successfully access the **/username
 and **/jwtroles** endpoints. The requests that don't include a JWT should be
 denied access to all endpoints.
 
-<br/><br/>
 ### **Running the tests**
+
+
+
 
 Because you started Open Liberty in dev mode, press the **enter/return** key from the
 command-line session of the **system** service to run the tests. You see the
@@ -793,6 +797,8 @@ You learned how to use MicroProfile JWT to validate JWTs, authenticate and autho
 <br/><br/>
 ## **Clean up your environment**
 
+## **Clean up your environment**
+
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -804,14 +810,12 @@ rm -fr guide-microprofile-jwt
 ```
 {: codeblock}
 
-<br/><br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-<br/><br/>
 ## **What could make this guide better?**
 
 
@@ -821,15 +825,15 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/><br/>
-## **Where to next?**
+
+## **Where to next?** 
+
 
 * [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
-<br/><br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
