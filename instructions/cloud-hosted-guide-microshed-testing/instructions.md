@@ -20,10 +20,8 @@ Sometimes tests might pass in development and testing (dev/test) environments, b
 running differently in production than it is in dev/test. Fortunately, you can minimize these parity issues between development and production
 by testing your application in the same Docker container that you'll use in production.
 
+<br/>
 ### **What is Docker?**
-
-
-
 
 Docker is a tool that you can use to deploy and run applications with containers. You
 can think of Docker as a virtual machine that runs various applications. However, unlike with a typical virtual
@@ -57,10 +55,8 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+<br/>
 ### **Try what you'll build**
-
-
-
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -954,9 +950,7 @@ You developed automated tests for a REST service in Open Liberty by using MicroS
 
 
 
-<br/><br/>
-## **Clean up your environment**
-
+<br/>
 ## **Clean up your environment**
 
 
@@ -970,12 +964,14 @@ rm -fr guide-microshed-testing
 ```
 {: codeblock}
 
+<br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
+<br/>
 ## **What could make this guide better?**
 
 
@@ -985,9 +981,8 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-
-## **Where to next?** 
-
+<br/>
+## **Where to next?**
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
@@ -996,6 +991,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
+<br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

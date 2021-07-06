@@ -74,10 +74,8 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+<br/>
 ### **Try what you'll build**
-
-
-
 
 Run the following docker command to start Jaeger server:
 ```
@@ -233,10 +231,8 @@ Jaeger provides a **Tracer** implementation for the Jaeger server in the **jaege
 This package is already added as a dependency for you in your **pom.xml** file.
 It's downloaded and installed automatically into each service when you run a Maven build.
 
+<br/>
 ### **Configuring the Jaeger client**
-
-
-
 
 In a development environment, it is important that every trace is sampled.
 When every trace is sampled, all spans are available in the Jaeger UI.
@@ -274,10 +270,8 @@ tracing of particular methods. You can also inject a custom **Tracer** object to
 
 This feature is already enabled in the **inventory** and **system** configuration files.
 
+<br/>
 ### **Enabling distributed tracing without code instrumentation**
-
-
-
 
 Because tracing of all JAX-RS methods is enabled by default, you only need to enable the
 **MicroProfile OpenTracing** feature in the **server.xml** file
@@ -294,10 +288,8 @@ This configuration adds **third-party** to the default list of API package types
 Make sure that your services are running. Then, point your browser to any of the services' endpoints and
 check your Jaeger server for traces.
 
+<br/>
 ### **Enabling explicit distributed tracing**
-
-
-
 
 Use the **@Traced** annotation to define explicit span creation for specific classes and methods.
 If you place the annotation on a class, then the annotation is automatically applied to all methods within that class.
@@ -405,10 +397,8 @@ Verify that you see the following spans:
 
 
 
+<br/>
 ### **Disable automatic distributed tracing**
-
-
-
 
 You can use the **@Traced** annotation with a value of **false** to disable automatic distributed tracing of JAX-RS
 methods.
@@ -503,10 +493,8 @@ Verify that you see the following span:
 
 
 
+<br/>
 ### **Injecting a custom Tracer object**
-
-
-
 
 The MicroProfile OpenTracing specification also makes the underlying OpenTracing **Tracer** instance
 available for use. You can access the configured **Tracer** by injecting it into a bean by using the
@@ -630,10 +618,8 @@ by viewing them on the Jaeger server.
 A few tests are included for you to test the basic functionality of the services. If a test failure
 occurs, then you might have introduced a bug into the code.
 
+<br/>
 ### **Running the tests**
-
-
-
 
 Since you started Open Liberty in dev mode, run the tests for the system and inventory services by pressing the
 **enter/return** key in the command-line sessions where you started the services.
@@ -661,9 +647,7 @@ Try out one of the related MicroProfile guides. These guides demonstrate more te
 on what you built in this guide.
 
 
-<br/><br/>
-## **Clean up your environment**
-
+<br/>
 ## **Clean up your environment**
 
 
@@ -677,12 +661,14 @@ rm -fr guide-microprofile-opentracing-jaeger
 ```
 {: codeblock}
 
+<br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
+<br/>
 ## **What could make this guide better?**
 
 
@@ -692,14 +678,14 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-
-## **Where to next?** 
-
+<br/>
+## **Where to next?**
 
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Enabling distributed tracing in microservices with Zipkin](https://openliberty.io/guides/microprofile-opentracing.html)
 
 
+<br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

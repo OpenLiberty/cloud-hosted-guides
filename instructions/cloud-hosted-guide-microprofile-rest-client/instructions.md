@@ -55,10 +55,8 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+<br/>
 ### **Try what you'll build**
-
-
-
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -219,10 +217,8 @@ The **@Produces** annotation specifies the media (MIME) type of the expected res
 The **@RegisterProvider** annotation tells the framework to register the provider classes to be used when the framework invokes the interface. You can add as many providers as necessary.
 In the **SystemClient** interface, add a response exception mapper as a provider to map the **404** response code with the **UnknownUriException** exception.
 
+<br/>
 ### **Handling exceptions through ResponseExceptionMappers**
-
-
-
 
 Error handling is an important step to ensure that the application can fail safely. If there is an error response such as **404 NOT FOUND** when invoking the remote service, you need to handle it. First, define an exception, and map the exception with the error response code. Then, register the exception mapper in the client interface.
 
@@ -640,10 +636,8 @@ The **testRestClientBuilder()** test gets your IP address. Then, use your IP add
 In addition, a few endpoint tests are provided for you to test the basic functionality of the **inventory** and **system** services. If a test failure occurs, you might have introduced a bug into the code.
 
 
+<br/>
 ### **Running the tests**
-
-
-
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -687,9 +681,7 @@ You can learn more in the [Hostname verification with SSL on Open Liberty and Mi
 Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
 
 
-<br/><br/>
-## **Clean up your environment**
-
+<br/>
 ## **Clean up your environment**
 
 
@@ -703,12 +695,14 @@ rm -fr guide-microprofile-rest-client
 ```
 {: codeblock}
 
+<br/>
 ## **What did you think of this guide?**
 
 
 We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
+<br/>
 ## **What could make this guide better?**
 
 
@@ -718,9 +712,8 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-
-## **Where to next?** 
-
+<br/>
+## **Where to next?**
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
@@ -728,6 +721,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 
+<br/>
 ## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
