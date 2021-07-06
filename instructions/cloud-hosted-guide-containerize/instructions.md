@@ -1,5 +1,5 @@
 
-# Welcome to the Containerizing microservices guide!
+# **Welcome to the Containerizing microservices guide!**
 
 Learn how to containerize and run your microservices with Open Liberty using Docker.
 
@@ -12,7 +12,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 
 You can easily deploy your microservices in different environments in a lightweight and portable manner by using containers.
@@ -28,7 +28,7 @@ The two microservices that you'll be working with are called **system** and **in
 of the running container. The **inventory** microservice adds the properties from the **system** microservice to the inventory. This guide demonstrates how both microservices can run and communicate
 with each other in different Docker containers. 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -54,7 +54,7 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-# Packaging your microservices
+# **Packaging your microservices**
 
 
 To begin, run the following command to navigate to the **start** directory:
@@ -129,7 +129,7 @@ To learn more about RESTful web services and how to build them, see
 The **inventory** service is built in a similar way.
 
 
-# Building your Docker images
+# **Building your Docker images**
 
 A Docker image is a binary file. It is made up of multiple layers and is used to run code in a Docker container. Images are built from
 instructions in Dockerfiles to create a containerized version of the application.
@@ -141,7 +141,8 @@ Every **Dockerfile** begins with a parent or base image over which various comma
 
 Learn more about Docker on the [official Docker page](https://www.docker.com/what-docker).
 
-### Creating your Dockerfiles
+<br/><br/>
+### **Creating your Dockerfiles**
 You will be creating two Docker images to run the **inventory** service and **system** service. The first step is to create Dockerfiles for both services.
 
 Create the **Dockerfile** for the inventory service.
@@ -258,7 +259,8 @@ RUN configure.sh
 
 
 
-### Building your Docker image
+<br/><br/>
+### **Building your Docker image**
 
 Now that your microservices are packaged and you have written your Dockerfiles, you will build your Docker images by using the **docker build** command.
 
@@ -306,7 +308,7 @@ system        1.0-SNAPSHOT    1dff6d0b4f31    5 minutes ago    470MB
 ```
 
 
-# Running your microservices in Docker containers
+# **Running your microservices in Docker containers**
 Now that you have your two images built, you will run your microservices in Docker containers:
 
 ```
@@ -388,7 +390,7 @@ curl http://localhost:9081/inventory/systems
 ```
 {: codeblock}
 
-# Externalizing server configuration
+# **Externalizing server configuration**
 
 
 As mentioned at the beginning of this guide, one of the advantages of using
@@ -471,7 +473,7 @@ You can externalize the configuration of more than just the port numbers.
 To learn more about Open Liberty server configuration, check out the
 [Server Configuration Overview](https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html) docs. 
 
-# Testing the microservices
+# **Testing the microservices**
 
 You can test your microservices manually by hitting the endpoints or with automated tests that check your running Docker containers.
 
@@ -752,7 +754,8 @@ public class InventoryEndpointIT {
 * The **testUnknownHost()** method checks that an error is raised if an unknown host name is being added into the **inventory** service.
 * The **systemServiceIp** variable has the same value as what you retrieved in the previous section when manually adding the **system** service into the **inventory** service. This value of the IP address is passed in when you run the tests.
 
-### Running the tests
+<br/><br/>
+### **Running the tests**
 
 Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by setting **-Dsystem.ip** to the IP address that you determined previously.
 
@@ -797,16 +800,17 @@ docker rm inventory system
 
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You have just built Docker images and run two microservices on Open Liberty in containers. 
 
 
 
+<br/><br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -818,24 +822,31 @@ rm -fr guide-containerize
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+<br/><br/>
+## **What did you think of this guide?**
+
+
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-## What could make this guide better?
+<br/><br/>
+## **What could make this guide better?**
+
+
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-containerize/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-containerize/pulls)
 
 
 
-
-## Where to next? 
+<br/><br/>
+## **Where to next?**
 
 * [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 * [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
-## Log out of the session
+<br/><br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

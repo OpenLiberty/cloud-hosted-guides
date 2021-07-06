@@ -1,5 +1,5 @@
 
-# Welcome to the Consuming RESTful services with template interfaces guide!
+# **Welcome to the Consuming RESTful services with template interfaces guide!**
 
 Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
 
@@ -12,7 +12,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to build a MicroProfile Rest Client to access remote RESTful services. You will create a template interface that maps to the remote service that you want to call.
 MicroProfile Rest Client automatically generates a client instance based on what is defined and annotated in the template interface.
@@ -30,7 +30,7 @@ In this guide, you will explore both methods to handle scenarios for providing a
  * When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose **RestClientBuilder** method.
 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -55,7 +55,8 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-### Try what you'll build
+<br/><br/>
+### **Try what you'll build**
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -126,7 +127,7 @@ mvn liberty:stop
 {: codeblock}
 
 
-# Writing the RESTful client interface
+# **Writing the RESTful client interface**
 
 Now, navigate to the **start** directory to begin.
 
@@ -216,7 +217,8 @@ The **@Produces** annotation specifies the media (MIME) type of the expected res
 The **@RegisterProvider** annotation tells the framework to register the provider classes to be used when the framework invokes the interface. You can add as many providers as necessary.
 In the **SystemClient** interface, add a response exception mapper as a provider to map the **404** response code with the **UnknownUriException** exception.
 
-### Handling exceptions through ResponseExceptionMappers
+<br/><br/>
+### **Handling exceptions through ResponseExceptionMappers**
 
 Error handling is an important step to ensure that the application can fail safely. If there is an error response such as **404 NOT FOUND** when invoking the remote service, you need to handle it. First, define an exception, and map the exception with the error response code. Then, register the exception mapper in the client interface.
 
@@ -308,7 +310,7 @@ public class UnknownUriExceptionMapper
 
 The **handles()** method inspects the HTTP response code to determine whether an exception is thrown for the specific response, and the **toThrowable()** method returns the mapped exception.
 
-# Injecting the client with dependency injection
+# **Injecting the client with dependency injection**
 
 Now, instantiate the **SystemClient** interface and use it in the **inventory** service. If you want to connect only with the default host name, you can easily instantiate the **SystemClient** with CDI annotations. CDI injection simplifies the process of bootstrapping the client.
 
@@ -481,7 +483,7 @@ If the **hostname** parameter is **localhost**, the service runs the **getProper
 The helper function invokes the **system** service by calling the **defaultRestClient.getProperties()** method.
 
 
-# Building the client with RestClientBuilder
+# **Building the client with RestClientBuilder**
 
 The **inventory** service can also connect with a host other than the default **localhost** host, but you cannot configure a base URL that is not yet known.
 In this case, set the host name as a variable and build the client by using the **RestClientBuilder** method. You can customize the base URL from the host name attribute.
@@ -495,7 +497,7 @@ Then, the method instantiates a **RestClientBuilder** builder with the new URL, 
 Similarly, call the **customRestClient.getProperties()** method to invoke the **system** service.
 
 
-# Running the application
+# **Running the application**
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
@@ -518,7 +520,7 @@ curl http://localhost:9080/inventory/systems/localhost
 Or, get your FQDN first. Then, visit the **http://localhost:9080/inventory/systems/{your_hostname}** URL by replacing **{your_hostname}** with your FQDN, which retrieves your system properties by making a request to the **system** service at **http://{your_hostname}:9080/system/properties**.
 
 
-# Testing the application
+# **Testing the application**
 
 Create the **RestClientIT** class.
 
@@ -634,7 +636,8 @@ The **testRestClientBuilder()** test gets your IP address. Then, use your IP add
 In addition, a few endpoint tests are provided for you to test the basic functionality of the **inventory** and **system** services. If a test failure occurs, you might have introduced a bug into the code.
 
 
-### Running the tests
+<br/><br/>
+### **Running the tests**
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -665,9 +668,9 @@ Rerun the tests to see a test failure occur.
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
 
@@ -678,8 +681,9 @@ You can learn more in the [Hostname verification with SSL on Open Liberty and Mi
 Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
 
 
+<br/><br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -691,19 +695,25 @@ rm -fr guide-microprofile-rest-client
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+<br/><br/>
+## **What did you think of this guide?**
+
+
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-## What could make this guide better?
+<br/><br/>
+## **What could make this guide better?**
+
+
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-rest-client/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-rest-client/pulls)
 
 
 
-
-## Where to next? 
+<br/><br/>
+## **Where to next?**
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
@@ -711,6 +721,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 
-## Log out of the session
+<br/><br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

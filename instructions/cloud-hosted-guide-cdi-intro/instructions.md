@@ -1,5 +1,5 @@
 
-# Welcome to the Injecting dependencies into microservices guide!
+# **Welcome to the Injecting dependencies into microservices guide!**
 
 Learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies into microservices.
 
@@ -11,7 +11,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies in a simple inventory management application.
 
@@ -34,7 +34,8 @@ If you want to learn more about RESTful web services and how to build them, see
 [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the **system** service.
 The **inventory** service is built in a similar way.
 
-### What is CDI?
+<br/><br/>
+### **What is CDI?**
 
 Contexts and Dependency Injection (CDI) defines a rich set of complementary services that improve the application structure.
 The most fundamental services that are provided by CDI are contexts that bind the lifecycle of stateful components to well-defined contexts,
@@ -44,7 +45,7 @@ controlling exactly when and how these components are instantiated and destroyed
 
 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -69,7 +70,8 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-### Try what you'll build
+<br/><br/>
+### **Try what you'll build**
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -147,11 +149,12 @@ mvn liberty:stop
 {: codeblock}
 
 
-# Handling dependencies in the application
+# **Handling dependencies in the application**
 
 You will use CDI to inject dependencies into the inventory manager application and learn how to manage the life cycles of your objects.
 
-### Managing scopes and contexts
+<br/><br/>
+### **Managing scopes and contexts**
 
 Navigate to the **start** directory to begin.
 
@@ -308,7 +311,8 @@ Annotating a class with the **@ApplicationScoped** annotation indicates that the
 
 If you want this bean to be initialized once for every request, you can annotate the class with the **@RequestScoped** annotation instead. With the **@RequestScoped** annotation, the bean is instantiated when the request is received and destroyed when a response is sent back to the client. A request scope is short-lived.
 
-### Injecting a dependency
+<br/><br/>
+### **Injecting a dependency**
 
 Refer to the **InventoryResource** class you created above.
 
@@ -330,7 +334,7 @@ Your inventory application is now completed.
 
 
 
-# Running the application
+# **Running the application**
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
@@ -362,7 +366,7 @@ curl http://localhost:9080/system/properties
 
 
 
-# Testing the inventory application
+# **Testing the inventory application**
 
 While you can test your application manually, you should rely on automated tests since they trigger
 a failure whenever a code change introduces a defect.
@@ -576,7 +580,8 @@ If a test failure occurs, then you might have introduced a bug into the code.
 
 
 
-### Running the tests
+<br/><br/>
+### **Running the tests**
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -609,16 +614,17 @@ run the tests again to see that a test failure occurs.
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You just used CDI services in Open Liberty to build a simple inventory application.
 
 
 
+<br/><br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -630,23 +636,30 @@ rm -fr guide-cdi-intro
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+<br/><br/>
+## **What did you think of this guide?**
+
+
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-## What could make this guide better?
+<br/><br/>
+## **What could make this guide better?**
+
+
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-cdi-intro/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-cdi-intro/pulls)
 
 
 
-
-## Where to next? 
+<br/><br/>
+## **Where to next?**
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 
 
-## Log out of the session
+<br/><br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
