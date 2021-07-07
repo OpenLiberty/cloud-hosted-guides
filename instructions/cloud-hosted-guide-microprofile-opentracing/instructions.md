@@ -228,55 +228,6 @@ Replace the **InventoryManager** class.
 
 
 
-
-```
-package io.openliberty.guides.inventory;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-
-import io.openliberty.guides.inventory.client.SystemClient;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-import io.opentracing.Scope;
-import io.opentracing.Span;
-import io.opentracing.Tracer;
-
-import org.eclipse.microprofile.opentracing.Traced;
-
-@ApplicationScoped
-public class InventoryManager {
-
-    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-    private SystemClient systemClient = new SystemClient();
-
-    public Properties get(String hostname) {
-        systemClient.init(hostname, 9080);
-        Properties properties = systemClient.getProperties();
-        return properties;
-    }
-
-    public void add(String hostname, Properties systemProps) {
-        Properties props = new Properties();
-        props.setProperty("os.name", systemProps.getProperty("os.name"));
-        props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-        SystemData system = new SystemData(hostname, props);
-    }
-
-    @Traced(value = true, operationName = "InventoryManager.list")
-    public InventoryList list() {
-        return new InventoryList(systems);
-    }
-}
-```
-{: codeblock}
-
-
 The **@Traced** annotation can be configured with the following two parameters:
 
 * The **value=[true|false]** parameter indicates whether a particular class or method is traced. 
@@ -321,56 +272,6 @@ Replace the **InventoryResource** class.
 
 
 
-
-```
-package io.openliberty.guides.inventory;
-
-import java.util.Properties;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import org.eclipse.microprofile.opentracing.Traced;
-
-import io.openliberty.guides.inventory.model.InventoryList;
-
-@RequestScoped
-@Path("/systems")
-public class InventoryResource {
-
-    @Inject InventoryManager manager;
-
-    @GET
-    @Path("/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
-        Properties props = manager.get(hostname);
-        if (props == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                           .entity("{ \"error\" : \"Unknown hostname or the system service " 
-                           + "may not be running on " + hostname + "\" }")
-                           .build();
-        }
-        manager.add(hostname, props);
-        return Response.ok(props).build();
-    }
-    
-    @GET
-    @Traced(false)
-    @Produces(MediaType.APPLICATION_JSON)
-    public InventoryList listContents() {
-        return manager.list();
-    }
-}
-```
-{: codeblock}
-
-
 Again, run the **mvn compile** command from the **start** directory to recompile your services:
 ```
 mvn compile
@@ -409,66 +310,6 @@ Replace the **InventoryManager** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-
-import io.openliberty.guides.inventory.client.SystemClient;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-import io.opentracing.Scope;
-import io.opentracing.Span;
-import io.opentracing.Tracer;
-
-import org.eclipse.microprofile.opentracing.Traced;
-
-@ApplicationScoped
-public class InventoryManager {
-
-    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-    private SystemClient systemClient = new SystemClient();
-    @Inject Tracer tracer;
-
-    public Properties get(String hostname) {
-        systemClient.init(hostname, 9080);
-        Properties properties = systemClient.getProperties();
-        return properties;
-    }
-
-    public void add(String hostname, Properties systemProps) {
-        Properties props = new Properties();
-        props.setProperty("os.name", systemProps.getProperty("os.name"));
-        props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-        SystemData system = new SystemData(hostname, props);
-        if (!systems.contains(system)) {
-            Span span = tracer.buildSpan("add() Span").start();
-            try (Scope childScope = tracer.scopeManager()
-                                          .activate(span)
-                ) {
-                systems.add(system);
-            } finally {
-                span.finish();
-            }
-        }
-    }
-
-    @Traced(value = true, operationName = "InventoryManager.list")
-    public InventoryList list() {
-        return new InventoryList(systems);
-    }
-}
-```
-{: codeblock}
 
 
 The **Scope** is used in a **try** block.

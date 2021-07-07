@@ -171,98 +171,6 @@ Update the **InventoryResource** class.
 
 
 
-```
-package io.openliberty.guides.inventory;
-
-import java.util.Properties;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
-import org.eclipse.microprofile.openapi.annotations.media.Content;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
-import io.openliberty.guides.inventory.model.InventoryList;
-
-@RequestScoped
-@Path("/systems")
-public class InventoryResource {
-
-    @Inject
-    InventoryManager manager;
-
-    @GET
-    @Path("/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses(
-        value = {
-            @APIResponse(
-                responseCode = "404", 
-                description = "Missing description",
-                content = @Content(mediaType = "text/plain")),
-            @APIResponse(
-                responseCode = "200",
-                description = "JVM system properties of a particular host.",
-                content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = Properties.class))) })
-    @Operation(
-        summary = "Get JVM system properties for particular host",
-        description = "Retrieves and returns the JVM system properties from the system "
-        + "service running on the particular host.")
-    public Response getPropertiesForHost(
-        @Parameter(
-            description = "The host for whom to retrieve the JVM system properties for.",
-            required = true, 
-            example = "foo", 
-            schema = @Schema(type = SchemaType.STRING)) 
-        @PathParam("hostname") String hostname) {
-        Properties props = manager.get(hostname);
-        if (props == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                           .entity("{ \"error\" : " 
-                                   + "\"Unknown hostname " + hostname 
-                                   + " or the resource may not be "
-                                   + "running on the host machine\" }")
-                           .build();
-        }
-
-        manager.add(hostname, props);
-        return Response.ok(props).build();
-    }
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponse(
-        responseCode = "200",
-        description = "host:properties pairs stored in the inventory.",
-        content = @Content(
-            mediaType = "application/json",
-            schema = @Schema(
-                type = SchemaType.OBJECT,
-                implementation = InventoryList.class)))
-    @Operation(
-        summary = "List inventory contents.",
-        description = "Returns the currently stored host:properties pairs in the "
-        + "inventory.")
-    public InventoryList listContents() {
-        return manager.list();
-    }
-
-}
-```
-{: codeblock}
-
-
-
 Add OpenAPI **@APIResponses**, **@Operation** 
 and **@Parameter** annotations to the two JAX-RS methods, 
 **getPropertiesForHost()** and **listContents()**.
@@ -348,35 +256,6 @@ Update the **InventoryList** class.
 
 
 
-```
-package io.openliberty.guides.inventory.model;
-
-import java.util.List;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-
-@Schema(name="InventoryList", description="POJO that represents the inventory contents.")
-public class InventoryList {
-
-    @Schema(required = true)
-    private List<SystemData> systems;
-
-    public InventoryList(List<SystemData> systems) {
-        this.systems = systems;
-    }
-
-    public List<SystemData> getSystems() {
-        return systems;
-    }
-
-    public int getTotal() {
-        return systems.size();
-    }
-}
-```
-{: codeblock}
-
-
-
 Add OpenAPI **@Schema** annotations to 
 the **InventoryList** class and the **systems** variable.
 
@@ -389,47 +268,6 @@ Update the **SystemData** class.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/SystemData.java
 
-
-
-
-```
-package io.openliberty.guides.inventory.model;
-
-import java.util.Properties;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-
-@Schema(name="SystemData", description="POJO that represents a single inventory entry.")
-public class SystemData {
-
-    @Schema(required = true)
-    private final String hostname;
-
-    @Schema(required = true)
-    private final Properties properties;
-
-    public SystemData(String hostname, Properties properties) {
-        this.hostname = hostname;
-        this.properties = properties;
-    }
-
-    public String getHostname() {
-        return hostname;
-    }
-
-    public Properties getProperties() {
-        return properties;
-    }
-
-    @Override
-    public boolean equals(Object host) {
-        if (host instanceof SystemData) {
-            return hostname.equals(((SystemData) host).getHostname());
-        }
-        return false;
-    }
-}
-```
-{: codeblock}
 
 
 
@@ -500,59 +338,6 @@ touch /home/project/guide-microprofile-openapi/start/src/main/java/io/openlibert
 
 
 
-```
-package io.openliberty.guides.inventory.filter;
-
-import java.util.Arrays;
-import java.util.Collections;
-
-import org.eclipse.microprofile.openapi.OASFactory;
-import org.eclipse.microprofile.openapi.OASFilter;
-import org.eclipse.microprofile.openapi.models.OpenAPI;
-import org.eclipse.microprofile.openapi.models.info.License;
-import org.eclipse.microprofile.openapi.models.info.Info;
-import org.eclipse.microprofile.openapi.models.responses.APIResponse;
-import org.eclipse.microprofile.openapi.models.servers.Server;
-import org.eclipse.microprofile.openapi.models.servers.ServerVariable;
-
-public class InventoryOASFilter implements OASFilter {
-
-  @Override
-  public APIResponse filterAPIResponse(APIResponse apiResponse) {
-    if ("Missing description".equals(apiResponse.getDescription())) {
-      apiResponse.setDescription("Invalid hostname or the system service may not "
-          + "be running on the particular host.");
-    }
-    return apiResponse;
-  }
-
-  @Override
-  public void filterOpenAPI(OpenAPI openAPI) {
-    openAPI.setInfo(
-        OASFactory.createObject(Info.class).title("Inventory App").version("1.0")
-                  .description(
-                      "App for storing JVM system properties of various hosts.")
-                  .license(
-                      OASFactory.createObject(License.class)
-                                .name("Eclipse Public License - v 1.0").url(
-                                    "https://www.eclipse.org/legal/epl-v10.html")));
-
-    openAPI.addServer(
-        OASFactory.createServer()
-                  .url("http://localhost:{port}")
-                  .description("Simple Open Liberty.")
-                  .variables(Collections.singletonMap("port", 
-                                 OASFactory.createServerVariable()
-                                           .defaultValue("9080")
-                                           .description("Server HTTP port."))));
-  }
-
-}
-```
-{: codeblock}
-
-
-
 The **filterAPIResponse()** method allows filtering of **APIResponse** elements. When you
 override this method, it will be called once for every **APIResponse** element in the OpenAPI tree.
 In this case, you are matching the **404** response that is returned by the **/inventory/systems/{hostname}**
@@ -585,13 +370,6 @@ touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/mi
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties
 
-
-
-
-```
-mp.openapi.filter = io.openliberty.guides.inventory.filter.InventoryOASFilter
-```
-{: codeblock}
 
 
 
@@ -662,109 +440,6 @@ touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/op
 
 
 
-```
-openapi: 3.0.0
-info:
-  title: Inventory App
-  description: App for storing JVM system properties of various hosts.
-  license:
-    name: Eclipse Public License - v 1.0
-    url: https://www.eclipse.org/legal/epl-v10.html
-  version: 1.0.0
-servers:
-- url: http://localhost:{port}
-  description: Simple Open Liberty.
-  variables:
-    port:
-      default: "9080"
-      description: Server HTTP port.
-paths:
-  /inventory/systems:
-    get:
-      summary: List inventory contents.
-      description: Returns the currently stored host:properties pairs in the inventory.
-      operationId: listContents
-      responses:
-        200:
-          description: host:properties pairs stored in the inventory.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InventoryList'
-  /inventory/systems/{hostname}:
-    get:
-      summary: Get JVM system properties for particular host
-      description: Retrieves and returns the JVM system properties from the system
-        service running on the particular host.
-      operationId: getPropertiesForHost
-      parameters:
-      - name: hostname
-        in: path
-        description: The host for whom to retrieve the JVM system properties for.
-        required: true
-        schema:
-          type: string
-        example: foo
-      responses:
-        404:
-          description: Invalid hostname or the system service may not be running on
-            the particular host.
-          content:
-            text/plain: {}
-        200:
-          description: JVM system properties of a particular host.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Properties'
-  /inventory/properties:
-    get:
-      operationId: getProperties
-      responses:
-        200:
-          description: JVM system properties of the host running this service.
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties:
-                  type: string
-components:
-  schemas:
-    InventoryList:
-      required:
-      - systems
-      type: object
-      properties:
-        systems:
-          type: array
-          items:
-            $ref: '#/components/schemas/SystemData'
-        total:
-          type: integer
-      description: POJO that represents the inventory contents.
-    SystemData:
-      required:
-      - hostname
-      - properties
-      type: object
-      properties:
-        hostname:
-          type: string
-        properties:
-          type: object
-          additionalProperties:
-            type: string
-      description: POJO that represents a single inventory entry.
-    Properties:
-      type: object
-      additionalProperties:
-        type: string
-```
-{: codeblock}
-
-
-
 
 This document is the same as your current OpenAPI document with extra APIs for the **/inventory/properties** endpoint. 
 Since this document is complete, you can also add the **mp.openapi.scan.disable** property
@@ -775,14 +450,6 @@ Update the configuration file.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties
 
-
-
-
-```
-mp.openapi.scan.disable = true
-mp.openapi.filter = io.openliberty.guides.inventory.filter.InventoryOASFilter
-```
-{: codeblock}
 
 
 Add and set the **mp.openapi.scan.disable** property to **true**.

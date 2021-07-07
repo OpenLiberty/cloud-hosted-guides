@@ -115,35 +115,6 @@ touch /home/project/guide-docker/start/Dockerfile
 
 
 
-
-```
-FROM openliberty/open-liberty:full-java11-openj9-ubi
-
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
-
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="IBM" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-docker" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="system" \
-  version="$VERSION-$REVISION" \
-  summary="The system microservice from the Docker Guide" \
-  description="This image contains the system microservice running with the Open Liberty runtime."
-
-USER root
-
-COPY --chown=1001:0 src/main/liberty/config/server.xml /config/
-COPY --chown=1001:0 target/*.war /config/apps/
-USER 1001
-```
-{: codeblock}
-
-
 The **FROM** instruction initializes a new build stage and indicates the parent image from which your
 image is built. If you don't need a parent image, then use **FROM scratch**, which makes your image a
 base image. 
@@ -243,41 +214,6 @@ Update the **PropertiesResource** class.
 
 
 
-
-```
-package io.openliberty.guides.rest;
-
-import javax.ws.rs.Path;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.GET;
-import javax.ws.rs.Produces;
-
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.Json;
-
-@Path("properties-new")
-public class PropertiesResource {
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject getProperties() {
-
-        JsonObjectBuilder builder = Json.createObjectBuilder();
-
-        System.getProperties()
-              .entrySet()
-              .stream()
-              .forEach(entry -> builder.add((String)entry.getKey(),
-                                            (String)entry.getValue()));
-
-       return builder.build();
-    }
-}
-```
-{: codeblock}
-
-
 Change the endpoint of your application from **properties** to **properties-new** by changing the **@Path**
 annotation to **"properties-new"**.
 
@@ -306,14 +242,6 @@ http://localhost:9080/system/properties-new URL.
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
-However, automated tests are a much better approach because they trigger a failure if a change introduces a bug.
-JUnit and the JAX-RS Client API provide a simple environment to test the application. 
-You can write tests for the individual units of code outside of a running application server, or they
-can be written to call the application server directly. In this example, you will create a test that calls the application server directly.
-
-Create the **EndpointIT** class.
-
-> Run the following touch command in your terminal
 ```
 curl http://localhost:9080/system/properties-new
 ```
@@ -336,51 +264,6 @@ touch /home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/re
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
-
-
-
-```
-package it.io.openliberty.guides.rest;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import org.junit.jupiter.api.Test;
-
-import javax.json.JsonObject;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
-
-public class EndpointIT {
-
-    @Test
-    public void testGetProperties() {
-        String port = System.getProperty("liberty.test.port");
-        String url = "http://localhost:" + port + "/";
-
-        Client client = ClientBuilder.newClient();
-        client.register(JsrJsonpProvider.class);
-
-        WebTarget target = client.target(url + "system/properties-new");
-        Response response = target.request().get();
-        JsonObject obj = response.readEntity(JsonObject.class);
-
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-
-        assertEquals("/opt/ol/wlp/output/defaultServer/",
-                     obj.getString("server.output.dir"),
-                     "The system property for the server output directory should match "
-                     + "the Open Liberty container image.");
-
-        response.close();
-    }
-}
-```
-{: codeblock}
 
 
 This test makes a request to the **/system/properties-new** endpoint and checks to

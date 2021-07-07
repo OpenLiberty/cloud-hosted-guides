@@ -226,57 +226,6 @@ touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openlib
 
 
 
-
-```
-package io.openliberty.guides.system;
-
-import javax.json.JsonArray;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.annotation.security.RolesAllowed;
-
-import org.eclipse.microprofile.jwt.Claim;
-
-@RequestScoped
-@Path("/properties")
-public class SystemResource {
-
-    @Inject
-    @Claim("groups")
-    private JsonArray roles;
-
-    @GET
-    @Path("/username")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin", "user" })
-    public String getUsername() {
-        return System.getProperties().getProperty("user.name");
-    }
-
-    @GET
-    @Path("/os")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin" })
-    public String getOS() {
-        return System.getProperties().getProperty("os.name");
-    }
-
-    @GET
-    @Path("/jwtroles")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin", "user" })
-    public String getRoles() {
-        return roles.toString();
-    }
-}
-```
-{: codeblock}
-
-
 This class has role-based access control. The role names that are used in the
 **@RolesAllowed** annotations are mapped to group
 names in the **groups** claim of the JWT, which results in an authorization
@@ -322,43 +271,6 @@ touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openl
 
 
 
-
-```
-package io.openliberty.guides.frontend.client;
-
-import javax.enterprise.context.RequestScoped;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.HeaderParam;
-
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-
-@RegisterRestClient(baseUri = "https://localhost:8443/system")
-@Path("/properties")
-@RequestScoped
-public interface SystemClient extends AutoCloseable{
- 
-    @GET
-    @Path("/os")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getOS(@HeaderParam("Authorization") String authHeader);
-
-    @GET
-    @Path("/username")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getUsername(@HeaderParam("Authorization") String authHeader);
-    
-    @GET
-    @Path("/jwtroles")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getJwtRoles(@HeaderParam("Authorization") String authHeader);
-}
-```
-{: codeblock}
-
-
 This interface declares methods for accessing each of the endpoints that were
 previously set up in the **system** service.
 
@@ -386,60 +298,6 @@ touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openl
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
 
-
-
-
-```
-package io.openliberty.guides.frontend;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
-
-import org.eclipse.microprofile.rest.client.inject.RestClient;
-
-import io.openliberty.guides.frontend.client.SystemClient;
-import io.openliberty.guides.frontend.util.SessionUtils;
-
-
-@ApplicationScoped
-@Named
-public class ApplicationBean { 
-
-    @Inject
-    @RestClient
-    private SystemClient defaultRestClient;
-
-    public String getJwt() {
-        String jwtTokenString = SessionUtils.getJwtToken();
-        String authHeader = "Bearer " + jwtTokenString;
-        return authHeader;
-    }
-    
-    public String getOs() {
-        String authHeader = getJwt();
-        String os;
-        try {
-            os = defaultRestClient.getOS(authHeader);
-        } catch(Exception e) {
-            return "You are not authorized to access this system property";
-        }
-        return os;
-    }
-
-    public String getUsername() {
-        String authHeader = getJwt();
-        return defaultRestClient.getUsername(authHeader);
-    }
-
-    public String getJwtRoles() {
-        String authHeader = getJwt();
-        return defaultRestClient.getJwtRoles(authHeader);
-    }
-
-}
-```
-{: codeblock}
 
 
 The application bean is used to populate the table in the front end by making
@@ -482,13 +340,6 @@ touch /home/project/guide-microprofile-jwt/start/system/src/main/webapp/META-INF
 
 
 
-
-```
-mp.jwt.verify.issuer=http://openliberty.io
-```
-{: codeblock}
-
-
 The **mp.jwt.verify.issuer** config property specifies the expected value of
 the issuer claim on an incoming JWT. Incoming JWTs with an issuer
 claim that's different from this expected value aren't considered valid.
@@ -501,36 +352,6 @@ Replace the system server configuration file.
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml
 
-
-
-
-```
-<server description="Sample Liberty server">
-
-  <featureManager>
-    <feature>jaxrs-2.1</feature>
-    <feature>jsonp-1.1</feature>
-    <feature>cdi-2.0</feature>
-    <feature>mpConfig-2.0</feature>
-    <feature>mpRestClient-2.0</feature>
-    <feature>appSecurity-3.0</feature>
-    <feature>servlet-4.0</feature>
-    <feature>mpJwt-1.2</feature>
-  </featureManager>
-
-  <variable name="default.http.port" defaultValue="8080"/>
-  <variable name="default.https.port" defaultValue="8443"/>
-
-  <keyStore id="defaultKeyStore" password="secret"/>
-
-  <httpEndpoint host="*" httpPort="${default.http.port}" httpsPort="${default.https.port}"
-                id="defaultHttpEndpoint"/>
-                 
-  <webApplication location="system.war" contextRoot="/"/>
-
-</server>
-```
-{: codeblock}
 
 
 The **mpJwt** feature adds the libraries that are required for MicroProfile JWT implementation.
@@ -621,114 +442,6 @@ touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/open
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 
-
-
-
-```
-package it.io.openliberty.guides.system;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import it.io.openliberty.guides.system.util.JwtBuilder;
-
-public class SystemEndpointIT {
-
-    static String authHeaderAdmin;
-    static String authHeaderUser;
-    static String urlOS;
-    static String urlUsername;
-    static String urlRoles;
-
-    @BeforeAll
-    private static void setup() throws Exception{
-        String urlBase = "http://" + System.getProperty("hostname")
-                 + ":" + System.getProperty("http.port")
-                 + "/system/properties";
-        urlOS = urlBase + "/os";
-        urlUsername = urlBase + "/username";
-        urlRoles = urlBase + "/jwtroles";
-
-        authHeaderAdmin = "Bearer " + new JwtBuilder().createAdminJwt("testUser");
-        authHeaderUser = "Bearer " + new JwtBuilder().createUserJwt("testUser");
-    }
-
-    @Test
-    public void testOSEndpoint() {
-        Response response = makeRequest(urlOS, authHeaderAdmin);
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + urlOS);
-        assertEquals(System.getProperty("os.name"), response.readEntity(String.class),
-                "The system property for the local and remote JVM should match");
-
-        response = makeRequest(urlOS, authHeaderUser);
-        assertEquals(403, response.getStatus(), "Incorrect response code from " + urlOS);
-
-        response = makeRequest(urlOS, null);
-        assertEquals(401, response.getStatus(), "Incorrect response code from " + urlOS);
-
-        response.close();
-    }
-
-    @Test
-    public void testUsernameEndpoint() {
-        Response response = makeRequest(urlUsername, authHeaderAdmin);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
-
-        response = makeRequest(urlUsername, authHeaderUser);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
-
-        response = makeRequest(urlUsername, null);
-        assertEquals(401, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
-
-        response.close();
-    }
-
-    @Test
-    public void testRolesEndpoint() {
-        Response response = makeRequest(urlRoles, authHeaderAdmin);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlRoles);
-        assertEquals("[\"admin\",\"user\"]", response.readEntity(String.class),
-                "Incorrect groups claim in token " + urlRoles);
-
-        response = makeRequest(urlRoles, authHeaderUser);
-        assertEquals(200, response.getStatus(), 
-                "Incorrect response code from " + urlRoles);
-        assertEquals("[\"user\"]", response.readEntity(String.class),
-                "Incorrect groups claim in token " + urlRoles);
-
-        response = makeRequest(urlRoles, null);
-        assertEquals(401, response.getStatus(),
-                "Incorrect response code from " + urlRoles);
-
-        response.close();
-    }
-
-    private Response makeRequest(String url, String authHeader) {
-        Client client = ClientBuilder.newClient();
-        Builder builder = client.target(url).request();
-        builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-        if (authHeader != null) {
-            builder.header(HttpHeaders.AUTHORIZATION, authHeader);
-        }
-        Response response = builder.get();
-        return response;
-    }
-
-}
-```
-{: codeblock}
 
 
 The **testOSEndpoint()**, **testUsernameEndpoint()**, and **testRolesEndpoint()**
