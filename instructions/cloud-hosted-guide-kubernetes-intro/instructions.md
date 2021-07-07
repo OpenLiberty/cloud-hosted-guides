@@ -1,5 +1,5 @@
 
-# Welcome to the Deploying microservices to Kubernetes guide!
+# **Welcome to the Deploying microservices to Kubernetes guide!**
 
 Deploy microservices in Open Liberty Docker containers to Kubernetes and manage them with the Kubernetes CLI, kubectl.
 
@@ -13,7 +13,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What is Kubernetes?
+# **What is Kubernetes?**
 
 Kubernetes is an open source container orchestrator that automates many tasks involved in deploying,
 managing, and scaling containerized applications.
@@ -21,7 +21,8 @@ managing, and scaling containerized applications.
 Over the years, Kubernetes has become a major tool in containerized environments as containers are being
 further leveraged for all steps of a continuous delivery pipeline.
 
-### Why use Kubernetes?
+<br/>
+### **Why use Kubernetes?**
 
 Managing individual containers can be challenging. 
 A small team can easily manage a few containers for development but 
@@ -34,7 +35,8 @@ While you could destroy and then re-create these containers, you can also run a 
 command to have Kubernetes make all those updates for you. Of course, this is just a simple example.
 Kubernetes has a lot more to offer.
 
-### Architecture
+<br/>
+### **Architecture**
 
 Deploying an application to Kubernetes means deploying an application to a Kubernetes cluster.
 
@@ -59,7 +61,7 @@ To learn about the various Kubernetes resources that you can configure,
 see the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/).
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to deploy two microservices in Open Liberty containers to a local Kubernetes cluster.
 You will then manage your deployed microservices using the **kubectl** command line interface for Kubernetes. 
@@ -74,7 +76,7 @@ This process demonstrates how communication can be established between pods insi
 You will use a local single-node Kubernetes cluster.
 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -120,11 +122,10 @@ Namespace
 sn-labs-yourname
 ```
 
-Store the namespace name in a variable.
-Use the namespace name that was obtained from the previous command.
+Run the following command to store the namespace name in a variable.
 
 ```
-NAMESPACE_NAME={namespace_name}
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
 ```
 {: codeblock}
 
@@ -143,7 +144,7 @@ bx cr login
 
 
 
-# Building and containerizing the microservices
+# **Building and containerizing the microservices**
 
 The first step of deploying to Kubernetes is to build your microservices and containerize them with Docker.
 
@@ -214,7 +215,7 @@ docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 {: codeblock}
 
 
-# Deploying the microservices
+# **Deploying the microservices**
 
 Now that your Docker images are built, deploy them using a Kubernetes resource definition.
 
@@ -328,11 +329,14 @@ This means you can access these services from outside of your cluster via a spec
 In this case, the ports are **31000** and **32000**, but port numbers can also be randomized if the
 **nodePort** field is not used.
 
-Update the image names so that the images in your IBM Cloud container registry are used:
+Update the image names so that the images in your IBM Cloud container registry are used,
+and remove the **nodePort** fields so that the ports can be generated automatically:
 
 ```
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
 sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
 ```
 {: codeblock}
 
@@ -369,71 +373,70 @@ You can also issue the **kubectl get** and **kubectl describe** commands on othe
 free to inspect all other resources.
 
 
-Run the following command to get the node IP for the `system` service:
+In this execise, you need to access the services by using the Kubernetes API.
+Run the following command to start a proxy to the Kubernetes API server:
 
 ```
-kubectl describe pod system | grep Node
-```
-{: codeblock}
-
-The output shows the node IP that is later used to access the service. 
-It appears in a format similar to the following:
-
-```
-Node:         10.114.85.140/10.114.85.140
-Node-Selectors:  <none>
-```
-
-The IP for the system service is `10.114.85.140`.
-Store the IP in a variable.
-
-```
-SYSTEM_HOST={system-node-ip}
+kubectl proxy
 ```
 {: codeblock}
 
-Use another `kubectl` command to get the node IP for the `inventory` service:
-
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Run the following commands to store the proxy path of the **system** and **inventory** services.
 ```
-kubectl describe pod inventory | grep Node
-```
-{: codeblock}
-
-Store this IP in a variable as well.
-
-```
-INVENTORY_HOST={inventory-node-ip}
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
+SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
+INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/inventory-service/proxy
 ```
 {: codeblock}
 
-Verify that the variables that contain the IPs are set correctly:
+Run the following echo commands to verify the variables:
 
 ```
-echo $SYSTEM_HOST && echo $INVENTORY_HOST
-```
-{: codeblock}
-
-Then use the following `curl` commands to access your microservices:
-
-```
-curl http://$SYSTEM_HOST:31000/system/properties
+echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
 ```
 {: codeblock}
 
+
+The output appears as shown in the following example:
+
 ```
-curl http://$INVENTORY_HOST:32000/inventory/systems/system-service
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
+```
+
+Then, use the following **curl** command to access your **system** microservice:
+
+```
+curl http://$SYSTEM_PROXY/system/properties | jq
 ```
 {: codeblock}
 
-The first URL returns system properties and the name of the pod in an HTTP header called `X-Pod-Name`.
-To view the header, you can use the `-I` option in the `curl` command when you make a request to the
-`http://$SYSTEM_HOST:31000/system/properties` URL.
-The second URL adds properties from `system-service` to the inventory Kubernetes Service. 
-Making a request to the `http://$INVENTORY_HOST:32000/inventory/systems/[kube-service]` URL in general 
-adds to the inventory depending on whether `kube-service` is a valid Kubernetes service that can be accessed.
+Also, use the following **curl** command to access your **inventory** microservice:
+
+```
+curl http://$INVENTORY_PROXY/inventory/systems/system-service | jq
+```
+{: codeblock}
+
+The `http://$SYSTEM_PROXY/system/properties` URL returns system properties and the name of the pod 
+in an HTTP header that is called **X-Pod-Name**.
+To view the header, you can use the **-I** option in the **curl** command when you make a request to the
+`http://$SYSTEM_PROXY/system/properties` URL.
+
+```
+curl -I http://$SYSTEM_PROXY/system/properties
+```
+{: codeblock}
+
+The `http://$INVENTORY_PROXY/inventory/systems/system-service` URL adds properties 
+from the **system-service** endpoint to the inventory Kubernetes Service. 
+Making a request to the `http://$INVENTORY_PROXY/inventory/systems/[kube-service]` URL in general 
+adds to the inventory. That result depends on whether the **kube-service** endpoint is a valid Kubernetes service 
+that can be accessed.
 
 
-# Scaling a deployment
+# **Scaling a deployment**
 
 To use load balancing, you need to scale your deployments. 
 When you scale a deployment, you replicate its pods, creating more running instances of your applications. 
@@ -463,10 +466,10 @@ inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
 ```
 
 
-Wait for your two new pods to be in the ready state, then make the following `curl` command:
+Wait for your two new pods to be in the ready state, then make the following **curl** command:
 
 ```
-curl -I http://$SYSTEM_HOST:31000/system/properties
+curl -I http://$SYSTEM_PROXY/system/properties
 ```
 {: codeblock}
 
@@ -480,7 +483,7 @@ kubectl scale deployment/system-deployment --replicas=1
 {: codeblock}
 
 
-# Redeploy microservices
+# **Redeploy microservices**
 
 When you're building your application, you might want to quickly test a change. 
 To run a quick test, you can rebuild your Docker images then delete and re-create your Kubernetes resources. 
@@ -488,6 +491,7 @@ Note that there is only one **system** pod after you redeploy since you're delet
 
 
 ```
+cd /home/project/guide-kubernetes-intro/start
 kubectl delete -f kubernetes.yaml
 
 mvn clean package
@@ -508,7 +512,7 @@ you can update the container in your deployment with a new image.
 Once the new container is ready, Kubernetes automates both the creation of a new container and the decommissioning of the old one.
 
 
-# Testing microservices that are running on Kubernetes
+# **Testing microservices that are running on Kubernetes**
 
 A few tests are included for you to test the basic functionality of the microservices. 
 If a test failure occurs, then you might have introduced a bug into the code. 
@@ -517,19 +521,20 @@ The default properties defined in the **pom.xml** are:
 
 | *Property*                        | *Description*
 | ---| ---
-| **cluster.ip**            | IP or host name for your cluster, **localhost** by default, which is appropriate when using Docker Desktop.
-| **system.kube.service**     | Name of the Kubernetes Service wrapping the **system** pods, **system-service** by default.
-| **system.node.port**        | The NodePort of the Kubernetes Service **system-service**, 31000 by default.
-| **inventory.node.port**        | The NodePort of the Kubernetes Service **inventory-service**, 32000 by default.
+| **system.kube.service**       | Name of the Kubernetes Service wrapping the **system** pods, **system-service** by default.
+| **system.service.root**       | The Kubernetes Service **system-service** root path, **localhost:31000** by default.
+| **inventory.service.root** | The Kubernetes Service **inventory-service** root path, **localhost:32000** by default.
 
 Navigate back to the **start** directory.
 
 
-Update the `pom.xml` files so that the `cluster.ip` properties match the values of your node IPs.
+Update the **pom.xml** files so that the **system.service.root** and **inventory.service.root** properties
+match the values to access the **system** and **inventory** services.
 
 ```
-sed -i 's=localhost='"$INVENTORY_HOST"'=g' inventory/pom.xml
-sed -i 's=localhost='"$SYSTEM_HOST"'=g' system/pom.xml
+sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' inventory/pom.xml
+sed -i 's=localhost:32000='"$INVENTORY_PROXY"'=g' inventory/pom.xml
+sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
 ```
 {: codeblock}
 
@@ -567,7 +572,7 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 
-# Tearing down the environment
+# **Tearing down the environment**
 
 When you no longer need your deployed microservices, 
 you can delete all Kubernetes resources by running the **kubectl delete** command:
@@ -578,10 +583,12 @@ kubectl delete -f kubernetes.yaml
 
 
 
+Press **CTRL+C** to stop the proxy server that was started at step 7.
 
-# Summary
 
-## Nice Work!
+# **Summary**
+
+## **Nice Work!**
 
 You have just deployed two microservices that are running in Open Liberty to Kubernetes.
 
@@ -589,8 +596,9 @@ You then scaled a microservice and ran integration tests against miroservices th
 
 
 
+<br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -602,24 +610,31 @@ rm -fr guide-kubernetes-intro
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
+<br/>
+## **What did you think of this guide?**
+
+
+We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
 select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
 
-## What could make this guide better?
+<br/>
+## **What could make this guide better?**
+
+
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-kubernetes-intro/issues)
 * [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-kubernetes-intro/pulls)
 
 
 
-
-## Where to next? 
+<br/>
+## **Where to next?**
 
 * [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 * [Managing microservice traffic using Istio](https://openliberty.io/guides/istio-intro.html)
 
 
-## Log out of the session
+<br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
