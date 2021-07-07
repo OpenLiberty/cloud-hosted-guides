@@ -306,6 +306,18 @@ http://localhost:9080/system/properties-new URL.
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
+
+
+# **Testing the container **
+
+
+You can test this service manually by starting a server and going to the 
+
+http://localhost:9080/system/properties-new URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 However, automated tests are a much better approach because they trigger a failure if a change introduces a bug.
 JUnit and the JAX-RS Client API provide a simple environment to test the application. 
 You can write tests for the individual units of code outside of a running application server, or they
