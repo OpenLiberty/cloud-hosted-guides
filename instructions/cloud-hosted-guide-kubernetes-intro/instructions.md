@@ -122,11 +122,10 @@ Namespace
 sn-labs-yourname
 ```
 
-Store the namespace name in a variable.
-Use the namespace name that was obtained from the previous command.
+Run the following command to store the namespace name in a variable.
 
 ```
-NAMESPACE_NAME={namespace_name}
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
 ```
 {: codeblock}
 
@@ -330,11 +329,14 @@ This means you can access these services from outside of your cluster via a spec
 In this case, the ports are **31000** and **32000**, but port numbers can also be randomized if the
 **nodePort** field is not used.
 
-Update the image names so that the images in your IBM Cloud container registry are used:
+Update the image names so that the images in your IBM Cloud container registry are used,
+and remove the **nodePort** fields so that the ports can be generated automatically:
 
 ```
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
 sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
 ```
 {: codeblock}
 
@@ -371,68 +373,67 @@ You can also issue the **kubectl get** and **kubectl describe** commands on othe
 free to inspect all other resources.
 
 
-Run the following command to get the node IP for the `system` service:
+In this execise, you need to access the services by using the Kubernetes API.
+Run the following command to start a proxy to the Kubernetes API server:
 
 ```
-kubectl describe pod system | grep Node
+kubectl proxy
 ```
 {: codeblock}
 
-The output shows the node IP that is later used to access the service. 
-It appears in a format similar to the following:
-
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Run the following commands to store the proxy path of the **system** and **inventory** services.
 ```
-Node:         10.114.85.140/10.114.85.140
-Node-Selectors:  <none>
-```
-
-The IP for the system service is `10.114.85.140`.
-Store the IP in a variable.
-
-```
-SYSTEM_HOST={system-node-ip}
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
+SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
+INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/inventory-service/proxy
 ```
 {: codeblock}
 
-Use another `kubectl` command to get the node IP for the `inventory` service:
+Run the following echo commands to verify the variables:
 
 ```
-kubectl describe pod inventory | grep Node
+echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
 ```
 {: codeblock}
 
-Store this IP in a variable as well.
+
+The output appears as shown in the following example:
 
 ```
-INVENTORY_HOST={inventory-node-ip}
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
+```
+
+Then, use the following **curl** command to access your **system** microservice:
+
+```
+curl http://$SYSTEM_PROXY/system/properties | jq
 ```
 {: codeblock}
 
-Verify that the variables that contain the IPs are set correctly:
+Also, use the following **curl** command to access your **inventory** microservice:
 
 ```
-echo $SYSTEM_HOST && echo $INVENTORY_HOST
+curl http://$INVENTORY_PROXY/inventory/systems/system-service | jq
 ```
 {: codeblock}
 
-Then use the following `curl` commands to access your microservices:
+The `http://$SYSTEM_PROXY/system/properties` URL returns system properties and the name of the pod 
+in an HTTP header that is called **X-Pod-Name**.
+To view the header, you can use the **-I** option in the **curl** command when you make a request to the
+`http://$SYSTEM_PROXY/system/properties` URL.
 
 ```
-curl http://$SYSTEM_HOST:31000/system/properties
+curl -I http://$SYSTEM_PROXY/system/properties
 ```
 {: codeblock}
 
-```
-curl http://$INVENTORY_HOST:32000/inventory/systems/system-service
-```
-{: codeblock}
-
-The first URL returns system properties and the name of the pod in an HTTP header called `X-Pod-Name`.
-To view the header, you can use the `-I` option in the `curl` command when you make a request to the
-`http://$SYSTEM_HOST:31000/system/properties` URL.
-The second URL adds properties from `system-service` to the inventory Kubernetes Service. 
-Making a request to the `http://$INVENTORY_HOST:32000/inventory/systems/[kube-service]` URL in general 
-adds to the inventory depending on whether `kube-service` is a valid Kubernetes service that can be accessed.
+The `http://$INVENTORY_PROXY/inventory/systems/system-service` URL adds properties 
+from the **system-service** endpoint to the inventory Kubernetes Service. 
+Making a request to the `http://$INVENTORY_PROXY/inventory/systems/[kube-service]` URL in general 
+adds to the inventory. That result depends on whether the **kube-service** endpoint is a valid Kubernetes service 
+that can be accessed.
 
 
 # **Scaling a deployment**
@@ -465,10 +466,10 @@ inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
 ```
 
 
-Wait for your two new pods to be in the ready state, then make the following `curl` command:
+Wait for your two new pods to be in the ready state, then make the following **curl** command:
 
 ```
-curl -I http://$SYSTEM_HOST:31000/system/properties
+curl -I http://$SYSTEM_PROXY/system/properties
 ```
 {: codeblock}
 
@@ -490,6 +491,7 @@ Note that there is only one **system** pod after you redeploy since you're delet
 
 
 ```
+cd /home/project/guide-kubernetes-intro/start
 kubectl delete -f kubernetes.yaml
 
 mvn clean package
@@ -519,19 +521,20 @@ The default properties defined in the **pom.xml** are:
 
 | *Property*                        | *Description*
 | ---| ---
-| **cluster.ip**            | IP or host name for your cluster, **localhost** by default, which is appropriate when using Docker Desktop.
-| **system.kube.service**     | Name of the Kubernetes Service wrapping the **system** pods, **system-service** by default.
-| **system.node.port**        | The NodePort of the Kubernetes Service **system-service**, 31000 by default.
-| **inventory.node.port**        | The NodePort of the Kubernetes Service **inventory-service**, 32000 by default.
+| **system.kube.service**       | Name of the Kubernetes Service wrapping the **system** pods, **system-service** by default.
+| **system.service.root**       | The Kubernetes Service **system-service** root path, **localhost:31000** by default.
+| **inventory.service.root** | The Kubernetes Service **inventory-service** root path, **localhost:32000** by default.
 
 Navigate back to the **start** directory.
 
 
-Update the `pom.xml` files so that the `cluster.ip` properties match the values of your node IPs.
+Update the **pom.xml** files so that the **system.service.root** and **inventory.service.root** properties
+match the values to access the **system** and **inventory** services.
 
 ```
-sed -i 's=localhost='"$INVENTORY_HOST"'=g' inventory/pom.xml
-sed -i 's=localhost='"$SYSTEM_HOST"'=g' system/pom.xml
+sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' inventory/pom.xml
+sed -i 's=localhost:32000='"$INVENTORY_PROXY"'=g' inventory/pom.xml
+sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
 ```
 {: codeblock}
 
@@ -579,6 +582,8 @@ kubectl delete -f kubernetes.yaml
 {: codeblock}
 
 
+
+Press **CTRL+C** to stop the proxy server that was started at step 7.
 
 
 # **Summary**
