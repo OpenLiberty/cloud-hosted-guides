@@ -1,5 +1,5 @@
 
-# Welcome to the Creating a RESTful web service guide!
+# **Welcome to the Creating a RESTful web service guide!**
 
 Learn how to create a REST service with JAX-RS, JSON-B, and Open Liberty.
 
@@ -13,7 +13,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to build and test a simple REST service with JAX-RS and JSON-B, which will expose
 the JVM's system properties. The REST service will respond to **GET** requests made to the **http://localhost:9080/LibertyProject/System/properties** URL.
@@ -34,7 +34,7 @@ functionality for creating, reading, updating, and deleting exposed resources. T
 supports the creation of RESTful web services that come with desirable properties, 
 such as performance, scalability, and modifiability.
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -59,7 +59,8 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-### Try what you'll build
+<br/>
+### **Try what you'll build**
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -107,7 +108,7 @@ mvn liberty:stop
 
 
 
-# Creating a JAX-RS application
+# **Creating a JAX-RS application**
 
 Navigate to the **start** directory to begin.
 
@@ -164,7 +165,7 @@ the JAX-RS application accepts requests from.
 
 
 
-# Creating the JAX-RS resource
+# **Creating the JAX-RS resource**
 
 In JAX-RS, a single class should represent a single resource, or a group of resources of the same type.
 In this application, a resource might be a system property, or a set of system properties. It is easy
@@ -235,7 +236,7 @@ to JSON data in the HTTP response.
 
 
 
-# Configuring the server
+# **Configuring the server**
 
 To get the service running, the Liberty server needs to be correctly configured.
 
@@ -275,7 +276,7 @@ the Maven **pom.xml** file. This is specified in the **`<httpEndpoint/>`** eleme
 The variables that are being used in the **server.xml** file are provided by the properties set in the Maven **pom.xml** file. The properties must be formatted as **liberty.var.variableName**.
 
 
-# Running the application
+# **Running the application**
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
@@ -293,7 +294,7 @@ curl http://localhost:9080/LibertyProject/System/properties
 
 
 
-# Testing the service
+# **Testing the service**
 
 
 You can test this service manually by starting a server and pointing a web browser at the
@@ -391,7 +392,8 @@ are running on the same machine, it is reasonable to expect that the system prop
 and remote JVM would be the same. In this case, an **assertEquals** assertion is made so that the **os.name** system property
 for both JVMs is the same. You can write additional assertions to check for more values.
 
-### Running the tests
+<br/>
+### **Running the tests**
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -416,16 +418,17 @@ When you are done checking out the service, exit dev mode by pressing **CTRL+C**
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
 
 
 
+<br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -437,24 +440,32 @@ rm -fr guide-rest-intro
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
-select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+<br/>
+## **What did you think of this guide?**
 
-## What could make this guide better?
+We want to hear from you. To provide feedback, click the following link.
+
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-intro)
+
+Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
+
+<br/>
+## **What could make this guide better?**
+
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-rest-intro/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-rest-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-intro/pulls)
 
 
 
-
-## Where to next? 
+<br/>
+## **Where to next?**
 
 * [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
 * [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
-## Log out of the session
+<br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

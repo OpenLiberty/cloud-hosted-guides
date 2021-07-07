@@ -1,5 +1,5 @@
 
-# Welcome to the Enabling distributed tracing in microservices with Zipkin guide!
+# **Welcome to the Enabling distributed tracing in microservices with Zipkin guide!**
 
 Explore how to enable and customize tracing of JAX-RS and non-JAX-RS methods by using MicroProfile OpenTracing and the Zipkin tracing system.
 
@@ -12,7 +12,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You'll learn how to enable automatic tracing for JAX-RS methods and how to create custom tracers
 for non-JAX-RS methods by using MicroProfile OpenTracing.
@@ -35,7 +35,7 @@ MicroProfile OpenTracing. You'll run these services in two separate JVMs made of
 to demonstrate tracing in a distributed environment. If all the components were to run on a single
 server, then any logging software would do the trick.
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -78,7 +78,8 @@ type **9411** to specify the port number for the Zipkin service. Click the **OK*
 Zipkin can also be found at the **`https://accountname-9411.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
 where **accountname** is your account name.
 
-### Try what you'll build
+<br/>
+### **Try what you'll build**
 
 The **finish** directory in the root directory of this guide contains two services that are configured
 to use MicroProfile OpenTracing. Give them a try before you continue.
@@ -135,7 +136,7 @@ mvn liberty:stop-server
 
 
 
-# Running the services
+# **Running the services**
 
 Navigate to the **start** directory to begin.
 
@@ -171,7 +172,7 @@ curl http://localhost:9081/inventory/systems
 {: codeblock}
 
 
-# Existing Tracer implementation
+# **Existing Tracer implementation**
 
 To collect traces across your systems, you need to implement the OpenTracing **Tracer**
 interface. For this guide, you can access a bare-bones **Tracer** implementation for
@@ -191,13 +192,14 @@ in IBM Documentation.
 
 
 
-# Enabling distributed tracing
+# **Enabling distributed tracing**
 
 The MicroProfile OpenTracing feature enables tracing of all JAX-RS methods by default.
 To further control and customize these traces, use the **@Traced** annotation to enable and disable
 tracing of particular methods. You can also inject a custom **Tracer** object to create and customize spans.
 
-### Enabling distributed tracing without code instrumentation
+<br/>
+### **Enabling distributed tracing without code instrumentation**
 
 Because tracing is enabled by default for all JAX-RS methods, you need to enable only the
 **mpOpenTracing** feature and the **usr:opentracingZipkin**
@@ -209,7 +211,8 @@ Make sure your services are running.
 Then, point your browser to any of their endpoints and check your Zipkin server for traces.
 
 
-### Enabling explicit distributed tracing
+<br/>
+### **Enabling explicit distributed tracing**
 
 The **@Traced** annotation defines explicit span creation for specific classes and methods.
 If you place the annotation on a class, then it's automatically applied to all methods within that class.
@@ -391,7 +394,8 @@ Verify that this span has the following name:
 
 
 
-### Injecting a custom Tracer object
+<br/>
+### **Injecting a custom Tracer object**
 
 The MicroProfile OpenTracing specification also makes the underlying OpenTracing **Tracer** instance
 available. The configured **Tracer** is accessed by injecting it into a bean by using the
@@ -516,7 +520,7 @@ creation and customization, including setting timestamps.
 
 
 
-# Testing the services
+# **Testing the services**
 
 No automated tests are provided to verify the correctness of the traces. Manually verify these traces
 by viewing them on the Zipkin server.
@@ -544,9 +548,9 @@ docker stop zipkin
 
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You have just used MicroProfile OpenTracing in Open Liberty to customize how and which traces are delivered to Zipkin.
 
@@ -554,8 +558,9 @@ You have just used MicroProfile OpenTracing in Open Liberty to customize how and
 Feel free to try one of the related MicroProfile guides. They demonstrate additional technologies that you
 can learn to expand on top of what you built here.
 
+<br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -567,24 +572,32 @@ rm -fr guide-microprofile-opentracing
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
-select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+<br/>
+## **What did you think of this guide?**
 
-## What could make this guide better?
+We want to hear from you. To provide feedback, click the following link.
+
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20distributed%20tracing%20in%20microservices%20with%20Zipkin&guide-id=cloud-hosted-guide-microprofile-opentracing)
+
+Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
+
+<br/>
+## **What could make this guide better?**
+
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-opentracing/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-opentracing/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-opentracing/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-opentracing/pulls)
 
 
 
-
-## Where to next? 
+<br/>
+## **Where to next?**
 
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Enabling distributed tracing in microservices with Jaeger](https://openliberty.io/guides/microprofile-opentracing-jaeger.html)
 
 
-## Log out of the session
+<br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
