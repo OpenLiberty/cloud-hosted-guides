@@ -1,5 +1,5 @@
 
-# Welcome to the Acknowledging messages using MicroProfile Reactive Messaging guide!
+# **Welcome to the Acknowledging messages using MicroProfile Reactive Messaging guide!**
 
 Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
 
@@ -11,7 +11,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive
 Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged
@@ -31,7 +31,7 @@ You will explore the acknowledgment strategies that are available with MicroProf
 your own manual acknowledgment strategy. To learn more about how the reactive Java services used in this guide work, check
 out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -56,7 +56,7 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-# Choosing an acknowledgment strategy
+# **Choosing an acknowledgment strategy**
 
 
 Messages must be acknowledged in reactive applications. Messages are either acknowledged explicitly, or messages are acknowledged
@@ -96,7 +96,7 @@ message must be acknowledged immediately.
 This case where a message either needs to be acknowledged immediately or some time later is one of the situations where
 the **MANUAL** acknowledgment strategy would be beneficial
 
-# Implementing the MANUAL acknowledgment strategy
+# **Implementing the MANUAL acknowledgment strategy**
 
 
 
@@ -209,7 +209,7 @@ One of the following outcomes occurs:
   requested system property and sends it to the proper channel. The method acknowledges the incoming message only
   after the sent message is acknowledged.
 
-# Waiting for a message to be acknowledged
+# **Waiting for a message to be acknowledged**
 
 
 The **inventory** service contains an endpoint that accepts **PUT** requests. When a **PUT** request that contains a system property
@@ -395,7 +395,7 @@ with the requested property name as the **payload** and an acknowledgment
 **CompletableFuture** variable that returns a **200** response
 code after the variable is completed in the **callback** function.
 
-# Building and running the application
+# **Building and running the application**
 
 Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
 
@@ -439,7 +439,7 @@ in the project. For simplicity, the script starts one instance of the **system**
 
 
 
-# Testing the application
+# **Testing the application**
 
 After the application is up and running, you can access the application by making a GET request to the **/systems** 
 endpoint of the **inventory** service.
@@ -511,7 +511,7 @@ The **os.name** system property value is now included with the previous values:
 }
 ```
 
-# Tearing down the environment
+# **Tearing down the environment**
 
 Finally, run the following script to stop the application:
 
@@ -523,16 +523,17 @@ Finally, run the following script to stop the application:
 
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You developed an application by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
 
 
+<br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -544,19 +545,26 @@ rm -fr guide-microprofile-reactive-messaging-acknowledgment
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
-select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+<br/>
+## **What did you think of this guide?**
 
-## What could make this guide better?
+We want to hear from you. To provide feedback, click the following link.
+
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Acknowledging%20messages%20using%20MicroProfile%20Reactive%20Messaging&guide-id=cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment)
+
+Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
+
+<br/>
+## **What could make this guide better?**
+
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/pulls)
 
 
 
-
-## Where to next? 
+<br/>
+## **Where to next?**
 
 * [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
 * [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest.html)
@@ -571,6 +579,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-## Log out of the session
+<br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

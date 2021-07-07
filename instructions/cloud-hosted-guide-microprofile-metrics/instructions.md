@@ -1,5 +1,5 @@
 
-# Welcome to the Providing metrics from a microservice guide!
+# **Welcome to the Providing metrics from a microservice guide!**
 
 You'll explore how to provide system and application metrics from a microservice with MicroProfile Metrics.
 
@@ -12,7 +12,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to use MicroProfile Metrics to provide metrics from a microservice. You can monitor
 metrics to determine the performance and health of a service. You can also use them to pinpoint issues,
@@ -29,7 +29,7 @@ provide application-level metrics data. You will add counter, gauge, and timer m
 You will also check well-known REST endpoints that are defined by MicroProfile Metrics to review
 the metrics data collected. Monitoring agents can access these endpoints to collect metrics.
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -55,7 +55,8 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-### Try what you'll build
+<br/>
+### **Try what you'll build**
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -108,31 +109,31 @@ curl -k --user admin:adminpwd https://localhost:9443/metrics/application
 See the following sample outputs for the **@Timed**, **@Gauge**, and **@Counted** metrics:
 
 ```
-# TYPE application_inventoryProcessingTime_rate_per_second gauge
+# **TYPE application_inventoryProcessingTime_rate_per_second gauge**
 application_inventoryProcessingTime_rate_per_second{method="get"} 0.0019189661542898407
 ...
-# TYPE application_inventoryProcessingTime_seconds summary
-# HELP application_inventoryProcessingTime_seconds Time needed to process the inventory
+# **TYPE application_inventoryProcessingTime_seconds summary**
+# **HELP application_inventoryProcessingTime_seconds Time needed to process the inventory**
 application_inventoryProcessingTime_seconds_count{method="get"} 1
 application_inventoryProcessingTime_seconds{method="get",quantile="0.5"} 0.127965469
 ...
-# TYPE application_inventoryProcessingTime_rate_per_second gauge
+# **TYPE application_inventoryProcessingTime_rate_per_second gauge**
 application_inventoryProcessingTime_rate_per_second{method="list"} 0.0038379320982686884
 ...
-# TYPE application_inventoryProcessingTime_seconds summary
-# HELP application_inventoryProcessingTime_seconds Time needed to process the inventory
+# **TYPE application_inventoryProcessingTime_seconds summary**
+# **HELP application_inventoryProcessingTime_seconds Time needed to process the inventory**
 application_inventoryProcessingTime_seconds_count{method="list"} 2
 application_inventoryProcessingTime_seconds{method="list",quantile="0.5"} 2.2185000000000002E-5
 ...
 ```
 ```
-# TYPE application_inventorySizeGauge gauge
-# HELP application_inventorySizeGauge Number of systems in the inventory
+# **TYPE application_inventorySizeGauge gauge**
+# **HELP application_inventorySizeGauge Number of systems in the inventory**
 application_inventorySizeGauge 1
 ```
 ```
-# TYPE application_inventoryAccessCount_total counter
-# HELP application_inventoryAccessCount_total Number of times the list of systems method is requested
+# **TYPE application_inventoryAccessCount_total counter**
+# **HELP application_inventoryAccessCount_total Number of times the list of systems method is requested**
 application_inventoryAccessCount_total 1
 ```
 
@@ -146,13 +147,13 @@ curl -k --user admin:adminpwd https://localhost:9443/metrics/base
 See the following sample output:
 
 ```
-# TYPE base_jvm_uptime_seconds gauge
-# HELP base_jvm_uptime_seconds Displays the start time of the Java virtual machine in milliseconds. This attribute displays the approximate time when the Java virtual machine started.
+# **TYPE base_jvm_uptime_seconds gauge**
+# **HELP base_jvm_uptime_seconds Displays the start time of the Java virtual machine in milliseconds. This attribute displays the approximate time when the Java virtual machine started.**
 base_jvm_uptime_seconds 30.342000000000002
 ```
 ```
-# TYPE base_classloader_loadedClasses_count gauge
-# HELP base_classloader_loadedClasses_count Displays the number of classes that are currently loaded in the Java virtual machine.
+# **TYPE base_classloader_loadedClasses_count gauge**
+# **HELP base_classloader_loadedClasses_count Displays the number of classes that are currently loaded in the Java virtual machine.**
 base_classloader_loadedClasses_count 11231
 ```
 
@@ -166,13 +167,13 @@ curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
 See the following sample output:
 
 ```
-# TYPE vendor_threadpool_size gauge
-# HELP vendor_threadpool_size The size of the thread pool.
+# **TYPE vendor_threadpool_size gauge**
+# **HELP vendor_threadpool_size The size of the thread pool.**
 vendor_threadpool_size{pool="Default_Executor"} 32
 ```
 ```
-# TYPE vendor_servlet_request_total counter
-# HELP vendor_servlet_request_total The number of visits to this servlet since the start of the server.
+# **TYPE vendor_servlet_request_total counter**
+# **HELP vendor_servlet_request_total The number of visits to this servlet since the start of the server.**
 vendor_servlet_request_total{servlet="microprofile_metrics_io_openliberty_guides_inventory_InventoryApplication"} 1
 ```
 
@@ -187,7 +188,7 @@ mvn liberty:stop
 
 
 
-# Adding MicroProfile Metrics to the inventory service
+# **Adding MicroProfile Metrics to the inventory service**
 
 
 
@@ -261,7 +262,8 @@ The **quickStartSecurity** configuration element provides basic security to secu
 When you visit the **/metrics** endpoint, use the credentials defined in the server configuration to log in and view the data.
 
 
-### Adding the annotations
+<br/>
+### **Adding the annotations**
 
 Replace the **InventoryManager** class.
 
@@ -376,7 +378,7 @@ Additional information about these annotations, relevant metadata fields, and mo
 the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-4.0-javadoc.html#package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=org/eclipse/microprofile/metrics/annotation/package-summary.html).
 
 
-# Enabling vendor metrics for the microservices
+# **Enabling vendor metrics for the microservices**
 
 
 MicroProfile Metrics API implementers can provide vendor metrics in the same forms as the base and application metrics do.
@@ -388,7 +390,7 @@ Note that these metrics are specific to the Liberty application server. Differen
 Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metrics-list.html) for more information.
 
 
-# Building and running the application
+# **Building and running the application**
 
 The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
 
@@ -432,7 +434,7 @@ curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
 
 
 
-# Testing the metrics
+# **Testing the metrics**
 
 
 You can test your application manually, but automated tests ensure code quality because they trigger a
@@ -698,7 +700,8 @@ test the basic functionality of the **inventory** and **system** services. If a 
 introduced a bug into the code.
 
 
-### Running the tests
+<br/>
+### **Running the tests**
 
 Because you started Open Liberty in development mode at the start of the guide, press the **enter/return** key to run the tests and see the following output:
 
@@ -731,17 +734,18 @@ When you are done checking out the service, exit dev mode by pressing **CTRL+C**
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You learned how to enable system, application and vendor metrics for microservices by using MicroProfile Metrics
 
 and wrote tests to validate them in Open Liberty.
 
 
+<br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -753,25 +757,33 @@ rm -fr guide-microprofile-metrics
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
-select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+<br/>
+## **What did you think of this guide?**
 
-## What could make this guide better?
+We want to hear from you. To provide feedback, click the following link.
+
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Providing%20metrics%20from%20a%20microservice&guide-id=cloud-hosted-guide-microprofile-metrics)
+
+Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
+
+<br/>
+## **What could make this guide better?**
+
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-microprofile-metrics/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-microprofile-metrics/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-metrics/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-metrics/pulls)
 
 
 
-
-## Where to next? 
+<br/>
+## **Where to next?**
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
-## Log out of the session
+<br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
