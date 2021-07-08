@@ -1,5 +1,5 @@
 
-# Welcome to the Configuring microservices running in Kubernetes guide!
+# **Welcome to the Configuring microservices running in Kubernetes guide!**
 
 Explore how to externalize configuration using MicroProfile Config and configure your microservices using Kubernetes ConfigMaps and Secrets.
 
@@ -13,7 +13,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 You will learn how and why to externalize your microservice's configuration.
 Externalized configuration is useful because configuration usually changes depending on your environment.
 You will also learn how to configure the environment by providing required values to your application using Kubernetes.
@@ -29,7 +29,7 @@ These resources are provided by Kubernetes and act as a data source for your env
 You can use a ConfigMap or Secret to set environment variables for any number of containers.
 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -98,7 +98,7 @@ bx cr login
 {: codeblock}
 
 
-# Deploying the microservices
+# **Deploying the microservices**
 
 The two microservices you will deploy are called **system** and **inventory**. The **system** microservice
 returns the JVM system properties of the running container. The **inventory** microservice
@@ -227,7 +227,7 @@ curl http://$INVENTORY_PROXY/inventory/systems/system-service | jq
 ```
 {: codeblock}
 
-# Modifying system microservice
+# **Modifying system microservice**
 
 
 The **system** service is hardcoded to use a single forward slash as the context root.
@@ -285,7 +285,7 @@ Open Liberty will look for the following environment variables, in order:
 * **`CONTEXT_ROOT`**
 
 
-# Modifying inventory microservice
+# **Modifying inventory microservice**
 
 The **inventory** service is hardcoded to use **bob** and **bobpwd** as the credentials to authenticate against the **system** service.
 You'll make these credentials configurable. 
@@ -417,7 +417,7 @@ environment variables **`SYSTEM_APP_USERNAME`** and
 **`SYSTEM_APP_PASSWORD`** into the **SystemClient** class.
 
 
-# Creating a ConfigMap and Secret
+# **Creating a ConfigMap and Secret**
 
 There are several ways to configure an environment variable in a Docker container.
 You can set it directly in the **Dockerfile** with the **ENV** command.
@@ -466,7 +466,7 @@ that is something you'll either need to do yourself or find an alternate option 
 
 
 
-# Updating Kubernetes resources
+# **Updating Kubernetes resources**
 
 Next, you will update your Kubernetes deployments to set the environment variables in your containers
 based on the values configured in the ConfigMap and Secret created previously. 
@@ -606,7 +606,7 @@ gets the values **username** and
 **password** from the
 **sys-app-credentials** Secret.
 
-# Deploying your changes
+# **Deploying your changes**
 
 Rebuild the application using **mvn clean package**.
 ```
@@ -651,7 +651,7 @@ curl http://$INVENTORY_PROXY/inventory/systems/system-service | jq
 
 If it is not working, then check the configuration of the credentials.
 
-# Testing the microservices
+# **Testing the microservices**
 
 
 
@@ -703,7 +703,7 @@ Results:
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-# Tearing down the environment
+# **Tearing down the environment**
 
 Run the following commands to delete all the resources that you created.
 
@@ -719,9 +719,9 @@ kubectl delete secret sys-app-credentials
 Press **CTRL+C** to stop the proxy server that was started at step 5.
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You have used MicroProfile Config to externalize the configuration of two microservices,
 
@@ -729,8 +729,9 @@ and then you configured them by creating a ConfigMap and Secret in your Kubernet
 
 
 
+<br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -742,19 +743,26 @@ rm -fr guide-kubernetes-microprofile-config
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
-select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+<br/>
+## **What did you think of this guide?**
 
-## What could make this guide better?
+We want to hear from you. To provide feedback, click the following link.
+
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Configuring%20microservices%20running%20in%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-config)
+
+Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
+
+<br/>
+## **What could make this guide better?**
+
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/pulls)
 
 
 
-
-## Where to next? 
+<br/>
+## **Where to next?**
 
 * [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 * [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
@@ -762,6 +770,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
-## Log out of the session
+<br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
