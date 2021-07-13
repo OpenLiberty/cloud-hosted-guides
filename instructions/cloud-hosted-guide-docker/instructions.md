@@ -287,7 +287,7 @@ curl http://localhost:9080/system/properties-new
 {: codeblock}
 
 
-# **Testing the container **
+# **Testing the container**
 
 
 
