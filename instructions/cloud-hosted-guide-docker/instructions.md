@@ -17,10 +17,11 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 You will learn how to set up, run, and iteratively develop a simple REST application in a container with Open Liberty and Docker.
 
-Open Liberty is an application server designed for the cloud. It’s small, lightweight, and designed with modern cloud-native
-application development in mind. Open Liberty simplifies the development process for these applications by automating 
-the repetitive actions associated with running applications inside containers, like rebuilding the image and stopping and starting 
-the container. 
+Open Liberty is an application server designed for the cloud.
+It’s small, lightweight, and designed with modern cloud-native application development in mind.
+Open Liberty simplifies the development process for these applications by automating 
+the repetitive actions associated with running applications inside containers,
+like rebuilding the image and stopping and starting the container. 
 
 You'll also learn how to create and run automated tests for your application and container.
 
@@ -52,17 +53,20 @@ Learn more about containers on the [official Docker website](https://www.docker.
 ### **Why use a container to develop?**
 
 Consider a scenario where you need to deploy your application on another environment. Your application
-works on your local machine, but when you try to run it on your cloud production environment, it breaks. You do
-some debugging and discover that you built your application with Java 8, but this cloud production environment has only 
-Java 11 installed. Although this issue is generally easy to fix, you don't want your application to be missing 
-dozens of version-specific dependencies. You can develop your application in this cloud environment, but that 
+works on your local machine, but when you try to run it on your cloud production environment, it breaks.
+You do some debugging and discover that you built your application with Java 8,
+but this cloud production environment has only Java 11 installed.
+Although this issue is generally easy to fix, 
+you don't want your application to be missing dozens of version-specific dependencies.
+You can develop your application in this cloud environment, but that 
 requires you to rebuild and repackage your application every time you update your code and wish to test it.
 
-To avoid this kind of problem, you can instead choose to develop your application in a container locally, bundled together with the
-entire environment that it needs to run. By doing this, you know that at any point in your iterative development process,
-the application can run inside that container. This helps avoid any unpleasant surprises when you go to test or
-deploy your application down the road. Containers run quickly and do not have a major impact on the speed
-of your iterative development. 
+To avoid this kind of problem, you can instead choose to develop your application in a container locally,
+bundled together with the entire environment that it needs to run.
+By doing this, you know that at any point in your iterative development process,
+the application can run inside that container.
+This helps avoid any unpleasant surprises when you go to test or deploy your application down the road.
+Containers run quickly and do not have a major impact on the speed of your iterative development.
 
 # **Getting started**
 
@@ -144,11 +148,11 @@ USER 1001
 {: codeblock}
 
 
-The **FROM** instruction initializes a new build stage and indicates the parent image from which your
-image is built. If you don't need a parent image, then use **FROM scratch**, which makes your image a
-base image. 
+The **FROM** instruction initializes a new build stage
+and indicates the parent image from which your image is built.
+If you don't need a parent image, then use **FROM scratch**, which makes your image a base image. 
 
-In this case, you’re using the **openliberty/open-liberty:full-java8-openj9-ubi** image as your parent image, 
+In this case, you’re using the **openliberty/open-liberty:full-java11-openj9-ubi** image as your parent image, 
 which comes with the latest Open Liberty runtime.
 
 The **COPY** instructions are structured as **COPY** 
@@ -176,8 +180,9 @@ the **pom.xml** file and some system files.
 # **Launching Open Liberty in dev mode**
 
 The Open Liberty Maven plug-in includes a **devc** goal that builds a Docker image, mounts the required directories,
-binds the required ports, and then runs the application inside of a container. This development mode, known as dev mode, also listens for any 
-changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
+binds the required ports, and then runs the application inside of a container.
+This development mode, known as dev mode, also listens for any changes in the application source code or
+configuration and rebuilds the image and restarts the container as necessary.
 
 Build and run the container by running the **devc** goal from the **start** directory:
 
@@ -213,22 +218,13 @@ ee2daf0b33e1        guide-docker-dev-mode   "/opt/ol/helpers/run…"   2 minutes
 To view a full list of all available containers, you can run the **docker ps -a** command.
 
 
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-If your container runs without problems, go to the http://localhost:9080/system/properties URL 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+If your container runs without problems, run the following **curl** command to get a JSON response
+that contains the system properties of the JVM in your container.
 
 ```
 curl http://localhost:9080/system/properties
 ```
 {: codeblock}
-
-
-where you can see a JSON file that contains the system properties of the JVM in your container.
 
 
 # **Updating the application while the container is running**
@@ -281,12 +277,9 @@ public class PropertiesResource {
 Change the endpoint of your application from **properties** to **properties-new** by changing the **@Path**
 annotation to **"properties-new"**.
 
-After you make the file changes, Open Liberty automatically updates the application. To see these changes reflected in the application, 
 
-go to the http://localhost:9080/system/properties-new URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+After you make the file changes, Open Liberty automatically updates the application.
+To see the changes reflected in the application, run the following command in a terminal:
 
 ```
 curl http://localhost:9080/system/properties-new
@@ -294,28 +287,17 @@ curl http://localhost:9080/system/properties-new
 {: codeblock}
 
 
+# **Testing the container**
 
-
-# **Testing the container **
 
 
 You can test this service manually by starting a server and going to the 
-
-http://localhost:9080/system/properties-new URL. 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/system/properties-new
-```
-{: codeblock}
-
-
+**http://localhost:9080/system/properties-new** URL.
 However, automated tests are a much better approach because they trigger a failure if a change introduces a bug.
 JUnit and the JAX-RS Client API provide a simple environment to test the application. 
-You can write tests for the individual units of code outside of a running application server, or they
-can be written to call the application server directly. In this example, you will create a test that calls the application server directly.
+You can write tests for the individual units of code outside of a running application server,
+or you can write them to call the application server directly.
+In this example, you will create a test that calls the application server directly.
 
 Create the **EndpointIT** class.
 
@@ -412,7 +394,7 @@ being passed in:
 ```
 <groupId>io.openliberty.tools</groupId>
 <artifactId>liberty-maven-plugin</artifactId>
-<version>3.3.2</version>
+<version>3.3.4</version>
 <configuration>
     <dockerRunOpts>-e ENV_VAR=exampleValue</dockerRunOpts>
 </configuration>
@@ -432,9 +414,16 @@ mvn liberty:devc \
 -Ddockerfile="./path/to/file"
 ```
 
-To learn more about dev mode with a container and its different
-features, check out the  
-https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode[Documentation].
+To learn more about dev mode with a container and its different features, 
+check out the [Documentation](http://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode).
+
+# **Summary**
+
+## **Nice Work!**
+
+You just iteratively developed a simple REST application in a container with Open Liberty and Docker.
+
+
 
 <br/>
 ## **Clean up your environment**
