@@ -91,7 +91,7 @@ Check out the service at the http://localhost:9080/LibertyProject/System/propert
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/LibertyProject/System/properties
+curl -s http://localhost:9080/LibertyProject/System/properties | jq
 ```
 {: codeblock}
 
@@ -287,7 +287,7 @@ Check out the service that you created at the http://localhost:9080/LibertyProje
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/LibertyProject/System/properties
+curl -s http://localhost:9080/LibertyProject/System/properties | jq
 ```
 {: codeblock}
 

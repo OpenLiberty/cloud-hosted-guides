@@ -564,7 +564,7 @@ Go to the http://localhost:9085/inventory/systems URL to access the inventory mi
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9085/inventory/systems
+curl -s http://localhost:9085/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -584,7 +584,7 @@ You can revisit the http://localhost:9085/inventory/systems URL after a while, a
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9085/inventory/systems
+curl -s http://localhost:9085/inventory/systems | jq
 ```
 {: codeblock}
 
