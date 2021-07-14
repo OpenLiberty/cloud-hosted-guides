@@ -1,5 +1,5 @@
 
-# Welcome to the Persisting data with MongoDB guide!
+# **Welcome to the Persisting data with MongoDB guide!**
 
 Learn how to persist data in your microservices to MongoDB, a document-oriented NoSQL database.
 
@@ -11,7 +11,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to use MongoDB to build and test a simple microservice that manages the members of a crew.
 The microservice will respond to **POST**, **GET**, **PUT**, and **DELETE** requests that manipulate the database.
@@ -35,7 +35,7 @@ Additionally, MicroProfile Config is used to easily configure the MongoDB driver
 For more information about CDI and MicroProfile Config, see the guides on [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) and [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html).
 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -61,7 +61,8 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-### Setting up MongoDB
+<br/>
+### **Setting up MongoDB**
 
 This guide uses Docker to run an instance of MongoDB.
 A multi-stage Dockerfile is provided for you.
@@ -98,7 +99,8 @@ docker cp mongo-guide:/home/mongodb/certs/truststore.p12 finish/src/main/liberty
 {: codeblock}
 
 
-### Try what you'll build
+<br/>
+### **Try what you'll build**
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -135,7 +137,7 @@ mvn liberty:stop
 
 
 
-# Providing a MongoDatabase
+# **Providing a MongoDatabase**
 
 Navigate to the **start** directory to begin.
 
@@ -278,7 +280,7 @@ This method injects the **MongoClient** in its parameters and passes the databas
 
 
 
-# Implementing the Create, Retrieve, Update, and Delete operations
+# **Implementing the Create, Retrieve, Update, and Delete operations**
 
 You are going to implement the basic create, retrieve, update, and delete (CRUD) operations in the **CrewService** class.
 The **com.mongodb.client** and **com.mongodb.client.result** packages are used to help implement these operations for the microservice.
@@ -613,7 +615,7 @@ If zero documents were deleted, then the object **id** doesn't exist.
 
 
 
-# Configuring the MongoDB driver and the server
+# **Configuring the MongoDB driver and the server**
 
 MicroProfile Config makes configuring the MongoDB driver simple because all of the configuration can be set in one place and injected into the CDI producer.
 
@@ -666,8 +668,9 @@ Replace the server configuration file.
         <feature>mpConfig-2.0</feature>
         <!-- tag::passwordUtilFeature[] -->
         <feature>passwordUtilities-1.0</feature>
-        <feature>beanValidation-2.0</feature>	   
+        <feature>beanValidation-2.0</feature>
         <feature>jaxrs-2.1</feature>
+        <feature>jca-1.7</feature>
         <feature>mpOpenAPI-2.0</feature>
     </featureManager>
 
@@ -720,7 +723,7 @@ The **ssl** element specifies the **defaultKeyStore** as the keystore and **outb
 After you replace the **server.xml** file, the Open Liberty configuration is automatically reloaded.
 
 
-# Running the application
+# **Running the application**
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
@@ -837,7 +840,7 @@ Now, you can check out the microservice that you created by going to the **`http
 where **accountname** is your account name.
 
 
-# Testing the application
+# **Testing the application**
 
 Next, you'll create integration tests to ensure that the basic operations you implemented function correctly.
 
@@ -1020,7 +1023,8 @@ The following test cases are included in this class:
 
 * **testDeleteCrewMember()** verifies that the crew members are correctly removed from the database.
 
-### Running the tests
+<br/>
+### **Running the tests**
 
 Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
@@ -1044,7 +1048,7 @@ Results:
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-# Tearing down the environment
+# **Tearing down the environment**
 
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
@@ -1060,16 +1064,17 @@ docker rmi mongo
 {: codeblock}
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You've successfully accessed and persisted data to a MongoDB database from a Java microservice using Contexts and Dependency Injection (CDI) and MicroProfile Config with Open Liberty.
 
 
 
+<br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -1081,19 +1086,26 @@ rm -fr guide-mongodb-intro
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
-select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+<br/>
+## **What did you think of this guide?**
 
-## What could make this guide better?
+We want to hear from you. To provide feedback, click the following link.
+
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Persisting%20data%20with%20MongoDB&guide-id=cloud-hosted-guide-mongodb-intro)
+
+Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
+
+<br/>
+## **What could make this guide better?**
+
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-mongodb-intro/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-mongodb-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-mongodb-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-mongodb-intro/pulls)
 
 
 
-
-## Where to next? 
+<br/>
+## **Where to next?**
 
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
@@ -1104,6 +1116,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-## Log out of the session
+<br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
