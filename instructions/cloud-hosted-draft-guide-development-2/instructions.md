@@ -180,52 +180,40 @@ inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
 After the pods are ready, you will make requests to your services.
 
 
-In this execise, you need to access the services by using Kubernetes API.
-Run the following command to start a proxy to the Kubernetes API server:
-
-```
-kubectl proxy
-```
-{: codeblock}
-
+To make requests to the services, you need to set up port forwarding.
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following commands to store the proxy path of the **system** and **inventory** services.
+Run the following command to set up port forwarding to access the **system** service.
 
 ```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/inventory-service/proxy
+kubectl port-forward svc/system-service 31000:9080
 ```
 {: codeblock}
 
-Run the following echo commands to verify the variables:
+Then, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Run the following command to set up port forwarding to access the **inventory** service.
 
 ```
-echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
+kubectl port-forward svc/inventory-service 32000:9080
 ```
 {: codeblock}
-
-The output appears similar to the following:
-
-```
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
-```
 
 Then use the following **curl** command to access your **system** microservice.
 The `-u` option is used to pass in the username `bob` and the password `bobpwd`.
 
 ```
-curl http://$SYSTEM_PROXY/system/properties -u bob:bobpwd | jq
+curl localhost:31000/system/properties -u bob:bobpwd | jq
 ```
 {: codeblock}
 
 Use the following **curl** command to access your **inventory** microservice.
 
 ```
-curl http://$INVENTORY_PROXY/inventory/systems/system-service | jq
+curl localhost:32000/inventory/systems/system-service | jq
 ```
 {: codeblock}
+
+When you're done trying out the microservices, press **CTRL+C** in the command line sessions
+where you ran the `kubectl port-forward` commands. 
 
 # **Modifying system microservice**
 
@@ -606,6 +594,7 @@ gets the values **username** and
 **password** from the
 **sys-app-credentials** Secret.
 
+
 # **Deploying your changes**
 
 Rebuild the application using **mvn clean package**.
@@ -623,6 +612,29 @@ docker build -t inventory:1.0-SNAPSHOT inventory/.
 {: codeblock}
 
 
+
+Push your updated images to the container registry on IBM Cloud with the following commands:
+
+```
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+```
+{: codeblock}
+
+Update the image names so that the images in your IBM Cloud container registry are used,
+and remove the **nodePort** fields so that the ports can be automatically generated:
+
+```
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
+{: codeblock}
+
+
 Run the following command to deploy your changes to the Kubernetes cluster.
 ```
 kubectl replace --force -f kubernetes.yaml
@@ -631,11 +643,27 @@ kubectl replace --force -f kubernetes.yaml
 
 
 
+Set up port forwarding to the new services.
+
+Run the following command to set up port forwarding to access the **system** service.
+
+```
+kubectl port-forward svc/system-service 31000:9080
+```
+{: codeblock}
+
+Then, run the following command to set up port forwarding to access the **inventory** service.
+
+```
+kubectl port-forward svc/inventory-service 32000:9080
+```
+{: codeblock}
+
 You now need to use the new username, `alice`, and the new password `wonderland`.
 Access your application with the following command:
 
 ```
-curl http://$SYSTEM_PROXY/dev/system/properties -u alice:wonderland | jq
+curl localhost:31000/dev/system/properties -u alice:wonderland | jq
 ```
 {: codeblock}
 
@@ -645,7 +673,7 @@ Notice that the URL you are using to reach the application now has **/dev** as t
 Verify the inventory service is working as intended by using the following command:
 
 ```
-curl http://$INVENTORY_PROXY/inventory/systems/system-service | jq
+curl localhost:32000/inventory/systems/system-service | jq
 ```
 {: codeblock}
 
@@ -655,20 +683,10 @@ If it is not working, then check the configuration of the credentials.
 
 
 
-Update the **pom.xml** files so that the **system.service.root** and **inventory.service.root** properties
-match the values to access the **system** and **inventory** services.
-
-```
-sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' inventory/pom.xml
-sed -i 's=localhost:32000='"$INVENTORY_PROXY"'=g' inventory/pom.xml
-sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
-```
-{: codeblock}
-
 Run the integration tests by using the following command:
 
 ```
-mvn failsafe:integration-test
+mvn failsafe:integration-test -Dsystem.context.root=/dev
 ```
 {: codeblock}
 
@@ -716,7 +734,7 @@ kubectl delete secret sys-app-credentials
 
 
 
-Press **CTRL+C** to stop the proxy server that was started at step 5.
+Press **CTRL+C** in the command-line sessions where you ran `kubectl port-forward` to stop the port forwarding. 
 
 
 # **Summary**
