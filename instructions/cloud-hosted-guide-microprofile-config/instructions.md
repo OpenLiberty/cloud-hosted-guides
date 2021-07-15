@@ -157,7 +157,7 @@ The **`io_openliberty_guides_port_number`** property that has already been defin
 
 
 To use this configuration property,
-Create the **InventoryConfig.java** class.
+create the **InventoryConfig.java** class.
 
 > Run the following touch command in your terminal
 ```
@@ -223,7 +223,7 @@ To use these properties in the application, the data object needs to be transfor
 
 To link this JSON file to your application and to implement the **ConfigSource** interface,
 
-Create the **CustomConfigSource** class.
+create the **CustomConfigSource** class.
 
 > Run the following touch command in your terminal
 ```
@@ -372,7 +372,7 @@ io.openliberty.guides.config.CustomConfigSource
 Now that the custom configuration source has successfully been set up, you can enable dynamic configuration injection of the properties being set in this ConfigSource.
 To enable this dynamic injection,
 
-Replace the **InventoryConfig.java** class.
+replace the **InventoryConfig.java** class.
 
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
@@ -428,7 +428,7 @@ Configuration values are purely Strings. MicroProfile Config API has built-in co
 Therefore, in the previous section, it is type-safe to directly set the variable type to **Provider<Boolean>**.
 
 To convert configured Strings to an arbitrary class type, such as the **Email** class type,
-Replace the **Email** Class.
+replace the **Email** Class.
 
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java
@@ -508,7 +508,7 @@ public class CustomEmailConverter implements Converter<Email> {
 This implements the **Converter<T>** interface.
 
 To register your implementation,
-Create the configuration file.
+create the configuration file.
 
 > Run the following touch command in your terminal
 ```
@@ -530,7 +530,7 @@ io.openliberty.guides.config.CustomEmailConverter
 
 
 To use the custom **Email** converter,
-Replace the **InventoryConfig** class.
+replace the **InventoryConfig** class.
 
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
@@ -583,7 +583,7 @@ Inject the **`io_openliberty_guides_email`** property, and add the **getEmail()*
 # **Adding configuration to the microservice**
 
 To use externalized configuration in the **inventory** service,
-Replace the **InventoryResource** class.
+replace the **InventoryResource** class.
 
 > From the menu of the IDE, select 
  **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
