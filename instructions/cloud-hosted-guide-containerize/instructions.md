@@ -84,7 +84,7 @@ mvn -pl inventory liberty:run
 Select **Terminal** > **New Terminal** from the menu of the IDE to open a new command-line session.
 To access the **inventory** service, which displays the current contents of the inventory, run the following curl command: 
 ```
-curl http://localhost:9081/inventory/systems
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -96,13 +96,13 @@ The defaultServer server is ready to run a smarter planet.
 
 The **system** service shows the system properties of the running JVM and can be found by running the following curl command:
 ```
-curl http://localhost:9080/system/properties
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
 The system properties of your localhost can be added to the **inventory** service at **http://localhost:9081/inventory/systems/localhost**. Run the following curl command:
 ```
-curl http://localhost:9081/inventory/systems/localhost
+curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 {: codeblock}
 
@@ -353,7 +353,7 @@ your images, and start the containers again.
 To access the application, run the following curl command. 
 An empty list is expected because no system properties are stored in the inventory yet:
 ```
-curl http://localhost:9081/inventory/systems
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -378,7 +378,7 @@ In this case, the IP address for the **system** service is **172.17.0.2**. Take 
 Run the following commands to go to the **http://localhost:9081/inventory/systems/[system-ip-address]** by replacing **[system-ip-address]** URL with the IP address that you obtained earlier:
 ```
 SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
-curl http://localhost:9081/inventory/systems/{$SYSTEM_IP}
+curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
 ```
 {: codeblock}
 
@@ -386,7 +386,7 @@ You see a result in JSON format with the system properties of your local JVM. Wh
 properties are automatically stored in the inventory. Run the following curl command and 
 you see a new entry for **[system-ip-address]**:
 ```
-curl http://localhost:9081/inventory/systems
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -448,7 +448,7 @@ The **inventory** service is now available on the new port number that you
 specified. You can see the contents of the inventory at the
 **http://localhost:9091/inventory/systems** URL. Run the following curl command:
 ```
-curl http://localhost:9091/inventory/systems
+curl -s http://localhost:9091/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -458,14 +458,14 @@ replacing **[system-ip-address]** with the IP address that you obtained in the p
 section. Run the following commands:
 ```
 SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
-curl http://localhost:9091/inventory/systems/{$SYSTEM_IP}
+curl -s http://localhost:9091/inventory/systems/{$SYSTEM_IP} | jq
 ```
 {: codeblock}
 
 The **system** service remains unchanged and is available at the
 **http://localhost:9080/system/properties** URL. Run the following curl command:
 ```
-curl http://localhost:9080/system/properties
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
