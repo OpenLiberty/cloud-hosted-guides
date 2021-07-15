@@ -90,7 +90,7 @@ The defaultServer server is ready to run a smarter planet.
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 To access the **inventory** service with a localhost hostname, run the following curl command:
 ```
-curl http://localhost:9080/inventory/systems/localhost
+curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
 {: codeblock}
 
@@ -114,7 +114,7 @@ Change the **`io_openliberty_guides_system_inMaintenance`** property from **fals
 You do not need to restart the server. 
 Next, run the following curl command:
 ```
-curl http://localhost:9080/inventory/systems/localhost
+curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
 {: codeblock}
 
@@ -343,7 +343,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 When the server is running, run the following curl command:
 ```
-curl http://localhost:9080/inventory/systems/localhost
+curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
 {: codeblock}
 
@@ -351,7 +351,7 @@ You receive the system properties of your local JVM from the **inventory** servi
 
 Next, run the following curl command which accesses the **system** service, to retrieve the system properties for the specific localhost:
 ```
-curl http://localhost:9080/system/properties
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
@@ -396,7 +396,7 @@ Change the **`io_openliberty_guides_system_inMaintenance`** property from **fals
 
 After saving the file, run the following curl command to view the cached version of the properties:
 ```
-curl http://localhost:9080/inventory/systems/localhost
+curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
 {: codeblock}
 
