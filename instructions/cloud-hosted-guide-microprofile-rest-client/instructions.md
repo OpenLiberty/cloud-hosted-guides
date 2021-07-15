@@ -89,7 +89,7 @@ The **system** service is accessible at the http://localhost:9080/system/propert
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/system/properties
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
@@ -104,7 +104,7 @@ To fetch and store your system information, visit the http://localhost:9080/inve
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/inventory/systems/localhost
+curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
 {: codeblock}
 
@@ -510,7 +510,7 @@ When the server is running, select either approach to fetch your system properti
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/inventory/systems/localhost
+curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
 {: codeblock}
 
