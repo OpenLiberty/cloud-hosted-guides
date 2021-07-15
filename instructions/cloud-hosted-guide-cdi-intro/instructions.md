@@ -102,7 +102,7 @@ Point your browser to the http://localhost:9080/inventory/systems URL.
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/inventory/systems
+curl -s http://localhost:9080/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -116,7 +116,7 @@ Next, point your browser to the http://localhost:9080/inventory/systems/localhos
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/inventory/systems/localhost
+curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
 {: codeblock}
 
@@ -130,7 +130,7 @@ Go back to http://localhost:9080/inventory/systems
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/inventory/systems
+curl -s http://localhost:9080/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -347,7 +347,7 @@ You can find the **inventory** and **system** services at the following URLs:
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/inventory/systems
+curl -s http://localhost:9080/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -359,7 +359,7 @@ curl http://localhost:9080/inventory/systems
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/system/properties
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
