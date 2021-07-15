@@ -447,7 +447,7 @@ endpoint of the **inventory** service.
 
 Run the following curl command to access the **inventory** microservice:
 ```
-curl http://localhost:9085/inventory/systems
+curl -s http://localhost:9085/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -466,7 +466,7 @@ acknowledges each incoming message, ensuring that no **system** message is lost.
 
 If you run the curl command again after a while, notice that the CPU **systemLoad** property for the systems changed.
 ```
-curl http://localhost:9085/inventory/systems
+curl -s http://localhost:9085/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -497,7 +497,7 @@ The previous example response is confirmation that the sent request message was 
 
 Run the following curl command again:
 ```
-curl http://localhost:9085/inventory/systems
+curl -s http://localhost:9085/inventory/systems | jq
 ```
 {: codeblock}
 
