@@ -233,7 +233,7 @@ In this case, you are using the default application readiness check at the http:
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/health/ready
+curl -s http://localhost:9080/health/ready | jq
 ```
 {: codeblock}
 
