@@ -457,7 +457,7 @@ of the **inventory** service.
 
 Run the following curl command to access the  **inventory** microservice:
 ```
-curl http://localhost:9085/inventory/systems
+curl -s http://localhost:9085/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -473,7 +473,7 @@ You see the CPU **systemLoad** property for all the systems:
 
 You can revisit the **inventory** service after a while by running the following curl command:
 ```
-curl http://localhost:9085/inventory/systems
+curl -s http://localhost:9085/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -504,7 +504,7 @@ The **system** service is available so the request to the service is successful 
 
 You can revisit the **inventory** service by running the following curl command:
 ```
-curl http://localhost:9085/inventory/systems
+curl -s http://localhost:9085/inventory/systems | jq
 ```
 {: codeblock}
 
