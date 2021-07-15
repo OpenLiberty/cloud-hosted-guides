@@ -72,21 +72,21 @@ The defaultServer server is ready to run a smarter planet.
 
 Run the following curl command to test the availability of the **system** microservice and retrieve the system information:
 ```
-curl http://localhost:9080/system/properties
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
 Run the following curl command to test the availability of the **inventory** microservice and 
 retrieve the information for a list of all previously registered hosts:
 ```
-curl http://localhost:9080/inventory/systems
+curl -s http://localhost:9080/inventory/systems | jq
 ```
 {: codeblock}
 
 In addition, you can run the following curl command to access a third microservice, 
 which retrieves and aggregates all of the configuration properties and sources that are added throughout this guide.
 ```
-curl http://localhost:9080/config
+curl -s http://localhost:9080/config | jq
 ```
 {: codeblock}
 
@@ -678,19 +678,19 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 While the server is running, run the following curl command to access the **system** microservice:
 ```
-curl http://localhost:9080/system/properties
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
 and run the following curl command to access the **inventory** microservice:
 ```
-curl http://localhost:9080/inventory/systems
+curl -s http://localhost:9080/inventory/systems | jq
 ```
 {: codeblock}
 
 You can find the service that retrieves configuration information that is specific to this guide by running the following curl command:
 ```
-curl http://localhost:9080/config
+curl -s http://localhost:9080/config | jq
 ```
 {: codeblock}
 
@@ -702,13 +702,13 @@ The **`config_ordinal`** value of the custom configuration source is set to **15
 Play with this application by changing configuration values for each property in the **resources/CustomConfigSource.json** file.
 Your changes are added dynamically, and you do not need to restart the server. Rerun the following curl command to see the dynamic changes:
 ```
-curl http://localhost:9080/config
+curl -s http://localhost:9080/config | jq
 ```
 {: codeblock}
 
 For example, change **`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**, then try to access http://localhost:9080/inventory/systems again by running the following curl command:
 ```
-curl http://localhost:9080/inventory/systems
+curl -s http://localhost:9080/inventory/systems | jq
 ```
 {: codeblock}
 
