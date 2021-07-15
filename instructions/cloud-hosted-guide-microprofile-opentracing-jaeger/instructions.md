@@ -131,7 +131,7 @@ The defaultServer server is ready to run a smarter planet.
 
 Open another command-line session and run the following curl command from the terminal:
 ```
-curl http://localhost:9081/inventory/systems/localhost
+curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 {: codeblock}
 
@@ -211,13 +211,13 @@ Open another command-line session to continue, or open the project in your edito
 
 When the servers start, you can find the **system** service by running the following curl command:
 ```
-curl http://localhost:9080/system/properties
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
 and the **inventory** service by running the following curl command:
 ```
-curl http://localhost:9081/inventory/systems
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -377,7 +377,7 @@ Enable tracing of the **list()** non-JAX-RS method by updating **@Traced** as sh
 
 Run the following curl command:
 ```
-curl http://localhost:9081/inventory/systems
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -476,7 +476,7 @@ by setting **@Traced(false)**.
 
 Run the following curl command:
 ```
-curl http://localhost:9081/inventory/systems
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -587,7 +587,7 @@ Otherwise, any exceptions that are thrown before the span closes will leak the a
 
 Run the following curl command:
 ```
-curl http://localhost:9081/inventory/systems/localhost
+curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 {: codeblock}
 
