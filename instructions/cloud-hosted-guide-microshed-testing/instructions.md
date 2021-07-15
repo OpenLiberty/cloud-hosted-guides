@@ -93,7 +93,7 @@ After you see the following message, your application server in dev mode is read
 *    Liberty is running in dev mode.
 ```
 
-After the Open Liberty server starts and you see the **Press the Enter key to run tests on demand.** message, 
+After the Open Liberty server starts and you see the **To run tests on demand, press Enter.** message, 
 you can press the **enter/return** key to run the integration tests. 
 After the tests finish, you can press the **enter/return** key to run the tests again, 
 or you can make code changes to the application or tests. 
@@ -130,7 +130,7 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
-Wait for the **Press the Enter key to run tests on demand.** message, 
+Wait for the **To run tests on demand, press Enter.** message, 
 and then press the **enter/return** key to run the tests. You see that one test runs:
 
 ```
