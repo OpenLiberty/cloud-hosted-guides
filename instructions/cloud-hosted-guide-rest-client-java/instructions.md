@@ -87,7 +87,7 @@ Open another command-line session by selecting **Terminal** > **New Terminal** f
 
 You can find your service at the **http://localhost:9080/artists** endpoint by running the following curl command:
 ```
-curl http://localhost:9080/artists
+curl -s http://localhost:9080/artists | jq
 ```
 {: codeblock}
 
@@ -147,7 +147,7 @@ or open the project in your editor.
 The application that you'll build upon was created for you. After your server is
 ready, run the following curl command to access the service:
 ```
-curl http://localhost:9080/artists
+curl -s http://localhost:9080/artists | jq
 ```
 {: codeblock}
 
@@ -425,7 +425,7 @@ The Open Liberty server was started in development mode at the beginning of the 
 
 You can find your service at the **http://localhost:9080/artists** endpoint by running the following curl command:
 ```
-curl http://localhost:9080/artists
+curl -s http://localhost:9080/artists | jq
 ```
 {: codeblock}
 
