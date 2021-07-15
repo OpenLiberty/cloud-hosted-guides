@@ -321,7 +321,7 @@ The script also creates three instances of the **system** microservice.
 The services might take several minutes to become available.
 You can access the application by making requests to the **query/systemLoad** endpoint by running the following curl command:
 ```
-curl http://localhost:9080/query/systemLoad
+curl -s http://localhost:9080/query/systemLoad | jq
 ```
 {: codeblock}
 
