@@ -691,7 +691,7 @@ mvn liberty:devc -DserverStartTimeout=300
 When you see the following message, Open Liberty is ready to run in dev mode:
 
 ```
-************************************************************************
+**************************************************************
 *    Liberty is running in dev mode.
 ```
 
