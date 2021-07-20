@@ -1,5 +1,5 @@
 
-# Welcome to the Testing microservices with consumer-driven contracts guide!
+# **Welcome to the Testing microservices with consumer-driven contracts guide!**
 
 Learn how to test Java microservices with consumer-driven contracts in Open Liberty.
 
@@ -11,7 +11,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 With a microservices-based architecture, you need robust testing to ensure that
 microservices that depend on one another are able to communicate effectively.
@@ -46,7 +46,7 @@ The **inventory** microservice retrieves specific properties from the **system**
 You will learn how to use the Pact framework to write contract tests for the **inventory** microservice
 that will then be verified by the **system** microservice.
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -71,7 +71,8 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-### Starting the Pact Broker
+<br/>
+### **Starting the Pact Broker**
 
 Run the following command to start the Pact Broker:
 ```
@@ -105,7 +106,7 @@ The Pact Broker interface is similar to the following image:
 You can refer to the [official Pact Broker documentation](https://docs.pact.io/pact_broker/docker_images/pactfoundation)
 for more information about the components of the Docker Compose file.
 
-# Implementing pact testing in the inventory service
+# **Implementing pact testing in the inventory service**
 
 Navigate to the **start/inventory** directory to begin.
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
@@ -120,7 +121,7 @@ mvn liberty:dev
 After you see the following message, your application server in dev mode is ready:
 
 ```
-************************************************************************
+**************************************************************
 *    Liberty is running in dev mode.
 ```
 
@@ -478,7 +479,7 @@ After the file is published, you'll see a similar output to the following exampl
 Publishing 'Inventory-System.json' with tags 'open-liberty-pact' ... OK
 ```
 
-# Verifying the pact in the Pact Broker
+# **Verifying the pact in the Pact Broker**
 
 
 Refresh the Pact Broker at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
@@ -500,7 +501,7 @@ The insights look similar to the following image:
 ![Pact Broker webpage for Interactions](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-interactions.png)
 
 
-# Implementing pact testing in the system service
+# **Implementing pact testing in the system service**
 
 
 
@@ -517,7 +518,7 @@ mvn liberty:dev
 After you see the following message, your application server in dev mode is ready:
 
 ```
-************************************************************************
+**************************************************************
 *    Liberty is running in dev mode.
 ```
 
@@ -713,7 +714,7 @@ dynamically set to the build number so that you can identify where a breaking ch
 After you create the **SystemBrokerIT.java** class and replace the **pom.xml** file,
 Open Liberty automatically reloads its configuration.
 
-# Verifying the contract
+# **Verifying the contract**
 
 In the command-line session where you started the **system** microservice,
 press the **enter/return** key to run the tests to verify the pact file.
@@ -845,7 +846,7 @@ Confirm that the last verified column now shows a timestamp:
 The pact file that's created by the **inventory** microservice was successfully verified by the **system** microservice through the Pact Broker.
 This ensures that responses from the **system** microservice meet the expectations of the **inventory** microservice.
 
-# Tearing down the environment
+# **Tearing down the environment**
 
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line sessions
 where you ran the servers for the **system** and **inventory** microservices,
@@ -861,16 +862,17 @@ docker volume rm pact-broker_postgres-volume
 {: codeblock}
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You implemented contract testing in Java microservices by using Pact and verified the contract with the Pact Broker.
 
 
 
+<br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -882,19 +884,26 @@ rm -fr guide-contract-testing
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
-select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+<br/>
+## **What did you think of this guide?**
 
-## What could make this guide better?
+We want to hear from you. To provide feedback, click the following link.
+
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20consumer-driven%20contracts&guide-id=cloud-hosted-guide-contract-testing)
+
+Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
+
+<br/>
+## **What could make this guide better?**
+
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-contract-testing/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-contract-testing/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-contract-testing/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-contract-testing/pulls)
 
 
 
-
-## Where to next? 
+<br/>
+## **Where to next?**
 
 * [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
 * [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
@@ -903,6 +912,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-## Log out of the session
+<br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
