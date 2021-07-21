@@ -10,6 +10,7 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
+
 # **What you'll learn**
 
 You will learn how to run and update a simple REST microservice on Open Liberty.
@@ -36,7 +37,7 @@ Finally, you will package the application along with the server configuration in
 image and run that image as a container.
 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -57,7 +58,6 @@ cd guide-getting-started
 {: codeblock}
 
 
-
 The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
@@ -65,7 +65,7 @@ The **finish** directory contains the finished project that you will build.
 
 
 
-# Building and running the application
+# **Building and running the application**
 
 Your application is configured to be built with Maven. Every Maven-configured project
 contains a **pom.xml** file, which defines the project configuration, dependencies, plug-ins,
@@ -117,7 +117,7 @@ To access the **system** microservice, see the http://localhost:9080/system/prop
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/system/properties
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
@@ -144,7 +144,7 @@ mvn liberty:stop
 
 
 
-# Starting and stopping the Open Liberty server in the background
+# **Starting and stopping the Open Liberty server in the background**
 
 Although you can start and stop the server in the foreground by using the Maven
 **liberty:run** goal, you can also start and stop the server in the background with
@@ -160,7 +160,7 @@ mvn liberty:stop
 
 
 
-# Updating the server configuration without restarting the server
+# **Updating the server configuration without restarting the server**
 
 The Open Liberty Maven plug-in includes a **dev** goal that listens for any changes in the project, 
 including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
@@ -182,7 +182,7 @@ As before, you can see that the application is running by going to the http://lo
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/system/properties
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
@@ -213,7 +213,7 @@ To add the MicroProfile Health feature to the server, include the **mpHealth** f
 Replace the server configuration file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
+> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
@@ -270,7 +270,7 @@ Try to access the **/health** endpoint again by visiting the http://localhost:90
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/health
+curl -s http://localhost:9080/health | jq
 ```
 {: codeblock}
 
@@ -288,7 +288,7 @@ Now you can verify whether your server is up and running.
 
 
 
-# Updating the source code without restarting the server
+# **Updating the source code without restarting the server**
 
 The JAX-RS application that contains your **system** microservice runs in a server from its **.class** file and other artifacts.
 Open Liberty automatically monitors these artifacts, and whenever they are updated, it updates the running server without the need for the server to be restarted.
@@ -428,7 +428,7 @@ Access the **/health** endpoint again by going to the http://localhost:9080/heal
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/health
+curl -s http://localhost:9080/health | jq
 ```
 {: codeblock}
 
@@ -463,7 +463,7 @@ You can also access the **/health/ready** endpoint by going to the http://localh
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/health/ready
+curl -s http://localhost:9080/health/ready | jq
 ```
 {: codeblock}
 
@@ -475,7 +475,7 @@ Similarly, access the **/health/live** endpoint by going to the http://localhost
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/health/live
+curl -s http://localhost:9080/health/live | jq
 ```
 {: codeblock}
 
@@ -487,7 +487,7 @@ Alternatively, you can run the **run** goal and manually repackage or recompile 
 
 
 
-# Checking the Open Liberty server logs
+# **Checking the Open Liberty server logs**
 
 While the server is running in the foreground, it displays various console messages in
 the command-line session. These messages are also logged to the **target/liberty/wlp/usr/servers/defaultServer/logs/console.log**
@@ -498,7 +498,7 @@ occur or whenever tracing is enabled. You can find the error logs in the
 **ffdc** directory and the tracing logs in the **trace.log** file.
 
 In addition to the log files that are generated automatically, you can enable logging of
-specific Java packages or classes by using the **`<logging/>`** element:
+specific Java packages or classes by using the **logging** element:
 
 ```
 <logging traceSpecification="<component_1>=<level>:<component_2>=<level>:..."/>
@@ -509,7 +509,7 @@ of the following logging levels: **off**, **fatal**, **severe**, **warning**, **
 **config**, **detail**, **fine**, **finer**, **finest**, **all**.
 
 Try enabling detailed logging of the MicroProfile Health feature by adding the
-**`<logging/>`** element to your configuration file.
+**logging** element to your configuration file.
 
 Replace the server configuration file.
 
@@ -557,7 +557,7 @@ When you are done checking out the service, exit dev mode by pressing **CTRL+C**
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
-# Running the application in a Docker container
+# **Running the application in a Docker container**
 
 To run the application in a container, Docker needs to be installed. For installation
 instructions, see the [Official Docker Docs](https://docs.docker.com/install/).
@@ -649,7 +649,7 @@ To access the application, go to the http://localhost:9080/system/properties URL
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/system/properties
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
@@ -670,7 +670,7 @@ docker rmi openliberty-getting-started:1.0-SNAPSHOT
 
 
 
-# Developing the application in a Docker container
+# **Developing the application in a Docker container**
 
 
 The Open Liberty Maven plug-in includes a **devc** goal that simplifies developing
@@ -716,7 +716,7 @@ To access the application, go to the http://localhost:9080/system/properties URL
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/system/properties
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
@@ -774,7 +774,7 @@ http://localhost:9080/dev/system/properties
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/dev/system/properties
+curl -s http://localhost:9080/dev/system/properties | jq
 ```
 {: codeblock}
 
@@ -787,7 +787,7 @@ then pressing the **enter/return** key. Either of these options stops and
 removes the container. To check that the container was stopped, run the **docker ps** command.
 
 
-# Running the application from a minimal runnable JAR
+# **Running the application from a minimal runnable JAR**
 
 So far, Open Liberty was running out of the **target/liberty/wlp** directory, which
 effectively contains an Open Liberty server installation and the deployed application. The
@@ -833,7 +833,7 @@ When the server starts, go to the http://localhost:9080/dev/system/properties UR
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/dev/system/properties
+curl -s http://localhost:9080/dev/system/properties | jq
 ```
 {: codeblock}
 
@@ -846,17 +846,18 @@ You can stop the server by pressing **CTRL+C** in the command-line session that 
 
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You've learned the basics of deploying and updating an application on an Open Liberty server.
 
 
 
 
+<br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -868,25 +869,33 @@ rm -fr guide-getting-started
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support** button in the IDE,
-select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+<br/>
+## **What did you think of this guide?**
 
-## What could make this guide better?
+We want to hear from you. To provide feedback, click the following link.
+
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Getting%20started%20with%20Open%20Liberty&guide-id=cloud-hosted-guide-getting-started)
+
+Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
+
+<br/>
+## **What could make this guide better?**
+
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-getting-started/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-getting-started/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-getting-started/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-getting-started/pulls)
 
 
 
-
-## Where to next? 
+<br/>
+## **Where to next?**
 
 * [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
-## Log out of the session
+<br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
