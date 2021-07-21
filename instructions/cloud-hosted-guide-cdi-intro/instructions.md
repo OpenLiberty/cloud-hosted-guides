@@ -560,11 +560,9 @@ See the following descriptions of the test cases:
 
 * **testHostRegistration()** verifies that a host is correctly added to the inventory.
 
-* **testSystemPropertiesMatch()** verifies that the JVM system properties returned by the **system** service match
-the ones stored in the **inventory** service.
+* **testSystemPropertiesMatch()** verifies that the JVM system properties returned by the **system** service match the ones stored in the **inventory** service.
 
-* **testUnknownHost()** verifies that an unknown host or a host that does not expose their JVM system
-properties is correctly handled as an error.
+* **testUnknownHost()** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled as an error.
 
 To force these test cases to run in a particular order, annotate your **InventoryEndpointIT** test class with the **@TestMethodOrder(OrderAnnotation.class)** annotation.
 **OrderAnnotation.class** runs test methods in numerical order, 
