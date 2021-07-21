@@ -22,7 +22,7 @@ The application that you will be working with is an **inventory** service, which
 Whenever a request is made to retrieve the system properties of a particular host, the **inventory** service will create a client to invoke the **system**
 service on that host. The **system** service simulates a remote service in the application.
 
-You will instantiate the client and use it in the **inventory** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/ref/general/#contexts_dependency_injection.html) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method.
+You will instantiate the client and use it in the **inventory** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/latest/cdi-beans.html) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method.
 In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
 
  * When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with a CDI method.
@@ -111,9 +111,9 @@ curl -s http://localhost:9080/inventory/systems/localhost | jq
 
 
 
-You can also use the **http://localhost:9080/inventory/systems/{your_hostname}** URL. In Windows,
+You can also use the **http://localhost:9080/inventory/systems/{your-hostname}** URL. In Windows,
 MacOS, and Linux, get your fully qualified domain name (FQDN) by entering
-**hostname** into your command-line. Visit the URL by replacing **{your_hostname}**
+**hostname** into your command-line. Visit the URL by replacing **{your-hostname}**
 with your FQDN.
 
 
@@ -517,7 +517,9 @@ curl -s http://localhost:9080/inventory/systems/localhost | jq
 
 
 
-Or, get your FQDN first. Then, visit the **http://localhost:9080/inventory/systems/{your_hostname}** URL by replacing **{your_hostname}** with your FQDN, which retrieves your system properties by making a request to the **system** service at **http://{your_hostname}:9080/system/properties**.
+Or, get your FQDN first. Then, visit the **http://localhost:9080/inventory/systems/{your-hostname}** URL 
+by replacing **{your-hostname}** with your FQDN, which retrieves your system properties 
+by making a request to the **system** service at **http://{your-hostname}:9080/system/properties**.
 
 
 # **Testing the application**
