@@ -165,8 +165,13 @@ the JAX-RS framework.
 
 Update the **InventoryResource** class.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-microprofile-openapi/start/
+> From the menu of the IDE, select   
+> File > Open > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+
+
+
 
 
 
@@ -342,8 +347,13 @@ file with some OpenAPI annotations.
 
 Update the **InventoryList** class.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/InventoryList.java
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-microprofile-openapi/start/
+> From the menu of the IDE, select   
+> File > Open > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/InventoryList.java
+
+
+
 
 
 
@@ -386,8 +396,13 @@ which is referenced in the **InventoryList** class.
 
 Update the **SystemData** class.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/SystemData.java
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-microprofile-openapi/start/
+> From the menu of the IDE, select   
+> File > Open > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/SystemData.java
+
+
+
 
 
 
@@ -772,8 +787,13 @@ and set it to **true** in the **src/main/webapp/META-INF/microprofile-config.pro
 
 Update the configuration file.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-microprofile-openapi/start/
+> From the menu of the IDE, select   
+> File > Open > guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties
+
+
+
 
 
 

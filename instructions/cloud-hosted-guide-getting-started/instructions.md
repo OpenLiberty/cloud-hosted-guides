@@ -212,8 +212,8 @@ To add the MicroProfile Health feature to the server, include the **mpHealth** f
 
 Replace the server configuration file.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
@@ -513,8 +513,8 @@ Try enabling detailed logging of the MicroProfile Health feature by adding the
 
 Replace the server configuration file.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
@@ -730,8 +730,8 @@ Update the **server.xml** file to change the context root from **/** to **/dev**
 
 Replace the server configuration file.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
