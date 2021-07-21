@@ -213,7 +213,7 @@ To add the MicroProfile Health feature to the server, include the **mpHealth** f
 Replace the server configuration file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
+> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
 
 
 
