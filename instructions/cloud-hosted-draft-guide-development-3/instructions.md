@@ -360,7 +360,7 @@ Inject the **SystemClient** interface into the **InventoryManager** class, which
 Replace the **InventoryManager** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
