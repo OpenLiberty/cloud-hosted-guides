@@ -111,8 +111,8 @@ requirements better than the default **`PRE_PROCESSING`** strategy.
 
 Replace the **SystemService** class.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 
 
 
@@ -220,8 +220,8 @@ response only after the outgoing message is acknowledged.
 
 Replace the **InventoryResource** class.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 

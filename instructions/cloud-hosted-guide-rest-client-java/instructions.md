@@ -326,8 +326,8 @@ Now that you can consume a JSON resource you can put that data to use.
 
 Replace the **ArtistResource** class.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java
 
 
 

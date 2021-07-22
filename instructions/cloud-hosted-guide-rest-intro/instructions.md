@@ -138,8 +138,8 @@ common path. You can think of the JAX-RS application as a wrapper for all of you
 
 Replace the **SystemApplication** class.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
 
 
 
@@ -242,8 +242,8 @@ To get the service running, the Liberty server needs to be correctly configured.
 
 Replace the server configuration file.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-rest-intro/start/src/main/liberty/config/server.xml
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-rest-intro/start/src/main/liberty/config/server.xml
 
 
 
