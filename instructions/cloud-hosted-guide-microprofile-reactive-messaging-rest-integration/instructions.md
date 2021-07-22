@@ -78,8 +78,8 @@ sending or receiving of reactive messages. Add the **/data** RESTful endpoint to
 
 Replace the **InventoryResource** class.
 
-> From the menu of the IDE, select   
-> **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
@@ -246,8 +246,8 @@ system property request from the **inventory** microservice and publish it to th
 
 Replace the **SystemService** class.
 
-> From the menu of the IDE, select   
-> **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 
 
 
@@ -334,8 +334,8 @@ must be added and configured.
 
 Replace the inventory/microprofile-config.properties file.
 
-> From the menu of the IDE, select   
-> **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/resources/META-INF/microprofile-config.properties
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/resources/META-INF/microprofile-config.properties
 
 
 
@@ -372,8 +372,8 @@ handles receiving the system property response.
 
 Replace the system/microprofile-config.properties file.
 
-> From the menu of the IDE, select   
-> **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/resources/META-INF/microprofile-config.properties
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/resources/META-INF/microprofile-config.properties
 
 
 
@@ -451,11 +451,17 @@ project. For simplicity, the script starts one instance of the **system** servic
 
 # **Testing the application**
 
-After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint
-of the **inventory** service.
+The application might take some time to become available. After the application is up and running,
+you can access it by making a GET request to the **/systems** endpoint of the **inventory** service.
 
 
-Run the following curl command to access the  **inventory** microservice:
+Run the following curl command to confirm that the **inventory** microservice is up and running.
+```
+curl -s http://localhost:9085/health | jq
+```
+{: codeblock}
+
+When both the liveness and readiness health checks are up, run the following curl command to access the  **inventory** microservice:
 ```
 curl -s http://localhost:9085/inventory/systems | jq
 ```
