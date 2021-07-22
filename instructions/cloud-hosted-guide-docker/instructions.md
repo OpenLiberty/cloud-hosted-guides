@@ -234,8 +234,8 @@ With your container running, make the following update to the source code:
 
 Update the **PropertiesResource** class.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 
 
