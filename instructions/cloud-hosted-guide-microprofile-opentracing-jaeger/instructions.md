@@ -307,8 +307,13 @@ explicitly overridden by another **@Traced** annotation.
 
 Update the **InventoryManager** class.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/
+> From the menu of the IDE, select   
+> File > Open > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+
+
+
 
 
 
@@ -405,8 +410,13 @@ methods.
 
 Update the **InventoryResource** class.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/
+> From the menu of the IDE, select   
+> File > Open > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+
+
+
 
 
 
@@ -505,8 +515,8 @@ Then, use it to define a new child scope in the **add()** call.
 
 Replace the **InventoryManager** class.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> From the menu of the IDE, select   
+> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
