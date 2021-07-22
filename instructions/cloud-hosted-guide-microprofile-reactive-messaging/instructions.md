@@ -550,15 +550,27 @@ Next, use the provided script to start the application in Docker containers. The
 
 # **Testing the application**
 
-The application might take several minutes to become available.
-After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint of the **inventory** service. 
+The application might take some time to become available. After the application is up and running, you can access it by making a GET request to the **/systems** endpoint of the **inventory** service. 
 
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-Go to the http://localhost:9085/inventory/systems URL to access the inventory microservice. You see the CPU **systemLoad** property for all the systems:
+Visit the http://localhost:9085/health URL to confirm that the **inventory** microservice is up and running.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl -s http://localhost:9085/health | jq
+```
+{: codeblock}
+
+
+
+
+When both the liveness and readiness health checks are up, go to the http://localhost:9085/inventory/systems URL to access the **inventory** microservice.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -569,6 +581,7 @@ curl -s http://localhost:9085/inventory/systems | jq
 {: codeblock}
 
 
+You see the CPU **systemLoad** property for all the systems:
 
 ```
 {
