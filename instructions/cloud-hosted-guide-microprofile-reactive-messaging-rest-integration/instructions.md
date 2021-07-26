@@ -79,7 +79,7 @@ sending or receiving of reactive messages. Add the **/data** RESTful endpoint to
 Replace the **InventoryResource** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
@@ -247,7 +247,7 @@ system property request from the **inventory** microservice and publish it to th
 Replace the **SystemService** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+> **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 
 
 
@@ -335,7 +335,7 @@ must be added and configured.
 Replace the inventory/microprofile-config.properties file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/resources/META-INF/microprofile-config.properties
+> **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/inventory/src/main/resources/META-INF/microprofile-config.properties
 
 
 
@@ -373,7 +373,7 @@ handles receiving the system property response.
 Replace the system/microprofile-config.properties file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/resources/META-INF/microprofile-config.properties
+> **File** > **Open** > guide-microprofile-reactive-messaging-rest-integration/start/system/src/main/resources/META-INF/microprofile-config.properties
 
 
 

@@ -225,7 +225,7 @@ in your code to provide metrics from your microservices.
 
 Replace the server configuration file.
 
-> From the menu of the IDE, select   
+> From the menu of the IDE, select 
 > **File** > **Open** > guide-microprofile-metrics/start/src/main/liberty/config/server.xml
 
 
@@ -267,7 +267,7 @@ When you visit the **/metrics** endpoint, use the credentials defined in the ser
 
 Replace the **InventoryManager** class.
 
-> From the menu of the IDE, select   
+> From the menu of the IDE, select 
 > **File** > **Open** > guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
