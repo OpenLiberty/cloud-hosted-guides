@@ -76,11 +76,10 @@ Namespace
 sn-labs-yourname
 ```
 
-Store the namespace name in a variable.
-Use the namespace name that was obtained from the previous command.
+Run the following command to store the namespace name in a variable.
 
 ```
-NAMESPACE_NAME={namespace_name}
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
 ```
 {: codeblock}
 
@@ -182,33 +181,37 @@ After the pods are ready, you will make requests to your services.
 
 To make requests to the services, you need to set up port forwarding.
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following command to set up port forwarding to access the **system** service.
+Run the following commands to set up port forwarding to access the **system** service.
 
 ```
-kubectl port-forward svc/system-service 31000:9080
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
 ```
 {: codeblock}
 
 Then, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following command to set up port forwarding to access the **inventory** service.
+Run the following commands to set up port forwarding to access the **inventory** service.
 
 ```
-kubectl port-forward svc/inventory-service 32000:9080
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
 ```
 {: codeblock}
 
-Then use the following **curl** command to access your **system** microservice.
+Then use the following commands to access your **system** microservice.
 The `-u` option is used to pass in the username `bob` and the password `bobpwd`.
 
 ```
-curl localhost:31000/system/properties -u bob:bobpwd | jq
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u bob:bobpwd | jq
 ```
 {: codeblock}
 
-Use the following **curl** command to access your **inventory** microservice.
+Use the following commands to access your **inventory** microservice.
 
 ```
-curl localhost:32000/inventory/systems/system-service | jq
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
 ```
 {: codeblock}
 
@@ -227,7 +230,7 @@ implementing it as a variable.
 Replace the **server.xml** file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml
 
 
 
@@ -281,7 +284,7 @@ You'll make these credentials configurable.
 Replace the **SystemClient** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 
 
 
@@ -462,7 +465,7 @@ based on the values configured in the ConfigMap and Secret created previously.
 Replace the kubernetes file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-kubernetes-microprofile-config/start/kubernetes.yaml
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/kubernetes.yaml
 
 
 
@@ -645,35 +648,39 @@ kubectl replace --force -f kubernetes.yaml
 
 Set up port forwarding to the new services.
 
-Run the following command to set up port forwarding to access the **system** service.
+Run the following commands to set up port forwarding to access the **system** service.
 
 ```
-kubectl port-forward svc/system-service 31000:9080
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
 ```
 {: codeblock}
 
-Then, run the following command to set up port forwarding to access the **inventory** service.
+Then, run the following commands to set up port forwarding to access the **inventory** service.
 
 ```
-kubectl port-forward svc/inventory-service 32000:9080
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
 ```
 {: codeblock}
 
 You now need to use the new username, `alice`, and the new password `wonderland`.
-Access your application with the following command:
+Access your application with the following commands:
 
 ```
-curl localhost:31000/dev/system/properties -u alice:wonderland | jq
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u alice:wonderland | jq
 ```
 {: codeblock}
 
 Notice that the URL you are using to reach the application now has **/dev** as the context root. 
 
 
-Verify the inventory service is working as intended by using the following command:
+Verify the inventory service is working as intended by using the following commands:
 
 ```
-curl localhost:32000/inventory/systems/system-service | jq
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
 ```
 {: codeblock}
 
@@ -682,6 +689,18 @@ If it is not working, then check the configuration of the credentials.
 # **Testing the microservices**
 
 
+
+Update the **pom.xml** files so that the **system.service.root** and **inventory.service.root** properties
+have the correct ports to access the **system** and **inventory** services.
+
+```
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' inventory/pom.xml
+sed -i 's=localhost:32000='"localhost:$INVENTORY_NODEPORT"'=g' inventory/pom.xml
+sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' system/pom.xml
+```
+{: codeblock}
 
 Run the integration tests by using the following command:
 
