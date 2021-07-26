@@ -1,7 +1,7 @@
 
-# **Welcome to the Acknowledging messages using MicroProfile Reactive Messaging guide!**
+# **Welcome to the Configuring microservices running in Kubernetes guide!**
 
-Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
+Explore how to externalize configuration using MicroProfile Config and configure your microservices using Kubernetes ConfigMaps and Secrets.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,25 +11,23 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
+
 # **What you'll learn**
+You will learn how and why to externalize your microservice's configuration.
+Externalized configuration is useful because configuration usually changes depending on your environment.
+You will also learn how to configure the environment by providing required values to your application using Kubernetes.
+Using environment variables allows for easier deployment to different environments.
 
-MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive
-Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged
-after they are processed. Every message that gets sent out must be acknowledged. This way, any messages that were delivered
-to the target service but not processed, for example, due to a system failure, can be identified and sent again.
+MicroProfile Config provides useful annotations that you can use to inject configured values into your code.
+These values can come from any configuration source, such as environment variables.
+To learn more about MicroProfile Config,
+read the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide.
 
-The application in this guide consists of two microservices, **system** and **inventory**. Every 15 seconds, the **system**
-microservice calculates and publishes events that contain its current average system load. The **inventory** microservice
-subscribes to that information so that it can keep an updated list of all the systems and their current system loads.
-You can get the current inventory of systems by accessing the **/systems** REST endpoint. The following diagram depicts
-the application that is used in this guide:
+Furthermore, you'll learn how to set these environment variables with ConfigMaps and Secrets.
+These resources are provided by Kubernetes and act as a data source for your environment variables.
+You can use a ConfigMap or Secret to set environment variables for any number of containers.
 
-![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/master/assets/reactive-messaging-system-inventory-rest.png)
-
-
-You will explore the acknowledgment strategies that are available with MicroProfile Reactive Messaging, and you'll implement
-your own manual acknowledgment strategy. To learn more about how the reactive Java services used in this guide work, check
-out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 # **Getting started**
 
@@ -43,11 +41,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-config.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git
-cd guide-microprofile-reactive-messaging-acknowledgment
+git clone https://github.com/openliberty/guide-kubernetes-microprofile-config.git
+cd guide-kubernetes-microprofile-config
 ```
 {: codeblock}
 
@@ -56,356 +54,60 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-# **Choosing an acknowledgment strategy**
-
-
-Messages must be acknowledged in reactive applications. Messages are either acknowledged explicitly, or messages are acknowledged
-implicitly by MicroProfile Reactive Messaging. Acknowledgment for incoming messages is controlled by the **@Acknowledgment**
-annotation in MicroProfile Reactive Messaging. If the **@Acknowledgment** annotation isn't explicitly defined, then the
-default acknowledgment strategy applies, which depends on the method signature. Only methods that receive incoming messages
-and are annotated with the **@Incoming** annotation must acknowledge messages. Methods that are annotated only with the
-**@Outgoing** annotation don't need to acknowledge messages because messages aren't being received and MicroProfile Reactive
-Messaging requires only that _received_ messages are acknowledged.
-
-Almost all of the methods in this application that require message acknowledgment are assigned the **`POST_PROCESSING`** strategy
-by default. If the acknowledgment strategy is set to **`POST_PROCESSING`**, then MicroProfile Reactive Messaging acknowledges
-the message based on whether the annotated method emits data:
-
-* If the method emits data, the incoming message is acknowledged after the outgoing message is acknowledged.
-* If the method doesn't emit data, the incoming message is acknowledged after the method or processing completes.
-
-It’s important that the methods use the **`POST_PROCESSING`** strategy because it fulfills the requirement that a message isn't
-acknowledged until after the message is fully processed. This processing strategy is beneficial in situations where messages
-must reliably not get lost. When the **`POST_PROCESSING`** acknowledgment strategy can’t be used, the **MANUAL** strategy can
-be used to fulfill the same requirement. In situations where message acknowledgment reliability isn't important and losing
-messages is acceptable, the **`PRE_PROCESSING`** strategy might be appropriate.
-
-The only method in the guide that doesn't default to the **`POST_PROCESSING`** strategy is the
-**sendProperty()** method in the **system** service. The **sendProperty()**
-method receives property requests from the **inventory** service. For each property request, if the property that's being
-requested is valid, then the method **returns** a property response with the value of the property.
-However, if the requested property **doesn't exist**, the request is ignored and no property response
-is **returned**.
-
-A key difference exists between when a property response is returned and when a property response isn't returned. In the
-case where a property response is returned, the request doesn't finish processing until the response is sent and safely
-stored by the Kafka broker. Only then is the incoming message acknowledged. However, in the case where the requested
-property doesn’t exist and a property response isn't returned, the method finishes processing the request message so the
-message must be acknowledged immediately.
-
-This case where a message either needs to be acknowledged immediately or some time later is one of the situations where
-the **MANUAL** acknowledgment strategy would be beneficial
-
-# **Implementing the MANUAL acknowledgment strategy**
 
 
 
-To begin, run the following command to navigate to the **start** directory:
+# Logging into your cluster
+
+For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
+Get the name of your namespace with the following command:
+
 ```
-cd /home/project/guide-microprofile-reactive-messaging-acknowledgment/start
+bx cr namespace-list
 ```
 {: codeblock}
 
-Update the **SystemService.sendProperty** method to use the **MANUAL** acknowledgment strategy, which fits the method processing
-requirements better than the default **`PRE_PROCESSING`** strategy.
-
-Replace the **SystemService** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
-
-
-
+Look for output that is similar to the following:
 
 ```
-package io.openliberty.guides.system;
+Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
+Namespace
+sn-labs-yourname
+```
 
-import javax.enterprise.context.ApplicationScoped;
+Run the following command to store the namespace name in a variable.
 
-import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.eclipse.microprofile.reactive.streams.operators.PublisherBuilder;
-import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
-import org.reactivestreams.Publisher;
+```
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
+```
+{: codeblock}
 
-import io.openliberty.guides.models.PropertyMessage;
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.Flowable;
+Verify that the variable contains your namespace name:
 
-@ApplicationScoped
-public class SystemService {
-    
-    private static Logger logger = Logger.getLogger(SystemService.class.getName());
+```
+echo $NAMESPACE_NAME
+```
+{: codeblock}
 
-    private static final OperatingSystemMXBean osMean = 
-            ManagementFactory.getOperatingSystemMXBean();
-    private static String hostname = null;
-
-    private static String getHostname() {
-        if (hostname == null) {
-            try {
-                return InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException e) {
-                return System.getenv("HOSTNAME");
-            }
-        }
-        return hostname;
-    }
-
-    @Outgoing("systemLoad")
-    public Publisher<SystemLoad> sendSystemLoad() {
-        return Flowable.interval(15, TimeUnit.SECONDS)
-                .map((interval -> new SystemLoad(getHostname(),
-                        osMean.getSystemLoadAverage())));
-    }
-
-    @Incoming("propertyRequest")
-    @Outgoing("propertyResponse")
-    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public PublisherBuilder<Message<PropertyMessage>>
-    sendProperty(Message<String> propertyMessage) {
-        String propertyName = propertyMessage.getPayload();
-        String propertyValue = System.getProperty(propertyName, "unknown");
-        logger.info("sendProperty: " + propertyValue);
-        if (propertyName == null || propertyName.isEmpty() || propertyValue == "unknown") {
-            logger.warning("Provided property: " +
-                    propertyName + " is not a system property");
-            propertyMessage.ack();
-            return ReactiveStreams.empty();
-        }
-        Message<PropertyMessage> message = Message.of(
-                new PropertyMessage(getHostname(),
-                        propertyName,
-                        propertyValue),
-                propertyMessage::ack
-        );
-        return ReactiveStreams.of(message);
-    }
-}
+Log in to the registry with the following command:
+```
+bx cr login
 ```
 {: codeblock}
 
 
-The **sendProperty()** method needs to manually acknowledge the incoming messages, so it is
-annotated with the **@Acknowledgment(Acknowledgment.Strategy.MANUAL)**
-annotation. This annotation sets the method up to expect an incoming message. To meet the requirements of acknowledgment,
-the method parameter is updated to receive and return a **Message** of type **String**, rather
-than just a **String**. Then, the message **payload** is extracted and checked for validity.
-One of the following outcomes occurs:
+# **Deploying the microservices**
 
-* If the system property **isn't valid**, the method **acknowledges**
-  the incoming message and **returns** an empty reactive stream. 
-  The processing is complete.
-* If the system property is valid, the method creates a **message** with the value of the
-  requested system property and sends it to the proper channel. The method acknowledges the incoming message only
-  after the sent message is acknowledged.
-
-# **Waiting for a message to be acknowledged**
-
-
-The **inventory** service contains an endpoint that accepts **PUT** requests. When a **PUT** request that contains a system property
-is made to the **inventory** service, the **inventory** service sends a message to the **system** service. The message from the
-**inventory** service requests the value of the system property from the system service. Currently, a **200** response code
-is returned without confirming whether the sent message was acknowledged. Replace the **inventory** service to return a **200**
-response only after the outgoing message is acknowledged.
-
-Replace the **InventoryResource** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
-
-
-
+The two microservices you will deploy are called **system** and **inventory**. The **system** microservice
+returns the JVM system properties of the running container. The **inventory** microservice
+adds the properties from the **system** microservice to the inventory. This demonstrates
+how communication can be established between pods inside a cluster.
+To build these applications, navigate to the **start** directory and run the following command.
 
 ```
-package io.openliberty.guides.inventory;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.reactivestreams.Publisher;
-
-import io.openliberty.guides.models.PropertyMessage;
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.BackpressureStrategy;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.FlowableEmitter;
-
-
-@ApplicationScoped
-@Path("/inventory")
-public class InventoryResource {
-
-    private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
-    private FlowableEmitter<Message<String>> propertyNameEmitter;
-
-    @Inject
-    private InventoryManager manager;
-    
-    @GET
-    @Path("/systems")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystems() {
-        List<Properties> systems = manager.getSystems()
-                .values()
-                .stream()
-                .collect(Collectors.toList());
-        return Response
-                .status(Response.Status.OK)
-                .entity(systems)
-                .build();
-    }
-
-    @GET
-    @Path("/systems/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystem(@PathParam("hostname") String hostname) {
-        Optional<Properties> system = manager.getSystem(hostname);
-        if (system.isPresent()) {
-            return Response
-                    .status(Response.Status.OK)
-                    .entity(system)
-                    .build();
-        }
-        return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("hostname does not exist.")
-                .build();
-    }
-
-    @PUT
-    @Path("/data")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.TEXT_PLAIN)
-    /* This method sends a message and returns a CompletionStage that doesn't
-        complete until the message is acknowledged. */
-    public CompletionStage<Response> updateSystemProperty(String propertyName) {
-        logger.info("updateSystemProperty: " + propertyName);
-        CompletableFuture<Void> result = new CompletableFuture<>();
-
-        Message<String> message = Message.of(
-                propertyName,
-                () -> {
-                    /* This is the ack callback, which runs when the outgoing
-                        message is acknowledged. After the outgoing message is
-                        acknowledged, complete the "result" CompletableFuture. */
-                    result.complete(null);
-                    /* An ack callback must return a CompletionStage that says
-                        when it's complete. Asynchronous processing isn't necessary 
-                        so a completed CompletionStage is returned to indicate that 
-                        the work here is done. */
-                    return CompletableFuture.completedFuture(null);
-                }
-        );
-
-        propertyNameEmitter.onNext(message);
-        /* Set up what happens when the message is acknowledged and the "result"
-            CompletableFuture is completed. When "result" completes, the Response 
-            object is created with the status code and message. */
-        return result.thenApply(a -> Response
-                .status(Response.Status.OK)
-                .entity("Request successful for the " + propertyName + " property\n")
-                .build());
-    }
-
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response resetSystems() {
-        manager.resetSystems();
-        return Response
-                .status(Response.Status.OK)
-                .build();
-    }
-
-    @Incoming("systemLoad")
-    public void updateStatus(SystemLoad sl)  {
-        String hostname = sl.hostname;
-        if (manager.getSystem(hostname).isPresent()) {
-            manager.updateCpuStatus(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was updated: " + sl);
-        } else {
-            manager.addSystem(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was added: " + sl);
-        }
-    }
-
-    @Incoming("addSystemProperty")
-    public void getPropertyMessage(PropertyMessage pm)  {
-        logger.info("getPropertyMessage: " + pm);
-        String hostId = pm.hostname;
-        if (manager.getSystem(hostId).isPresent()) {
-            manager.updatePropertyMessage(hostId, pm.key, pm.value);
-            logger.info("Host " + hostId + " was updated: " + pm);
-        } else {
-            manager.addSystem(hostId, pm.key, pm.value);
-            logger.info("Host " + hostId + " was added: " + pm);
-        }
-    }
-
-    @Outgoing("requestSystemProperty")
-    public Publisher<Message<String>> sendPropertyName() {
-        Flowable<Message<String>> flowable = Flowable.create(emitter ->
-                this.propertyNameEmitter = emitter, BackpressureStrategy.BUFFER);
-        return flowable;
-    }
-}
-```
-{: codeblock}
-
-
-The **sendPropertyName()** method is updated to return a
-**Message<String>** instead of just a **String**. This return type allows the method to set a callback
-that runs after the outgoing message is acknowledged. In addition to updating the **sendPropertyName()**
-method, the **propertyNameEmitter** variable is updated to send a **Message<String>** type.
-
-The **updateSystemProperty()** method now returns a
-**CompletionStage** object wrapped around a Response type. This return type allows for a response
-object to be returned after the outgoing message is acknowledged. The outgoing **message** is created
-with the requested property name as the **payload** and an acknowledgment
-**callback** to execute an action after the message is acknowledged. The method creates a
-**CompletableFuture** variable that returns a **200** response
-code after the variable is completed in the **callback** function.
-
-# **Building and running the application**
-
-Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
-
-Start your Docker environment. Dockerfiles are provided for you to use.
-
-To build the application, run the Maven **install** and **package** goals from the command-line session in the **start** directory:
-
-```
-mvn -pl models install
-mvn package
+cd start
+mvn clean package
 ```
 {: codeblock}
 
@@ -418,8 +120,7 @@ docker pull openliberty/open-liberty:full-java11-openj9-ubi
 {: codeblock}
 
 
-Run the following commands to containerize the microservices:
-
+Next, run the **docker build** commands to build container images for your application:
 ```
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
@@ -427,113 +128,641 @@ docker build -t inventory:1.0-SNAPSHOT inventory/.
 {: codeblock}
 
 
-Next, use the provided script to start the application in Docker containers. The script creates a network for the
-containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices 
-in the project. For simplicity, the script starts one instance of the **system** service.
+The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
+The tag for an image describes the specific image version.
+If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
 
+Push your images to the container registry on IBM Cloud with the following commands:
 
 ```
-./scripts/startContainers.sh
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+```
+{: codeblock}
+
+Update the image names so that the images in your IBM Cloud container registry are used,
+and remove the **nodePort** fields so that the ports can be automatically generated:
+
+```
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
+{: codeblock}
+
+Run the following command to deploy the necessary Kubernetes resources to serve the applications.
+```
+kubectl apply -f kubernetes.yaml
 ```
 {: codeblock}
 
 
-
-# **Testing the application**
-
-The application might take some time to become available. After the application is up and running, 
-you can access it by making a GET request to the **/systems** endpoint of the **inventory** service.
-
-
-Run the following curl command to confirm that the **inventory** microservice is up and running.
+When this command finishes, wait for the pods to be in the Ready state.
+Run the following command to view the status of the pods.
 ```
-curl -s http://localhost:9085/health | jq
+kubectl get pods
 ```
 {: codeblock}
 
-When both the liveness and readiness health checks are up, run the following curl command to access the **inventory** microservice:
+
+When the pods are ready, the output shows **1/1** for READY and **Running** for STATUS.
+
 ```
-curl -s http://localhost:9085/inventory/systems | jq
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-6bd97d9bf6-6d2cj     1/1       Running   0          34s
+inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
+```
+
+After the pods are ready, you will make requests to your services.
+
+
+To make requests to the services, you need to set up port forwarding.
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Run the following commands to set up port forwarding to access the **system** service.
+
+```
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
 ```
 {: codeblock}
 
-Look for the CPU **systemLoad** property for all the systems:
+Then, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Run the following commands to set up port forwarding to access the **inventory** service.
 
 ```
-{
-   "hostname":"30bec2b63a96",
-   "systemLoad":1.44
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
+```
+{: codeblock}
+
+Then use the following commands to access your **system** microservice.
+The `-u` option is used to pass in the username `bob` and the password `bobpwd`.
+
+```
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u bob:bobpwd | jq
+```
+{: codeblock}
+
+Use the following commands to access your **inventory** microservice.
+
+```
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
+```
+{: codeblock}
+
+When you're done trying out the microservices, press **CTRL+C** in the command line sessions
+where you ran the `kubectl port-forward` commands. 
+
+# **Modifying system microservice**
+
+
+The **system** service is hardcoded to use a single forward slash as the context root.
+The context root is set in the **webApplication**
+element where the **contextRoot** attribute is specified as **"/"**.
+You'll make the value of the **contextRoot** attribute configurable by
+implementing it as a variable.
+
+Replace the **server.xml** file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml
+
+
+
+
+```
+<server description="Sample Liberty server">
+
+  <featureManager>
+    <feature>jaxrs-2.1</feature>
+    <feature>cdi-2.0</feature>
+    <feature>jsonp-1.1</feature>
+    <feature>mpConfig-2.0</feature>
+    <feature>appSecurity-3.0</feature>
+  </featureManager>
+
+  <variable name="default.http.port" defaultValue="9080"/>
+  <variable name="default.https.port" defaultValue="9443"/>
+  <variable name="system.app.username" defaultValue="bob"/>
+  <variable name="system.app.password" defaultValue="bobpwd"/>
+  <variable name="context.root" defaultValue="/"/>
+
+  <httpEndpoint host="*" httpPort="${default.http.port}" 
+    httpsPort="${default.https.port}" id="defaultHttpEndpoint" />
+
+  <webApplication location="system.war" contextRoot="${context.root}"/>
+
+  <basicRegistry id="basic" realm="BasicRegistry">
+    <user name="${system.app.username}" password="${system.app.password}" />
+  </basicRegistry>
+
+</server>
+```
+{: codeblock}
+
+
+The **contextRoot** attribute in the **webApplication**
+element now gets its value from the **context.root** variable.
+To find a value for the **context.root** variable,
+Open Liberty will look for the following environment variables, in order:
+
+* **context.root**
+* **`context_root`**
+* **`CONTEXT_ROOT`**
+
+
+# **Modifying inventory microservice**
+
+The **inventory** service is hardcoded to use **bob** and **bobpwd** as the credentials to authenticate against the **system** service.
+You'll make these credentials configurable. 
+
+Replace the **SystemClient** class.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+
+
+
+
+```
+package io.openliberty.guides.inventory.client;
+
+import java.net.URI;
+import java.util.Base64;
+import java.util.Properties;
+
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+@RequestScoped
+public class SystemClient {
+
+  private final String SYSTEM_PROPERTIES = "/system/properties";
+  private final String PROTOCOL = "http";
+
+  @Inject
+  @ConfigProperty(name = "CONTEXT_ROOT", defaultValue = "")
+  String CONTEXT_ROOT;
+
+  @Inject
+  @ConfigProperty(name = "default.http.port")
+  String DEFAULT_PORT;
+
+  @Inject
+  @ConfigProperty(name = "SYSTEM_APP_USERNAME")
+  private String username;
+
+  @Inject
+  @ConfigProperty(name = "SYSTEM_APP_PASSWORD")
+  private String password;
+
+  public Properties getProperties(String hostname) {
+    String url = buildUrl(PROTOCOL,
+                          hostname,
+                          Integer.valueOf(DEFAULT_PORT),
+                          CONTEXT_ROOT + SYSTEM_PROPERTIES);
+    Builder clientBuilder = buildClientBuilder(url);
+    return getPropertiesHelper(clientBuilder);
+  }
+
+  /**
+   * Builds the URI string to the system service for a particular host.
+   * @param protocol
+   *          - http or https.
+   * @param host
+   *          - name of host.
+   * @param port
+   *          - port number.
+   * @param path
+   *          - Note that the path needs to start with a slash!!!
+   * @return String representation of the URI to the system properties service.
+   */
+  protected String buildUrl(String protocol, String host, int port, String path) {
+    try {
+      URI uri = new URI(protocol, null, host, port, path, null, null);
+      return uri.toString();
+    } catch (Exception e) {
+      System.err.println("Exception thrown while building the URL: " + e.getMessage());
+      return null;
+    }
+  }
+
+  protected Builder buildClientBuilder(String urlString) {
+    try {
+      Client client = ClientBuilder.newClient();
+      Builder builder = client.target(urlString).request();
+      return builder
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, getAuthHeader());
+    } catch (Exception e) {
+      System.err.println("Exception thrown while building the client: "
+                         + e.getMessage());
+      return null;
+    }
+  }
+
+  protected Properties getPropertiesHelper(Builder builder) {
+    try {
+      Response response = builder.get();
+      if (response.getStatus() == Status.OK.getStatusCode()) {
+        return response.readEntity(Properties.class);
+      } else {
+        System.err.println("Response Status is not OK.");
+      }
+    } catch (RuntimeException e) {
+      System.err.println("Runtime exception: " + e.getMessage());
+    } catch (Exception e) {
+      System.err.println("Exception thrown while invoking the request: "
+                         + e.getMessage());
+    }
+    return null;
+  }
+
+  private String getAuthHeader() {
+    String usernamePassword = username + ":" + password;
+    String encoded = Base64.getEncoder().encodeToString(usernamePassword.getBytes());
+    return "Basic " + encoded;
+  }
 }
 ```
-
-The **system** service sends messages to the **inventory** service every 15 seconds. The **inventory** service processes and
-acknowledges each incoming message, ensuring that no **system** message is lost.
-
-
-If you run the curl command again after a while, notice that the CPU **systemLoad** property for the systems changed.
-```
-curl -s http://localhost:9085/inventory/systems | jq
-```
-{: codeblock}
-
-Make a **PUT** request to the **http://localhost:9085/inventory/data** URL to add the value of a particular system property
-to the set of existing properties. For example, run the following **curl** command:
-
-
-```
-curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-Type:text/plain"
-```
 {: codeblock}
 
 
 
-In this example, the **PUT** request with the **os.name** system property in the request body on the 
-**http://localhost:9085/inventory/data** URL adds the **os.name** system property for your system. 
-The **inventory** service sends a message that contains the requested system property to the **system** service. 
-The **inventory** service then waits until the message is acknowledged before it sends a response back.
+The changes introduced here use MicroProfile Config and CDI to inject the value of the
+environment variables **`SYSTEM_APP_USERNAME`** and
+**`SYSTEM_APP_PASSWORD`** into the **SystemClient** class.
 
-You see the following output:
 
+# **Creating a ConfigMap and Secret**
+
+There are several ways to configure an environment variable in a Docker container.
+You can set it directly in the **Dockerfile** with the **ENV** command.
+You can also set it in your **kubernetes.yaml** file by specifying a
+name and a value for the environment variable you want to set for a specific container.
+With these options in mind, you're going to use a ConfigMap and Secret to set these values.
+These are resources provided by Kubernetes that are used as a way to provide configuration values to your containers.
+A benefit is that they can be reused across many different containers,
+even if they all require different environment variables to be set with the same value.
+
+Create a ConfigMap to configure the app name with the following **kubectl** command.
 ```
-Request successful for the os.name property
-```
-
-The previous example response is confirmation that the sent request message was acknowledged.
-
-
-Run the following curl command again:
-```
-curl -s http://localhost:9085/inventory/systems | jq
+kubectl create configmap sys-app-root --from-literal contextRoot=/dev
 ```
 {: codeblock}
 
-The **os.name** system property value is now included with the previous values:
+
+This command deploys a ConfigMap named **sys-app-root** to your cluster.
+It has a key called **contextRoot** with a value of **/dev**.
+The **--from-literal** flag allows you to specify individual key-value pairs to store in this ConfigMap.
+Other available options, such as **--from-file** and **--from-env-file**,
+provide more versatility as to what you want to configure.
+Details about these options can be found in the
+[Kubernetes CLI documentation](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-configmap-em-).
+
+Create a Secret to configure the new credentials that **inventory** will use to
+authenticate against **system** with the following **kubectl** command.
+```
+kubectl create secret generic sys-app-credentials --from-literal username=alice --from-literal password=wonderland
+```
+{: codeblock}
+
+
+This command looks similar to the command to create a ConfigMap, but one difference is the word **generic**.
+This word creates a Secret that doesn't store information in any specialized way.
+There are different types of secrets, such as secrets to store Docker credentials
+and secrets to store public and private key pairs.
+
+A Secret is similar to a ConfigMap.
+A key difference is that a Secret is used for confidential information such as credentials.
+One of the main differences is that you must explicitly tell **kubectl** to show you the contents of a Secret.
+Additionally, when it does show you the information,
+it only shows you a Base64 encoded version so that a casual onlooker doesn't accidentally see any sensitive data.
+Secrets don't provide any encryption by default,
+that is something you'll either need to do yourself or find an alternate option to configure.
+
+
+
+# **Updating Kubernetes resources**
+
+Next, you will update your Kubernetes deployments to set the environment variables in your containers
+based on the values configured in the ConfigMap and Secret created previously. 
+
+Replace the kubernetes file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/kubernetes.yaml
+
+
+
 
 ```
-{
-   "hostname":"30bec2b63a96",
-   "os.name":"Linux",
-   "systemLoad":1.44
-}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  selector:
+    matchLabels:
+      app: system
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        # Set the environment variables
+        env:
+        - name: CONTEXT_ROOT
+          valueFrom:
+            configMapKeyRef:
+              name: sys-app-root
+              key: contextRoot
+        - name: SYSTEM_APP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: username
+        - name: SYSTEM_APP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: password
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        # Set the environment variables
+        env:
+        - name: CONTEXT_ROOT
+          valueFrom:
+            configMapKeyRef:
+              name: sys-app-root
+              key: contextRoot
+        - name: SYSTEM_APP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: username
+        - name: SYSTEM_APP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 31000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 32000
+```
+{: codeblock}
+
+
+
+The **`CONTEXT_ROOT`**,
+**`SYSTEM_APP_USERNAME`**, and
+**`SYSTEM_APP_PASSWORD`** environment
+variables are set in the **env** sections of
+**system-container** and
+**inventory-container**.
+
+Using the **valueFrom** field,
+you can specify the value of an environment variable from various sources. These sources
+include a ConfigMap, a Secret, and information about the cluster. In this
+example **configMapKeyRef** gets the
+value **contextRoot** from the
+**sys-app-root** ConfigMap. Similarly,
+**secretKeyRef**
+gets the values **username** and
+**password** from the
+**sys-app-credentials** Secret.
+
+
+# **Deploying your changes**
+
+Rebuild the application using **mvn clean package**.
+```
+mvn clean package
+```
+{: codeblock}
+
+
+Run the **docker build** commands to rebuild container images for your application:
+```
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+{: codeblock}
+
+
+
+Push your updated images to the container registry on IBM Cloud with the following commands:
+
+```
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+```
+{: codeblock}
+
+Update the image names so that the images in your IBM Cloud container registry are used,
+and remove the **nodePort** fields so that the ports can be automatically generated:
+
+```
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
+{: codeblock}
+
+
+Run the following command to deploy your changes to the Kubernetes cluster.
+```
+kubectl replace --force -f kubernetes.yaml
+```
+{: codeblock}
+
+
+
+Set up port forwarding to the new services.
+
+Run the following commands to set up port forwarding to access the **system** service.
+
+```
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
+```
+{: codeblock}
+
+Then, run the following commands to set up port forwarding to access the **inventory** service.
+
+```
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
+```
+{: codeblock}
+
+You now need to use the new username, `alice`, and the new password `wonderland`.
+Access your application with the following commands:
+
+```
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u alice:wonderland | jq
+```
+{: codeblock}
+
+Notice that the URL you are using to reach the application now has **/dev** as the context root. 
+
+
+Verify the inventory service is working as intended by using the following commands:
+
+```
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
+```
+{: codeblock}
+
+If it is not working, then check the configuration of the credentials.
+
+# **Testing the microservices**
+
+
+
+Update the **pom.xml** files so that the **system.service.root** and **inventory.service.root** properties
+have the correct ports to access the **system** and **inventory** services.
+
+```
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' inventory/pom.xml
+sed -i 's=localhost:32000='"localhost:$INVENTORY_NODEPORT"'=g' inventory/pom.xml
+sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' system/pom.xml
+```
+{: codeblock}
+
+Run the integration tests by using the following command:
+
+```
+mvn failsafe:integration-test -Dsystem.context.root=/dev
+```
+{: codeblock}
+
+The tests for **inventory** verify that the service can communicate with **system**
+using the configured credentials. If the credentials are misconfigured, then the
+**inventory** test fails, so the **inventory** test indirectly verifies that the
+credentials are correctly configured.
+
+After the tests succeed, you should see output similar to the following in your console.
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.706 s - in it.io.openliberty.guides.system.SystemEndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+```
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.696 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results:
+
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 # **Tearing down the environment**
 
-Finally, run the following script to stop the application:
-
+Run the following commands to delete all the resources that you created.
 
 ```
-./scripts/stopContainers.sh
+kubectl delete -f kubernetes.yaml
+kubectl delete configmap sys-app-root
+kubectl delete secret sys-app-credentials
 ```
 {: codeblock}
 
+
+
+Press **CTRL+C** in the command-line sessions where you ran `kubectl port-forward` to stop the port forwarding. 
 
 
 # **Summary**
 
 ## **Nice Work!**
 
-You developed an application by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
+You have used MicroProfile Config to externalize the configuration of two microservices,
+
+and then you configured them by creating a ConfigMap and Secret in your Kubernetes cluster.
 
 
 
@@ -543,11 +772,11 @@ You developed an application by using MicroProfile Reactive Messaging, Open Libe
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-reactive-messaging-acknowledgment** project by running the following commands:
+Delete the **guide-kubernetes-microprofile-config** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-reactive-messaging-acknowledgment
+rm -fr guide-kubernetes-microprofile-config
 ```
 {: codeblock}
 
@@ -556,7 +785,7 @@ rm -fr guide-microprofile-reactive-messaging-acknowledgment
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Acknowledging%20messages%20using%20MicroProfile%20Reactive%20Messaging&guide-id=cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Configuring%20microservices%20running%20in%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-config)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -564,25 +793,18 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest.html)
-* [Streaming updates to a client using Server-Sent Events](https://openliberty.io/guides/reactive-messaging-sse.html)
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
-
-**Learn more about MicroProfile**
-* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html)
-* [View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/apidocs/)
-* [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
-
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
 <br/>
