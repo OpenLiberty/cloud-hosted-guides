@@ -17,7 +17,7 @@ on:
       converter_branch:
         description: 'Converter branch'
         required: true
-        default: 'main'
+        default: 'refs/heads/main'
         
 jobs:
   printBranch:
