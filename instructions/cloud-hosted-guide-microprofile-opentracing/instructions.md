@@ -223,7 +223,7 @@ Enable tracing of the **list()** non-JAX-RS method by adding the
 
 Replace the **InventoryManager** class.
 
-> From the menu of the IDE, select   
+> From the menu of the IDE, select 
 > **File** > **Open** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
@@ -316,7 +316,7 @@ on the **listContents()** JAX-RS method.
 
 Replace the **InventoryResource** class.
 
-> From the menu of the IDE, select   
+> From the menu of the IDE, select 
 > **File** > **Open** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
@@ -406,7 +406,7 @@ The **Span** will be activated and used in a **Scope**.
 
 Replace the **InventoryManager** class.
 
-> From the menu of the IDE, select   
+> From the menu of the IDE, select 
 > **File** > **Open** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
