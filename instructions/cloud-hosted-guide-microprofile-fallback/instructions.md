@@ -229,7 +229,7 @@ Now, set a fallback method to deal with this failure.
 Replace the **InventoryManager** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> **File** > **Open** > guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
