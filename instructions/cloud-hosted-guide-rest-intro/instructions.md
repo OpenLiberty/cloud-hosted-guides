@@ -143,21 +143,6 @@ Replace the **SystemApplication** class.
 
 
 
-
-```
-package io.openliberty.guides.rest;
-
-import javax.ws.rs.core.Application;
-import javax.ws.rs.ApplicationPath;
-
-@ApplicationPath("System")
-public class SystemApplication extends Application {
-
-}
-```
-{: codeblock}
-
-
 The **SystemApplication** class extends the **Application** class, which associates all JAX-RS resource classes in the WAR file with this JAX-RS application. These resources become available under the common path that's specified with the **@ApplicationPath** 
 annotation. The **@ApplicationPath** annotation has a value that indicates the path in the WAR file that 
 the JAX-RS application accepts requests from.
@@ -183,31 +168,6 @@ touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/r
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
-
-
-
-```
-package io.openliberty.guides.rest;
-
-import java.util.Properties;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
-@Path("properties")
-public class PropertiesResource {
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Properties getProperties() {
-        return System.getProperties();
-    }
-
-}
-```
-{: codeblock}
 
 
 This resource class has quite a bit of code in it, so let's break it down into manageable chunks.
@@ -245,22 +205,6 @@ Replace the server configuration file.
 > From the menu of the IDE, select 
 > **File** > **Open** > guide-rest-intro/start/src/main/liberty/config/server.xml
 
-
-
-
-```
-<server description="Intro REST Guide Liberty server">
-  <featureManager>
-      <feature>jaxrs-2.1</feature>
-  </featureManager>
-
-  <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
-                id="defaultHttpEndpoint" host="*" />
-
-  <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
-</server>
-```
-{: codeblock}
 
 
 
@@ -317,53 +261,6 @@ touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guide
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
-
-
-
-```
-package it.io.openliberty.guides.rest;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.Properties;
-
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-
-import org.junit.jupiter.api.Test;
-
-public class EndpointIT {
-    
-    private static final Jsonb jsonb = JsonbBuilder.create();
-
-    @Test
-    public void testGetProperties() {
-        String port = System.getProperty("http.port");
-        String context = System.getProperty("context.root");
-        String url = "http://localhost:" + port + "/" + context + "/";
-
-        Client client = ClientBuilder.newClient();
-
-        WebTarget target = client.target(url + "System/properties");
-        Response response = target.request().get();
-
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
-                     "Incorrect response code from " + url);
-
-        String json = response.readEntity(String.class);
-        Properties sysProps = jsonb.fromJson(json, Properties.class);
-
-        assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
-                     "The system property for the local and remote JVM should match");
-        response.close();
-    }
-}
-```
-{: codeblock}
 
 
 
