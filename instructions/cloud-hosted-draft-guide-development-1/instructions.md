@@ -1,7 +1,7 @@
 
-# Welcome to the Checking the health of microservices on Kubernetes guide!
+# **Welcome to the Creating a RESTful web service guide!**
 
-Learn how to check the health of microservices on Kubernetes by setting up readiness and liveness probes to inspect MicroProfile Health Check endpoints.
+Learn how to create a REST service with JAX-RS, JSON-B, and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -13,36 +13,28 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
-You will learn how to create health check endpoints for your microservices. Then, you 
-will configure Kubernetes to use these endpoints to keep your microservices running smoothly.
+You will learn how to build and test a simple REST service with JAX-RS and JSON-B, which will expose
+the JVM's system properties. The REST service will respond to **GET** requests made to the **http://localhost:9080/LibertyProject/System/properties** URL.
 
-MicroProfile Health allows services to report their health, and it publishes the overall 
-health status to defined endpoints. If a service reports **UP**, then it's available. If 
-the service reports **DOWN**, then it's unavailable. MicroProfile Health reports an individual 
-service status at the endpoint and indicates the overall status as **UP** if all the services 
-are **UP**. A service orchestrator can then use the health statuses to make decisions.
+The service responds to a **GET** request with a JSON representation of the system properties, where
+each property is a field in a JSON object like this:
 
-Kubernetes provides liveness and readiness probes that are used to check the health of your 
-containers. These probes can check certain files in your containers, check a TCP socket, 
-or make HTTP requests. MicroProfile Health exposes readiness and liveness endpoints on 
-your microservices. Kubernetes polls these endpoints as specified by the probes to react 
-appropriately to any change in the microservice's status. Read the 
-[Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) 
-guide to learn more about MicroProfile Health.
+```
+{
+  "os.name":"Mac",
+  "java.version": "1.8"
+}
+```
 
-The two microservices you will work with are called **system** and **inventory**. The **system** microservice
-returns the JVM system properties of the running container and it returns the pod's name in the HTTP header
-making replicas easy to distinguish from each other. The **inventory** microservice
-adds the properties from the **system** microservice to the inventory. This demonstrates
-how communication can be established between pods inside a cluster.
+The design of an HTTP API is essential when creating a web application. The REST API has 
+become the go-to architectural style for building an HTTP API. The JAX-RS API offers 
+functionality for creating, reading, updating, and deleting exposed resources. The JAX-RS API 
+supports the creation of RESTful web services that come with desirable properties, 
+such as performance, scalability, and modifiability.
 
-
-
-
-
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -54,11 +46,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-health.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-kubernetes-microprofile-health.git
-cd guide-kubernetes-microprofile-health
+git clone https://github.com/openliberty/guide-rest-intro.git
+cd guide-rest-intro
 ```
 {: codeblock}
 
@@ -67,691 +59,413 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+<br/>
+### **Try what you'll build**
 
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-
-# Logging into your cluster
-
-For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
-Get the name of your namespace with the following command:
-
-```
-bx cr namespace-list
-```
-{: codeblock}
-
-Look for output that is similar to the following:
+To try out the application, first go to the **finish** directory and run the following
+Maven goal to build the application and deploy it to Open Liberty:
 
 ```
-Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
-
-Namespace
-sn-labs-yourname
-```
-
-Store the namespace name in a variable.
-Use the namespace name that was obtained from the previous command.
-
-```
-NAMESPACE_NAME={namespace_name}
-```
-{: codeblock}
-
-Verify that the variable contains your namespace name:
-
-```
-echo $NAMESPACE_NAME
-```
-{: codeblock}
-
-Log in to the registry with the following command:
-```
-bx cr login
+cd finish
+mvn liberty:run
 ```
 {: codeblock}
 
 
-# Adding health checks to the inventory microservice
-
-Navigate to **start** directory to begin.
-
-The **inventory** microservice should be healthy only when **system** is available. To add this 
-check to the **/health/ready** endpoint, you will create a class that is annotated with the
-**@Readiness** annotation and implements the **HealthCheck** interface.
-
-Create the **InventoryReadinessCheck** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
-
-
-
+After you see the following message, your application server is ready:
 
 ```
-package io.openliberty.guides.inventory;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Readiness
-@ApplicationScoped
-public class InventoryReadinessCheck implements HealthCheck {
-
-    private static final String READINESS_CHECK = InventoryResource.class
-                                                .getSimpleName()
-                                                + " Readiness Check";
-
-    @Inject
-    @ConfigProperty(name = "SYS_APP_HOSTNAME")
-    private String hostname;
-
-    public HealthCheckResponse call() {
-        if (isSystemServiceReachable()) {
-            return HealthCheckResponse.up(READINESS_CHECK);
-        } else {
-            return HealthCheckResponse.down(READINESS_CHECK);
-        }
-    }
-
-    private boolean isSystemServiceReachable() {
-        try {
-            Client client = ClientBuilder.newClient();
-            client
-                .target("http://" + hostname + ":9080/system/properties")
-                .request()
-                .post(null);
-
-            return true;
-        } catch (Exception ex) {
-            return false;
-        }
-    }
-}
-```
-{: codeblock}
-
-
-
-This health check verifies that the **system** microservice is available at 
-**http://system-service:9080/**. The **system-service** host name is only accessible from 
-inside the cluster, you can't access it yourself. If it's available, then it returns an 
-**UP** status. Similarly, if it's unavailable then it returns a **DOWN** status. When the 
-status is **DOWN**, the microservice is considered to be unhealthy.
-
-Create the **InventoryLivenessCheck** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
-
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import javax.enterprise.context.ApplicationScoped;
-
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
-
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class InventoryLivenessCheck implements HealthCheck {
-
-  @Override
-  public HealthCheckResponse call() {
-      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-      long memUsed = memBean.getHeapMemoryUsage().getUsed();
-      long memMax = memBean.getHeapMemoryUsage().getMax();
-
-      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
-                                      + " Liveness Check")
-                                .withData("memory used", memUsed)
-                                .withData("memory max", memMax)
-                                .status(memUsed < memMax * 0.9).build();
-  }
-}
-```
-{: codeblock}
-
-
-
-This liveness check verifies that the heap memory usage is below 90% of the maximum memory.
-If more than 90% of the maximum memory is used, a status of **DOWN** will be returned. 
-
-The health checks for the **system** microservice were already been implemented. The **system**
-microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. 
-This endpoint has been provided for you to observe the results of an unhealthy pod and how 
-Kubernetes reacts.
-
-# Configuring readiness and liveness probes
-
-You will configure Kubernetes readiness and liveness probes.
-Readiness probes are responsible for determining that your application is ready to accept requests.
-If it's not ready, traffic won't be routed to the container.
-Liveness probes are responsible for determining when a container needs to be restarted. 
-
-Create the kubernetes configuration file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/kubernetes.yaml
-
-
-
-
-```
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: system
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        # system probes
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        env:
-        - name: SYS_APP_HOSTNAME
-          value: system-service
-        # inventory probe
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 31000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 32000
-```
-{: codeblock}
-
-
-
-The readiness and liveness probes are configured for the containers running the **system** 
-and **inventory** microservices.
-
-The readiness probes are configured to poll the **/health/ready** endpoint.
-The readiness probe determines the READY status of the container as seen in the **kubectl get pods** output.
-The **initialDelaySeconds** field defines how long the probe should wait before it 
-starts to poll so the probe does not start making requests before the server has started. 
-The **failureThreshold** option defines how many times the probe should fail 
-before the state should be changed from ready to not ready. The **timeoutSeconds** 
-option defines how many seconds before the probe times out. The **periodSeconds** 
-option defines how often the probe should poll the given endpoint.
-
-The liveness probes are configured to poll the **/health/live** endpoint.
-The liveness probes determine when a container needs to be restarted.
-Similar to the readiness probes, the liveness probes also define
-**initialDelaySeconds**,
-**failureThreshold**,
-**timeoutSeconds**,
-and **periodSeconds**.
-
-# Deploying the microservices
-
-To build these microservices, navigate to the **start** directory and run the following 
-command.
-
-```
-mvn package
-```
-{: codeblock}
-
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
-
-
-Next, run the **docker build** commands to build container images for your application:
-```
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-{: codeblock}
-
-
-The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
-The tag for an image describes the specific image version. 
-If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
-
-Push your images to the container registry on IBM Cloud with the following commands:
-
-```
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-```
-{: codeblock}
-
-Update the image names so that the images in your IBM Cloud container registry are used,
-and remove the **nodePort** fields so that the ports can be automatically generated:
-
-```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
-```
-{: codeblock}
-
-When the builds succeed, run the following command to deploy the necessary Kubernetes 
-resources to serve the applications.
-
-```
-kubectl apply -f kubernetes.yaml
-```
-{: codeblock}
-
-
-Use the following command to view the status of the pods. There will be two **system** pods 
-and one **inventory** pod, later you'll observe their behavior as the **system** pods become unhealthy.
-
-```
-kubectl get pods
-```
-{: codeblock}
-
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          59s
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          59s
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          59s
+The defaultServer server is ready to run a smarter planet.
 ```
 
-Wait until the pods are ready. After the pods are ready, you will make requests to your 
-services.
 
-
-In this execise, you need to access the services by using Kubernetes API.
-Run the following command to start a proxy to the Kubernetes API server:
-
-```
-kubectl proxy
-```
-{: codeblock}
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following commands to store the proxy path of the **system** and **inventory** services.
+
+
+Check out the service at the http://localhost:9080/LibertyProject/System/properties URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/inventory-service/proxy
-```
-{: codeblock}
-
-Run the following echo commands to verify the variables:
-
-```
-echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
-```
-{: codeblock}
-
-The output appears similar to the following:
-
-```
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
-```
-
-Make a request to the system service to see the JVM system properties with the following command:
-
-```
-curl http://$SYSTEM_PROXY/system/properties | jq
-```
-{: codeblock}
-
-The readiness probe ensures the READY state won't be `1/1`
-until the container is available to accept requests.
-Without a readiness probe, you may notice an unsuccessful response from the server.
-This scenario can occur when the container has started,
-but the application server hasn't fully initialized.
-With the readiness probe, you can be certain the pod will only accept traffic
-when the microservice has fully started.
-
-Similarly, access the inventory service and observe the successful request with the following command:
-
-```
-curl http://$INVENTORY_PROXY/inventory/systems/system-service | jq
-```
-{: codeblock}
-
-# Changing the ready state of the system microservice
-
-
-An endpoint has been provided under the `system` microservice to set it to an unhealthy 
-state in the health check. The unhealthy state will cause the readiness probe to fail.
-Use the `curl` command to invoke this endpoint by making a POST request to the
-`/system/properties/unhealthy` endpoint.
-
-```
-curl -X POST http://$SYSTEM_PROXY/system/properties/unhealthy
-```
-{: codeblock}
-
-Run the following command to view the state of the pods:
-
-```
-kubectl get pods
+curl -s http://localhost:9080/LibertyProject/System/properties | jq
 ```
 {: codeblock}
 
 
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          1m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          1m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
-```
 
-
-You will notice that one of the two `system` pods is no longer in the ready state.
-Make a request to the `/system/properties` endpoint with the following command:
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
+in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
+from the **finish** directory in another shell session:
 
 ```
-curl http://$SYSTEM_PROXY/system/properties | jqproperties
+mvn liberty:stop
 ```
 {: codeblock}
 
-Observe that your request will still be successful because you have two replicas and one is still healthy.
-
-### Observing the effects on the inventory microservice
 
 
-Wait until the `system` pod is ready again.
-Make two POST requests to `/system/properties/unhealthy` endpoint with the following command:
+# **Creating a JAX-RS application**
 
-```
-curl -X POST http://$SYSTEM_PROXY/system/properties/unhealthy
-```
-{: codeblock}
+Navigate to the **start** directory to begin.
 
-If you see the same pod name twice, make the request again until you see that the second 
-pod has been made unhealthy. You may see the same pod twice because there's a delay 
-between a pod becoming unhealthy and the readiness probe noticing it.
-Therefore, traffic may still be routed to the unhealthy service for approximately 5 seconds.
-Continue to observe the output of `kubectl get pods`.
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
+deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```
-kubectl get pods
+mvn liberty:dev
 ```
 {: codeblock}
 
-You will see both pods are no longer ready. 
-During this process, the readiness probe for the `inventory` microservice will also fail. 
-Observe it's no longer in the ready state either.
 
-First, both **system** pods will no longer be ready because the readiness probe failed.
+After you see the following message, your application server in dev mode is ready:
 
 ```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          5m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          5m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          5m
+**************************************************************
+*    Liberty is running in dev mode.
 ```
 
-Next, the **inventory** pod is no longer ready because the readiness probe failed. The probe 
-failed because **system-service** is now unavailable.
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
+or open the project in your editor.
+
+JAX-RS has two key concepts for creating REST APIs. The most obvious one is the resource itself, which is
+modelled as a class. The second is a JAX-RS application, which groups all exposed resources under a
+common path. You can think of the JAX-RS application as a wrapper for all of your resources.
+
+
+Replace the **SystemApplication** class.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
+
+
+
 
 ```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          6m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          6m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          6m
-```
+package io.openliberty.guides.rest;
 
-Then, the **system** pods will start to become healthy again after 60 seconds.
+import javax.ws.rs.core.Application;
+import javax.ws.rs.ApplicationPath;
 
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
-```
+@ApplicationPath("System")
+public class SystemApplication extends Application {
 
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
-```
-
-Finally, you will see all of the pods have recovered.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          8m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          8m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
-```
-
-# Testing the microservices
-
-
-Update the **pom.xml** files so that the **system.service.root** and **inventory.service.root** properties
-match the values to access the **system** and **inventory** services.
-
-```
-sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' inventory/pom.xml
-sed -i 's=localhost:32000='"$INVENTORY_PROXY"'=g' inventory/pom.xml
-sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
+}
 ```
 {: codeblock}
 
-Run the integration tests by using the following command:
 
+The **SystemApplication** class extends the **Application** class, which associates all JAX-RS resource classes in the WAR file with this JAX-RS application. These resources become available under the common path that's specified with the **@ApplicationPath** 
+annotation. The **@ApplicationPath** annotation has a value that indicates the path in the WAR file that 
+the JAX-RS application accepts requests from.
+
+
+
+
+# **Creating the JAX-RS resource**
+
+In JAX-RS, a single class should represent a single resource, or a group of resources of the same type.
+In this application, a resource might be a system property, or a set of system properties. It is easy
+to have a single class handle multiple different resources, but keeping a clean separation between types
+of resources helps with maintainability in the long run.
+
+Create the **PropertiesResource** class.
+
+> Run the following touch command in your terminal
 ```
-mvn failsafe:integration-test
+touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 ```
 {: codeblock}
 
-A few tests are included for you to test the basic functions of the microservices.
-If a test failure occurs, then you might have introduced a bug into the code.
-To run the tests, wait for all pods to be in the ready state before proceeding further.
 
-When the tests succeed, you should see output similar to the following in your console.
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+
+
+
+
+```
+package io.openliberty.guides.rest;
+
+import java.util.Properties;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+@Path("properties")
+public class PropertiesResource {
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Properties getProperties() {
+        return System.getProperties();
+    }
+
+}
+```
+{: codeblock}
+
+
+This resource class has quite a bit of code in it, so let's break it down into manageable chunks.
+
+The **@Path** annotation on the class indicates that this resource responds to the **properties** path
+in the JAX-RS application. The **@ApplicationPath** annotation in the **SystemApplication** class together with
+the **@Path** annotation in this class indicates that the resource is available at the **System/properties**
+path.
+
+JAX-RS maps the HTTP methods on the URL to the methods of the class by using annotations. 
+Your application uses the **GET** annotation to map an HTTP **GET** request
+to the **System/properties** path.
+
+The **@GET** annotation on the method indicates that this method is to be called for the HTTP **GET**
+method. The **@Produces** annotation indicates the format of the content that will be returned. The
+value of the **@Produces** annotation will be specified in the HTTP **Content-Type** response header.
+For this application, a JSON structure is to be returned. The desired **Content-Type** for a JSON
+response is **application/json** with **`MediaType.APPLICATION_JSON`** instead of the **String** content type. Using a constant such as **`MediaType.APPLICATION_JSON`** is better because if there's a spelling error, a compile failure occurs.
+
+JAX-RS supports a number of ways to marshal JSON. The JAX-RS 2.1 specification mandates JSON-Binding
+(JSON-B). The method body returns the result of **System.getProperties()**, which is of type **java.util.Properties**. Since the method 
+is annotated with **`@Produces(MediaType.APPLICATION_JSON)`**, JAX-RS uses JSON-B to automatically convert the returned object
+to JSON data in the HTTP response.
+
+
+
+
+
+# **Configuring the server**
+
+To get the service running, the Liberty server needs to be correctly configured.
+
+Replace the server configuration file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-rest-intro/start/src/main/liberty/config/server.xml
+
+
+
+
+```
+<server description="Intro REST Guide Liberty server">
+  <featureManager>
+      <feature>jaxrs-2.1</feature>
+  </featureManager>
+
+  <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
+                id="defaultHttpEndpoint" host="*" />
+
+  <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
+</server>
+```
+{: codeblock}
+
+
+
+The configuration does the following actions:
+
+* Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
+* Configures the server to resolve the HTTP port numbers from variables, which are then specified in
+the Maven **pom.xml** file. This is specified in the **`<httpEndpoint/>`** element. Variables use the **${variableName}** syntax.
+* Configures the server to run the produced web application on a context root specified in the 
+**pom.xml** file. This is specified in the **`<webApplication/>`** element.
+
+
+The variables that are being used in the **server.xml** file are provided by the properties set in the Maven **pom.xml** file. The properties must be formatted as **liberty.var.variableName**.
+
+
+# **Running the application**
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+Check out the service that you created at the http://localhost:9080/LibertyProject/System/properties URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl -s http://localhost:9080/LibertyProject/System/properties | jq
+```
+{: codeblock}
+
+
+
+
+# **Testing the service**
+
+
+You can test this service manually by starting a server and pointing a web browser at the
+http://localhost:9080/LibertyProject/System/properties URL. However, automated tests are a 
+much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS 
+Client API provide a simple environment to test the application.
+
+You can write tests for the individual units of code outside of a running application server, or they
+can be written to call the application server directly. In this example, you will create a test that
+does the latter.
+
+Create the **EndpointIT** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+
+
+
+
+```
+package it.io.openliberty.guides.rest;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.Properties;
+
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+
+import org.junit.jupiter.api.Test;
+
+public class EndpointIT {
+    
+    private static final Jsonb jsonb = JsonbBuilder.create();
+
+    @Test
+    public void testGetProperties() {
+        String port = System.getProperty("http.port");
+        String context = System.getProperty("context.root");
+        String url = "http://localhost:" + port + "/" + context + "/";
+
+        Client client = ClientBuilder.newClient();
+
+        WebTarget target = client.target(url + "System/properties");
+        Response response = target.request().get();
+
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
+                     "Incorrect response code from " + url);
+
+        String json = response.readEntity(String.class);
+        Properties sysProps = jsonb.fromJson(json, Properties.class);
+
+        assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
+                     "The system property for the local and remote JVM should match");
+        response.close();
+    }
+}
+```
+{: codeblock}
+
+
+
+This test class has more lines of code than the resource implementation. This situation is common.
+The test method is indicated with the **@Test** annotation.
+
+
+The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the server configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven **pom.xml** file. Refer to the **pom.xml** file to see how the application information such as the **default.http.port**, **default.https.port** and **app.context.root** elements are provided in the file.
+
+
+These Maven properties are then passed to the Java test program as the **`<systemPropertyVariables/>`** element in the **pom.xml** file.
+
+Getting the values to create a representation of the URL is simple. The test class uses the **getProperty** method
+to get the application details.
+
+To call the JAX-RS service using the JAX-RS client, first create a **WebTarget** object by calling
+the **target** method that provides the URL. To cause the HTTP request to occur, the **request().get()** method
+is called on the **WebTarget** object. The **get** method
+call is a synchronous call that blocks until a response is received. This call returns a **Response**
+object, which can be inspected to determine whether the request was successful.
+
+The first thing to check is that a **200** response was received. The JUnit **assertEquals** method can be used for this check.
+
+Check the response body to ensure it returned the right information. Since the client and the server
+are running on the same machine, it is reasonable to expect that the system properties for the local
+and remote JVM would be the same. In this case, an **assertEquals** assertion is made so that the **os.name** system property
+for both JVMs is the same. You can write additional assertions to check for more values.
+
+<br/>
+### **Running the tests**
+
+Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+
+You will see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.65 s - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.rest.EndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
 
-Results:
+Results :
 
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+To see whether the tests detect a failure, add an assertion that you know fails, or change the existing
+assertion to a constant value that doesn't match the **os.name** system property.
 
-Results:
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
+where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-```
 
-# Tearing down the environment
+# **Summary**
 
-To remove all of the resources created during this guide, run the following command to 
-delete all of the resources that you created.
+## **Nice Work!**
 
-```
-kubectl delete -f kubernetes.yaml
-```
-{: codeblock}
+You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
 
 
 
-Press **CTRL+C** to stop the proxy server that was started at step 7.
+<br/>
+## **Clean up your environment**
 
-
-# Summary
-
-## Nice Work!
-
-You have used MicroProfile Health and Open Liberty to create endpoints that report on 
-
-your microservice's status. Then, you observed how Kubernetes uses the **/health/ready** and
-**/health/live** endpoints to keep your microservices running smoothly.
-
-
-
-
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-kubernetes-microprofile-health** project by running the following commands:
+Delete the **guide-rest-intro** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-kubernetes-microprofile-health
+rm -fr guide-rest-intro
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
-select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+<br/>
+## **What did you think of this guide?**
 
-## What could make this guide better?
+We want to hear from you. To provide feedback, click the following link.
+
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-intro)
+
+Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
+
+<br/>
+## **What could make this guide better?**
+
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-intro/pulls)
 
 
 
+<br/>
+## **Where to next?**
 
-## Where to next? 
-
-* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
-## Log out of the session
+<br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
