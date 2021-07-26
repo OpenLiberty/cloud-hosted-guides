@@ -375,7 +375,7 @@ To enable this dynamic injection,
 replace the **InventoryConfig.java** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
+> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
 
 
 
@@ -431,7 +431,7 @@ To convert configured Strings to an arbitrary class type, such as the **Email** 
 replace the **Email** Class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java
+> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java
 
 
 
@@ -533,7 +533,7 @@ To use the custom **Email** converter,
 replace the **InventoryConfig** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
+> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
 
 
 
@@ -586,7 +586,7 @@ To use externalized configuration in the **inventory** service,
 replace the **InventoryResource** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 

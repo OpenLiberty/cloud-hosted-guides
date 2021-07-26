@@ -156,7 +156,7 @@ The **PersonServiceIT** class outlines some basic information that informs how M
 Replace the **PersonServiceIT** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 
@@ -229,7 +229,7 @@ create a **PersonService** REST client, and annotate the REST client with **@RES
 Replace the **PersonServiceIT** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 
@@ -281,7 +281,7 @@ Now that the setup is complete, you can write your first test case. Start by tes
 Replace the **PersonServiceIT** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 
@@ -335,7 +335,7 @@ Next, add more tests.
 Replace the **PersonServiceIT** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 
@@ -585,7 +585,7 @@ Remove the container code from the **PersonServiceIT** class.
 Replace the **PersonServiceIT** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 
@@ -691,7 +691,7 @@ Annotate the **PersonServiceIT** class with the **@SharedContainerConfig** annot
 Replace the **PersonServiceIT** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 
@@ -792,7 +792,7 @@ Similarly, replace the **ErrorPathIT** class to remove the container code.
 Replace the **ErrorPathIT** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
 
 
@@ -858,7 +858,7 @@ Annotate the **ErrorPathIT** class with the **@SharedContainerConfig** annotatio
 Replace the **ErrorPathIT** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 
 
 

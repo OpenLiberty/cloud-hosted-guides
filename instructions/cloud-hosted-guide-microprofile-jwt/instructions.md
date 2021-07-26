@@ -499,7 +499,7 @@ the **system** service.
 Replace the system server configuration file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml
+> **File** > **Open** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml
 
 
 

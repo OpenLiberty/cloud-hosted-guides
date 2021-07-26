@@ -383,7 +383,7 @@ These custom objects provide a simpler and faster way for you to create scalable
 Replace the Maven configuration file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-reactive-rest-client/start/query/pom.xml
+> **File** > **Open** > guide-reactive-rest-client/start/query/pom.xml
 
 
 
@@ -543,7 +543,7 @@ You'll need to register the type of object that you want inside the client invoc
 Replace the **InventoryClient** interface.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
+> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
 
 
 
@@ -628,7 +628,7 @@ Now that the client methods return the **Observable** class, you must update the
 Replace the **QueryResource** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
+> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
 
 
 

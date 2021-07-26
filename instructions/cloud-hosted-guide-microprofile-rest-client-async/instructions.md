@@ -89,7 +89,7 @@ You will update the methods in the template interface for this client to be asyn
 Replace the **InventoryClient** interface.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
+> **File** > **Open** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
 
 
 
@@ -143,7 +143,7 @@ Since asynchronous calls do not block the program, the endpoint needs to ensure 
 Replace the **QueryResource** class.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
+> **File** > **Open** > guide-microprofile-rest-client-async/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
 
 
 
