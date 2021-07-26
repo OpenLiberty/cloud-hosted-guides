@@ -966,6 +966,8 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 * [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+<br/> 
+### **Learn more about MicroShed Testing.**
 * [View the MicroShed Testing website](https://microshed.org/microshed-testing/)
 
 

@@ -592,6 +592,8 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 * [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
 * [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
+<br/> 
+### **Learn more about MicroShed Testing.**
 * [Visit the official MicroShed Testing website](https://microshed.org/microshed-testing/)
 
 
