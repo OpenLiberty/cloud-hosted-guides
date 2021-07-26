@@ -72,9 +72,6 @@
         "guide": "guide-reactive-rest-client"
     },
     {
-        "guide": "guide-mongodb-intro"
-    },
-    {
         "guide": "guide-contract-testing"
     }
 ]
