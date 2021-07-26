@@ -13,7 +13,11 @@ on:
       guide_branch:
         description: 'Guide branch'     
         required: true
-        default: 'refs/heads/name-patch-1'
+        default: 'refs/heads/staging'
+      converter_branch:
+        description: 'Converter branch'
+        required: true
+        default: 'refs/heads/main'
         
 jobs:
   printBranch:
@@ -26,6 +30,7 @@ jobs:
           echo "${{ github.event.inputs.guide_name }}"
           echo "${{ github.event.inputs.guide_branch }}"
           echo "${{ github.event.inputs.devGuide }}"
+          echo "${{ github.event.inputs.converter_branch }}"
 
           
   convertToDevelopmentLab:
@@ -41,6 +46,7 @@ jobs:
       - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
         with:
+          ref: ${{ github.event.inputs.converter_branch }}
           repository: OpenLiberty/cloud-hosted-guide-converter
           path: GuideConverter
         
