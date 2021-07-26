@@ -1,7 +1,7 @@
 
-# **Welcome to the Creating reactive Java microservices guide!**
+# **Welcome to the Acknowledging messages using MicroProfile Reactive Messaging guide!**
 
-Learn how to write reactive Java microservices using MicroProfile Reactive Messaging.
+Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -13,20 +13,23 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 # **What you'll learn**
 
-You will learn how to build reactive microservices that can send requests to other microservices, and asynchronously receive and process the responses. You will use an external messaging system to handle the asynchronous messages that are sent and received between the microservices as streams of events. MicroProfile Reactive Messaging makes it easy to write and configure your application to send, receive, and process the events efficiently.
+MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive
+Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged
+after they are processed. Every message that gets sent out must be acknowledged. This way, any messages that were delivered
+to the target service but not processed, for example, due to a system failure, can be identified and sent again.
 
-*Asynchronous messaging between microservices*
+The application in this guide consists of two microservices, **system** and **inventory**. Every 15 seconds, the **system**
+microservice calculates and publishes events that contain its current average system load. The **inventory** microservice
+subscribes to that information so that it can keep an updated list of all the systems and their current system loads.
+You can get the current inventory of systems by accessing the **/systems** REST endpoint. The following diagram depicts
+the application that is used in this guide:
 
-Asynchronous communication between microservices can be used to build reactive and responsive applications. By decoupling the requests sent by a microservice from the responses that it receives, the microservice is not blocked from performing other tasks while waiting for the requested data to become available. Imagine asynchronous communication as a restaurant. A waiter might come to your table and take your order. While you are waiting for your food to be prepared, that waiter serves other tables and takes their orders too. When your food is ready, the waiter brings your food to the table and then continues to serve the other tables. If the waiter were to operate synchronously, they must take your order and then wait until they deliver your food before serving any other tables. In microservices, a request call from a REST client to another microservice can be time-consuming because the network might be slow, or the other service might be overwhelmed with requests and can’t respond quickly. But in an asynchronous system, the microservice sends a request to another microservice and continues to send other calls and to receive and process other responses until it receives a response to the original request.
+![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/master/assets/reactive-messaging-system-inventory-rest.png)
 
-*What is MicroProfile Reactive Messaging?*
 
-MicroProfile Reactive Messaging provides an easy way to asynchronously send, receive, and process messages that are received as continuous streams of events. You simply annotate application beans' methods and Open Liberty converts the annotated methods to reactive streams-compatible publishers, subscribers, and processors and connects them up to each other. MicroProfile Reactive Messaging provides a Connector API so that your methods can be connected to external messaging systems that produce and consume the streams of events, such as [Apache Kafka](https://kafka.apache.org/).
-
-The application in this guide consists of two microservices, **system** and **inventory**. Every 15 seconds, the **system** microservice calculates and publishes an event that contains its current average system load. The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. The current inventory of systems can be accessed via the **/systems** REST endpoint. You'll create the **system** and **inventory** microservices using MicroProfile Reactive Messaging.
-
-![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory.png)
-
+You will explore the acknowledgment strategies that are available with MicroProfile Reactive Messaging, and you'll implement
+your own manual acknowledgment strategy. To learn more about how the reactive Java services used in this guide work, check
+out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 # **Getting started**
 
@@ -40,11 +43,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-reactive-messaging.git
-cd guide-microprofile-reactive-messaging
+git clone https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git
+cd guide-microprofile-reactive-messaging-acknowledgment
 ```
 {: codeblock}
 
@@ -53,22 +56,63 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-# **Creating the producer in the system microservice**
+# **Choosing an acknowledgment strategy**
 
-Navigate to the **start** directory to begin. 
 
-The **system** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of events. Every 15 seconds, the **system** microservice publishes an event that contains its calculation of the average system load (its CPU usage) for the last minute.
+Messages must be acknowledged in reactive applications. Messages are either acknowledged explicitly, or messages are acknowledged
+implicitly by MicroProfile Reactive Messaging. Acknowledgment for incoming messages is controlled by the **@Acknowledgment**
+annotation in MicroProfile Reactive Messaging. If the **@Acknowledgment** annotation isn't explicitly defined, then the
+default acknowledgment strategy applies, which depends on the method signature. Only methods that receive incoming messages
+and are annotated with the **@Incoming** annotation must acknowledge messages. Methods that are annotated only with the
+**@Outgoing** annotation don't need to acknowledge messages because messages aren't being received and MicroProfile Reactive
+Messaging requires only that _received_ messages are acknowledged.
 
-Create the **SystemService** class.
+Almost all of the methods in this application that require message acknowledgment are assigned the **`POST_PROCESSING`** strategy
+by default. If the acknowledgment strategy is set to **`POST_PROCESSING`**, then MicroProfile Reactive Messaging acknowledges
+the message based on whether the annotated method emits data:
 
-> Run the following touch command in your terminal
+* If the method emits data, the incoming message is acknowledged after the outgoing message is acknowledged.
+* If the method doesn't emit data, the incoming message is acknowledged after the method or processing completes.
+
+It’s important that the methods use the **`POST_PROCESSING`** strategy because it fulfills the requirement that a message isn't
+acknowledged until after the message is fully processed. This processing strategy is beneficial in situations where messages
+must reliably not get lost. When the **`POST_PROCESSING`** acknowledgment strategy can’t be used, the **MANUAL** strategy can
+be used to fulfill the same requirement. In situations where message acknowledgment reliability isn't important and losing
+messages is acceptable, the **`PRE_PROCESSING`** strategy might be appropriate.
+
+The only method in the guide that doesn't default to the **`POST_PROCESSING`** strategy is the
+**sendProperty()** method in the **system** service. The **sendProperty()**
+method receives property requests from the **inventory** service. For each property request, if the property that's being
+requested is valid, then the method **returns** a property response with the value of the property.
+However, if the requested property **doesn't exist**, the request is ignored and no property response
+is **returned**.
+
+A key difference exists between when a property response is returned and when a property response isn't returned. In the
+case where a property response is returned, the request doesn't finish processing until the response is sent and safely
+stored by the Kafka broker. Only then is the incoming message acknowledged. However, in the case where the requested
+property doesn’t exist and a property response isn't returned, the method finishes processing the request message so the
+message must be acknowledged immediately.
+
+This case where a message either needs to be acknowledged immediately or some time later is one of the situations where
+the **MANUAL** acknowledgment strategy would be beneficial
+
+# **Implementing the MANUAL acknowledgment strategy**
+
+
+
+To begin, run the following command to navigate to the **start** directory:
 ```
-touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+cd /home/project/guide-microprofile-reactive-messaging-acknowledgment/start
 ```
 {: codeblock}
 
+Update the **SystemService.sendProperty** method to use the **MANUAL** acknowledgment strategy, which fits the method processing
+requirements better than the default **`PRE_PROCESSING`** strategy.
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+Replace the **SystemService** class.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 
 
 
@@ -81,17 +125,26 @@ import java.lang.management.OperatingSystemMXBean;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 
+import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import org.eclipse.microprofile.reactive.streams.operators.PublisherBuilder;
+import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
 import org.reactivestreams.Publisher;
 
+import io.openliberty.guides.models.PropertyMessage;
 import io.openliberty.guides.models.SystemLoad;
 import io.reactivex.rxjava3.core.Flowable;
 
 @ApplicationScoped
 public class SystemService {
+    
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
 
     private static final OperatingSystemMXBean osMean = 
             ManagementFactory.getOperatingSystemMXBean();
@@ -112,37 +165,63 @@ public class SystemService {
     public Publisher<SystemLoad> sendSystemLoad() {
         return Flowable.interval(15, TimeUnit.SECONDS)
                 .map((interval -> new SystemLoad(getHostname(),
-                        new Double(osMean.getSystemLoadAverage()))));
+                        osMean.getSystemLoadAverage())));
     }
 
+    @Incoming("propertyRequest")
+    @Outgoing("propertyResponse")
+    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
+    public PublisherBuilder<Message<PropertyMessage>>
+    sendProperty(Message<String> propertyMessage) {
+        String propertyName = propertyMessage.getPayload();
+        String propertyValue = System.getProperty(propertyName, "unknown");
+        logger.info("sendProperty: " + propertyValue);
+        if (propertyName == null || propertyName.isEmpty() || propertyValue == "unknown") {
+            logger.warning("Provided property: " +
+                    propertyName + " is not a system property");
+            propertyMessage.ack();
+            return ReactiveStreams.empty();
+        }
+        Message<PropertyMessage> message = Message.of(
+                new PropertyMessage(getHostname(),
+                        propertyName,
+                        propertyValue),
+                propertyMessage::ack
+        );
+        return ReactiveStreams.of(message);
+    }
 }
 ```
 {: codeblock}
 
 
+The **sendProperty()** method needs to manually acknowledge the incoming messages, so it is
+annotated with the **@Acknowledgment(Acknowledgment.Strategy.MANUAL)**
+annotation. This annotation sets the method up to expect an incoming message. To meet the requirements of acknowledgment,
+the method parameter is updated to receive and return a **Message** of type **String**, rather
+than just a **String**. Then, the message **payload** is extracted and checked for validity.
+One of the following outcomes occurs:
+
+* If the system property **isn't valid**, the method **acknowledges**
+  the incoming message and **returns** an empty reactive stream. 
+  The processing is complete.
+* If the system property is valid, the method creates a **message** with the value of the
+  requested system property and sends it to the proper channel. The method acknowledges the incoming message only
+  after the sent message is acknowledged.
+
+# **Waiting for a message to be acknowledged**
 
 
-The **SystemService** class contains a **Publisher** method that is called **sendSystemLoad()**, which calculates and returns the average system load. The **@Outgoing** annotation on the **sendSystemLoad()** method indicates that the method publishes its calculation as a message on a topic in the Kafka messaging system. The **Flowable.interval()** method from **rxJava** is used to set the frequency of how often the system service publishes the calculation to the event stream.
+The **inventory** service contains an endpoint that accepts **PUT** requests. When a **PUT** request that contains a system property
+is made to the **inventory** service, the **inventory** service sends a message to the **system** service. The message from the
+**inventory** service requests the value of the system property from the system service. Currently, a **200** response code
+is returned without confirming whether the sent message was acknowledged. Replace the **inventory** service to return a **200**
+response only after the outgoing message is acknowledged.
 
-The messages are transported between the service and the Kafka messaging system through a channel called **systemLoad**. The name of the channel to use is set in the **@Outgoing("systemLoad")** annotation. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are published on a topic called **system.load**, as shown in the following diagram:
+Replace the **InventoryResource** class.
 
-![Reactive system publisher](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-publisher.png)
-
-
-# **Creating the consumer in the inventory microservice**
-
-The **inventory** microservice records in its inventory the average system load information that it received from potentially multiple instances of the **system** service.
-
-Create the **InventoryResource** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
@@ -153,13 +232,17 @@ package io.openliberty.guides.inventory;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -167,14 +250,23 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Message;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import org.reactivestreams.Publisher;
 
+import io.openliberty.guides.models.PropertyMessage;
 import io.openliberty.guides.models.SystemLoad;
+import io.reactivex.rxjava3.core.BackpressureStrategy;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableEmitter;
+
 
 @ApplicationScoped
 @Path("/inventory")
 public class InventoryResource {
 
     private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
+    private FlowableEmitter<Message<String>> propertyNameEmitter;
 
     @Inject
     private InventoryManager manager;
@@ -210,6 +302,41 @@ public class InventoryResource {
                 .build();
     }
 
+    @PUT
+    @Path("/data")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
+    /* This method sends a message and returns a CompletionStage that doesn't
+        complete until the message is acknowledged. */
+    public CompletionStage<Response> updateSystemProperty(String propertyName) {
+        logger.info("updateSystemProperty: " + propertyName);
+        CompletableFuture<Void> result = new CompletableFuture<>();
+
+        Message<String> message = Message.of(
+                propertyName,
+                () -> {
+                    /* This is the ack callback, which runs when the outgoing
+                        message is acknowledged. After the outgoing message is
+                        acknowledged, complete the "result" CompletableFuture. */
+                    result.complete(null);
+                    /* An ack callback must return a CompletionStage that says
+                        when it's complete. Asynchronous processing isn't necessary 
+                        so a completed CompletionStage is returned to indicate that 
+                        the work here is done. */
+                    return CompletableFuture.completedFuture(null);
+                }
+        );
+
+        propertyNameEmitter.onNext(message);
+        /* Set up what happens when the message is acknowledged and the "result"
+            CompletableFuture is completed. When "result" completes, the Response 
+            object is created with the status code and message. */
+        return result.thenApply(a -> Response
+                .status(Response.Status.OK)
+                .entity("Request successful for the " + propertyName + " property\n")
+                .build());
+    }
+
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     public Response resetSystems() {
@@ -230,289 +357,51 @@ public class InventoryResource {
             logger.info("Host " + hostname + " was added: " + sl);
         }
     }
+
+    @Incoming("addSystemProperty")
+    public void getPropertyMessage(PropertyMessage pm)  {
+        logger.info("getPropertyMessage: " + pm);
+        String hostId = pm.hostname;
+        if (manager.getSystem(hostId).isPresent()) {
+            manager.updatePropertyMessage(hostId, pm.key, pm.value);
+            logger.info("Host " + hostId + " was updated: " + pm);
+        } else {
+            manager.addSystem(hostId, pm.key, pm.value);
+            logger.info("Host " + hostId + " was added: " + pm);
+        }
+    }
+
+    @Outgoing("requestSystemProperty")
+    public Publisher<Message<String>> sendPropertyName() {
+        Flowable<Message<String>> flowable = Flowable.create(emitter ->
+                this.propertyNameEmitter = emitter, BackpressureStrategy.BUFFER);
+        return flowable;
+    }
 }
 ```
 {: codeblock}
 
 
+The **sendPropertyName()** method is updated to return a
+**Message<String>** instead of just a **String**. This return type allows the method to set a callback
+that runs after the outgoing message is acknowledged. In addition to updating the **sendPropertyName()**
+method, the **propertyNameEmitter** variable is updated to send a **Message<String>** type.
 
-
-The **inventory** microservice receives the message from the **system** microservice over the **@Incoming("systemLoad")** channel. The properties of this channel are defined in the **microprofile-config.properties** file. The **inventory** microservice is also a RESTful service that is served at the **/inventory** endpoint.
-
-The **InventoryResource** class contains a method called **updateStatus()**, which receives the message that contains the average system load and updates its existing inventory of systems and their average system load. The **@Incoming("systemLoad")** annotation on the **updateStatus()** method indicates that the method retrieves the average system load information by connecting to the channel called **systemLoad**. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are retrieved from a topic called **system.load**, as shown in the following diagram:
-
-![Reactive system inventory detail](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-detail.png)
-
-
-# **Configuring the MicroProfile Reactive Messaging connectors for Kafka**
-
-The **system** and **inventory** services exchange messages with the external messaging system through a channel. The MicroProfile Reactive Messaging Connector API makes it easy to connect each service to the channel. You just need to add configuration keys in a properties file for each of the services. These configuration keys define properties such as the name of the channel and the topic in the Kafka messaging system. Open Liberty includes the **liberty-kafka** connector for sending and receiving messages from Apache Kafka.
-
-The system and inventory microservices each have a MicroProfile Config properties file to define the properties of their outgoing and incoming streams.
-
-Create the system/microprofile-config.properties file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
-
-
-
-
-```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
-
-mp.messaging.outgoing.systemLoad.connector=liberty-kafka
-mp.messaging.outgoing.systemLoad.topic=system.load
-mp.messaging.outgoing.systemLoad.key.serializer=org.apache.kafka.common.serialization.StringSerializer
-mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.SystemLoad$SystemLoadSerializer
-```
-{: codeblock}
-
-
-
-
-The **mp.messaging.connector.liberty-kafka.bootstrap.servers** property configures the hostname and port for connecting to the Kafka server. The **system** microservice uses an outgoing connector to send messages through the **systemLoad** channel to the **system.load** topic in the Kafka message broker so that the **inventory** microservices can consume the messages. The **key.serializer** and **value.serializer** properties characterize how to serialize the messages. The **SystemLoadSerializer** class implements the logic for turning a **SystemLoad** object into JSON and is configured as the **value.serializer**.
-
-The **inventory** microservice uses a similar **microprofile-config.properties** configuration to define its required incoming stream.
-
-Create the inventory/microprofile-config.properties file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
-
-
-
-
-```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
-
-mp.messaging.incoming.systemLoad.connector=liberty-kafka
-mp.messaging.incoming.systemLoad.topic=system.load
-mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
-mp.messaging.incoming.systemLoad.group.id=system-load-status
-```
-{: codeblock}
-
-
-The **inventory** microservice uses an incoming connector to receive messages through the **systemLoad** channel. The messages were published by the **system** microservice to the **system.load** topic in the Kafka message broker. The **key.deserializer** and **value.deserializer** properties define how to deserialize the messages. The **SystemLoadDeserializer** class implements the logic for turning JSON into a **SystemLoad** object and is configured as the **value.deserializer**. The **group.id** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) and [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs).
-
-# **Configuring the server**
-
-To run the services, the Open Liberty server on which each service runs needs to be correctly configured. Relevant features, including the [MicroProfile Reactive Messaging feature](https://openliberty.io/docs/ref/feature/#mpReactiveMessaging-1.0.html), must be enabled for the **system** and **inventory** services.
-
-Create the system/server.xml configuration file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
-
-
-
-
-```
-<server description="System Service">
-
-  <featureManager>
-    <feature>cdi-2.0</feature>
-    <feature>concurrent-1.0</feature>
-    <feature>jsonb-1.0</feature>
-    <feature>mpHealth-2.2</feature>
-    <feature>mpConfig-1.4</feature>
-    <feature>mpReactiveMessaging-1.0</feature>
-  </featureManager>
-
-  <variable name="default.http.port" defaultValue="9083"/>
-  <variable name="default.https.port" defaultValue="9446"/>
-
-  <httpEndpoint host="*" httpPort="${default.http.port}"
-      httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-  <webApplication location="system.war" contextRoot="/"/>
-</server>
-```
-{: codeblock}
-
-
-
-
-The **server.xml** file is already configured for the **inventory** microservice.
+The **updateSystemProperty()** method now returns a
+**CompletionStage** object wrapped around a Response type. This return type allows for a response
+object to be returned after the outgoing message is acknowledged. The outgoing **message** is created
+with the requested property name as the **payload** and an acknowledgment
+**callback** to execute an action after the message is acknowledged. The method creates a
+**CompletableFuture** variable that returns a **200** response
+code after the variable is completed in the **callback** function.
 
 # **Building and running the application**
 
 Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
 
-Create the Maven configuration file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/pom.xml
-
-
-
-
-```
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>system</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <liberty.var.default.http.port>9083</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9446</liberty.var.default.https.port>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>8.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>3.3</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile.reactive.messaging</groupId>
-            <artifactId>microprofile-reactive-messaging-api</artifactId>
-            <version>1.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- Required dependencies -->
-        <dependency>
-            <groupId>io.openliberty.guides</groupId>
-            <artifactId>models</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>2.8.0</version>
-        </dependency>
-        <!-- tag::rxjava[] -->
-        <dependency>
-            <groupId>io.reactivex.rxjava3</groupId>
-            <artifactId>rxjava</artifactId>
-            <version>3.0.12</version>
-        </dependency>
-        <!-- For tests -->
-        <dependency>
-            <groupId>org.microshed</groupId>
-            <artifactId>microshed-testing-liberty</artifactId>
-            <version>0.9.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>kafka</artifactId>
-            <version>1.15.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.7.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.1</version>
-                <configuration>
-                    <packagingExcludes>pom.xml</packagingExcludes>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.3.4</version>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <executions>
-                    <execution>
-                        <id>integration-test</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                        </goals>
-                        <configuration>
-                            <trimStackTrace>false</trimStackTrace>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>verify</id>
-                        <goals>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-{: codeblock}
-
-
-
-The **pom.xml** file lists the **microprofile-reactive-messaging-api**, **kafka-clients**, and **rxjava** dependencies.
-
-The **microprofile-reactive-messaging-api** dependency is needed to enable the use of MicroProfile Reactive Messaging API. The **kafka-clients** dependency is added because the application needs a Kafka client to connect to the Kafka broker. The **rxjava** dependency is used for creating events at regular intervals.
-
 Start your Docker environment. Dockerfiles are provided for you to use.
 
-To build the application, run the Maven **install** and **package** goals from the command line in the **start** directory:
+To build the application, run the Maven **install** and **package** goals from the command-line session in the **start** directory:
 
 ```
 mvn -pl models install
@@ -538,7 +427,9 @@ docker build -t inventory:1.0-SNAPSHOT inventory/.
 {: codeblock}
 
 
-Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the project. For simplicity, the script starts one instance of the system service.
+Next, use the provided script to start the application in Docker containers. The script creates a network for the
+containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices 
+in the project. For simplicity, the script starts one instance of the **system** service.
 
 
 ```
@@ -550,74 +441,85 @@ Next, use the provided script to start the application in Docker containers. The
 
 # **Testing the application**
 
-The application might take several minutes to become available.
-The application take some time to become available. After the application is up and running, you can access the application by making a GET request to the **/systems** endpoint of the **inventory** service. 
+The application might take some time to become available. After the application is up and running, 
+you can access it by making a GET request to the **/systems** endpoint of the **inventory** service.
 
 
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-Visit the http://localhost:9085/health URL to confirm that the **inventory** microservice is up and running.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to confirm that the **inventory** microservice is up and running.
 ```
 curl -s http://localhost:9085/health | jq
 ```
 {: codeblock}
 
-
-
-
-When both health liveness and readiness checks are up, go to the http://localhost:9085/inventory/systems URL to access the **inventory** microservice.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+When both the liveness and readiness health checks are up, run the following curl command to access the **inventory** microservice:
 ```
 curl -s http://localhost:9085/inventory/systems | jq
 ```
 {: codeblock}
 
-
-You see the CPU **systemLoad** property for all the systems:
+Look for the CPU **systemLoad** property for all the systems:
 
 ```
 {
    "hostname":"30bec2b63a96",
-   "systemLoad":2.25927734375
+   "systemLoad":1.44
 }
 ```
 
+The **system** service sends messages to the **inventory** service every 15 seconds. The **inventory** service processes and
+acknowledges each incoming message, ensuring that no **system** message is lost.
 
-You can revisit the http://localhost:9085/inventory/systems URL after a while, and you will notice the CPU **systemLoad** property for the systems changed.
 
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+If you run the curl command again after a while, notice that the CPU **systemLoad** property for the systems changed.
 ```
 curl -s http://localhost:9085/inventory/systems | jq
 ```
 {: codeblock}
 
+Make a **PUT** request to the **http://localhost:9085/inventory/data** URL to add the value of a particular system property
+to the set of existing properties. For example, run the following **curl** command:
 
 
-You can use the **http://localhost:9085/inventory/systems/{hostname}** URL to see the CPU **systemLoad** property for one particular system.
+```
+curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-Type:text/plain"
+```
+{: codeblock}
 
-In the following example, the **30bec2b63a96** value is the **hostname**. If you go to the **http://localhost:9085/inventory/systems/30bec2b63a96** URL, you can see the CPU **systemLoad** property only for the **30bec2b63a96** **hostname**:
+
+
+In this example, the **PUT** request with the **os.name** system property in the request body on the 
+**http://localhost:9085/inventory/data** URL adds the **os.name** system property for your system. 
+The **inventory** service sends a message that contains the requested system property to the **system** service. 
+The **inventory** service then waits until the message is acknowledged before it sends a response back.
+
+You see the following output:
+
+```
+Request successful for the os.name property
+```
+
+The previous example response is confirmation that the sent request message was acknowledged.
+
+
+Run the following curl command again:
+```
+curl -s http://localhost:9085/inventory/systems | jq
+```
+{: codeblock}
+
+The **os.name** system property value is now included with the previous values:
 
 ```
 {
    "hostname":"30bec2b63a96",
-   "systemLoad":2.25927734375
+   "os.name":"Linux",
+   "systemLoad":1.44
 }
 ```
 
 # **Tearing down the environment**
 
-Run the following script to stop the application:
+Finally, run the following script to stop the application:
 
 
 ```
@@ -631,7 +533,7 @@ Run the following script to stop the application:
 
 ## **Nice Work!**
 
-You just developed a reactive Java application using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
+You developed an application by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
 
 
@@ -641,11 +543,11 @@ You just developed a reactive Java application using MicroProfile Reactive Messa
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-reactive-messaging** project by running the following commands:
+Delete the **guide-microprofile-reactive-messaging-acknowledgment** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-reactive-messaging
+rm -fr guide-microprofile-reactive-messaging-acknowledgment
 ```
 {: codeblock}
 
@@ -654,7 +556,7 @@ rm -fr guide-microprofile-reactive-messaging
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20reactive%20Java%20microservices&guide-id=cloud-hosted-guide-microprofile-reactive-messaging)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Acknowledging%20messages%20using%20MicroProfile%20Reactive%20Messaging&guide-id=cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -662,15 +564,27 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest.html)
+* [Streaming updates to a client using Server-Sent Events](https://openliberty.io/guides/reactive-messaging-sse.html)
 * [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
+<br/> 
+### **Learn more about MicroProfile.**
+* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html)
+
+* [View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/apidocs/)
+
+* [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
+
 
 
 <br/>
