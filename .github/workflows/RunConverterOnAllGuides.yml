@@ -128,7 +128,7 @@ jobs:
           title: "To Prod: Change to multiple Guides"
           token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
           body: "Updated by github actions, triggered by GuideConverter repo ([PR](https://github.com/OpenLiberty/cloud-hosted-guide-converter/pull/${{ github.event.inputs.PRNumber }}))."
-          branch: "cloud-hosted-Manual-ALL/staging"
+          branch: "cloud-hosted-All/prod"
           base: "prod"
           labels: "TestAll"
 
@@ -152,7 +152,7 @@ jobs:
           title: "To Prod: Change to All Guides (Manually triggered)"
           token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
           body: "Updated by github actions, triggered Manually."
-          branch: "cloud-hosted-Manual-ALL/staging"
+          branch: "cloud-hosted-All/prod"
           base: "prod"
           labels: "TestAll"
 
