@@ -199,39 +199,6 @@ touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it
 
 
 
-
-```
-package it.io.openliberty.guides.system;
-
-import java.time.Duration;
-
-import org.microshed.testing.SharedContainerConfiguration;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.junit.jupiter.Container;
-
-public class AppContainerConfig implements SharedContainerConfiguration {
-
-    private static Network network = Network.newNetwork();
-
-    @Container
-    public static KafkaContainer kafka = new KafkaContainer()
-                    .withNetwork(network);
-
-    @Container
-    public static ApplicationContainer system = new ApplicationContainer()
-                    .withAppContextRoot("/")
-                    .withExposedPorts(9083)
-                    .withReadinessPath("/health/ready")
-                    .withNetwork(network)
-                    .withStartupTimeout(Duration.ofMinutes(3))
-                    .dependsOn(kafka);
-}
-```
-{: codeblock}
-
-
 The **AppContainerConfig** class externalizes test container setup and configuration, so
 you can use the same application containers across multiple tests.The **@Container**
 annotation denotes an application container that is started up and used in the tests.
@@ -259,57 +226,6 @@ touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
 
-
-
-
-```
-package it.io.openliberty.guides.system;
-
-import static org.junit.Assert.assertNotNull;
-
-import java.time.Duration;
-
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.kafka.KafkaConsumerClient;
-
-import io.openliberty.guides.models.SystemLoad;
-import io.openliberty.guides.models.SystemLoad.SystemLoadDeserializer;
-
-@MicroShedTest
-@SharedContainerConfig(AppContainerConfig.class)
-public class SystemServiceIT {
-
-    @KafkaConsumerClient(valueDeserializer = SystemLoadDeserializer.class,
-                         groupId = "system-load-status",
-                         topics = "system.load",
-                         properties = ConsumerConfig.AUTO_OFFSET_RESET_CONFIG
-                                      + "=earliest")
-    public static KafkaConsumer<String, SystemLoad> consumer;
-
-    @Test
-    public void testCpuStatus() {
-        ConsumerRecords<String, SystemLoad> records =
-                consumer.poll(Duration.ofMillis(30 * 1000));
-        System.out.println("Polled " + records.count() + " records from Kafka:");
-
-        for (ConsumerRecord<String, SystemLoad> record : records) {
-            SystemLoad sl = record.value();
-            System.out.println(sl);
-            assertNotNull(sl.hostname);
-            assertNotNull(sl.loadAverage);
-        }
-
-        consumer.commitAsync();
-    }
-}
-```
-{: codeblock}
 
 
 
@@ -416,73 +332,6 @@ touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
 
-
-
-
-```
-package it.io.openliberty.guides.inventory;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Properties;
-
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.kafka.KafkaProducerClient;
-
-import io.openliberty.guides.inventory.InventoryResource;
-import io.openliberty.guides.models.SystemLoad;
-import io.openliberty.guides.models.SystemLoad.SystemLoadSerializer;
-
-@MicroShedTest
-@SharedContainerConfig(AppContainerConfig.class)
-@TestMethodOrder(OrderAnnotation.class)
-public class InventoryServiceIT {
-
-    @RESTClient
-    public static InventoryResource inventoryResource;
-
-    @KafkaProducerClient(valueSerializer = SystemLoadSerializer.class)
-    public static KafkaProducer<String, SystemLoad> producer;
-
-    @AfterAll
-    public static void cleanup() {
-        inventoryResource.resetSystems();
-    }
-
-    @Test
-    public void testCpuUsage() throws InterruptedException {
-        SystemLoad sl = new SystemLoad("localhost", 1.1);
-        producer.send(new ProducerRecord<String, SystemLoad>("system.load", sl));
-        Thread.sleep(5000);
-        Response response = inventoryResource.getSystems();
-        List<Properties> systems =
-                response.readEntity(new GenericType<List<Properties>>() { });
-        Assertions.assertEquals(200, response.getStatus(),
-                "Response should be 200");
-        Assertions.assertEquals(systems.size(), 1);
-        for (Properties system : systems) {
-            Assertions.assertEquals(sl.hostname, system.get("hostname"),
-                    "Hostname doesn't match!");
-            BigDecimal systemLoad = (BigDecimal) system.get("systemLoad");
-            Assertions.assertEquals(sl.loadAverage, systemLoad.doubleValue(),
-                    "CPU load doesn't match!");
-        }
-    }
-}
-```
-{: codeblock}
 
 
 The **InventoryServiceIT** class uses the **KafkaProducer**
