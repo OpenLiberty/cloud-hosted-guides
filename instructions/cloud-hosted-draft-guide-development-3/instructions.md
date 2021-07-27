@@ -584,7 +584,6 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
 
 
-
 <br/>
 ## **Log out of the session**
 
