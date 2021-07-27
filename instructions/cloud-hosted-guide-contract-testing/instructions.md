@@ -287,7 +287,7 @@ Finally, the **assertEquals()** method confirms that the response is correct.
 Replace the inventory Maven project file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-contract-testing/start/inventory/pom.xml
+> **File** > **Open** > guide-contract-testing/start/inventory/pom.xml
 
 
 
@@ -615,7 +615,7 @@ that was provided in the **inventory** test class so that Pact can identify whic
 Replace the system Maven project file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-contract-testing/start/system/pom.xml
+> **File** > **Open** > guide-contract-testing/start/system/pom.xml
 
 
 
@@ -743,7 +743,7 @@ Correct the value of the **system.properties.version** property to a decimal.
 Replace the SystemResource class file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
+> **File** > **Open** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
 
 
 
