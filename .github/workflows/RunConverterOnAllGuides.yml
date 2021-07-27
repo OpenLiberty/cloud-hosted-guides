@@ -152,7 +152,7 @@ jobs:
           title: "To Prod: Change to All Guides (Manually triggered)"
           token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
           body: "Updated by github actions, triggered Manually."
-          branch: "cloud-hosted-Manual-ALL/prod"
+          branch: "cloud-hosted-Manual-ALL/Prod"
           base: "prod"
           labels: "TestAll"
 
