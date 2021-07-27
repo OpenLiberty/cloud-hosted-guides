@@ -14,19 +14,11 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 # **What you'll learn**
-You will learn how and why to externalize your microservice's configuration.
-Externalized configuration is useful because configuration usually changes depending on your environment.
-You will also learn how to configure the environment by providing required values to your application using Kubernetes.
-Using environment variables allows for easier deployment to different environments.
+You will learn how and why to externalize your microservice's configuration. Externalized configuration is useful because configuration usually changes depending on your environment. You will also learn how to configure the environment by providing required values to your application using Kubernetes. Using environment variables allows for easier deployment to different environments.
 
-MicroProfile Config provides useful annotations that you can use to inject configured values into your code.
-These values can come from any configuration source, such as environment variables.
-To learn more about MicroProfile Config,
-read the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide.
+MicroProfile Config provides useful annotations that you can use to inject configured values into your code. These values can come from any configuration source, such as environment variables. To learn more about MicroProfile Config, read the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide.
 
-Furthermore, you'll learn how to set these environment variables with ConfigMaps and Secrets.
-These resources are provided by Kubernetes and act as a data source for your environment variables.
-You can use a ConfigMap or Secret to set environment variables for any number of containers.
+Furthermore, you'll learn how to set these environment variables with ConfigMaps and Secrets. These resources are provided by Kubernetes and act as a data source for your environment variables. You can use a ConfigMap or Secret to set environment variables for any number of containers.
 
 
 # **Getting started**
@@ -55,46 +47,40 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
+# **Starting and preparing your cluster for deployment**
+
+Start your Kubernetes cluster.
 
 
-# Logging into your cluster
-
-For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
-Get the name of your namespace with the following command:
-
-```
-bx cr namespace-list
-```
-{: codeblock}
-
-Look for output that is similar to the following:
+Run the following command from a command-line session:
 
 ```
-Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
-
-Namespace
-sn-labs-yourname
-```
-
-Run the following command to store the namespace name in a variable.
-
-```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
+minikube start
 ```
 {: codeblock}
 
-Verify that the variable contains your namespace name:
 
+
+
+
+Next, validate that you have a healthy Kubernetes environment by running the following command from the active command-line session.
 ```
-echo $NAMESPACE_NAME
+kubectl get nodes
 ```
 {: codeblock}
 
-Log in to the registry with the following command:
+
+This command should return a **Ready** status for the master node.
+
+
+Run the following command to configure the Docker CLI to use Minikube's Docker daemon.
+After you run this command, you will be able to interact with Minikube's Docker daemon and build new
+images directly to it from your host machine:
 ```
-bx cr login
+eval $(minikube docker-env)
 ```
 {: codeblock}
+
 
 
 # **Deploying the microservices**
@@ -129,29 +115,7 @@ docker build -t inventory:1.0-SNAPSHOT inventory/.
 
 
 The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
-The tag for an image describes the specific image version.
-If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
-
-Push your images to the container registry on IBM Cloud with the following commands:
-
-```
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-```
-{: codeblock}
-
-Update the image names so that the images in your IBM Cloud container registry are used,
-and remove the **nodePort** fields so that the ports can be automatically generated:
-
-```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
-```
-{: codeblock}
+The tag for an image describes the specific image version. If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
 
 Run the following command to deploy the necessary Kubernetes resources to serve the applications.
 ```
@@ -160,8 +124,7 @@ kubectl apply -f kubernetes.yaml
 {: codeblock}
 
 
-When this command finishes, wait for the pods to be in the Ready state.
-Run the following command to view the status of the pods.
+When this command finishes, wait for the pods to be in the Ready state. Run the following command to view the status of the pods.
 ```
 kubectl get pods
 ```
@@ -179,52 +142,40 @@ inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
 After the pods are ready, you will make requests to your services.
 
 
-To make requests to the services, you need to set up port forwarding.
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following commands to set up port forwarding to access the **system** service.
+The default host name for minikube is 192.168.99.100. Otherwise it can be found using the **minikube ip** command.
+
+Navigate to **http://[hostname]:31000/system/properties** and use the username **bob** and the password **bobpwd** to authenticate.
+Replace **[hostname]** with the IP address or host name of your Kubernetes cluster.
+Open your browser's developer console and examine the response headers.
+
+You can also run the **curl** command to make requests to your microservices.
+Use the **-u** option to pass in the username **bob** and the password **bobpwd**.
+
 
 ```
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
-```
-{: codeblock}
-
-Then, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following commands to set up port forwarding to access the **inventory** service.
-
-```
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
+curl http://$(minikube ip):31000/system/properties -u bob:bobpwd
 ```
 {: codeblock}
 
-Then use the following commands to access your **system** microservice.
-The `-u` option is used to pass in the username `bob` and the password `bobpwd`.
+
+
+Similarly, navigate to **http://[hostname]:32000/inventory/systems/system-service**, or use the following **curl** command, to add the system to your inventory.
+
 
 ```
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u bob:bobpwd | jq
-```
-{: codeblock}
-
-Use the following commands to access your **inventory** microservice.
-
-```
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
+curl http://$(minikube ip):32000/inventory/systems/system-service
 ```
 {: codeblock}
 
-When you're done trying out the microservices, press **CTRL+C** in the command line sessions
-where you ran the `kubectl port-forward` commands. 
+
 
 # **Modifying system microservice**
 
 
-The **system** service is hardcoded to use a single forward slash as the context root.
-The context root is set in the **webApplication**
-element where the **contextRoot** attribute is specified as **"/"**.
-You'll make the value of the **contextRoot** attribute configurable by
+The **system** service is hardcoded to use a single forward slash as the context
+root. The context root is set in the [hotspot=webApplication
+file=0]**webApplication** element where the **contextRoot** attribute is specified
+as **"/"**. You'll make the value of the **contextRoot** attribute configurable by
 implementing it as a variable.
 
 Replace the **server.xml** file.
@@ -266,10 +217,11 @@ Replace the **server.xml** file.
 {: codeblock}
 
 
-The **contextRoot** attribute in the **webApplication**
-element now gets its value from the **context.root** variable.
-To find a value for the **context.root** variable,
-Open Liberty will look for the following environment variables, in order:
+The **contextRoot** attribute in the [hotspot=webApplication
+file=0]**webApplication** element now gets its value from the
+**context.root** variable. To find a value for the
+**context.root** variable, Open Liberty will look for the following environment
+variables, in order:
 
 * **context.root**
 * **`context_root`**
@@ -278,8 +230,7 @@ Open Liberty will look for the following environment variables, in order:
 
 # **Modifying inventory microservice**
 
-The **inventory** service is hardcoded to use **bob** and **bobpwd** as the credentials to authenticate against the **system** service.
-You'll make these credentials configurable. 
+The **inventory** service is hardcoded to use **bob** and **bobpwd** as the credentials to authenticate against the **system** service. You'll make these credentials configurable. 
 
 Replace the **SystemClient** class.
 
@@ -403,21 +354,12 @@ public class SystemClient {
 
 
 
-The changes introduced here use MicroProfile Config and CDI to inject the value of the
-environment variables **`SYSTEM_APP_USERNAME`** and
-**`SYSTEM_APP_PASSWORD`** into the **SystemClient** class.
+The changes introduced here use MicroProfile Config and CDI to inject the value of the environment variables **`SYSTEM_APP_USERNAME`** and **`SYSTEM_APP_USERNAME`** into the **SystemClient** class.
 
 
 # **Creating a ConfigMap and Secret**
 
-There are several ways to configure an environment variable in a Docker container.
-You can set it directly in the **Dockerfile** with the **ENV** command.
-You can also set it in your **kubernetes.yaml** file by specifying a
-name and a value for the environment variable you want to set for a specific container.
-With these options in mind, you're going to use a ConfigMap and Secret to set these values.
-These are resources provided by Kubernetes that are used as a way to provide configuration values to your containers.
-A benefit is that they can be reused across many different containers,
-even if they all require different environment variables to be set with the same value.
+There are several ways to configure an environment variable in a Docker container. You can set it directly in the **Dockerfile** with the **ENV** command. You can also set it in your **kubernetes.yaml** file by specifying a name and a value for the environment variable you want to set for a specific container. With these options in mind, you're going to use a ConfigMap and Secret to set these values. These are resources provided by Kubernetes that are used as a way to provide configuration values to your containers. A benefit is that they can be reused across many different containers, even if they all require different environment variables to be set with the same value.
 
 Create a ConfigMap to configure the app name with the following **kubectl** command.
 ```
@@ -426,41 +368,24 @@ kubectl create configmap sys-app-root --from-literal contextRoot=/dev
 {: codeblock}
 
 
-This command deploys a ConfigMap named **sys-app-root** to your cluster.
-It has a key called **contextRoot** with a value of **/dev**.
-The **--from-literal** flag allows you to specify individual key-value pairs to store in this ConfigMap.
-Other available options, such as **--from-file** and **--from-env-file**,
-provide more versatility as to what you want to configure.
-Details about these options can be found in the
-[Kubernetes CLI documentation](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-configmap-em-).
+This command deploys a ConfigMap named **sys-app-root** to your cluster. It has a key called **contextRoot** with a value of **/dev**. The **--from-literal** flag allows you to specify individual key-value pairs to store in this ConfigMap. Other available options, such as **--from-file** and **--from-env-file**, provide more versatility as to what you want to configure. Details about these options can be found in the [Kubernetes CLI documentation](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-configmap-em-).
 
-Create a Secret to configure the new credentials that **inventory** will use to
-authenticate against **system** with the following **kubectl** command.
+Create a Secret to configure the new credentials that **inventory** will use to authenticate against **system** with the following **kubectl** command.
 ```
 kubectl create secret generic sys-app-credentials --from-literal username=alice --from-literal password=wonderland
 ```
 {: codeblock}
 
 
-This command looks similar to the command to create a ConfigMap, but one difference is the word **generic**.
-This word creates a Secret that doesn't store information in any specialized way.
-There are different types of secrets, such as secrets to store Docker credentials
-and secrets to store public and private key pairs.
+This command looks similar to the command to create a ConfigMap, but one difference is the word **generic**. This word creates a Secret that doesn't store information in any specialized way. There are different types of secrets, such as secrets to store Docker credentials and secrets to store public and private key pairs.
 
-A Secret is similar to a ConfigMap.
-A key difference is that a Secret is used for confidential information such as credentials.
-One of the main differences is that you must explicitly tell **kubectl** to show you the contents of a Secret.
-Additionally, when it does show you the information,
-it only shows you a Base64 encoded version so that a casual onlooker doesn't accidentally see any sensitive data.
-Secrets don't provide any encryption by default,
-that is something you'll either need to do yourself or find an alternate option to configure.
+A Secret is similar to a ConfigMap. A key difference is that a Secret is used for confidential information such as credentials. One of the main differences is that you must explicitly tell **kubectl** to show you the contents of a Secret. Additionally, when it does show you the information, it only shows you a Base64 encoded version so that a casual onlooker doesn't accidentally see any sensitive data. Secrets don't provide any encryption by default, that is something you'll either need to do yourself or find an alternate option to configure.
 
 
 
 # **Updating Kubernetes resources**
 
-Next, you will update your Kubernetes deployments to set the environment variables in your containers
-based on the values configured in the ConfigMap and Secret created previously. 
+Next, you will update your Kubernetes deployments to set the environment variables in your containers based on the values configured in the ConfigMap and Secret created previously. 
 
 Replace the kubernetes file.
 
@@ -579,6 +504,7 @@ spec:
 
 
 
+
 The **`CONTEXT_ROOT`**,
 **`SYSTEM_APP_USERNAME`**, and
 **`SYSTEM_APP_PASSWORD`** environment
@@ -586,17 +512,18 @@ variables are set in the **env** sections of
 **system-container** and
 **inventory-container**.
 
-Using the **valueFrom** field,
-you can specify the value of an environment variable from various sources. These sources
+Using the [hotspot=valueFrom1 hotspot=valueFrom2 hotspot=valueFrom3 hotspot=valueFrom4
+hotspot=valueFrom5 hotspot=valueFrom6 file=0]**valueFrom** field, you can
+specify the value of an environment variable from various sources. These sources
 include a ConfigMap, a Secret, and information about the cluster. In this
 example **configMapKeyRef** gets the
 value **contextRoot** from the
 **sys-app-root** ConfigMap. Similarly,
-**secretKeyRef**
-gets the values **username** and
-**password** from the
-**sys-app-credentials** Secret.
-
+[hotspot=secretRef1 hotspot=secretRef2 hotspot=secretRef3 hotspot=secretRef4
+file=0]**secretKeyRef** gets the values [hotspot=username1 hotspot=username2
+file=0]**username** and **password**
+from the [hotspot=credentials1 hotspot=credentials2 hotspot=credentials3
+hotspot=credentials4 file=0]**sys-app-credentials** Secret.
 
 # **Deploying your changes**
 
@@ -615,29 +542,6 @@ docker build -t inventory:1.0-SNAPSHOT inventory/.
 {: codeblock}
 
 
-
-Push your updated images to the container registry on IBM Cloud with the following commands:
-
-```
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-```
-{: codeblock}
-
-Update the image names so that the images in your IBM Cloud container registry are used,
-and remove the **nodePort** fields so that the ports can be automatically generated:
-
-```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
-```
-{: codeblock}
-
-
 Run the following command to deploy your changes to the Kubernetes cluster.
 ```
 kubectl replace --force -f kubernetes.yaml
@@ -645,69 +549,34 @@ kubectl replace --force -f kubernetes.yaml
 {: codeblock}
 
 
+Your application will now be available at the
+**http://[hostname]:31000/dev/system/properties** URL. You now need to use the new
+username, **alice**, and the new password, **wonderland**, to log in. Alternatively,
+you can run the following command:
 
-Set up port forwarding to the new services.
-
-Run the following commands to set up port forwarding to access the **system** service.
-
-```
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
-```
-{: codeblock}
-
-Then, run the following commands to set up port forwarding to access the **inventory** service.
 
 ```
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
+curl http://$(minikube ip):31000/dev/system/properties -u alice:wonderland
 ```
 {: codeblock}
 
-You now need to use the new username, `alice`, and the new password `wonderland`.
-Access your application with the following commands:
 
-```
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u alice:wonderland | jq
-```
-{: codeblock}
 
 Notice that the URL you are using to reach the application now has **/dev** as the context root. 
 
-
-Verify the inventory service is working as intended by using the following commands:
-
-```
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
-```
-{: codeblock}
-
-If it is not working, then check the configuration of the credentials.
+Verify that **http://[hostname]:32000/inventory/systems/system-service** is working as intended.
+If it is not, then check the configuration of the credentials.
 
 # **Testing the microservices**
 
 
-
-Update the **pom.xml** files so that the **system.service.root** and **inventory.service.root** properties
-have the correct ports to access the **system** and **inventory** services.
-
+Run the integration tests against a cluster running at Minikube's IP address:
 ```
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' inventory/pom.xml
-sed -i 's=localhost:32000='"localhost:$INVENTORY_NODEPORT"'=g' inventory/pom.xml
-sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' system/pom.xml
+mvn failsafe:integration-test -Dsystem.context.root=/dev -Dcluster.ip=$(minikube ip)
 ```
 {: codeblock}
 
-Run the integration tests by using the following command:
 
-```
-mvn failsafe:integration-test -Dsystem.context.root=/dev
-```
-{: codeblock}
 
 The tests for **inventory** verify that the service can communicate with **system**
 using the configured credentials. If the credentials are misconfigured, then the
@@ -753,16 +622,44 @@ kubectl delete secret sys-app-credentials
 
 
 
-Press **CTRL+C** in the command-line sessions where you ran `kubectl port-forward` to stop the port forwarding. 
+
+Perform the following steps to return your environment to a clean state.
+
+. Point the Docker daemon back to your local machine:
++
+```
+eval $(minikube docker-env -u)
+```
+. Stop your Minikube cluster:
++
+```
+minikube stop
+```
+{: codeblock}
+
+
+. Delete your cluster:
++
+```
+minikube delete
+```
+{: codeblock}
+
+
+
+
+
+
+
+
 
 
 # **Summary**
 
 ## **Nice Work!**
 
-You have used MicroProfile Config to externalize the configuration of two microservices,
+You have used MicroProfile Config to externalize the configuration of two microservices, and then you configured them by creating a ConfigMap and Secret in your Kubernetes cluster.
 
-and then you configured them by creating a ConfigMap and Secret in your Kubernetes cluster.
 
 
 
@@ -801,11 +698,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 <br/>
 ## **Where to next?**
 
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 <br/>
 ## **Log out of the session**
