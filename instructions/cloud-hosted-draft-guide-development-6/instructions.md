@@ -1,7 +1,7 @@
 
-# **Welcome to the Creating a multi-module application guide!**
+# **Welcome to the Securing a web application guide!**
 
-You will learn how to build an application with multiple modules with Maven and Open Liberty.
+Learn how to secure a web application through authentication and authorization.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,13 +14,16 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 # **What you'll learn**
 
-A Java Platform, Enterprise Edition (Java EE) application consists of modules that work together as one entity. An enterprise archive (EAR) is a wrapper for a Java EE application, which consists of web archive (WAR) and Java archive (JAR) files. To deploy or distribute the Java EE application into new environments, all the modules and resources must first be packaged into an EAR file.
+You'll learn how to secure a web application by performing authentication and authorization using Jakarta EE Security. 
+Authentication confirms the identity of the user by verifying a user's credentials while authorization
+determines whether a user has access to restricted resources.
 
-You will learn how to establish a dependency between a web module and a Java library module. You will use Maven to package the WAR file and the JAR file into an EAR file so that you can run and test the application on Open Liberty.
+Jakarta EE Security provides capability to configure the basic authentication, form authentication, or custom 
+form authentication mechanism by using annotations in servlets. It also provides the SecurityContext API for
+programmatic security checks in application code.
 
-You will build a unit converter application that converts heights from centimeters into feet and inches. The application will request the user to enter a height value in centimeters. Then, the application processes the input by using functions that are found in the JAR file to return the height value in imperial units.
-
-
+You’ll implement form authentication for a simple web front end. You'll also learn to specify security
+constraints for a servlet and use the SecurityContext API to determine the role of a logged-in user.
 
 # **Getting started**
 
@@ -34,11 +37,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-multimodules.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-security-intro.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-maven-multimodules.git
-cd guide-maven-multimodules
+git clone https://github.com/openliberty/guide-security-intro.git
+cd guide-security-intro
 ```
 {: codeblock}
 
@@ -47,40 +50,11 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-Access partial implementation of the application from the **start** folder. This folder includes a web module in the **war** folder, a Java library in the **jar** folder, and template files in the **ear** folder. However, the Java library and the web module are independent projects, and you will need to complete the following steps to implement the application:
-
-1. Add a dependency relationship between the two modules.
-
-2. Assemble the entire application into an EAR file.
-
-3. Aggregate the entire build.
-
-4. Test the multi-module application.
-
 <br/>
 ### **Try what you'll build**
 
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application:
-
-```
-cd finish
-mvn install
-```
-{: codeblock}
-
-
-
-To deploy your EAR application on an Open Liberty server, run the Maven **liberty:run** goal from the **ear** directory:
-
-```
-cd ear
-mvn liberty:run
-```
-{: codeblock}
-
+The **finish** directory in the root of this guide contains the finished application that is secured with form authentication. 
+Give it a try before you proceed.
 
 
 
@@ -88,19 +62,57 @@ mvn liberty:run
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-Once the server is running, you can find the application at the following URL: http://localhost:9080/converter/
+Navigate your browser to this URL to access the application: http://localhost:9080
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/converter/
+curl http://localhost:9080
 ```
 {: codeblock}
 
 
 
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C** in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal from the **finish\ear** directory in another command-line session:
+The application automatically switches from an HTTP connection to a secure HTTPS connection 
+and forwards you to a login page. If the browser gives you a certificate warning, it's because the 
+Open Liberty server created a self-signed SSL certificate by default. You can follow your browser's 
+provided instructions to accept the certificate and continue.
+
+Sign in to the application with one of the following user credentials from the user registry, 
+which are provided to you:
+
+|Username|Password|Role|Group
+| --- | --- | --- | ---
+
+|alice
+|alicepwd
+|user
+|Employee
+
+|bob
+|bobpwd
+|admin, user
+|Manager, Employee
+
+|carl
+|carlpwd
+|admin, user
+|TeamLead, Employee
+
+|dave
+|davepwd
+|N/A
+|PartTime
+
+Notice that when you sign in as Bob or Carl, the browser redirects to the **admin** page and you can view their names and roles. 
+When you sign in as Alice, you can only view Alice's name.
+When you sign in as Dave, you are blocked and see an **Error 403: Authorization failed** message 
+because Dave doesn't have a role that is supported by the application.
+
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
+in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
+from the **finish** directory in another shell session:
 
 ```
 mvn liberty:stop
@@ -109,505 +121,406 @@ mvn liberty:stop
 
 
 
+# **Adding authentication and authorization**
 
-# **Adding dependencies between WAR and JAR modules**
-
-To use a Java library in your web module, you must add a dependency relationship between the two modules.
-
-As you might have noticed, each module has its own **pom.xml** file. Each module has its own **pom.xml** file because each module is treated as an independent project. You can rebuild, reuse, and reassemble every module on its own.
+For this application, users are asked to log in with a form when they access the application. 
+Users are authenticated and depending on their roles, they are redirected to the pages that they 
+are authorized to access. If authentication or authorization fails, users are sent to an error page. 
+The application supports two roles, **admin** and **user**.
 
 Navigate to the **start** directory to begin.
 
-Replace the war/POM file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-maven-multimodules/start/war/pom.xml
-
-
-
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
+deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-    http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-maven-multimodules-war</artifactId>
-    <packaging>war</packaging>
-    <version>1.0-SNAPSHOT</version>
-    <name>guide-maven-multimodules-war</name>
-    <url>http://maven.apache.org</url>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
-
-    <dependencies>
-
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>8.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>4.0.1</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.openliberty.guides</groupId>
-            <artifactId>guide-maven-multimodules-jar</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-
-    </dependencies>
-
-</project>
+mvn liberty:dev
 ```
 {: codeblock}
 
 
-The **dependency** element is the Java library module that implements the functions that you need for the unit converter.
+After you see the following message, your application server in dev mode is ready:
 
-With this dependency, you can use any functions included in the library in the **HeightsBean.java** file of the web module.
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
 
-Replace the **HeightsBean** class.
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
+or open the project in your editor.
 
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java
+Create the **HomeServlet** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java
 
 
 
 
 ```
-package io.openliberty.guides.multimodules.web;
+package io.openliberty.guides.ui;
 
-public class HeightsBean implements java.io.Serializable {
-    private String heightCm = null;
-    private String heightFeet = null;
-    private String heightInches = null;
-    private int cm = 0;
-    private int feet = 0;
-    private int inches = 0;
+import java.io.IOException;
+import javax.inject.Inject;
+import javax.security.enterprise.SecurityContext;
+import javax.security.enterprise.authentication.mechanism.http.FormAuthenticationMechanismDefinition;
+import javax.security.enterprise.authentication.mechanism.http.LoginToContinue;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.HttpConstraint;
+import javax.servlet.annotation.ServletSecurity;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-    public HeightsBean() {
+@WebServlet(urlPatterns = "/home")
+@FormAuthenticationMechanismDefinition(
+    loginToContinue = @LoginToContinue(errorPage = "/error.html", 
+                                       loginPage = "/welcome.html"))
+@ServletSecurity(value = @HttpConstraint(rolesAllowed = { "user", "admin" },
+  transportGuarantee = ServletSecurity.TransportGuarantee.CONFIDENTIAL)) 
+public class HomeServlet extends HttpServlet {
+
+    private static final long serialVersionUID = 1L;
+
+    @Inject
+    private SecurityContext securityContext;
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+        if (securityContext.isCallerInRole(Utils.ADMIN)) {
+            response.sendRedirect("/admin.jsf");
+        } else if  (securityContext.isCallerInRole(Utils.USER)) {
+            response.sendRedirect("/user.jsf");
+        }
     }
 
-    public String getHeightCm() {
-        return heightCm;
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+        doGet(request, response);
     }
-
-    public String getHeightFeet() {
-        return heightFeet;
-    }
-
-    public String getHeightInches() {
-        return heightInches;
-    }
-
-    public void setHeightCm(String heightcm) {
-        this.heightCm = heightcm;
-    }
-
-    public void setHeightFeet(String heightfeet) {
-        this.cm = Integer.valueOf(heightCm);
-        this.feet = io.openliberty.guides.multimodules.lib.Converter.getFeet(cm);
-        String result = String.valueOf(feet);
-        this.heightFeet = result;
-    }
-
-    public void setHeightInches(String heightinches) {
-        this.cm = Integer.valueOf(heightCm);
-        this.inches = io.openliberty.guides.multimodules.lib.Converter.getInches(cm);
-        String result = String.valueOf(inches);
-        this.heightInches = result;
-    }
-
 }
 ```
 {: codeblock}
 
 
 
-The **getFeet(cm)** invocation was added to the **setHeightFeet** method to convert a measurement into feet.
+The **HomeServlet** servlet is the entry point of the application. 
+To enable form authentication for the **HomeServlet** class, 
+define the **@FormAuthenticationMechanismDefinition** annotation 
+and set its **loginToContinue** attribute with a 
+**@LoginToContinue** annotation. 
+This **@FormAuthenticationMechanismDefinition** annotation 
+defines **welcome.html** 
+as the login page and **error.html** as the error page.
 
-The **getInches(cm)** invocation was added to the **setHeightInches** method to convert a measurement into inches.
+The **welcome.html** page implements the login form, and the **error.html** page
+implements the error page. Both pages are provided for you under the 
+**src/main/webapp** directory. The login form in the **welcome.html** page 
+uses the **`j_security_check`** action, which is defined by Jakarta EE and available by default.
 
+Authorization determines whether a user can access a resource. To restrict access to 
+authenticated users with **user** and **admin** roles, define the 
+**@ServletSecurity** annotation with the 
+**@HttpConstraint** annotation and set the 
+**rolesAllowed** attribute to these two roles.
 
+The **transportGuarantee** attribute defines the constraint
+on the traffic between the client and the application. 
+Set it to **CONFIDENTIAL** to enforce that all user data must be encrypted, 
+which is why an HTTP connection from a browser switches to HTTPS.
 
-# **Assembling multiple modules into an EAR file**
+The SecurityContext interface provides programmatic access to the Jakarta EE Security API. 
+Inject a SecurityContext instance into the **HomeServlet** class. 
+The **doGet()** method uses the **isCallerInRole()** method 
+from the SecurityContext API to check a user's role and then forwards the response to the appropriate page.
 
-To deploy the entire application on the Open Liberty server, first package the application. Use the EAR project to assemble multiple modules into an EAR file.
-
-Navigate to the **ear** folder and find a template **pom.xml** file.
-Replace the ear/POM file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-maven-multimodules/start/ear/pom.xml
-
-
-
-
-```
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-    http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-maven-multimodules-ear</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>ear</packaging>
-    <!-- end::packaging[] -->
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-    </properties>
-
-    <dependencies>
-        <!-- tag::dependencies[] -->
-        <dependency>
-            <groupId>io.openliberty.guides</groupId>
-            <artifactId>guide-maven-multimodules-jar</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <type>jar</type>
-        </dependency>
-        <!-- tag::dependency-war[] -->
-        <dependency>
-            <groupId>io.openliberty.guides</groupId>
-            <artifactId>guide-maven-multimodules-war</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <type>war</type>
-        </dependency>
-        <!-- end::dependencies[] -->
-
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.7.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-ear-plugin</artifactId>
-                <version>3.2.0</version>
-                <configuration>
-                    <modules>
-                        <jarModule>
-                            <groupId>io.openliberty.guides</groupId>
-                            <artifactId>guide-maven-multimodules-jar</artifactId>
-                            <uri>/guide-maven-multimodules-jar-1.0-SNAPSHOT.jar</uri>
-                        </jarModule>
-                        <!-- tag::webModule[] -->
-                        <webModule>
-                            <groupId>io.openliberty.guides</groupId>
-                            <artifactId>guide-maven-multimodules-war</artifactId>
-                            <uri>/guide-maven-multimodules-war-1.0-SNAPSHOT.war</uri>
-                            <!-- tag::contextRoot[] -->
-                            <contextRoot>/converter</contextRoot>
-                        </webModule>
-                    </modules>
-                </configuration>
-            </plugin>
-
-            <!-- tag::liberty-maven-plugin[] -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.3.4</version>
-            </plugin>
-
-            <!-- Since the package type is ear,
-            need to run testCompile to compile the tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <executions>
-                    <execution>
-                        <phase>test-compile</phase>
-                        <goals>
-                            <goal>testCompile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <default.http.port>
-                            ${liberty.var.default.http.port}
-                        </default.http.port>
-                        <default.https.port>
-                            ${liberty.var.default.https.port}
-                        </default.https.port>
-                        <cf.context.root>/converter</cf.context.root>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
-</project>
-```
-{: codeblock}
+The **src/main/webapp/WEB-INF/web.xml** file 
+contains the rest of the security declaration for the application.
 
 
+The **security-role** elements define the roles that are supported by the application, 
+which are **user** and **admin**. 
+The **security-constraint** elements specify that JSF resources 
+like the **user.jsf** and **admin.jsf** pages 
+can be accessed only by users with **user** and 
+**admin** roles.
 
-Set the **basic configuration** for the project and set the **packaging** element to **ear**.
 
-The **Java library module** and the **web module** were added as dependencies. Specify a type of **war** for the web module. If you don’t specify this type for the web module, Maven looks for a JAR file.
+# **Configuring the user registry**
 
-The definition and configuration of the **maven-ear-plugin** plug-in were added to create an EAR file. Define the **jarModule** and **webModule** modules to be packaged into the EAR file.
-To customize the context root of the application, set the **contextRoot** element to **/converter** in the **webModule**. Otherwise, Maven automatically uses the WAR file **artifactId** ID as the context root for the application while generating the **application.xml** file.
+User registries store user account information, such as username and password, for use by applications 
+to perform security-related operations. Typically, application servers would be configured to use an 
+external registry like a Lightweight Directory Access Protocol (LDAP) registry. Applications would 
+access information in the registry for authentication and authorization by using APIs like the Jakarta EE Security API.
 
-To download and start an Open Liberty server, use the **liberty-maven-plugin** plug-in for Maven. This configuration is provided, and the executions of the plug-in follow the typical phases of a Maven life cycle.
+Open Liberty provides an easy-to-use basic user registry for developers, which you will configure.
 
-To deploy and run an EAR application on an Open Liberty server, you need to provide a server configuration file.
-
-Create the server configuration file.
+Create the **userRegistry** configuration file.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml
+touch /home/project/guide-security-intro/start/src/main/liberty/config/userRegistry.xml 
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml
+> Then from the menu of the IDE, select **File** > **Open** > guide-security-intro/start/src/main/liberty/config/userRegistry.xml 
 
 
 
 
 ```
 <server description="Sample Liberty server">
+  <basicRegistry id="basic" realm="WebRealm">
+    <user name="bob"
+    <!-- end::user-bob[] -->
+    <user name="alice"
+    <!-- end::user-alice[] -->
+    <user name="carl"
+    <!-- end::user-carl[] -->
+    <user name="dave"
+    <!-- end::user-dave[] -->
 
-    <featureManager>
-        <feature>jsp-2.3</feature>
-    </featureManager>
+    <group name="Manager">
+      <member name="bob" />
+    </group>
 
-    <variable name="default.http.port" defaultValue="9080" />
-    <variable name="default.https.port" defaultValue="9443" />
+    <group name="TeamLead">
+      <member name="carl" />
+    </group>
+    
+    <group name="Employee">
+      <member name="alice" />
+      <member name="bob" />
+      <member name="carl" />
+    </group>
 
-    <httpEndpoint host="*" httpPort="${default.http.port}"
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint" />
-
-    <enterpriseApplication id="guide-maven-multimodules-ear"
-        location="guide-maven-multimodules-ear.ear"
-        name="guide-maven-multimodules-ear" />
-    <!-- end::server[] -->
+    <group name="PartTime">
+      <member name="dave" />
+    </group>
+  </basicRegistry>
 </server>
 ```
 {: codeblock}
 
 
 
-You must configure the **server.xml** file with the **enterpriseApplication** element to specify the location of your EAR application.
+The registry has four users, **bob**, **alice**, 
+**carl**, and **dave**. It also has four groups: 
+**Manager**, **TeamLead**, 
+**Employee**, and **PartTime**. 
+Each user belongs to one or more groups.
+
+It is not recommended to store passwords in plain text. The passwords in the **userRegistry.xml** file
+are encoded by using the Liberty **securityUtility** command with XOR encoding.
 
 
-# **Aggregating the entire build**
+Use the **include** element to add the basic user registry configuration to your server configuration. 
+Open Liberty includes configuration information from the specified XML file in its server configuration.
 
-Because you have multiple modules, aggregate the Maven projects to simplify the build process.
-
-Create a parent **pom.xml** file under the **start** directory to link all of the child modules together. A template is provided for you.
-
-Replace the start/POM file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-maven-multimodules/start/pom.xml
-
-
+The **server.xml** file contains the security configuration of the server 
+under the **application-bnd** element.
+Use the **security-role** and **group** elements to 
+map the groups in the **userRegistry.xml** file to the appropriate user roles supported by the application for proper user authorization.
+The **Manager** and **TeamLead** groups are mapped to the 
+**admin** role while the **Employee** group is mapped to the 
+**user** role.
 
 
-```
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-    http://maven.apache.org/xsd/maven-4.0.0.xsd">
+# **Running the application**
 
-    <modelVersion>4.0.0</modelVersion>
-
-    <!-- tag::groupId[] -->
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-maven-multimodules</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <!-- end::packaging[] -->
-
-    <modules>
-        <module>jar</module>
-        <module>war</module>
-        <module>ear</module>
-    </modules>
-</project>
-```
-{: codeblock}
-
-
-Set the **basic configuration** for the project. Set **pom** as the **packaging** element of the parent **pom.xml** file.
-
-In the parent **pom.xml** file, list all of the **modules** that you want to aggregate for the application.
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
 
-# **Building the modules**
-
-By aggregating the build in the previous section, you can run **mvn install** once from the **start** directory and it will automatically build all your modules. This command creates a JAR file in the **jar/target** directory, a WAR file in the **war/target** directory, and an EAR file in the **ear/target** directory, which contains the JAR and WAR files.
-
-Use the following command to build the entire application from the **start** directory:
-
-```
-mvn install
-```
-{: codeblock}
-
-
-
-Since the modules are independent, you can re-build them individually by running **mvn install** from the corresponding module directory.
-
-
-# **Starting the application**
-
-To deploy your EAR application on an Open Liberty server, run the Maven **liberty:run** goal from the **ear** directory:
-
-```
-cd ear
-mvn liberty:run
-```
-{: codeblock}
-
-
-
-
-Once the server is running, you can find the application at the following URL: http://localhost:9080/converter/
+Point your browser to the http://localhost:9080 URL. 
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080/converter/
+curl http://localhost:9080
 ```
 {: codeblock}
 
 
+As you can see, the browser gets automatically redirected from an HTTP connection to an HTTPS connection
+because the transport guarantee is defined in the **HomeServlet** class.
 
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C** in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal from the **start\ear** directory in another command-line session:
+You will see a login form since form authentication is implemented and configured. 
+Sign in to the application by using one of the credentials from the following table. The credentials are defined in the configured user registry.
 
-```
-mvn liberty:stop
-```
-{: codeblock}
+|Username|Password|Role|Group
+| --- | --- | --- | ---
+
+|alice
+|alicepwd
+|user
+|Employee
+
+|bob
+|bobpwd
+|admin, user
+|Manager, Employee
+
+|carl
+|carlpwd
+|admin, user
+|TeamLead, Employee
+
+|dave
+|davepwd
+|N/A
+|PartTime
+
+Notice that when you sign in as Bob or Carl, the browser redirects to the **admin** page and you can view their names and roles.
+When you sign in as Alice, you can only view Alice's name.
+When you sign in as Dave, you are blocked and see an **Error 403: Authorization failed** message 
+because Dave doesn't have a role that is supported by the application.
 
 
 
+# **Testing the application**
 
+Write the **SecurityIT** class to test the authentication and authorization of the application.
 
-# **Testing the multi-module application**
-
-To test the multi-module application, add integration tests to the EAR project.
-
-Navigate to the **start\ear** directory.
-
-Create the integration test class.
+Create the **SecurityIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-maven-multimodules/start/src/test/java/it/io/openliberty/guides/multimodules/IT.java
+touch /home/project/guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-maven-multimodules/start/src/test/java/it/io/openliberty/guides/multimodules/IT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java
 
 
 
 
 ```
-package it.io.openliberty.guides.multimodules;
+package it.io.openliberty.guides.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.net.ssl.SSLContext;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class IT {
-    String port = System.getProperty("default.http.port");
-    String war = "converter";
-    String urlBase = "http://localhost:" + port + "/" + war + "/";
+public class SecurityIT {
 
-    @Test
-    public void testIndexPage() throws Exception {
-        String url = this.urlBase;
-        HttpURLConnection con = testRequestHelper(url, "GET");
-        assertEquals(200, con.getResponseCode(), "Incorrect response code from " + url);
-        assertTrue(testBufferHelper(con).contains("Enter the height in centimeters"),
-                        "Incorrect response from " + url);
+    private static String urlHttp;
+    private static String urlHttps;
+
+    @BeforeEach
+    public void setup() throws Exception {
+        urlHttp = "http://localhost:" + System.getProperty("http.port");
+        urlHttps = "https://localhost:" + System.getProperty("https.port");
+        ITUtils.trustAll();
     }
 
     @Test
-    public void testHeightsPage() throws Exception {
-        String url = this.urlBase + "heights.jsp?heightCm=10";
-        HttpURLConnection con = testRequestHelper(url, "POST");
-        assertTrue(testBufferHelper(con).contains("3        inches"),
-                        "Incorrect response from " + url);
+    public void testAuthenticationFail() throws Exception {
+        executeURL("/", "bob", "wrongpassword", true, -1, "Don't care");
     }
 
-    private HttpURLConnection testRequestHelper(String url, String method)
-                    throws Exception {
-        URL obj = new URL(url);
-        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-        con.setRequestMethod(method);
-        return con;
+    @Test
+    public void testAuthorizationForAdmin() throws Exception {
+        executeURL("/", "bob", "bobpwd", false,
+            HttpServletResponse.SC_OK, "admin, user");
     }
 
-    private String testBufferHelper(HttpURLConnection con) throws Exception {
-        BufferedReader in = new BufferedReader(
-                        new InputStreamReader(con.getInputStream()));
-        String inputLine;
-        StringBuffer response = new StringBuffer();
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
+    @Test
+    public void testAuthorizationForUser() throws Exception {
+        executeURL("/", "alice", "alicepwd", false,
+            HttpServletResponse.SC_OK, "<title>User</title>");
+    }
+
+    @Test
+    public void testAuthorizationFail() throws Exception {
+        executeURL("/", "dave", "davepwd", false,
+            HttpServletResponse.SC_FORBIDDEN, "Error 403: Authorization failed");
+    }
+    
+    private void executeURL(
+        String testUrl, String userid, String password,
+        boolean expectLoginFail, int expectedCode, String expectedContent)
+        throws Exception {
+
+        URI url = new URI(urlHttp + testUrl);
+        HttpGet getMethod = new HttpGet(url);
+        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
+        SSLContext sslContext = SSLContext.getDefault();
+        clientBuilder.setSSLContext(sslContext);
+        clientBuilder.setDefaultRequestConfig(
+            RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
+        HttpClient client = clientBuilder.build();
+        HttpResponse response = client.execute(getMethod);
+
+        String loginBody = EntityUtils.toString(response.getEntity(), "UTF-8");
+        assertTrue(loginBody.contains("window.location.assign"),
+            "Not redirected to home.html");
+        String[] redirect = loginBody.split("'");
+
+        HttpPost postMethod = new HttpPost(urlHttps + "/j_security_check");
+        List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+        nvps.add(new BasicNameValuePair("j_username", userid ));
+        nvps.add(new BasicNameValuePair("j_password", password));
+        postMethod.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
+        response = client.execute(postMethod);
+        assertEquals(HttpServletResponse.SC_FOUND, 
+            response.getStatusLine().getStatusCode(),
+            "Expected " + HttpServletResponse.SC_FOUND + " status code for login");
+
+        if (expectLoginFail) {
+            String location = response.getFirstHeader("Location").getValue();
+            assertTrue(location.contains("error.html"),
+                "Error.html was not returned");
+            return;
         }
-        in.close();
-        return response.toString();
+
+        url = new URI(urlHttps + redirect[1]);
+        getMethod = new HttpGet(url);
+        response = client.execute(getMethod);
+        assertEquals(expectedCode, response.getStatusLine().getStatusCode(),
+            "Expected " + expectedCode + " status code for login");
+
+        if (expectedCode != HttpServletResponse.SC_OK) {
+            return;
+        }
+
+        String actual = EntityUtils.toString(response.getEntity(), "UTF-8");
+        assertTrue(actual.contains(userid),
+            "The actual content did not contain the userid \"" + userid +
+            "\". It was:\n" + actual);
+        assertTrue(actual.contains(expectedContent),
+            "The url " + testUrl + " did not return the expected content \"" 
+            + expectedContent + "\"" + "The actual content was:\n" + actual);
     }
 
 }
@@ -616,53 +529,45 @@ public class IT {
 
 
 
-The **testIndexPage** tests to check that you can access the landing page.
+The **testAuthenticationFail()** method tests an invalid user authentication 
+while the **testAuthorizationFail()** method tests unauthorized access to the application.
 
-The **testHeightsPage** tests to check that the application can process the input value and calculate the result correctly.
+The **testAuthorizationForAdmin()** and 
+**testAuthorizationForUser()** methods verify that users with **admin** or **user** roles 
+are properly authenticated and can access authorized resource.
 
-For a Maven EAR project, the **testCompile** goal is
-specified for the **maven-compiler-plugin**
-plug-in in your **ear/pom.xml** file so that the test cases are
-compiled and picked up for execution. Run the following command to compile the
-test class:
+<br/>
+### **Running the tests**
 
-```
-mvn test-compile
-```
-{: codeblock}
+Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
-
-
-
-Then, enter the following command to start the server, run the tests, then stop the server:
-
-```
-mvn liberty:start failsafe:integration-test liberty:stop
-```
-{: codeblock}
-
-
+You see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.multimodules.IT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.712 sec - in it.io.openliberty.guides.multimodules.IT
+Running it.io.openliberty.guides.security.SecurityIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.78 sec - in it.io.openliberty.guides.security.SecurityIT
 
 Results :
 
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 
 ```
+
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
+where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
 # **Summary**
 
 ## **Nice Work!**
 
-You built and tested a multi-module unit converter application with Maven on Open Liberty.
+You learned how to use Jakarta EE Security in Open Liberty to authenticate and authorize users to secure your web application.
 
+
+Next, you can try the related [MicroProfile JWT](https://openliberty.io/guides/microprofile-jwt.html) guide. It demonstrates technologies to secure backend services.
 
 
 
@@ -672,11 +577,11 @@ You built and tested a multi-module unit converter application with Maven on Ope
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-maven-multimodules** project by running the following commands:
+Delete the **guide-security-intro** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-maven-multimodules
+rm -fr guide-security-intro
 ```
 {: codeblock}
 
@@ -685,7 +590,7 @@ rm -fr guide-maven-multimodules
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20multi-module%20application&guide-id=cloud-hosted-guide-maven-multimodules)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20a%20web%20application&guide-id=cloud-hosted-guide-security-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -693,15 +598,16 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-multimodules/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-multimodules/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-security-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-security-intro/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
+* [Securing microservices with JSON Web Tokens](https://openliberty.io/guides/microprofile-jwt.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 <br/>
