@@ -271,10 +271,10 @@ element now gets its value from the **context.root** variable.
 To find a value for the **context.root** variable,
 Open Liberty will look for the following environment variables, in order:
 
-* **context.root**
-* **`context_root`**
-* **`CONTEXT_ROOT`**
 
+* `context.root`
+* `context_root`
+* `CONTEXT_ROOT`
 
 # **Modifying inventory microservice**
 
