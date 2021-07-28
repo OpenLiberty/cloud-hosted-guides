@@ -489,6 +489,7 @@ spec:
       containers:
       - name: system-container
         image: system:1.0-SNAPSHOT
+        imagePullPolicy: Always
         ports:
         - containerPort: 9080
         # Set the environment variables
@@ -527,6 +528,7 @@ spec:
       containers:
       - name: inventory-container
         image: inventory:1.0-SNAPSHOT
+        imagePullPolicy: Always
         ports:
         - containerPort: 9080
         # Set the environment variables
@@ -602,6 +604,7 @@ gets the values **username** and
 
 Rebuild the application using **mvn clean package**.
 ```
+cd /home/project/guide-kubernetes-microprofile-config/start
 mvn clean package
 ```
 {: codeblock}
@@ -619,6 +622,7 @@ docker build -t inventory:1.0-SNAPSHOT inventory/.
 Push your updated images to the container registry on IBM Cloud with the following commands:
 
 ```
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
 docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
 docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
@@ -669,7 +673,7 @@ Access your application with the following commands:
 
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u alice:wonderland | jq
+curl -s http://localhost:$SYSTEM_NODEPORT/dev/system/properties -u alice:wonderland | jq
 ```
 {: codeblock}
 
@@ -705,7 +709,10 @@ sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' system/pom.xml
 Run the integration tests by using the following command:
 
 ```
-mvn failsafe:integration-test -Dsystem.context.root=/dev
+mvn failsafe:integration-test \
+    -Dsystem.service.root=localhost:$SYSTEM_NODEPORT \
+    -Dsystem.context.root=/dev \
+    -Dinventory.service.root=localhost:$INVENTORY_NODEPORT
 ```
 {: codeblock}
 
