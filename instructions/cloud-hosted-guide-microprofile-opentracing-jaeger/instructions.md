@@ -281,7 +281,7 @@ The OpenTracing API is exposed as a third-party API in Open Liberty.
 To add the visibility of OpenTracing APIs to the application, add **third-party** to the types of API packages
 that this class loader supports.
 Instead of explicitly configuring a list of API packages that includes **third-party**, set the **+third-party** value
-to the **apiTypeVisibility** attribute in the **`<classLoader />`** configuration.
+to the **apiTypeVisibility** attribute in the **classLoader** configuration.
 This configuration adds **third-party** to the default list of API package types that are supported.
 
 
