@@ -142,12 +142,13 @@ docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 ```
 {: codeblock}
 
-Update the image names so that the images in your IBM Cloud container registry are used,
+Update the image names and set the image pull policy to **Always**
+so that the images in your IBM Cloud container registry are used,
 and remove the **nodePort** fields so that the ports can be automatically generated:
 
 ```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
 sed -i 's=nodePort: 31000==g' kubernetes.yaml
 sed -i 's=nodePort: 32000==g' kubernetes.yaml
 ```
@@ -489,7 +490,6 @@ spec:
       containers:
       - name: system-container
         image: system:1.0-SNAPSHOT
-        imagePullPolicy: Always
         ports:
         - containerPort: 9080
         # Set the environment variables
@@ -528,7 +528,6 @@ spec:
       containers:
       - name: inventory-container
         image: inventory:1.0-SNAPSHOT
-        imagePullPolicy: Always
         ports:
         - containerPort: 9080
         # Set the environment variables
@@ -630,12 +629,13 @@ docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 ```
 {: codeblock}
 
-Update the image names so that the images in your IBM Cloud container registry are used,
+Update the image names and set the image pull policy to **Always**
+so that the images in your IBM Cloud container registry are used,
 and remove the **nodePort** fields so that the ports can be automatically generated:
 
 ```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
 sed -i 's=nodePort: 31000==g' kubernetes.yaml
 sed -i 's=nodePort: 32000==g' kubernetes.yaml
 ```
