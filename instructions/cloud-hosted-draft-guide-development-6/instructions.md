@@ -1,7 +1,7 @@
 
-# **Welcome to the Securing a web application guide!**
+# **Welcome to the Accessing and persisting data in microservices using Java Persistence API (JPA) guide!**
 
-Learn how to secure a web application through authentication and authorization.
+
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,20 +10,63 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
+Learn how to use Java Persistence API (JPA) to access and persist data to a database for your microservices.
+
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+
+:eventapp-url: http://localhost:9090/eventmanager.jsf
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9090/eventmanager.jsf
+```
+{: codeblock}
+
+
+
+:get-events-url: http://localhost:9090/events
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9090/events
+```
+{: codeblock}
+
 
 
 # **What you'll learn**
 
-You'll learn how to secure a web application by performing authentication and authorization using Jakarta EE Security. 
-Authentication confirms the identity of the user by verifying a user's credentials while authorization
-determines whether a user has access to restricted resources.
+You will learn how to use the Java Persistence API (JPA) to map Java objects to relational database 
+tables and perform create, read, update and delete (CRUD) operations on the data in your microservices. 
 
-Jakarta EE Security provides capability to configure the basic authentication, form authentication, or custom 
-form authentication mechanism by using annotations in servlets. It also provides the SecurityContext API for
-programmatic security checks in application code.
+JPA is a Java EE specification for representing relational database table data as Plain Old Java Objects (POJO).
+JPA simplifies object-relational mapping (ORM) by using annotations to map Java objects 
+to tables in a relational database. In addition to providing an efficient API for performing
+CRUD operations, JPA also reduces the burden of having to write JDBC and SQL code when performing
+database operations and takes care of database vendor-specific differences. This capability allows you to 
+focus on the business logic of your application instead of wasting time implementing repetitive CRUD logic.
 
-You’ll implement form authentication for a simple web front end. You'll also learn to specify security
-constraints for a servlet and use the SecurityContext API to determine the role of a logged-in user.
+The application that you will be working with is an event manager, which is composed of a UI
+and an event microservice for creating, retrieving, updating, and deleting events. In this 
+guide, you will be focused on the event microservice. The event microservice consists of
+a JPA entity class whose fields will be persisted to a database. The database logic is implemented in 
+a Data Access Object (DAO) to isolate the database operations from the rest of the service. 
+This DAO accesses and persists JPA entities to the database and can be injected 
+and consumed by other components in the microservice. An Embedded Derby database is used 
+as a data store for all the events.
+
+You will use JPA annotations to define an entity class whose fields are persisted to the 
+database. The interaction between your service and the database is mediated by the persistence 
+context that is managed by an entity manager. In a Java EE environment, you can use an
+application-managed entity manager or a container-managed entity manager. In this guide, 
+you will use a container-managed entity manager that is injected into the DAO so the application  
+server manages the opening and closing of the entity manager for you. 
+
 
 # **Getting started**
 
@@ -37,11 +80,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-security-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jpa-intro.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-security-intro.git
-cd guide-security-intro
+git clone https://github.com/openliberty/guide-jpa-intro.git
+cd guide-jpa-intro
 ```
 {: codeblock}
 
@@ -53,67 +96,69 @@ The **finish** directory contains the finished project that you will build.
 <br/>
 ### **Try what you'll build**
 
-The **finish** directory in the root of this guide contains the finished application that is secured with form authentication. 
-Give it a try before you proceed.
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-Navigate your browser to this URL to access the application: http://localhost:9080
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+To try out the application, run the following commands to navigate to the **finish/frontendUI** directory and
+deploy the **frontendUI** service to Open Liberty:
 
 ```
-curl http://localhost:9080
+cd finish/frontendUI
+mvn liberty:run
 ```
 {: codeblock}
 
 
 
-The application automatically switches from an HTTP connection to a secure HTTPS connection 
-and forwards you to a login page. If the browser gives you a certificate warning, it's because the 
-Open Liberty server created a self-signed SSL certificate by default. You can follow your browser's 
-provided instructions to accept the certificate and continue.
+Open another command-line session and run the following commands to navigate to the **finish/backendServices** directory and
+deploy the service to Open Liberty:
+```
+cd finish/backendServices
+mvn liberty:run
+```
+{: codeblock}
 
-Sign in to the application with one of the following user credentials from the user registry, 
-which are provided to you:
 
-|Username|Password|Role|Group
-| --- | --- | --- | ---
 
-|alice
-|alicepwd
-|user
-|Employee
+After you see the following message in both command-line sessions, both your services are ready.
 
-|bob
-|bobpwd
-|admin, user
-|Manager, Employee
+```
+The defaultServer server is ready to run a smarter planet.
+```
 
-|carl
-|carlpwd
-|admin, user
-|TeamLead, Employee
 
-|dave
-|davepwd
-|N/A
-|PartTime
+Point your browser to the http://localhost:9090/eventmanager.jsf URL. The event application does not display any events
 
-Notice that when you sign in as Bob or Carl, the browser redirects to the **admin** page and you can view their names and roles. 
-When you sign in as Alice, you can only view Alice's name.
-When you sign in as Dave, you are blocked and see an **Error 403: Authorization failed** message 
-because Dave doesn't have a role that is supported by the application.
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
+```
+curl http://localhost:9090/eventmanager.jsf
+```
+{: codeblock}
 
+
+because no events are stored in the database. Go ahead and click **Create Event**, located in the 
+left navigation bar. After entering an event name, location and time, click **Submit** to persist your 
+event entity to the database. The event is now stored in the database and is visible in the list of 
+current events.
+
+Notice that if you stop the Open Liberty server and then restart it, the events created
+are still displayed in the list of current events. Ensure you are in the **finish/backendServices** directory and run the following Maven goals to stop
+and then restart the server:
+```
+mvn liberty:stop
+mvn liberty:run
+```
+{: codeblock}
+
+
+The events created are still displayed in the list of current events. The **Update** action link
+located beside each event allows you to make modifications to the persisted entity and the 
+**Delete** action link allows you to remove entities from the database.
+
+After you are finished checking out the application, stop the Open Liberty servers by pressing CTRL+C in the
+command-line sessions where you ran the **backendServices** and **frontendUI** services.
+Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another command-line session for the **frontendUI**
+and **backendServices** services:
 ```
 mvn liberty:stop
 ```
@@ -121,89 +166,340 @@ mvn liberty:stop
 
 
 
-# **Adding authentication and authorization**
 
-For this application, users are asked to log in with a form when they access the application. 
-Users are authenticated and depending on their roles, they are redirected to the pages that they 
-are authorized to access. If authentication or authorization fails, users are sent to an error page. 
-The application supports two roles, **admin** and **user**.
+# **Defining a JPA entity class**
 
 Navigate to the **start** directory to begin.
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
+
+Run the following commands to navigate to the **frontendUI** directory and start the **frontendUI** service in dev mode:
 
 ```
+cd frontendUI
 mvn liberty:dev
 ```
 {: codeblock}
 
 
-After you see the following message, your application server in dev mode is ready:
+
+Open another command-line session and run the following commands to navigate to
+the **backendServices** directory and start the service in dev mode:
 
 ```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
-
-Create the **HomeServlet** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java
+cd backendServices
+mvn liberty:dev
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+************************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command line to listen for file changes. Open another command-line session to continue, 
+or open the project in your editor.
+
+To store Java objects in a database, you must define a JPA entity class. A JPA entity is a Java 
+object whose non-transient and non-static fields will be persisted to the database. Any Plain Old 
+Java Object (POJO) class can be designated as a JPA entity. However, the class must be annotated
+with the **@Entity** annotation, must not be declared final and must have a public or protected non-argument
+constructor. JPA maps an entity type to a database table and persisted instances will be represented 
+as rows in the table.
+
+The **Event** class is a data model that represents events in the event microservice and is annotated with JPA
+annotations.
+
+Create the **Event** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
 
 
 
 
 ```
-package io.openliberty.guides.ui;
+package io.openliberty.guides.event.models;
 
-import java.io.IOException;
-import javax.inject.Inject;
-import javax.security.enterprise.SecurityContext;
-import javax.security.enterprise.authentication.mechanism.http.FormAuthenticationMechanismDefinition;
-import javax.security.enterprise.authentication.mechanism.http.LoginToContinue;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.HttpConstraint;
-import javax.servlet.annotation.ServletSecurity;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.io.Serializable;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.NamedQuery;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Column;
+import javax.persistence.GenerationType;
 
-@WebServlet(urlPatterns = "/home")
-@FormAuthenticationMechanismDefinition(
-    loginToContinue = @LoginToContinue(errorPage = "/error.html", 
-                                       loginPage = "/welcome.html"))
-@ServletSecurity(value = @HttpConstraint(rolesAllowed = { "user", "admin" },
-  transportGuarantee = ServletSecurity.TransportGuarantee.CONFIDENTIAL)) 
-public class HomeServlet extends HttpServlet {
-
+@Entity
+@Table(name = "Event")
+@NamedQuery(name = "Event.findAll", query = "SELECT e FROM Event e")
+@NamedQuery(name = "Event.findEvent", query = "SELECT e FROM Event e WHERE "
+    + "e.name = :name AND e.location = :location AND e.time = :time")
+public class Event implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    @Inject
-    private SecurityContext securityContext;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id
+    @Column(name = "eventId")
+    private int id;
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-        if (securityContext.isCallerInRole(Utils.ADMIN)) {
-            response.sendRedirect("/admin.jsf");
-        } else if  (securityContext.isCallerInRole(Utils.USER)) {
-            response.sendRedirect("/user.jsf");
-        }
+    @Column(name = "eventLocation")
+    private String location;
+    @Column(name = "eventTime")
+    private String time;
+    @Column(name = "eventName")
+    private String name;
+
+    public Event() {
     }
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-        doGet(request, response);
+    public Event(String name, String location, String time) {
+        this.name = name;
+        this.location = location;
+        this.time = time;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+    
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + id;
+        result = prime * result + ((location == null) ? 0 : location.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result +
+                 (int) (serialVersionUID ^ (serialVersionUID >>> 32));
+        result = prime * result + ((time == null) ? 0 : time.hashCode());
+        return result;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Event other = (Event) obj;
+        if (location == null) {
+            if (other.location != null) {
+                return false;
+            }
+        } else if (!location.equals(other.location)) {
+            return false;
+        }
+        if (time == null) {
+            if (other.time != null) {
+                return false;
+            }
+        } else if (!time.equals(other.time)) {
+            return false;
+        }
+        if (name == null) {
+            if (other.name != null) {
+                return false;
+            }
+        } else if (!name.equals(other.name)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "Event [name=" + name + ", location=" + location + ", time=" + time
+                + "]";
+    }
+}
+
+```
+{: codeblock}
+
+
+
+The following table breaks down the new annotations:
+
+| *Annotation*    | *Description*
+| ---| ---
+| **@Entity** | Declares the class as an entity
+| **@Table**  | Specifies details of the table such as name 
+| **@NamedQuery** | Specifies a predefined database query that is run by an **EntityManager** instance.
+| **@Id**       |  Declares the primary key of the entity
+| **@GeneratedValue**    | Specifies the strategy used for generating the value of the primary key. 
+                        The **strategy = GenerationType.AUTO** code indicates that the generation strategy 
+                        is automatically selected
+                        
+| **@Column**    | Specifies that the field is mapped to a column in the database table. The **name**
+                 attribute is optional and indicates the name of the column in the table
+
+
+# **Configuring JPA**
+
+The **persistence.xml** file is a configuration file that defines a persistence unit. The
+persistence unit specifies configuration information for the entity manager.
+
+Create the configuration file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
+
+
+
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.2"
+    xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
+                        http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
+    <!-- tag::transaction-type[] -->
+    <persistence-unit name="jpa-unit" transaction-type="JTA">
+        <!-- tag::jta-data[] -->
+        <jta-data-source>jdbc/eventjpadatasource</jta-data-source>
+        <properties>
+            <property name="eclipselink.ddl-generation" value="create-tables"/>
+            <property name="eclipselink.ddl-generation.output-mode" value="both" />
+        </properties>
+    </persistence-unit>
+</persistence>
+```
+{: codeblock}
+
+
+
+The persistence unit is defined by the **persistence-unit** XML element. The **name** attribute is 
+required and is used to identify the persistent unit when using the **@PersistenceContext**
+annotation to inject the entity manager later in this guide. The **transaction-type="JTA"** 
+attribute specifies to use Java Transaction API (JTA) transaction management.
+Since we are using a container-managed entity manager, JTA transactions must be used. 
+
+A JTA transaction type requires a JTA data source to be provided. The **jta-data-source** 
+element specifies the Java Naming and Directory Interface (JNDI) name of 
+the data source that is used. The **data source** has already been configured for you
+in the **backendServices/src/main/liberty/config/server.xml** file. This data source configuration is where 
+the Java Database Connectivity (JDBC) connection is defined along with some database
+vendor-specific properties.
+
+
+The **eclipselink.ddl-generation** properties are used here so that you aren't required to 
+manually create a database table to run this sample application. To learn more about the 
+**ddl-generation** properties, see the 
+[JPA Extensions Reference for EclipseLink.](http://www.eclipse.org/eclipselink/documentation/2.5/jpa/extensions/p_ddl_generation.htm)
+
+
+# **Performing CRUD operations using JPA**
+
+The CRUD operations are defined in the DAO. To perform these operations by using JPA, we need an **EventDao** class. 
+
+Create the **EventDao** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
+
+
+
+
+```
+package io.openliberty.guides.event.dao;
+
+import java.util.List;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import io.openliberty.guides.event.models.Event;
+
+import javax.enterprise.context.RequestScoped;
+
+@RequestScoped
+public class EventDao {
+    
+    @PersistenceContext(name = "jpa-unit")
+    private EntityManager em;
+    
+    public void createEvent(Event event) {
+        em.persist(event);
+    }
+
+    public Event readEvent(int eventId) {
+        return em.find(Event.class, eventId);
+    }
+
+    public void updateEvent(Event event) {
+        em.merge(event);
+    }
+
+    public void deleteEvent(Event event) {
+        em.remove(event);
+    }
+
+    public List<Event> readAllEvents() {
+        return em.createNamedQuery("Event.findAll", Event.class).getResultList();
+    }
+
+    public List<Event> findEvent(String name, String location, String time) {
+        return em.createNamedQuery("Event.findEvent", Event.class)
+            .setParameter("name", name)
+            .setParameter("location", location)
+            .setParameter("time", time).getResultList();
     }
 }
 ```
@@ -211,127 +507,47 @@ public class HomeServlet extends HttpServlet {
 
 
 
-The **HomeServlet** servlet is the entry point of the application. 
-To enable form authentication for the **HomeServlet** class, 
-define the **@FormAuthenticationMechanismDefinition** annotation 
-and set its **loginToContinue** attribute with a 
-**@LoginToContinue** annotation. 
-This **@FormAuthenticationMechanismDefinition** annotation 
-defines **welcome.html** 
-as the login page and **error.html** as the error page.
+To use the entity manager at runtime, inject it into our CDI bean through the
+**@PersistenceContext** annotation. The entity manager interacts with the persistence context. 
+Every **EntityManager** instance is associated with a persistence context. The persistence context 
+manages a set of entities and is aware of the different states that an entity can have.
+The persistence context synchronizes with the database when a transaction commits.
 
-The **welcome.html** page implements the login form, and the **error.html** page
-implements the error page. Both pages are provided for you under the 
-**src/main/webapp** directory. The login form in the **welcome.html** page 
-uses the **`j_security_check`** action, which is defined by Jakarta EE and available by default.
+The **EventDao** class has a method for each CRUD operation, so let's break them down:
 
-Authorization determines whether a user can access a resource. To restrict access to 
-authenticated users with **user** and **admin** roles, define the 
-**@ServletSecurity** annotation with the 
-**@HttpConstraint** annotation and set the 
-**rolesAllowed** attribute to these two roles.
+* The **createEvent()** method persists an instance of the **Event** entity class to the data store by
+calling the **persist()** method on an **EntityManager** instance. The entity instance becomes managed
+and changes to it will be tracked by the entity manager.
 
-The **transportGuarantee** attribute defines the constraint
-on the traffic between the client and the application. 
-Set it to **CONFIDENTIAL** to enforce that all user data must be encrypted, 
-which is why an HTTP connection from a browser switches to HTTPS.
+* The **readEvent()** method returns an instance of the **Event** entity class with the specified primary 
+key by calling the **find()** method on an **EntityManager** instance. If the event instance is found, it
+is returned in a managed state, but, if the event instance is not found, **null** is returned.
 
-The SecurityContext interface provides programmatic access to the Jakarta EE Security API. 
-Inject a SecurityContext instance into the **HomeServlet** class. 
-The **doGet()** method uses the **isCallerInRole()** method 
-from the SecurityContext API to check a user's role and then forwards the response to the appropriate page.
-
-The **src/main/webapp/WEB-INF/web.xml** file 
-contains the rest of the security declaration for the application.
+* The **readAllEvents()** method demonstrates an alternative way to retrieve event objects 
+from the database. This method returns a list of instances of the **Event** entity class by 
+using the **Event.findAll** query specified in the **@NamedQuery** annotation on the **Event** class. 
+Similarly, the **findEvent()** method uses the **Event.findEvent** named query to find an event 
+with the given name, location and time. 
 
 
-The **security-role** elements define the roles that are supported by the application, 
-which are **user** and **admin**. 
-The **security-constraint** elements specify that JSF resources 
-like the **user.jsf** and **admin.jsf** pages 
-can be accessed only by users with **user** and 
-**admin** roles.
+* The **updateEvent()** method creates a managed instance of a detached entity instance. 
+The entity manager automatically tracks all managed entity objects in its persistence context 
+for changes and synchronizes them with the database. However, if an entity becomes detached, 
+you must merge that entity into the persistence context by calling the **merge()** method 
+so that changes to loaded fields of the detached entity are tracked.
 
+* The **deleteEvent()** method removes an instance of the **Event** entity class from the database by 
+calling the **remove()** method on an **EntityManager** instance. The state of the entity is
+changed to removed and is removed from the database upon transaction commit. 
 
-# **Configuring the user registry**
+The DAO is injected into the **backendServices/src/main/java/io/openliberty/guides/event/resources/EventResource.java**
+class and used to access and persist data. The **@Transactional** annotation is used in the
+**EventResource** class to declaratively control the transaction boundaries on the **@RequestScoped** CDI bean.
+This ensures that the methods run within the boundaries of an active global transaction, which is why it is not
+necessary to explicitly begin, commit or rollback transactions. At the end of the transactional
+method invocation, the transaction commits and the persistence context flushes any changes
+to Event entity instances it is managing to the database.
 
-User registries store user account information, such as username and password, for use by applications 
-to perform security-related operations. Typically, application servers would be configured to use an 
-external registry like a Lightweight Directory Access Protocol (LDAP) registry. Applications would 
-access information in the registry for authentication and authorization by using APIs like the Jakarta EE Security API.
-
-Open Liberty provides an easy-to-use basic user registry for developers, which you will configure.
-
-Create the **userRegistry** configuration file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-security-intro/start/src/main/liberty/config/userRegistry.xml 
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-security-intro/start/src/main/liberty/config/userRegistry.xml 
-
-
-
-
-```
-<server description="Sample Liberty server">
-  <basicRegistry id="basic" realm="WebRealm">
-    <user name="bob"
-    <!-- end::user-bob[] -->
-    <user name="alice"
-    <!-- end::user-alice[] -->
-    <user name="carl"
-    <!-- end::user-carl[] -->
-    <user name="dave"
-    <!-- end::user-dave[] -->
-
-    <group name="Manager">
-      <member name="bob" />
-    </group>
-
-    <group name="TeamLead">
-      <member name="carl" />
-    </group>
-    
-    <group name="Employee">
-      <member name="alice" />
-      <member name="bob" />
-      <member name="carl" />
-    </group>
-
-    <group name="PartTime">
-      <member name="dave" />
-    </group>
-  </basicRegistry>
-</server>
-```
-{: codeblock}
-
-
-
-The registry has four users, **bob**, **alice**, 
-**carl**, and **dave**. It also has four groups: 
-**Manager**, **TeamLead**, 
-**Employee**, and **PartTime**. 
-Each user belongs to one or more groups.
-
-It is not recommended to store passwords in plain text. The passwords in the **userRegistry.xml** file
-are encoded by using the Liberty **securityUtility** command with XOR encoding.
-
-
-Use the **include** element to add the basic user registry configuration to your server configuration. 
-Open Liberty includes configuration information from the specified XML file in its server configuration.
-
-The **server.xml** file contains the security configuration of the server 
-under the **application-bnd** element.
-Use the **security-role** and **group** elements to 
-map the groups in the **userRegistry.xml** file to the appropriate user roles supported by the application for proper user authorization.
-The **Manager** and **TeamLead** groups are mapped to the 
-**admin** role while the **Employee** group is mapped to the 
-**user** role.
 
 
 # **Running the application**
@@ -339,188 +555,163 @@ The **Manager** and **TeamLead** groups are mapped to the
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-
-Point your browser to the http://localhost:9080 URL. 
-
+When the server is running, go to the http://localhost:9090/eventmanager.jsf URL to view the Event Manager application. 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl http://localhost:9080
+curl http://localhost:9090/eventmanager.jsf
 ```
 {: codeblock}
 
 
-As you can see, the browser gets automatically redirected from an HTTP connection to an HTTPS connection
-because the transport guarantee is defined in the **HomeServlet** class.
 
-You will see a login form since form authentication is implemented and configured. 
-Sign in to the application by using one of the credentials from the following table. The credentials are defined in the configured user registry.
-
-|Username|Password|Role|Group
-| --- | --- | --- | ---
-
-|alice
-|alicepwd
-|user
-|Employee
-
-|bob
-|bobpwd
-|admin, user
-|Manager, Employee
-
-|carl
-|carlpwd
-|admin, user
-|TeamLead, Employee
-
-|dave
-|davepwd
-|N/A
-|PartTime
-
-Notice that when you sign in as Bob or Carl, the browser redirects to the **admin** page and you can view their names and roles.
-When you sign in as Alice, you can only view Alice's name.
-When you sign in as Dave, you are blocked and see an **Error 403: Authorization failed** message 
-because Dave doesn't have a role that is supported by the application.
-
+Click **Create Event** in the left navigation bar to create events that are persisted to 
+the database. After you create an event, it is available to view, update, and delete in
+the **Current Events** section.
 
 
 # **Testing the application**
 
-Write the **SecurityIT** class to test the authentication and authorization of the application.
-
-Create the **SecurityIT** class.
+Create the **EventEntityIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java
+touch /home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
 
 
 
 
 ```
-package it.io.openliberty.guides.security;
+package it.io.openliberty.guides.event;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import javax.json.JsonObject;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Form;
+import javax.ws.rs.core.Response.Status;
 
-import javax.net.ssl.SSLContext;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.CookieSpecs;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
+import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Test;
+import io.openliberty.guides.event.models.Event;
 
-public class SecurityIT {
+public class EventEntityIT extends EventIT {
 
-    private static String urlHttp;
-    private static String urlHttps;
+    private static final String JSONFIELD_LOCATION = "location";
+    private static final String JSONFIELD_NAME = "name";
+    private static final String JSONFIELD_TIME = "time";
+    private static final String EVENT_TIME = "12:00 PM, January 1 2018";
+    private static final String EVENT_LOCATION = "IBM";
+    private static final String EVENT_NAME = "JPA Guide";
+    private static final String UPDATE_EVENT_TIME = "12:00 PM, February 1 2018";
+    private static final String UPDATE_EVENT_LOCATION = "IBM Updated";
+    private static final String UPDATE_EVENT_NAME = "JPA Guide Updated";
+    
+    private static final int NO_CONTENT_CODE = Status.NO_CONTENT.getStatusCode();
+    private static final int NOT_FOUND_CODE = Status.NOT_FOUND.getStatusCode();
+
+    @BeforeAll
+    public static void oneTimeSetup() {
+        port = System.getProperty("backend.http.port");
+        baseUrl = "http://localhost:" + port + "/";
+    }
 
     @BeforeEach
-    public void setup() throws Exception {
-        urlHttp = "http://localhost:" + System.getProperty("http.port");
-        urlHttps = "https://localhost:" + System.getProperty("https.port");
-        ITUtils.trustAll();
+    public void setup() {
+        form = new Form();
+        client = ClientBuilder.newClient();
+        client.register(JsrJsonpProvider.class);
+
+        eventForm = new HashMap<String, String>();
+
+        eventForm.put(JSONFIELD_NAME, EVENT_NAME);
+        eventForm.put(JSONFIELD_LOCATION, EVENT_LOCATION);
+        eventForm.put(JSONFIELD_TIME, EVENT_TIME);
     }
 
     @Test
-    public void testAuthenticationFail() throws Exception {
-        executeURL("/", "bob", "wrongpassword", true, -1, "Don't care");
+    public void testInvalidRead() {
+        assertEquals(true, getIndividualEvent(-1).isEmpty(),
+          "Reading an event that does not exist should return an empty list");
     }
 
     @Test
-    public void testAuthorizationForAdmin() throws Exception {
-        executeURL("/", "bob", "bobpwd", false,
-            HttpServletResponse.SC_OK, "admin, user");
+    public void testInvalidDelete() {
+        int deleteResponse = deleteRequest(-1);
+        assertEquals(NOT_FOUND_CODE, deleteResponse,
+          "Trying to delete an event that does not exist should return the " 
+          + "HTTP response code " + NOT_FOUND_CODE);
     }
 
     @Test
-    public void testAuthorizationForUser() throws Exception {
-        executeURL("/", "alice", "alicepwd", false,
-            HttpServletResponse.SC_OK, "<title>User</title>");
-    }
-
-    @Test
-    public void testAuthorizationFail() throws Exception {
-        executeURL("/", "dave", "davepwd", false,
-            HttpServletResponse.SC_FORBIDDEN, "Error 403: Authorization failed");
+    public void testInvalidUpdate() {
+        int updateResponse = updateRequest(eventForm, -1);
+        assertEquals(NOT_FOUND_CODE, updateResponse,
+          "Trying to update an event that does not exist should return the " 
+          + "HTTP response code " + NOT_FOUND_CODE);
     }
     
-    private void executeURL(
-        String testUrl, String userid, String password,
-        boolean expectLoginFail, int expectedCode, String expectedContent)
-        throws Exception {
+    @Test
+    public void testReadIndividualEvent() {
+        int postResponse = postRequest(eventForm);
+        assertEquals(NO_CONTENT_CODE, postResponse,
+          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
 
-        URI url = new URI(urlHttp + testUrl);
-        HttpGet getMethod = new HttpGet(url);
-        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
-        SSLContext sslContext = SSLContext.getDefault();
-        clientBuilder.setSSLContext(sslContext);
-        clientBuilder.setDefaultRequestConfig(
-            RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
-        HttpClient client = clientBuilder.build();
-        HttpResponse response = client.execute(getMethod);
+        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+        JsonObject event = findEvent(e);
+        event = getIndividualEvent(event.getInt("id"));
+        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
 
-        String loginBody = EntityUtils.toString(response.getEntity(), "UTF-8");
-        assertTrue(loginBody.contains("window.location.assign"),
-            "Not redirected to home.html");
-        String[] redirect = loginBody.split("'");
+        int deleteResponse = deleteRequest(event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, deleteResponse, 
+          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
+    }
+    
+    @Test
+    public void testCRUD() {
+        int eventCount = getRequest().size();
+        int postResponse = postRequest(eventForm);
+        assertEquals(NO_CONTENT_CODE, postResponse, 
+          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
+     
+        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+        JsonObject event = findEvent(e);
+        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
 
-        HttpPost postMethod = new HttpPost(urlHttps + "/j_security_check");
-        List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-        nvps.add(new BasicNameValuePair("j_username", userid ));
-        nvps.add(new BasicNameValuePair("j_password", password));
-        postMethod.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
-        response = client.execute(postMethod);
-        assertEquals(HttpServletResponse.SC_FOUND, 
-            response.getStatusLine().getStatusCode(),
-            "Expected " + HttpServletResponse.SC_FOUND + " status code for login");
+        eventForm.put(JSONFIELD_NAME, UPDATE_EVENT_NAME);
+        eventForm.put(JSONFIELD_LOCATION, UPDATE_EVENT_LOCATION);
+        eventForm.put(JSONFIELD_TIME, UPDATE_EVENT_TIME);
+        int updateResponse = updateRequest(eventForm, event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, updateResponse, 
+          "Updating an event should return the HTTP response code " + NO_CONTENT_CODE);
+        
+        e = new Event(UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
+        event = findEvent(e);
+        assertData(event, UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
 
-        if (expectLoginFail) {
-            String location = response.getFirstHeader("Location").getValue();
-            assertTrue(location.contains("error.html"),
-                "Error.html was not returned");
-            return;
-        }
-
-        url = new URI(urlHttps + redirect[1]);
-        getMethod = new HttpGet(url);
-        response = client.execute(getMethod);
-        assertEquals(expectedCode, response.getStatusLine().getStatusCode(),
-            "Expected " + expectedCode + " status code for login");
-
-        if (expectedCode != HttpServletResponse.SC_OK) {
-            return;
-        }
-
-        String actual = EntityUtils.toString(response.getEntity(), "UTF-8");
-        assertTrue(actual.contains(userid),
-            "The actual content did not contain the userid \"" + userid +
-            "\". It was:\n" + actual);
-        assertTrue(actual.contains(expectedContent),
-            "The url " + testUrl + " did not return the expected content \"" 
-            + expectedContent + "\"" + "The actual content was:\n" + actual);
+        int deleteResponse = deleteRequest(event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, deleteResponse, 
+          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
+        assertEquals(eventCount, getRequest().size(), 
+          "Total number of events stored should be the same after testing " 
+          + "CRUD operations.");
+    }
+    
+    @AfterEach
+    public void teardown() {
+        response.close();
+        client.close();
     }
 
 }
@@ -529,45 +720,57 @@ public class SecurityIT {
 
 
 
-The **testAuthenticationFail()** method tests an invalid user authentication 
-while the **testAuthorizationFail()** method tests unauthorized access to the application.
+The **testInvalidRead()**, **testInvalidDelete()** and **testInvalidUpdate()** methods use a primary key that is not in the database to test reading, updating and deleting an event that does not
+exist, respectively.
 
-The **testAuthorizationForAdmin()** and 
-**testAuthorizationForUser()** methods verify that users with **admin** or **user** roles 
-are properly authenticated and can access authorized resource.
+The **testReadIndividualEvent()** method persists a test event to the database and retrieves the 
+event object from the database using the primary key of the entity.
+
+The **testCRUD()** method creates a test event and persists it to the database. The event object is then 
+retrieved from the database to verify that the test event was actually persisted. Next, the  
+name, location, and time of the test event are updated. The event object is retrieved 
+from the database to verify that the updated event is stored. Finally, the updated test 
+event is deleted and one final check is done to ensure that the updated test event is no longer 
+stored in the database.
 
 <br/>
 ### **Running the tests**
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
-
-You see the following output:
+Since you started Open Liberty in dev mode, press the **enter/return** key in the command-line session where you started the
+**backendServices** service to run the tests for the **backendServices**.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.security.SecurityIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.78 sec - in it.io.openliberty.guides.security.SecurityIT
+Running it.io.openliberty.guides.event.EventEntityIT
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.703 sec - in it.io.openliberty.guides.event.EventEntityIT
 
 Results :
 
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 
 ```
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
+When you are done checking out the services, exit dev mode by pressing CTRL+C in the command-line sessions where you
+ran the **frontendUI** and **backendServices** services,  or by typing **q** and then pressing the **enter/return** key.
+Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another command-line session for the **frontendUI**
+and **backendServices** services:
+```
+mvn liberty:stop
+```
+{: codeblock}
+
+
 
 
 # **Summary**
 
 ## **Nice Work!**
 
-You learned how to use Jakarta EE Security in Open Liberty to authenticate and authorize users to secure your web application.
+You learned how to map Java objects to database tables by defining a JPA entity class whose 
 
-
-Next, you can try the related [MicroProfile JWT](https://openliberty.io/guides/microprofile-jwt.html) guide. It demonstrates technologies to secure backend services.
+instances are represented as rows in the table. You have injected a container-managed 
+entity manager into a DAO and learned how to perform CRUD operations in your microservice in Open Liberty.
 
 
 
@@ -577,11 +780,11 @@ Next, you can try the related [MicroProfile JWT](https://openliberty.io/guides/m
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-security-intro** project by running the following commands:
+Delete the **guide-jpa-intro** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-security-intro
+rm -fr guide-jpa-intro
 ```
 {: codeblock}
 
@@ -590,7 +793,7 @@ rm -fr guide-security-intro
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20a%20web%20application&guide-id=cloud-hosted-guide-security-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Accessing%20and%20persisting%20data%20in%20microservices%20using%20Java%20Persistence%20API%20(JPA)&guide-id=cloud-hosted-guide-jpa-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -598,15 +801,14 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-security-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-security-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jpa-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jpa-intro/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Securing microservices with JSON Web Tokens](https://openliberty.io/guides/microprofile-jwt.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
