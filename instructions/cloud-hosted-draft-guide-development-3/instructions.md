@@ -1,7 +1,7 @@
 
-# **Welcome to the Acknowledging messages using MicroProfile Reactive Messaging guide!**
+# **Welcome to the Testing microservices with consumer-driven contracts guide!**
 
-Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
+Learn how to test Java microservices with consumer-driven contracts in Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -13,23 +13,38 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 # **What you'll learn**
 
-MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive
-Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged
-after they are processed. Every message that gets sent out must be acknowledged. This way, any messages that were delivered
-to the target service but not processed, for example, due to a system failure, can be identified and sent again.
+With a microservices-based architecture, you need robust testing to ensure that
+microservices that depend on one another are able to communicate effectively.
+Typically, to prevent multiple points of failure at different integration points,
+a combination of unit, integration, and end-to-end tests are used.
+While unit tests are fast, they are less trustworthy because they run in isolation and usually rely on mock data.
 
-The application in this guide consists of two microservices, **system** and **inventory**. Every 15 seconds, the **system**
-microservice calculates and publishes events that contain its current average system load. The **inventory** microservice
-subscribes to that information so that it can keep an updated list of all the systems and their current system loads.
-You can get the current inventory of systems by accessing the **/systems** REST endpoint. The following diagram depicts
-the application that is used in this guide:
+Integration tests address this issue by testing against real running services.
+However, they tend to be slow as the tests depend on other microservices and are less reliable because they are prone to external changes.
 
-![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/master/assets/reactive-messaging-system-inventory-rest.png)
+Usually, end-to-end tests are more trustworthy because they verify functionality from the perspective of a user.
+However, a graphical user interface (GUI) component is often required to perform end-to-end tests,
+and GUI components rely on third-party software, such as Selenium, which requires heavy computation time and resources.
 
+*What is contract testing?*
 
-You will explore the acknowledgment strategies that are available with MicroProfile Reactive Messaging, and you'll implement
-your own manual acknowledgment strategy. To learn more about how the reactive Java services used in this guide work, check
-out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+Contract testing bridges the gaps among the shortcomings of these different testing methodologies.
+Contract testing is a technique for testing an integration point by isolating each microservice and checking whether the
+HTTP requests and responses that the microservice transmits conform to a shared understanding that is documented in a contract.
+This way, contract testing ensures that microservices can communicate with each other.
+
+[Pact](https://docs.pact.io/) is an open source contract testing tool for testing
+HTTP requests, responses, and message integrations by using contract tests.
+
+The [Pact Broker](https://docs.pact.io/pact_broker/docker_images) is an application for sharing Pact contracts and verification results.
+The Pact Broker is also an important piece for integrating Pact into continuous integration and continuous delivery (CI/CD) pipelines.
+
+The two microservices you will interact with are called **system** and **inventory**.
+The **system** microservice returns the JVM system properties of its host.
+The **inventory** microservice retrieves specific properties from the **system** microservice.
+
+You will learn how to use the Pact framework to write contract tests for the **inventory** microservice
+that will then be verified by the **system** microservice.
 
 # **Getting started**
 
@@ -43,11 +58,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-contract-testing.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git
-cd guide-microprofile-reactive-messaging-acknowledgment
+git clone https://github.com/openliberty/guide-contract-testing.git
+cd guide-contract-testing
 ```
 {: codeblock}
 
@@ -56,63 +71,679 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-# **Choosing an acknowledgment strategy**
+<br/>
+### **Starting the Pact Broker**
 
-
-Messages must be acknowledged in reactive applications. Messages are either acknowledged explicitly, or messages are acknowledged
-implicitly by MicroProfile Reactive Messaging. Acknowledgment for incoming messages is controlled by the **@Acknowledgment**
-annotation in MicroProfile Reactive Messaging. If the **@Acknowledgment** annotation isn't explicitly defined, then the
-default acknowledgment strategy applies, which depends on the method signature. Only methods that receive incoming messages
-and are annotated with the **@Incoming** annotation must acknowledge messages. Methods that are annotated only with the
-**@Outgoing** annotation don't need to acknowledge messages because messages aren't being received and MicroProfile Reactive
-Messaging requires only that _received_ messages are acknowledged.
-
-Almost all of the methods in this application that require message acknowledgment are assigned the **`POST_PROCESSING`** strategy
-by default. If the acknowledgment strategy is set to **`POST_PROCESSING`**, then MicroProfile Reactive Messaging acknowledges
-the message based on whether the annotated method emits data:
-
-* If the method emits data, the incoming message is acknowledged after the outgoing message is acknowledged.
-* If the method doesn't emit data, the incoming message is acknowledged after the method or processing completes.
-
-It’s important that the methods use the **`POST_PROCESSING`** strategy because it fulfills the requirement that a message isn't
-acknowledged until after the message is fully processed. This processing strategy is beneficial in situations where messages
-must reliably not get lost. When the **`POST_PROCESSING`** acknowledgment strategy can’t be used, the **MANUAL** strategy can
-be used to fulfill the same requirement. In situations where message acknowledgment reliability isn't important and losing
-messages is acceptable, the **`PRE_PROCESSING`** strategy might be appropriate.
-
-The only method in the guide that doesn't default to the **`POST_PROCESSING`** strategy is the
-**sendProperty()** method in the **system** service. The **sendProperty()**
-method receives property requests from the **inventory** service. For each property request, if the property that's being
-requested is valid, then the method **returns** a property response with the value of the property.
-However, if the requested property **doesn't exist**, the request is ignored and no property response
-is **returned**.
-
-A key difference exists between when a property response is returned and when a property response isn't returned. In the
-case where a property response is returned, the request doesn't finish processing until the response is sent and safely
-stored by the Kafka broker. Only then is the incoming message acknowledged. However, in the case where the requested
-property doesn’t exist and a property response isn't returned, the method finishes processing the request message so the
-message must be acknowledged immediately.
-
-This case where a message either needs to be acknowledged immediately or some time later is one of the situations where
-the **MANUAL** acknowledgment strategy would be beneficial
-
-# **Implementing the MANUAL acknowledgment strategy**
-
-
-
-To begin, run the following command to navigate to the **start** directory:
+Run the following command to start the Pact Broker:
 ```
-cd /home/project/guide-microprofile-reactive-messaging-acknowledgment/start
+docker-compose -f "pact-broker/docker-compose.yml" up -d --build
 ```
 {: codeblock}
 
-Update the **SystemService.sendProperty** method to use the **MANUAL** acknowledgment strategy, which fits the method processing
-requirements better than the default **`PRE_PROCESSING`** strategy.
 
-Replace the **SystemService** class.
+When the Pact Broker is running, you'll see the following output:
+```
+Creating pact-broker_postgres_1 ... done
+Creating pact-broker_pact-broker_1 ... done
+```
+
+
+Confirm that the Pact Broker is working.
+Select **Launch Application** from the menu of the IDE and type **9292** to specify the port number for the Pact Broker service. 
+Click the **OK** button. 
+The Pact Broker can also be found at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
+where **accountname** is your account name.
+
+Confirm that you can access the user interface of the Pact Broker.
+The Pact Broker interface is similar to the following image:
+
+![Pact Broker webpage](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-webpage.png)
+
+
+
+
+
+You can refer to the [official Pact Broker documentation](https://docs.pact.io/pact_broker/docker_images/pactfoundation)
+for more information about the components of the Docker Compose file.
+
+# **Implementing pact testing in the inventory service**
+
+Navigate to the **start/inventory** directory to begin.
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
+deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```
+mvn liberty:dev
+```
+{: codeblock}
+
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
+or open the project in your editor.
+
+
+
+Create the InventoryPactIT class file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java
+
+
+
+
+```
+
+package io.openliberty.guides.inventory;
+
+import au.com.dius.pact.consumer.dsl.PactDslJsonArray;
+import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
+import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
+import au.com.dius.pact.consumer.junit.PactProviderRule;
+import au.com.dius.pact.consumer.junit.PactVerification;
+import au.com.dius.pact.core.model.RequestResponsePact;
+import au.com.dius.pact.core.model.annotations.Pact;
+
+import org.junit.Rule;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class InventoryPactIT {
+  @Rule
+  public PactProviderRule mockProvider = new PactProviderRule("System", this);
+
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactServer(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
+
+    return builder
+      .given("wlp.server.name is defaultServer")
+      .uponReceiving("a request for server name")
+      .path("/system/properties/key/wlp.server.name")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonArray().object()
+        .stringValue("wlp.server.name", "defaultServer"))
+      .toPact();
+  }
+
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactEdition(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
+
+    return builder
+      .given("Default directory is true")
+      .uponReceiving("a request to check for the default directory")
+      .path("/system/properties/key/wlp.user.dir.isDefault")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonArray().object()
+        .stringValue("wlp.user.dir.isDefault", "true"))
+      .toPact();
+  }
+
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactVersion(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
+
+    return builder
+      .given("version is 1.1")
+      .uponReceiving("a request for the version")
+      .path("/system/properties/version")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonBody()
+        .decimalType("system.properties.version", 1.1))
+      .toPact();
+  }
+
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactInvalid(PactDslWithProvider builder) {
+
+    return builder
+      .given("invalid property")
+      .uponReceiving("a request with an invalid property")
+      .path("/system/properties/invalidProperty")
+      .method("GET")
+      .willRespondWith()
+      .status(404)
+      .toPact();
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactServer")
+  public void runServerTest() {
+    String serverName = new Inventory(mockProvider.getUrl()).getServerName();
+    assertEquals("Expected server name does not match",
+      "[{\"wlp.server.name\":\"defaultServer\"}]", serverName);
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactEdition")
+  public void runEditionTest() {
+    String edition = new Inventory(mockProvider.getUrl()).getEdition();
+    assertEquals("Expected edition does not match",
+      "[{\"wlp.user.dir.isDefault\":\"true\"}]", edition);
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactVersion")
+  public void runVersionTest() {
+    String version = new Inventory(mockProvider.getUrl()).getVersion();
+    assertEquals("Expected version does not match",
+      "{\"system.properties.version\":1.1}", version);
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactInvalid")
+  public void runInvalidTest() {
+    String invalid = new Inventory(mockProvider.getUrl()).getInvalidProperty();
+    assertEquals("Expected invalid property response does not match",
+      "", invalid);
+  }
+}
+```
+{: codeblock}
+
+
+The **InventoryPactIT** class contains a **PactProviderRule**
+mock provider that mimics the HTTP responses from the **system** microservice.
+The **@Pact** annotation takes the name of the microservice as a parameter,
+which makes it easier to differentiate microservices from each other when you have multiple applications.
+
+The **createPactServer()** method defines the minimal expected responsezfor a specific endpoint, which is known as an interaction.
+For each interaction, the expected request and the response are registered with the mock service by using the
+**@PactVerification** annotation.
+
+The test sends a real request with the **getUrl()** method of the mock provider.
+The mock provider compares the actual request with the expected request and confirms whether the comparison is successful.
+Finally, the **assertEquals()** method confirms that the response is correct.
+
+Replace the inventory Maven project file.
 
 > From the menu of the IDE, select 
-> **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+> **File** > **Open** > guide-contract-testing/start/inventory/pom.xml
+
+
+
+
+```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>inventory</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <liberty.var.default.http.port>9081</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>4.0.1</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>8.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- tag::pactJunit[] -->
+        <dependency>
+            <groupId>au.com.dius</groupId>
+            <artifactId>pact-jvm-consumer-junit</artifactId>
+            <version>4.0.10</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.30</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-rs-client</artifactId>
+            <version>3.4.3</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>au.com.dius.pact.provider</groupId>
+                <artifactId>maven</artifactId>
+                <version>4.1.21</version>
+                <configuration>
+                    <serviceProviders>
+                        <serviceProvider>
+                            <name>System</name>
+                            <protocol>http</protocol>
+                            <host>localhost</host>
+                            <port>9080</port>
+                            <path>/</path>
+                            <pactFileDirectory>target/pacts</pactFileDirectory>
+                        </serviceProvider>
+                    </serviceProviders>
+                    <projectVersion>${project.version}</projectVersion>
+                    <skipPactPublish>false</skipPactPublish>
+                    <pactBrokerUrl>http://localhost:9292</pactBrokerUrl>
+                    <tags>
+                        <tag>open-liberty-pact</tag>
+                    </tags>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.default.http.port}</http.port>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.3.4</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+{: codeblock}
+
+
+The Pact framework provides a **Maven** plugin that can be added to the build section of the **pom.xml** file.
+The **serviceProvider** element defines the endpoint URL for the
+**system** microservice and the **pactFileDirectory** directory where you want to store the pact file.
+The **pact-jvm-consumer-junit** dependency provides the base test class that you can use with JUnit to build unit tests.
+
+After you create the **InventoryPactIT.java** class and replace the **pom.xml** file, Open Liberty automatically reloads its configuration.
+
+The contract between the **inventory** and **system** microservices is known as a pact.
+Each pact is a collection of interactions.
+In this guide, those interactions are defined in the **InventoryPactIT** class.
+
+Press the **enter/return** key to run the tests and generate the pact file.
+
+When completed, you'll see a similar output to the following example:
+```
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running io.openliberty.guides.inventory.InventoryPactIT
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.631 s - in io.openliberty.guides.inventory.InventoryPactIT
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+```
+
+When you integrate the Pact framework in a CI/CD build pipeline,
+you can use the **mvn failsafe:integration-test** goal to generate the pact file.
+The Maven failsafe plug-in provides a lifecycle phase for running integration tests that run after unit tests.
+By default, it looks for classes that are suffixed with **IT**, which stands for Integration Test.
+You can refer to the [Maven failsafe plug-in documentation](https://maven.apache.org/surefire/maven-failsafe-plugin/) for more information.
+
+The generated pact file is named **Inventory-System.json** and is located in the **inventory/target/pacts** directory.
+The pact file contains the defined interactions in JSON format:
+
+```
+{
+...
+"interactions": [
+{
+      "description": "a request for server name",
+      "request": {
+        "method": "GET",
+        "path": "/system/properties/key/wlp.server.name"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": [
+          {
+            "wlp.server.name": "defaultServer"
+          }
+        ]
+      },
+      "providerStates": [
+        {
+          "name": "wlp.server.name is defaultServer"
+        }
+      ]
+    }
+...
+  ]
+}
+```
+
+Open a new command-line session and navigate to the **start/inventory** directory.
+Publish the generated pact file to the Pact Broker by running the following command:
+```
+mvn pact:publish
+```
+{: codeblock}
+
+
+After the file is published, you'll see a similar output to the following example:
+```
+--- maven:4.1.21:publish (default-cli) @ inventory ---
+Publishing 'Inventory-System.json' with tags 'open-liberty-pact' ... OK
+```
+
+# **Verifying the pact in the Pact Broker**
+
+
+Refresh the Pact Broker at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
+where **accountname** is your account name.
+The last verified column doesn't show a timestamp because the `system` microservice hasn't verified the pact yet.
+
+![Pact Broker webpage for new entry](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-webpage-refresh.png)
+
+
+
+
+
+
+You can see detailed insights about each interaction by going to the
+**`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai/pacts/provider/System/consumer/Inventory/latest`** URL, 
+where **accountname** is your account name.
+The insights look similar to the following image:
+
+![Pact Broker webpage for Interactions](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-interactions.png)
+
+
+# **Implementing pact testing in the system service**
+
+
+
+
+Navigate to the **start/system** directory.
+
+Open another command-line session to start Open Liberty in dev mode for the **system** microservice:
+```
+mvn liberty:dev
+```
+{: codeblock}
+
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+
+Create the SystemBrokerIT class file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java
+
+
+
+
+```
+package it.io.openliberty.guides.system;
+
+import au.com.dius.pact.provider.junit5.HttpTestTarget;
+import au.com.dius.pact.provider.junit5.PactVerificationContext;
+import au.com.dius.pact.provider.junit5.PactVerificationInvocationContextProvider;
+import au.com.dius.pact.provider.junitsupport.Consumer;
+import au.com.dius.pact.provider.junitsupport.Provider;
+import au.com.dius.pact.provider.junitsupport.State;
+import au.com.dius.pact.provider.junitsupport.loader.PactBroker;
+import au.com.dius.pact.provider.junitsupport.loader.VersionSelector;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestTemplate;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+@Provider("System")
+@Consumer("Inventory")
+@PactBroker(
+  host = "localhost",
+  port = "9292",
+  consumerVersionSelectors = {
+    @VersionSelector(tag = "open-liberty-pact")
+  })
+public class SystemBrokerIT {
+  @TestTemplate
+  @ExtendWith(PactVerificationInvocationContextProvider.class)
+  void pactVerificationTestTemplate(PactVerificationContext context) {
+    context.verifyInteraction();
+  }
+
+  @BeforeAll
+  static void enablePublishingPact() {
+    System.setProperty("pact.verifier.publishResults", "true");
+  }
+
+  @BeforeEach
+  void before(PactVerificationContext context) {
+    int port = Integer.parseInt(System.getProperty("http.port"));
+    context.setTarget(new HttpTestTarget("localhost", port));
+  }
+
+  @State("wlp.server.name is defaultServer")
+  public void validServerName() {
+  }
+
+  @State("Default directory is true")
+  public void validEdition() {
+  }
+
+  @State("version is 1.1")
+  public void validVersion() {
+  }
+
+  @State("invalid property")
+  public void invalidProperty() {
+  }
+}
+```
+{: codeblock}
+
+
+The connection information for the Pact Broker is provided with the **@PactBroker** annotation.
+The dependency also provides a JUnit5 Invocation Context Provider with the
+**pactVerificationTestTemplate()** method to generate a test for each of the interactions.
+
+The **pact.verifier.publishResults** property is set to **true** so
+that the results are sent to the Pact Broker after the tests are completed.
+
+The test target is defined in the **PactVerificationContext** context
+to point to the running endpoint of the **system** microservice.
+
+The **@State** annotation must match the **given()** parameter
+that was provided in the **inventory** test class so that Pact can identify which test case to run against which endpoint.
+
+Replace the system Maven project file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-contract-testing/start/system/pom.xml
+
+
+
+
+```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>system</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <debugPort>8787</debugPort>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>4.0.1</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>8.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>au.com.dius.pact.provider</groupId>
+            <artifactId>junit5</artifactId>
+            <version>4.1.21</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.30</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-rs-client</artifactId>
+            <version>3.4.3</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <!-- tag::libertyMavenPlugin[] -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.3.4</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.0.0-M5</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.default.http.port}</http.port>
+                        <pact.provider.version>${project.version}</pact.provider.version>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+{: codeblock}
+
+
+The **system** microservice uses the **junit5** pact provider dependency
+to connect to the Pact Broker and verify the pact file.
+Ideally, in a CI/CD build pipeline, the **pact.provider.version** element is
+dynamically set to the build number so that you can identify where a breaking change is introduced.
+
+After you create the **SystemBrokerIT.java** class and replace the **pom.xml** file,
+Open Liberty automatically reloads its configuration.
+
+# **Verifying the contract**
+
+In the command-line session where you started the **system** microservice,
+press the **enter/return** key to run the tests to verify the pact file.
+When you integrate the Pact framework into a CI/CD build pipeline,
+you can use the **mvn failsafe:integration-test** goal to verify the pact file from the Pact Broker.
+
+The tests fail with the following errors:
+```
+[ERROR] Failures: 
+[ERROR]   SystemBrokerIT.pactVerificationTestTemplate:28 Pact between Inventory (1.0-SNAPSHOT) and System - Upon a request for the version 
+Failures:
+
+1) Verifying a pact between Inventory and System - a request for the version has a matching body
+
+    1.1) body: $.system.properties.version Expected "1.1" (String) to be a decimal number
+
+
+[INFO] 
+[ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0
+```
+
+The test from the **system** microservice fails because the **inventory** microservice was expecting a decimal,
+**1.1**, for the value of the **system.properties.version** property, but it received a string, **"1.1"**.
+
+Correct the value of the **system.properties.version** property to a decimal.
+Replace the SystemResource class file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
 
 
 
@@ -120,420 +751,122 @@ Replace the **SystemService** class.
 ```
 package io.openliberty.guides.system;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
-
-import javax.enterprise.context.ApplicationScoped;
-
-import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.eclipse.microprofile.reactive.streams.operators.PublisherBuilder;
-import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
-import org.reactivestreams.Publisher;
-
-import io.openliberty.guides.models.PropertyMessage;
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.Flowable;
-
-@ApplicationScoped
-public class SystemService {
-    
-    private static Logger logger = Logger.getLogger(SystemService.class.getName());
-
-    private static final OperatingSystemMXBean osMean = 
-            ManagementFactory.getOperatingSystemMXBean();
-    private static String hostname = null;
-
-    private static String getHostname() {
-        if (hostname == null) {
-            try {
-                return InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException e) {
-                return System.getenv("HOSTNAME");
-            }
-        }
-        return hostname;
-    }
-
-    @Outgoing("systemLoad")
-    public Publisher<SystemLoad> sendSystemLoad() {
-        return Flowable.interval(15, TimeUnit.SECONDS)
-                .map((interval -> new SystemLoad(getHostname(),
-                        osMean.getSystemLoadAverage())));
-    }
-
-    @Incoming("propertyRequest")
-    @Outgoing("propertyResponse")
-    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    public PublisherBuilder<Message<PropertyMessage>>
-    sendProperty(Message<String> propertyMessage) {
-        String propertyName = propertyMessage.getPayload();
-        String propertyValue = System.getProperty(propertyName, "unknown");
-        logger.info("sendProperty: " + propertyValue);
-        if (propertyName == null || propertyName.isEmpty() || propertyValue == "unknown") {
-            logger.warning("Provided property: " +
-                    propertyName + " is not a system property");
-            propertyMessage.ack();
-            return ReactiveStreams.empty();
-        }
-        Message<PropertyMessage> message = Message.of(
-                new PropertyMessage(getHostname(),
-                        propertyName,
-                        propertyValue),
-                propertyMessage::ack
-        );
-        return ReactiveStreams.of(message);
-    }
-}
-```
-{: codeblock}
-
-
-The **sendProperty()** method needs to manually acknowledge the incoming messages, so it is
-annotated with the **@Acknowledgment(Acknowledgment.Strategy.MANUAL)**
-annotation. This annotation sets the method up to expect an incoming message. To meet the requirements of acknowledgment,
-the method parameter is updated to receive and return a **Message** of type **String**, rather
-than just a **String**. Then, the message **payload** is extracted and checked for validity.
-One of the following outcomes occurs:
-
-* If the system property **isn't valid**, the method **acknowledges**
-  the incoming message and **returns** an empty reactive stream. 
-  The processing is complete.
-* If the system property is valid, the method creates a **message** with the value of the
-  requested system property and sends it to the proper channel. The method acknowledges the incoming message only
-  after the sent message is acknowledged.
-
-# **Waiting for a message to be acknowledged**
-
-
-The **inventory** service contains an endpoint that accepts **PUT** requests. When a **PUT** request that contains a system property
-is made to the **inventory** service, the **inventory** service sends a message to the **system** service. The message from the
-**inventory** service requests the value of the system property from the system service. Currently, a **200** response code
-is returned without confirming whether the sent message was acknowledged. Replace the **inventory** service to return a **200**
-response only after the outgoing message is acknowledged.
-
-Replace the **InventoryResource** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
-
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.reactivestreams.Publisher;
+import javax.enterprise.context.RequestScoped;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 
-import io.openliberty.guides.models.PropertyMessage;
-import io.openliberty.guides.models.SystemLoad;
-import io.reactivex.rxjava3.core.BackpressureStrategy;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.FlowableEmitter;
+import org.eclipse.microprofile.metrics.annotation.Counted;
+import org.eclipse.microprofile.metrics.annotation.Timed;
 
+@RequestScoped
+@Path("/properties")
+public class SystemResource {
 
-@ApplicationScoped
-@Path("/inventory")
-public class InventoryResource {
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Timed(name = "getPropertiesTime",
+    description = "Time needed to get the JVM system properties")
+  @Counted(absolute = true,
+    description = "Number of times the JVM system properties are requested")
 
-    private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
-    private FlowableEmitter<Message<String>> propertyNameEmitter;
+  public Response getProperties() {
+    return Response.ok(System.getProperties()).build();
+  }
 
-    @Inject
-    private InventoryManager manager;
-    
-    @GET
-    @Path("/systems")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystems() {
-        List<Properties> systems = manager.getSystems()
-                .values()
-                .stream()
-                .collect(Collectors.toList());
-        return Response
-                .status(Response.Status.OK)
-                .entity(systems)
-                .build();
+  @GET
+  @Path("/key/{key}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getPropertiesByKey(@PathParam("key") String key) {
+    try {
+      JsonArray response = Json.createArrayBuilder()
+        .add(Json.createObjectBuilder()
+          .add(key, System.getProperties().get(key).toString()))
+        .build();
+      return Response.ok(response, MediaType.APPLICATION_JSON).build();
+    } catch (java.lang.NullPointerException exception) {
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
+  }
 
-    @GET
-    @Path("/systems/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getSystem(@PathParam("hostname") String hostname) {
-        Optional<Properties> system = manager.getSystem(hostname);
-        if (system.isPresent()) {
-            return Response
-                    .status(Response.Status.OK)
-                    .entity(system)
-                    .build();
-        }
-        return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("hostname does not exist.")
-                .build();
-    }
-
-    @PUT
-    @Path("/data")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.TEXT_PLAIN)
-    /* This method sends a message and returns a CompletionStage that doesn't
-        complete until the message is acknowledged. */
-    public CompletionStage<Response> updateSystemProperty(String propertyName) {
-        logger.info("updateSystemProperty: " + propertyName);
-        CompletableFuture<Void> result = new CompletableFuture<>();
-
-        Message<String> message = Message.of(
-                propertyName,
-                () -> {
-                    /* This is the ack callback, which runs when the outgoing
-                        message is acknowledged. After the outgoing message is
-                        acknowledged, complete the "result" CompletableFuture. */
-                    result.complete(null);
-                    /* An ack callback must return a CompletionStage that says
-                        when it's complete. Asynchronous processing isn't necessary 
-                        so a completed CompletionStage is returned to indicate that 
-                        the work here is done. */
-                    return CompletableFuture.completedFuture(null);
-                }
-        );
-
-        propertyNameEmitter.onNext(message);
-        /* Set up what happens when the message is acknowledged and the "result"
-            CompletableFuture is completed. When "result" completes, the Response 
-            object is created with the status code and message. */
-        return result.thenApply(a -> Response
-                .status(Response.Status.OK)
-                .entity("Request successful for the " + propertyName + " property\n")
-                .build());
-    }
-
-    @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response resetSystems() {
-        manager.resetSystems();
-        return Response
-                .status(Response.Status.OK)
-                .build();
-    }
-
-    @Incoming("systemLoad")
-    public void updateStatus(SystemLoad sl)  {
-        String hostname = sl.hostname;
-        if (manager.getSystem(hostname).isPresent()) {
-            manager.updateCpuStatus(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was updated: " + sl);
-        } else {
-            manager.addSystem(hostname, sl.loadAverage);
-            logger.info("Host " + hostname + " was added: " + sl);
-        }
-    }
-
-    @Incoming("addSystemProperty")
-    public void getPropertyMessage(PropertyMessage pm)  {
-        logger.info("getPropertyMessage: " + pm);
-        String hostId = pm.hostname;
-        if (manager.getSystem(hostId).isPresent()) {
-            manager.updatePropertyMessage(hostId, pm.key, pm.value);
-            logger.info("Host " + hostId + " was updated: " + pm);
-        } else {
-            manager.addSystem(hostId, pm.key, pm.value);
-            logger.info("Host " + hostId + " was added: " + pm);
-        }
-    }
-
-    @Outgoing("requestSystemProperty")
-    public Publisher<Message<String>> sendPropertyName() {
-        Flowable<Message<String>> flowable = Flowable.create(emitter ->
-                this.propertyNameEmitter = emitter, BackpressureStrategy.BUFFER);
-        return flowable;
-    }
+  @GET
+  @Path("/version")
+  @Produces(MediaType.APPLICATION_JSON)
+  public JsonObject getVersion() {
+    JsonObject response = Json.createObjectBuilder().add("system.properties.version", 1.1)
+      .build();
+    return response;
+  }
 }
 ```
 {: codeblock}
 
 
-The **sendPropertyName()** method is updated to return a
-**Message<String>** instead of just a **String**. This return type allows the method to set a callback
-that runs after the outgoing message is acknowledged. In addition to updating the **sendPropertyName()**
-method, the **propertyNameEmitter** variable is updated to send a **Message<String>** type.
 
-The **updateSystemProperty()** method now returns a
-**CompletionStage** object wrapped around a Response type. This return type allows for a response
-object to be returned after the outgoing message is acknowledged. The outgoing **message** is created
-with the requested property name as the **payload** and an acknowledgment
-**callback** to execute an action after the message is acknowledged. The method creates a
-**CompletableFuture** variable that returns a **200** response
-code after the variable is completed in the **callback** function.
+Press the **enter/return** key to rerun the tests from the command-line session where you started the **system** microservice.
 
-# **Building and running the application**
-
-Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
-
-Start your Docker environment. Dockerfiles are provided for you to use.
-
-To build the application, run the Maven **install** and **package** goals from the command-line session in the **start** directory:
-
+If the tests are successful, you'll see a similar output to the following example:
 ```
-mvn -pl models install
-mvn package
-```
-{: codeblock}
+...
+Verifying a pact between pact between Inventory (1.0-SNAPSHOT) and System
 
+  Notices:
+    1) The pact at http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX is being verified because it matches the following configured selection criterion: latest pact for a consumer version tagged 'open-liberty-pact'
 
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
-
-
-Run the following commands to containerize the microservices:
-
-```
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-{: codeblock}
-
-
-Next, use the provided script to start the application in Docker containers. The script creates a network for the
-containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices 
-in the project. For simplicity, the script starts one instance of the **system** service.
-
-
-```
-./scripts/startContainers.sh
-```
-{: codeblock}
-
-
-
-# **Testing the application**
-
-The application might take some time to become available. After the application is up and running, 
-you can access it by making a GET request to the **/systems** endpoint of the **inventory** service.
-
-
-Run the following curl command to confirm that the **inventory** microservice is up and running.
-```
-curl -s http://localhost:9085/health | jq
-```
-{: codeblock}
-
-When both the liveness and readiness health checks are up, run the following curl command to access the **inventory** microservice:
-```
-curl -s http://localhost:9085/inventory/systems | jq
-```
-{: codeblock}
-
-Look for the CPU **systemLoad** property for all the systems:
-
-```
-{
-   "hostname":"30bec2b63a96",
-   "systemLoad":1.44
-}
+  [from Pact Broker http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX]
+  Given version is 1.1
+  a request for the version
+    returns a response which
+      has status code 200 (OK)
+      has a matching body (OK)
+[main] INFO au.com.dius.pact.provider.DefaultVerificationReporter - Published verification result of 'au.com.dius.pact.core.pactbroker.TestResult$Ok@4d84dfe7' for consumer 'Consumer(name=Inventory)'
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.835 s - in it.io.openliberty.guides.system.SystemBrokerIT
+...
 ```
 
-The **system** service sends messages to the **inventory** service every 15 seconds. The **inventory** service processes and
-acknowledges each incoming message, ensuring that no **system** message is lost.
 
+After the tests are complete, refresh the Pact Broker at the
+**`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
+where **accountname** is your account name.
+Confirm that the last verified column now shows a timestamp:
 
-If you run the curl command again after a while, notice that the CPU **systemLoad** property for the systems changed.
-```
-curl -s http://localhost:9085/inventory/systems | jq
-```
-{: codeblock}
-
-Make a **PUT** request to the **http://localhost:9085/inventory/data** URL to add the value of a particular system property
-to the set of existing properties. For example, run the following **curl** command:
-
-
-```
-curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-Type:text/plain"
-```
-{: codeblock}
+![Pact Broker webpage for verified](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-webpage-verified.png)
 
 
 
-In this example, the **PUT** request with the **os.name** system property in the request body on the 
-**http://localhost:9085/inventory/data** URL adds the **os.name** system property for your system. 
-The **inventory** service sends a message that contains the requested system property to the **system** service. 
-The **inventory** service then waits until the message is acknowledged before it sends a response back.
-
-You see the following output:
-
-```
-Request successful for the os.name property
-```
-
-The previous example response is confirmation that the sent request message was acknowledged.
 
 
-Run the following curl command again:
-```
-curl -s http://localhost:9085/inventory/systems | jq
-```
-{: codeblock}
-
-The **os.name** system property value is now included with the previous values:
-
-```
-{
-   "hostname":"30bec2b63a96",
-   "os.name":"Linux",
-   "systemLoad":1.44
-}
-```
+The pact file that's created by the **inventory** microservice was successfully verified by the **system** microservice through the Pact Broker.
+This ensures that responses from the **system** microservice meet the expectations of the **inventory** microservice.
 
 # **Tearing down the environment**
 
-Finally, run the following script to stop the application:
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line sessions
+where you ran the servers for the **system** and **inventory** microservices,
+or by typing **q** and then pressing the **enter/return** key.
 
-
+Navigate back to the **/guide-contract-testing** directory and run the following commands to remove the Pact Broker:
 ```
-./scripts/stopContainers.sh
+docker-compose -f "pact-broker/docker-compose.yml" down
+docker rmi postgres:12
+docker rmi pactfoundation/pact-broker:2.62.0.0
+docker volume rm pact-broker_postgres-volume
 ```
 {: codeblock}
-
 
 
 # **Summary**
 
 ## **Nice Work!**
 
-You developed an application by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
+You implemented contract testing in Java microservices by using Pact and verified the contract with the Pact Broker.
 
 
 
@@ -543,11 +876,11 @@ You developed an application by using MicroProfile Reactive Messaging, Open Libe
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-reactive-messaging-acknowledgment** project by running the following commands:
+Delete the **guide-contract-testing** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-reactive-messaging-acknowledgment
+rm -fr guide-contract-testing
 ```
 {: codeblock}
 
@@ -556,7 +889,7 @@ rm -fr guide-microprofile-reactive-messaging-acknowledgment
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Acknowledging%20messages%20using%20MicroProfile%20Reactive%20Messaging&guide-id=cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20consumer-driven%20contracts&guide-id=cloud-hosted-guide-contract-testing)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -564,24 +897,20 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-contract-testing/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-contract-testing/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest.html)
-* [Streaming updates to a client using Server-Sent Events](https://openliberty.io/guides/reactive-messaging-sse.html)
+* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
 * [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
+* [Testing microservices with the Arquillian managed container](https://openliberty.io/guides/arquillian-managed.html)
 
-**Learn more about MicroProfile**
-* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html)
-* [View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/apidocs/)
-* [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
+**Learn more about the Pact framework**
+* [Go to the Pact website.](https://pact.io/)
 
 
 <br/>
