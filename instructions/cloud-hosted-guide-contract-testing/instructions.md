@@ -908,8 +908,9 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
 * [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
 * [Testing microservices with the Arquillian managed container](https://openliberty.io/guides/arquillian-managed.html)
-* [Go to the Pact website.](https://pact.io/)
 
+**Learn more about the Pact framework**
+* [Go to the Pact website.](https://pact.io/)
 
 
 <br/>
