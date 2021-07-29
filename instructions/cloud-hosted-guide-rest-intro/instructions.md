@@ -268,9 +268,9 @@ The configuration does the following actions:
 
 * Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
 * Configures the server to resolve the HTTP port numbers from variables, which are then specified in
-the Maven **pom.xml** file. This is specified in the **`<httpEndpoint/>`** element. Variables use the **${variableName}** syntax.
+the Maven **pom.xml** file. This is specified in the **httpEndpoint** element. Variables use the **${variableName}** syntax.
 * Configures the server to run the produced web application on a context root specified in the 
-**pom.xml** file. This is specified in the **`<webApplication/>`** element.
+**pom.xml** file. This is specified in the **webApplication** element.
 
 
 The variables that are being used in the **server.xml** file are provided by the properties set in the Maven **pom.xml** file. The properties must be formatted as **liberty.var.variableName**.
@@ -374,7 +374,7 @@ The test method is indicated with the **@Test** annotation.
 The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the server configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven **pom.xml** file. Refer to the **pom.xml** file to see how the application information such as the **default.http.port**, **default.https.port** and **app.context.root** elements are provided in the file.
 
 
-These Maven properties are then passed to the Java test program as the **`<systemPropertyVariables/>`** element in the **pom.xml** file.
+These Maven properties are then passed to the Java test program as the **systemPropertyVariables** element in the **pom.xml** file.
 
 Getting the values to create a representation of the URL is simple. The test class uses the **getProperty** method
 to get the application details.
