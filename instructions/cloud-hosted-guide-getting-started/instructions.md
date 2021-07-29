@@ -498,7 +498,7 @@ occur or whenever tracing is enabled. You can find the error logs in the
 **ffdc** directory and the tracing logs in the **trace.log** file.
 
 In addition to the log files that are generated automatically, you can enable logging of
-specific Java packages or classes by using the **`<logging/>`** element:
+specific Java packages or classes by using the **logging** element:
 
 ```
 <logging traceSpecification="<component_1>=<level>:<component_2>=<level>:..."/>
@@ -509,7 +509,7 @@ of the following logging levels: **off**, **fatal**, **severe**, **warning**, **
 **config**, **detail**, **fine**, **finer**, **finest**, **all**.
 
 Try enabling detailed logging of the MicroProfile Health feature by adding the
-**`<logging/>`** element to your configuration file.
+**logging** element to your configuration file.
 
 Replace the server configuration file.
 
