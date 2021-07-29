@@ -287,7 +287,7 @@ Finally, the **assertEquals()** method confirms that the response is correct.
 Replace the inventory Maven project file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-contract-testing/start/inventory/pom.xml
+> **File** > **Open** > guide-contract-testing/start/inventory/pom.xml
 
 
 
@@ -615,7 +615,7 @@ that was provided in the **inventory** test class so that Pact can identify whic
 Replace the system Maven project file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-contract-testing/start/system/pom.xml
+> **File** > **Open** > guide-contract-testing/start/system/pom.xml
 
 
 
@@ -743,7 +743,7 @@ Correct the value of the **system.properties.version** property to a decimal.
 Replace the SystemResource class file.
 
 > From the menu of the IDE, select 
- **File** > **Open** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
+> **File** > **Open** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
 
 
 
@@ -908,8 +908,9 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
 * [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
 * [Testing microservices with the Arquillian managed container](https://openliberty.io/guides/arquillian-managed.html)
-* [Go to the Pact website.](https://pact.io/)
 
+**Learn more about the Pact framework**
+* [Go to the Pact website.](https://pact.io/)
 
 
 <br/>
