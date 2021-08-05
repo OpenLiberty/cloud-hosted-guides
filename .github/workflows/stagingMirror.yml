@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     name: Staging Mirror
+    continue-on-error: true
     runs-on: ubuntu-latest
     strategy:
       matrix: # Uses an array of Json variables to pass the repo names.
