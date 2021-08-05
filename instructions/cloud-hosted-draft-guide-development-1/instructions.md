@@ -1,5 +1,5 @@
 
-# Welcome to the Checking the health of microservices on Kubernetes guide!
+# **Welcome to the Checking the health of microservices on Kubernetes guide!**
 
 Learn how to check the health of microservices on Kubernetes by setting up readiness and liveness probes to inspect MicroProfile Health Check endpoints.
 
@@ -13,7 +13,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# What you'll learn
+# **What you'll learn**
 
 You will learn how to create health check endpoints for your microservices. Then, you 
 will configure Kubernetes to use these endpoints to keep your microservices running smoothly.
@@ -42,7 +42,7 @@ how communication can be established between pods inside a cluster.
 
 
 
-# Getting started
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -89,11 +89,10 @@ Namespace
 sn-labs-yourname
 ```
 
-Store the namespace name in a variable.
-Use the namespace name that was obtained from the previous command.
+Run the following command to store the namespace name in a variable.
 
 ```
-NAMESPACE_NAME={namespace_name}
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
 ```
 {: codeblock}
 
@@ -111,7 +110,7 @@ bx cr login
 {: codeblock}
 
 
-# Adding health checks to the inventory microservice
+# **Adding health checks to the inventory microservice**
 
 Navigate to **start** directory to begin.
 
@@ -247,7 +246,7 @@ microservice was set up to become unhealthy for 60 seconds when a specific endpo
 This endpoint has been provided for you to observe the results of an unhealthy pod and how 
 Kubernetes reacts.
 
-# Configuring readiness and liveness probes
+# **Configuring readiness and liveness probes**
 
 You will configure Kubernetes readiness and liveness probes.
 Readiness probes are responsible for determining that your application is ready to accept requests.
@@ -401,7 +400,7 @@ Similar to the readiness probes, the liveness probes also define
 **timeoutSeconds**,
 and **periodSeconds**.
 
-# Deploying the microservices
+# **Deploying the microservices**
 
 To build these microservices, navigate to the **start** directory and run the following 
 command.
@@ -443,11 +442,12 @@ docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 {: codeblock}
 
 Update the image names so that the images in your IBM Cloud container registry are used,
+the image pull policy is on `Always`,
 and remove the **nodePort** fields so that the ports can be automatically generated:
 
 ```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g\n        imagePullPolicy: Always=g' kubernetes.yaml
 sed -i 's=nodePort: 31000==g' kubernetes.yaml
 sed -i 's=nodePort: 32000==g' kubernetes.yaml
 ```
@@ -536,7 +536,7 @@ curl http://$INVENTORY_PROXY/inventory/systems/system-service | jq
 ```
 {: codeblock}
 
-# Changing the ready state of the system microservice
+# **Changing the ready state of the system microservice**
 
 
 An endpoint has been provided under the `system` microservice to set it to an unhealthy 
@@ -575,7 +575,8 @@ curl http://$SYSTEM_PROXY/system/properties | jqproperties
 
 Observe that your request will still be successful because you have two replicas and one is still healthy.
 
-### Observing the effects on the inventory microservice
+<br/>
+### **Observing the effects on the inventory microservice**
 
 
 Wait until the `system` pod is ready again.
@@ -645,7 +646,7 @@ system-deployment-694c7b74f7-lrlf7     1/1       Running   0          8m
 inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
 ```
 
-# Testing the microservices
+# **Testing the microservices**
 
 
 Update the **pom.xml** files so that the **system.service.root** and **inventory.service.root** properties
@@ -695,7 +696,7 @@ Results:
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-# Tearing down the environment
+# **Tearing down the environment**
 
 To remove all of the resources created during this guide, run the following command to 
 delete all of the resources that you created.
@@ -710,9 +711,9 @@ kubectl delete -f kubernetes.yaml
 Press **CTRL+C** to stop the proxy server that was started at step 7.
 
 
-# Summary
+# **Summary**
 
-## Nice Work!
+## **Nice Work!**
 
 You have used MicroProfile Health and Open Liberty to create endpoints that report on 
 
@@ -721,8 +722,9 @@ your microservice's status. Then, you observed how Kubernetes uses the **/health
 
 
 
+<br/>
+## **Clean up your environment**
 
-## Clean up your environment
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
@@ -734,24 +736,32 @@ rm -fr guide-kubernetes-microprofile-health
 ```
 {: codeblock}
 
-## What did you think of this guide?
-We want to hear from you. To provide feedback on your experience with this guide, click the **Support/Feedback** button in the IDE,
-select **Give feedback** option, fill in the fields, choose **General** category, and click the **Post Idea** button.
+<br/>
+## **What did you think of this guide?**
 
-## What could make this guide better?
+We want to hear from you. To provide feedback, click the following link.
+
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Checking%20the%20health%20of%20microservices%20on%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-health)
+
+Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
+
+<br/>
+## **What could make this guide better?**
+
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/issues)
-* [Create a pull request to contribute to this guide](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/pulls)
 
 
 
-
-## Where to next? 
+<br/>
+## **Where to next?**
 
 * [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
 * [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
-## Log out of the session
+<br/>
+## **Log out of the session**
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
