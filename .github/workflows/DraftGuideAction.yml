@@ -21,7 +21,6 @@ jobs:
         run: |
           echo "${{ github.event.inputs.branch }}"
           echo "${{ github.event.inputs.guide_name }}"
-
   convertStaging:
     name: Make PR to Staging
     runs-on: ubuntu-latest
@@ -64,9 +63,8 @@ jobs:
           mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/
           rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
-          mvn compiler:compile
+          mvn compiler:compile 
           mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11}"
-          mvn -Dtest=TestConversion test -DguideName="${{ github.event.inputs.guide_name }}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
