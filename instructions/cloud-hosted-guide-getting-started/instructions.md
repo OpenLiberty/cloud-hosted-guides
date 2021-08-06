@@ -672,7 +672,6 @@ docker rmi openliberty-getting-started:1.0-SNAPSHOT
 
 # **Developing the application in a Docker container**
 
-
 The Open Liberty Maven plug-in includes a **devc** goal that simplifies developing
 your application in a Docker container by starting dev mode with container
 support. This goal builds a Docker image, mounts the required directories, binds
@@ -751,7 +750,6 @@ Replace the server configuration file.
     <variable name="default.https.port" defaultValue="9443"/>
 
     <webApplication location="guide-getting-started.war" contextRoot="/dev" />
-    
     <mpMetrics authentication="false"/>
 
     <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
@@ -764,6 +762,24 @@ Replace the server configuration file.
 ```
 {: codeblock}
 
+
+
+Update the **mpData.js** file to change the **url** in the **getSystemPropertiesRequest** method to reflect the new context root.
+
+
+Update the mpData.js file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-getting-started/start/src/main/webapp/js/mpData.js
+
+```
+function getSystemPropertiesRequest() {
+    var propToDisplay = ["java.vendor", "java.version", "user.name", "os.name", "wlp.install.dir", "wlp.server.name" ];
+    var url = "http://localhost:9080/dev/system/properties";
+    var req = new XMLHttpRequest();
+    var table = document.getElementById("systemPropertiesTable");
+    ...
+```
 
 After you make the file changes, Open Liberty automatically reloads its
 configuration. You can access the application at the
