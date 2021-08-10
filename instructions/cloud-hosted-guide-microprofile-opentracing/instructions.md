@@ -102,7 +102,7 @@ mvn liberty:start-server
 
 Make sure your Zipkin server is running and run the following curl command:
 ```
-curl http://localhost:9081/inventory/systems/localhost
+curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 {: codeblock}
 
@@ -161,13 +161,13 @@ mvn liberty:start-server
 
 When the servers start, you can access the **system** service by running the following curl command:
 ```
-curl http://localhost:9080/system/properties
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
 and access the **inventory** service by running the following curl command:
 ```
-curl http://localhost:9081/inventory/systems
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -299,7 +299,7 @@ mvn compile
 
 Run the following curl command, check your Zipkin server, and sort the traces by newest first:
 ```
-curl http://localhost:9081/inventory/systems
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -382,7 +382,7 @@ mvn compile
 
 Run the following curl command again, check your Zipkin server, and sort the traces by newest first:
 ```
-curl http://localhost:9081/inventory/systems
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 {: codeblock}
 
@@ -489,7 +489,7 @@ mvn compile
 
 Run the following curl command, check your Zipkin server, and sort the traces by newest first:
 ```
-curl http://localhost:9081/inventory/systems/localhost
+curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 {: codeblock}
 
