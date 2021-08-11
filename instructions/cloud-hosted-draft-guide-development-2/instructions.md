@@ -749,6 +749,8 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 
 # **Tearing down the environment**
 
+Press **CTRL+C** in the command-line sessions where you ran `kubectl port-forward` to stop the port forwarding. 
+
 Run the following commands to delete all the resources that you created.
 
 ```
@@ -760,7 +762,6 @@ kubectl delete secret sys-app-credentials
 
 
 
-Press **CTRL+C** in the command-line sessions where you ran `kubectl port-forward` to stop the port forwarding. 
 
 
 # **Summary**
