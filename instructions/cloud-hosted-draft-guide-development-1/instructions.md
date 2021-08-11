@@ -484,7 +484,6 @@ services.
 
 To make requests to the services, you need to set up port forwarding.
 Run the following commands to set up port forwarding to access the **system** service.
-
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
@@ -493,7 +492,6 @@ kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 Run the following commands to set up port forwarding to access the **inventory** service.
-
 ```
 INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
 kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
@@ -502,7 +500,6 @@ kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 Make a request to the system service to see the JVM system properties with the following command:
-
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 curl -s http://localhost:$SYSTEM_NODEPORT/system/properties | jq
@@ -518,7 +515,6 @@ With the readiness probe, you can be certain the pod will only accept traffic
 when the microservice has fully started.
 
 Similarly, access the inventory service and observe the successful request with the following command:
-
 ```
 INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
 curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
@@ -567,10 +563,10 @@ Observe that your request will still be successful because you have two replicas
 ### **Observing the effects on the inventory microservice**
 
 
-Wait until the **system** pod is ready again.
+Wait until the **system-service** pod is ready again.
 Make two POST requests to the **/system/unhealthy** endpoint of the two **system-service** pods.
 
-Go to the terminal where you started the port forwarding of the **system-service** service.
+Go to the terminal where you started the port forwarding of the **system** service.
 Press **CTRL+C** to stop the port forwarding. Run following commands to start the first pod.
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
@@ -586,7 +582,7 @@ curl -X POST http://localhost:$SYSTEM_NODEPORT/system/unhealthy
 ```
 {: codeblock}
 
-Go back to the terminal where you started the port forwarding the first pod of the **system-service** service.
+Go back to the terminal where you started the port forwarding the first pod of the **system** service.
 Press **CTRL+C** to stop the port forwarding. Run following commands to start the second pod.
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
@@ -659,6 +655,14 @@ inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
 # **Testing the microservices**
 
 
+Go back to the terminal where you started the port forwarding the second pod of the **system** service.
+Press **CTRL+C** to stop the port forwarding. Run following commands to port forward the **system** service.
+```
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
+```
+{: codeblock}
+
 Update the **pom.xml** files so that the **system.service.root** and **inventory.service.root** properties
 match the values to access the **system** and **inventory** services.
 
@@ -712,6 +716,9 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 
 # **Tearing down the environment**
 
+Go back to the terminals where you started the port forwarding the **system** service and 
+the **inventory** service. Press **CTRL+C** to stop the port forwardings.
+
 To remove all of the resources created during this guide, run the following command to 
 delete all of the resources that you created.
 
@@ -722,7 +729,6 @@ kubectl delete -f kubernetes.yaml
 
 
 
-Press **CTRL+C** to stop the proxy server that was started at step 7.
 
 
 # **Summary**
