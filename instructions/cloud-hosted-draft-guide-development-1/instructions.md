@@ -442,7 +442,7 @@ docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 {: codeblock}
 
 Update the image names so that the images in your IBM Cloud container registry are used,
-the image pull policy is on `Always`,
+the image pull policy is on **Always**,
 and remove the **nodePort** fields so that the ports can be automatically generated:
 
 ```
@@ -528,11 +528,9 @@ curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | 
 # **Changing the ready state of the system microservice**
 
 
-An endpoint has been provided under the `system` microservice to set it to an unhealthy 
+An endpoint has been provided under the **system** microservice to set it to an unhealthy 
 state in the health check. The unhealthy state will cause the readiness probe to fail.
-Use the `curl` command to invoke this endpoint by making a POST request to the
-`/system/unhealthy` endpoint.
-
+Use the following **curl** command to make a POST request to the **/system/unhealthy** endpoint.
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 curl -X POST http://localhost:$SYSTEM_NODEPORT/system/unhealthy
@@ -555,9 +553,8 @@ inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
 ```
 
 
-You will notice that one of the two `system` pods is no longer in the ready state.
-Make a request to the `/system/properties` endpoint with the following command:
-
+You will notice that one of the two **system** pods is no longer in the ready state.
+Make a request to the **/system/properties** endpoint with the following command:
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 curl -s http://localhost:$SYSTEM_NODEPORT/system/properties | jq
@@ -570,8 +567,8 @@ Observe that your request will still be successful because you have two replicas
 ### **Observing the effects on the inventory microservice**
 
 
-Wait until the `system` pod is ready again.
-Make two POST requests to `/system/unhealthy` endpoint of the two **system-service** pods.
+Wait until the **system** pod is ready again.
+Make two POST requests to the **/system/unhealthy** endpoint of the two **system-service** pods.
 
 Go to the terminal where you started the port forwarding of the **system-service** service.
 Press **CTRL+C** to stop the port forwarding. Run following commands to start the first pod.
@@ -582,13 +579,12 @@ kubectl port-forward $SYSTEM_POD $SYSTEM_NODEPORT:9080
 ```
 {: codeblock}
 
-On a terminal, run the following POST requests to make the first pod to not ready. 
+On a terminal, run the following POST request to make the first pod to not ready state. 
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 curl -X POST http://localhost:$SYSTEM_NODEPORT/system/unhealthy
 ```
 {: codeblock}
-
 
 Go back to the terminal where you started the port forwarding the first pod of the **system-service** service.
 Press **CTRL+C** to stop the port forwarding. Run following commands to start the second pod.
@@ -599,21 +595,21 @@ kubectl port-forward $SYSTEM_POD $SYSTEM_NODEPORT:9080
 ```
 {: codeblock}
 
-On a terminal, run the following POST requests to make the second pod to not ready. 
+On a terminal, run the following POST requests to make the second pod to not ready state. 
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 curl -X POST http://localhost:$SYSTEM_NODEPORT/system/unhealthy
 ```
 {: codeblock}
 
-Observe the output of `kubectl get pods`.
+Observe the output of **kubectl get pods**.
 ```
 kubectl get pods
 ```
 {: codeblock}
 
 You will see both pods are no longer ready. 
-During this process, the readiness probe for the `inventory` microservice will also fail. 
+During this process, the readiness probe for the **inventory** microservice will also fail. 
 Observe it's no longer in the ready state either.
 
 First, both **system** pods will no longer be ready because the readiness probe failed.
@@ -667,16 +663,20 @@ Update the **pom.xml** files so that the **system.service.root** and **inventory
 match the values to access the **system** and **inventory** services.
 
 ```
-sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' inventory/pom.xml
-sed -i 's=localhost:32000='"$INVENTORY_PROXY"'=g' inventory/pom.xml
-sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' inventory/pom.xml
+sed -i 's=localhost:32000='"localhost:$INVENTORY_NODEPORT"'=g' inventory/pom.xml
+sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' system/pom.xml
 ```
 {: codeblock}
 
 Run the integration tests by using the following command:
 
 ```
-mvn failsafe:integration-test
+mvn failsafe:integration-test \
+    -Dsystem.service.root=localhost:$SYSTEM_NODEPORT \
+    -Dinventory.service.root=localhost:$INVENTORY_NODEPORT
 ```
 {: codeblock}
 
