@@ -180,10 +180,9 @@ inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
 After the pods are ready, you will make requests to your services.
 
 
-To make requests to the services, you need to set up port forwarding.
+In this execise, you need to set up port forwarding to access the services.
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 Run the following commands to set up port forwarding to access the **system** service.
-
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
@@ -192,7 +191,6 @@ kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
 
 Then, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 Run the following commands to set up port forwarding to access the **inventory** service.
-
 ```
 INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
 kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
@@ -201,7 +199,6 @@ kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
 
 Then use the following commands to access your **system** microservice.
 The `-u` option is used to pass in the username `bob` and the password `bobpwd`.
-
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u bob:bobpwd | jq
@@ -209,7 +206,6 @@ curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u bob:bobpwd | jq
 {: codeblock}
 
 Use the following commands to access your **inventory** microservice.
-
 ```
 INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
 curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
