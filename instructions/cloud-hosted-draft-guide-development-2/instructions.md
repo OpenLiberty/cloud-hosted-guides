@@ -17,10 +17,10 @@ The other panel displays the IDE that you will use to create files, edit the cod
 You will learn how and why to externalize your microservice's configuration.
 Externalized configuration is useful because configuration usually changes depending on your environment.
 You will also learn how to configure the environment by providing required values to your application using Kubernetes.
-Using environment variables allows for easier deployment to different environments.
 
 MicroProfile Config provides useful annotations that you can use to inject configured values into your code.
 These values can come from any configuration source, such as environment variables.
+Using environment variables allows for easier deployment to different environments.
 To learn more about MicroProfile Config,
 read the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide.
 
@@ -180,7 +180,7 @@ inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
 After the pods are ready, you will make requests to your services.
 
 
-In this execise, you need to set up port forwarding to access the services.
+In this guide, you need to set up port forwarding to access the services.
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 Run the following commands to set up port forwarding to access the **system** service.
 ```
@@ -213,14 +213,14 @@ curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | 
 {: codeblock}
 
 When you're done trying out the microservices, press **CTRL+C** in the command line sessions
-where you ran the `kubectl port-forward` commands. 
+where you ran the `kubectl port-forward` commands to stop the port forwarding.
 
 # **Modifying system microservice**
 
 
 The **system** service is hardcoded to use a single forward slash as the context root.
 The context root is set in the **webApplication**
-element where the **contextRoot** attribute is specified as **"/"**.
+element, where the **contextRoot** attribute is specified as **"/"**.
 You'll make the value of the **contextRoot** attribute configurable by
 implementing it as a variable.
 
@@ -266,7 +266,7 @@ Replace the **server.xml** file.
 The **contextRoot** attribute in the **webApplication**
 element now gets its value from the **context.root** variable.
 To find a value for the **context.root** variable,
-Open Liberty will look for the following environment variables, in order:
+Open Liberty looks for the following environment variables, in order:
 
 
 * `context.root`
@@ -407,12 +407,12 @@ environment variables **`SYSTEM_APP_USERNAME`** and
 
 # **Creating a ConfigMap and Secret**
 
-There are several ways to configure an environment variable in a Docker container.
+Several options exist to configure an environment variable in a Docker container.
 You can set it directly in the **Dockerfile** with the **ENV** command.
 You can also set it in your **kubernetes.yaml** file by specifying a
-name and a value for the environment variable you want to set for a specific container.
+name and a value for the environment variable that you want to set for a specific container.
 With these options in mind, you're going to use a ConfigMap and Secret to set these values.
-These are resources provided by Kubernetes that are used as a way to provide configuration values to your containers.
+These are resources provided by Kubernetes as a way to provide configuration values to your containers.
 A benefit is that they can be reused across many different containers,
 even if they all require different environment variables to be set with the same value.
 
@@ -431,7 +431,7 @@ provide more versatility as to what you want to configure.
 Details about these options can be found in the
 [Kubernetes CLI documentation](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-configmap-em-).
 
-Create a Secret to configure the new credentials that **inventory** will use to
+Create a Secret to configure the new credentials that **inventory** uses to
 authenticate against **system** with the following **kubectl** command.
 ```
 kubectl create secret generic sys-app-credentials --from-literal username=alice --from-literal password=wonderland
@@ -441,7 +441,7 @@ kubectl create secret generic sys-app-credentials --from-literal username=alice 
 
 This command looks similar to the command to create a ConfigMap, but one difference is the word **generic**.
 This word creates a Secret that doesn't store information in any specialized way.
-There are different types of secrets, such as secrets to store Docker credentials
+Different types of secrets are available, such as secrets to store Docker credentials
 and secrets to store public and private key pairs.
 
 A Secret is similar to a ConfigMap.
@@ -451,13 +451,14 @@ Additionally, when it does show you the information,
 it only shows you a Base64 encoded version so that a casual onlooker doesn't accidentally see any sensitive data.
 Secrets don't provide any encryption by default,
 that is something you'll either need to do yourself or find an alternate option to configure.
+Encryption is not required for the application to run.
 
 
 
 # **Updating Kubernetes resources**
 
 Next, you will update your Kubernetes deployments to set the environment variables in your containers
-based on the values configured in the ConfigMap and Secret created previously. 
+based on the values that are configured in the ConfigMap and Secret that you created previously. 
 
 Replace the kubernetes file.
 
