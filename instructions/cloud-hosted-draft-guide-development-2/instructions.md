@@ -601,13 +601,13 @@ gets the values **username** and
 
 # **Deploying your changes**
 
+
 Rebuild the application using **mvn clean package**.
 ```
 cd /home/project/guide-kubernetes-microprofile-config/start
 mvn clean package
 ```
 {: codeblock}
-
 
 Run the **docker build** commands to rebuild container images for your application:
 ```
