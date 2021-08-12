@@ -1,7 +1,7 @@
 
-# **Welcome to the Getting started with Open Liberty guide!**
+# **Welcome to the Creating a multi-module application guide!**
 
-Learn how to develop a Java application on Open Liberty with Maven and Docker.
+You will learn how to build an application with multiple modules with Maven and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,30 +11,15 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 # **What you'll learn**
 
-You will learn how to run and update a simple REST microservice on Open Liberty.
-You will use Maven throughout the guide to build and deploy the microservice as well as
-to interact with the running Liberty instance.
+A Java Platform, Enterprise Edition (Java EE) application consists of modules that work together as one entity. An enterprise archive (EAR) is a wrapper for a Java EE application, which consists of web archive (WAR) and Java archive (JAR) files. To deploy or distribute the Java EE application into new environments, all the modules and resources must first be packaged into an EAR file.
 
-Open Liberty is an open application framework designed for the cloud. It's small, lightweight,
-and designed with modern cloud-native application development in mind. It supports the
-full MicroProfile and Jakarta EE APIs and is composable, meaning that you can use only the
-features that you need, keeping everything lightweight, which is great for microservices.
-It also deploys to every major cloud platform, including Docker, Kubernetes, and Cloud
-Foundry.
+You will learn how to establish a dependency between a web module and a Java library module. You will use Maven to package the WAR file and the JAR file into an EAR file so that you can run and test the application on Open Liberty.
 
-Maven is an automation build tool that provides an efficient way to develop Java applications.
-Using Maven, you will build a simple microservice, called **system**, that collects basic
-system properties from your laptop and displays them on an endpoint that you can access
-in your web browser. 
+You will build a unit converter application that converts heights from centimeters into feet and inches. The application will request the user to enter a height value in centimeters. Then, the application processes the input by using functions that are found in the JAR file to return the height value in imperial units.
 
-You'll also explore how to package your application with Open Liberty
-so that it can be deployed anywhere in one go. You will then make Liberty configuration and code changes and see how
-they are immediately picked up by a running instance.
-
-Finally, you will package the application along with the server configuration into a Docker
-image and run that image as a container.
 
 
 # **Getting started**
@@ -49,11 +34,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-getting-started.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-multimodules.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-getting-started.git
-cd guide-getting-started
+git clone https://github.com/openliberty/guide-maven-multimodules.git
+cd guide-maven-multimodules
 ```
 {: codeblock}
 
@@ -62,79 +47,60 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+Access partial implementation of the application from the **start** folder. This folder includes a web module in the **war** folder, a Java library in the **jar** folder, and template files in the **ear** folder. However, the Java library and the web module are independent projects, and you will need to complete the following steps to implement the application:
 
+1. Add a dependency relationship between the two modules.
 
+2. Assemble the entire application into an EAR file.
 
-# **Building and running the application**
+3. Aggregate the entire build.
 
-Your application is configured to be built with Maven. Every Maven-configured project
-contains a **pom.xml** file, which defines the project configuration, dependencies, plug-ins,
-and so on.
+4. Test the multi-module application.
 
-Your **pom.xml** file is located in the **start** directory and is configured to
-include the **liberty-maven-plugin**, which allows you
-to install applications into Open Liberty and manage the server instances.
+<br/>
+### **Try what you'll build**
 
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To begin, navigate to the **start** directory. Build the **system** microservice
-that is provided and deploy it to Open Liberty by running the Maven
-**liberty:run** goal:
+To try out the application, first go to the **finish** directory and run the following
+Maven goal to build the application:
 
 ```
-cd start
+cd finish
+mvn install
+```
+{: codeblock}
+
+
+
+To deploy your EAR application on an Open Liberty server, run the Maven **liberty:run** goal from the **ear** directory:
+
+```
+cd ear
 mvn liberty:run
 ```
 {: codeblock}
 
 
-The **mvn** command initiates a Maven build, during which the **target** directory is created
-to store all build-related files.
-
-The **liberty:run** argument specifies the Open Liberty **run** goal, which
-starts an Open Liberty server instance in the foreground.
-As part of this phase, an Open Liberty server runtime is downloaded and installed into
-the **target/liberty/wlp** directory, a server instance is created and configured in the
-**target/liberty/wlp/usr/servers/defaultServer** directory, and the application is
-installed into that server via [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
-
-For more information about the Liberty Maven plug-in, see its [GitHub repository](https://github.com/WASdev/ci.maven).
-
-When the server begins starting up, various messages display in your command-line session. Wait
-for the following message, which indicates that the server startup is complete:
-
-```
-[INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
-```
 
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-To access the **system** microservice, see the http://localhost:9080/system/properties URL,
+Once the server is running, you can find the application at the following URL: http://localhost:9080/converter/
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl -s http://localhost:9080/system/properties | jq
+curl http://localhost:9080/converter/
 ```
 {: codeblock}
 
 
-and you see a list of the various system properties of your JVM:
 
-```
-{
-    "os.name": "Mac OS X",
-    "java.version": "1.8.0_151",
-    ...
-}
-```
-
-When you need to stop the server, press **CTRL+C** in the command-line session where
-you ran the server, or run the **liberty:stop** goal from the **start** directory in
-another command-line session:
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C** in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal from the **finish\ear** directory in another command-line session:
 
 ```
 mvn liberty:stop
@@ -144,209 +110,480 @@ mvn liberty:stop
 
 
 
-# **Starting and stopping the Open Liberty server in the background**
+# **Adding dependencies between WAR and JAR modules**
 
-Although you can start and stop the server in the foreground by using the Maven
-**liberty:run** goal, you can also start and stop the server in the background with
-the Maven **liberty:start** and **liberty:stop** goals:
+To use a Java library in your web module, you must add a dependency relationship between the two modules.
 
-```
-mvn liberty:start
-mvn liberty:stop
-```
-{: codeblock}
+As you might have noticed, each module has its own **pom.xml** file. Each module has its own **pom.xml** file because each module is treated as an independent project. You can rebuild, reuse, and reassemble every module on its own.
 
+Navigate to the **start** directory to begin.
 
-
-
-
-# **Updating the server configuration without restarting the server**
-
-The Open Liberty Maven plug-in includes a **dev** goal that listens for any changes in the project, 
-including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
-
-Stop the Open Liberty server if it is running, and start it in dev mode by running the **liberty:dev** goal in the **start** directory:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the **enter/return** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the **enter/return** key to verify your change.
-
-
-As before, you can see that the application is running by going to the http://localhost:9080/system/properties URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/system/properties | jq
-```
-{: codeblock}
-
-
-
-Now try updating the server configuration while the server is running in dev mode.
-The **system** microservice does not currently include health monitoring to report whether the server and the microservice that it runs are healthy.
-You can add health reports with the MicroProfile Health feature, which adds a **/health** endpoint to your application.
-
-If you try to access this endpoint now at the http://localhost:9080/health/ URL, you see a 404 error because the **/health** endpoint does not yet exist:
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/health/
-```
-{: codeblock}
-
-
-
-```
-Error 404: java.io.FileNotFoundException: SRVE0190E: File not found: /health
-```
-
-To add the MicroProfile Health feature to the server, include the **mpHealth** feature in the **server.xml**.
-
-Replace the server configuration file.
+Replace the war/POM file.
 
 > From the menu of the IDE, select 
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
+> **File** > **Open** > guide-maven-multimodules/start/war/pom.xml
+
+
+
+
+```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-maven-multimodules-war</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <name>guide-maven-multimodules-war</name>
+    <url>http://maven.apache.org</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>8.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>4.0.1</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-jar</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+    </dependencies>
+
+</project>
+```
+{: codeblock}
+
+
+The **dependency** element is the Java library module that implements the functions that you need for the unit converter.
+
+With this dependency, you can use any functions included in the library in the **HeightsBean.java** file of the web module.
+
+Replace the **HeightsBean** class.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java
+
+
+
+
+```
+package io.openliberty.guides.multimodules.web;
+
+public class HeightsBean implements java.io.Serializable {
+    private String heightCm = null;
+    private String heightFeet = null;
+    private String heightInches = null;
+    private int cm = 0;
+    private int feet = 0;
+    private int inches = 0;
+
+    public HeightsBean() {
+    }
+
+    public String getHeightCm() {
+        return heightCm;
+    }
+
+    public String getHeightFeet() {
+        return heightFeet;
+    }
+
+    public String getHeightInches() {
+        return heightInches;
+    }
+
+    public void setHeightCm(String heightcm) {
+        this.heightCm = heightcm;
+    }
+
+    public void setHeightFeet(String heightfeet) {
+        this.cm = Integer.valueOf(heightCm);
+        this.feet = io.openliberty.guides.multimodules.lib.Converter.getFeet(cm);
+        String result = String.valueOf(feet);
+        this.heightFeet = result;
+    }
+
+    public void setHeightInches(String heightinches) {
+        this.cm = Integer.valueOf(heightCm);
+        this.inches = io.openliberty.guides.multimodules.lib.Converter.getInches(cm);
+        String result = String.valueOf(inches);
+        this.heightInches = result;
+    }
+
+}
+```
+{: codeblock}
+
+
+
+The **getFeet(cm)** invocation was added to the **setHeightFeet** method to convert a measurement into feet.
+
+The **getInches(cm)** invocation was added to the **setHeightInches** method to convert a measurement into inches.
+
+
+
+# **Assembling multiple modules into an EAR file**
+
+To deploy the entire application on the Open Liberty server, first package the application. Use the EAR project to assemble multiple modules into an EAR file.
+
+Navigate to the **ear** folder and find a template **pom.xml** file.
+Replace the ear/POM file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-maven-multimodules/start/ear/pom.xml
+
+
+
+
+```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-maven-multimodules-ear</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>ear</packaging>
+    <!-- end::packaging[] -->
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+    </properties>
+
+    <dependencies>
+        <!-- tag::dependencies[] -->
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-jar</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>jar</type>
+        </dependency>
+        <!-- tag::dependency-war[] -->
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-war</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>war</type>
+        </dependency>
+        <!-- end::dependencies[] -->
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.7.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-ear-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <modules>
+                        <jarModule>
+                            <groupId>io.openliberty.guides</groupId>
+                            <artifactId>guide-maven-multimodules-jar</artifactId>
+                            <uri>/guide-maven-multimodules-jar-1.0-SNAPSHOT.jar</uri>
+                        </jarModule>
+                        <!-- tag::webModule[] -->
+                        <webModule>
+                            <groupId>io.openliberty.guides</groupId>
+                            <artifactId>guide-maven-multimodules-war</artifactId>
+                            <uri>/guide-maven-multimodules-war-1.0-SNAPSHOT.war</uri>
+                            <!-- tag::contextRoot[] -->
+                            <contextRoot>/converter</contextRoot>
+                        </webModule>
+                    </modules>
+                </configuration>
+            </plugin>
+
+            <!-- tag::liberty-maven-plugin[] -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.3.4</version>
+            </plugin>
+
+            <!-- Since the package type is ear,
+            need to run testCompile to compile the tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <executions>
+                    <execution>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <default.http.port>
+                            ${liberty.var.default.http.port}
+                        </default.http.port>
+                        <default.https.port>
+                            ${liberty.var.default.https.port}
+                        </default.https.port>
+                        <cf.context.root>/converter</cf.context.root>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+```
+{: codeblock}
+
+
+
+Set the **basic configuration** for the project and set the **packaging** element to **ear**.
+
+The **Java library module** and the **web module** were added as dependencies. Specify a type of **war** for the web module. If you don’t specify this type for the web module, Maven looks for a JAR file.
+
+The definition and configuration of the **maven-ear-plugin** plug-in were added to create an EAR file. Define the **jarModule** and **webModule** modules to be packaged into the EAR file.
+To customize the context root of the application, set the **contextRoot** element to **/converter** in the **webModule**. Otherwise, Maven automatically uses the WAR file **artifactId** ID as the context root for the application while generating the **application.xml** file.
+
+To download and start an Open Liberty server, use the **liberty-maven-plugin** plug-in for Maven. This configuration is provided, and the executions of the plug-in follow the typical phases of a Maven life cycle.
+
+To deploy and run an EAR application on an Open Liberty server, you need to provide a server configuration file.
+
+Create the server configuration file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml
 
 
 
 
 ```
 <server description="Sample Liberty server">
+
     <featureManager>
-        <feature>jaxrs-2.1</feature>
-        <feature>jsonp-1.1</feature>
-        <feature>cdi-2.0</feature>
-        <feature>mpMetrics-3.0</feature>
-        <feature>mpHealth-3.0</feature>
-        <feature>mpConfig-2.0</feature>
+        <feature>jsp-2.3</feature>
     </featureManager>
 
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
+    <variable name="default.http.port" defaultValue="9080" />
+    <variable name="default.https.port" defaultValue="9443" />
 
-    <webApplication location="guide-getting-started.war" contextRoot="/" />
-    
-    <mpMetrics authentication="false"/>
+    <httpEndpoint host="*" httpPort="${default.http.port}"
+        httpsPort="${default.https.port}" id="defaultHttpEndpoint" />
 
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
+    <enterpriseApplication id="guide-maven-multimodules-ear"
+        location="guide-maven-multimodules-ear.ear"
+        name="guide-maven-multimodules-ear" />
+    <!-- end::server[] -->
 </server>
 ```
 {: codeblock}
 
 
 
-After you make the file changes, Open Liberty automatically reloads its configuration.
-When enabled, the **mpHealth** feature automatically adds a **/health** endpoint to the application.
-You can see the server being updated in the server log displayed in your command-line session:
+You must configure the **server.xml** file with the **enterpriseApplication** element to specify the location of your EAR application.
+
+
+# **Aggregating the entire build**
+
+Because you have multiple modules, aggregate the Maven projects to simplify the build process.
+
+Create a parent **pom.xml** file under the **start** directory to link all of the child modules together. A template is provided for you.
+
+Replace the start/POM file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-maven-multimodules/start/pom.xml
+
+
+
 
 ```
-[INFO] [AUDIT] CWWKG0016I: Starting server configuration update.
-[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
-[INFO] [AUDIT] CWWKG0017I: The server configuration was successfully updated in 0.284 seconds.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/health/
-[INFO] [AUDIT] CWWKF0012I: The server installed the following features: [mpHealth-3.0].
-[INFO] [AUDIT] CWWKF0008I: Feature update completed in 0.285 seconds.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.173 seconds.
-```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
+    <modelVersion>4.0.0</modelVersion>
 
-Try to access the **/health** endpoint again by visiting the http://localhost:9080/health URL.
+    <!-- tag::groupId[] -->
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-maven-multimodules</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <!-- end::packaging[] -->
 
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/health | jq
+    <modules>
+        <module>jar</module>
+        <module>war</module>
+        <module>ear</module>
+    </modules>
+</project>
 ```
 {: codeblock}
 
 
-You see the following JSON:
+Set the **basic configuration** for the project. Set **pom** as the **packaging** element of the parent **pom.xml** file.
+
+In the parent **pom.xml** file, list all of the **modules** that you want to aggregate for the application.
+
+
+
+# **Building the modules**
+
+By aggregating the build in the previous section, you can run **mvn install** once from the **start** directory and it will automatically build all your modules. This command creates a JAR file in the **jar/target** directory, a WAR file in the **war/target** directory, and an EAR file in the **ear/target** directory, which contains the JAR and WAR files.
+
+Use the following command to build the entire application from the **start** directory:
 
 ```
-{
-    "checks":[],
-    "status":"UP"
-}
+mvn install
 ```
-
-Now you can verify whether your server is up and running.
-
+{: codeblock}
 
 
-# **Updating the source code without restarting the server**
 
-The JAX-RS application that contains your **system** microservice runs in a server from its **.class** file and other artifacts.
-Open Liberty automatically monitors these artifacts, and whenever they are updated, it updates the running server without the need for the server to be restarted.
-
-Look at your **pom.xml** file.
+Since the modules are independent, you can re-build them individually by running **mvn install** from the corresponding module directory.
 
 
-Try updating the source code while the server is running in dev mode.
-At the moment, the **/health** endpoint reports whether the server is running, but the endpoint doesn't provide any details on the microservices that are running inside of the server.
+# **Starting the application**
 
-MicroProfile Health offers health checks for both readiness and liveness.
-A readiness check allows third-party services, such as Kubernetes, to know if the microservice is ready to process requests.
-A liveness check allows third-party services to determine if the microservice is running.
+Open Liberty development mode now supports multiple modules. When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal from the **start** directory to start Open Liberty in dev mode:
 
-Create the **SystemReadinessCheck** class.
+```
+mvn io.openliberty.tools:liberty-maven-plugin:3.3.5-M2:dev
+```
+{: codeblock}
+
+
+
+
+# **Testing the multi-module application**
+
+To test the multi-module application, add integration tests to the EAR project.
+
+Navigate to the **start\ear** directory.
+
+Create the integration test class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+touch /home/project/guide-maven-multimodules/start/src/test/java/it/io/openliberty/guides/multimodules/IT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-maven-multimodules/start/src/test/java/it/io/openliberty/guides/multimodules/IT.java
 
 
 
 
 ```
-package io.openliberty.sample.system;
+package it.io.openliberty.guides.multimodules;
 
-import javax.enterprise.context.ApplicationScoped;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+import org.junit.jupiter.api.Test;
 
-@Readiness
-@ApplicationScoped
-public class SystemReadinessCheck implements HealthCheck {
+public class IT {
+    String port = System.getProperty("default.http.port");
+    String war = "converter";
+    String urlBase = "http://localhost:" + port + "/" + war + "/";
 
-    private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
-                                                 + " Readiness Check";
+    @Test
+    public void testIndexPage() throws Exception {
+        String url = this.urlBase;
+        HttpURLConnection con = testRequestHelper(url, "GET");
+        assertEquals(200, con.getResponseCode(), "Incorrect response code from " + url);
+        assertTrue(testBufferHelper(con).contains("Enter the height in centimeters"),
+                        "Incorrect response from " + url);
+    }
 
-    @Inject
-    @ConfigProperty(name = "io_openliberty_guides_system_inMaintenance")
-    Provider<String> inMaintenance;
+    @Test
+    public void testHeightsPage() throws Exception {
+        String url = this.urlBase + "heights.jsp?heightCm=10";
+        HttpURLConnection con = testRequestHelper(url, "POST");
+        assertTrue(testBufferHelper(con).contains("3        inches"),
+                        "Incorrect response from " + url);
+    }
 
-    @Override
-    public HealthCheckResponse call() {
-        if (inMaintenance != null && inMaintenance.get().equalsIgnoreCase("true")) {
-            return HealthCheckResponse.down(READINESS_CHECK);
+    private HttpURLConnection testRequestHelper(String url, String method)
+                    throws Exception {
+        URL obj = new URL(url);
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+        con.setRequestMethod(method);
+        return con;
+    }
+
+    private String testBufferHelper(HttpURLConnection con) throws Exception {
+        BufferedReader in = new BufferedReader(
+                        new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer response = new StringBuffer();
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
         }
-        return HealthCheckResponse.up(READINESS_CHECK);
+        in.close();
+        return response.toString();
     }
 
 }
@@ -355,518 +592,38 @@ public class SystemReadinessCheck implements HealthCheck {
 
 
 
-The **SystemReadinessCheck** class verifies that the 
-**system** microservice is not in maintenance by checking a config property.
+The **testIndexPage** tests to check that you can access the landing page.
 
-Create the **SystemLivenessCheck** class.
+The **testHeightsPage** tests to check that the application can process the input value and calculate the result correctly.
 
-> Run the following touch command in your terminal
+For a Maven EAR project, the **testCompile** goal is
+specified for the **maven-compiler-plugin**
+plug-in in your **ear/pom.xml** file so that the test cases are
+compiled and picked up for execution.
+
+Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+
+
+You will see the following output:
 ```
-touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
-```
-{: codeblock}
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.multimodules.IT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.712 sec - in it.io.openliberty.guides.multimodules.IT
 
+Results :
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
-
-
-
-
-```
-package io.openliberty.sample.system;
-
-import javax.enterprise.context.ApplicationScoped;
-
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
-
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class SystemLivenessCheck implements HealthCheck {
-
-    @Override
-    public HealthCheckResponse call() {
-        MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-        long memUsed = memBean.getHeapMemoryUsage().getUsed();
-        long memMax = memBean.getHeapMemoryUsage().getMax();
-
-        return HealthCheckResponse.named(
-            SystemResource.class.getSimpleName() + " Liveness Check")
-                                  .withData("memory used", memUsed)
-                                  .withData("memory max", memMax)
-                                  .status(memUsed < memMax * 0.9).build();
-    }
-
-}
-```
-{: codeblock}
-
-
-
-The **SystemLivenessCheck** class reports a status of 
-**DOWN** if the microservice uses over 90% of the maximum amount of memory.
-
-After you make the file changes, Open Liberty automatically reloads its configuration and the **system** application.
-
-The following messages display in your first command-line session:
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 
 ```
-[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.136 seconds.
-```
-
-
-Access the **/health** endpoint again by going to the http://localhost:9080/health URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/health | jq
-```
-{: codeblock}
-
-
-This time you see the overall status of your server and the aggregated data of the liveness and readiness checks for the **system** microservice:
-
-```
-{  
-   "checks":[  
-      {  
-         "data":{},
-         "name":"SystemResource Readiness Check",
-         "status":"UP"
-      },
-      {  
-         "data":{
-            "memory used":40434888,
-            "memory max":4294967296
-         },
-         "name":"SystemResource Liveness Check",
-         "status":"UP"
-      }
-   ],
-   "status":"UP"
-}
-```
-
-
-You can also access the **/health/ready** endpoint by going to the http://localhost:9080/health/ready URL to view the data from the readiness health check.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/health/ready | jq
-```
-{: codeblock}
-
-
-
-Similarly, access the **/health/live** endpoint by going to the http://localhost:9080/health/live URL to view the data from the liveness health check.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/health/live | jq
-```
-{: codeblock}
-
-
-
-Making code changes and recompiling is fast and straightforward.
-Open Liberty dev mode automatically picks up changes in the **.class** files and artifacts, without needing to be restarted.
-Alternatively, you can run the **run** goal and manually repackage or recompile the application by using the **mvn package** command or the **mvn compile** command while the server is running. Dev mode was added to further improve the developer experience by minimizing turnaround times.
-
-
-
-# **Checking the Open Liberty server logs**
-
-While the server is running in the foreground, it displays various console messages in
-the command-line session. These messages are also logged to the **target/liberty/wlp/usr/servers/defaultServer/logs/console.log**
-file. You can find the complete server logs in the **target/liberty/wlp/usr/servers/defaultServer/logs**
-directory. The **console.log** and **messages.log** files are the primary log files that contain
-console output of the running application and the server. More logs are created when runtime errors 
-occur or whenever tracing is enabled. You can find the error logs in the
-**ffdc** directory and the tracing logs in the **trace.log** file.
-
-In addition to the log files that are generated automatically, you can enable logging of
-specific Java packages or classes by using the **`<logging/>`** element:
-
-```
-<logging traceSpecification="<component_1>=<level>:<component_2>=<level>:..."/>
-```
-
-The **component** element is a Java package or class, and the **level** element is one
-of the following logging levels: **off**, **fatal**, **severe**, **warning**, **audit**, **info**,
-**config**, **detail**, **fine**, **finer**, **finest**, **all**.
-
-Try enabling detailed logging of the MicroProfile Health feature by adding the
-**`<logging/>`** element to your configuration file.
-
-Replace the server configuration file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
-
-
-
-
-```
-<server description="Sample Liberty server">
-    <featureManager>
-        <feature>jaxrs-2.1</feature>
-        <feature>jsonp-1.1</feature>
-        <feature>cdi-2.0</feature>
-        <feature>mpMetrics-3.0</feature>
-        <feature>mpHealth-3.0</feature>
-        <feature>mpConfig-2.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/" />
-    
-    <mpMetrics authentication="false"/>
-
-    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-{: codeblock}
-
-
-
-After you change the file, Open Liberty automatically reloads its configuration.
-
-Now, when you visit the **/health** endpoint, additional traces are logged in the **trace.log** file.
-
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
-
-
-# **Running the application in a Docker container**
-
-To run the application in a container, Docker needs to be installed. For installation
-instructions, see the [Official Docker Docs](https://docs.docker.com/install/).
-
-Make sure to start your Docker daemon before you proceed.
-
-To containerize the application, you need a **Dockerfile**. This file contains a collection
-of instructions that define how a Docker image is built, what files are packaged into it,
-what commands run when the image runs as a container, and other information. You can find a complete
-**Dockerfile** in the **start** directory. This **Dockerfile** copies the **.war** file into a Docker
-image that contains the Java runtime and a preconfigured Open Liberty server.
-
-Run the **mvn package** command from the **start** directory so that the **.war** file resides in the **target** directory.
-
-```
-mvn package
-```
-{: codeblock}
-
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
-
-
-To build and containerize the application, run the
-following Docker build command in the **start** directory:
-
-```
-docker build -t openliberty-getting-started:1.0-SNAPSHOT .
-```
-{: codeblock}
-
-
-The Docker **openliberty-getting-started:1.0-SNAPSHOT** image is also built from the **Dockerfile**.
-To verify that the image is built, run the **docker images** command to list all local Docker images:
-
-```
-docker images
-```
-{: codeblock}
-
-
-Your image should appear in the list of all Docker images:
-
-```
-REPOSITORY                     TAG             IMAGE ID        CREATED         SIZE
-openliberty-getting-started    1.0-SNAPSHOT    85085141269b    21 hours ago    487MB
-```
-
-Next, run the image as a container:
-```
-docker run -d --name gettingstarted-app -p 9080:9080 openliberty-getting-started:1.0-SNAPSHOT
-```
-{: codeblock}
-
-
-There is a bit going on here, so here's a breakdown of the command:
-
-| *Flag* | *Description*
-| ---| ---
-| -d     | Runs the container in the background.
-| --name | Specifies a name for the container.
-| -p     | Maps the container ports to the host ports.
-
-The final argument in the **docker run** command is the Docker image name.
-
-Next, run the **docker ps** command to verify that your container started:
-```
-docker ps
-```
-{: codeblock}
-
-
-Make sure that your container is running and does not have **Exited** as its status:
-
-```
-CONTAINER ID    IMAGE                         CREATED          STATUS           NAMES
-4294a6bdf41b    openliberty-getting-started   9 seconds ago    Up 11 seconds    gettingstarted-app
-```
-
-
-To access the application, go to the http://localhost:9080/system/properties URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/system/properties | jq
-```
-{: codeblock}
-
-
-
-To stop and remove the container, run the following commands:
-```
-docker stop gettingstarted-app && docker rm gettingstarted-app
-```
-{: codeblock}
-
-
-To remove the image, run the following command:
-```
-docker rmi openliberty-getting-started:1.0-SNAPSHOT
-```
-{: codeblock}
-
-
-
-# **Developing the application in a Docker container**
-
-The Open Liberty Maven plug-in includes a **devc** goal that simplifies developing
-your application in a Docker container by starting dev mode with container
-support. This goal builds a Docker image, mounts the required directories, binds
-the required ports, and then runs the application inside of a container. Dev
-mode also listens for any changes in the application source code or
-configuration and rebuilds the image and restarts the container as necessary.
-
-Build and run the container by running the devc goal from the **start** directory:
-
-
-```
-mvn liberty:devc -DserverStartTimeout=300
-```
-{: codeblock}
-
-When you see the following message, Open Liberty is ready to run in dev mode:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Open another command-line session and run the **docker ps** command to verify that your container started:
-```
-docker ps
-```
-{: codeblock}
-
-
-Your container should be running and have **Up** as its status:
-
-```
-CONTAINER ID        IMAGE                                 COMMAND                  CREATED             STATUS                         PORTS                                                                    NAMES
-17af26af0539        guide-getting-started-dev-mode        "/opt/ol/helpers/run…"   3 minutes ago       Up 3 minutes                   0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
-```
-
-
-To access the application, go to the http://localhost:9080/system/properties URL. 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/system/properties | jq
-```
-{: codeblock}
-
-
-
-Dev mode automatically picks up changes that you make to your
-application and allows you to run tests by pressing the **enter/return** key in the
-active command-line session.
-
-Update the **server.xml** file to change the context root from **/** to **/dev**.
-
-Replace the server configuration file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
-
-
-
-
-```
-<server description="Sample Liberty server">
-    <featureManager>
-        <feature>jaxrs-2.1</feature>
-        <feature>jsonp-1.1</feature>
-        <feature>cdi-2.0</feature>
-        <feature>mpMetrics-3.0</feature>
-        <feature>mpHealth-3.0</feature>
-        <feature>mpConfig-2.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/dev" />
-    <mpMetrics authentication="false"/>
-
-    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-{: codeblock}
-
-
-
-Update the **mpData.js** file to change the **url** in the **getSystemPropertiesRequest** method to reflect the new context root.
-
-
-Update the mpData.js file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-getting-started/start/src/main/webapp/js/mpData.js
-
-```
-function getSystemPropertiesRequest() {
-    var propToDisplay = ["java.vendor", "java.version", "user.name", "os.name", "wlp.install.dir", "wlp.server.name" ];
-    var url = "http://localhost:9080/dev/system/properties";
-    var req = new XMLHttpRequest();
-    var table = document.getElementById("systemPropertiesTable");
-    ...
-```
-
-After you make the file changes, Open Liberty automatically reloads its
-configuration. You can access the application at the
-
-http://localhost:9080/dev/system/properties
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/dev/system/properties | jq
-```
-{: codeblock}
-
-
-URL. Notice that context root is now **/dev**.
-
-When you are finished, exit dev mode by pressing **CTRL+C** in the
-command-line session that the container was started from, or by typing `q` and
-then pressing the **enter/return** key. Either of these options stops and 
-removes the container. To check that the container was stopped, run the **docker ps** command.
-
-
-# **Running the application from a minimal runnable JAR**
-
-So far, Open Liberty was running out of the **target/liberty/wlp** directory, which
-effectively contains an Open Liberty server installation and the deployed application. The
-final product of the Maven build is a server package for use in a continuous integration
-pipeline and, ultimately, a production deployment.
-
-Open Liberty supports a number of different server packages. The sample application
-currently generates a **usr** package that contains the servers and application to be
-extracted onto an Open Liberty installation.
-
-Instead of creating a server package, you can generate a runnable JAR file that contains
-the application along with a server runtime. This JAR file can then be run anywhere and deploy
-your application and server at the same time. To generate a runnable JAR file, override the 
-**include** property: 
-```
-mvn liberty:package -Dinclude=runnable
-```
-{: codeblock}
-
-
-The packaging type is overridden from the **usr** package to the **runnable**
-package. This property then propagates to the **liberty-maven-plugin**
-plug-in, which generates the server package based on the **openliberty-kernel** package.
-
-When the build completes, you can find the minimal runnable **guide-getting-started.jar** file in the
-**target** directory. This JAR file contains only the **features** that you
-explicitly enabled in your **server.xml** file. As a result, the
-generated JAR file is only about 50 MB.
-
-To run the JAR file, first stop the server if it's running. Then, navigate to the **target**
-directory and run the **java -jar** command:
-
-```
-java -jar guide-getting-started.jar
-```
-{: codeblock}
-
-
-
-When the server starts, go to the http://localhost:9080/dev/system/properties URL to access
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/dev/system/properties | jq
-```
-{: codeblock}
-
-
-your application that is now running out of the minimal runnable JAR file.
-
-You can stop the server by pressing **CTRL+C** in the command-line session that the server runs in.
-
-
-
 
 
 # **Summary**
 
 ## **Nice Work!**
 
-You've learned the basics of deploying and updating an application on an Open Liberty server.
+You built and tested a multi-module unit converter application with Maven on Open Liberty.
 
 
 
@@ -877,11 +634,11 @@ You've learned the basics of deploying and updating an application on an Open Li
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-getting-started** project by running the following commands:
+Delete the **guide-maven-multimodules** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-getting-started
+rm -fr guide-maven-multimodules
 ```
 {: codeblock}
 
@@ -890,7 +647,7 @@ rm -fr guide-getting-started
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Getting%20started%20with%20Open%20Liberty&guide-id=cloud-hosted-guide-getting-started)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20multi-module%20application&guide-id=cloud-hosted-guide-maven-multimodules)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -898,8 +655,8 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-getting-started/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-getting-started/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-multimodules/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-multimodules/pulls)
 
 
 
@@ -907,8 +664,6 @@ You can also provide feedback or contribute to this guide from GitHub.
 ## **Where to next?**
 
 * [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
 <br/>
