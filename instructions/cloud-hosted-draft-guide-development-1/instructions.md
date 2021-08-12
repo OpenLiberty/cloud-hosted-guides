@@ -482,8 +482,8 @@ Wait until the pods are ready. After the pods are ready, you will make requests 
 services.
 
 
-To make requests to the services, you need to set up port forwarding.
-Run the following commands to set up port forwarding to access the **system** service.
+In this execise, you need to set up port forwarding to access the services.
+Run the following commands for the **system** service.
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
@@ -566,8 +566,9 @@ Observe that your request will still be successful because you have two replicas
 Wait until the **system-service** pod is ready again.
 Make two POST requests to the **/system/unhealthy** endpoint of the two **system-service** pods.
 
-Go to the terminal where you started the port forwarding of the **system** service.
-Press **CTRL+C** to stop the port forwarding. Run following commands to start the first pod.
+Go to the terminal where you started the port forwarding for the **system** service.
+Press **CTRL+C** to stop the port forwarding.
+Run following commands to set up the port forwarding to access the first pod.
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 SYSTEM_POD=`kubectl get pods -o=name | grep system | head -1`
@@ -582,8 +583,9 @@ curl -X POST http://localhost:$SYSTEM_NODEPORT/system/unhealthy
 ```
 {: codeblock}
 
-Go back to the terminal where you started the port forwarding the first pod of the **system** service.
-Press **CTRL+C** to stop the port forwarding. Run following commands to start the second pod.
+Go back to the terminal where you set up the port forwarding for the first pod.
+Press **CTRL+C** to stop the port forwarding.
+Run following commands to set up the port forwarding to access the second pod.
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 SYSTEM_POD=`kubectl get pods -o=name | grep system | tail -1`
@@ -655,8 +657,9 @@ inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
 # **Testing the microservices**
 
 
-Go back to the terminal where you started the port forwarding the second pod of the **system** service.
-Press **CTRL+C** to stop the port forwarding. Run following commands to port forward the **system** service.
+Go back to the terminal where you set up the port forwarding for the second pod.
+Press **CTRL+C** to stop the port forwarding.
+Run the following commands to set up port forwarding to access the **system** service.
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
