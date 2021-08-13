@@ -180,7 +180,7 @@ inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
 After the pods are ready, you will make requests to your services.
 
 
-In this guide, you need to set up port forwarding to access the services.
+In this IBM cloud environment, you need to set up port forwarding to access the services.
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 Run the following commands to set up port forwarding to access the **system** service.
 ```
