@@ -577,9 +577,9 @@ Observe that your request will still be successful because you have two replicas
 
 
 Wait until the **system-service** pod is ready again.
-Make two requests to the **/system/unhealthy** endpoint of the **system** service.
+Make several requests to the **/system/unhealthy** endpoint of the **system** service
+until you see two pods are unhealthy.
 ```
-curl http://$SYSTEM_PROXY/system/unhealthy
 curl http://$SYSTEM_PROXY/system/unhealthy
 ```
 {: codeblock}
@@ -641,22 +641,20 @@ inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
 # **Testing the microservices**
 
 
-Update the **pom.xml** files so that the **system.service.root** and **inventory.service.root** properties
-match the values to access the **system** and **inventory** services.
-
+Run the following commands to store the proxy path of the **system** and **inventory** services.
 ```
-sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' inventory/pom.xml
-sed -i 's=localhost:32000='"$INVENTORY_PROXY"'=g' inventory/pom.xml
-sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
+cd /home/project/guide-kubernetes-microprofile-health/start
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
+SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
+INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/inventory-service/proxy
 ```
 {: codeblock}
 
 Run the integration tests by using the following command:
-
 ```
 mvn failsafe:integration-test \
-    -Dsystem.service.root=localhost:$SYSTEM_NODEPORT \
-    -Dinventory.service.root=localhost:$INVENTORY_NODEPORT
+    -Dsystem.service.root=$SYSTEM_PROXY \
+    -Dinventory.service.root=$INVENTORY_PROXY
 ```
 {: codeblock}
 
@@ -683,11 +681,11 @@ Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
  T E S T S
 -------------------------------------------------------
 Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
 Results:
 
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 # **Tearing down the environment**
