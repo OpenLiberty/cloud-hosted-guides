@@ -30,6 +30,9 @@
         "guide": "guide-kubernetes-intro"
     },
     {
+        "guide": "guide-kubernetes-microprofile-config"
+    },
+    {
         "guide": "guide-kubernetes-microprofile-health"
     },
     {
