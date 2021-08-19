@@ -226,8 +226,8 @@ import org.eclipse.microprofile.metrics.annotation.Counted;
 From your previous addition of the MicroProfile Metrics feature in the server.xml you should now see a message for a new metrics endpoint in the terminal that looks like:
 
 ```
-
 [INFO] [AUDIT   ] CWWKT0016I: Web application available (default_host): http://ACCOUNTNAME-9080.theiadocker-1.proxy.cognitiveclass.ai/metrics/
+```
 
 Open the metrics endpoint in your browser. To do this select **Launch Application**, a box will appear where the port number is required. The application is running on port **9080**. The Open Liberty homepage will load. To access the **metrics** endpoint at the end of the URL type **/metrics**. The URL should look like: 
 
