@@ -68,40 +68,46 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-# **Starting and preparing your cluster for deployment**
-
-Start your Kubernetes cluster.
 
 
-Run the following command from a command-line session:
+# Logging into your cluster
+
+For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
+Get the name of your namespace with the following command:
 
 ```
-minikube start
-```
-{: codeblock}
-
-
-
-
-
-Next, validate that you have a healthy Kubernetes environment by running the following command from the active command-line session.
-```
-kubectl get nodes
+bx cr namespace-list
 ```
 {: codeblock}
 
+Look for output that is similar to the following:
 
-This command should return a **Ready** status for the master node.
-
-
-Run the following command to configure the Docker CLI to use Minikube's Docker daemon.
-After you run this command, you will be able to interact with Minikube's Docker daemon and build new
-images directly to it from your host machine:
 ```
-eval $(minikube docker-env)
+Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
+
+Namespace
+sn-labs-yourname
+```
+
+Run the following command to store the namespace name in a variable.
+
+```
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
 ```
 {: codeblock}
 
+Verify that the variable contains your namespace name:
+
+```
+echo $NAMESPACE_NAME
+```
+{: codeblock}
+
+Log in to the registry with the following command:
+```
+bx cr login
+```
+{: codeblock}
 
 
 # **Adding health checks to the inventory microservice**
@@ -126,6 +132,58 @@ touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/mai
 
 
 
+```
+package io.openliberty.guides.inventory;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Readiness
+@ApplicationScoped
+public class InventoryReadinessCheck implements HealthCheck {
+
+    private static final String READINESS_CHECK = InventoryResource.class
+                                                .getSimpleName()
+                                                + " Readiness Check";
+
+    @Inject
+    @ConfigProperty(name = "SYS_APP_HOSTNAME")
+    private String hostname;
+
+    public HealthCheckResponse call() {
+        if (isSystemServiceReachable()) {
+            return HealthCheckResponse.up(READINESS_CHECK);
+        } else {
+            return HealthCheckResponse.down(READINESS_CHECK);
+        }
+    }
+
+    private boolean isSystemServiceReachable() {
+        try {
+            Client client = ClientBuilder.newClient();
+            client
+                .target("http://" + hostname + ":9080/system/properties")
+                .request()
+                .post(null);
+
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+}
+```
+{: codeblock}
+
+
+
 This health check verifies that the **system** microservice is available at 
 **http://system-service:9080/**. The **system-service** host name is only accessible from 
 inside the cluster, you can't access it yourself. If it's available, then it returns an 
@@ -146,6 +204,40 @@ touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/mai
 
 
 
+```
+package io.openliberty.guides.inventory;
+
+import javax.enterprise.context.ApplicationScoped;
+
+import java.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
+
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class InventoryLivenessCheck implements HealthCheck {
+
+  @Override
+  public HealthCheckResponse call() {
+      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+      long memUsed = memBean.getHeapMemoryUsage().getUsed();
+      long memMax = memBean.getHeapMemoryUsage().getMax();
+
+      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
+                                      + " Liveness Check")
+                                .withData("memory used", memUsed)
+                                .withData("memory max", memMax)
+                                .status(memUsed < memMax * 0.9).build();
+  }
+}
+```
+{: codeblock}
+
+
+
 This liveness check verifies that the heap memory usage is below 90% of the maximum memory.
 If more than 90% of the maximum memory is used, a status of **DOWN** will be returned. 
 
@@ -156,10 +248,10 @@ Kubernetes reacts.
 
 # **Configuring readiness and liveness probes**
 
-You will configure Kubernetes readiness and liveness probes. Readiness probes are responsible for 
-determining that your application is ready to accept requests. If it's not ready, traffic 
-won't be routed to the container. Liveness probes are responsible for determining when a 
-container needs to be restarted. 
+You will configure Kubernetes readiness and liveness probes.
+Readiness probes determine whether your application is ready to accept requests.
+If it's not ready, traffic won't be routed to the container.
+Liveness probes determine whether a container needs to be restarted.
 
 Create the kubernetes configuration file.
 
@@ -175,22 +267,137 @@ touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
 
 
 
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: system
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        # system probes
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+        # inventory probe
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 31000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 32000
+```
+{: codeblock}
+
+
+
 The readiness and liveness probes are configured for the containers running the **system** 
 and **inventory** microservices.
 
-The readiness probes are configured to poll the **/health/ready** endpoint. The readiness probe 
-determines the READY status of the container as seen in the **kubectl get pods** output. The 
-**initialDelaySeconds** field defines how long the probe should wait before it 
+The readiness probes are configured to poll the **/health/ready** endpoint.
+The readiness probe determines the READY status of the container, as seen in the **kubectl get pods** output.
+The **initialDelaySeconds** field defines how long the probe waits before it 
 starts to poll so the probe does not start making requests before the server has started. 
-The **failureThreshold** option defines how many times the probe should fail 
-before the state should be changed from ready to not ready. The **timeoutSeconds** 
+The **failureThreshold** option defines how many times the probe fails 
+before the state changes from ready to not ready. The **timeoutSeconds** 
 option defines how many seconds before the probe times out. The **periodSeconds** 
 option defines how often the probe should poll the given endpoint.
 
-The liveness probes are configured to poll the **/health/live** endpoint. 
-The liveness probes determine when a container needs to be restarted. Similar to the readiness
-probes, the liveness probes also define **initialDelaySeconds**, 
-**failureThreshold**, **timeoutSeconds**,
+The liveness probes are configured to poll the **/health/live** endpoint.
+The liveness probes determine whether a container needs to be restarted.
+Similar to the readiness probes, the liveness probes also define
+**initialDelaySeconds**,
+**failureThreshold**,
+**timeoutSeconds**,
 and **periodSeconds**.
 
 # **Deploying the microservices**
@@ -224,6 +431,27 @@ The **-t** flag in the **docker build** command allows the Docker image to be la
 The tag for an image describes the specific image version. 
 If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
 
+Push your images to the container registry on IBM Cloud with the following commands:
+
+```
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+```
+{: codeblock}
+
+Update the image names so that the images in your IBM Cloud container registry are used.
+Set the image pull policy to **Always** 
+and remove the **nodePort** fields so that the ports can be automatically generated:
+```
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
+{: codeblock}
+
 When the builds succeed, run the following command to deploy the necessary Kubernetes 
 resources to serve the applications.
 
@@ -253,32 +481,70 @@ Wait until the pods are ready. After the pods are ready, you will make requests 
 services.
 
 
-The default host name for minikube is 192.168.99.100. Otherwise it can be found using the 
-**minikube ip** command.
+In this IBM cloud environment, you need to access the services by using the Kubernetes API.
+Run the following command to start a proxy to the Kubernetes API server:
 
-Navigate to **http://[hostname]:31000/system/properties/properties** and observe a response
-containing JVM system properties. Replace **[hostname]** with the 
-IP address or host name of your Kubernetes cluster. The readiness probe ensures the READY 
-state won't be **1/1** until the container is available to accept requests. Without a 
-readiness probe, you may notice an unsuccessful response from the server. This scenario 
-can occur when the container has started, but the application server hasn't fully 
-initialized. With the readiness probe, you can be certain the pod will only accept 
-traffic when the microservice has fully started.
+```
+kubectl proxy
+```
+{: codeblock}
 
-Similarly, navigate to **http://[hostname]:32000/inventory/systems/system-service** and observe that the request is successful.
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Run the following commands to store the proxy path of the **system** and **inventory** services.
+```
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
+SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
+INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/inventory-service/proxy
+```
+{: codeblock}
+
+Run the following echo commands to verify the variables:
+
+```
+echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
+```
+{: codeblock}
+
+
+The output appears as shown in the following example:
+
+```
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
+```
+
+Make a request to the system service to see the JVM system properties with the following **curl** command:
+```
+curl -s http://$SYSTEM_PROXY/system/properties | jq
+```
+{: codeblock}
+
+The readiness probe ensures the READY state won't be `1/1`
+until the container is available to accept requests.
+Without a readiness probe, you might notice an unsuccessful response from the server.
+This scenario can occur when the container is started,
+but the application server isn't fully initialized.
+With the readiness probe, you can be certain the pod accepts traffic only
+when the microservice is fully started.
+
+Similarly, access the inventory service and observe the successful request with the following command:
+```
+curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
+```
+{: codeblock}
 
 # **Changing the ready state of the system microservice**
 
-An endpoint has been provided under the **system** microservice to set it to an unhealthy 
-state in the health check. The unhealthy state will cause the readiness probe to fail. 
-Use the **curl** command to invoke this endpoint by making a POST request to 
-**http://[hostname]:31000/system/properties/unhealthy** -- if **curl** is unavailable then use a tool such as 
-[Postman](https://www.getpostman.com/).
+An **unhealthy** endpoint has been provided under the **system** microservice to set it to an unhealthy 
+state. The unhealthy state causes the readiness probe to fail.
+A request to the **unhealthy** endpoint puts the service in an unhealthy state as a simulation.
 
-[subs="attributes", role=command]
+
+Run the following **curl** command to invoke the unhealthy endpoint:
 ```
-curl -X POST http://[hostname]:31000/system/properties/unhealthy
+curl http://$SYSTEM_PROXY/system/unhealthy
 ```
+{: codeblock}
 
 Run the following command to view the state of the pods:
 
@@ -295,21 +561,37 @@ system-deployment-694c7b74f7-lrlf7     0/1       Running   0          1m
 inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
 ```
 
-You will notice that one of the two **system** pods is no longer in the ready state. Navigate 
-to **http://[hostname]:31000/system/properties/properties**. Observe that your request will still be successful because you have two 
-replicas and one is still healthy.
+
+You will notice that one of the two **system** pods is no longer in the ready state.
+Make a request to the **/system/properties** endpoint with the following command:
+```
+curl -s http://$SYSTEM_PROXY/system/properties | jq
+```
+{: codeblock}
+
+Your request is successful because you have two replicas and one is still healthy.
 
 <br/>
 ### **Observing the effects on the inventory microservice**
 
-Wait until the **system** pod is ready again. Make two POST requests to **http://[hostname]:31000/system/properties/unhealthy**.
- If you see the same pod name twice, make the request again until you see that the second 
- pod has been made unhealthy. You may see the same pod twice because there's a delay 
- between a pod becoming unhealthy and the readiness probe noticing it. Therefore, traffic 
- may still be routed to the unhealthy service for approximately 5 seconds. Continue to 
- observe the output of **kubectl get pods**. You will see both pods are no longer ready. 
- During this process, the readiness probe for the **inventory** microservice will also fail. 
- Observe it's no longer in the ready state either.
+
+Wait until the **system-service** pod is ready again.
+Make several requests to the **/system/unhealthy** endpoint of the **system** service
+until you see two pods are unhealthy.
+```
+curl http://$SYSTEM_PROXY/system/unhealthy
+```
+{: codeblock}
+
+Observe the output of **kubectl get pods**.
+```
+kubectl get pods
+```
+{: codeblock}
+
+You will see both pods are no longer ready. 
+During this process, the readiness probe for the **inventory** microservice will also fail. 
+Observe that it's no longer in the ready state either.
 
 First, both **system** pods will no longer be ready because the readiness probe failed.
 
@@ -357,18 +639,27 @@ inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
 
 # **Testing the microservices**
 
-Run the tests by running the following command and appropriately substituting **[hostname]** 
-for the correct value.
 
+Run the following commands to store the proxy path of the **system** and **inventory** services.
 ```
-mvn failsafe:integration-test -Dcluster.ip=[hostname]
+cd /home/project/guide-kubernetes-microprofile-health/start
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
+SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
+INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/inventory-service/proxy
 ```
 {: codeblock}
 
+Run the integration tests by using the following command:
+```
+mvn failsafe:integration-test \
+    -Dsystem.service.root=$SYSTEM_PROXY \
+    -Dinventory.service.root=$INVENTORY_PROXY
+```
+{: codeblock}
 
-A few tests are included for you to test the basic functions of the microservices. If a test failure
-occurs, then you might have introduced a bug into the code. To run the tests, wait for all pods to be
-in the ready state before proceeding further.
+A few tests are included for you to test the basic functions of the microservices.
+If a test fails, then you might have introduced a bug into the code.
+Wait for all pods to be in the ready state before you run the tests.
 
 When the tests succeed, you should see output similar to the following in your console.
 
@@ -389,14 +680,16 @@ Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
  T E S T S
 -------------------------------------------------------
 Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
 Results:
 
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 # **Tearing down the environment**
+
+Press **CTRL+C** to stop the proxy server that was started at step 7.
 
 To remove all of the resources created during this guide, run the following command to 
 delete all of the resources that you created.
@@ -405,36 +698,6 @@ delete all of the resources that you created.
 kubectl delete -f kubernetes.yaml
 ```
 {: codeblock}
-
-
-
-
-Perform the following steps to return your environment to a clean state.
-
-. Point the Docker daemon back to your local machine:
-+
-```
-eval $(minikube docker-env -u)
-```
-. Stop your Minikube cluster:
-+
-```
-minikube stop
-```
-{: codeblock}
-
-
-. Delete your cluster:
-+
-```
-minikube delete
-```
-{: codeblock}
-
-
-
-
-
 
 
 
