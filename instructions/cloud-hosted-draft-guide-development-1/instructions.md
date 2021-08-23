@@ -1,7 +1,7 @@
 
-# **Welcome to the Checking the health of microservices on Kubernetes guide!**
+# **Welcome to the Securing microservices with JSON Web Tokens guide!**
 
-Learn how to check the health of microservices on Kubernetes by setting up readiness and liveness probes to inspect MicroProfile Health Check endpoints.
+You'll explore how to control user and role access to microservices with MicroProfile JSON Web Token (MicroProfile JWT).
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -12,35 +12,47 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 # **What you'll learn**
 
-You will learn how to create health check endpoints for your microservices. Then, you 
-will configure Kubernetes to use these endpoints to keep your microservices running smoothly.
+You will add token-based authentication mechanisms to authenticate, authorize,
+and verify users by implementing MicroProfile JWT in the **system** microservice.
 
-MicroProfile Health allows services to report their health, and it publishes the overall 
-health status to defined endpoints. If a service reports **UP**, then it's available. If 
-the service reports **DOWN**, then it's unavailable. MicroProfile Health reports an individual 
-service status at the endpoint and indicates the overall status as **UP** if all the services 
-are **UP**. A service orchestrator can then use the health statuses to make decisions.
+A JSON Web Token (JWT) is a self-contained token that is designed to securely transmit
+information as a JSON object. The information in this JSON object is digitally
+signed and can be trusted and verified by the recipient.
 
-Kubernetes provides liveness and readiness probes that are used to check the health of your 
-containers. These probes can check certain files in your containers, check a TCP socket, 
-or make HTTP requests. MicroProfile Health exposes readiness and liveness endpoints on 
-your microservices. Kubernetes polls these endpoints as specified by the probes to react 
-appropriately to any change in the microservice's status. Read the 
-[Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) 
-guide to learn more about MicroProfile Health.
+For microservices, a token-based authentication mechanism offers a lightweight
+way for security controls and security tokens to propagate user identities
+across different services. JSON Web Token is becoming the most common
+token format because it follows well-defined and known standards.
 
-The two microservices you will work with are called **system** and **inventory**. The **system** microservice
-returns the JVM system properties of the running container and it returns the pod's name in the HTTP header
-making replicas easy to distinguish from each other. The **inventory** microservice
-adds the properties from the **system** microservice to the inventory. This demonstrates
-how communication can be established between pods inside a cluster.
+MicroProfile JWT standards define the required format of JWT for authentication
+and authorization. The standards also map JWT claims to various Jakarta EE
+container APIs and make the set of claims available through getter methods.
+
+In this guide, the application uses JWTs to authenticate a user,
+allowing them to make authorized requests to a secure backend service.
+
+You will be working with two services, a **frontend** service and a secure 
+**system** backend service. The **frontend** service logs a user in, builds a JWT, and makes
+authorized requests to the secure **system** service for JVM system properties.
+The following diagram depicts the application that is used in this guide:
+
+![JWT frontend and system services](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-jwt/master/assets/JWT_Diagram.png)
 
 
+The user signs in to the **frontend** service with a username and a password,
+at which point a JWT is created. The **frontend** service then makes
+requests, with the JWT included, to the **system** backend service. The secure
+**system** service verifies the JWT to ensure that the request came
+from the authorized **frontend** service. After the JWT is validated, the information
+in the claims, such as the user's role, can be trusted and used to
+determine which system properties the user has access to.
 
-
+To learn more about JSON Web Tokens, check out the
+[jwt.io website](https://jwt.io/introduction/). If you want to learn more about how JWTs
+can be used for user authentication and authorization, check out the Open Liberty
+[Single Sign-on documentation](https://openliberty.io/docs/latest/single-sign-on.html).
 
 # **Getting started**
 
@@ -54,11 +66,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-health.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-jwt.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-kubernetes-microprofile-health.git
-cd guide-kubernetes-microprofile-health
+git clone https://github.com/openliberty/guide-microprofile-jwt.git
+cd guide-microprofile-jwt
 ```
 {: codeblock}
 
@@ -67,640 +79,723 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+<br/>
+### **Try what you'll build**
 
+The **finish** directory contains the finished JWT security implementation for the
+services in the application. Try the finished application before you
+build your own.
 
-
-# Logging into your cluster
-
-For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
-Get the name of your namespace with the following command:
-
-```
-bx cr namespace-list
-```
-{: codeblock}
-
-Look for output that is similar to the following:
+To try out the application, run the following commands to navigate to the **finish/frontend** directory and
+deploy the **frontend** service to Open Liberty:
 
 ```
-Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
-
-Namespace
-sn-labs-yourname
-```
-
-Run the following command to store the namespace name in a variable.
-
-```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-```
-{: codeblock}
-
-Verify that the variable contains your namespace name:
-
-```
-echo $NAMESPACE_NAME
-```
-{: codeblock}
-
-Log in to the registry with the following command:
-```
-bx cr login
+cd finish/frontend
+mvn liberty:run
 ```
 {: codeblock}
 
 
-# **Adding health checks to the inventory microservice**
+Open another command-line session and run the following commands to navigate to the **finish/system** directory and
+deploy the **system** service to Open Liberty:
 
-Navigate to **start** directory to begin.
+```
+cd finish/system
+mvn liberty:run
+```
+{: codeblock}
 
-The **inventory** microservice should be healthy only when **system** is available. To add this 
-check to the **/health/ready** endpoint, you will create a class that is annotated with the
-**@Readiness** annotation and implements the **HealthCheck** interface.
 
-Create the **InventoryReadinessCheck** class.
+After you see the following message in both command-line sessions, both of your services are ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+
+To launch the front-end web application, 
+select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
+and click the **OK** button. 
+You’re redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
+where **accountname** is your account name. Click the **Log in** link on the welcome page. From here, 
+you can log in to the application with the form-based login.
+
+Log in with one of the following usernames and its corresponding password:
+
+| *Username* | *Password* | *Role*
+| --- | --- | ---
+| bob | bobpwd | admin, user
+| alice | alicepwd | user
+| carl | carlpwd | user
+
+You're redirected to a page that displays information that the
+front end requested from the **system** service, such as the system username.
+If you log in as an **admin** user, the current OS is also shown. If you log in as
+a **user**, you instead see the **You are not authorized to access
+this system property** message. You see this message because the **user** role doesn't
+have sufficient privileges to view current OS information.
+
+Additionally, the **groups** claim of the JWT is read by the **system** service and
+requested by the front end to be displayed.
+
+
+You can try accessing these services without a JWT by going to the **system** endpoint. 
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Run the following curl command from the terminal in the IDE:
+```
+curl -k https://localhost:8443/system/properties/os
+```
+{: codeblock}
+
+The response is empty because you don't have access.
+Access is granted if a valid JWT is sent with the request.
+The following error also appears in the command-line session of the **system** service:
+
+```
+[ERROR] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+```
+
+When you are done with the application, stop both the **frontend** and **system**
+services by pressing **CTRL+C** in the command-line sessions where you ran them.
+Alternatively, you can run the following goals from the **finish** directory in
+another command-line session:
+
+```
+mvn -pl system liberty:stop
+mvn -pl frontend liberty:stop
+```
+{: codeblock}
+
+
+
+# **Creating the secure system service**
+
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd /home/project/guide-microprofile-jwt/start
+```
+{: codeblock}
+
+When you run Open Liberty in development mode, known as dev mode, the server
+listens for file changes and automatically recompiles and deploys your updates
+whenever you save a new change. Run the following commands to navigate to the
+**frontend** directory and start the **frontend** service in dev mode:
+
+```
+cd frontend
+mvn liberty:dev
+```
+{: codeblock}
+
+
+Open another command-line session and run the following commands to navigate to the
+**system** directory and start the **system** service in dev mode:
+```
+cd system
+mvn liberty:dev
+```
+{: codeblock}
+
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+The **system** service provides endpoints for the **frontend** service to use to
+request system properties. This service is secure and requires a valid JWT to be
+included in requests that are made to it. The claims in the JWT are used to determine
+what properties the user has access to.
+
+Create the secure **system** service.
+
+
+Create the **SystemResource** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
 
 
 
 
 ```
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.system;
+
+import javax.json.JsonArray;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.annotation.security.RolesAllowed;
+
+import org.eclipse.microprofile.jwt.Claim;
+
+@RequestScoped
+@Path("/properties")
+public class SystemResource {
+
+    @Inject
+    @Claim("groups")
+    private JsonArray roles;
+
+    @GET
+    @Path("/username")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin", "user" })
+    public String getUsername() {
+        return System.getProperties().getProperty("user.name");
+    }
+
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin" })
+    public String getOS() {
+        return System.getProperties().getProperty("os.name");
+    }
+
+    @GET
+    @Path("/jwtroles")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin", "user" })
+    public String getRoles() {
+        return roles.toString();
+    }
+}
+```
+{: codeblock}
+
+
+This class has role-based access control. The role names that are used in the
+**@RolesAllowed** annotations are mapped to group
+names in the **groups** claim of the JWT, which results in an authorization
+decision wherever the security constraint is applied.
+
+The **/username** endpoint returns the system's username and is annotated with the
+**@RolesAllowed({"admin, "user"})**
+annotation. Only authenticated users with the role of **admin** or **user**
+can access this endpoint.
+
+The **/os** endpoint returns the system's current OS. Here,
+the **@RolesAllowed** annotation is limited to
+**admin**, meaning that only authenticated users with the role of **admin** are able to
+access the endpoint.
+
+While the **@RolesAllowed** annotation automatically reads from the **groups** claim
+of the JWT to make an authorization decision, you can also manually access the
+claims of the JWT by using the **@Claim** annotation. In this
+case, the **groups** claim is injected into the **roles** JSON array.
+The roles that are parsed from the **groups** claim of the
+JWT are then exposed back to the front end at the **/jwtroles** endpoint.
+To read more about different claims and ways to
+access them, check out the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
+
+
+# **Creating a client to access the secure system service**
+
+
+
+
+Create a RESTful client interface for the **frontend** service.
+
+Create the **SystemClient** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
+
+
+
+
+```
+package io.openliberty.guides.frontend.client;
+
+import javax.enterprise.context.RequestScoped;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.HeaderParam;
+
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+
+@RegisterRestClient(baseUri = "https://localhost:8443/system")
+@Path("/properties")
+@RequestScoped
+public interface SystemClient extends AutoCloseable{
+ 
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getOS(@HeaderParam("Authorization") String authHeader);
+
+    @GET
+    @Path("/username")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getUsername(@HeaderParam("Authorization") String authHeader);
+    
+    @GET
+    @Path("/jwtroles")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getJwtRoles(@HeaderParam("Authorization") String authHeader);
+}
+```
+{: codeblock}
+
+
+This interface declares methods for accessing each of the endpoints that were
+previously set up in the **system** service.
+
+The MicroProfile Rest Client feature automatically builds and generates a client
+implementation based on what is defined in the **SystemClient** interface. You
+don't need to set up the client and connect with the remote service.
+
+As discussed, the **system** service is secured and requests made to it must
+include a valid JWT in the **Authorization** header. The **@HeaderParam** annotations
+include the JWT by specifying that the value of the **String authHeader**
+parameter, which contains the JWT, be used as the value for the **Authorization**
+header. This header is included in all of the requests that are made to the
+**system** service through this client.
+
+Create the application bean that the front-end UI uses to request data.
+
+Create the **ApplicationBean** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
+
+
+
+
+```
+package io.openliberty.guides.frontend;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
+import javax.inject.Named;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
-@Readiness
+import io.openliberty.guides.frontend.client.SystemClient;
+import io.openliberty.guides.frontend.util.SessionUtils;
+
+
 @ApplicationScoped
-public class InventoryReadinessCheck implements HealthCheck {
-
-    private static final String READINESS_CHECK = InventoryResource.class
-                                                .getSimpleName()
-                                                + " Readiness Check";
+@Named
+public class ApplicationBean { 
 
     @Inject
-    @ConfigProperty(name = "SYS_APP_HOSTNAME")
-    private String hostname;
+    @RestClient
+    private SystemClient defaultRestClient;
 
-    public HealthCheckResponse call() {
-        if (isSystemServiceReachable()) {
-            return HealthCheckResponse.up(READINESS_CHECK);
-        } else {
-            return HealthCheckResponse.down(READINESS_CHECK);
-        }
+    public String getJwt() {
+        String jwtTokenString = SessionUtils.getJwtToken();
+        String authHeader = "Bearer " + jwtTokenString;
+        return authHeader;
     }
-
-    private boolean isSystemServiceReachable() {
+    
+    public String getOs() {
+        String authHeader = getJwt();
+        String os;
         try {
-            Client client = ClientBuilder.newClient();
-            client
-                .target("http://" + hostname + ":9080/system/properties")
-                .request()
-                .post(null);
-
-            return true;
-        } catch (Exception ex) {
-            return false;
+            os = defaultRestClient.getOS(authHeader);
+        } catch(Exception e) {
+            return "You are not authorized to access this system property";
         }
+        return os;
     }
+
+    public String getUsername() {
+        String authHeader = getJwt();
+        return defaultRestClient.getUsername(authHeader);
+    }
+
+    public String getJwtRoles() {
+        String authHeader = getJwt();
+        return defaultRestClient.getJwtRoles(authHeader);
+    }
+
 }
 ```
 {: codeblock}
 
 
+The application bean is used to populate the table in the front end by making
+requests for data through the **defaultRestClient**, which
+is an injected instance of the **SystemClient** class
+that you created. The **getOs()**, **getUsername()**, and **getJwtRoles()** methods call
+their associated methods of the **SystemClient** class
+with the **authHeader** passed in as a parameter. The **authHeader** is a string that
+consists of the JWT with **Bearer** prefixed to it. The **authHeader** is included in the
+**Authorization** header of the subsequent requests that are made by the
+**defaultRestClient** instance.
 
-This health check verifies that the **system** microservice is available at 
-**http://system-service:9080/**. The **system-service** host name is only accessible from 
-inside the cluster, you can't access it yourself. If it's available, then it returns an 
-**UP** status. Similarly, if it's unavailable then it returns a **DOWN** status. When the 
-status is **DOWN**, the microservice is considered to be unhealthy.
+The JWT for these requests is retrieved from the session attributes with the
+**getJwt()** method. The JWT is stored in the session
+attributes by the provided **LoginBean** class. When the
+user logs in to the front end, the **doLogin()** method is
+called and builds the JWT. Then, the **setAttribute()**
+method stores it as an **HttpSession** attribute. The JWT is built by using the
+**JwtBuilder** APIs in the **buildJwt()** method.
+You can see that the **claim()** method is being used to set the **groups** and the **aud** claims of the token.
+The **groups** claim is used to provide the role-based access that you implemented.
+The **aud** claim  is used to specify the audience that the JWT is intended for.
 
-Create the **InventoryLivenessCheck** class.
+# **Configuring MicroProfile JWT**
+
+
+
+Configure the **mpJwt** feature in the **microprofile-config.properties** file for the **system** service.
+
+Create the microprofile-config.properties file.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+touch /home/project/guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties
 
 
 
 
 ```
-package io.openliberty.guides.inventory;
+mp.jwt.verify.issuer=http://openliberty.io
+mp.jwt.token.header=Authorization
+mp.jwt.token.cookie=Bearer
+mp.jwt.verify.audiences=systemService, adminServices
+mp.jwt.verify.publickey.algorithm=RSA256
+```
+{: codeblock}
 
-import javax.enterprise.context.ApplicationScoped;
 
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
+The following table breaks down the new properties:
 
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+| *Property* |   *Description*
+| ---| ---
+| **mp.jwt.verify.issuer** | Specifies the expected value of the issuer claim on an incoming JWT. Incoming JWTs with an issuer claim that's different from this expected value aren't considered valid.
+| **mp.jwt.token.header**  | Allows you to control the HTTP request header which is expected to contain a JWT token. You can specify either Authorization (default) or Cookie values.
+| **mp.jwt.token.cookie** | Allows you to specify the name of the cookie which is expected to contain a JWT token. The default value is Bearer if not specified.
+| **mp.jwt.verify.audiences** |  Allows you to create list of allowable audience (aud) values. At least one of these must be found in the claim. Previously, this had to be configured in the server.xml file.
+| **mp.jwt.decrypt.key.location** | Allows you to specify the location of the Key Management Key. It is a Private key used to decrypt the Content Encryption Key, which is then used to decrypt the JWE ciphertext. This private key must correspond to the public key that is used to encrypt the Content Encryption Key.
+| **mp.jwt.verify.publickey.algorithm** | Allows you to control the Public Key Signature Algorithm that is supported by the MicroProfile JWT endpoint. The default value is RSA256 if not specified. Previously, this had to be configured in the server.xml file.
 
-@Liveness
-@ApplicationScoped
-public class InventoryLivenessCheck implements HealthCheck {
 
-  @Override
-  public HealthCheckResponse call() {
-      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-      long memUsed = memBean.getHeapMemoryUsage().getUsed();
-      long memMax = memBean.getHeapMemoryUsage().getMax();
 
-      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
-                                      + " Liveness Check")
-                                .withData("memory used", memUsed)
-                                .withData("memory max", memMax)
-                                .status(memUsed < memMax * 0.9).build();
-  }
+
+
+
+
+Next, add the MicroProfile JSON Web Token feature to the server configuration file for
+the **system** service.
+
+Replace the system server configuration file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml
+
+
+
+
+```
+<server description="Sample Liberty server">
+
+  <featureManager>
+    <feature>jaxrs-2.1</feature>
+    <feature>jsonp-1.1</feature>
+    <feature>cdi-2.0</feature>
+    <feature>mpConfig-2.0</feature>
+    <feature>mpRestClient-2.0</feature>
+    <feature>appSecurity-3.0</feature>
+    <feature>servlet-4.0</feature>
+    <feature>mpJwt-1.2</feature>
+  </featureManager>
+
+  <variable name="default.http.port" defaultValue="8080"/>
+  <variable name="default.https.port" defaultValue="8443"/>
+
+  <keyStore id="defaultKeyStore" password="secret"/>
+
+  <httpEndpoint host="*" httpPort="${default.http.port}" httpsPort="${default.https.port}"
+                id="defaultHttpEndpoint"/>
+                 
+  <webApplication location="system.war" contextRoot="/"/>
+
+</server>
+```
+{: codeblock}
+
+
+The **mpJwt** feature adds the libraries that are required for MicroProfile JWT implementation.
+
+
+# **Building and running the application**
+
+Because you are running the **frontend** and **system** services in dev mode, the changes that you made were automatically picked up. You're now ready to check out your application in your browser.
+
+
+To launch the front-end web application, 
+select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
+and click the **OK** button. You’re redirected to the **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
+where **accountname** is your account name. Click the **Log in** link on the welcome page. 
+Log in with one of the following usernames and its corresponding password:
+
+| *Username* | *Password* | *Role*
+| --- | --- | ---
+| bob | bobpwd | admin, user
+| alice | alicepwd | user
+| carl | carlpwd | user
+
+After you log in, you can see the information that's retrieved from the **system**
+service. With successfully implemented role-based access in the application, if
+you log in as a **user** role, you don't have access to the OS property.
+
+You can also see the value of the **groups** claim in the row with the **Roles:** label.
+These roles are read from the JWT and sent back to the front end to
+be displayed.
+
+
+You can check that the **system** service is secured against unauthenticated
+requests by going to the **system** endpoint.
+Run the following curl command from the terminal in the IDE:
+```
+curl -k https://localhost:8443/system/properties/os
+```
+{: codeblock}
+
+You'll see an empty response because you didn't authenticate with a valid JWT. 
+
+In the front end, you see your JWT displayed in the row with the **JSON Web Token** label.
+
+To see the specific information that this JWT holds, you can enter it into the token reader on the [JWT.io website](https://JWT.io).
+The token reader shows you the header, which contains information about the JWT, as shown in the following example:
+
+```
+{
+  "kid": "NPzyG3ZMzljUwQgbzi44",
+  "typ": "JWT",
+  "alg": "RS256"
+}
+```
+
+The token reader also shows you the payload, which contains the claims information:
+
+```
+{
+  "token_type": "Bearer",
+  "sub": "bob",
+  "upn": "bob",
+  "groups": [ "admin", "user" ],
+  "iss": "http://openliberty.io",
+  "exp": 1596723489,
+  "iat": 1596637089
+}
+```
+
+You can learn more about these claims in the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
+
+
+# **Testing the application**
+
+
+You can manually check that the **system** service is secure by making requests to
+each of the endpoints with and without valid JWTs. However, automated tests are a
+much better approach because they are more reliable and trigger a failure if a
+breaking change is introduced.
+
+Create the **SystemEndpointIT** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+
+
+
+
+```
+package it.io.openliberty.guides.system;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import it.io.openliberty.guides.system.util.JwtBuilder;
+
+public class SystemEndpointIT {
+
+    static String authHeaderAdmin;
+    static String authHeaderUser;
+    static String urlOS;
+    static String urlUsername;
+    static String urlRoles;
+
+    @BeforeAll
+    private static void setup() throws Exception{
+        String urlBase = "http://" + System.getProperty("hostname")
+                 + ":" + System.getProperty("http.port")
+                 + "/system/properties";
+        urlOS = urlBase + "/os";
+        urlUsername = urlBase + "/username";
+        urlRoles = urlBase + "/jwtroles";
+
+        authHeaderAdmin = "Bearer " + new JwtBuilder().createAdminJwt("testUser");
+        authHeaderUser = "Bearer " + new JwtBuilder().createUserJwt("testUser");
+    }
+
+    @Test
+    public void testOSEndpoint() {
+        Response response = makeRequest(urlOS, authHeaderAdmin);
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + urlOS);
+        assertEquals(System.getProperty("os.name"), response.readEntity(String.class),
+                "The system property for the local and remote JVM should match");
+
+        response = makeRequest(urlOS, authHeaderUser);
+        assertEquals(403, response.getStatus(), "Incorrect response code from " + urlOS);
+
+        response = makeRequest(urlOS, null);
+        assertEquals(401, response.getStatus(), "Incorrect response code from " + urlOS);
+
+        response.close();
+    }
+
+    @Test
+    public void testUsernameEndpoint() {
+        Response response = makeRequest(urlUsername, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
+
+        response = makeRequest(urlUsername, authHeaderUser);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
+
+        response = makeRequest(urlUsername, null);
+        assertEquals(401, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
+
+        response.close();
+    }
+
+    @Test
+    public void testRolesEndpoint() {
+        Response response = makeRequest(urlRoles, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+        assertEquals("[\"admin\",\"user\"]", response.readEntity(String.class),
+                "Incorrect groups claim in token " + urlRoles);
+
+        response = makeRequest(urlRoles, authHeaderUser);
+        assertEquals(200, response.getStatus(), 
+                "Incorrect response code from " + urlRoles);
+        assertEquals("[\"user\"]", response.readEntity(String.class),
+                "Incorrect groups claim in token " + urlRoles);
+
+        response = makeRequest(urlRoles, null);
+        assertEquals(401, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+
+        response.close();
+    }
+
+    private Response makeRequest(String url, String authHeader) {
+        Client client = ClientBuilder.newClient();
+        Builder builder = client.target(url).request();
+        builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+        if (authHeader != null) {
+            builder.header(HttpHeaders.AUTHORIZATION, authHeader);
+        }
+        Response response = builder.get();
+        return response;
+    }
+
 }
 ```
 {: codeblock}
 
 
+The **testOSEndpoint()**, **testUsernameEndpoint()**, and **testRolesEndpoint()**
+tests test the **/os**, **/username**, and **/roles** endpoints.
 
-This liveness check verifies that the heap memory usage is below 90% of the maximum memory.
-If more than 90% of the maximum memory is used, a status of **DOWN** will be returned. 
-
-The health checks for the **system** microservice were already been implemented. The **system**
-microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. 
-This endpoint has been provided for you to observe the results of an unhealthy pod and how 
-Kubernetes reacts.
-
-# **Configuring readiness and liveness probes**
-
-You will configure Kubernetes readiness and liveness probes.
-Readiness probes are responsible for determining that your application is ready to accept requests.
-If it's not ready, traffic won't be routed to the container.
-Liveness probes are responsible for determining when a container needs to be restarted. 
-
-Create the kubernetes configuration file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/kubernetes.yaml
-
-
-
-
-```
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: system
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        # system probes
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        env:
-        - name: SYS_APP_HOSTNAME
-          value: system-service
-        # inventory probe
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 31000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 32000
-```
-{: codeblock}
-
-
-
-The readiness and liveness probes are configured for the containers running the **system** 
-and **inventory** microservices.
-
-The readiness probes are configured to poll the **/health/ready** endpoint.
-The readiness probe determines the READY status of the container as seen in the **kubectl get pods** output.
-The **initialDelaySeconds** field defines how long the probe should wait before it 
-starts to poll so the probe does not start making requests before the server has started. 
-The **failureThreshold** option defines how many times the probe should fail 
-before the state should be changed from ready to not ready. The **timeoutSeconds** 
-option defines how many seconds before the probe times out. The **periodSeconds** 
-option defines how often the probe should poll the given endpoint.
-
-The liveness probes are configured to poll the **/health/live** endpoint.
-The liveness probes determine when a container needs to be restarted.
-Similar to the readiness probes, the liveness probes also define
-**initialDelaySeconds**,
-**failureThreshold**,
-**timeoutSeconds**,
-and **periodSeconds**.
-
-# **Deploying the microservices**
-
-To build these microservices, navigate to the **start** directory and run the following 
-command.
-
-```
-mvn package
-```
-{: codeblock}
-
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
-
-
-Next, run the **docker build** commands to build container images for your application:
-```
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-{: codeblock}
-
-
-The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
-The tag for an image describes the specific image version. 
-If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
-
-Push your images to the container registry on IBM Cloud with the following commands:
-
-```
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-```
-{: codeblock}
-
-Update the image names so that the images in your IBM Cloud container registry are used,
-the image pull policy is on **Always**,
-and remove the **nodePort** fields so that the ports can be automatically generated:
-
-```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
-```
-{: codeblock}
-
-When the builds succeed, run the following command to deploy the necessary Kubernetes 
-resources to serve the applications.
-
-```
-kubectl apply -f kubernetes.yaml
-```
-{: codeblock}
-
-
-Use the following command to view the status of the pods. There will be two **system** pods 
-and one **inventory** pod, later you'll observe their behavior as the **system** pods become unhealthy.
-
-```
-kubectl get pods
-```
-{: codeblock}
-
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          59s
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          59s
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          59s
-```
-
-Wait until the pods are ready. After the pods are ready, you will make requests to your 
-services.
-
-
-In this IBM cloud environment, you need to access the services by using the Kubernetes API.
-Run the following command to start a proxy to the Kubernetes API server:
-
-```
-kubectl proxy
-```
-{: codeblock}
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following commands to store the proxy path of the **system** and **inventory** services.
-```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/inventory-service/proxy
-```
-{: codeblock}
-
-Run the following echo commands to verify the variables:
-
-```
-echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
-```
-{: codeblock}
-
-
-The output appears as shown in the following example:
-
-```
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
-```
-
-Make a request to the system service to see the JVM system properties with the following **curl** command:
-```
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-{: codeblock}
-
-The readiness probe ensures the READY state won't be `1/1`
-until the container is available to accept requests.
-Without a readiness probe, you may notice an unsuccessful response from the server.
-This scenario can occur when the container has started,
-but the application server hasn't fully initialized.
-With the readiness probe, you can be certain the pod will only accept traffic
-when the microservice has fully started.
-
-Similarly, access the inventory service and observe the successful request with the following command:
-```
-curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
-```
-{: codeblock}
-
-# **Changing the ready state of the system microservice**
-
-An **unhealthy** endpoint has been provided under the **system** microservice to set it to an unhealthy 
-state. The unhealthy state will cause the readiness probe to fail.
-A request to the **unhealthy** endpoint will put the service in an unhealthy state as a simulation.
-
-
-Run the following **curl** command to invoke the unhealthy endpoint:
-```
-curl http://$SYSTEM_PROXY/system/unhealthy
-```
-{: codeblock}
-
-Run the following command to view the state of the pods:
-
-```
-kubectl get pods
-```
-{: codeblock}
-
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          1m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          1m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
-```
-
-
-You will notice that one of the two **system** pods is no longer in the ready state.
-Make a request to the **/system/properties** endpoint with the following command:
-```
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-{: codeblock}
-
-Observe that your request will still be successful because you have two replicas and one is still healthy.
+Each test makes three requests to its associated endpoint. The first
+**makeRequest()** call has a JWT with the **admin** role. The second
+**makeRequest()** call has a JWT with the **user** role. The third
+**makeRequest()** call has no JWT at all. The responses to these
+requests are checked based on the role-based access rules for the endpoints. The
+**admin** requests should be successful on all endpoints. The **user** requests
+should be denied by the **/os** endpoint but successfully access the **/username**
+and **/jwtroles** endpoints. The requests that don't include a JWT should be
+denied access to all endpoints.
 
 <br/>
-### **Observing the effects on the inventory microservice**
+### **Running the tests**
 
-
-Wait until the **system-service** pod is ready again.
-Make several requests to the **/system/unhealthy** endpoint of the **system** service
-until you see two pods are unhealthy.
-```
-curl http://$SYSTEM_PROXY/system/unhealthy
-```
-{: codeblock}
-
-Observe the output of **kubectl get pods**.
-```
-kubectl get pods
-```
-{: codeblock}
-
-You will see both pods are no longer ready. 
-During this process, the readiness probe for the **inventory** microservice will also fail. 
-Observe it's no longer in the ready state either.
-
-First, both **system** pods will no longer be ready because the readiness probe failed.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          5m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          5m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          5m
-```
-
-Next, the **inventory** pod is no longer ready because the readiness probe failed. The probe 
-failed because **system-service** is now unavailable.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          6m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          6m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          6m
-```
-
-Then, the **system** pods will start to become healthy again after 60 seconds.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
-```
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
-```
-
-Finally, you will see all of the pods have recovered.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          8m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          8m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
-```
-
-# **Testing the microservices**
-
-
-Run the following commands to store the proxy path of the **system** and **inventory** services.
-```
-cd /home/project/guide-kubernetes-microprofile-health/start
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/inventory-service/proxy
-```
-{: codeblock}
-
-Run the integration tests by using the following command:
-```
-mvn failsafe:integration-test \
-    -Dsystem.service.root=$SYSTEM_PROXY \
-    -Dinventory.service.root=$INVENTORY_PROXY
-```
-{: codeblock}
-
-A few tests are included for you to test the basic functions of the microservices.
-If a test failure occurs, then you might have introduced a bug into the code.
-To run the tests, wait for all pods to be in the ready state before proceeding further.
-
-When the tests succeed, you should see output similar to the following in your console.
+Because you started Open Liberty in dev mode, press the **enter/return** key from the
+command-line session of the **system** service to run the tests. You see the
+following output:
 
 ```
 -------------------------------------------------------
- T E S T S
+  T E S T S
 -------------------------------------------------------
 Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.65 s - in it.io.openliberty.guides.system.SystemEndpointIT
-
-Results:
-
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-```
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.648 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
 Results:
 
 Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-# **Tearing down the environment**
+The three errors in the output are expected and result from the **system** service successfully
+rejecting the requests that didn't include a JWT.
 
-Press **CTRL+C** to stop the proxy server that was started at step 7.
-
-To remove all of the resources created during this guide, run the following command to 
-delete all of the resources that you created.
+When you are finished testing the application, stop both the **frontend** and **system**
+services by pressing **CTRL+C** in the command-line sessions where you ran them.
+Alternatively, you can run the following goals from the **start** directory in
+another command-line session:
 
 ```
-kubectl delete -f kubernetes.yaml
+mvn -pl system liberty:stop
+mvn -pl frontend liberty:stop
 ```
 {: codeblock}
-
-
 
 
 
@@ -708,10 +803,7 @@ kubectl delete -f kubernetes.yaml
 
 ## **Nice Work!**
 
-You have used MicroProfile Health and Open Liberty to create endpoints that report on 
-
-your microservice's status. Then, you observed how Kubernetes uses the **/health/ready** and
-**/health/live** endpoints to keep your microservices running smoothly.
+You learned how to use MicroProfile JWT to validate JWTs, authenticate and authorize users to secure your microservices in Open Liberty.
 
 
 
@@ -721,11 +813,11 @@ your microservice's status. Then, you observed how Kubernetes uses the **/health
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-kubernetes-microprofile-health** project by running the following commands:
+Delete the **guide-microprofile-jwt** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-kubernetes-microprofile-health
+rm -fr guide-microprofile-jwt
 ```
 {: codeblock}
 
@@ -734,7 +826,7 @@ rm -fr guide-kubernetes-microprofile-health
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Checking%20the%20health%20of%20microservices%20on%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-health)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20microservices%20with%20JSON%20Web%20Tokens&guide-id=cloud-hosted-guide-microprofile-jwt)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -742,16 +834,17 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-jwt/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-jwt/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 <br/>
