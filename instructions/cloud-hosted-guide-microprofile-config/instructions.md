@@ -70,6 +70,7 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 Run the following curl command to test the availability of the **system** microservice and retrieve the system information:
 ```
 curl -s http://localhost:9080/system/properties | jq
