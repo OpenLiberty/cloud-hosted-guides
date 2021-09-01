@@ -733,6 +733,7 @@ Take a look at the file **open-liberty-masterclass/start/coffee-shop/configDropi
 
     <featureManager>
         <feature>mpMetrics-3.0</feature>
+        <feature>appSecurity-2.0</feature>
     </featureManager>
     
     <mpMetrics authentication="true" />
