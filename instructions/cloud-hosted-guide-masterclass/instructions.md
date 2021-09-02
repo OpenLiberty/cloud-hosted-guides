@@ -754,6 +754,7 @@ In the `open-liberty-masterclass/start/coffee-shop` directory, run the **coffee-
 
 ```
 cd /home/project/open-liberty-masterclass/start/coffee-shop
+touch configDropins/overrides/metrics-prod.xml
 docker run -d -p 9080:9080 -p 9445:9443 --network=masterclass-net --name=coffee-shop \
   -e default_barista_base_url='http://barista:9081' \
   -e default_http_port=9080 \
