@@ -595,7 +595,7 @@ We're now going to dockerize the two services and show how we can override the d
 Take a look at the **open-liberty-masterclass/start/coffee-shop/Dockerfile:**
 
 ```Dockerfile
-FROM openliberty/open-liberty:full-java8-openj9-ubi
+FROM openliberty/open-liberty:full-java11-openj9-ubi
 
 COPY src/main/liberty/config /config/
 ADD target/coffee-shop.war /config/dropins
