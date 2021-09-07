@@ -459,9 +459,9 @@ user logs in to the front end, the **doLogin()** method is
 called and builds the JWT. Then, the **setAttribute()**
 method stores it as an **HttpSession** attribute. The JWT is built by using the
 **JwtBuilder** APIs in the **buildJwt()** method.
-You can see that the **claim()** method is being used to set the **groups** claim of the token.
-This claim is used to provide the role-based access that you implemented.
-
+You can see that the **claim()** method is being used to set the **groups** and the **aud** claims of the token.
+The **groups** claim is used to provide the role-based access that you implemented.
+The **aud** claim is used to specify the audience that the JWT is intended for.
 
 # **Configuring MicroProfile JWT**
 
@@ -485,13 +485,24 @@ touch /home/project/guide-microprofile-jwt/start/system/src/main/webapp/META-INF
 
 ```
 mp.jwt.verify.issuer=http://openliberty.io
+mp.jwt.token.header=Authorization
+mp.jwt.token.cookie=Bearer
+mp.jwt.verify.audiences=systemService, adminServices
+mp.jwt.verify.publickey.algorithm=RS256
 ```
 {: codeblock}
 
 
-The **mp.jwt.verify.issuer** config property specifies the expected value of
-the issuer claim on an incoming JWT. Incoming JWTs with an issuer
-claim that's different from this expected value aren't considered valid.
+The following table breaks down the new properties:
+
+| *Property* |   *Description*
+| ---| ---
+| **mp.jwt.verify.issuer** | Specifies the expected value of the issuer claim on an incoming JWT. Incoming JWTs with an issuer claim that's different from this expected value aren't considered valid.
+| **mp.jwt.token.header**  | With this property, you can control the HTTP request header, which is expected to contain a JWT. You can either specify Authorization, by default, or the Cookie values.
+| **mp.jwt.token.cookie** | Specifies the name of the cookie, which is expected to contain a JWT token. The default value is Bearer.
+| **mp.jwt.verify.audiences** |  With this property, you can create a list of allowable audience (aud) values. At least one of these values must be found in the claim. Previously, this configuration was included in the **server.xml** file.
+| **mp.jwt.decrypt.key.location** | With this property, you can specify the location of the Key Management key. It is a Private key that is used to decrypt the Content Encryption key, which is then used to decrypt the JWE ciphertext. This private key must correspond to the public key that is used to encrypt the Content Encryption key.
+| **mp.jwt.verify.publickey.algorithm** | With this property, you can control the Public Key Signature Algorithm that is supported by the MicroProfile JWT endpoint. The default value is RS256. Previously, this configuration was included in the **server.xml** file.
 
 Next, add the MicroProfile JSON Web Token feature to the server configuration file for
 the **system** service.
