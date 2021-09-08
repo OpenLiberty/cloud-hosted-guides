@@ -360,7 +360,7 @@ calling the **system** service.
 
 To see the application metrics, run the following curl commmand. This command will Log in using **admin** user, and you will have to enter **adminpwd** as the password.
 ```
-curl -k -u admin https://localhost:9443/metrics/base
+curl -k -u admin https://localhost:9443/metrics/base | grep _ft_
 ```
 {: codeblock}
 
@@ -415,7 +415,7 @@ You see that the service displays a 503 HTTP response code.
 
 Run the following curl command again and enter **adminpwd** as the password:
 ```
-curl -k -u admin https://localhost:9443/metrics/base
+curl -k -u admin https://localhost:9443/metrics/base | grep _ft_
 ```
 {: codeblock}
 
