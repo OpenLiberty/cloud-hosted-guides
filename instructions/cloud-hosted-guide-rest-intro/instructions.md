@@ -297,7 +297,7 @@ curl -s http://localhost:9080/LibertyProject/System/properties | jq
 # **Testing the service**
 
 
-You can test this service manually by starting a server and pointing a web browser at the
+You can test this service manually by starting a server and visiting the
 http://localhost:9080/LibertyProject/System/properties URL. However, automated tests are a 
 much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS 
 Client API provide a simple environment to test the application.
