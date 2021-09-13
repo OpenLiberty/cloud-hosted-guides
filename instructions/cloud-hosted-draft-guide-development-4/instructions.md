@@ -1,7 +1,7 @@
 
-# **Welcome to the Consuming RESTful services with template interfaces guide!**
+# **Welcome to the Streaming updates to a client using Server-Sent Events guide!**
 
-Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
+Learn how to stream updates from a MicroProfile Reactive Messaging service to a
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,24 +10,55 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
+front-end client by using Server-Sent Events (SSE).
 
 
 # **What you'll learn**
 
-You will learn how to build a MicroProfile Rest Client to access remote RESTful services. You will create a template interface that maps to the remote service that you want to call.
-MicroProfile Rest Client automatically generates a client instance based on what is defined and annotated in the template interface.
-Thus, you don't have to worry about all of the boilerplate code, such as setting up a client class, connecting to the remote server, or invoking the correct URI with the correct parameters.
+You will learn how to stream messages from a MicroProfile Reactive Messaging service to a
+front-end client by using Server-Sent Events (SSE).
 
-The application that you will be working with is an **inventory** service, which fetches and stores the system property information for different hosts.
-Whenever a request is made to retrieve the system properties of a particular host, the **inventory** service will create a client to invoke the **system**
-service on that host. The **system** service simulates a remote service in the application.
+MicroProfile Reactive Messaging provides an easy way for Java services to send
+requests to other Java services, and asynchronously receive and process the
+responses as a stream of events. SSE provides a framework to stream the data in
+these events to a browser client.
 
-You will instantiate the client and use it in the **inventory** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/ref/general/#cdi-beans.html) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method.
-In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
+<br/>
+### **What is SSE?**
 
- * When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with a CDI method.
+Server-Sent Events is an API that allows
+clients to subscribe to a stream of events that is pushed from a server. First, the
+client makes a connection with the server over HTTP. The server continuously pushes events to the client as
+long as the connection persists. SSE differs from traditional HTTP requests, which
+use one request for one response. SSE also differs from Web Sockets in that SSE is unidirectional from
+the server to the client, and Web Sockets allow for bidirectional communication.
 
- * When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose **RestClientBuilder** method.
+For example, an application that provides real-time stock quotes might use SSE to push price
+updates from the server to the browser as soon as the server receives them. Such an application wouldn't need Web Sockets because the data travels in only one direction, and polling the server by using HTTP requests wouldn't provide real-time
+updates.
+
+The application that you will build in this guide consists of a **frontend**
+service, a **bff** (backend for frontend) service, and three instances of a
+**system** service. The **system** services periodically publish messages that
+contain their hostname and current system load. The **bff** service receives the
+messages from the **system** services and pushes the contents as SSE to a JavaScript
+client in the **frontend** service. This client uses the events to update a table
+in the UI that displays each system's hostname and its periodically updating
+load. The following diagram depicts the application that is used in this guide:
+
+![SSE Diagram](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/master/assets/SSE_Diagram.png)
+
+
+In this guide, you will set up the **bff** service by creating an endpoint that
+clients can use to subscribe to events. You will also enable the service to read
+from the reactive messaging channel and push the contents to subscribers via
+SSE. After that, you will configure the Kafka connectors to allow the **bff**
+service to receive messages from the **system** services. Finally, you will
+configure the client in the **frontend** service to subscribe to these events,
+consume them, and display them in the UI.
+
+To learn more about the reactive Java services that are used in this guide, check out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+
 
 
 # **Getting started**
@@ -42,11 +73,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-messaging-sse.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-rest-client.git
-cd guide-microprofile-rest-client
+git clone https://github.com/openliberty/guide-reactive-messaging-sse.git
+cd guide-reactive-messaging-sse
 ```
 {: codeblock}
 
@@ -55,632 +86,272 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-<br/>
-### **Try what you'll build**
-
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
-
-```
-cd finish
-mvn liberty:run
-```
-{: codeblock}
 
 
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-The **system** microservice simulates a service that returns the system
-property information for the host. 
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-The **system** service is accessible at the http://localhost:9080/system/properties URL. In this case, **localhost** is the host name.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/system/properties | jq
-```
-{: codeblock}
+# **Setting up SSE in the bff service**
 
 
 
-The **inventory** microservice makes a request to the **system** microservice and
-stores the system property information. 
+In this section, you will create a REST API for SSE in the **bff** service. When a
+client makes a request to this endpoint, the initial connection between the
+client and server is established and the client is subscribed to receive events
+that are pushed from the server. Later in this guide, the client in the **frontend**
+service uses this endpoint to subscribe to the events that are pushed from the
+**bff** service.
 
-To fetch and store your system information, visit the http://localhost:9080/inventory/systems/localhost URL.
+Additionally, you will enable the **bff** service to read messages from the
+incoming stream and push the contents as events to subscribers via SSE.
 
+Navigate to the **start** directory to begin.
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/inventory/systems/localhost | jq
-```
-{: codeblock}
-
-
-
-
-You can also use the **http://localhost:9080/inventory/systems/{your_hostname}** URL. In Windows,
-MacOS, and Linux, get your fully qualified domain name (FQDN) by entering
-**hostname** into your command-line. Visit the URL by replacing **{your_hostname}**
-with your FQDN.
-
-
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
-
-```
-mvn liberty:stop
-```
-{: codeblock}
-
-
-# **Writing the RESTful client interface**
-
-Now, navigate to the **start** directory to begin.
-
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
-
-The MicroProfile Rest Client API is included in the MicroProfile dependency specified by your **pom.xml** file. Look for the dependency with the **microprofile** artifact ID.
-
-
-This dependency provides a library that is required to implement the MicroProfile Rest Client interface.
-
-The **mpRestClient** feature is also enabled in the **src/main/liberty/config/server.xml** file. This feature enables your Open Liberty server to use MicroProfile Rest Client to invoke RESTful microservices.
-
-
-The code for the **system** service in the **src/main/java/io/openliberty/guides/system** directory is provided for you. It simulates a remote RESTful service that the **inventory** service invokes.
-
-Create a RESTful client interface for the **system** service. Write a template interface that maps the API of the remote **system** service.
-The template interface describes the remote service that you want to access. The interface defines the resource to access as a method by mapping its annotations, return type, list of arguments, and exception declarations.
-
-Create the **SystemClient** class.
+Create the BFFResource class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java
 
-
-
-
-```
-package io.openliberty.guides.inventory.client;
-
-import java.util.Properties;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.ProcessingException;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
-import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-
-@RegisterRestClient(configKey = "systemClient", baseUri = "http://localhost:9080/system")
-@RegisterProvider(UnknownUriExceptionMapper.class)
-@Path("/properties")
-public interface SystemClient extends AutoCloseable {
-
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  public Properties getProperties() throws UnknownUriException, ProcessingException;
-}
-```
-{: codeblock}
-
-
-
-The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the **SystemClient** interface. There is no need to set up the client and connect with the remote service.
-
-Notice the **SystemClient** interface inherits the **AutoCloseable** interface.
-This allows the user to explicitly close the client instance by invoking the **close()** method or to implicitly close the client instance using a try-with-resources block. When the client instance is closed, all underlying resources associated with the client instance are cleaned up. Refer to the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases) for more details.
-
-When the **getProperties()** method is invoked, the **SystemClient** instance sends a GET request to the **`<baseUrl>/properties`** endpoint, where **`<baseUrl>`** is the default base URL of the **system** service. You will see how to configure the base URL in the next section.
-
-The **@Produces** annotation specifies the media (MIME) type of the expected response. The default value is **`MediaType.APPLICATION_JSON`**.
-
-The **@RegisterProvider** annotation tells the framework to register the provider classes to be used when the framework invokes the interface. You can add as many providers as necessary.
-In the **SystemClient** interface, add a response exception mapper as a provider to map the **404** response code with the **UnknownUriException** exception.
-
-<br/>
-### **Handling exceptions through ResponseExceptionMappers**
-
-Error handling is an important step to ensure that the application can fail safely. If there is an error response such as **404 NOT FOUND** when invoking the remote service, you need to handle it. First, define an exception, and map the exception with the error response code. Then, register the exception mapper in the client interface.
-
-Look at the client interface again, the **@RegisterProvider** annotation registers the **UnknownUriExceptionMapper** response exception mapper.
-An exception mapper maps various response codes from the remote service to throwable exceptions.
-
-
-Implement the actual exception class and the mapper class to see how this mechanism works.
-
-Create the **UnknownUriException** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
-
-
-
-
-```
-package io.openliberty.guides.inventory.client;
-
-public class UnknownUriException extends Exception {
-
-  private static final long serialVersionUID = 1L;
-
-  public UnknownUriException() {
-    super();
-  }
-
-  public UnknownUriException(String message) {
-    super(message);
-  }
-}
-```
-{: codeblock}
-
-
-
-Now, link the **UnknownUriException** class with the corresponding response code through a **ResponseExceptionMapper** mapper class.
-
-Create the **UnknownUriExceptionMapper** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
-
-
-
-
-```
-package io.openliberty.guides.inventory.client;
-
-import java.util.logging.Logger;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.Provider;
-import org.eclipse.microprofile.rest.client.ext.ResponseExceptionMapper;
-
-@Provider
-public class UnknownUriExceptionMapper
-    implements ResponseExceptionMapper<UnknownUriException> {
-  Logger LOG = Logger.getLogger(UnknownUriExceptionMapper.class.getName());
-
-  @Override
-  public boolean handles(int status, MultivaluedMap<String, Object> headers) {
-    LOG.info("status = " + status);
-    return status == 404;
-  }
-
-  @Override
-  public UnknownUriException toThrowable(Response response) {
-    return new UnknownUriException();
-  }
-}
-```
-{: codeblock}
-
-
-
-The **handles()** method inspects the HTTP response code to determine whether an exception is thrown for the specific response, and the **toThrowable()** method returns the mapped exception.
-
-# **Injecting the client with dependency injection**
-
-Now, instantiate the **SystemClient** interface and use it in the **inventory** service. If you want to connect only with the default host name, you can easily instantiate the **SystemClient** with CDI annotations. CDI injection simplifies the process of bootstrapping the client.
-
-First, you need to define the base URL of the **SystemClient** instance.
-Configure the default base URL with the MicroProfile Config feature. This feature is enabled for you in the **server.xml** file.
-
-Create the configuration file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
-
-
-
-
-```
-systemClient/mp-rest/uri=http://localhost:9080/system
-```
-{: codeblock}
-
-
-
-The **mp-rest/uri** base URL config property is configured to the default **http://localhost:9080/system** URL.
-
-This configuration is automatically picked up by the MicroProfile Config API.
-
-Look at the annotations in the **SystemClient** interface again.
-
-
-The **@RegisterRestClient** annotation registers the interface as a RESTful client. The runtime creates a CDI managed bean for every interface that is annotated with the **@RegisterRestClient** annotation.
-
-The **configKey** value in the **@RegisterRestClient** annotation replaces the fully-qualified classname of the properties in the **microprofile-config.properties** configuration file.
-For example, the **<fully-qualified classname>/mp-rest/uri** property becomes **systemClient/mp-rest/uri**.
-The benefit of using Config Keys is when multiple client interfaces have the same **configKey** value, the interfaces can be configured with a single MP config property.
-
-The **baseUri** value can also be set in the **@RegisterRestClient** annotation. However, this value will be overridden by the base URI property defined in the **microprofile-config.properties** configuration file, which takes precedence. In a production environment, you can use the **baseUri** variable to specify a different URI for development and testing purposes.
-
-The **@RegisterRestClient** annotation, which is a bean defining annotation implies that the interface is manageable through CDI. You must have this annotation in order to inject the client.
-
-Inject the **SystemClient** interface into the **InventoryManager** class, which is another CDI managed bean.
-
-Replace the **InventoryManager** class.
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
-
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import java.net.ConnectException;
-import java.net.URI;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.ProcessingException;
-
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.eclipse.microprofile.rest.client.RestClientBuilder;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import io.openliberty.guides.inventory.client.SystemClient;
-import io.openliberty.guides.inventory.client.UnknownUriException;
-import io.openliberty.guides.inventory.client.UnknownUriExceptionMapper;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-
-@ApplicationScoped
-public class InventoryManager {
-
-  private List<SystemData> systems = Collections.synchronizedList(
-                                       new ArrayList<SystemData>());
-
-  @Inject
-  @ConfigProperty(name = "default.http.port")
-  String DEFAULT_PORT;
-
-  @Inject
-  @RestClient
-  private SystemClient defaultRestClient;
-
-  public Properties get(String hostname) {
-    Properties properties = null;
-    if (hostname.equals("localhost")) {
-      properties = getPropertiesWithDefaultHostName();
-    } else {
-      properties = getPropertiesWithGivenHostName(hostname);
-    }
-
-    return properties;
-  }
-
-  public void add(String hostname, Properties systemProps) {
-    Properties props = new Properties();
-    props.setProperty("os.name", systemProps.getProperty("os.name"));
-    props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-    SystemData host = new SystemData(hostname, props);
-    if (!systems.contains(host))
-      systems.add(host);
-  }
-
-  public InventoryList list() {
-    return new InventoryList(systems);
-  }
-
-  private Properties getPropertiesWithDefaultHostName() {
-    try {
-      return defaultRestClient.getProperties();
-    } catch (UnknownUriException e) {
-      System.err.println("The given URI is not formatted correctly.");
-    } catch (ProcessingException ex) {
-      handleProcessingException(ex);
-    }
-    return null;
-  }
-
-  private Properties getPropertiesWithGivenHostName(String hostname) {
-    String customURIString = "http://" + hostname + ":" + DEFAULT_PORT + "/system";
-    URI customURI = null;
-    try {
-      customURI = URI.create(customURIString);
-      SystemClient customRestClient = RestClientBuilder.newBuilder()
-                                        .baseUri(customURI)
-                                        .register(UnknownUriExceptionMapper.class)
-                                        .build(SystemClient.class);
-      return customRestClient.getProperties();
-    } catch (ProcessingException ex) {
-      handleProcessingException(ex);
-    } catch (UnknownUriException e) {
-      System.err.println("The given URI is unreachable.");
-    }
-    return null;
-  }
-
-  private void handleProcessingException(ProcessingException ex) {
-    Throwable rootEx = ExceptionUtils.getRootCause(ex);
-    if (rootEx != null && (rootEx instanceof UnknownHostException
-        || rootEx instanceof ConnectException)) {
-      System.err.println("The specified host is unknown.");
-    } else {
-      throw ex;
-    }
-  }
-
-}
-```
-{: codeblock}
-
-
-
-**@Inject** and **@RestClient** annotations inject an instance of the **SystemClient** called **defaultRestClient** to the **InventoryManager** class.
-
-Because the **InventoryManager** class is **@ApplicationScoped**, and the **SystemClient** CDI bean maintains the same scope through the default dependent scope, the client is initialized once per application.
-
-If the **hostname** parameter is **localhost**, the service runs the **getPropertiesWithDefaultHostName()** helper function to fetch system properties.
-The helper function invokes the **system** service by calling the **defaultRestClient.getProperties()** method.
-
-
-# **Building the client with RestClientBuilder**
-
-The **inventory** service can also connect with a host other than the default **localhost** host, but you cannot configure a base URL that is not yet known.
-In this case, set the host name as a variable and build the client by using the **RestClientBuilder** method. You can customize the base URL from the host name attribute.
-
-Look at the **getPropertiesWithGivenHostName()** method in the **src/main/java/io/openliberty/guides/inventory/InventoryManager.java** file.
-
-
-The host name is provided as a parameter. This method first assembles the base URL that consists of the new host name.
-Then, the method instantiates a **RestClientBuilder** builder with the new URL, registers the response exception mapper, and builds the **SystemClient** instance.
-
-Similarly, call the **customRestClient.getProperties()** method to invoke the **system** service.
-
-
-# **Running the application**
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-When the server is running, select either approach to fetch your system properties:
-
-
- Visit the http://localhost:9080/inventory/systems/localhost URL. The URL retrieves the system property information for the **localhost** host name by making a request to the **system** service at **http://localhost:9080/system/properties**.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/inventory/systems/localhost | jq
-```
-{: codeblock}
-
-
-
-
-Or, get your FQDN first. Then, visit the **http://localhost:9080/inventory/systems/{your_hostname}** URL 
-by replacing **{your_hostname}** with your FQDN, which retrieves your system properties 
-by making a request to the **system** service at **http://{your_hostname}:9080/system/properties**.
-
-
-# **Testing the application**
-
-Create the **RestClientIT** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
-
-
-
-
-```
-package it.io.openliberty.guides.client;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import javax.json.JsonObject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.client.WebTarget;
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
-public class RestClientIT {
-
-  private static String port;
-
-  private Client client;
-
-  private final String INVENTORY_SYSTEMS = "inventory/systems";
-
-  @BeforeAll
-  public static void oneTimeSetup() {
-    port = System.getProperty("http.port");
-  }
-
-  @BeforeEach
-  public void setup() {
-    client = ClientBuilder.newClient();
-    client.register(JsrJsonpProvider.class);
-  }
-
-  @AfterEach
-  public void teardown() {
-    client.close();
-  }
-
-  @Test
-  public void testSuite() {
-    this.testDefaultLocalhost();
-    this.testRestClientBuilder();
-  }
-
-  public void testDefaultLocalhost() {
-    String hostname = "localhost";
-
-    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
-
-    JsonObject obj = fetchProperties(url);
-
-    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
-                 "The system property for the local and remote JVM should match");
-  }
-
-  public void testRestClientBuilder() {
-    String hostname = null;
-    try{
-      hostname = InetAddress.getLocalHost().getHostAddress();
-    } catch (UnknownHostException e) {
-      System.err.println("Unknown Host.");
-    }
-
-    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
-
-    JsonObject obj = fetchProperties(url);
-
-    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
-                 "The system property for the local and remote JVM should match");
-  }
-
-  private JsonObject fetchProperties(String url) {
-    WebTarget target = client.target(url);
-    Response response = target.request().get();
-
-    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-
-    JsonObject obj = response.readEntity(JsonObject.class);
-    response.close();
-    return obj;
-  }
-
-}
-```
-{: codeblock}
-
-
-
-Each test case tests one of the methods for instantiating a RESTful client.
-
-The **testDefaultLocalhost()** test fetches and compares system properties from the http://localhost:9080/inventory/systems/localhost URL.
-
-The **testRestClientBuilder()** test gets your IP address. Then, use your IP address as the host name to fetch your system properties and compare them.
-
-In addition, a few endpoint tests are provided for you to test the basic functionality of the **inventory** and **system** services. If a test failure occurs, you might have introduced a bug into the code.
 
 
 <br/>
-### **Running the tests**
+### **Creating the SSE API endpoint**
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+The **subscribeToSystem()** method allows
+clients to subscribe to events via an HTTP **GET** request to the **/bff/sse/**
+endpoint. The [hotspot=sseMimeType
+file=0]**`@Produces(MediaType.SERVER_SENT_EVENTS)`** annotation sets the **Content-Type** in the
+response header to **text/event-stream**. This content type indicates that client requests that are made
+to this endpoint are to receive Server-Sent Events. Additionally, the method
+parameters take in an instance of the **SseEventSink** class and
+the **Sse** class, both of which are injected using the **@Context**
+annotation. First, the method checks if the **sse** and
+**broadcaster** instance variables are assigned.
+If these variables aren't assigned, the
+**sse** variable is obtained from the [hotspot=sseParam
+file=0]**@Context** injection and the **broadcaster** variable
+is obtained by using the **Sse.newBroadcaster()**
+method. Then, the **register()** method is called to
+register the **SseEventSink** instance to the
+**SseBroadcaster** instance to subscribe to events.
+
+For more information about these interfaces, see the Javadocs for
+[OutboundSseEvent](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.html&package=allclasses-frame.html)
+and
+[OutboundSseEvent.Builder](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.Builder.html&package=allclasses-frame.html).
+
+<br/>
+### **Reading from the reactive messaging channel**
+
+The **getSystemLoadMessage()** method
+receives the message that contains the hostname and the average system load. The
+**@Incoming("systemLoad")** annotation indicates that
+the method retrieves the message by connecting to the **systemLoad** channel in
+Kafka, which you configure in the next section.
+
+Each time a message is received, the [hotspot=getSystemLoadMessage
+file=0]**getSystemLoadMessage()** method is called, and the hostname and system
+load contained in that message are broadcasted in an event to all subscribers.
+
+<br/>
+### **Broadcasting events**
+
+Broadcasting events is handled in the [hotspot=broadcastData
+file=0]**broadcastData()** method. First, it checks whether the
+**broadcaster** value is **null**.
+There must be at least one subscriber or there's no
+client to send the event to. If the **broadcaster** value is specified, the
+**OutboundSseEvent** interface is created by using the [hotspot=newEventBuilder
+file=0]**Sse.newEventBuilder()** method, where the **name** of the
+event, the **data** it contains, and the
+**mediaType** are set. The **OutboundSseEvent** interface is then
+broadcasted, or sent to all registered sinks, by invoking the
+**SseBroadcaster.broadcast()** method.
+
+
+You just set up an endpoint in the **bff** service that the client in the
+**frontend** service can use to subscribe to events. You also enabled the
+service to read from the reactive messaging channel and broadcast the
+information as events to subscribers via SSE.
+
+
+# **Configuring the Kafka connector for the bff service**
+
+
+A complete **system** service is provided for you in the **start/system**
+directory. The **system** service is the producer of the messages that are
+published to the Kafka messaging system. The periodically
+published messages contain the system's hostname and a calculation of the
+average system load (its CPU usage) for the last minute.
+
+Configure the Kafka connector in the **bff** service to receive the messages from the **system** service.
+
+Create the microprofile-config.properties file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties
+
+
+
+The **bff** service uses an incoming connector to receive messages through
+the **systemLoad** channel. The messages are
+then published by the **system** service to the [hotspot=systemLoadTopic
+file=0]**system.load** topic in the Kafka message broker. The
+**key.deserializer** and
+**value.deserializer** properties define how to
+deserialize the messages. The **group.id** property
+defines a unique name for the consumer group. All of these properties are
+required by the [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs) documentation.
+
+
+
+# **Configuring the frontend service to subscribe to and consume events**
+
+
+In this section, you will configure the client in the **frontend** service to subscribe to events
+and display their contents in a table in the UI.
+
+The front-end UI is a table where each row contains the hostname and load of one of the three **system** services.
+The HTML and styling for the UI is provided for you but you must populate the table with
+information that is received from the Server-Sent Events.
+
+Create the index.js file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
+
+
+
+<br/>
+### **Subscribing to SSE**
+
+The **initSSE()** method is called when the page first
+loads. This method subscribes the client to the SSE by creating a new instance of the
+**EventSource** interface and specifying the
+**http://localhost:9084/bff/sse** URL in the parameters. The [hotspot=eventSource
+file=0]**EventSource** interface makes a **GET** request to this endpoint with a
+request header of **Accept: text/event-stream** to connect to the server. 
+
+Because this request comes from **localhost:9080** and is made to
+**localhost:9084**, it must follow the Cross-Origin Resource Sharing (CORS)
+specification to avoid being blocked by the browser. To enable CORS for the
+client, set the **withCredentials** configuration element to true in the
+parameters of the **EventSource** interface. CORS is
+already enabled for you in the **bff** service. To learn more about CORS, check out
+the https://openliberty.io/guides/cors.html[CORS guide].
+
+
+<br/>
+### **Consuming the SSE**
+
+The **EventSource.addEventListener()** method is
+called to add an event listener. This event listener listens for events with
+the name of **systemLoad**. The
+**systemLoadHandler()** function is set as the
+handler function, and each time an event is received, this function is called.
+The **systemLoadHandler()** function will take the event
+object and parse the event's data property from a JSON string into a JavaScript
+object. The contents of this object are used to
+update the table with the system hostname and load. If a system is already present in the table, the load is
+updated, otherwise a new row is added for the system.
+
+
+# **Building and running the application**
+
+To build the application, navigate to the **start** directory and run the following Maven **install** and **package** goals from the command line:
 
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.377 sec - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
-Could not send Message.
-[err] The specified host is unknown.
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.379 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
-Running it.io.openliberty.guides.client.RestClientIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.121 sec - in it.io.openliberty.guides.client.RestClientIT
-
-Results :
-
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
+mvn -pl models install
+mvn package
 ```
+{: codeblock}
 
-The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
 
-To see whether the tests detect a failure, change the base URL in the configuration file so that when the **inventory** service tries to access the invalid URL, an **UnknownUriException** is thrown.
-Rerun the tests to see a test failure occur.
+Run the following command to download or update to the latest
+Open Liberty Docker image:
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
+```
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
+```
+{: codeblock}
+
+
+Run the following commands to containerize the **frontend**, **bff**, and **system** services:
+
+```
+docker build -t frontend:1.0-SNAPSHOT frontend/.
+docker build -t bff:1.0-SNAPSHOT bff/.
+docker build -t system:1.0-SNAPSHOT system/.
+```
+{: codeblock}
+
+
+Next, use the following **startContainers.sh** script to start the application in Docker containers:
+
+
+
+```
+./scripts/startContainers.sh
+```
+{: codeblock}
+
+
+This script creates a network for the containers to communicate with each other. It
+also creates containers for Kafka, Zookeeper, the **frontend** service, the **bff** service , and three
+instances of the **system** service.
+
+
+Once your application is up and running, use the following `curl` 
+to check out your service.
+```
+curl http://localhost:9080
+``` 
+The application might take some time to get ready. The latest version of most
+modern web browsers supports Server-Sent Events. The exception is
+Internet Explorer, which does not support SSE.
+When you visit the URL, look for a table similar to the following example:
+
+![System table](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/master/assets/system_table.png)
+
+
+The table contains three rows, one for each of the running **system**
+containers. If you can see the loads updating, you know that your **bff** service
+is successfully receiving messages and broadcasting them as SSE to the client in the **frontend** service.
+
+
+# **Tearing down the environment**
+
+Run the following script to stop the application:
+
+
+```
+./scripts/stopContainers.sh
+```
+{: codeblock}
+
+
 
 # **Summary**
 
 ## **Nice Work!**
 
-You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
+You developed an application that subscribes to Server-Sent Events by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
-
-MicroProfile Rest Client also provides a uniform way to configure SSL for the client.
-You can learn more in the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl) blog and the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases).
-
-Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
 
 
 <br/>
@@ -689,11 +360,11 @@ Feel free to try one of the related guides where you can learn more technologies
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-rest-client** project by running the following commands:
+Delete the **guide-reactive-messaging-sse** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-rest-client
+rm -fr guide-reactive-messaging-sse
 ```
 {: codeblock}
 
@@ -702,7 +373,7 @@ rm -fr guide-microprofile-rest-client
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20with%20template%20interfaces&guide-id=cloud-hosted-guide-microprofile-rest-client)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Streaming%20updates%20to%20a%20client%20using%20Server-Sent%20Events&guide-id=cloud-hosted-guide-reactive-messaging-sse)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -710,18 +381,26 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-rest-client/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-rest-client/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Acknowledging messages using MicroProfile Reactive Messaging](https://openliberty.io/guides/microprofile-reactive-messaging-acknowledgment.html)
+* [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest-integration.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
+
+**Learn more about MicroProfile**
+* [See the MicroProfile specs](https://microprofile.io/)
+* [View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
+* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html#_microprofile_reactive_messaging)
+* [View the JAX-RS Server-Sent Events API](https://openliberty.io/docs/ref/javaee/8/#package=javax/ws/rs/sse/package-frame.html&class=javax/ws/rs/sse/package-summary.html)
+* [View the Server-Sent Events HTML Specification](https://html.spec.whatwg.org/multipage/server-sent-events.html)
 
 
 <br/>
