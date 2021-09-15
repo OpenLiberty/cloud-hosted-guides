@@ -15,8 +15,7 @@ front-end client by using Server-Sent Events (SSE).
 
 # **What you'll learn**
 
-You will learn how to stream messages from a MicroProfile Reactive Messaging service to a
-front-end client by using Server-Sent Events (SSE).
+You will learn how to stream messages from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
 
 MicroProfile Reactive Messaging provides an easy way for Java services to send
 requests to other Java services, and asynchronously receive and process the
@@ -91,7 +90,6 @@ The **finish** directory contains the finished project that you will build.
 # **Setting up SSE in the bff service**
 
 
-
 In this section, you will create a REST API for SSE in the **bff** service. When a
 client makes a request to this endpoint, the initial connection between the
 client and server is established and the client is subscribed to receive events
@@ -104,7 +102,7 @@ incoming stream and push the contents as events to subscribers via SSE.
 
 Navigate to the **start** directory to begin.
 
-Create the BFFResource class.
+Create the **BFFResource** class.
 
 > Run the following touch command in your terminal
 ```
@@ -114,6 +112,7 @@ touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/open
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java
+
 
 
 
