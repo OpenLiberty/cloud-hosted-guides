@@ -1,7 +1,7 @@
 
-# **Welcome to the Testing microservices with the Arquillian managed container guide!**
+# **Welcome to the Caching HTTP session data using JCache and Hazelcast guide!**
 
-
+WINDOWS
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,27 +10,47 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-Learn how to develop tests for your microservices with the Arquillian managed container and run the tests on Open Liberty.
 
 # **What you'll learn**
 
-You will learn how to develop tests for your microservices by using the
-[Arquillian Liberty Managed container](https://github.com/OpenLiberty/liberty-arquillian/tree/master/liberty-managed)
-and JUnit with Maven on Open Liberty. [Arquillian](http://arquillian.org/) is a testing framework to develop
-automated functional, integration and acceptance tests for your Java applications.
-Arquillian sets up the test environment and handles the application server lifecycle for you
-so you can focus on writing tests.
+<br/>
+### **What is a session?**
+On the internet, a web server doesn't know who you are or what you do
+because it's processing stateless HTTP requests. An HTTP session provides a way to store
+information to be used across multiple requests.
+Session variables store user information like user name or items in a shopping cart.
+By default, session variables will timeout after 30 minutes of being unused.
+Cookies, which also store user information, are maintained on a client's computer,
+whereas session variables are maintained on a web server. For security reasons,
+an HTTP session is preferred over cookies when used with sensitive data.
+A session hides data from users.
+Cookies can be manipulated by a savvy user to make fake requests to your site.
 
-You will develop Arquillian tests that use JUnit
-as the runner and build your tests with Maven using the Liberty Maven plug-in.
-This technique simplifies the process of managing
-Arquillian dependencies and the setup of your Arquillian managed container.
+<br/>
+### **What is session persistence?**
+High traffic websites must support thousands of users in a fast and reliable way.
+Load balancing requires running several instances of the same application in parallel
+so that traffic can be routed to different instances to maximize speed and reliability.
+Unless a user is tied to a particular instance, running multiple instances of the same
+application can pose an out-of-sync problem when each instance keeps an isolated copy of its
+session data. HTTP session data caching can solve this problem by allowing all
+instances of the application to share caches among each other.
+Sharing caches among instances eliminates the need to route a user to the same instance
+and helps in failover situations by distributing the cache.
 
-You will work with an **inventory** microservice, which stores information about various systems.
-The **inventory** service communicates with the **system** service on a particular host to retrieve its
-system properties and store them. You will develop functional and integration tests for the microservices.
-You will also learn about the Maven and server configurations so that you can run
-your tests on Open Liberty with the Arquillian Liberty Managed container.
+![Session Cache](https://raw.githubusercontent.com/OpenLiberty/guide-sessions/master/assets/sessionCache.png)
+
+
+You will learn how to build an application that creates and uses HTTP session data.
+You will also learn how to use Open Liberty's **sessionCache** feature to persist HTTP sessions
+by using Java Caching (JCache), the standard caching API for Java.
+
+You will containerize and deploy the application to a local Kubernetes cluster.
+You will then replicate the application in multiple pods and see that the session data is cached and
+shared among all instances of the application. Even if an instance is unavailable, the other instances
+are able to take over and handle requests from the same user by using the cached session data.
+
+
 
 # **Getting started**
 
@@ -44,11 +64,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-arquillian-managed.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-sessions.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-arquillian-managed.git
-cd guide-arquillian-managed
+git clone https://github.com/openliberty/guide-sessions.git
+cd guide-sessions
 ```
 {: codeblock}
 
@@ -58,123 +78,137 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-# **Developing Arquillian tests**
+# **Creating the application**
+
+The application that you are working with is a shopping cart web service that uses JAX-RS,
+which is a Java API for building RESTful web services.
+You'll learn how to persist a user's shopping cart data between servers by using the
+**sessionCache** feature in Open Liberty. The **sessionCache** feature persists HTTP
+sessions using JCache. You can have high-performance HTTP session persistence
+without using a relational database.
 
 Navigate to the **start** directory to begin.
 
-You'll develop tests that use Arquillian and JUnit to verify the **inventory** microservice as an endpoint
-and the functions of the **InventoryResource** class.
-The code for the microservices is in the **src/main/java/io/openliberty/guides** directory.
-
-Create the **InventoryArquillianIT** test class.
+Create the **CartApplication** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java
+touch /home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java
 
 
 
 
 ```
-package it.io.openliberty.guides.inventory;
+package io.openliberty.guides.cart;
 
-import java.net.URL;
-import java.util.List;
+import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.core.Application;
 
-import javax.inject.Inject;
+@ApplicationPath("/")
+public class CartApplication extends Application {
+
+}
+```
+{: codeblock}
+
+
+
+The **CartApplication** class extends the generic JAX-RS application class that is needed to run the
+application.
+
+Create the **CartResource** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java
+
+
+
+
+```
+package io.openliberty.guides.cart;
+
+import java.util.Enumeration;
+
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
+import javax.json.JsonObjectBuilder;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.junit.InSequence;
-import org.jboss.arquillian.test.api.ArquillianResource;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
-import io.openliberty.guides.inventory.InventoryResource;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
+@Path("/")
+public class CartResource {
 
-@RunWith(Arquillian.class)
-public class InventoryArquillianIT {
-
-    private final static String WARNAME = System.getProperty("arquillian.war.name");
-    private final String INVENTORY_SYSTEMS = "inventory/systems";
-    private Client client = ClientBuilder.newClient();
-
-    @Deployment(testable = true)
-    public static WebArchive createDeployment() {
-        WebArchive archive = ShrinkWrap.create(WebArchive.class, WARNAME)
-                                       .addPackages(true, "io.openliberty.guides");
-        return archive;
+    @POST
+    @Path("cart/{item}&{price}")
+    @Produces(MediaType.TEXT_PLAIN)
+    @APIResponse(responseCode = "200", description = "Item successfully added to cart.")
+    @Operation(summary = "Add a new item to cart.")
+    public String addToCart(@Context HttpServletRequest request,
+                    @Parameter(description = "Item you need for intergalatic travel.",
+                               required = true)
+                    @PathParam("item") String item,
+                    @Parameter(description = "Price for this item.",
+                               required = true)
+                    @PathParam("price") double price) {
+        HttpSession session = request.getSession();
+        session.setAttribute(item, price);
+        return item + " added to your cart and costs $" + price;
     }
 
-    @ArquillianResource
-    private URL baseURL;
-
-    @Inject
-    InventoryResource invSrv;
-
-    @Test
-    @RunAsClient
-    @InSequence(1)
-    public void testInventoryEndpoints() throws Exception {
-        String localhosturl = baseURL + INVENTORY_SYSTEMS + "/localhost";
-
-        client.register(JsrJsonpProvider.class);
-        WebTarget localhosttarget = client.target(localhosturl);
-        Response localhostresponse = localhosttarget.request().get();
-
-        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
-                            localhostresponse.getStatus());
-
-        JsonObject localhostobj = localhostresponse.readEntity(JsonObject.class);
-        Assert.assertEquals("The system property for the local and remote JVM "
-                        + "should match", System.getProperty("os.name"),
-                            localhostobj.getString("os.name"));
-
-        String invsystemsurl = baseURL + INVENTORY_SYSTEMS;
-
-        WebTarget invsystemstarget = client.target(invsystemsurl);
-        Response invsystemsresponse = invsystemstarget.request().get();
-
-        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
-                            invsystemsresponse.getStatus());
-
-        JsonObject invsystemsobj = invsystemsresponse.readEntity(JsonObject.class);
-
-        int expected = 1;
-        int actual = invsystemsobj.getInt("total");
-        Assert.assertEquals("The inventory should have one entry for localhost",
-                            expected, actual);
-        localhostresponse.close();
+    @GET
+    @Path("cart")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponse(responseCode = "200",
+        description = "Items successfully retrieved from your cart.")
+    @Operation(summary = "Return an JsonObject instance which contains " +
+                         "the items in your cart and the subtotal.")
+    public JsonObject getCart(@Context HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        Enumeration<String> names = session.getAttributeNames();
+        JsonObjectBuilder builder = Json.createObjectBuilder();
+        builder.add("pod-name", getHostname());
+        builder.add("session-id", session.getId());
+        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+        Double subtotal = 0.0;
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+            String price = session.getAttribute(name).toString();
+            arrayBuilder.add(name + " | $" + price);
+            subtotal += Double.valueOf(price).doubleValue();
+        }
+        builder.add("cart", arrayBuilder);
+        builder.add("subtotal", subtotal);
+        return builder.build();
     }
 
-    @Test
-    @InSequence(2)
-    public void testInventoryResourceFunctions() {
-        InventoryList invList = invSrv.listContents();
-        Assert.assertEquals(1, invList.getTotal());
-
-        List<SystemData> systemDataList = invList.getSystems();
-        Assert.assertTrue(systemDataList.get(0).getHostname().equals("localhost"));
-
-        Assert.assertTrue(systemDataList.get(0).getProperties().get("os.name")
-                                        .equals(System.getProperty("os.name")));
+    private String getHostname() {
+        String hostname = System.getenv("HOSTNAME");
+        if (hostname == null)
+        	hostname = "localhost";
+        	return hostname;
     }
 }
 ```
@@ -182,236 +216,447 @@ public class InventoryArquillianIT {
 
 
 
-Notice that the JUnit Arquillian runner runs the tests instead of the standard JUnit runner.
-The **@RunWith** annotation preceding the class tells JUnit to run the tests by using Arquillian.
+The **CartResource** class defines the REST endpoints at which a user can make
+an HTTP request.
 
-The method annotated by **@Deployment** defines the content of the
-web archive, which is going to be deployed onto the Open Liberty server.
-The tests are either run on or against the server.
-The **testable = true** attribute enables the deployment to
-run the tests "in container", that is the tests are run on the server.
+The **addToCart** and **getCart** methods
+have a number of annotations. Most of these annotations are used by the
+MicroProfile OpenAPI and JAX-RS features to document the REST endpoints and map Java objects to web resources.
+More information about these annotations can be found in the
+[Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html#augmenting-the-existing-jax-rs-annotations-with-openapi-annotations)
+and
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html#creating-a-jax-rs-application)
+guides.
+
+The **cart/{item}&{price}** endpoint demonstrates how to set session data.
+The **@PathParam** annotation injects a custom **item** and
+**price** from the POST request into the method parameter.
+The **addToCart** method gets the current **session** and binds
+the **{item}:{price}** key-value pair into the session by the **setAttribute()** method.
+A response is then built and returned to confirm that an item was added to your cart and session.
+
+The **cart** endpoint demonstrates how to get session data.
+The **getCart** method gets the current session, iterates through all key-value
+pairs that are stored in the current session, and creates a **JsonObject** response.
+The **JsonObject** response is returned to confirm the server instance by
+**pod-name**, the session by **session-id**,
+and the items in your cart by **cart**.
 
 
-The **WARNAME** variable is used to name the web archive 
-and is defined in the **pom.xml** file.
-This name is necessary if you don't want a randomly generated web archive name.
-
-The ShrinkWrap API is used to create the web archive.
-All of the packages in the **inventory** service must be added to the web archive; otherwise,
-the code compiles successfully but fails at runtime when the injection of the
-**InventoryResource** class takes place.
-You can learn about the ShrinkWrap archive configuration in this
-[Arquillian guide](http://arquillian.org/guides/shrinkwrap_introduction/).
-
-The **@ArquillianResource** annotation is used to retrieve the
-**http://localhost:9080/arquillian-managed/** base URL for this web service.
-The annotation provides the host name, port number and web archive
-information for this service, so you don't need to hardcode these values
-in the test case. The **arquillian-managed** path in the URL comes
-from the WAR name you specified when you created the web archive in the
-**@Deployment** annotated method.
-It's needed when the **inventory** service communicates
-with the **system** service to get the system properties.
-
-The **testInventoryEndpoints** method is an integration
-test to test the **inventory** service endpoints. The **@RunAsClient**
-annotation added in this test case indicates that this test case is to be run
-on the client side. By running the tests on the client side,
-the tests are run against the managed container.
-The endpoint test case first calls the
-**http://localhost:9080/{WARNAME}/inventory/systems/{hostname}** endpoint with
-the **localhost** host name to add its system properties to the inventory.
-The test verifies that the system property for the local and service JVM match.
-Then, the test method calls the
-**http://localhost:9080/{WARNAME}/inventory/systems** endpoint.
-The test checks that the inventory has one host and
-that the host is **localhost**. The test also verifies that the system property
-stored in the inventory for the local and service JVM match.
-
-Contexts and Dependency Injection (CDI) is used to inject an instance of the
-**InventoryResource** class into this test class.
-You can learn more about CDI in the
-[Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
-
-The injected **InventoryResource** instance is then tested
-by the **testInventoryResourceFunctions** method.
-This test case calls the **listContents()** method to get all systems
-that are stored in this inventory
-and verifies that **localhost** is the only system being found.
-Notice the functional test case doesn't store any system in the inventory,
-the **localhost** system is from the endpoint test case that ran before this test case.
-The **@InSequence** Arquillian annotation guarantees the test sequence.
-The sequence is important for the two tests, as the results in the first test impact the second one.
-
-The test cases are ready to run.
-You will configure the Maven build and the Liberty application server to run them.
-
-# **Configuring Arquillian with Liberty**
-
-Configure your build to use the Arquillian Liberty Managed container
-and set up your Open Liberty server to run your test cases by configuring the **server.xml** file.
+# **Configuring session persistence**
 
 <br/>
-### **Configuring your test build**
+### **Using client-server vs peer-to-peer model**
 
-First, configure your test build with Maven. All of the Maven configuration takes
-place in the **pom.xml** file, which is provided for you.
+Session caching is only valuable when a server is connected to at least
+one other member. There are two different ways session caching can behave in a
+cluster environment:
 
+* Client-server model: A Liberty server can act as the JCache client and connect
+to a dedicated JCache server.
+* Peer-to-peer model: A Liberty server can connect with other Liberty servers
+that are also running with the session cache and configured to be
+part of the same cluster.
 
-Let's look into each of the required elements for this configuration.
-
-You need the **arquillian-bom** Bill of Materials.
-It's a Maven artifact that defines the versions of Arquillian dependencies to
-make dependency management easier.
-
-The **arquillian-liberty-managed-junit** dependency bundle,
-which includes all the core dependencies, is required to run the Arquillian tests on a
-managed Liberty container that uses JUnit. You can learn more about the
-[Arquillian Liberty dependency bundles](https://github.com/OpenLiberty/arquillian-liberty-dependencies).
-The **shrinkwrap-api** dependency allows you to create your test
-archive, which is packaged into a WAR file and deployed to the Open Liberty server.
-
-The **maven-failsafe-plugin** 
-artifact runs your Arquillian integration tests by using JUnit.
-
-Lastly, specify the **liberty-maven-plugin**
-configuration that defines your Open Liberty runtime configuration.
-When the application runs in an Arquillian Liberty managed container,
-the name of the war file is used as the context root of the application.
-You can pass context root information to the application and customize the container 
-by using the **arquillianProperties** configuration.
-To learn more about the **arquillianProperties** configuration, 
-see the [Arquillian Liberty Managed documentation](https://github.com/OpenLiberty/liberty-arquillian/blob/main/liberty-managed/README.md#configuration).
-
+You'll use the peer-to-peer model in a Kubernetes environment for this guide.
 
 <br/>
-### **Configuring the server.xml file**
+### **Configuring session persistence with JCache in Open Liberty**
 
-Now that you're done configuring your Maven build, set up your
-Open Liberty server to run your test cases by configuring
-the **server.xml** file.
+JCache, which stands for Java Caching, is an interface
+to standardize distributed caching on the Java platform.
+The **sessionCache** feature uses JCache, which allows for session
+persistence by providing a common cache of session data between servers.
+This feature doesn't include a JCache implementation.
+For this guide, you'll use Hazelcast as an open source JCache provider.
 
-Take a look at the **server.xml** file.
+Hazelcast is a JCache provider. Open Liberty needs to be configured to use
+Hazelcast after the **sessionCache** feature is enabled.
+
+Create the **server.xml** file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-sessions/start/src/main/liberty/config/server.xml
+```
+{: codeblock}
 
 
-The **localConnector** feature is required by the Arquillian Liberty
-Managed container to connect to and communicate with the Open Liberty runtime.
-The **servlet** feature is required during the deployment of the
-Arquillian tests in which servlets are created to perform the in-container testing.
+> Then from the menu of the IDE, select **File** > **Open** > guide-sessions/start/src/main/liberty/config/server.xml
 
 
-# **Running the tests**
-
-It's now time to build and run your Arquillian tests.
-Navigate to the **start** directory. First, run the Maven command to package the application.
-Then, run the **liberty-maven-plugin** goals to create the application server, install the features, 
-and deploy the application to the server. The **configure-arquillian** goal configures
-your Arquillian container. 
-You can learn more about this goal in the [configure-arquillian goal documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/configure-arquillian.md).
 
 
 ```
-mvn clean package
-mvn liberty:create liberty:install-feature
-mvn liberty:configure-arquillian
+<server description="Liberty Server for Sessions Management">
+
+    <featureManager>
+        <feature>servlet-4.0</feature>
+        <feature>sessionCache-1.0</feature>
+        <feature>jaxrs-2.1</feature>
+        <feature>jsonp-1.1</feature>
+        <feature>mpOpenAPI-2.0</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080"/>
+    <variable name="default.https.port" defaultValue="9443"/>
+    <variable name="app.context.root" defaultValue="guide-sessions"/>
+    <variable name="hazelcast.lib" defaultValue="${shared.resource.dir}/hazelcast.jar"/>
+
+    <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
+        id="defaultHttpEndpoint" host="*" />
+    <httpSessionCache libraryRef="jCacheVendorLib"
+        uri="file:${server.config.dir}/hazelcast-config.xml" />
+    <!-- tag::library[] -->
+    <library id="jCacheVendorLib">
+        <file name="${hazelcast.lib}" />
+    </library>
+
+    <webApplication location="guide-sessions.war" contextRoot="${app.context.root}" />
+
+</server>
 ```
 {: codeblock}
 
 
 
-Now, you can run your Arquillian tests with the Maven **integration-test** goal:
+The **library** element includes the library reference that indicates
+to the server where the Hazelcast implementation of JCache is located. 
+Your Hazelcast implementation of JCache is a JAR file that resides in the location that is defined by
+the **${hazelcast.lib}** variable.
+The **hazelcast.jar** file is downloaded as a dependency and copied to the
+predefined **target** directory when the Maven build runs. This goal is defined in the
+provided Maven POM file.
+
+<br/>
+### **Configuring Hazelcast**
+
+
+By default, all Open Liberty servers that run the **sessionCache**
+feature and Hazelcast are connected using a peer-to-peer model.
+
+You can share the session cache only among certain Hazelcast instances
+by using the **group** configuration element in the Hazelcast configuration file.
+
+Create the **hazelcast-config.xml** configuration file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-sessions/start/src/main/liberty/config/hazelcast-config.xml
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-sessions/start/src/main/liberty/config/hazelcast-config.xml
+
+
+
 
 ```
-mvn failsafe:integration-test
+<hazelcast xmlns="http://www.hazelcast.com/schema/config"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.hazelcast.com/schema/config
+       https://hazelcast.com/schema/config/hazelcast-config-3.12.xsd">
+    <group>
+        <name>CartCluster</name>
+    </group>
+</hazelcast>
 ```
 {: codeblock}
 
 
 
-In the test output, you can see that the application server launched, and that the web archive,
-**arquillian-managed**, started as an application in the server.
-You can also see that the tests are running and that the results are reported.
+The cluster group **CartCluster** is defined in the **hazelcast-config.xml**.
 
-After the tests stop running, the test application is automatically
-undeployed and the server shuts down.
-You should then get a message indicating that the build and tests are successful.
+In the **server.xml** file, a reference to the Hazelcast configuration file is made by using
+the **httpSessionCache** tag.
+
+There are more configuration settings that you can explore in the
+[Hazelcast documentation](https://docs.hazelcast.org/docs/latest/manual/html-single/#understanding-configuration).
+
+
+# **Running the application**
+
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
+deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
-...
-[AUDIT   ] CWWKE0001I: The server defaultServer has been launched.
-[AUDIT   ] CWWKG0093A: Processing configuration drop-ins resource: guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/configDropins/overrides/liberty-plugin-variable-config.xml
-[INFO    ] CWWKE0002I: The kernel started after 0.854 seconds
-[INFO    ] CWWKF0007I: Feature update started.
-[AUDIT   ] CWWKZ0058I: Monitoring dropins for applications.
-[INFO    ] Aries Blueprint packages not available. So namespaces will not be registered
-[INFO    ] CWWKZ0018I: Starting application guide-arquillian-managed.
-...
-[INFO    ] SRVE0169I: Loading Web Module: guide-arquillian-managed.
-[INFO    ] SRVE0250I: Web Module guide-arquillian-managed has been bound to default_host.
-[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/
-[INFO    ] SESN0176I: A new session context will be created for application key default_host/
-[INFO    ] SESN0172I: The session manager is using the Java default SecureRandom implementation for session ID generation.
-[AUDIT   ] CWWKZ0001I: Application guide-arquillian-managed started in 1.126 seconds.
-[INFO    ] CWWKO0219I: TCP Channel defaultHttpEndpoint has been started and is now listening for requests on host localhost  (IPv4: 127.0.0.1) port 9080.
-[AUDIT   ] CWWKF0012I: The server installed the following features: [cdi-2.0, jaxrs-2.1, jaxrsClient-2.1, jndi-1.0, jsonp-1.1, localConnector-1.0, mpConfig-1.3, servlet-4.0].
-[INFO    ] CWWKF0008I: Feature update completed in 2.321 seconds.
-[AUDIT   ] CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 3.175 seconds.
-[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
-...
-[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
-[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
-[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/arquillian-managed/
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
-[INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
-[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
-[INFO    ] CWWKZ0136I: The arquillian-managed application is using the archive file at the guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/dropins/arquillian-managed.war location.
-[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
-[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
-...
-[INFO    ] Setting the server's publish address to be /inventory/
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Initialization successful.
-[INFO    ] Setting the server's publish address to be /system/
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.system.SystemApplication]: Initialization successful.
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Initialization successful.
-[AUDIT   ] CWWKT0017I: Web application removed (default_host): http://localhost:9080/arquillian-managed/
-[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Destroy successful.
-[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Destroy successful.
-[AUDIT   ] CWWKZ0009I: The application arquillian-managed has stopped successfully.
-[INFO    ] SRVE9103I: A configuration file for a web server plugin was automatically generated for this server at guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/logs/state/plugin-cfg.xml.
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.inventory.InventoryArquillianIT
-...
-Stopping server defaultServer.
-...
-Server defaultServer stopped.
-[INFO]
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-[INFO]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  12.018 s
-[INFO] Finished at: 2020-06-23T12:40:32-04:00
-[INFO] ------------------------------------------------------------------------
+mvn liberty:dev
 ```
+{: codeblock}
+
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
+or open the project in your editor.
+
+
+Select **Launch Application** from the menu of the IDE, 
+type in **9080** to specify the port number for the microservice, and click the **OK** button. 
+You can now check out the service by going to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
+where **accountname** is your account name.
+This URL displays the available REST endpoints.
+
+First, make a POST request to the **/cart/{item}&{price}** endpoint. To make this request, expand the POST
+endpoint on the UI, click the **Try it out** button, provide an item and a price,
+and then click the **Execute** button.
+The POST request adds a user-specified item and price to a session
+that represents data in a user's cart.
+
+Next, make a GET request to the **/cart** endpoint. To make this request, expand the GET
+endpoint on the UI, click the **Try it out** button,
+and then click the **Execute** button. The GET request
+returns a pod name, a session ID, and all the items from your session.
+
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
+where you ran the server, or by typing **q** and then pressing the **enter/return** key.
+
+
+# **Starting and preparing your cluster for deployment**
+
+Start your Kubernetes cluster.
+
+
+Run the following command from a command-line session:
+
+```
+minikube start
+```
+{: codeblock}
+
+
+
+
+
+Next, validate that you have a healthy Kubernetes environment by running the following command from the active command-line session.
+```
+kubectl get nodes
+```
+{: codeblock}
+
+
+This command should return a **Ready** status for the master node.
+
+
+Run the following command to configure the Docker CLI to use Minikube's Docker daemon.
+After you run this command, you will be able to interact with Minikube's Docker daemon and build new
+images directly to it from your host machine:
+```
+eval $(minikube docker-env)
+```
+{: codeblock}
+
+
+
+
+# **Containerizing the application**
+
+Before you can deploy the application to Kubernetes, you need to containerize it with Docker.
+
+Make sure to start your Docker daemon before you proceed.
+
+The Dockerfile is provided at the **start** directory. If you're unfamiliar with Dockerfile,
+check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide,
+which covers Dockerfile in depth.
+
+Run the **mvn package** command from the **start** directory so that the **.war** file resides in the **target** directory.
+
+```
+mvn package
+```
+{: codeblock}
+
+
+Run the following command to download or update to the latest Open Liberty Docker image:
+
+```
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
+```
+{: codeblock}
+
+
+To build and containerize the application, run the following Docker build command in the **start** directory:
+
+```
+docker build -t cart-app:1.0-SNAPSHOT .
+```
+{: codeblock}
+
+
+When the build finishes, run the following command to list all local Docker images:
+```
+docker images
+```
+{: codeblock}
+
+
+Verify that the **cart-app:1.0-SNAPSHOT** image is listed among the Docker images, for example:
+```
+REPOSITORY                      TAG
+cart-app                        1.0-SNAPSHOT
+openliberty/open-liberty        full-java11-openj9-ubi
+```
+
+
+# **Deploying and running the application in Kubernetes**
+
+
+Now that the containerized application is built, deploy it to a local Kubernetes cluster by using
+a Kubernetes resource definition, which is provided in the **kubernetes.yaml** file
+at the **start** directory.
+
+Run the following command to deploy the application into `3` replicated pods as defined
+in the **kubernetes.yaml** file:
+```
+kubectl apply -f kubernetes.yaml
+```
+{: codeblock}
+
+
+When the application is deployed, run the following command to check the status of your pods:
+```
+kubectl get pods
+```
+{: codeblock}
+
+
+You see an output similar to the following if all the pods are working correctly:
+
+```
+NAME                             READY  STATUS   RESTARTS  AGE
+cart-deployment-98f4ff789-2xlhs  1/1    Running  0         17s
+cart-deployment-98f4ff789-6rvfj  1/1    Running  0         17s
+cart-deployment-98f4ff789-qrh45  1/1    Running  0         17s
+```
+
+
+
+Run the **minikube ip** command to get the hostname for minikube.
+Then, go to the **http://[hostname]:31000/openapi/ui/** URL in your browser. 
+This URL displays the available REST endpoints.
+
+Make a POST request to the **/cart/{item}&{price}** endpoint. To make this request, expand the POST
+endpoint on the UI, click the **Try it out** button, provide an item and a price,
+and then click the **Execute** button.
+The POST request adds a user-specified item and price to a session
+that represents data in a user's cart.
+
+Next, make a GET request to the **/cart** endpoint. To make this request, expand the GET
+endpoint on the UI, click the **Try it out** button, and then click the **Execute** button.
+The GET request returns a pod name, a session ID, and all the items from your session.
+
+```
+{
+  "pod-name": "cart-deployment-98f4ff789-2xlhs",
+  "session-id": "RyJKzmka6Yc-ZCMzEA8-uPq",
+  "cart": [
+    "eggs | $2.89"
+  ],
+  "subtotal": 2.89
+}
+```
+
+Replace the **[pod-name]** in the following command, and then run the command to pause
+the pod for the GET request that you just ran:
+
+```
+kubectl exec -it [pod-name] -- /opt/ol/wlp/bin/server pause
+```
+{: codeblock}
+
+
+Repeat the GET request. You see the same **session-id**
+but a different **pod-name** because the session data is cached but the request
+is served by a different pod (server).
+
+Verify that the Hazelcast cluster is running by checking the Open Liberty log. 
+To check the log, run the following command:
+
+```
+kubectl exec -it [pod-name] -- cat /logs/messages.log
+```
+{: codeblock}
+
+
+You see a message similar to the following:
+
+```
+... I [10.1.0.46]:5701 [CartCluster] [3.11.2]
+
+Members {size:3, ver:3} [
+	Member [10.1.0.40]:5701 - 01227d80-501e-4789-ae9d-6fb348d794ea
+	Member [10.1.0.41]:5701 - a68d0ed1-f50e-4a4c-82b0-389f356b8c73 this
+	Member [10.1.0.42]:5701 - b0dfa05a-c110-45ed-9424-adb1b2896a3d
+]
+```
+
+You can resume the paused pod by running the following command:
+
+```
+kubectl exec -it [pod-name] -- /opt/ol/wlp/bin/server resume
+```
+{: codeblock}
+
+
+
+
+# **Tearing down the environment**
+
+When you no longer need your deployed application, you can delete all Kubernetes resources
+by running the **kubectl delete** command:
+
+```
+kubectl delete -f kubernetes.yaml
+```
+{: codeblock}
+
+
+
+
+Perform the following steps to return your environment to a clean state.
+
+. Point the Docker daemon back to your local machine:
++
+```
+eval $(minikube docker-env -u)
+```
+. Stop your Minikube cluster:
++
+```
+minikube stop
+```
+{: codeblock}
+
+
+. Delete your cluster:
++
+```
+minikube delete
+```
+{: codeblock}
+
+
+
+
+
+
+
+
 
 # **Summary**
 
 ## **Nice Work!**
 
-You just built some functional and integration tests with the
+You have created, used, and cached HTTP session data for an application that was running on Open Liberty server
 
-Arquillian managed container and ran the tests for your microservices
-on Open Liberty.
+and deployed in a Kubernetes cluster.
 
-Try one of the related guides to learn more about the
-technologies that you come across in this guide.
 
 
 <br/>
@@ -420,11 +665,11 @@ technologies that you come across in this guide.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-arquillian-managed** project by running the following commands:
+Delete the **guide-sessions** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-arquillian-managed
+rm -fr guide-sessions
 ```
 {: codeblock}
 
@@ -433,7 +678,7 @@ rm -fr guide-arquillian-managed
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20the%20Arquillian%20managed%20container&guide-id=cloud-hosted-guide-arquillian-managed)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Caching%20HTTP%20session%20data%20using%20JCache%20and%20Hazelcast&guide-id=cloud-hosted-guide-sessions)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -441,16 +686,17 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-arquillian-managed/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-arquillian-managed/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-sessions/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-sessions/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
 <br/>
