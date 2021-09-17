@@ -15,8 +15,7 @@ front-end client by using Server-Sent Events (SSE).
 
 # **What you'll learn**
 
-You will learn how to stream messages from a MicroProfile Reactive Messaging service to a
-front-end client by using Server-Sent Events (SSE).
+You will learn how to stream messages from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
 
 MicroProfile Reactive Messaging provides an easy way for Java services to send
 requests to other Java services, and asynchronously receive and process the
@@ -117,6 +116,75 @@ touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/open
 
 
 
+
+```
+package io.openliberty.guides.bff;
+
+import io.openliberty.guides.models.SystemLoad;
+
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.sse.OutboundSseEvent;
+import javax.ws.rs.sse.Sse;
+import javax.ws.rs.sse.SseBroadcaster;
+import javax.ws.rs.sse.SseEventSink;
+import java.util.logging.Logger;
+
+@ApplicationScoped
+@Path("/sse")
+public class BFFResource {
+
+    private Logger logger = Logger.getLogger(BFFResource.class.getName());
+
+    private Sse sse;
+    private SseBroadcaster broadcaster;
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.SERVER_SENT_EVENTS)
+    public void subscribeToSystem(
+        @Context SseEventSink sink,
+        @Context Sse sse
+        ) {
+
+        if (this.sse == null || this.broadcaster == null) { 
+            this.sse = sse;
+            this.broadcaster = sse.newBroadcaster();
+        }
+        
+        this.broadcaster.register(sink);
+        logger.info("New sink registered to broadcaster.");
+    }
+
+    private void broadcastData(String name, Object data) {
+        if (broadcaster != null) {
+            OutboundSseEvent event = sse.newEventBuilder()
+                                        .name(name)
+                                        .data(data.getClass(), data)
+                                        .mediaType(MediaType.APPLICATION_JSON_TYPE)
+                                        .build();
+            broadcaster.broadcast(event);
+        } else {
+            logger.info("Unable to send SSE. Broadcaster context is not set up.");
+        }
+    }
+
+    @Incoming("systemLoad")
+    public void getSystemLoadMessage(SystemLoad sl)  {
+        logger.info("Message received from system.load topic. " + sl.toString());
+        broadcastData("systemLoad", sl);
+    }
+}
+```
+{: codeblock}
+
+
 <br/>
 ### **Creating the SSE API endpoint**
 
@@ -202,6 +270,19 @@ touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/ME
 
 
 
+
+```
+mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
+
+mp.messaging.incoming.systemLoad.connector=liberty-kafka
+mp.messaging.incoming.systemLoad.topic=system.load
+mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
+mp.messaging.incoming.systemLoad.group.id=bff
+```
+{: codeblock}
+
+
 The **bff** service uses an incoming connector to receive messages through
 the **systemLoad** channel. The messages are
 then published by the **system** service to the [hotspot=systemLoadTopic
@@ -235,6 +316,35 @@ touch /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
 
+
+
+
+```
+function initSSE() {
+    var source = new EventSource('http://localhost:9084/bff/sse', { withCredentials: true });
+    source.addEventListener(
+        'systemLoad',
+        systemLoadHandler
+    );
+}
+
+function systemLoadHandler(event) {
+    var system = JSON.parse(event.data);
+    if (document.getElementById(system.hostname)) {
+        document.getElementById(system.hostname).cells[1].innerHTML =
+                                        system.loadAverage.toFixed(2);
+    } else {
+        var tableRow = document.createElement('tr');
+        tableRow.id = system.hostname;
+        tableRow.innerHTML = '<td>' + system.hostname + '</td><td>'
+                             + system.loadAverage.toFixed(2) + '</td>';
+        document.getElementById('sysPropertiesTableBody').appendChild(tableRow);
+    }
+}
+
+
+```
+{: codeblock}
 
 
 <br/>
