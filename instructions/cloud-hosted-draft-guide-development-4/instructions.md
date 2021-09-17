@@ -1,7 +1,7 @@
 
 # **Welcome to the Streaming updates to a client using Server-Sent Events guide!**
 
-Learn how to stream updates from a MicroProfile Reactive Messaging service to a
+Learn how to stream updates from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,13 +10,11 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-front-end client by using Server-Sent Events (SSE).
 
 
 # **What you'll learn**
 
-You will learn how to stream messages from a MicroProfile Reactive Messaging service to a
-front-end client by using Server-Sent Events (SSE).
+You will learn how to stream messages from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
 
 MicroProfile Reactive Messaging provides an easy way for Java services to send
 requests to other Java services, and asynchronously receive and process the
@@ -117,13 +115,81 @@ touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/open
 
 
 
+
+```
+package io.openliberty.guides.bff;
+
+import io.openliberty.guides.models.SystemLoad;
+
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.sse.OutboundSseEvent;
+import javax.ws.rs.sse.Sse;
+import javax.ws.rs.sse.SseBroadcaster;
+import javax.ws.rs.sse.SseEventSink;
+import java.util.logging.Logger;
+
+@ApplicationScoped
+@Path("/sse")
+public class BFFResource {
+
+    private Logger logger = Logger.getLogger(BFFResource.class.getName());
+
+    private Sse sse;
+    private SseBroadcaster broadcaster;
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.SERVER_SENT_EVENTS)
+    public void subscribeToSystem(
+        @Context SseEventSink sink,
+        @Context Sse sse
+        ) {
+
+        if (this.sse == null || this.broadcaster == null) { 
+            this.sse = sse;
+            this.broadcaster = sse.newBroadcaster();
+        }
+        
+        this.broadcaster.register(sink);
+        logger.info("New sink registered to broadcaster.");
+    }
+
+    private void broadcastData(String name, Object data) {
+        if (broadcaster != null) {
+            OutboundSseEvent event = sse.newEventBuilder()
+                                        .name(name)
+                                        .data(data.getClass(), data)
+                                        .mediaType(MediaType.APPLICATION_JSON_TYPE)
+                                        .build();
+            broadcaster.broadcast(event);
+        } else {
+            logger.info("Unable to send SSE. Broadcaster context is not set up.");
+        }
+    }
+
+    @Incoming("systemLoad")
+    public void getSystemLoadMessage(SystemLoad sl)  {
+        logger.info("Message received from system.load topic. " + sl.toString());
+        broadcastData("systemLoad", sl);
+    }
+}
+```
+{: codeblock}
+
+
 <br/>
 ### **Creating the SSE API endpoint**
 
 The **subscribeToSystem()** method allows
 clients to subscribe to events via an HTTP **GET** request to the **/bff/sse/**
-endpoint. The [hotspot=sseMimeType
-file=0]**`@Produces(MediaType.SERVER_SENT_EVENTS)`** annotation sets the **Content-Type** in the
+endpoint. The **`@Produces(MediaType.SERVER_SENT_EVENTS)`** annotation sets the **Content-Type** in the
 response header to **text/event-stream**. This content type indicates that client requests that are made
 to this endpoint are to receive Server-Sent Events. Additionally, the method
 parameters take in an instance of the **SseEventSink** class and
@@ -131,8 +197,8 @@ the **Sse** class, both of which are injected using the **@Context**
 annotation. First, the method checks if the **sse** and
 **broadcaster** instance variables are assigned.
 If these variables aren't assigned, the
-**sse** variable is obtained from the [hotspot=sseParam
-file=0]**@Context** injection and the **broadcaster** variable
+**sse** variable is obtained from the **@Context** 
+injection and the **broadcaster** variable
 is obtained by using the **Sse.newBroadcaster()**
 method. Then, the **register()** method is called to
 register the **SseEventSink** instance to the
@@ -152,8 +218,8 @@ receives the message that contains the hostname and the average system load. The
 the method retrieves the message by connecting to the **systemLoad** channel in
 Kafka, which you configure in the next section.
 
-Each time a message is received, the [hotspot=getSystemLoadMessage
-file=0]**getSystemLoadMessage()** method is called, and the hostname and system
+Each time a message is received, the **getSystemLoadMessage()** 
+method is called, and the hostname and system
 load contained in that message are broadcasted in an event to all subscribers.
 
 <br/>
@@ -164,9 +230,8 @@ file=0]**broadcastData()** method. First, it checks whether the
 **broadcaster** value is **null**.
 There must be at least one subscriber or there's no
 client to send the event to. If the **broadcaster** value is specified, the
-**OutboundSseEvent** interface is created by using the [hotspot=newEventBuilder
-file=0]**Sse.newEventBuilder()** method, where the **name** of the
-event, the **data** it contains, and the
+**OutboundSseEvent** interface is created by using the **Sse.newEventBuilder()** method, 
+where the **name** of the event, the **data** it contains, and the
 **mediaType** are set. The **OutboundSseEvent** interface is then
 broadcasted, or sent to all registered sinks, by invoking the
 **SseBroadcaster.broadcast()** method.
@@ -202,11 +267,23 @@ touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/ME
 
 
 
+
+```
+mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
+
+mp.messaging.incoming.systemLoad.connector=liberty-kafka
+mp.messaging.incoming.systemLoad.topic=system.load
+mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
+mp.messaging.incoming.systemLoad.group.id=bff
+```
+{: codeblock}
+
+
 The **bff** service uses an incoming connector to receive messages through
 the **systemLoad** channel. The messages are
-then published by the **system** service to the [hotspot=systemLoadTopic
-file=0]**system.load** topic in the Kafka message broker. The
-**key.deserializer** and
+then published by the **system** service to the **system.load** 
+topic in the Kafka message broker. The **key.deserializer** and
 **value.deserializer** properties define how to
 deserialize the messages. The **group.id** property
 defines a unique name for the consumer group. All of these properties are
@@ -237,14 +314,43 @@ touch /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/
 
 
 
+
+```
+function initSSE() {
+    var source = new EventSource('http://localhost:9084/bff/sse', { withCredentials: true });
+    source.addEventListener(
+        'systemLoad',
+        systemLoadHandler
+    );
+}
+
+function systemLoadHandler(event) {
+    var system = JSON.parse(event.data);
+    if (document.getElementById(system.hostname)) {
+        document.getElementById(system.hostname).cells[1].innerHTML =
+                                        system.loadAverage.toFixed(2);
+    } else {
+        var tableRow = document.createElement('tr');
+        tableRow.id = system.hostname;
+        tableRow.innerHTML = '<td>' + system.hostname + '</td><td>'
+                             + system.loadAverage.toFixed(2) + '</td>';
+        document.getElementById('sysPropertiesTableBody').appendChild(tableRow);
+    }
+}
+
+
+```
+{: codeblock}
+
+
 <br/>
 ### **Subscribing to SSE**
 
 The **initSSE()** method is called when the page first
 loads. This method subscribes the client to the SSE by creating a new instance of the
 **EventSource** interface and specifying the
-**http://localhost:9084/bff/sse** URL in the parameters. The [hotspot=eventSource
-file=0]**EventSource** interface makes a **GET** request to this endpoint with a
+**http://localhost:9084/bff/sse** URL in the parameters. The **EventSource** 
+interface makes a **GET** request to this endpoint with a
 request header of **Accept: text/event-stream** to connect to the server. 
 
 Because this request comes from **localhost:9080** and is made to
