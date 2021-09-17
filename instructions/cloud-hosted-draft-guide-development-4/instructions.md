@@ -358,7 +358,7 @@ specification to avoid being blocked by the browser. To enable CORS for the
 client, set the **withCredentials** configuration element to true in the
 parameters of the **EventSource** interface. CORS is
 already enabled for you in the **bff** service. To learn more about CORS, check out
-the https://openliberty.io/guides/cors.html[CORS guide].
+the [CORS guide](https://openliberty.io/guides/cors.html).
 
 
 <br/>
