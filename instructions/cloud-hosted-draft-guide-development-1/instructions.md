@@ -1,7 +1,7 @@
 
-# **Welcome to the Securing microservices with JSON Web Tokens guide!**
+# **Welcome to the Streaming updates to a client using Server-Sent Events guide!**
 
-You'll explore how to control user and role access to microservices with MicroProfile JSON Web Token (MicroProfile JWT).
+Learn how to stream updates from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,45 +14,50 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 # **What you'll learn**
 
-You will add token-based authentication mechanisms to authenticate, authorize,
-and verify users by implementing MicroProfile JWT in the **system** microservice.
+You will learn how to stream messages from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
 
-A JSON Web Token (JWT) is a self-contained token that is designed to securely transmit
-information as a JSON object. The information in this JSON object is digitally
-signed and can be trusted and verified by the recipient.
+MicroProfile Reactive Messaging provides an easy way for Java services to send
+requests to other Java services, and asynchronously receive and process the
+responses as a stream of events. SSE provides a framework to stream the data in
+these events to a browser client.
 
-For microservices, a token-based authentication mechanism offers a lightweight
-way for security controls and security tokens to propagate user identities
-across different services. JSON Web Token is becoming the most common
-token format because it follows well-defined and known standards.
+<br/>
+### **What is SSE?**
 
-MicroProfile JWT standards define the required format of JWT for authentication
-and authorization. The standards also map JWT claims to various Jakarta EE
-container APIs and make the set of claims available through getter methods.
+Server-Sent Events is an API that allows
+clients to subscribe to a stream of events that is pushed from a server. First, the
+client makes a connection with the server over HTTP. The server continuously pushes events to the client as
+long as the connection persists. SSE differs from traditional HTTP requests, which
+use one request for one response. SSE also differs from Web Sockets in that SSE is unidirectional from
+the server to the client, and Web Sockets allow for bidirectional communication.
 
-In this guide, the application uses JWTs to authenticate a user,
-allowing them to make authorized requests to a secure backend service.
+For example, an application that provides real-time stock quotes might use SSE to push price
+updates from the server to the browser as soon as the server receives them. Such an application wouldn't need Web Sockets because the data travels in only one direction, and polling the server by using HTTP requests wouldn't provide real-time
+updates.
 
-You will be working with two services, a **frontend** service and a secure 
-**system** backend service. The **frontend** service logs a user in, builds a JWT, and makes
-authorized requests to the secure **system** service for JVM system properties.
-The following diagram depicts the application that is used in this guide:
+The application that you will build in this guide consists of a **frontend**
+service, a **bff** (backend for frontend) service, and three instances of a
+**system** service. The **system** services periodically publish messages that
+contain their hostname and current system load. The **bff** service receives the
+messages from the **system** services and pushes the contents as SSE to a JavaScript
+client in the **frontend** service. This client uses the events to update a table
+in the UI that displays each system's hostname and its periodically updating
+load. The following diagram depicts the application that is used in this guide:
 
-![JWT frontend and system services](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-jwt/master/assets/JWT_Diagram.png)
+![SSE Diagram](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/master/assets/SSE_Diagram.png)
 
 
-The user signs in to the **frontend** service with a username and a password,
-at which point a JWT is created. The **frontend** service then makes
-requests, with the JWT included, to the **system** backend service. The secure
-**system** service verifies the JWT to ensure that the request came
-from the authorized **frontend** service. After the JWT is validated, the information
-in the claims, such as the user's role, can be trusted and used to
-determine which system properties the user has access to.
+In this guide, you will set up the **bff** service by creating an endpoint that
+clients can use to subscribe to events. You will also enable the service to read
+from the reactive messaging channel and push the contents to subscribers via
+SSE. After that, you will configure the Kafka connectors to allow the **bff**
+service to receive messages from the **system** services. Finally, you will
+configure the client in the **frontend** service to subscribe to these events,
+consume them, and display them in the UI.
 
-To learn more about JSON Web Tokens, check out the
-[jwt.io website](https://jwt.io/introduction/). If you want to learn more about how JWTs
-can be used for user authentication and authorization, check out the Open Liberty
-[Single Sign-on documentation](https://openliberty.io/docs/latest/single-sign-on.html).
+To learn more about the reactive Java services that are used in this guide, check out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+
+
 
 # **Getting started**
 
@@ -66,11 +71,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-jwt.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-messaging-sse.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-jwt.git
-cd guide-microprofile-jwt
+git clone https://github.com/openliberty/guide-reactive-messaging-sse.git
+cd guide-reactive-messaging-sse
 ```
 {: codeblock}
 
@@ -79,716 +84,368 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-<br/>
-### **Try what you'll build**
-
-The **finish** directory contains the finished JWT security implementation for the
-services in the application. Try the finished application before you
-build your own.
-
-To try out the application, run the following commands to navigate to the **finish/frontend** directory and
-deploy the **frontend** service to Open Liberty:
-
-```
-cd finish/frontend
-mvn liberty:run
-```
-{: codeblock}
 
 
-Open another command-line session and run the following commands to navigate to the **finish/system** directory and
-deploy the **system** service to Open Liberty:
-
-```
-cd finish/system
-mvn liberty:run
-```
-{: codeblock}
-
-
-After you see the following message in both command-line sessions, both of your services are ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-To launch the front-end web application, 
-select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
-and click the **OK** button. 
-You’re redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
-where **accountname** is your account name. Click the **Log in** link on the welcome page. From here, 
-you can log in to the application with the form-based login.
-
-Log in with one of the following usernames and its corresponding password:
-
-| *Username* | *Password* | *Role*
-| --- | --- | ---
-| bob | bobpwd | admin, user
-| alice | alicepwd | user
-| carl | carlpwd | user
-
-You're redirected to a page that displays information that the
-front end requested from the **system** service, such as the system username.
-If you log in as an **admin**, you can also see the current OS.
-Click **Log Out** and log in as a **user**.
-You'll see the message **You are not authorized to access this system property**
-because the **user** role doesn't have sufficient privileges to view current OS information. 
-
-Additionally, the **groups** claim of the JWT is read by the **system** service and
-requested by the front end to be displayed.
-
-
-You can try accessing these services without a JWT by going to the **system** endpoint. 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following curl command from the terminal in the IDE:
-```
-curl -k https://localhost:8443/system/properties/os
-```
-{: codeblock}
-
-The response is empty because you don't have access.
-Access is granted if a valid JWT is sent with the request.
-The following error also appears in the command-line session of the **system** service:
-
-```
-[ERROR] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-```
-
-When you are done with the application, stop both the **frontend** and **system**
-services by pressing **CTRL+C** in the command-line sessions where you ran them.
-Alternatively, you can run the following goals from the **finish** directory in
-another command-line session:
-
-```
-mvn -pl system liberty:stop
-mvn -pl frontend liberty:stop
-```
-{: codeblock}
+# **Setting up SSE in the bff service**
 
 
 
-# **Creating the secure system service**
+In this section, you will create a REST API for SSE in the **bff** service. When a
+client makes a request to this endpoint, the initial connection between the
+client and server is established and the client is subscribed to receive events
+that are pushed from the server. Later in this guide, the client in the **frontend**
+service uses this endpoint to subscribe to the events that are pushed from the
+**bff** service.
 
+Additionally, you will enable the **bff** service to read messages from the
+incoming stream and push the contents as events to subscribers via SSE.
 
-To begin, run the following command to navigate to the **start** directory:
-```
-cd /home/project/guide-microprofile-jwt/start
-```
-{: codeblock}
+Navigate to the **start** directory to begin.
 
-When you run Open Liberty in development mode, known as dev mode, the server
-listens for file changes and automatically recompiles and deploys your updates
-whenever you save a new change. Run the following commands to navigate to the
-**frontend** directory and start the **frontend** service in dev mode:
-
-```
-cd frontend
-mvn liberty:dev
-```
-{: codeblock}
-
-
-Open another command-line session and run the following commands to navigate to the
-**system** directory and start the **system** service in dev mode:
-```
-cd system
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-The **system** service provides endpoints for the **frontend** service to use to
-request system properties. This service is secure and requires a valid JWT to be
-included in requests that are made to it. The claims in the JWT are used to determine
-what properties the user has access to.
-
-Create the secure **system** service.
-
-
-Create the **SystemResource** class.
+Create the BFFResource class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
+touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java
 
 
 
 
 ```
-package io.openliberty.guides.system;
+package io.openliberty.guides.bff;
 
-import javax.json.JsonArray;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.annotation.security.RolesAllowed;
+import io.openliberty.guides.models.SystemLoad;
 
-import org.eclipse.microprofile.jwt.Claim;
-
-@RequestScoped
-@Path("/properties")
-public class SystemResource {
-
-    @Inject
-    @Claim("groups")
-    private JsonArray roles;
-
-    @GET
-    @Path("/username")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin", "user" })
-    public String getUsername() {
-        return System.getProperties().getProperty("user.name");
-    }
-
-    @GET
-    @Path("/os")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin" })
-    public String getOS() {
-        return System.getProperties().getProperty("os.name");
-    }
-
-    @GET
-    @Path("/jwtroles")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin", "user" })
-    public String getRoles() {
-        return roles.toString();
-    }
-}
-```
-{: codeblock}
-
-
-This class has role-based access control. The role names that are used in the
-**@RolesAllowed** annotations are mapped to group
-names in the **groups** claim of the JWT, which results in an authorization
-decision wherever the security constraint is applied.
-
-The **/username** endpoint returns the system's username and is annotated with the
-**@RolesAllowed({"admin, "user"})**
-annotation. Only authenticated users with the role of **admin** or **user**
-can access this endpoint.
-
-The **/os** endpoint returns the system's current OS. Here,
-the **@RolesAllowed** annotation is limited to
-**admin**, meaning that only authenticated users with the role of **admin** are able to
-access the endpoint.
-
-While the **@RolesAllowed** annotation automatically reads from the **groups** claim
-of the JWT to make an authorization decision, you can also manually access the
-claims of the JWT by using the **@Claim** annotation. In this
-case, the **groups** claim is injected into the **roles** JSON array.
-The roles that are parsed from the **groups** claim of the
-JWT are then exposed back to the front end at the **/jwtroles** endpoint.
-To read more about different claims and ways to
-access them, check out the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
-
-
-# **Creating a client to access the secure system service**
-
-
-
-
-Create a RESTful client interface for the **frontend** service.
-
-Create the **SystemClient** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
-
-
-
-
-```
-package io.openliberty.guides.frontend.client;
-
-import javax.enterprise.context.RequestScoped;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.HeaderParam;
-
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-
-@RegisterRestClient(baseUri = "https://localhost:8443/system")
-@Path("/properties")
-@RequestScoped
-public interface SystemClient extends AutoCloseable{
- 
-    @GET
-    @Path("/os")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getOS(@HeaderParam("Authorization") String authHeader);
-
-    @GET
-    @Path("/username")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getUsername(@HeaderParam("Authorization") String authHeader);
-    
-    @GET
-    @Path("/jwtroles")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getJwtRoles(@HeaderParam("Authorization") String authHeader);
-}
-```
-{: codeblock}
-
-
-This interface declares methods for accessing each of the endpoints that were
-previously set up in the **system** service.
-
-The MicroProfile Rest Client feature automatically builds and generates a client
-implementation based on what is defined in the **SystemClient** interface. You
-don't need to set up the client and connect with the remote service.
-
-As discussed, the **system** service is secured and requests made to it must
-include a valid JWT in the **Authorization** header. The **@HeaderParam** annotations
-include the JWT by specifying that the value of the **String authHeader**
-parameter, which contains the JWT, be used as the value for the **Authorization**
-header. This header is included in all of the requests that are made to the
-**system** service through this client.
-
-Create the application bean that the front-end UI uses to request data.
-
-Create the **ApplicationBean** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
-
-
-
-
-```
-package io.openliberty.guides.frontend;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
-
-import org.eclipse.microprofile.rest.client.inject.RestClient;
-
-import io.openliberty.guides.frontend.client.SystemClient;
-import io.openliberty.guides.frontend.util.SessionUtils;
-
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.sse.OutboundSseEvent;
+import javax.ws.rs.sse.Sse;
+import javax.ws.rs.sse.SseBroadcaster;
+import javax.ws.rs.sse.SseEventSink;
+import java.util.logging.Logger;
 
 @ApplicationScoped
-@Named
-public class ApplicationBean { 
+@Path("/sse")
+public class BFFResource {
 
-    @Inject
-    @RestClient
-    private SystemClient defaultRestClient;
+    private Logger logger = Logger.getLogger(BFFResource.class.getName());
 
-    public String getJwt() {
-        String jwtTokenString = SessionUtils.getJwtToken();
-        String authHeader = "Bearer " + jwtTokenString;
-        return authHeader;
-    }
-    
-    public String getOs() {
-        String authHeader = getJwt();
-        String os;
-        try {
-            os = defaultRestClient.getOS(authHeader);
-        } catch(Exception e) {
-            return "You are not authorized to access this system property";
+    private Sse sse;
+    private SseBroadcaster broadcaster;
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.SERVER_SENT_EVENTS)
+    public void subscribeToSystem(
+        @Context SseEventSink sink,
+        @Context Sse sse
+        ) {
+
+        if (this.sse == null || this.broadcaster == null) { 
+            this.sse = sse;
+            this.broadcaster = sse.newBroadcaster();
         }
-        return os;
+        
+        this.broadcaster.register(sink);
+        logger.info("New sink registered to broadcaster.");
     }
 
-    public String getUsername() {
-        String authHeader = getJwt();
-        return defaultRestClient.getUsername(authHeader);
+    private void broadcastData(String name, Object data) {
+        if (broadcaster != null) {
+            OutboundSseEvent event = sse.newEventBuilder()
+                                        .name(name)
+                                        .data(data.getClass(), data)
+                                        .mediaType(MediaType.APPLICATION_JSON_TYPE)
+                                        .build();
+            broadcaster.broadcast(event);
+        } else {
+            logger.info("Unable to send SSE. Broadcaster context is not set up.");
+        }
     }
 
-    public String getJwtRoles() {
-        String authHeader = getJwt();
-        return defaultRestClient.getJwtRoles(authHeader);
+    @Incoming("systemLoad")
+    public void getSystemLoadMessage(SystemLoad sl)  {
+        logger.info("Message received from system.load topic. " + sl.toString());
+        broadcastData("systemLoad", sl);
     }
-
 }
 ```
 {: codeblock}
 
 
-The application bean is used to populate the table in the front end by making
-requests for data through the **defaultRestClient**, which
-is an injected instance of the **SystemClient** class
-that you created. The **getOs()**, **getUsername()**, and **getJwtRoles()** methods call
-their associated methods of the **SystemClient** class
-with the **authHeader** passed in as a parameter. The **authHeader** is a string that
-consists of the JWT with **Bearer** prefixed to it. The **authHeader** is included in the
-**Authorization** header of the subsequent requests that are made by the
-**defaultRestClient** instance.
+<br/>
+### **Creating the SSE API endpoint**
 
-The JWT for these requests is retrieved from the session attributes with the
-**getJwt()** method. The JWT is stored in the session
-attributes by the provided **LoginBean** class. When the
-user logs in to the front end, the **doLogin()** method is
-called and builds the JWT. Then, the **setAttribute()**
-method stores it as an **HttpSession** attribute. The JWT is built by using the
-**JwtBuilder** APIs in the **buildJwt()** method.
-You can see that the **claim()** method is being used to set the **groups** and the **aud** claims of the token.
-The **groups** claim is used to provide the role-based access that you implemented.
-The **aud** claim is used to specify the audience that the JWT is intended for.
+The **subscribeToSystem()** method allows
+clients to subscribe to events via an HTTP **GET** request to the **/bff/sse/**
+endpoint. The **`@Produces(MediaType.SERVER_SENT_EVENTS)`** annotation sets the **Content-Type** in the
+response header to **text/event-stream**. This content type indicates that client requests that are made
+to this endpoint are to receive Server-Sent Events. Additionally, the method
+parameters take in an instance of the **SseEventSink** class and
+the **Sse** class, both of which are injected using the **@Context**
+annotation. First, the method checks if the **sse** and
+**broadcaster** instance variables are assigned.
+If these variables aren't assigned, the
+**sse** variable is obtained from the **@Context** 
+injection and the **broadcaster** variable
+is obtained by using the **Sse.newBroadcaster()**
+method. Then, the **register()** method is called to
+register the **SseEventSink** instance to the
+**SseBroadcaster** instance to subscribe to events.
 
-# **Configuring MicroProfile JWT**
+For more information about these interfaces, see the Javadocs for
+[OutboundSseEvent](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.html&package=allclasses-frame.html)
+and
+[OutboundSseEvent.Builder](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.Builder.html&package=allclasses-frame.html).
+
+<br/>
+### **Reading from the reactive messaging channel**
+
+The **getSystemLoadMessage()** method
+receives the message that contains the hostname and the average system load. The
+**@Incoming("systemLoad")** annotation indicates that
+the method retrieves the message by connecting to the **systemLoad** channel in
+Kafka, which you configure in the next section.
+
+Each time a message is received, the **getSystemLoadMessage()** 
+method is called, and the hostname and system
+load contained in that message are broadcasted in an event to all subscribers.
+
+<br/>
+### **Broadcasting events**
+
+Broadcasting events is handled in the **broadcastData()** method.
+First, it checks whether the **broadcaster** value is **null**.
+There must be at least one subscriber or there's no client to send the event to.
+If the **broadcaster** value is specified, the **OutboundSseEvent** interface is created 
+by using the **Sse.newEventBuilder()** method, 
+where the **name** of the event, the **data** it contains, and the
+**mediaType** are set. The **OutboundSseEvent** interface is then
+broadcasted, or sent to all registered sinks, by invoking the
+**SseBroadcaster.broadcast()** method.
 
 
+You just set up an endpoint in the **bff** service that the client in the
+**frontend** service can use to subscribe to events. You also enabled the
+service to read from the reactive messaging channel and broadcast the
+information as events to subscribers via SSE.
 
-Configure the **mpJwt** feature in the **microprofile-config.properties** file for the **system** service.
+
+# **Configuring the Kafka connector for the bff service**
+
+
+A complete **system** service is provided for you in the **start/system**
+directory. The **system** service is the producer of the messages that are
+published to the Kafka messaging system. The periodically
+published messages contain the system's hostname and a calculation of the
+average system load (its CPU usage) for the last minute.
+
+Configure the Kafka connector in the **bff** service to receive the messages from the **system** service.
 
 Create the microprofile-config.properties file.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties
+touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties
+> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties
 
 
 
 
 ```
-mp.jwt.verify.issuer=http://openliberty.io
-mp.jwt.token.header=Authorization
-mp.jwt.token.cookie=Bearer
-mp.jwt.verify.audiences=systemService, adminServices
-mp.jwt.verify.publickey.algorithm=RSA256
-```
-{: codeblock}
+mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
 
-
-The following table breaks down the new properties:
-
-| *Property* |   *Description*
-| ---| ---
-| **mp.jwt.verify.issuer** | Specifies the expected value of the issuer claim on an incoming JWT. Incoming JWTs with an issuer claim that's different from this expected value aren't considered valid.
-| **mp.jwt.token.header**  | With this property, you can control the HTTP request header, which is expected to contain a JWT. You can either specify Authorization, by default, or the Cookie values.
-| **mp.jwt.token.cookie** | Specifies the name of the cookie, which is expected to contain a JWT token. The default value is Bearer.
-| **mp.jwt.verify.audiences** |  With this property, you can create a list of allowable audience (aud) values. At least one of these values must be found in the claim. Previously, this configuration was included in the **server.xml** file.
-| **mp.jwt.decrypt.key.location** | With this property, you can specify the location of the Key Management key. It is a Private key that is used to decrypt the Content Encryption key, which is then used to decrypt the JWE ciphertext. This private key must correspond to the public key that is used to encrypt the Content Encryption key.
-| **mp.jwt.verify.publickey.algorithm** | With this property, you can control the Public Key Signature Algorithm that is supported by the MicroProfile JWT endpoint. The default value is RSA256. Previously, this configuration was included in the **server.xml** file.
-
-Next, add the MicroProfile JSON Web Token feature to the server configuration file for
-the **system** service.
-
-Replace the system server configuration file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml
-
-
-
-
-```
-<server description="Sample Liberty server">
-
-  <featureManager>
-    <feature>jaxrs-2.1</feature>
-    <feature>jsonp-1.1</feature>
-    <feature>cdi-2.0</feature>
-    <feature>mpConfig-2.0</feature>
-    <feature>mpRestClient-2.0</feature>
-    <feature>appSecurity-3.0</feature>
-    <feature>servlet-4.0</feature>
-    <feature>mpJwt-1.2</feature>
-  </featureManager>
-
-  <variable name="default.http.port" defaultValue="8080"/>
-  <variable name="default.https.port" defaultValue="8443"/>
-
-  <keyStore id="defaultKeyStore" password="secret"/>
-
-  <httpEndpoint host="*" httpPort="${default.http.port}" httpsPort="${default.https.port}"
-                id="defaultHttpEndpoint"/>
-                 
-  <webApplication location="system.war" contextRoot="/"/>
-
-</server>
+mp.messaging.incoming.systemLoad.connector=liberty-kafka
+mp.messaging.incoming.systemLoad.topic=system.load
+mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
+mp.messaging.incoming.systemLoad.group.id=bff
 ```
 {: codeblock}
 
 
-The **mpJwt** feature adds the libraries that are required for MicroProfile JWT implementation.
+The **bff** service uses an incoming connector to receive messages through
+the **systemLoad** channel. The messages are
+then published by the **system** service to the **system.load** 
+topic in the Kafka message broker. The **key.deserializer** and
+**value.deserializer** properties define how to
+deserialize the messages. The **group.id** property
+defines a unique name for the consumer group. All of these properties are
+required by the [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs) documentation.
+
+
+
+# **Configuring the frontend service to subscribe to and consume events**
+
+
+In this section, you will configure the client in the **frontend** service to subscribe to events
+and display their contents in a table in the UI.
+
+The front-end UI is a table where each row contains the hostname and load of one of the three **system** services.
+The HTML and styling for the UI is provided for you but you must populate the table with
+information that is received from the Server-Sent Events.
+
+Create the index.js file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
+
+
+
+
+```
+function initSSE() {
+    var source = new EventSource('http://localhost:9084/bff/sse', { withCredentials: true });
+    source.addEventListener(
+        'systemLoad',
+        systemLoadHandler
+    );
+}
+
+function systemLoadHandler(event) {
+    var system = JSON.parse(event.data);
+    if (document.getElementById(system.hostname)) {
+        document.getElementById(system.hostname).cells[1].innerHTML =
+                                        system.loadAverage.toFixed(2);
+    } else {
+        var tableRow = document.createElement('tr');
+        tableRow.id = system.hostname;
+        tableRow.innerHTML = '<td>' + system.hostname + '</td><td>'
+                             + system.loadAverage.toFixed(2) + '</td>';
+        document.getElementById('sysPropertiesTableBody').appendChild(tableRow);
+    }
+}
+
+
+```
+{: codeblock}
+
+
+<br/>
+### **Subscribing to SSE**
+
+The **initSSE()** method is called when the page first
+loads. This method subscribes the client to the SSE by creating a new instance of the
+**EventSource** interface and specifying the
+**http://localhost:9084/bff/sse** URL in the parameters. The **EventSource** 
+interface makes a **GET** request to this endpoint with a
+request header of **Accept: text/event-stream** to connect to the server. 
+
+Because this request comes from **localhost:9080** and is made to
+**localhost:9084**, it must follow the Cross-Origin Resource Sharing (CORS)
+specification to avoid being blocked by the browser. To enable CORS for the
+client, set the **withCredentials** configuration element to true in the
+parameters of the **EventSource** interface. CORS is
+already enabled for you in the **bff** service. To learn more about CORS, check out
+the [CORS guide](https://openliberty.io/guides/cors.html).
+
+
+<br/>
+### **Consuming the SSE**
+
+The **EventSource.addEventListener()** method is
+called to add an event listener. This event listener listens for events with
+the name of **systemLoad**. The
+**systemLoadHandler()** function is set as the
+handler function, and each time an event is received, this function is called.
+The **systemLoadHandler()** function will take the event
+object and parse the event's data property from a JSON string into a JavaScript
+object. The contents of this object are used to
+update the table with the system hostname and load. If a system is already present in the table, the load is
+updated, otherwise a new row is added for the system.
 
 
 # **Building and running the application**
 
-Because you are running the **frontend** and **system** services in dev mode, the changes that you made were automatically picked up. You're now ready to check out your application in your browser.
-
-
-To launch the front-end web application, 
-select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, 
-and click the **OK** button. You’re redirected to the **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
-where **accountname** is your account name. Click the **Log in** link on the welcome page. 
-Log in with one of the following usernames and its corresponding password:
-
-| *Username* | *Password* | *Role*
-| --- | --- | ---
-| bob | bobpwd | admin, user
-| alice | alicepwd | user
-| carl | carlpwd | user
-
-After you log in as an **admin**, you can see the information that's retrieved from the **system**
-service. Click **Log Out** and log in as a **user**. 
-With successfully implemented role-based access in the application, if
-you log in as a **user** role, you don't have access to the OS property.
-
-You can also see the value of the **groups** claim in the row with the **Roles:** label.
-These roles are read from the JWT and sent back to the front end to
-be displayed.
-
-
-You can check that the **system** service is secured against unauthenticated
-requests by going to the **system** endpoint.
-Run the following curl command from the terminal in the IDE:
-```
-curl -k https://localhost:8443/system/properties/os
-```
-{: codeblock}
-
-You'll see an empty response because you didn't authenticate with a valid JWT. 
-
-In the front end, you see your JWT displayed in the row with the **JSON Web Token** label.
-
-To see the specific information that this JWT holds, you can enter it into the token reader on the [JWT.io website](https://JWT.io).
-The token reader shows you the header, which contains information about the JWT, as shown in the following example:
+To build the application, navigate to the **start** directory and run the following Maven **install** and **package** goals from the command line:
 
 ```
-{
-  "kid": "NPzyG3ZMzljUwQgbzi44",
-  "typ": "JWT",
-  "alg": "RS256"
-}
-```
-
-The token reader also shows you the payload, which contains the claims information:
-
-```
-{
-  "token_type": "Bearer",
-  "sub": "bob",
-  "upn": "bob",
-  "groups": [ "admin", "user" ],
-  "iss": "http://openliberty.io",
-  "exp": 1596723489,
-  "iat": 1596637089
-}
-```
-
-You can learn more about these claims in the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
-
-
-# **Testing the application**
-
-
-You can manually check that the **system** service is secure by making requests to
-each of the endpoints with and without valid JWTs. However, automated tests are a
-much better approach because they are more reliable and trigger a failure if a
-breaking change is introduced.
-
-Create the **SystemEndpointIT** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+mvn -pl models install
+mvn package
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
-
-
-
+Run the following command to download or update to the latest
+Open Liberty Docker image:
 
 ```
-package it.io.openliberty.guides.system;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import it.io.openliberty.guides.system.util.JwtBuilder;
-
-public class SystemEndpointIT {
-
-    static String authHeaderAdmin;
-    static String authHeaderUser;
-    static String urlOS;
-    static String urlUsername;
-    static String urlRoles;
-
-    @BeforeAll
-    private static void setup() throws Exception{
-        String urlBase = "http://" + System.getProperty("hostname")
-                 + ":" + System.getProperty("http.port")
-                 + "/system/properties";
-        urlOS = urlBase + "/os";
-        urlUsername = urlBase + "/username";
-        urlRoles = urlBase + "/jwtroles";
-
-        authHeaderAdmin = "Bearer " + new JwtBuilder().createAdminJwt("testUser");
-        authHeaderUser = "Bearer " + new JwtBuilder().createUserJwt("testUser");
-    }
-
-    @Test
-    public void testOSEndpoint() {
-        Response response = makeRequest(urlOS, authHeaderAdmin);
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + urlOS);
-        assertEquals(System.getProperty("os.name"), response.readEntity(String.class),
-                "The system property for the local and remote JVM should match");
-
-        response = makeRequest(urlOS, authHeaderUser);
-        assertEquals(403, response.getStatus(), "Incorrect response code from " + urlOS);
-
-        response = makeRequest(urlOS, null);
-        assertEquals(401, response.getStatus(), "Incorrect response code from " + urlOS);
-
-        response.close();
-    }
-
-    @Test
-    public void testUsernameEndpoint() {
-        Response response = makeRequest(urlUsername, authHeaderAdmin);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
-
-        response = makeRequest(urlUsername, authHeaderUser);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
-
-        response = makeRequest(urlUsername, null);
-        assertEquals(401, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
-
-        response.close();
-    }
-
-    @Test
-    public void testRolesEndpoint() {
-        Response response = makeRequest(urlRoles, authHeaderAdmin);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlRoles);
-        assertEquals("[\"admin\",\"user\"]", response.readEntity(String.class),
-                "Incorrect groups claim in token " + urlRoles);
-
-        response = makeRequest(urlRoles, authHeaderUser);
-        assertEquals(200, response.getStatus(), 
-                "Incorrect response code from " + urlRoles);
-        assertEquals("[\"user\"]", response.readEntity(String.class),
-                "Incorrect groups claim in token " + urlRoles);
-
-        response = makeRequest(urlRoles, null);
-        assertEquals(401, response.getStatus(),
-                "Incorrect response code from " + urlRoles);
-
-        response.close();
-    }
-
-    private Response makeRequest(String url, String authHeader) {
-        Client client = ClientBuilder.newClient();
-        Builder builder = client.target(url).request();
-        builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-        if (authHeader != null) {
-            builder.header(HttpHeaders.AUTHORIZATION, authHeader);
-        }
-        Response response = builder.get();
-        return response;
-    }
-
-}
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
 
-The **testOSEndpoint()**, **testUsernameEndpoint()**, and **testRolesEndpoint()**
-tests test the **/os**, **/username**, and **/roles** endpoints.
-
-Each test makes three requests to its associated endpoint. The first
-**makeRequest()** call has a JWT with the **admin** role. The second
-**makeRequest()** call has a JWT with the **user** role. The third
-**makeRequest()** call has no JWT at all. The responses to these
-requests are checked based on the role-based access rules for the endpoints. The
-**admin** requests should be successful on all endpoints. The **user** requests
-should be denied by the **/os** endpoint but successfully access the **/username**
-and **/jwtroles** endpoints. The requests that don't include a JWT should be
-denied access to all endpoints.
-
-<br/>
-### **Running the tests**
-
-Because you started Open Liberty in dev mode, press the **enter/return** key from the
-command-line session of the **system** service to run the tests. You see the
-following output:
+Run the following commands to containerize the **frontend**, **bff**, and **system** services:
 
 ```
--------------------------------------------------------
-  T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.648 s - in it.io.openliberty.guides.system.SystemEndpointIT
-
-Results:
-
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+docker build -t frontend:1.0-SNAPSHOT frontend/.
+docker build -t bff:1.0-SNAPSHOT bff/.
+docker build -t system:1.0-SNAPSHOT system/.
 ```
+{: codeblock}
 
-The three errors in the output are expected and result from the **system** service successfully
-rejecting the requests that didn't include a JWT.
 
-When you are finished testing the application, stop both the **frontend** and **system**
-services by pressing **CTRL+C** in the command-line sessions where you ran them.
-Alternatively, you can run the following goals from the **start** directory in
-another command-line session:
+Next, use the following **startContainers.sh** script to start the application in Docker containers:
+
+
 
 ```
-mvn -pl system liberty:stop
-mvn -pl frontend liberty:stop
+./scripts/startContainers.sh
+```
+{: codeblock}
+
+
+This script creates a network for the containers to communicate with each other. It
+also creates containers for Kafka, Zookeeper, the **frontend** service, the **bff** service , and three
+instances of the **system** service.
+
+
+Once your application is up and running, use the following `curl` 
+to check out your service.
+```
+curl http://localhost:9080
+``` 
+The application might take some time to get ready. The latest version of most
+modern web browsers supports Server-Sent Events. The exception is
+Internet Explorer, which does not support SSE.
+When you visit the URL, look for a table similar to the following example:
+
+![System table](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/master/assets/system_table.png)
+
+
+The table contains three rows, one for each of the running **system**
+containers. If you can see the loads updating, you know that your **bff** service
+is successfully receiving messages and broadcasting them as SSE to the client in the **frontend** service.
+
+
+# **Tearing down the environment**
+
+Run the following script to stop the application:
+
+
+```
+./scripts/stopContainers.sh
 ```
 {: codeblock}
 
@@ -798,7 +455,7 @@ mvn -pl frontend liberty:stop
 
 ## **Nice Work!**
 
-You learned how to use MicroProfile JWT to validate JWTs, authenticate and authorize users to secure your microservices in Open Liberty.
+You developed an application that subscribes to Server-Sent Events by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
 
 
@@ -808,11 +465,11 @@ You learned how to use MicroProfile JWT to validate JWTs, authenticate and autho
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-jwt** project by running the following commands:
+Delete the **guide-reactive-messaging-sse** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-jwt
+rm -fr guide-reactive-messaging-sse
 ```
 {: codeblock}
 
@@ -821,7 +478,7 @@ rm -fr guide-microprofile-jwt
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20microservices%20with%20JSON%20Web%20Tokens&guide-id=cloud-hosted-guide-microprofile-jwt)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Streaming%20updates%20to%20a%20client%20using%20Server-Sent%20Events&guide-id=cloud-hosted-guide-reactive-messaging-sse)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -829,17 +486,26 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-jwt/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-jwt/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Acknowledging messages using MicroProfile Reactive Messaging](https://openliberty.io/guides/microprofile-reactive-messaging-acknowledgment.html)
+* [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest-integration.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
+
+**Learn more about MicroProfile**
+* [See the MicroProfile specs](https://microprofile.io/)
+* [View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
+* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html#_microprofile_reactive_messaging)
+* [View the JAX-RS Server-Sent Events API](https://openliberty.io/docs/ref/javaee/8/#package=javax/ws/rs/sse/package-frame.html&class=javax/ws/rs/sse/package-summary.html)
+* [View the Server-Sent Events HTML Specification](https://html.spec.whatwg.org/multipage/server-sent-events.html)
 
 
 <br/>
