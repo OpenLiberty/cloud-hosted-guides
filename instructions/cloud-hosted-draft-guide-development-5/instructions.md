@@ -27,11 +27,11 @@ technique for consuming an API served from an origin different than yours.
 CORS is useful for requesting different kinds of data from websites that aren't your own. 
 These types of data might include images, videos, scripts, stylesheets, iFrames, or web fonts.
 
-However, you cannot request resources from another website domain without proper permission. In JavaScript, cross-origin requests with an **XMLHttpRequest** API and Ajax cannot happen unless CORS is enabled on the server that receives the request. Otherwise, same-origin security policy prevents the requests. For example, a web page that is served from the **+http://aboutcors.com+** server sends a request to get data to the
-**+http://openliberty.io+** server. Because of security concerns, browsers block the server response unless
+However, you cannot request resources from another website domain without proper permission. In JavaScript, cross-origin requests with an **XMLHttpRequest** API and Ajax cannot happen unless CORS is enabled on the server that receives the request. Otherwise, same-origin security policy prevents the requests. For example, a web page that is served from the **http://aboutcors.com** server sends a request to get data to the
+**http://openliberty.io** server. Because of security concerns, browsers block the server response unless
 the server adds HTTP response headers to allow the web page to consume the data.
 
-Different ports and different protocols also trigger CORS. For example, the **+http://abc.xyz:1234+** domain is considered to be different from the **+https://abc.xyz:4321+** domain.
+Different ports and different protocols also trigger CORS. For example, the **http://abc.xyz:1234** domain is considered to be different from the **https://abc.xyz:4321** domain.
 
 Open Liberty has built-in support for CORS that gives you an easy and powerful way to configure the
 runtime to handle CORS requests without the need to write Java code.
@@ -165,9 +165,13 @@ The CORS configuration contains the following attributes:
 | ---| ---
 
 |**domain** | The endpoint to be configured for CORS requests. The value is set to **/configurations/simple**.
+
 |**allowedOrigins** | Origins that are allowed to access the endpoint. The value is set to **openliberty.io**.
+
 |**allowedMethods** | HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to **GET**.
+
 |**allowCredentials** | A boolean that indicates whether the user credentials can be included in the request. The value is set to **true**.
+
 |**exposeHeaders** | Headers that are safe to expose to clients. The value is set to **MyHeader**.
 
 Save the changes to the **server.xml** file. The **/configurations/simple** endpoint is now ready to be
@@ -259,7 +263,9 @@ Expect the following response headers and values if the simple CORS request is s
 | ---| ---
 
 | Access-Control-Allow-Origin | The expected value is **openliberty.io**. Indicates whether a resource can be shared based on the returning value of the Origin request header **openliberty.io**.
+
 | Access-Control-Allow-Credentials | The expected value is **true**. Indicates that the user credentials can be included in the request.
+
 | Access-Control-Expose-Headers |  The expected value is **MyHeader**. Indicates that the header **MyHeader** is safe to expose.
 
 Since you started Open Liberty in development mode at the start of the guide, 
@@ -336,8 +342,11 @@ The preflight CORS configuration has different values than the simple CORS confi
 | ---| ---
 
 | **domain**|The value is set to **/configurations/preflight** because the **domain** is a different endpoint.
+
 | **allowedOrigins**| Origins that are allowed to access the endpoint. The value is set to an asterisk (*) to allow requests from all origins.
+
 | **allowedMethods**| HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to **OPTIONS, DELETE**.
+
 | **allowCredentials**| A boolean that indicates whether the user credentials can be included in the request. The value is set to **true**.
 
 The following attributes were added:
@@ -431,11 +440,13 @@ Lastly, it prints the response headers for you to inspect.
 
 The request is an **OPTIONS** HTTP request with the following headers:
 
+
 | *Request Header* | *Request Value*
-| ---| ---
 
 | Origin | The value is set to **anywebsiteyoulike.com**. Indicates that the request originates from **anywebsiteyoulike.com**.
+
 | Access-Control-Request-Method | The value is set to **DELETE**. Indicates that the HTTP DELETE method will be used in the actual request.
+
 | Access-Control-Request-Headers | The value is set to **MyOwnHeader2**. Indicates the header **MyOwnHeader2** will be used in the actual request.
 
 Expect the following response headers and values if the preflight CORS request is successful, and the server is correctly configured:
@@ -444,9 +455,13 @@ Expect the following response headers and values if the preflight CORS request i
 | ---| ---
 
 | Access-Control-Max-Age | The expected value is **10**. Indicates that the preflight request can be cached within **10** seconds.
+
 | Access-Control-Allow-Origin | The expected value is **anywebsiteyoulike.com**. Indicates whether a resource can be shared based on the returning value of the Origin request header **anywebsiteyoulike.com**.
+
 | Access-Control-Allow-Methods | The expected value is **OPTIONS, DELETE**. Indicates that HTTP OPTIONS and DELETE methods can be used in the actual request.
+
 | Access-Control-Allow-Credentials | The expected value is **true**. Indicates that the user credentials can be included in the request.
+
 | Access-Control-Allow-Headers | The expected value is **MyOwnHeader1, MyOwnHeader2**. Indicates that the header **MyOwnHeader1** and **MyOwnHeader2** are safe to expose.
 
 The **Access-Control-Allow-Origin** header has a value of **anywebsiteyoulike.com**
