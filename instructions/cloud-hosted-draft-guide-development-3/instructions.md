@@ -1,7 +1,7 @@
 
-# **Welcome to the Testing microservices with consumer-driven contracts guide!**
+# **Welcome to the Containerizing, packaging, and running a Spring Boot application guide!**
 
-Learn how to test Java microservices with consumer-driven contracts in Open Liberty.
+
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,41 +10,17 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
+The starting point of this guide is the finished application from Spring's
+[Building an Application with Spring Boot](https://spring.io/guides/gs/spring-boot/) guide.
+If you are not familiar with Spring Boot, complete that guide first.
+Java 8 is required to run this project.
 
-# **What you'll learn**
+You will learn how to use the **springBootUtility** command to deploy a Spring Boot application in Docker on an Open Liberty server without modification.
+This command stores the dependent library JAR files of the application to the target library cache,
+and packages the remaining application artifacts into a thin application JAR file.
 
-With a microservices-based architecture, you need robust testing to ensure that
-microservices that depend on one another are able to communicate effectively.
-Typically, to prevent multiple points of failure at different integration points,
-a combination of unit, integration, and end-to-end tests are used.
-While unit tests are fast, they are less trustworthy because they run in isolation and usually rely on mock data.
-
-Integration tests address this issue by testing against real running services.
-However, they tend to be slow as the tests depend on other microservices and are less reliable because they are prone to external changes.
-
-Usually, end-to-end tests are more trustworthy because they verify functionality from the perspective of a user.
-However, a graphical user interface (GUI) component is often required to perform end-to-end tests,
-and GUI components rely on third-party software, such as Selenium, which requires heavy computation time and resources.
-
-*What is contract testing?*
-
-Contract testing bridges the gaps among the shortcomings of these different testing methodologies.
-Contract testing is a technique for testing an integration point by isolating each microservice and checking whether the
-HTTP requests and responses that the microservice transmits conform to a shared understanding that is documented in a contract.
-This way, contract testing ensures that microservices can communicate with each other.
-
-[Pact](https://docs.pact.io/) is an open source contract testing tool for testing
-HTTP requests, responses, and message integrations by using contract tests.
-
-The [Pact Broker](https://docs.pact.io/pact_broker/docker_images) is an application for sharing Pact contracts and verification results.
-The Pact Broker is also an important piece for integrating Pact into continuous integration and continuous delivery (CI/CD) pipelines.
-
-The two microservices you will interact with are called **system** and **inventory**.
-The **system** microservice returns the JVM system properties of its host.
-The **inventory** microservice retrieves specific properties from the **system** microservice.
-
-You will learn how to use the Pact framework to write contract tests for the **inventory** microservice
-that will then be verified by the **system** microservice.
+You will also learn how to run the Spring Boot application locally with an Open Liberty server,
+and how to package it so that it is embedded with an Open Liberty server.
 
 # **Getting started**
 
@@ -58,11 +34,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-contract-testing.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-spring-boot.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-contract-testing.git
-cd guide-contract-testing
+git clone https://github.com/openliberty/guide-spring-boot.git
+cd guide-spring-boot
 ```
 {: codeblock}
 
@@ -71,802 +47,583 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+
+# **Building and running the application**
+
+First, build the initial Spring Boot application into an executable JAR file. 
+Navigate to the **start** directory and run the Maven package command:
+
+
+```
+cd start
+./mvnw package
+```
+
+You can now run the application in the embedded Tomcat web container by executing the JAR file that you built:
+
+```
+java -jar target/guide-spring-boot-0.1.0.jar
+```
+
+Notice that the console output displays a message about the application running in Tomcat on port **8080**. 
+```
+... INFO ... [ main] o.s.b.w.embedded.tomcat.TomcatWebServer : Tomcat started on port(s): 8080 (http) with context path ''
+```
+
+
+Run the following command to access the application:
+
+```
+curl http://localhost:8080/hello
+```
+{: codeblock}
+
+The following output is returned:
+
+```
+Greetings from Spring Boot!
+```
+
+When you need to stop the application, press **CTRL+C** in the command-line session where you ran the application.
+
+# **Building and running the application in a Docker container**
+
+You will build an Open Liberty Docker image to run the Spring Boot application.
+Using Docker, you can run your thinned application with a few simple commands.
+For more information on using Open Liberty with Docker, see the
+[Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
+
+Learn more about Docker on the [official Docker website](https://www.docker.com/why-docker).
+
+Install Docker by following the instructions in the
+[official Docker documentation](https://docs.docker.com/engine/install).
+
+Navigate to the **start** directory. 
+
+Create the **Dockerfile**.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-spring-boot/start/Dockerfile
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-spring-boot/start/Dockerfile
+
+
+
+
+```
+FROM openliberty/open-liberty:full-java11-openj9-ubi as staging
+
+COPY --chown=1001:0 target/guide-spring-boot-0.1.0.jar \
+                    /staging/fat-guide-spring-boot-0.1.0.jar
+
+RUN springBootUtility thin \
+ --sourceAppPath=/staging/fat-guide-spring-boot-0.1.0.jar \
+ --targetThinAppPath=/staging/thin-guide-spring-boot-0.1.0.jar \
+ --targetLibCachePath=/staging/lib.index.cache
+
+FROM openliberty/open-liberty:full-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-spring-boot" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="hello app" \
+  version="$VERSION-$REVISION" \
+  summary="The hello application from the Spring Boot guide" \
+  description="This image contains the hello application running with the Open Liberty runtime."
+
+RUN cp /opt/ol/wlp/templates/servers/springBoot2/server.xml /config/server.xml
+
+COPY --chown=1001:0 --from=staging /staging/lib.index.cache /lib.index.cache
+COPY --chown=1001:0 --from=staging /staging/thin-guide-spring-boot-0.1.0.jar \
+                    /config/dropins/spring/thin-guide-spring-boot-0.1.0.jar
+
+RUN configure.sh 
+```
+{: codeblock}
+
+
+
+This Dockerfile is written in two main stages.
+For more information about multi-stage Dockerfiles, see the documentation on the
+[official Docker website](https://docs.docker.com/develop/develop-images/multistage-build/).
+
+The first stage copies the **guide-spring-boot-0.1.0.jar**
+Spring Boot application to the **/staging** temporary directory, 
+and then uses the Open Liberty **springBootUtility** command to thin the application. 
+For more information about the **springBootUtility** command, 
+see the [springBootUtility documentation](https://openliberty.io/docs/latest/reference/command/springbootUtility-thin.html).
+
+The second stage begins with the **Open Liberty Docker image**. 
+The Dockerfile copies the **server.xml** file from the **/opt/ol/wlp/templates** directory, 
+which enables Spring Boot and TLS support. 
+Then, the Dockerfile copies the Spring Boot dependent library JAR files that are at the **lib.index.cache** directory 
+and the **thin-guide-spring-boot-0.1.0.jar** file. 
+The **lib.index.cache** directory and the **thin-guide-spring-boot-0.1.0.jar** file were both generated in the first stage.
+
+Run the following command to download or update to the latest Open Liberty Docker image:
+
+```
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
+```
+{: codeblock}
+
+
+Use the following command to build the Docker image:
+```
+docker build -t springboot .
+```
+{: codeblock}
+
+
+To verify that the images are built, run the **docker images** command to list all local Docker images:
+
+```
+docker images
+```
+{: codeblock}
+
+
+Your **springboot** image appears in the list of Docker images:
+```
+REPOSITORY    TAG       IMAGE ID         CREATED           SIZE
+springboot    latest    d3ffdaa81854     27 seconds ago    486MB
+```
+
+Now, you can run the Spring Boot application in a Docker container:
+```
+docker run -d --name springBootContainer -p 9080:9080 -p 9443:9443 springboot
+```
+{: codeblock}
+
+
+Before you access your application from the browser,
+run the **docker ps** command to make sure that your container is running:
+
+```
+docker ps
+```
+{: codeblock}
+
+
+
+You see an entry similar to the following example:
+```
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                                            NAMES
+e33532aa07d6        springboot          "/opt/ibm/docker/doc…"   7 seconds ago       Up 2 seconds        0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   springBootContainer
+```
+
+You can watch the application start by monitoring the logs:
+```
+docker logs springBootContainer
+```
+{: codeblock}
+
+
+
+After the application starts, run the following command to access the application:
+
+```
+curl http://localhost:9080/hello
+```
+{: codeblock}
+
 <br/>
-### **Starting the Pact Broker**
+### **Tearing down the Docker container**
 
-Run the following command to start the Pact Broker:
-```
-docker-compose -f "pact-broker/docker-compose.yml" up -d --build
-```
-{: codeblock}
-
-
-When the Pact Broker is running, you'll see the following output:
-```
-Creating pact-broker_postgres_1 ... done
-Creating pact-broker_pact-broker_1 ... done
-```
-
-
-Confirm that the Pact Broker is working.
-Select **Launch Application** from the menu of the IDE and type **9292** to specify the port number for the Pact Broker service. 
-Click the **OK** button. 
-The Pact Broker can also be found at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
-where **accountname** is your account name.
-
-Confirm that you can access the user interface of the Pact Broker.
-The Pact Broker interface is similar to the following image:
-
-![Pact Broker webpage](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-webpage.png)
-
-
-
-
-
-You can refer to the [official Pact Broker documentation](https://docs.pact.io/pact_broker/docker_images/pactfoundation)
-for more information about the components of the Docker Compose file.
-
-# **Implementing pact testing in the inventory service**
-
-Navigate to the **start/inventory** directory to begin.
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+To stop and remove your container, run the following commands:
 
 ```
-mvn liberty:dev
+docker stop springBootContainer
+docker rm springBootContainer
 ```
 {: codeblock}
 
 
-After you see the following message, your application server in dev mode is ready:
+# **Running the application on Open Liberty**
 
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
+Next, you will run the Spring Boot application locally on Open Liberty by updating the **pom.xml** file.
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
+The **pom.xml** was created for you in this directory. 
 
-
-
-Create the InventoryPactIT class file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java
-
-
-
-
-```
-
-package io.openliberty.guides.inventory;
-
-import au.com.dius.pact.consumer.dsl.PactDslJsonArray;
-import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
-import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
-import au.com.dius.pact.consumer.junit.PactProviderRule;
-import au.com.dius.pact.consumer.junit.PactVerification;
-import au.com.dius.pact.core.model.RequestResponsePact;
-import au.com.dius.pact.core.model.annotations.Pact;
-
-import org.junit.Rule;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-
-import java.util.HashMap;
-import java.util.Map;
-
-public class InventoryPactIT {
-  @Rule
-  public PactProviderRule mockProvider = new PactProviderRule("System", this);
-
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactServer(PactDslWithProvider builder) {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("Content-Type", "application/json");
-
-    return builder
-      .given("wlp.server.name is defaultServer")
-      .uponReceiving("a request for server name")
-      .path("/system/properties/key/wlp.server.name")
-      .method("GET")
-      .willRespondWith()
-      .headers(headers)
-      .status(200)
-      .body(new PactDslJsonArray().object()
-        .stringValue("wlp.server.name", "defaultServer"))
-      .toPact();
-  }
-
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactEdition(PactDslWithProvider builder) {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("Content-Type", "application/json");
-
-    return builder
-      .given("Default directory is true")
-      .uponReceiving("a request to check for the default directory")
-      .path("/system/properties/key/wlp.user.dir.isDefault")
-      .method("GET")
-      .willRespondWith()
-      .headers(headers)
-      .status(200)
-      .body(new PactDslJsonArray().object()
-        .stringValue("wlp.user.dir.isDefault", "true"))
-      .toPact();
-  }
-
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactVersion(PactDslWithProvider builder) {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("Content-Type", "application/json");
-
-    return builder
-      .given("version is 1.1")
-      .uponReceiving("a request for the version")
-      .path("/system/properties/version")
-      .method("GET")
-      .willRespondWith()
-      .headers(headers)
-      .status(200)
-      .body(new PactDslJsonBody()
-        .decimalType("system.properties.version", 1.1))
-      .toPact();
-  }
-
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactInvalid(PactDslWithProvider builder) {
-
-    return builder
-      .given("invalid property")
-      .uponReceiving("a request with an invalid property")
-      .path("/system/properties/invalidProperty")
-      .method("GET")
-      .willRespondWith()
-      .status(404)
-      .toPact();
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactServer")
-  public void runServerTest() {
-    String serverName = new Inventory(mockProvider.getUrl()).getServerName();
-    assertEquals("Expected server name does not match",
-      "[{\"wlp.server.name\":\"defaultServer\"}]", serverName);
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactEdition")
-  public void runEditionTest() {
-    String edition = new Inventory(mockProvider.getUrl()).getEdition();
-    assertEquals("Expected edition does not match",
-      "[{\"wlp.user.dir.isDefault\":\"true\"}]", edition);
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactVersion")
-  public void runVersionTest() {
-    String version = new Inventory(mockProvider.getUrl()).getVersion();
-    assertEquals("Expected version does not match",
-      "{\"system.properties.version\":1.1}", version);
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactInvalid")
-  public void runInvalidTest() {
-    String invalid = new Inventory(mockProvider.getUrl()).getInvalidProperty();
-    assertEquals("Expected invalid property response does not match",
-      "", invalid);
-  }
-}
-```
-{: codeblock}
-
-
-The **InventoryPactIT** class contains a **PactProviderRule**
-mock provider that mimics the HTTP responses from the **system** microservice.
-The **@Pact** annotation takes the name of the microservice as a parameter,
-which makes it easier to differentiate microservices from each other when you have multiple applications.
-
-The **createPactServer()** method defines the minimal expected responsezfor a specific endpoint, which is known as an interaction.
-For each interaction, the expected request and the response are registered with the mock service by using the
-**@PactVerification** annotation.
-
-The test sends a real request with the **getUrl()** method of the mock provider.
-The mock provider compares the actual request with the expected request and confirms whether the comparison is successful.
-Finally, the **assertEquals()** method confirms that the response is correct.
-
-Replace the inventory Maven project file.
+Update the **Maven POM** file.
 
 > From the menu of the IDE, select 
-> **File** > **Open** > guide-contract-testing/start/inventory/pom.xml
+> **File** > **Open** > guide-spring-boot/start/pom.xml
 
 
 
 
 ```
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-    <modelVersion>4.0.0</modelVersion>
+  <groupId>org.springframework</groupId>
+  <artifactId>guide-spring-boot</artifactId>
+  <version>0.1.0</version>
 
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>inventory</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.4.5</version>
+  </parent>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <liberty.var.default.http.port>9081</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-    </properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <!-- tag::tests[] -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
+      <scope>test</scope>
+      <exclusions>
+          <exclusion>
+              <groupId>org.hamcrest</groupId>
+              <artifactId>hamcrest-core</artifactId>
+          </exclusion>
+      </exclusions>
+    </dependency>
+  </dependencies>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>4.0.1</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>8.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- tag::pactJunit[] -->
-        <dependency>
-            <groupId>au.com.dius</groupId>
-            <artifactId>pact-jvm-consumer-junit</artifactId>
-            <version>4.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.30</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-rs-client</artifactId>
-            <version>3.4.3</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+  <properties>
+    <java.version>1.8</java.version>
+  </properties>
 
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>au.com.dius.pact.provider</groupId>
-                <artifactId>maven</artifactId>
-                <version>4.1.21</version>
-                <configuration>
-                    <serviceProviders>
-                        <serviceProvider>
-                            <name>System</name>
-                            <protocol>http</protocol>
-                            <host>localhost</host>
-                            <port>9080</port>
-                            <path>/</path>
-                            <pactFileDirectory>target/pacts</pactFileDirectory>
-                        </serviceProvider>
-                    </serviceProviders>
-                    <projectVersion>${project.version}</projectVersion>
-                    <skipPactPublish>false</skipPactPublish>
-                    <pactBrokerUrl>http://localhost:9292</pactBrokerUrl>
-                    <tags>
-                        <tag>open-liberty-pact</tag>
-                    </tags>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.1</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.3.4</version>
-            </plugin>
-        </plugins>
-    </build>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>2.22.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- tag::libertyMavenPlugin[] -->
+      <plugin>
+        <groupId>io.openliberty.tools</groupId>
+        <artifactId>liberty-maven-plugin</artifactId>
+        <version>3.3.4</version>
+        <configuration>
+          <appsDirectory>apps</appsDirectory>
+          <!-- tag::installAppPackages[] -->
+          <installAppPackages>spring-boot-project</installAppPackages>
+          <!-- tag::include[] -->
+        </configuration>
+        <executions>
+          <execution>
+            <id>package-server</id>
+            <phase>package</phase>
+            <goals>
+              <goal>create</goal>
+              <goal>install-feature</goal>
+              <goal>deploy</goal>
+              <goal>package</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- End of Liberty Maven plugin -->
+
+    </plugins>
+  </build>
 </project>
 ```
 {: codeblock}
 
 
-The Pact framework provides a **Maven** plugin that can be added to the build section of the **pom.xml** file.
-The **serviceProvider** element defines the endpoint URL for the
-**system** microservice and the **pactFileDirectory** directory where you want to store the pact file.
-The **pact-jvm-consumer-junit** dependency provides the base test class that you can use with JUnit to build unit tests.
-
-After you create the **InventoryPactIT.java** class and replace the **pom.xml** file, Open Liberty automatically reloads its configuration.
-
-The contract between the **inventory** and **system** microservices is known as a pact.
-Each pact is a collection of interactions.
-In this guide, those interactions are defined in the **InventoryPactIT** class.
-
-Press the **enter/return** key to run the tests and generate the pact file.
-
-When completed, you'll see a similar output to the following example:
-```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running io.openliberty.guides.inventory.InventoryPactIT
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.631 s - in io.openliberty.guides.inventory.InventoryPactIT
-[INFO]
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-```
-
-When you integrate the Pact framework in a CI/CD build pipeline,
-you can use the **mvn failsafe:integration-test** goal to generate the pact file.
-The Maven failsafe plug-in provides a lifecycle phase for running integration tests that run after unit tests.
-By default, it looks for classes that are suffixed with **IT**, which stands for Integration Test.
-You can refer to the [Maven failsafe plug-in documentation](https://maven.apache.org/surefire/maven-failsafe-plugin/) for more information.
-
-The generated pact file is named **Inventory-System.json** and is located in the **inventory/target/pacts** directory.
-The pact file contains the defined interactions in JSON format:
-
-```
-{
-...
-"interactions": [
-{
-      "description": "a request for server name",
-      "request": {
-        "method": "GET",
-        "path": "/system/properties/key/wlp.server.name"
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "body": [
-          {
-            "wlp.server.name": "defaultServer"
-          }
-        ]
-      },
-      "providerStates": [
-        {
-          "name": "wlp.server.name is defaultServer"
-        }
-      ]
-    }
-...
-  ]
-}
-```
-
-Open a new command-line session and navigate to the **start/inventory** directory.
-Publish the generated pact file to the Pact Broker by running the following command:
-```
-mvn pact:publish
-```
-{: codeblock}
 
 
-After the file is published, you'll see a similar output to the following example:
-```
---- maven:4.1.21:publish (default-cli) @ inventory ---
-Publishing 'Inventory-System.json' with tags 'open-liberty-pact' ... OK
-```
+The **liberty-maven-plugin** downloads and installs Open Liberty to the **target/liberty** directory.
+The **`<installAppPackages/>`** configuration tag in the
+**pom.xml** file typically takes in the following parameters: **dependencies**, **project**, or **all**.
+The default value is **dependencies**, but to install the Spring Boot application to Open Liberty,
+the value must be **spring-boot-project**.
+This value allows Maven to package, thin, and copy the **guide-spring-boot-0.1.0.jar** application
+to the Open Liberty runtime **applications** directory and shared library directory.
 
-# **Verifying the pact in the Pact Broker**
+To run the Spring Boot application, the Open Liberty server needs to be correctly configured.
+By default, the **liberty-maven-plugin** picks up the server configuration file from the **src/main/liberty/config** directory.
 
-
-Refresh the Pact Broker at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
-where **accountname** is your account name.
-The last verified column doesn't show a timestamp because the `system` microservice hasn't verified the pact yet.
-
-![Pact Broker webpage for new entry](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-webpage-refresh.png)
-
-
-
-
-
-
-You can see detailed insights about each interaction by going to the
-**`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai/pacts/provider/System/consumer/Inventory/latest`** URL, 
-where **accountname** is your account name.
-The insights look similar to the following image:
-
-![Pact Broker webpage for Interactions](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-interactions.png)
-
-
-# **Implementing pact testing in the system service**
-
-
-
-
-Navigate to the **start/system** directory.
-
-Open another command-line session to start Open Liberty in dev mode for the **system** microservice:
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-
-Create the SystemBrokerIT class file.
+Create the **server.xml**.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java
+touch /home/project/guide-spring-boot/start/src/main/liberty/config/server.xml
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-spring-boot/start/src/main/liberty/config/server.xml
 
 
 
 
 ```
-package it.io.openliberty.guides.system;
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="new server">
 
-import au.com.dius.pact.provider.junit5.HttpTestTarget;
-import au.com.dius.pact.provider.junit5.PactVerificationContext;
-import au.com.dius.pact.provider.junit5.PactVerificationInvocationContextProvider;
-import au.com.dius.pact.provider.junitsupport.Consumer;
-import au.com.dius.pact.provider.junitsupport.Provider;
-import au.com.dius.pact.provider.junitsupport.State;
-import au.com.dius.pact.provider.junitsupport.loader.PactBroker;
-import au.com.dius.pact.provider.junitsupport.loader.VersionSelector;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestTemplate;
-import org.junit.jupiter.api.extension.ExtendWith;
+    <featureManager>
+        <feature>servlet-4.0</feature>
+    <!-- tag::springboot[] -->
+        <feature>springBoot-2.0</feature>
+    </featureManager>
 
-@Provider("System")
-@Consumer("Inventory")
-@PactBroker(
-  host = "localhost",
-  port = "9292",
-  consumerVersionSelectors = {
-    @VersionSelector(tag = "open-liberty-pact")
-  })
-public class SystemBrokerIT {
-  @TestTemplate
-  @ExtendWith(PactVerificationInvocationContextProvider.class)
-  void pactVerificationTestTemplate(PactVerificationContext context) {
-    context.verifyInteraction();
-  }
+    <httpEndpoint id="defaultHttpEndpoint"
+                  host="*"
+                  httpPort="9080"
+                  httpsPort="9443" />
 
-  @BeforeAll
-  static void enablePublishingPact() {
-    System.setProperty("pact.verifier.publishResults", "true");
-  }
+    <springBootApplication id="guide-spring-boot" 
+                           location="thin-guide-spring-boot-0.1.0.jar"
+                           name="guide-spring-boot" />
 
-  @BeforeEach
-  void before(PactVerificationContext context) {
-    int port = Integer.parseInt(System.getProperty("http.port"));
-    context.setTarget(new HttpTestTarget("localhost", port));
-  }
-
-  @State("wlp.server.name is defaultServer")
-  public void validServerName() {
-  }
-
-  @State("Default directory is true")
-  public void validEdition() {
-  }
-
-  @State("version is 1.1")
-  public void validVersion() {
-  }
-
-  @State("invalid property")
-  public void invalidProperty() {
-  }
-}
+</server>
 ```
 {: codeblock}
 
 
-The connection information for the Pact Broker is provided with the **@PactBroker** annotation.
-The dependency also provides a JUnit5 Invocation Context Provider with the
-**pactVerificationTestTemplate()** method to generate a test for each of the interactions.
+The **servlet** and **springBoot** features
+are required for the Liberty server to run the Spring Boot application.
+The application port is specified as **9080** and
+the application is configured as a **`<springBootApplication />`**.
 
-The **pact.verifier.publishResults** property is set to **true** so
-that the results are sent to the Pact Broker after the tests are completed.
 
-The test target is defined in the **PactVerificationContext** context
-to point to the running endpoint of the **system** microservice.
+If you didn't build the Spring Boot application, run the **package** goal:
 
-The **@State** annotation must match the **given()** parameter
-that was provided in the **inventory** test class so that Pact can identify which test case to run against which endpoint.
 
-Replace the system Maven project file.
+```
+./mvnw package
+```
+{: codeblock}
+
+
+
+Next, run the **liberty:run** goal.
+This goal creates the Open Liberty server, installs required features,
+deploys the Spring Boot application to the Open Liberty server, and starts the application.
+
+
+```
+./mvnw liberty:run
+```
+{: codeblock}
+
+
+
+
+In another command line sesssion, run the following command to access the application:
+
+```
+curl http://localhost:9080/hello
+```
+{: codeblock}
+
+After you finish exploring the application, press **CTRL+C** to stop the Open Liberty server.
+Alternatively, you can run the **liberty:stop** goal from the **start** directory in a separate command-line session:
+
+
+```
+./mvnw liberty:stop
+```
+{: codeblock}
+
+
+
+# **Packaging the application embedded with Open Liberty**
+
+You can update the **pom.xml** file to bind more Open Liberty Maven goals to the package phase.
+Binding these goals to the package phase allows the Maven **package** goal to build a Spring Boot application that is embedded with Open Liberty.
+
+Update the Maven POM file.
 
 > From the menu of the IDE, select 
-> **File** > **Open** > guide-contract-testing/start/system/pom.xml
+> **File** > **Open** > guide-spring-boot/start/pom.xml
 
 
 
 
 ```
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>system</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
+  <groupId>org.springframework</groupId>
+  <artifactId>guide-spring-boot</artifactId>
+  <version>0.1.0</version>
 
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-        <debugPort>8787</debugPort>
-    </properties>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.4.5</version>
+  </parent>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>4.0.1</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>8.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>au.com.dius.pact.provider</groupId>
-            <artifactId>junit5</artifactId>
-            <version>4.1.21</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.30</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-rs-client</artifactId>
-            <version>3.4.3</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <!-- tag::tests[] -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
+      <scope>test</scope>
+      <exclusions>
+          <exclusion>
+              <groupId>org.hamcrest</groupId>
+              <artifactId>hamcrest-core</artifactId>
+          </exclusion>
+      </exclusions>
+    </dependency>
+  </dependencies>
 
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <!-- tag::libertyMavenPlugin[] -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.3.4</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.1</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M5</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
-                        <pact.provider.version>${project.version}</pact.provider.version>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+  <properties>
+    <java.version>1.8</java.version>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>2.22.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- tag::libertyMavenPlugin[] -->
+      <plugin>
+        <groupId>io.openliberty.tools</groupId>
+        <artifactId>liberty-maven-plugin</artifactId>
+        <version>3.3.4</version>
+        <configuration>
+          <appsDirectory>apps</appsDirectory>
+          <!-- tag::installAppPackages[] -->
+          <installAppPackages>spring-boot-project</installAppPackages>
+          <!-- tag::include[] -->
+          <include>minify,runnable</include>
+          <!-- tag::packageFile[] -->
+          <packageName>GSSpringBootApp</packageName>
+        </configuration>
+        <executions>
+          <execution>
+            <id>package-server</id>
+            <phase>package</phase>
+            <goals>
+              <goal>create</goal>
+              <goal>install-feature</goal>
+              <goal>deploy</goal>
+              <goal>package</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- End of Liberty Maven plugin -->
+
+    </plugins>
+  </build>
 </project>
 ```
 {: codeblock}
 
 
-The **system** microservice uses the **junit5** pact provider dependency
-to connect to the Pact Broker and verify the pact file.
-Ideally, in a CI/CD build pipeline, the **pact.provider.version** element is
-dynamically set to the build number so that you can identify where a breaking change is introduced.
+and the **`<executions/>`** tag to the **pom.xml** file. 
+ 
 
-After you create the **SystemBrokerIT.java** class and replace the **pom.xml** file,
-Open Liberty automatically reloads its configuration.
+The **`<include/>`** configuration tag specifies the **minify, runnable** values.
+The **runnable** value allows the application to be generated as a runnable JAR file.
+The **minify** value packages only what you need from your configuration files without bundling the entire Open Liberty install.
 
-# **Verifying the contract**
+The **`<packageName/>`** configuration tag specifies
+that the application is generated as a **GSSpringBootApp.jar** file.
 
-In the command-line session where you started the **system** microservice,
-press the **enter/return** key to run the tests to verify the pact file.
-When you integrate the Pact framework into a CI/CD build pipeline,
-you can use the **mvn failsafe:integration-test** goal to verify the pact file from the Pact Broker.
+The **`<executions/>`** tag specifies the required
+Open Liberty Maven goals to generate the application that is embedded with Open Liberty. 
 
-The tests fail with the following errors:
-```
-[ERROR] Failures: 
-[ERROR]   SystemBrokerIT.pactVerificationTestTemplate:28 Pact between Inventory (1.0-SNAPSHOT) and System - Upon a request for the version 
-Failures:
-
-1) Verifying a pact between Inventory and System - a request for the version has a matching body
-
-    1.1) body: $.system.properties.version Expected "1.1" (String) to be a decimal number
-
-
-[INFO] 
-[ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0
-```
-
-The test from the **system** microservice fails because the **inventory** microservice was expecting a decimal,
-**1.1**, for the value of the **system.properties.version** property, but it received a string, **"1.1"**.
-
-Correct the value of the **system.properties.version** property to a decimal.
-Replace the SystemResource class file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
-
-
+Next, run the Maven **package** goal:
 
 
 ```
-package io.openliberty.guides.system;
-
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.core.Response;
-
-import javax.enterprise.context.RequestScoped;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
-import org.eclipse.microprofile.metrics.annotation.Counted;
-import org.eclipse.microprofile.metrics.annotation.Timed;
-
-@RequestScoped
-@Path("/properties")
-public class SystemResource {
-
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  @Timed(name = "getPropertiesTime",
-    description = "Time needed to get the JVM system properties")
-  @Counted(absolute = true,
-    description = "Number of times the JVM system properties are requested")
-
-  public Response getProperties() {
-    return Response.ok(System.getProperties()).build();
-  }
-
-  @GET
-  @Path("/key/{key}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response getPropertiesByKey(@PathParam("key") String key) {
-    try {
-      JsonArray response = Json.createArrayBuilder()
-        .add(Json.createObjectBuilder()
-          .add(key, System.getProperties().get(key).toString()))
-        .build();
-      return Response.ok(response, MediaType.APPLICATION_JSON).build();
-    } catch (java.lang.NullPointerException exception) {
-        return Response.status(Response.Status.NOT_FOUND).build();
-    }
-  }
-
-  @GET
-  @Path("/version")
-  @Produces(MediaType.APPLICATION_JSON)
-  public JsonObject getVersion() {
-    JsonObject response = Json.createObjectBuilder().add("system.properties.version", 1.1)
-      .build();
-    return response;
-  }
-}
+./mvnw package
 ```
 {: codeblock}
 
 
 
-Press the **enter/return** key to rerun the tests from the command-line session where you started the **system** microservice.
+Run the repackaged Spring Boot application. This JAR file was defined previously in the **pom.xml** file.
 
-If the tests are successful, you'll see a similar output to the following example:
 ```
-...
-Verifying a pact between pact between Inventory (1.0-SNAPSHOT) and System
-
-  Notices:
-    1) The pact at http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX is being verified because it matches the following configured selection criterion: latest pact for a consumer version tagged 'open-liberty-pact'
-
-  [from Pact Broker http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX]
-  Given version is 1.1
-  a request for the version
-    returns a response which
-      has status code 200 (OK)
-      has a matching body (OK)
-[main] INFO au.com.dius.pact.provider.DefaultVerificationReporter - Published verification result of 'au.com.dius.pact.core.pactbroker.TestResult$Ok@4d84dfe7' for consumer 'Consumer(name=Inventory)'
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.835 s - in it.io.openliberty.guides.system.SystemBrokerIT
-...
-```
-
-
-After the tests are complete, refresh the Pact Broker at the
-**`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
-where **accountname** is your account name.
-Confirm that the last verified column now shows a timestamp:
-
-![Pact Broker webpage for verified](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-webpage-verified.png)
-
-
-
-
-
-The pact file that's created by the **inventory** microservice was successfully verified by the **system** microservice through the Pact Broker.
-This ensures that responses from the **system** microservice meet the expectations of the **inventory** microservice.
-
-# **Tearing down the environment**
-
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line sessions
-where you ran the servers for the **system** and **inventory** microservices,
-or by typing **q** and then pressing the **enter/return** key.
-
-Navigate back to the **/guide-contract-testing** directory and run the following commands to remove the Pact Broker:
-```
-docker-compose -f "pact-broker/docker-compose.yml" down
-docker rmi postgres:12
-docker rmi pactfoundation/pact-broker:2.62.0.0
-docker volume rm pact-broker_postgres-volume
+java -jar target/GSSpringBootApp.jar
 ```
 {: codeblock}
+
+
+
+In another command line sesssion, run the following command to access the application:
+
+```
+curl http://localhost:9080/hello
+```
+{: codeblock}
+
+When you need to stop the application, press **CTRL+C**.
 
 
 # **Summary**
 
 ## **Nice Work!**
 
-You implemented contract testing in Java microservices by using Pact and verified the contract with the Pact Broker.
+You just ran a basic Spring Boot application with Open Liberty.
 
 
 
@@ -876,11 +633,11 @@ You implemented contract testing in Java microservices by using Pact and verifie
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-contract-testing** project by running the following commands:
+Delete the **guide-spring-boot** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-contract-testing
+rm -fr guide-spring-boot
 ```
 {: codeblock}
 
@@ -889,7 +646,7 @@ rm -fr guide-contract-testing
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20consumer-driven%20contracts&guide-id=cloud-hosted-guide-contract-testing)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Containerizing,%20packaging,%20and%20running%20a%20Spring%20Boot%20application&guide-id=cloud-hosted-guide-spring-boot)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -897,20 +654,16 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-contract-testing/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-contract-testing/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-spring-boot/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-spring-boot/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-* [Testing microservices with the Arquillian managed container](https://openliberty.io/guides/arquillian-managed.html)
-
-**Learn more about the Pact framework**
-* [Go to the Pact website.](https://pact.io/)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
 
 
 <br/>
