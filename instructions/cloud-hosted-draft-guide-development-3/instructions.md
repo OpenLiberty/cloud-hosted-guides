@@ -582,7 +582,7 @@ Update the Maven POM file.
 
 
 and the **executions** element to the **pom.xml** file. 
- 
+
 
 The **include** configuration element specifies the **minify, runnable** values.
 The **runnable** value allows the application to be generated as a runnable JAR file.
@@ -614,7 +614,6 @@ java -jar target/GSSpringBootApp.jar
 
 
 In another command line sesssion, run the following command to access the application:
-
 ```
 curl http://localhost:9080/hello
 ```
