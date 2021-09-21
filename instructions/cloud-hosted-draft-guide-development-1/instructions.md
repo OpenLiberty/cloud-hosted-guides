@@ -396,6 +396,13 @@ docker pull openliberty/open-liberty:full-java11-openj9-ubi
 {: codeblock}
 
 
+In this IBM cloud environment, you need to run the following command to update the **index.js** file:
+[role='command']
+```
+BFF_URL=http://${USERNAME}-9084.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+sed -i 's=localhost:9084=$BFF_URL=g' frontend/src/main/webapp/js/index.js
+```
+
 Run the following commands to containerize the **frontend**, **bff**, and **system** services:
 
 ```
@@ -421,14 +428,22 @@ also creates containers for Kafka, Zookeeper, the **frontend** service, the **bf
 instances of the **system** service.
 
 
-Once your application is up and running, use the following `curl` 
-to check out your service.
+The application might take some time to get ready.
+Run the following command to confirm that the **bff** microservice is up and running:
+[role='command']
 ```
-curl http://localhost:9080
+curl http://localhost:9084/health
 ``` 
-The application might take some time to get ready. The latest version of most
-modern web browsers supports Server-Sent Events. The exception is
-Internet Explorer, which does not support SSE.
+
+Once your application is up and running, use the following command to get the url and 
+visit it by your browser and check out your service.
+[role='command']
+```
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+``` 
+
+The latest version of most modern web browsers supports Server-Sent Events.
+The exception is Internet Explorer, which does not support SSE. 
 When you visit the URL, look for a table similar to the following example:
 
 ![System table](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/master/assets/system_table.png)
