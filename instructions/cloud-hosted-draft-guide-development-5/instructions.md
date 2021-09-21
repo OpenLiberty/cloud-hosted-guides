@@ -161,15 +161,14 @@ Replace the server configuration file.
 
 The CORS configuration contains the following attributes:
 
-
-|===
+[options="header"]
 | *Configuration Attribute* | *Value*
-|`domain` | The endpoint to be configured for CORS requests. The value is set to `/configurations/simple`.
-|`allowedOrigins` | Origins that are allowed to access the endpoint. The value is set to `openliberty.io`.
-|`allowedMethods` | HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to `GET`.
-|`allowCredentials` | A boolean that indicates whether the user credentials can be included in the request. The value is set to `true`.
-|`exposeHeaders` | Headers that are safe to expose to clients. The value is set to `MyHeader`.
-|===
+| ---| ---
+|**domain** | The endpoint to be configured for CORS requests. The value is set to **/configurations/simple**.
+|**allowedOrigins** | Origins that are allowed to access the endpoint. The value is set to **openliberty.io**.
+|**allowedMethods** | HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to **GET**.
+|**allowCredentials** | A boolean that indicates whether the user credentials can be included in the request. The value is set to **true**.
+|**exposeHeaders** | Headers that are safe to expose to clients. The value is set to **MyHeader**.
 
 Save the changes to the **server.xml** file. The **/configurations/simple** endpoint is now ready to be
 tested with a simple CORS request.
@@ -249,21 +248,19 @@ The **testSimpleCorsRequest** test simulates a client. It first sends a simple C
 
 The request is a **GET** HTTP request with the following header:
 
-
-|===
+[options="header"]
 | *Request Header* | *Request Value*
-| Origin | The value is set to `openliberty.io`. Indicates that the request originates from `openliberty.io`.
-|===
+| ---| ---
+| Origin | The value is set to **openliberty.io**. Indicates that the request originates from **openliberty.io**.
 
 Expect the following response headers and values if the simple CORS request is successful, and the server is correctly configured:
 
-
-|===
+[options="header"]
 | *Response Header* | *Response Value*
-| Access-Control-Allow-Origin | The expected value is `openliberty.io`. Indicates whether a resource can be shared based on the returning value of the Origin request header `openliberty.io`.
-| Access-Control-Allow-Credentials | The expected value is `true`. Indicates that the user credentials can be included in the request.
-| Access-Control-Expose-Headers |  The expected value is `MyHeader`. Indicates that the header `MyHeader` is safe to expose.
-|===
+| ---| ---
+| Access-Control-Allow-Origin | The expected value is **openliberty.io**. Indicates whether a resource can be shared based on the returning value of the Origin request header **openliberty.io**.
+| Access-Control-Allow-Credentials | The expected value is **true**. Indicates that the user credentials can be included in the request.
+| Access-Control-Expose-Headers |  The expected value is **MyHeader**. Indicates that the header **MyHeader** is safe to expose.
 
 Since you started Open Liberty in development mode at the start of the guide, 
 press the **enter/return** key to run the tests.
@@ -335,14 +332,13 @@ Replace the server configuration file.
 
 The preflight CORS configuration has different values than the simple CORS configuration.
 
-
-|===
+[options="header"]
 | *Configuration Attribute* | *Value*
-| `domain`|The value is set to `/configurations/preflight` because the `domain` is a different endpoint.
-| `allowedOrigins`| Origins that are allowed to access the endpoint. The value is set to an asterisk (*) to allow requests from all origins.
-| `allowedMethods`| HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to `OPTIONS, DELETE`.
-| `allowCredentials`| A boolean that indicates whether the user credentials can be included in the request. The value is set to `true`.
-|===
+| ---| ---
+| **domain**|The value is set to **/configurations/preflight** because the **domain** is a different endpoint.
+| **allowedOrigins**| Origins that are allowed to access the endpoint. The value is set to an asterisk (*) to allow requests from all origins.
+| **allowedMethods**| HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to **OPTIONS, DELETE**.
+| **allowCredentials**| A boolean that indicates whether the user credentials can be included in the request. The value is set to **true**.
 
 The following attributes were added:
 
@@ -435,25 +431,23 @@ Lastly, it prints the response headers for you to inspect.
 
 The request is an **OPTIONS** HTTP request with the following headers:
 
-
-|===
+[options="header"]
 | *Request Header* | *Request Value*
-| Origin | The value is set to `anywebsiteyoulike.com`. Indicates that the request originates from `anywebsiteyoulike.com`.
-| Access-Control-Request-Method | The value is set to `DELETE`. Indicates that the HTTP DELETE method will be used in the actual request.
-| Access-Control-Request-Headers | The value is set to `MyOwnHeader2`. Indicates the header `MyOwnHeader2` will be used in the actual request.
-|===
+| ---| ---
+| Origin | The value is set to **anywebsiteyoulike.com**. Indicates that the request originates from **anywebsiteyoulike.com**.
+| Access-Control-Request-Method | The value is set to **DELETE**. Indicates that the HTTP DELETE method will be used in the actual request.
+| Access-Control-Request-Headers | The value is set to **MyOwnHeader2**. Indicates the header **MyOwnHeader2** will be used in the actual request.
 
 Expect the following response headers and values if the preflight CORS request is successful, and the server is correctly configured:
 
-
-|===
+[options="header"]
 | *Response Header* | *Response Value*
-| Access-Control-Max-Age | The expected value is `10`. Indicates that the preflight request can be cached within `10` seconds.
-| Access-Control-Allow-Origin | The expected value is `anywebsiteyoulike.com`. Indicates whether a resource can be shared based on the returning value of the Origin request header `anywebsiteyoulike.com`.
-| Access-Control-Allow-Methods | The expected value is `OPTIONS, DELETE`. Indicates that HTTP OPTIONS and DELETE methods can be used in the actual request.
-| Access-Control-Allow-Credentials | The expected value is `true`. Indicates that the user credentials can be included in the request.
-| Access-Control-Allow-Headers | The expected value is `MyOwnHeader1, MyOwnHeader2`. Indicates that the header `MyOwnHeader1` and `MyOwnHeader2` are safe to expose.
-|===
+| ---| ---
+| Access-Control-Max-Age | The expected value is **10**. Indicates that the preflight request can be cached within **10** seconds.
+| Access-Control-Allow-Origin | The expected value is **anywebsiteyoulike.com**. Indicates whether a resource can be shared based on the returning value of the Origin request header **anywebsiteyoulike.com**.
+| Access-Control-Allow-Methods | The expected value is **OPTIONS, DELETE**. Indicates that HTTP OPTIONS and DELETE methods can be used in the actual request.
+| Access-Control-Allow-Credentials | The expected value is **true**. Indicates that the user credentials can be included in the request.
+| Access-Control-Allow-Headers | The expected value is **MyOwnHeader1, MyOwnHeader2**. Indicates that the header **MyOwnHeader1** and **MyOwnHeader2** are safe to expose.
 
 The **Access-Control-Allow-Origin** header has a value of **anywebsiteyoulike.com**
 because the server is configured to allow all origins, and the request came with an origin of
