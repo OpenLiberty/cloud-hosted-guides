@@ -76,15 +76,14 @@ Notice that the console output displays a message about the application running 
 ```
 
 
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 Run the following command to access the application:
-
 ```
 curl http://localhost:8080/hello
 ```
 {: codeblock}
 
 The following output is returned:
-
 ```
 Greetings from Spring Boot!
 ```
