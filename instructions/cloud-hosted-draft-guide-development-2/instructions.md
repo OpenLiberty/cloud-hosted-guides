@@ -1,7 +1,7 @@
 
-# **Welcome to the Configuring microservices running in Kubernetes guide!**
+# **Welcome to the Validating constraints with microservices guide!**
 
-Explore how to externalize configuration using MicroProfile Config and configure your microservices using Kubernetes ConfigMaps and Secrets.
+Explore the use of bean validation to validate user input data for
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,23 +10,34 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-
-
+microservices.
 
 # **What you'll learn**
-You will learn how and why to externalize your microservice's configuration.
-Externalized configuration is useful because configuration usually changes depending on your environment.
-You will also learn how to configure the environment by providing required values to your application using Kubernetes.
 
-MicroProfile Config provides useful annotations that you can use to inject configured values into your code.
-These values can come from any configuration source, such as environment variables.
-Using environment variables allows for easier deployment to different environments.
-To learn more about MicroProfile Config,
-read the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide.
+You will learn the basics of writing and testing a microservice that uses bean 
+validation and the new functionality of Bean Validation 2.0. The service uses
+bean validation to validate that the supplied JavaBeans meet the defined 
+constraints.
 
-Furthermore, you'll learn how to set these environment variables with ConfigMaps and Secrets.
-These resources are provided by Kubernetes and act as a data source for your environment variables.
-You can use a ConfigMap or Secret to set environment variables for any number of containers.
+Bean Validation is a Java specification that simplifies data validation and error 
+checking. Bean validation uses a standard way to validate data stored in 
+JavaBeans. Validation can be performed manually or with integration with other 
+specifications and frameworks, such as Contexts and Dependency Injection (CDI), 
+Java Persistence API (JPA), or JavaServer Faces (JSF). To set rules on data, apply 
+constraints by using annotations or XML configuration files. Bean validation 
+provides both built-in constraints and the ability to create custom constraints. 
+Bean validation allows for validation of both JavaBean fields and methods. For 
+method-level validation, both the input parameters and return value can be 
+validated.
+
+Several additional built-in constraints are included in Bean Validation 2.0, 
+which reduces the need for custom validation in common validation scenarios. 
+Some of the new built-in constraints include **@Email**, **@NotBlank**, **@Positive**, 
+and **@Negative**. Also in Bean Validation 2.0, you can now specify constraints 
+on type parameters.
+
+The example microservice uses both field-level and method-level validation as well 
+as several of the built-in constraints and a custom constraint.
 
 
 # **Getting started**
@@ -41,11 +52,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-config.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-bean-validation.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-kubernetes-microprofile-config.git
-cd guide-kubernetes-microprofile-config
+git clone https://github.com/openliberty/guide-bean-validation.git
+cd guide-bean-validation
 ```
 {: codeblock}
 
@@ -55,720 +66,831 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
+<br/>
+### **Try what you'll build**
 
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-# Logging into your cluster
-
-For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
-Get the name of your namespace with the following command:
-
-```
-bx cr namespace-list
-```
-{: codeblock}
-
-Look for output that is similar to the following:
+To try out the application, first go to the **finish** directory and run the following
+Maven goal to build the application and deploy it to Open Liberty:
 
 ```
-Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
-
-Namespace
-sn-labs-yourname
-```
-
-Run the following command to store the namespace name in a variable.
-
-```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-```
-{: codeblock}
-
-Verify that the variable contains your namespace name:
-
-```
-echo $NAMESPACE_NAME
-```
-{: codeblock}
-
-Log in to the registry with the following command:
-```
-bx cr login
+cd finish
+mvn liberty:run
 ```
 {: codeblock}
 
 
-# **Deploying the microservices**
-
-The two microservices you will deploy are called **system** and **inventory**. The **system** microservice
-returns the JVM system properties of the running container. The **inventory** microservice
-adds the properties from the **system** microservice to the inventory. This demonstrates
-how communication can be established between pods inside a cluster.
-To build these applications, navigate to the **start** directory and run the following command.
+After you see the following message, your application server is ready:
 
 ```
-cd start
-mvn clean package
+The defaultServer server is ready to run a smarter planet.
 ```
-{: codeblock}
 
 
-Run the following command to download or update to the latest Open Liberty Docker image:
 
-```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
+To visit the UI, select **Launch Application** from the menu of the IDE, 
+type in **9080** to specify the port number and click the **OK** button. 
+You’re redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`**, 
+where **accountname** is your account name. 
+Click the **interactive UI** link on the welcome page.
 
-
-Next, run the **docker build** commands to build container images for your application:
-```
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-{: codeblock}
-
-
-The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
-The tag for an image describes the specific image version.
-If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
-
-Push your images to the container registry on IBM Cloud with the following commands:
+You see the OpenAPI user interface documenting the REST endpoints used in this guide.
+If you are interested in learning more about OpenAPI,
+read [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html). 
+Expand the `/beanvalidation/validatespacecraft POST request to validate your
+spacecraft bean` section and click *Try it out*.
+Copy the following example input into the text box:
 
 ```
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+{
+  "astronaut": {
+    "name": "Libby",
+    "age": 25,
+    "emailAddress": "libbybot@openliberty.io"
+  },
+  "destinations": {
+    "Mars": 500
+  },
+  "serialNumber": "Liberty0001"
+}
 ```
-{: codeblock}
 
-Update the image names and set the image pull policy to **Always**
-so that the images in your IBM Cloud container registry are used,
-and remove the **nodePort** fields so that the ports can be automatically generated:
+Click **Execute** and you receive the response **No Constraint Violations** because the 
+values specified pass the constraints you will create in this guide. Now try copying
+the following value into the box:
 
 ```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
+{
+  "astronaut": {
+    "name": "Libby",
+    "age": 12,
+    "emailAddress": "libbybot@openliberty.io"
+  },
+  "destinations": {
+    "Mars": 500
+  },
+  "serialNumber": "Liberty0001"
+}
 ```
-{: codeblock}
 
-Run the following command to deploy the necessary Kubernetes resources to serve the applications.
-```
-kubectl apply -f kubernetes.yaml
-```
-{: codeblock}
+This time you receive `Constraint Violation Found: must be greater than or equal
+to 18` as a response because the age specified was under the minimum age of 18. Try 
+other combinations of values to get a feel for the constraints that will be defined 
+in this guide.
 
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
+in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
+from the **finish** directory in another shell session:
 
-When this command finishes, wait for the pods to be in the Ready state.
-Run the following command to view the status of the pods.
 ```
-kubectl get pods
+mvn liberty:stop
 ```
 {: codeblock}
 
 
-When the pods are ready, the output shows **1/1** for READY and **Running** for STATUS.
+# **Applying constraints on the JavaBeans**
+
+Navigate to the **start** directory to begin.
+
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
+deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-6bd97d9bf6-6d2cj     1/1       Running   0          34s
-inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
-```
-
-After the pods are ready, you will make requests to your services.
-
-
-In this IBM cloud environment, you need to set up port forwarding to access the services.
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following commands to set up port forwarding to access the **system** service.
-```
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
-```
-{: codeblock}
-
-Then, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following commands to set up port forwarding to access the **inventory** service.
-```
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
-```
-{: codeblock}
-
-Then use the following commands to access your **system** microservice.
-The `-u` option is used to pass in the username `bob` and the password `bobpwd`.
-```
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u bob:bobpwd | jq
-```
-{: codeblock}
-
-Use the following commands to access your **inventory** microservice.
-```
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
-```
-{: codeblock}
-
-When you're done trying out the microservices, press **CTRL+C** in the command line sessions
-where you ran the `kubectl port-forward` commands to stop the port forwarding.
-
-# **Modifying system microservice**
-
-
-The **system** service is hardcoded to use a single forward slash as the context root.
-The context root is set in the **webApplication**
-element, where the **contextRoot** attribute is specified as **"/"**.
-You'll make the value of the **contextRoot** attribute configurable by
-implementing it as a variable.
-
-Replace the **server.xml** file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml
-
-
-
-
-```
-<server description="Sample Liberty server">
-
-  <featureManager>
-    <feature>jaxrs-2.1</feature>
-    <feature>cdi-2.0</feature>
-    <feature>jsonp-1.1</feature>
-    <feature>mpConfig-2.0</feature>
-    <feature>appSecurity-3.0</feature>
-  </featureManager>
-
-  <variable name="default.http.port" defaultValue="9080"/>
-  <variable name="default.https.port" defaultValue="9443"/>
-  <variable name="system.app.username" defaultValue="bob"/>
-  <variable name="system.app.password" defaultValue="bobpwd"/>
-  <variable name="context.root" defaultValue="/"/>
-
-  <httpEndpoint host="*" httpPort="${default.http.port}" 
-    httpsPort="${default.https.port}" id="defaultHttpEndpoint" />
-
-  <webApplication location="system.war" contextRoot="${context.root}"/>
-
-  <basicRegistry id="basic" realm="BasicRegistry">
-    <user name="${system.app.username}" password="${system.app.password}" />
-  </basicRegistry>
-
-</server>
+mvn liberty:dev
 ```
 {: codeblock}
 
 
-The **contextRoot** attribute in the **webApplication**
-element now gets its value from the **context.root** variable.
-To find a value for the **context.root** variable,
-Open Liberty looks for the following environment variables, in order:
+After you see the following message, your application server in dev mode is ready:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
+or open the project in your editor.
+
+First, create the JavaBeans to be constrained. 
+Create the **Astronaut** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Astronaut.java
+```
+{: codeblock}
 
 
-* `context.root`
-* `context_root`
-* `CONTEXT_ROOT`
-
-# **Modifying inventory microservice**
-
-The **inventory** service is hardcoded to use **bob** and **bobpwd** as the credentials to authenticate against the **system** service.
-You'll make these credentials configurable. 
-
-Replace the **SystemClient** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Astronaut.java
 
 
 
 
 ```
-package io.openliberty.guides.inventory.client;
+package io.openliberty.guides.beanvalidation;
 
-import java.net.URI;
-import java.util.Base64;
-import java.util.Properties;
+import java.io.Serializable;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Email;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
+public class Astronaut implements Serializable {
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+    private static final long serialVersionUID = 1L;
+    
+    @NotBlank
+    private String name;
 
-@RequestScoped
-public class SystemClient {
+    @Min(18)
+    @Max(100)
+    private Integer age;
 
-  private final String SYSTEM_PROPERTIES = "/system/properties";
-  private final String PROTOCOL = "http";
+    @Email
+    private String emailAddress;
 
-  @Inject
-  @ConfigProperty(name = "CONTEXT_ROOT", defaultValue = "")
-  String CONTEXT_ROOT;
+    public Astronaut() {}
 
-  @Inject
-  @ConfigProperty(name = "default.http.port")
-  String DEFAULT_PORT;
-
-  @Inject
-  @ConfigProperty(name = "SYSTEM_APP_USERNAME")
-  private String username;
-
-  @Inject
-  @ConfigProperty(name = "SYSTEM_APP_PASSWORD")
-  private String password;
-
-  public Properties getProperties(String hostname) {
-    String url = buildUrl(PROTOCOL,
-                          hostname,
-                          Integer.valueOf(DEFAULT_PORT),
-                          CONTEXT_ROOT + SYSTEM_PROPERTIES);
-    Builder clientBuilder = buildClientBuilder(url);
-    return getPropertiesHelper(clientBuilder);
-  }
-
-  /**
-   * Builds the URI string to the system service for a particular host.
-   * @param protocol
-   *          - http or https.
-   * @param host
-   *          - name of host.
-   * @param port
-   *          - port number.
-   * @param path
-   *          - Note that the path needs to start with a slash!!!
-   * @return String representation of the URI to the system properties service.
-   */
-  protected String buildUrl(String protocol, String host, int port, String path) {
-    try {
-      URI uri = new URI(protocol, null, host, port, path, null, null);
-      return uri.toString();
-    } catch (Exception e) {
-      System.err.println("Exception thrown while building the URL: " + e.getMessage());
-      return null;
+    public String getName() {
+        return name;
     }
-  }
 
-  protected Builder buildClientBuilder(String urlString) {
-    try {
-      Client client = ClientBuilder.newClient();
-      Builder builder = client.target(urlString).request();
-      return builder
-        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, getAuthHeader());
-    } catch (Exception e) {
-      System.err.println("Exception thrown while building the client: "
-                         + e.getMessage());
-      return null;
+    public Integer getAge() {
+        return age;
     }
-  }
 
-  protected Properties getPropertiesHelper(Builder builder) {
-    try {
-      Response response = builder.get();
-      if (response.getStatus() == Status.OK.getStatusCode()) {
-        return response.readEntity(Properties.class);
-      } else {
-        System.err.println("Response Status is not OK.");
-      }
-    } catch (RuntimeException e) {
-      System.err.println("Runtime exception: " + e.getMessage());
-    } catch (Exception e) {
-      System.err.println("Exception thrown while invoking the request: "
-                         + e.getMessage());
+    public String getEmailAddress() {
+        return emailAddress;
     }
-    return null;
-  }
 
-  private String getAuthHeader() {
-    String usernamePassword = username + ":" + password;
-    String encoded = Base64.getEncoder().encodeToString(usernamePassword.getBytes());
-    return "Basic " + encoded;
-  }
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public void setEmailAddress(String emailAddress) {
+        this.emailAddress = emailAddress;
+    }
 }
 ```
 {: codeblock}
 
 
 
-The changes introduced here use MicroProfile Config and CDI to inject the value of the
-environment variables **`SYSTEM_APP_USERNAME`** and
-**`SYSTEM_APP_PASSWORD`** into the **SystemClient** class.
+The bean stores the attributes of an astronaut, **name**, **age**, 
+and **emailAddress**, and provides getters and setters to access and set 
+the values.
 
+The **Astronaut** class has the following constraints applied:
 
-# **Creating a ConfigMap and Secret**
+* The astronaut needs to have a name. Bean Validation 2.0 provides a built-in 
+**@NotBlank** constraint, which ensures the value is not null and contains 
+one character that isn't a blank space. The annotation constrains the **name** field.
 
-Several options exist to configure an environment variable in a Docker container.
-You can set it directly in the **Dockerfile** with the **ENV** command.
-You can also set it in your **kubernetes.yaml** file by specifying a
-name and a value for the environment variable that you want to set for a specific container.
-With these options in mind, you're going to use a ConfigMap and Secret to set these values.
-These are resources provided by Kubernetes as a way to provide configuration values to your containers.
-A benefit is that they can be reused across many different containers,
-even if they all require different environment variables to be set with the same value.
+* The email supplied needs to be a valid email address. Another built-in constraint in 
+Bean Validation 2.0 is **@Email**, which can validate that the 
+**Astronaut** bean includes a correctly formatted email address. The 
+annotation constrains the **emailAddress** field.
 
-Create a ConfigMap to configure the app name with the following **kubectl** command.
+* The astronaut needs to be between 18 and 100 years old. Bean validation allows you to 
+specify multiple constraints on a single field. The **@Min** and 
+**@Max** built-in constraints applied to the **age** 
+field check that the astronaut is between the ages of 18 and 100.
+
+In this example, the annotation is on the field value itself. You can also place the 
+annotation on the getter method, which has the same effect.
+
+Create the **Spacecraft** class.
+
+> Run the following touch command in your terminal
 ```
-kubectl create configmap sys-app-root --from-literal contextRoot=/dev
-```
-{: codeblock}
-
-
-This command deploys a ConfigMap named **sys-app-root** to your cluster.
-It has a key called **contextRoot** with a value of **/dev**.
-The **--from-literal** flag allows you to specify individual key-value pairs to store in this ConfigMap.
-Other available options, such as **--from-file** and **--from-env-file**,
-provide more versatility as to what you want to configure.
-Details about these options can be found in the
-[Kubernetes CLI documentation](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-configmap-em-).
-
-Create a Secret to configure the new credentials that **inventory** uses to
-authenticate against **system** with the following **kubectl** command.
-```
-kubectl create secret generic sys-app-credentials --from-literal username=alice --from-literal password=wonderland
+touch /home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Spacecraft.java
 ```
 {: codeblock}
 
 
-This command looks similar to the command to create a ConfigMap, but one difference is the word **generic**.
-This word creates a Secret that doesn't store information in any specialized way.
-Different types of secrets are available, such as secrets to store Docker credentials
-and secrets to store public and private key pairs.
-
-A Secret is similar to a ConfigMap.
-A key difference is that a Secret is used for confidential information such as credentials.
-One of the main differences is that you must explicitly tell **kubectl** to show you the contents of a Secret.
-Additionally, when it does show you the information,
-it only shows you a Base64 encoded version so that a casual onlooker doesn't accidentally see any sensitive data.
-Secrets don't provide any encryption by default,
-that is something you'll either need to do yourself or find an alternate option to configure.
-Encryption is not required for the application to run.
+> Then from the menu of the IDE, select **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Spacecraft.java
 
 
 
-# **Updating Kubernetes resources**
 
-Next, you will update your Kubernetes deployments to set the environment variables in your containers
-based on the values that are configured in the ConfigMap and Secret that you created previously. 
+```
+package io.openliberty.guides.beanvalidation;
 
-Replace the kubernetes file.
+import java.io.Serializable;
+import java.util.Map;
+import java.util.HashMap;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.AssertTrue;
+import javax.inject.Named;
+import javax.enterprise.context.RequestScoped;
+import javax.validation.Valid;
+
+@Named
+@RequestScoped
+public class Spacecraft implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+    
+    @Valid
+    private Astronaut astronaut;
+
+    private Map<@NotBlank String, @Positive Integer> destinations;
+
+    @SerialNumber
+    private String serialNumber;
+
+    public Spacecraft() {
+        destinations = new HashMap<String, Integer>();
+    }
+
+    public void setAstronaut(Astronaut astronaut) {
+        this.astronaut = astronaut;
+    }
+
+    public void setDestinations(Map<String,Integer> destinations) {
+        this.destinations = destinations;
+    }
+
+    public void setSerialNumber(String serialNumber) {
+        this.serialNumber = serialNumber;
+    }
+
+    public Astronaut getAstronaut() {
+        return astronaut;
+    }
+
+    public Map<String, Integer> getDestinations() {
+        return destinations;
+    }
+
+    public String getSerialNumber() {
+        return serialNumber;
+    }
+
+    @AssertTrue
+    public boolean launchSpacecraft(@NotNull String launchCode) {
+        if(launchCode.equals("OpenLiberty"))
+            return true;
+        return false;
+    }
+}
+```
+{: codeblock}
+
+
+
+
+The **Spacecraft** bean contains 3 fields, **astronaut**, 
+**serialNumber**, and **destinations**. The JavaBean 
+needs to be a CDI managed bean to allow for method-level validation, which uses CDI 
+interceptions. Because the **Spacecraft** bean is a CDI managed bean, 
+a scope is necessary. A request scope is used in this example. To learn more about CDI, see 
+[Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html).
+
+
+The **Spacecraft** class has the following constraints applied:
+
+* Every destination that is specified needs a name and a positive distance. In Bean 
+Validation 2.0, you can specify constraints on type parameters. The **@NotBlank** 
+and **@Positive** annotations constrain the **destinations** 
+map so that the destination name is not blank, and the distance is positive. The 
+**@Positive** constraint ensures that numeric value fields are greater 
+than 0.
+
+* A correctly formatted serial number is required. In addition to specifying the 
+built-in constraints, you can create custom constraints to allow user-defined validation
+rules. The **@SerialNumber** annotation that constrains the 
+**serialNumber** field is a custom constraint, which will be created later.
+
+Because you already specified constraints on the **Astronaut** bean, 
+the constraints do not need to be respecified in the **Spacecraft** 
+bean. Instead, because of the **@Valid** annotation on the field, all 
+the nested constraints on the **Astronaut** bean are validated.
+
+You can also use bean validation with CDI to provide method-level validation. The
+**launchSpacecraft()** method on the **Spacecraft** 
+bean accepts a **launchCode** parameter, and if the **launchCode** 
+parameter is **OpenLiberty**, the method returns **true** 
+that the spacecraft is launched. Otherwise, the method returns **false**. 
+The **launchSpacecraft()** method uses both parameter and return value 
+validation. The **@NotNull** constraint eliminates the need to manually 
+check within the method that the parameter is not null. Additionally, the method has the 
+**@AssertTrue** return-level constraint to enforce that the method must 
+return the **true** boolean.
+
+# **Creating custom constraints**
+
+To create the custom constraint for **@SerialNumber**, begin by creating 
+an annotation.
+
+
+Replace the annotation.
 
 > From the menu of the IDE, select 
-> **File** > **Open** > guide-kubernetes-microprofile-config/start/kubernetes.yaml
+> **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumber.java
 
 
 
 
 ```
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  selector:
-    matchLabels:
-      app: system
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        # Set the environment variables
-        env:
-        - name: CONTEXT_ROOT
-          valueFrom:
-            configMapKeyRef:
-              name: sys-app-root
-              key: contextRoot
-        - name: SYSTEM_APP_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: sys-app-credentials
-              key: username
-        - name: SYSTEM_APP_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: sys-app-credentials
-              key: password
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        # Set the environment variables
-        env:
-        - name: CONTEXT_ROOT
-          valueFrom:
-            configMapKeyRef:
-              name: sys-app-root
-              key: contextRoot
-        - name: SYSTEM_APP_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: sys-app-credentials
-              key: username
-        - name: SYSTEM_APP_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: sys-app-credentials
-              key: password
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 31000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 32000
+package io.openliberty.guides.beanvalidation;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import javax.validation.Constraint;
+import javax.validation.Payload;
+
+@Target({ FIELD })
+@Retention(RUNTIME)
+@Documented
+@Constraint(validatedBy = { SerialNumberValidator.class })
+public @interface SerialNumber {
+
+    String message() default "serial number is not valid.";
+
+    Class<?>[] groups() default {};
+    
+    Class<? extends Payload>[] payload() default {};
+}
 ```
 {: codeblock}
 
 
 
-The **`CONTEXT_ROOT`**,
-**`SYSTEM_APP_USERNAME`**, and
-**`SYSTEM_APP_PASSWORD`** environment
-variables are set in the **env** sections of
-**system-container** and
-**inventory-container**.
 
-Using the **valueFrom** field,
-you can specify the value of an environment variable from various sources. These sources
-include a ConfigMap, a Secret, and information about the cluster. In this
-example **configMapKeyRef** gets the
-value **contextRoot** from the
-**sys-app-root** ConfigMap. Similarly,
-**secretKeyRef**
-gets the values **username** and
-**password** from the
-**sys-app-credentials** Secret.
+The **@Target** annotation indicates the element types to which you can 
+apply the custom constraint. Because the **@SerialNumber** constraint is 
+used only on a field, only the **FIELD** target is specified.
 
+When you define a constraint annotation, the specification requires the **RUNTIME** 
+retention policy.
 
-# **Deploying your changes**
+The **@Constraint** annotation specifies the class that contains the 
+validation logic for the custom constraint.
 
+In the **SerialNumber** body, the **message()** 
+method provides the message that is output when a validation constraint is violated. The 
+**groups()** and **payload()** methods associate this 
+constraint only with certain groups or payloads. The defaults are used in the example.
 
-Rebuild the application using **mvn clean package**.
-```
-cd /home/project/guide-kubernetes-microprofile-config/start
-mvn clean package
-```
-{: codeblock}
+Now, create the class that provides the validation for the **@SerialNumber** 
+constraint.
 
-Run the **docker build** commands to rebuild container images for your application:
-```
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-{: codeblock}
+Replace the **SerialNumberValidator** class.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumberValidator.java
 
 
 
-Push your updated images to the container registry on IBM Cloud with the following commands:
 
 ```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-```
-{: codeblock}
+package io.openliberty.guides.beanvalidation;
 
-Update the image names and set the image pull policy to **Always**
-so that the images in your IBM Cloud container registry are used,
-and remove the **nodePort** fields so that the ports can be automatically generated:
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
-```
-{: codeblock}
+public class SerialNumberValidator 
+    implements ConstraintValidator<SerialNumber,Object> {
 
-
-Run the following command to deploy your changes to the Kubernetes cluster.
-```
-kubectl replace --force -f kubernetes.yaml
+    @Override
+    public boolean isValid(Object arg0, ConstraintValidatorContext arg1) {
+        boolean isValid = false;
+        if (arg0 == null)
+            return isValid;
+        String serialNumber = arg0.toString();
+        isValid = serialNumber.length() == 11 && serialNumber.startsWith("Liberty");
+        try {
+            Integer.parseInt(serialNumber.substring(7));
+        } catch (Exception ex) {
+            isValid = false;
+        }
+        return isValid;
+    }
+}
 ```
 {: codeblock}
 
 
 
-Set up port forwarding to the new services.
 
-Run the following commands to set up port forwarding to access the **system** service.
+The **SerialNumberValidator** class has one method, **isValid()**, 
+which contains the custom validation logic. In this case, the serial number must start 
+with **Liberty** followed by 4 numbers, such as **Liberty0001**. If the 
+supplied serial number matches the constraint, **isValid()** returns 
+**true**. If the serial number does not match, it returns **false**.
 
+# **Programmatically validating constraints**
+
+Finally, create a service that can be used to programmatically validate the constraints
+on the **Spacecraft** and **Astronaut** JavaBeans.
+
+
+
+Create the **BeanValidationEndpoint** class.
+
+> Run the following touch command in your terminal
 ```
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
-```
-{: codeblock}
-
-Then, run the following commands to set up port forwarding to access the **inventory** service.
-
-```
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
-```
-{: codeblock}
-
-You now need to use the new username, `alice`, and the new password, `wonderland`, to log in.
-Access your application with the following commands:
-
-```
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-curl -s http://localhost:$SYSTEM_NODEPORT/dev/system/properties -u alice:wonderland | jq
+touch /home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/BeanValidationEndpoint.java
 ```
 {: codeblock}
 
-Notice that the URL you are using to reach the application now has **/dev** as the context root. 
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/BeanValidationEndpoint.java
 
 
-Verify the inventory service is working as intended by using the following commands:
+
 
 ```
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
+package io.openliberty.guides.beanvalidation;
+
+import java.util.Set;
+
+import javax.inject.Inject;
+import javax.validation.Validator;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
+
+@Path("/")
+public class BeanValidationEndpoint {
+	
+    @Inject
+    Validator validator;
+    
+    @Inject
+    Spacecraft bean;
+
+    @POST
+    @Path("/validatespacecraft")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(summary = "POST request to validate your spacecraft bean")
+    public String validateSpacecraft(
+        @RequestBody(description = "Specify the values to create the "
+                + "Astronaut and Spacecraft beans.",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = Spacecraft.class)))
+        Spacecraft spacecraft) {
+	    
+            Set<ConstraintViolation<Spacecraft>> violations
+                = validator.validate(spacecraft);
+
+            if (violations.size() == 0) {
+                return "No Constraint Violations";
+            }
+                    
+            StringBuilder sb = new StringBuilder();
+            for (ConstraintViolation<Spacecraft> violation : violations) {
+                sb.append("Constraint Violation Found: ")
+                .append(violation.getMessage())
+                .append(System.lineSeparator());
+            }
+            return sb.toString();
+    }
+    
+    @POST
+    @Path("/launchspacecraft")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Operation(summary = "POST request to specify a launch code")
+    public String launchSpacecraft(
+        @RequestBody(description = "Enter the launch code.  Must not be "
+                + "null and must equal OpenLiberty for successful launch.",
+            content = @Content(mediaType = "text/plain"))
+        String launchCode) {	
+            try {
+                bean.launchSpacecraft(launchCode);
+                return "launched";
+            } catch(ConstraintViolationException ex) {
+                return ex.getMessage();
+            }
+    }
+}
 ```
 {: codeblock}
 
-If it is not working, then check the configuration of the credentials.
-
-# **Testing the microservices**
 
 
 
-Update the **pom.xml** files so that the **system.service.root** and **inventory.service.root** properties
-have the correct ports to access the **system** and **inventory** services.
+Two resources, a validator and an instance of the **Spacecraft** JavaBean, 
+are injected into the class. The default validator is used and is obtained through CDI
+injection. However, you can also obtain the default validator with resource injection
+or a JNDI lookup. The **Spacecraft** JavaBean is injected so that the 
+method-level constraints can be validated.
+
+The programmatic validation takes place in the **validateSpacecraft()** 
+method. To validate the data, the **validate()** method is called on the 
+**Spacecraft** bean. Because the **Spacecraft** 
+bean contains the **@Valid** constraint on the **Astronaut** 
+bean, both JavaBeans are validated. Any constraint violations found during the call to 
+the **validate()** method are returned as a set of **ConstraintViolation** 
+objects.
+
+The method level validation occurs in the **launchSpacecraft()** method. 
+A call is then made to the **launchSpacecraft()** method on the 
+**Spacecraft** bean, which throws a **ConstraintViolationException** 
+exception if either of the method-level constraints is violated.
+
+
+# **Running the application**
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+Visit the OpenAPI UI by selecting **Launch Application** from the menu of the IDE.
+Enter **9080** to specify the port number and click the **OK** button. 
+You’re redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`**, 
+where **accountname** is your account name. 
+Click the **interactive UI** link on the welcome page.
+
+Expand the **/beanvalidation/validatespacecraft POST request to validate your spacecraft bean**
+section and click **Try it out**. Copy the following example input into the text box:
 
 ```
-SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' inventory/pom.xml
-sed -i 's=localhost:32000='"localhost:$INVENTORY_NODEPORT"'=g' inventory/pom.xml
-sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' system/pom.xml
+{
+  "astronaut": {
+    "name": "Libby",
+    "age": 25,
+    "emailAddress": "libbybot@openliberty.io"
+  },
+  "destinations": {
+    "Mars": 500
+  },
+  "serialNumber": "Liberty0001"
+}
+```
+
+Click **Execute** and you receive the response **No Constraint Violations** because
+the values specified pass previously defined constraints.
+
+Next, modify the following values, all of which break the previously defined
+constraints:
+
+```
+Age = 10
+Email = libbybot
+SerialNumber = Liberty1
+```
+
+After you click **Execute**, the response contains the following constraint
+violations:
+
+```
+Constraint Violation Found: serial number is not valid.
+Constraint Violation Found: must be greater than or equal to 18
+Constraint Violation Found: must be a well-formed email address
+```
+
+To try the method-level validation expand the `/beanvalidation/launchspacecraft
+POST request to specify a launch code** section.  Enter **OpenLiberty** in the text box
+to note that **launched** is returned because the launch code passes the defined
+constraints. Replace **OpenLiberty** with anything else to note that a constraint
+violation is returned.
+
+
+# **Testing the constraints**
+
+Now, write automated tests to drive the previously created service. 
+
+Create **BeanValidationIT** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-bean-validation/start/src/test/java/it/io/openliberty/guides/beanvalidation/BeanValidationIT.java
 ```
 {: codeblock}
 
-Run the integration tests by using the following command:
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-bean-validation/start/src/test/java/it/io/openliberty/guides/beanvalidation/BeanValidationIT.java
+
+
+
 
 ```
-mvn failsafe:integration-test \
-    -Dsystem.service.root=localhost:$SYSTEM_NODEPORT \
-    -Dsystem.context.root=/dev \
-    -Dinventory.service.root=localhost:$INVENTORY_NODEPORT
+package it.io.openliberty.guides.beanvalidation;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import io.openliberty.guides.beanvalidation.Astronaut;
+import io.openliberty.guides.beanvalidation.Spacecraft;
+
+import java.util.HashMap;
+
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class BeanValidationIT {
+
+    private Client client;
+    private static String port;
+
+    @BeforeEach
+    public void setup() {
+        client = ClientBuilder.newClient();
+        port = System.getProperty("http.port");
+    }
+
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
+
+    @Test
+    public void testNoFieldLevelConstraintViolations() throws Exception {
+        Astronaut astronaut = new Astronaut();
+        astronaut.setAge(25);
+        astronaut.setEmailAddress("libby@openliberty.io");
+        astronaut.setName("Libby");
+        Spacecraft spacecraft = new Spacecraft();
+        spacecraft.setAstronaut(astronaut);
+        spacecraft.setSerialNumber("Liberty1001");
+        HashMap<String, Integer> destinations = new HashMap<String, Integer>();
+        destinations.put("Mars", 1500);
+        destinations.put("Pluto", 10000);
+        spacecraft.setDestinations(destinations);
+        
+        Jsonb jsonb = JsonbBuilder.create();
+        String spacecraftJSON = jsonb.toJson(spacecraft);
+        Response response = postResponse(getURL(port, "validatespacecraft"), 
+                spacecraftJSON, false);
+        String actualResponse = response.readEntity(String.class);
+        String expectedResponse = "No Constraint Violations";
+        
+        assertEquals(expectedResponse, actualResponse,
+                "Unexpected response when validating beans.");
+    }
+
+    @Test
+    public void testFieldLevelConstraintViolation() throws Exception {
+        Astronaut astronaut = new Astronaut();
+        astronaut.setAge(25);
+        astronaut.setEmailAddress("libby");
+        astronaut.setName("Libby");
+        
+        Spacecraft spacecraft = new Spacecraft();
+        spacecraft.setAstronaut(astronaut);
+        spacecraft.setSerialNumber("Liberty123");
+        
+        HashMap<String, Integer> destinations = new HashMap<String, Integer>();
+        destinations.put("Mars", -100);
+        spacecraft.setDestinations(destinations);
+        
+        Jsonb jsonb = JsonbBuilder.create();
+        String spacecraftJSON = jsonb.toJson(spacecraft);
+        Response response = postResponse(getURL(port, "validatespacecraft"), 
+                spacecraftJSON, false);
+        String actualResponse = response.readEntity(String.class);
+        String expectedDestinationResponse = "must be greater than 0";
+        assertTrue(actualResponse.contains(expectedDestinationResponse),
+                "Expected response to contain: " + expectedDestinationResponse);
+        String expectedEmailResponse = "must be a well-formed email address";
+        assertTrue(actualResponse.contains(expectedEmailResponse),
+                "Expected response to contain: " + expectedEmailResponse);
+        String expectedSerialNumberResponse = "serial number is not valid";
+        assertTrue(actualResponse.contains(expectedSerialNumberResponse),
+                "Expected response to contain: " + expectedSerialNumberResponse);
+    }
+
+    @Test
+    public void testNoMethodLevelConstraintViolations() throws Exception {
+        String launchCode = "OpenLiberty";
+        Response response = postResponse(getURL(port, "launchspacecraft"), 
+                launchCode, true);
+        
+        String actualResponse = response.readEntity(String.class);
+        String expectedResponse = "launched";
+        
+        assertEquals(expectedResponse, actualResponse,
+                "Unexpected response from call to launchSpacecraft");
+       
+    }
+
+    @Test
+    public void testMethodLevelConstraintViolation() throws Exception {
+        String launchCode = "incorrectCode";
+        Response response = postResponse(getURL(port, "launchspacecraft"), 
+                launchCode, true);
+        
+        String actualResponse = response.readEntity(String.class);
+        assertTrue(
+                actualResponse.contains("must be true"),
+                "Unexpected response from call to launchSpacecraft");
+    }
+    
+    private Response postResponse(String url, String value, 
+                                  boolean isMethodLevel) {
+        if(isMethodLevel)
+            return client.target(url).request().post(Entity.text(value));
+        else
+            return client.target(url).request().post(Entity.entity(value, 
+                MediaType.APPLICATION_JSON));
+    }
+
+    private String getURL(String port, String function) {
+        return "http://localhost:" + port + "/Spacecraft/beanvalidation/" + 
+                function;
+    }
+}
 ```
 {: codeblock}
 
-The tests for **inventory** verify that the service can communicate with **system**
-using the configured credentials. If the credentials are misconfigured, then the
-**inventory** test fails, so the **inventory** test indirectly verifies that the
-credentials are correctly configured.
 
-After the tests succeed, you should see output similar to the following in your console.
+
+
+The **@BeforeEach** annotation causes the **setup()** method 
+to execute before the test cases. The **setup()** method retrieves the 
+port number for the Open Liberty server and creates a **Client** that is 
+used throughout the tests, which are described as follows:
+
+* The **testNoFieldLevelConstraintViolations()** test case verifies that 
+constraint violations do not occur when valid data is supplied to the **Astronaut** 
+and **Spacecraft** bean attributes.
+
+* The **testFieldLevelConstraintViolation()** test case verifies that 
+the appropriate constraint violations occur when data that is supplied to the 
+**Astronaut** and **Spacecraft** attributes violates 
+the defined constraints. Because 3 constraint violations are defined, 3 **ConstraintViolation** 
+objects are returned as a set from the **validate** call. The 3 expected 
+messages are **"must be greater than 0"** for the negative distance specified 
+in the destination map, **"must be a well-formed email address"** for the 
+incorrect email address, and the custom **"serial number is not valid"** 
+message for the serial number.
+
+* The **testNoMethodLevelConstraintViolations()** test case verifies 
+that the method-level constraints that are specified on the **launchSpacecraft()** 
+method of the **Spacecraft** bean are validated when the method is 
+called with no violations. In this test, the call to the **launchSpacecraft()** 
+method is made with the **OpenLiberty** argument. A value of **true** is 
+returned, which passes the specified constraints.
+
+* The **testMethodLevelConstraintViolation()** test case verifies 
+that a **ConstraintViolationException** exception is thrown when one of the method-level 
+constraints is violated. A call with an incorrect parameter, **incorrectCode**, 
+is made to the **launchSpacecraft()** method of the **Spacecraft** 
+bean. The method returns **false**, which violates the defined constraint, and a **ConstraintViolationException** 
+exception is thrown. The exception includes the constraint violation message, which is 
+**must be true** in this example.
+
+
+<br/>
+### **Running the tests**
+
+Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.706 s - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.beanvalidation.BeanValidationIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.493 sec - in
+it.io.openliberty.guides.beanvalidation.BeanValidationIT
 
-Results:
+Results :
 
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.696 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
-
-Results:
-
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
-```
-
-# **Tearing down the environment**
-
-Press **CTRL+C** in the command-line sessions where you ran `kubectl port-forward` to stop the port forwarding. 
-
-Run the following commands to delete all the resources that you created.
-
-```
-kubectl delete -f kubernetes.yaml
-kubectl delete configmap sys-app-root
-kubectl delete secret sys-app-credentials
-```
-{: codeblock}
-
-
-
-
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
+where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 # **Summary**
 
 ## **Nice Work!**
 
-You have used MicroProfile Config to externalize the configuration of two microservices,
+You developed and tested a Java microservice by using bean validation and Open 
 
-and then you configured them by creating a ConfigMap and Secret in your Kubernetes cluster.
-
+Liberty.
 
 
 <br/>
@@ -777,11 +899,11 @@ and then you configured them by creating a ConfigMap and Secret in your Kubernet
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-kubernetes-microprofile-config** project by running the following commands:
+Delete the **guide-bean-validation** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-kubernetes-microprofile-config
+rm -fr guide-bean-validation
 ```
 {: codeblock}
 
@@ -790,7 +912,7 @@ rm -fr guide-kubernetes-microprofile-config
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Configuring%20microservices%20running%20in%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-config)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Validating%20constraints%20with%20microservices&guide-id=cloud-hosted-guide-bean-validation)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -798,18 +920,15 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-bean-validation/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-bean-validation/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
 <br/>
