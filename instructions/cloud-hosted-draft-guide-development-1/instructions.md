@@ -352,7 +352,8 @@ loads. This method subscribes the client to the SSE by creating a new instance o
 interface makes a **GET** request to this endpoint with a
 request header of **Accept: text/event-stream** to connect to the server. 
 
-In this IBM cloud environment, you need to run the following command to update the **index.js** file:
+In this IBM cloud environment, you need to update the **EventSource** URL with the **bff** service domain
+instead of **localhost**. Run the following command:
 ```
 BFF_DOMAIN=${USERNAME}-9084.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 sed -i 's=localhost:9084='"$BFF_DOMAIN"'=g' frontend/src/main/webapp/js/index.js
