@@ -367,7 +367,7 @@ Update the **Maven POM** file.
 
 
 The **liberty-maven-plugin** downloads and installs Open Liberty to the **target/liberty** directory.
-The **`<installAppPackages/>`** configuration tag in the
+The **installAppPackages** configuration element in the
 **pom.xml** file typically takes in the following parameters: **dependencies**, **project**, or **all**.
 The default value is **dependencies**, but to install the Spring Boot application to Open Liberty,
 the value must be **spring-boot-project**.
@@ -418,7 +418,7 @@ touch /home/project/guide-spring-boot/start/src/main/liberty/config/server.xml
 The **servlet** and **springBoot** features
 are required for the Liberty server to run the Spring Boot application.
 The application port is specified as **9080** and
-the application is configured as a **`<springBootApplication />`**.
+the application is configured as a **springBootApplication** element.
 
 
 If you didn't build the Spring Boot application, run the **package** goal:
@@ -577,17 +577,17 @@ Update the Maven POM file.
 {: codeblock}
 
 
-and the **`<executions/>`** tag to the **pom.xml** file. 
+and the **executions** element to the **pom.xml** file. 
  
 
-The **`<include/>`** configuration tag specifies the **minify, runnable** values.
+The **include** configuration element specifies the **minify, runnable** values.
 The **runnable** value allows the application to be generated as a runnable JAR file.
 The **minify** value packages only what you need from your configuration files without bundling the entire Open Liberty install.
 
-The **`<packageName/>`** configuration tag specifies
+The **packageName** configuration element specifies
 that the application is generated as a **GSSpringBootApp.jar** file.
 
-The **`<executions/>`** tag specifies the required
+The **executions** element specifies the required
 Open Liberty Maven goals to generate the application that is embedded with Open Liberty. 
 
 Next, run the Maven **package** goal:
