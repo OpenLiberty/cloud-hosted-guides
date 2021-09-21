@@ -352,6 +352,13 @@ loads. This method subscribes the client to the SSE by creating a new instance o
 interface makes a **GET** request to this endpoint with a
 request header of **Accept: text/event-stream** to connect to the server. 
 
+In this IBM cloud environment, you need to run the following command to update the **index.js** file:
+```
+BFF_DOMAIN=${USERNAME}-9084.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+sed -i 's=localhost:9084='"$BFF_DOMAIN"'=g' frontend/src/main/webapp/js/index.js
+```
+{: codeblock}
+
 Because this request comes from **localhost:9080** and is made to
 **localhost:9084**, it must follow the Cross-Origin Resource Sharing (CORS)
 specification to avoid being blocked by the browser. To enable CORS for the
@@ -395,13 +402,6 @@ docker pull openliberty/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
-
-In this IBM cloud environment, you need to run the following command to update the **index.js** file:
-```
-BFF_DOMAIN=${USERNAME}-9084.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
-sed -i 's=localhost:9084='"$BFF_DOMAIN"'=g' frontend/src/main/webapp/js/index.js
-```
-{: codeblock}
 
 Run the following commands to containerize the **frontend**, **bff**, and **system** services:
 
