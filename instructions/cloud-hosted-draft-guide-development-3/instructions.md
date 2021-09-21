@@ -58,12 +58,17 @@ Navigate to the **start** directory and run the Maven package command:
 cd start
 ./mvnw package
 ```
+{: codeblock}
+
+
 
 You can now run the application in the embedded Tomcat web container by executing the JAR file that you built:
 
 ```
 java -jar target/guide-spring-boot-0.1.0.jar
 ```
+{: codeblock}
+
 
 Notice that the console output displays a message about the application running in Tomcat on port **8080**. 
 ```
