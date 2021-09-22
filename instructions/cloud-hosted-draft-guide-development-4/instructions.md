@@ -74,7 +74,6 @@ The **finish** directory contains the finished project that you will build.
 
 # **Creating a web client using the default JAX-RS API**
 
-
 Navigate to the **start** directory to begin.
 
 JAX-RS provides a default reactive provider that you can use to create a reactive REST client using the **CompletionStage** interface.
@@ -101,19 +100,17 @@ package io.openliberty.guides.query.client;
 
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CompletionStage;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.glassfish.jersey.client.rx.rxjava.RxObservableInvoker;
-import org.glassfish.jersey.client.rx.rxjava.RxObservableInvokerProvider;
-
-import rx.Observable;
 
 @RequestScoped
 public class InventoryClient {
@@ -127,26 +124,24 @@ public class InventoryClient {
                             .target(baseUri)
                             .path("/inventory/systems")
                             .request()
-                            .header(HttpHeaders.CONTENT_TYPE,
-                            MediaType.APPLICATION_JSON)
-                            .get(new GenericType<List<String>>() { });
+                            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .get(new GenericType<List<String>>(){});
     }
 
-    public Observable<Properties> getSystem(String hostname) {
+    public CompletionStage<Properties> getSystem(String hostname) {
         return ClientBuilder.newClient()
                             .target(baseUri)
-                            .register(RxObservableInvokerProvider.class)
                             .path("/inventory/systems")
                             .path(hostname)
                             .request()
-                            .header(HttpHeaders.CONTENT_TYPE,
-                            MediaType.APPLICATION_JSON)
-                            .rx(RxObservableInvoker.class)
-                            .get(new GenericType<Properties>() { });
+                            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .rx()
+                            .get(Properties.class);
     }
 }
 ```
 {: codeblock}
+
 
 
 The **getSystem()** method returns the **CompletionStage** interface. 
