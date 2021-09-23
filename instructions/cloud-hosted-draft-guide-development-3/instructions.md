@@ -582,7 +582,6 @@ Update the Maven POM file.
 {: codeblock}
 
 
-and the **executions** element to the **pom.xml** file. 
 
 The **include** configuration element specifies the **minify, runnable** values.
 The **runnable** value allows the application to be generated as a runnable JAR file.
