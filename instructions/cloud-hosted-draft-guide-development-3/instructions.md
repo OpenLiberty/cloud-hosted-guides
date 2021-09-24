@@ -339,10 +339,10 @@ curl http://localhost:9080/health | jq
 ```
 {: codeblock}
 
-Once the microservices are up and running, you can access the application by using the following `curl` command:
-
+Once the microservices are up and running, you can access the application by making requests to the **query/systemLoad** endpoint
+using the following **curl** command:
 ```
-curl http://localhost:9080/query/systemLoad
+curl http://localhost:9080/query/systemLoad | jq
 ```
 {: codeblock}
 
@@ -780,8 +780,8 @@ curl http://localhost:9080/health | jq
 {: codeblock}
 
 Once the **query** microservice is up and running, 
-you can access the application by making requests to the `query/systemLoad` endpoint using
-the following `curl` command:
+you can access the application by making requests to the **query/systemLoad** endpoint using
+the following **curl** command:
 ```
 curl http://localhost:9080/query/systemLoad | jq
 ```
