@@ -400,7 +400,7 @@ or open the project in your editor.
 Once your application is up and running, use the following command to get the URL.
 Open your browser and check out your service by going to the URL that the command returns.
 ```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/openapi/ui
 ```
 {: codeblock} 
 
@@ -515,19 +515,19 @@ If the images built without errors, push them to your container registry on IBM 
 docker tag cart-app:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/cart-app:1.0-SNAPSHOT
 docker push us.icr.io/$NAMESPACE_NAME/cart-app:1.0-SNAPSHOT
 ```
-
-# **Deploying and running the application in Kubernetes**
-
+{: codeblock}
 
 Update the image names so that the images in your IBM Cloud container registry are used,
 and remove the **nodePort** fields so that the ports can be generated automatically:
 
 ```
-sed -i 's=cart-app:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/cart-app:1.0-SNAPSHOT\n
-imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=cart-app:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/cart-app:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
 sed -i 's=nodePort: 31000==g' kubernetes.yaml
 ```
 {: codeblock}
+
+# **Deploying and running the application in Kubernetes**
+
 
 Now that the containerized application is built, deploy it to a local Kubernetes cluster by using
 a Kubernetes resource definition, which is provided in the **kubernetes.yaml** file
@@ -560,8 +560,9 @@ cart-deployment-98f4ff789-qrh45  1/1    Running  0         17s
 Run the following commands to get the necessary port to connect to the application.
 ```
 CART_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services cart-service`
-kubectl port-forward svc/system-service $CART_NODEPORT:9080
+kubectl port-forward svc/cart-service $CART_NODEPORT:9080
 ```
+{: codeblock}
 
 
 Run the **minikube ip** command to get the hostname for minikube.
@@ -574,6 +575,7 @@ Run the following commands to get the URL to access the application.
 CART_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services cart-service`
 echo https://${USERNAME}-${CART_NODEPORT}.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/openapi/ui
 ```
+{: codeblock}
 This URL displays the available REST endpoints.
 
 Make a POST request to the **/cart/{item}&{price}** endpoint. To make this request, expand the POST
@@ -649,48 +651,14 @@ by running the **kubectl delete** command:
 ```
 kubectl delete -f kubernetes.yaml
 ```
-{: codeblock}
-
-
-
-
-Perform the following steps to return your environment to a clean state.
-
-. Point the Docker daemon back to your local machine:
-+
-```
-eval $(minikube docker-env -u)
-```
-. Stop your Minikube cluster:
-+
-```
-minikube stop
-```
-{: codeblock}
-
-
-. Delete your cluster:
-+
-```
-minikube delete
-```
-{: codeblock}
-
-
-
-
-
-
-
 
 
 # **Summary**
 
 ## **Nice Work!**
 
-You have created, used, and cached HTTP session data for an application that was running on Open Liberty server
+You have created, used, and cached HTTP session data for an application that was running on Open Liberty server and deployed in a Kubernetes cluster.
 
-and deployed in a Kubernetes cluster.
 
 
 
