@@ -397,11 +397,12 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 or open the project in your editor.
 
 
-Select **Launch Application** from the menu of the IDE, 
-type in **9080** to specify the port number for the microservice, and click the **OK** button. 
-You can now check out the service by going to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
-where **accountname** is your account name.
-This URL displays the available REST endpoints.
+Once your application is up and running, use the following command to get the URL.
+Open your browser and check out your service by going to the URL that the command returns.
+```
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
+{: codeblock} 
 
 First, make a POST request to the **/cart/{item}&{price}** endpoint. To make this request, expand the POST
 endpoint on the UI, click the **Try it out** button, provide an item and a price,
@@ -509,9 +510,24 @@ cart-app                        1.0-SNAPSHOT
 openliberty/open-liberty        full-java11-openj9-ubi
 ```
 
+If the images built without errors, push them to your container registry on IBM Cloud with the following commands:
+```
+docker tag cart-app:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/cart-app:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/cart-app:1.0-SNAPSHOT
+```
 
 # **Deploying and running the application in Kubernetes**
 
+
+Update the image names so that the images in your IBM Cloud container registry are used,
+and remove the **nodePort** fields so that the ports can be generated automatically:
+
+```
+sed -i 's=cart-app:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/cart-app:1.0-SNAPSHOT\n
+imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+```
+{: codeblock}
 
 Now that the containerized application is built, deploy it to a local Kubernetes cluster by using
 a Kubernetes resource definition, which is provided in the **kubernetes.yaml** file
@@ -541,10 +557,23 @@ cart-deployment-98f4ff789-6rvfj  1/1    Running  0         17s
 cart-deployment-98f4ff789-qrh45  1/1    Running  0         17s
 ```
 
+Run the following commands to get the necessary port to connect to the application.
+```
+CART_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services cart-service`
+kubectl port-forward svc/system-service $CART_NODEPORT:9080
+```
 
 
 Run the **minikube ip** command to get the hostname for minikube.
 Then, go to the **http://[hostname]:31000/openapi/ui/** URL in your browser. 
+This URL displays the available REST endpoints.
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Run the following commands to get the URL to access the application.
+```
+CART_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services cart-service`
+echo https://${USERNAME}-${CART_NODEPORT}.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/openapi/ui
+```
 This URL displays the available REST endpoints.
 
 Make a POST request to the **/cart/{item}&{price}** endpoint. To make this request, expand the POST
