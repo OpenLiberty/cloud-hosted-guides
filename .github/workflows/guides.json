@@ -76,5 +76,8 @@
     },
     {
         "guide": "guide-contract-testing"
+    },
+    {
+        "guide": "guide-reactive-messaging-sse"
     }
 ]
