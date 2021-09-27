@@ -1,7 +1,7 @@
 
-# **Welcome to the Deploying microservices to Kubernetes guide!**
+# **Welcome to the Accessing and persisting data in microservices using Java Persistence API (JPA) guide!**
 
-Deploy microservices in Open Liberty Docker containers to Kubernetes and manage them with the Kubernetes CLI, kubectl.
+
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,70 +10,62 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
+Learn how to use Java Persistence API (JPA) to access and persist data to a database for your microservices.
 
 
 
-# **What is Kubernetes?**
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Kubernetes is an open source container orchestrator that automates many tasks involved in deploying,
-managing, and scaling containerized applications.
 
-Over the years, Kubernetes has become a major tool in containerized environments as containers are being
-further leveraged for all steps of a continuous delivery pipeline.
+:eventapp-url: http://localhost:9090/eventmanager.jsf
 
-<br/>
-### **Why use Kubernetes?**
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
-Managing individual containers can be challenging. 
-A small team can easily manage a few containers for development but 
-managing hundreds of containers can be a headache, even for a large team of experienced developers.
-Kubernetes is a tool for deployment in containerized environments. 
-It handles scheduling, deployment, as well as mass deletion and creation of containers. 
-It provides update rollout abilities on a large scale that would otherwise prove extremely tedious to do. 
-Imagine that you updated a Docker image, which now needs to propagate to a dozen containers. 
-While you could destroy and then re-create these containers, you can also run a short one-line
-command to have Kubernetes make all those updates for you. Of course, this is just a simple example.
-Kubernetes has a lot more to offer.
+```
+curl http://localhost:9090/eventmanager.jsf
+```
+{: codeblock}
 
-<br/>
-### **Architecture**
 
-Deploying an application to Kubernetes means deploying an application to a Kubernetes cluster.
 
-A typical Kubernetes cluster is a collection of physical or virtual machines called nodes that run
-containerized applications. A cluster is made up of one master node that manages the cluster, and
-many worker nodes that run the actual application instances inside Kubernetes objects called pods.
+:get-events-url: http://localhost:9090/events
 
-A pod is a basic building block in a Kubernetes cluster. It represents a single running process that
-encapsulates a container or in some scenarios many closely coupled containers. Pods can be
-replicated to scale applications and handle more traffic. From the perspective of a cluster, a set
-of replicated pods is still one application instance, although it might be made up of dozens of
-instances of itself. A single pod or a group of replicated pods are managed by Kubernetes objects
-called controllers. A controller handles replication, self-healing, rollout of updates, and general
-management of pods. One example of a controller that you will use in this guide is a deployment.
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
-A pod or a group of replicated pods are abstracted through Kubernetes objects called services
-that define a set of rules by which the pods can be accessed. In a basic scenario, a Kubernetes
-service exposes a node port that can be used together with the cluster IP address to access
-the pods encapsulated by the service.
+```
+curl http://localhost:9090/events
+```
+{: codeblock}
 
-To learn about the various Kubernetes resources that you can configure, 
-see the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/).
 
 
 # **What you'll learn**
 
-You will learn how to deploy two microservices in Open Liberty containers to a local Kubernetes cluster.
-You will then manage your deployed microservices using the **kubectl** command line interface for Kubernetes. 
-The **kubectl** CLI is your primary tool for communicating with and managing your Kubernetes cluster.
+You will learn how to use the Java Persistence API (JPA) to map Java objects to relational database 
+tables and perform create, read, update and delete (CRUD) operations on the data in your microservices. 
 
-The two microservices you will deploy are called **system** and **inventory**. The **system** microservice
-returns the JVM system properties of the running container and it returns the pod's name in the HTTP header
-making replicas easy to distinguish from each other. The **inventory** microservice
-adds the properties from the **system** microservice to the inventory. 
-This process demonstrates how communication can be established between pods inside a cluster.
+JPA is a Java EE specification for representing relational database table data as Plain Old Java Objects (POJO).
+JPA simplifies object-relational mapping (ORM) by using annotations to map Java objects 
+to tables in a relational database. In addition to providing an efficient API for performing
+CRUD operations, JPA also reduces the burden of having to write JDBC and SQL code when performing
+database operations and takes care of database vendor-specific differences. This capability allows you to 
+focus on the business logic of your application instead of wasting time implementing repetitive CRUD logic.
 
-You will use a local single-node Kubernetes cluster.
+The application that you will be working with is an event manager, which is composed of a UI
+and an event microservice for creating, retrieving, updating, and deleting events. In this 
+guide, you will be focused on the event microservice. The event microservice consists of
+a JPA entity class whose fields will be persisted to a database. The database logic is implemented in 
+a Data Access Object (DAO) to isolate the database operations from the rest of the service. 
+This DAO accesses and persists JPA entities to the database and can be injected 
+and consumed by other components in the microservice. An Embedded Derby database is used 
+as a data store for all the events.
+
+You will use JPA annotations to define an entity class whose fields are persisted to the 
+database. The interaction between your service and the database is mediated by the persistence 
+context that is managed by an entity manager. In a Java EE environment, you can use an
+application-managed entity manager or a container-managed entity manager. In this guide, 
+you will use a container-managed entity manager that is injected into the DAO so the application  
+server manages the opening and closing of the entity manager for you. 
 
 
 # **Getting started**
@@ -88,11 +80,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jpa-intro.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-kubernetes-intro.git
-cd guide-kubernetes-intro
+git clone https://github.com/openliberty/guide-jpa-intro.git
+cd guide-jpa-intro
 ```
 {: codeblock}
 
@@ -101,501 +93,672 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+<br/>
+### **Try what you'll build**
 
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-# Logging into your cluster
-
-For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
-Get the name of your namespace with the following command:
-
-```
-bx cr namespace-list
-```
-{: codeblock}
-
-Look for output that is similar to the following:
+To try out the application, run the following commands to navigate to the **finish/frontendUI** directory and
+deploy the **frontendUI** service to Open Liberty:
 
 ```
-Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
-
-Namespace
-sn-labs-yourname
-```
-
-Run the following command to store the namespace name in a variable.
-
-```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-```
-{: codeblock}
-
-Verify that the variable contains your namespace name:
-
-```
-echo $NAMESPACE_NAME
-```
-{: codeblock}
-
-Log in to the registry with the following command:
-```
-bx cr login
+cd finish/frontendUI
+mvn liberty:run
 ```
 {: codeblock}
 
 
 
-# **Building and containerizing the microservices**
-
-The first step of deploying to Kubernetes is to build your microservices and containerize them with Docker.
-
-The starting Java project, which you can find in the **start** directory, is a multi-module
-project that's made up of the **system** and **inventory** microservices. 
-Each microservice resides in its own directory, **start/system** and **start/inventory**. 
-Each of these directories also contains a Dockerfile, which is necessary for building Docker images. 
-If you're unfamiliar with Dockerfiles, check out the
-[Containerizing Microservices](https://openliberty.io/guides/containerize.html) guide,
-which covers Dockerfiles in depth.
-
-Navigate to the **start** directory and build the applications by running the following commands:
-
+Open another command-line session and run the following commands to navigate to the **finish/backendServices** directory and
+deploy the service to Open Liberty:
 ```
-cd start
-./mvnw clean package
-```
-```
-cd start
-./gradlew clean jar
-```
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
-
-
-Next, run the **docker build** commands to build container images for your application:
-```
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-{: codeblock}
-
-
-The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format.
-The tag for an image describes the specific image version. 
-If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
-
-During the build, you'll see various Docker messages describing what images are being downloaded and built. 
-When the build finishes, run the following command to list all local Docker images:
-```
-docker images
+cd finish/backendServices
+mvn liberty:run
 ```
 {: codeblock}
 
 
 
-Verify that the `system:1.0-SNAPSHOT` and `inventory:1.0-SNAPSHOT` images are listed among them, for example:
+After you see the following message in both command-line sessions, both your services are ready.
 
 ```
-REPOSITORY                                TAG                       
-inventory                                 1.0-SNAPSHOT
-system                                    1.0-SNAPSHOT
-openliberty/open-liberty                  full-java11-openj9-ubi
+The defaultServer server is ready to run a smarter planet.
 ```
 
-If you don't see the `system:1.0-SNAPSHOT` and `inventory:1.0-SNAPSHOT` images, then check the Maven
-build log for any potential errors.
-If the images built without errors, push them to your container registry on IBM Cloud with the following commands:
 
+Select **Launch Application** from the menu of the IDE, 
+type in **9090** to specify the port number for the microservice, and click the **OK** button. 
+You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`**, 
+where **accountname** is your account name.
+
+The event application does not display any events because no events are stored in the database. 
+Go ahead and click `Create Event`, located in the left navigation bar. 
+After entering an event name, location and time, 
+click `Submit` to persist your event entity to the database. 
+The event is now stored in the database and is visible in the list of current events.
+
+Notice that if you stop the Open Liberty server and then restart it, 
+the events created are still displayed in the list of current events. 
+Ensure you are in the **finish/backendServices** directory and run the following Maven goals to stop and then restart the server:
 ```
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+mvn liberty:stop
+mvn liberty:run
 ```
 {: codeblock}
 
 
-# **Deploying the microservices**
+The events created are still displayed in the list of current events. The **Update** action link
+located beside each event allows you to make modifications to the persisted entity and the 
+**Delete** action link allows you to remove entities from the database.
 
-Now that your Docker images are built, deploy them using a Kubernetes resource definition.
+After you are finished checking out the application, stop the Open Liberty servers by pressing CTRL+C in the
+command-line sessions where you ran the **backendServices** and **frontendUI** services.
+Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another command-line session for the **frontendUI**
+and **backendServices** services:
+```
+mvn liberty:stop
+```
+{: codeblock}
 
-A Kubernetes resource definition is a yaml file that contains a description of all your deployments, services, 
-or any other resources that you want to deploy. 
-All resources can also be deleted from the cluster by using the same yaml file that you used to deploy them.
 
-Create the Kubernetes configuration file.
+
+
+# **Defining a JPA entity class**
+
+Navigate to the **start** directory to begin.
+
+When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
+
+Run the following commands to navigate to the **frontendUI** directory and start the **frontendUI** service in dev mode:
+
+```
+cd frontendUI
+mvn liberty:dev
+```
+{: codeblock}
+
+
+
+Open another command-line session and run the following commands to navigate to
+the **backendServices** directory and start the service in dev mode:
+
+```
+cd backendServices
+mvn liberty:dev
+```
+{: codeblock}
+
+
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+************************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command line to listen for file changes. Open another command-line session to continue, 
+or open the project in your editor.
+
+To store Java objects in a database, you must define a JPA entity class. A JPA entity is a Java 
+object whose non-transient and non-static fields will be persisted to the database. Any Plain Old 
+Java Object (POJO) class can be designated as a JPA entity. However, the class must be annotated
+with the **@Entity** annotation, must not be declared final and must have a public or protected non-argument
+constructor. JPA maps an entity type to a database table and persisted instances will be represented 
+as rows in the table.
+
+The **Event** class is a data model that represents events in the event microservice and is annotated with JPA
+annotations.
+
+Create the **Event** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-kubernetes-intro/start/kubernetes.yaml
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-intro/start/kubernetes.yaml
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
 
 
 
 
 ```
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  selector:
-    matchLabels:
-      app: system
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 31000
+package io.openliberty.guides.event.models;
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 32000
-```
-{: codeblock}
+import java.io.Serializable;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.NamedQuery;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Column;
+import javax.persistence.GenerationType;
 
+@Entity
+@Table(name = "Event")
+@NamedQuery(name = "Event.findAll", query = "SELECT e FROM Event e")
+@NamedQuery(name = "Event.findEvent", query = "SELECT e FROM Event e WHERE "
+    + "e.name = :name AND e.location = :location AND e.time = :time")
+public class Event implements Serializable {
+    private static final long serialVersionUID = 1L;
 
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id
+    @Column(name = "eventId")
+    private int id;
 
-This file defines four Kubernetes resources. It defines two deployments and two services. 
-A Kubernetes deployment is a resource that controls the creation and management of pods. 
-A service exposes your deployment so that you can make requests to your containers. 
-Three key items to look at when creating the deployments are the **labels**, 
-**image**, and **containerPort** fields. 
-The **labels** is a way for a Kubernetes service to reference specific deployments. 
-The **image** is the name and tag of the Docker image that you want to use for this container. 
-Finally, the **containerPort** is the port that your container exposes to access your application.
-For the services, the key point to understand is that they expose your deployments.
-The binding between deployments and services is specified by labels -- in this case the 
-**app** label.
-You will also notice the service has a type of **NodePort**.
-This means you can access these services from outside of your cluster via a specific port.
-In this case, the ports are **31000** and **32000**, but port numbers can also be randomized if the
-**nodePort** field is not used.
+    @Column(name = "eventLocation")
+    private String location;
+    @Column(name = "eventTime")
+    private String time;
+    @Column(name = "eventName")
+    private String name;
 
-Update the image names so that the images in your IBM Cloud container registry are used,
-and remove the **nodePort** fields so that the ports can be generated automatically:
+    public Event() {
+    }
 
-```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
-```
-{: codeblock}
+    public Event(String name, String location, String time) {
+        this.name = name;
+        this.location = location;
+        this.time = time;
+    }
 
-Run the following commands to deploy the resources as defined in kubernetes.yaml:
-```
-kubectl apply -f kubernetes.yaml
-```
-{: codeblock}
+    public int getId() {
+        return id;
+    }
 
+    public void setId(int id) {
+        this.id = id;
+    }
 
-When the apps are deployed, run the following command to check the status of your pods:
-```
-kubectl get pods
-```
-{: codeblock}
+    public String getLocation() {
+        return location;
+    }
 
+    public void setLocation(String location) {
+        this.location = location;
+    }
 
-You'll see an output similar to the following if all the pods are healthy and running:
+    public String getTime() {
+        return time;
+    }
 
-```
-NAME                                    READY     STATUS    RESTARTS   AGE
-system-deployment-6bd97d9bf6-4ccds      1/1       Running   0          15s
-inventory-deployment-645767664f-nbtd9   1/1       Running   0          15s
-```
+    public void setTime(String time) {
+        this.time = time;
+    }
 
-You can also inspect individual pods in more detail by running the following command:
-```
-kubectl describe pods
-```
-{: codeblock}
+    public void setName(String name) {
+        this.name = name;
+    }
 
+    public String getName() {
+        return name;
+    }
+    
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + id;
+        result = prime * result + ((location == null) ? 0 : location.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result +
+                 (int) (serialVersionUID ^ (serialVersionUID >>> 32));
+        result = prime * result + ((time == null) ? 0 : time.hashCode());
+        return result;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Event other = (Event) obj;
+        if (location == null) {
+            if (other.location != null) {
+                return false;
+            }
+        } else if (!location.equals(other.location)) {
+            return false;
+        }
+        if (time == null) {
+            if (other.time != null) {
+                return false;
+            }
+        } else if (!time.equals(other.time)) {
+            return false;
+        }
+        if (name == null) {
+            if (other.name != null) {
+                return false;
+            }
+        } else if (!name.equals(other.name)) {
+            return false;
+        }
 
-You can also issue the **kubectl get** and **kubectl describe** commands on other Kubernetes resources, so feel
-free to inspect all other resources.
+        return true;
+    }
 
+    @Override
+    public String toString() {
+        return "Event [name=" + name + ", location=" + location + ", time=" + time
+                + "]";
+    }
+}
 
-In this execise, you need to access the services by using the Kubernetes API.
-Run the following command to start a proxy to the Kubernetes API server:
-
-```
-kubectl proxy
-```
-{: codeblock}
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following commands to store the proxy path of the **system** and **inventory** services.
-```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/inventory-service/proxy
-```
-{: codeblock}
-
-Run the following echo commands to verify the variables:
-
-```
-echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
 ```
 {: codeblock}
 
 
-The output appears as shown in the following example:
 
-```
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
-```
+The following table breaks down the new annotations:
 
-Then, use the following **curl** command to access your **system** microservice:
-
-```
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-{: codeblock}
-
-Also, use the following **curl** command to access your **inventory** microservice:
-
-```
-curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
-```
-{: codeblock}
-
-The `http://$SYSTEM_PROXY/system/properties` URL returns system properties and the name of the pod 
-in an HTTP header that is called **X-Pod-Name**.
-To view the header, you can use the **-I** option in the **curl** command when you make a request to the
-`http://$SYSTEM_PROXY/system/properties` URL.
-
-```
-curl -I http://$SYSTEM_PROXY/system/properties
-```
-{: codeblock}
-
-The `http://$INVENTORY_PROXY/inventory/systems/system-service` URL adds properties 
-from the **system-service** endpoint to the inventory Kubernetes Service. 
-Making a request to the `http://$INVENTORY_PROXY/inventory/systems/[kube-service]` URL in general 
-adds to the inventory. That result depends on whether the **kube-service** endpoint is a valid Kubernetes service 
-that can be accessed.
-
-
-# **Scaling a deployment**
-
-To use load balancing, you need to scale your deployments. 
-When you scale a deployment, you replicate its pods, creating more running instances of your applications. 
-Scaling is one of the primary advantages of Kubernetes because you can replicate your application to accommodate more traffic, 
-and then descale your deployments to free up resources when the traffic decreases.
-
-As an example, scale the **system** deployment to three pods by running the following command:
-```
-kubectl scale deployment/system-deployment --replicas=3
-```
-{: codeblock}
-
-
-Use the following command to verify that two new pods have been created.
-```
-kubectl get pods
-```
-{: codeblock}
-
-
-```
-NAME                                    READY     STATUS    RESTARTS   AGE
-system-deployment-6bd97d9bf6-4ccds      1/1       Running   0          1m
-system-deployment-6bd97d9bf6-jf9rs      1/1       Running   0          25s
-system-deployment-6bd97d9bf6-x4zth      1/1       Running   0          25s
-inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
-```
-
-
-Wait for your two new pods to be in the ready state, then make the following **curl** command:
-
-```
-curl -I http://$SYSTEM_PROXY/system/properties
-```
-{: codeblock}
-
-Notice that the **X-Pod-Name** header has a different value when you call it multiple times.
-The value changes because three pods that all serve the **system** application are now running.
-Similarly, to descale your deployments you can use the same scale command with fewer replicas.
-
-```
-kubectl scale deployment/system-deployment --replicas=1
-```
-{: codeblock}
-
-
-# **Redeploy microservices**
-
-When you're building your application, you might want to quickly test a change. 
-To run a quick test, you can rebuild your Docker images then delete and re-create your Kubernetes resources. 
-Note that there is only one **system** pod after you redeploy since you're deleting all of the existing pods.
-
-
-```
-cd /home/project/guide-kubernetes-intro/start
-kubectl delete -f kubernetes.yaml
-
-mvn clean package
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-
-kubectl apply -f kubernetes.yaml
-```
-{: codeblock}
-
-Updating your applications in this way is fine for development environments, but it is not suitable for production.
-If you want to deploy an updated image to a production cluster, 
-you can update the container in your deployment with a new image. 
-Once the new container is ready, Kubernetes automates both the creation of a new container and the decommissioning of the old one.
-
-
-# **Testing microservices that are running on Kubernetes**
-
-A few tests are included for you to test the basic functionality of the microservices. 
-If a test failure occurs, then you might have introduced a bug into the code. 
-To run the tests, wait for all pods to be in the ready state before proceeding further. 
-The default properties defined in the **pom.xml** are:
-
-| *Property*                        | *Description*
+| *Annotation*    | *Description*
 | ---| ---
-| **system.kube.service**       | Name of the Kubernetes Service wrapping the **system** pods, **system-service** by default.
-| **system.service.root**       | The Kubernetes Service **system-service** root path, **localhost:31000** by default.
-| **inventory.service.root** | The Kubernetes Service **inventory-service** root path, **localhost:32000** by default.
+| **@Entity** | Declares the class as an entity
+| **@Table**  | Specifies details of the table such as name 
+| **@NamedQuery** | Specifies a predefined database query that is run by an **EntityManager** instance.
+| **@Id**       |  Declares the primary key of the entity
+| **@GeneratedValue**    | Specifies the strategy used for generating the value of the primary key. 
+                        The **strategy = GenerationType.AUTO** code indicates that the generation strategy 
+                        is automatically selected
+                        
+| **@Column**    | Specifies that the field is mapped to a column in the database table. The **name**
+                 attribute is optional and indicates the name of the column in the table
 
-Navigate back to the **start** directory.
 
+# **Configuring JPA**
 
-Update the **pom.xml** files so that the **system.service.root** and **inventory.service.root** properties
-match the values to access the **system** and **inventory** services.
+The **persistence.xml** file is a configuration file that defines a persistence unit. The
+persistence unit specifies configuration information for the entity manager.
 
+Create the configuration file.
+
+> Run the following touch command in your terminal
 ```
-sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' inventory/pom.xml
-sed -i 's=localhost:32000='"$INVENTORY_PROXY"'=g' inventory/pom.xml
-sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
 ```
 {: codeblock}
 
-Run the integration tests by using the following command:
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
+
+
+
 
 ```
-mvn failsafe:integration-test
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.2"
+    xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
+                        http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
+    <!-- tag::transaction-type[] -->
+    <persistence-unit name="jpa-unit" transaction-type="JTA">
+        <!-- tag::jta-data[] -->
+        <jta-data-source>jdbc/eventjpadatasource</jta-data-source>
+        <properties>
+            <property name="eclipselink.ddl-generation" value="create-tables"/>
+            <property name="eclipselink.ddl-generation.output-mode" value="both" />
+        </properties>
+    </persistence-unit>
+</persistence>
 ```
 {: codeblock}
 
-If the tests pass, you'll see an output similar to the following for each service respectively:
+
+
+The persistence unit is defined by the **persistence-unit** XML element. The **name** attribute is 
+required and is used to identify the persistent unit when using the **@PersistenceContext**
+annotation to inject the entity manager later in this guide. The **transaction-type="JTA"** 
+attribute specifies to use Java Transaction API (JTA) transaction management.
+Since we are using a container-managed entity manager, JTA transactions must be used. 
+
+A JTA transaction type requires a JTA data source to be provided. The **jta-data-source** 
+element specifies the Java Naming and Directory Interface (JNDI) name of 
+the data source that is used. The **data source** has already been configured for you
+in the **backendServices/src/main/liberty/config/server.xml** file. This data source configuration is where 
+the Java Database Connectivity (JDBC) connection is defined along with some database
+vendor-specific properties.
+
+
+The **eclipselink.ddl-generation** properties are used here so that you aren't required to 
+manually create a database table to run this sample application. To learn more about the 
+**ddl-generation** properties, see the 
+[JPA Extensions Reference for EclipseLink.](http://www.eclipse.org/eclipselink/documentation/2.5/jpa/extensions/p_ddl_generation.htm)
+
+
+# **Performing CRUD operations using JPA**
+
+The CRUD operations are defined in the DAO. To perform these operations by using JPA, we need an **EventDao** class. 
+
+Create the **EventDao** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
+
+
+
+
+```
+package io.openliberty.guides.event.dao;
+
+import java.util.List;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import io.openliberty.guides.event.models.Event;
+
+import javax.enterprise.context.RequestScoped;
+
+@RequestScoped
+public class EventDao {
+    
+    @PersistenceContext(name = "jpa-unit")
+    private EntityManager em;
+    
+    public void createEvent(Event event) {
+        em.persist(event);
+    }
+
+    public Event readEvent(int eventId) {
+        return em.find(Event.class, eventId);
+    }
+
+    public void updateEvent(Event event) {
+        em.merge(event);
+    }
+
+    public void deleteEvent(Event event) {
+        em.remove(event);
+    }
+
+    public List<Event> readAllEvents() {
+        return em.createNamedQuery("Event.findAll", Event.class).getResultList();
+    }
+
+    public List<Event> findEvent(String name, String location, String time) {
+        return em.createNamedQuery("Event.findEvent", Event.class)
+            .setParameter("name", name)
+            .setParameter("location", location)
+            .setParameter("time", time).getResultList();
+    }
+}
+```
+{: codeblock}
+
+
+
+To use the entity manager at runtime, inject it into our CDI bean through the
+**@PersistenceContext** annotation. The entity manager interacts with the persistence context. 
+Every **EntityManager** instance is associated with a persistence context. The persistence context 
+manages a set of entities and is aware of the different states that an entity can have.
+The persistence context synchronizes with the database when a transaction commits.
+
+The **EventDao** class has a method for each CRUD operation, so let's break them down:
+
+* The **createEvent()** method persists an instance of the **Event** entity class to the data store by
+calling the **persist()** method on an **EntityManager** instance. The entity instance becomes managed
+and changes to it will be tracked by the entity manager.
+
+* The **readEvent()** method returns an instance of the **Event** entity class with the specified primary 
+key by calling the **find()** method on an **EntityManager** instance. If the event instance is found, it
+is returned in a managed state, but, if the event instance is not found, **null** is returned.
+
+* The **readAllEvents()** method demonstrates an alternative way to retrieve event objects 
+from the database. This method returns a list of instances of the **Event** entity class by 
+using the **Event.findAll** query specified in the **@NamedQuery** annotation on the **Event** class. 
+Similarly, the **findEvent()** method uses the **Event.findEvent** named query to find an event 
+with the given name, location and time. 
+
+
+* The **updateEvent()** method creates a managed instance of a detached entity instance. 
+The entity manager automatically tracks all managed entity objects in its persistence context 
+for changes and synchronizes them with the database. However, if an entity becomes detached, 
+you must merge that entity into the persistence context by calling the **merge()** method 
+so that changes to loaded fields of the detached entity are tracked.
+
+* The **deleteEvent()** method removes an instance of the **Event** entity class from the database by 
+calling the **remove()** method on an **EntityManager** instance. The state of the entity is
+changed to removed and is removed from the database upon transaction commit. 
+
+The DAO is injected into the **backendServices/src/main/java/io/openliberty/guides/event/resources/EventResource.java**
+class and used to access and persist data. The **@Transactional** annotation is used in the
+**EventResource** class to declaratively control the transaction boundaries on the **@RequestScoped** CDI bean.
+This ensures that the methods run within the boundaries of an active global transaction, which is why it is not
+necessary to explicitly begin, commit or rollback transactions. At the end of the transactional
+method invocation, the transaction commits and the persistence context flushes any changes
+to Event entity instances it is managing to the database.
+
+
+
+# **Running the application**
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+When the server is running, go to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL, to view the Event Manager application,
+where **accountname** is your account name.
+
+Click **Create Event** in the left navigation bar to create events that are persisted to 
+the database. After you create an event, it is available to view, update, and delete in
+the **Current Events** section.
+
+
+# **Testing the application**
+
+Create the **EventEntityIT** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
+
+
+
+
+```
+package it.io.openliberty.guides.event;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.HashMap;
+import javax.json.JsonObject;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Form;
+import javax.ws.rs.core.Response.Status;
+
+import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Test;
+import io.openliberty.guides.event.models.Event;
+
+public class EventEntityIT extends EventIT {
+
+    private static final String JSONFIELD_LOCATION = "location";
+    private static final String JSONFIELD_NAME = "name";
+    private static final String JSONFIELD_TIME = "time";
+    private static final String EVENT_TIME = "12:00 PM, January 1 2018";
+    private static final String EVENT_LOCATION = "IBM";
+    private static final String EVENT_NAME = "JPA Guide";
+    private static final String UPDATE_EVENT_TIME = "12:00 PM, February 1 2018";
+    private static final String UPDATE_EVENT_LOCATION = "IBM Updated";
+    private static final String UPDATE_EVENT_NAME = "JPA Guide Updated";
+    
+    private static final int NO_CONTENT_CODE = Status.NO_CONTENT.getStatusCode();
+    private static final int NOT_FOUND_CODE = Status.NOT_FOUND.getStatusCode();
+
+    @BeforeAll
+    public static void oneTimeSetup() {
+        port = System.getProperty("backend.http.port");
+        baseUrl = "http://localhost:" + port + "/";
+    }
+
+    @BeforeEach
+    public void setup() {
+        form = new Form();
+        client = ClientBuilder.newClient();
+        client.register(JsrJsonpProvider.class);
+
+        eventForm = new HashMap<String, String>();
+
+        eventForm.put(JSONFIELD_NAME, EVENT_NAME);
+        eventForm.put(JSONFIELD_LOCATION, EVENT_LOCATION);
+        eventForm.put(JSONFIELD_TIME, EVENT_TIME);
+    }
+
+    @Test
+    public void testInvalidRead() {
+        assertEquals(true, getIndividualEvent(-1).isEmpty(),
+          "Reading an event that does not exist should return an empty list");
+    }
+
+    @Test
+    public void testInvalidDelete() {
+        int deleteResponse = deleteRequest(-1);
+        assertEquals(NOT_FOUND_CODE, deleteResponse,
+          "Trying to delete an event that does not exist should return the " 
+          + "HTTP response code " + NOT_FOUND_CODE);
+    }
+
+    @Test
+    public void testInvalidUpdate() {
+        int updateResponse = updateRequest(eventForm, -1);
+        assertEquals(NOT_FOUND_CODE, updateResponse,
+          "Trying to update an event that does not exist should return the " 
+          + "HTTP response code " + NOT_FOUND_CODE);
+    }
+    
+    @Test
+    public void testReadIndividualEvent() {
+        int postResponse = postRequest(eventForm);
+        assertEquals(NO_CONTENT_CODE, postResponse,
+          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
+
+        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+        JsonObject event = findEvent(e);
+        event = getIndividualEvent(event.getInt("id"));
+        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+
+        int deleteResponse = deleteRequest(event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, deleteResponse, 
+          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
+    }
+    
+    @Test
+    public void testCRUD() {
+        int eventCount = getRequest().size();
+        int postResponse = postRequest(eventForm);
+        assertEquals(NO_CONTENT_CODE, postResponse, 
+          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
+     
+        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+        JsonObject event = findEvent(e);
+        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+
+        eventForm.put(JSONFIELD_NAME, UPDATE_EVENT_NAME);
+        eventForm.put(JSONFIELD_LOCATION, UPDATE_EVENT_LOCATION);
+        eventForm.put(JSONFIELD_TIME, UPDATE_EVENT_TIME);
+        int updateResponse = updateRequest(eventForm, event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, updateResponse, 
+          "Updating an event should return the HTTP response code " + NO_CONTENT_CODE);
+        
+        e = new Event(UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
+        event = findEvent(e);
+        assertData(event, UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
+
+        int deleteResponse = deleteRequest(event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, deleteResponse, 
+          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
+        assertEquals(eventCount, getRequest().size(), 
+          "Total number of events stored should be the same after testing " 
+          + "CRUD operations.");
+    }
+    
+    @AfterEach
+    public void teardown() {
+        response.close();
+        client.close();
+    }
+
+}
+```
+{: codeblock}
+
+
+
+The **testInvalidRead()**, **testInvalidDelete()** and **testInvalidUpdate()** methods use a primary key that is not in the database to test reading, updating and deleting an event that does not
+exist, respectively.
+
+The **testReadIndividualEvent()** method persists a test event to the database and retrieves the 
+event object from the database using the primary key of the entity.
+
+The **testCRUD()** method creates a test event and persists it to the database. The event object is then 
+retrieved from the database to verify that the test event was actually persisted. Next, the  
+name, location, and time of the test event are updated. The event object is retrieved 
+from the database to verify that the updated event is stored. Finally, the updated test 
+event is deleted and one final check is done to ensure that the updated test event is no longer 
+stored in the database.
+
+<br/>
+### **Running the tests**
+
+Since you started Open Liberty in dev mode, press the **enter/return** key in the command-line session where you started the
+**backendServices** service to run the tests for the **backendServices**.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.372 s - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.event.EventEntityIT
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.703 sec - in it.io.openliberty.guides.event.EventEntityIT
 
-Results:
+Results :
 
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 
 ```
 
+When you are done checking out the services, exit dev mode by pressing CTRL+C in the command-line sessions where you
+ran the **frontendUI** and **backendServices** services,  or by typing **q** and then pressing the **enter/return** key.
+Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another command-line session for the **frontendUI**
+and **backendServices** services:
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.714 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
-
-Results:
-
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-```
-
-
-# **Tearing down the environment**
-
-When you no longer need your deployed microservices, 
-you can delete all Kubernetes resources by running the **kubectl delete** command:
-```
-kubectl delete -f kubernetes.yaml
+mvn liberty:stop
 ```
 {: codeblock}
 
 
-
-Press **CTRL+C** to stop the proxy server that was started at step 7.
 
 
 # **Summary**
 
 ## **Nice Work!**
 
-You have just deployed two microservices that are running in Open Liberty to Kubernetes.
+You learned how to map Java objects to database tables by defining a JPA entity class whose 
 
-You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
+instances are represented as rows in the table. You have injected a container-managed 
+entity manager into a DAO and learned how to perform CRUD operations in your microservice in Open Liberty.
 
 
 
@@ -605,11 +768,11 @@ You then scaled a microservice and ran integration tests against miroservices th
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-kubernetes-intro** project by running the following commands:
+Delete the **guide-jpa-intro** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-kubernetes-intro
+rm -fr guide-jpa-intro
 ```
 {: codeblock}
 
@@ -618,7 +781,7 @@ rm -fr guide-kubernetes-intro
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20microservices%20to%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Accessing%20and%20persisting%20data%20in%20microservices%20using%20Java%20Persistence%20API%20(JPA)&guide-id=cloud-hosted-guide-jpa-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -626,16 +789,15 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jpa-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jpa-intro/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-* [Managing microservice traffic using Istio](https://openliberty.io/guides/istio-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 <br/>
