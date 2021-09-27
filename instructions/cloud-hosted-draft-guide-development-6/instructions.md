@@ -565,18 +565,15 @@ kubectl port-forward svc/cart-service $CART_NODEPORT:9080
 {: codeblock}
 
 
-Run the **minikube ip** command to get the hostname for minikube.
-Then, go to the **http://[hostname]:31000/openapi/ui/** URL in your browser. 
-This URL displays the available REST endpoints.
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following commands to get the URL to access the application.
+
+Run the following commands to get the URL to access the application. This URL displays the available REST endpoints.
 ```
 CART_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services cart-service`
 echo https://${USERNAME}-${CART_NODEPORT}.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/openapi/ui
 ```
 {: codeblock}
-This URL displays the available REST endpoints.
 
 Make a POST request to the **/cart/{item}&{price}** endpoint. To make this request, expand the POST
 endpoint on the UI, click the **Try it out** button, provide an item and a price,
