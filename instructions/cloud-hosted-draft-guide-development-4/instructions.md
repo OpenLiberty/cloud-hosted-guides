@@ -39,6 +39,7 @@ curl http://localhost:9090/events
 
 
 
+
 # **What you'll learn**
 
 You will learn how to use the Java Persistence API (JPA) to map Java objects to relational database 
@@ -128,7 +129,7 @@ The defaultServer server is ready to run a smarter planet.
 
 Select **Launch Application** from the menu of the IDE, 
 type in **9090** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`**, 
+You're redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
 where **accountname** is your account name.
 
 The event application does not display any events because no events are stored in the database. 
@@ -367,12 +368,8 @@ The following table breaks down the new annotations:
 | **@Table**  | Specifies details of the table such as name 
 | **@NamedQuery** | Specifies a predefined database query that is run by an **EntityManager** instance.
 | **@Id**       |  Declares the primary key of the entity
-| **@GeneratedValue**    | Specifies the strategy used for generating the value of the primary key. 
-                        The **strategy = GenerationType.AUTO** code indicates that the generation strategy 
-                        is automatically selected
-                        
-| **@Column**    | Specifies that the field is mapped to a column in the database table. The **name**
-                 attribute is optional and indicates the name of the column in the table
+| **@GeneratedValue**    | Specifies the strategy used for generating the value of the primary key. The **strategy = GenerationType.AUTO** code indicates that the generation strategy is automatically selected
+| **@Column**    | Specifies that the field is mapped to a column in the database table. The **name** attribute is optional and indicates the name of the column in the table
 
 
 # **Configuring JPA**
@@ -551,7 +548,9 @@ to Event entity instances it is managing to the database.
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-When the server is running, go to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL, to view the Event Manager application,
+When the server is running, select **Launch Application** from the menu of the IDE, 
+type in **9090** to specify the port number for the microservice, and click the **OK** button. 
+You're redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
 where **accountname** is your account name.
 
 Click **Create Event** in the left navigation bar to create events that are persisted to 
