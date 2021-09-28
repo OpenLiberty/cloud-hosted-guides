@@ -330,19 +330,19 @@ It creates containers for Kafka, Zookeeper, and all of the microservices in the 
 The microservices will take some time to become available.
 Run the following commands to confirm that the **inventory** and **query** microservices are up and running:
 ```
-curl http://localhost:9085/health | jq
+curl -s http://localhost:9085/health | jq
 ```
 {: codeblock}
 
 ```
-curl http://localhost:9080/health | jq
+curl -s http://localhost:9080/health | jq
 ```
 {: codeblock}
 
 Once the microservices are up and running, you can access the application by making requests to the **query/systemLoad** endpoint
 using the following **curl** command:
 ```
-curl http://localhost:9080/query/systemLoad | jq
+curl -s http://localhost:9080/query/systemLoad | jq
 ```
 {: codeblock}
 
@@ -775,7 +775,7 @@ Next, use the provided script to restart the query service in a Docker container
 The **query** microservice will take some time to become available.
 Run the following command to confirm that the **query** microservice is up and running:
 ```
-curl http://localhost:9080/health | jq
+curl -s http://localhost:9080/health | jq
 ```
 {: codeblock}
 
@@ -783,7 +783,7 @@ Once the **query** microservice is up and running,
 you can access the application by making requests to the **query/systemLoad** endpoint using
 the following **curl** command:
 ```
-curl http://localhost:9080/query/systemLoad | jq
+curl -s http://localhost:9080/query/systemLoad | jq
 ```
 {: codeblock}
 
