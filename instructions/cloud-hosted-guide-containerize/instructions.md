@@ -197,7 +197,7 @@ The **FROM** instruction initializes a new build stage, which indicates the pare
 In this case, you're using the recommended production image,
 **openliberty/open-liberty:full-java11-openj9-ubi**, as your parent image. If you
 don't want any additional runtime features for your **kernel** image, define the
-**FROM** instruction as **FROM open-liberty:kernel**. To use the default image that
+**FROM** instruction as **FROM open-liberty:kernel-slim**. To use the default image that
 comes with the Open Liberty runtime, define the **FROM** instruction as **FROM open-liberty**. 
 You can find all the [official images](https://hub.docker.com/_/open-liberty) and
 [ubi images](https://hub.docker.com/r/openliberty/open-liberty/) on the open-liberty Docker Hub.
