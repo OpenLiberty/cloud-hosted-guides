@@ -59,15 +59,22 @@ The **finish** directory contains the finished project that you will build.
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
 
+To try out the application, go to the `finish` directory and
+run the following command to specify the location of `artists.json` on the cloud:
+
+[role='command']
 ```
 cd finish
+sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/js/consume-rest.js
+```
+
+Next, run the following Maven goal to build the application and deploy it to Open Liberty:
+
+[role='command']
+```
 mvn liberty:run
 ```
-{: codeblock}
-
 
 After you see the following message, your application server is ready:
 
@@ -76,11 +83,13 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-When the server is running, select **Launch Application** from the menu of the IDE, 
-type in **9080** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`**, 
-where **accountname** is your account name.
-See the following output:
+When the server is running, run the following command to get the URL to access it.
+```
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
+{: codeblock}
+
+Follow the link and see the following output:
 
 ```
 foo wrote 2 albums:
@@ -179,6 +188,12 @@ app.controller("ArtistsCtrl", function($scope, artists) {
 
 
 
+Run the following command to specify the location of `artists.json` on the cloud.
+```
+sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/js/consume-rest.js
+```
+{: codeblock}
+
 The application module is defined by **consumeRestApp**.
 
 Your application will need some way of communicating with RESTful web services in order to retrieve their resources.
@@ -275,10 +290,12 @@ using the **{{ artists }}** expression. You can use the **ng-repeat** directive 
 of the **artists** property.
 
 
-After everything is set up, select **Launch Application** from the menu of the IDE, 
-type in **9080** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`**, 
-where **accountname** is your account name.
+When the server is running, run the following command to get the URL to access it.
+```
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
+{: codeblock}
+
 See the following output:
 
 ```
@@ -296,7 +313,7 @@ dj wrote 0 albums:
 No explicit code directly uses the consumed artist JSON, so you do not need to write any test cases for this guide.
 
 
-Whenever you change your AngularJS implementation, the application root at **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** will
+Whenever you change your AngularJS implementation, the application root at **`http://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** will
 reflect the changes automatically. You can visit the root to manually check whether the artist JSON
 was consumed correctly.
 
