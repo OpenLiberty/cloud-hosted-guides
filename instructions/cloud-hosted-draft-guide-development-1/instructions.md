@@ -1,7 +1,7 @@
 
 # **Welcome to the Consuming a RESTful web service with AngularJS guide!**
 
-Explore how to access a simple RESTful web service and consume its resources with AngularJS in Open
+Explore how to access a simple RESTful web service and consume its resources with AngularJS in Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,7 +10,6 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-Liberty.
 
 
 # **What you'll learn**
@@ -19,7 +18,7 @@ You will learn how to access a REST service and deserialize the returned JSON th
 artists and their albums by using the high-level **$resource** service of AngularJS.
 
 The REST service that provides the artists and albums resource was written for you in advance and
-responds with the **artists.json**.
+responds with the **artists.json**, located in the **start/src/resources** directory.
 
 
 
@@ -80,7 +79,8 @@ The defaultServer server is ready to run a smarter planet.
 When the server is running, select **Launch Application** from the menu of the IDE, 
 type in **9080** to specify the port number for the microservice, and click the **OK** button. 
 You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`**, 
-where **accountname** is your account name. See the following output:
+where **accountname** is your account name.
+See the following output:
 
 ```
 foo wrote 2 albums:
@@ -129,8 +129,8 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 or open the project in your editor.
 
 
-After the server is started, use the following command to get the URL.
-Open your browser and view your artist JSON by going to the URL that the command returns.
+After the server is started, use the following command to get the URL to view your artist JSON.
+Open your browser and view the URL that the command returns.
 ```
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists
 ```
@@ -278,7 +278,8 @@ of the **artists** property.
 After everything is set up, select **Launch Application** from the menu of the IDE, 
 type in **9080** to specify the port number for the microservice, and click the **OK** button. 
 You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`**, 
-where **accountname** is your account name. See the following output:
+where **accountname** is your account name.
+See the following output:
 
 ```
 foo wrote 2 albums:
