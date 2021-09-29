@@ -14,32 +14,6 @@ Learn how to use Java Persistence API (JPA) to access and persist data to a data
 
 
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-:eventapp-url: http://localhost:9090/eventmanager.jsf
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9090/eventmanager.jsf
-```
-{: codeblock}
-
-
-
-:get-events-url: http://localhost:9090/events
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9090/events
-```
-{: codeblock}
-
-
-
-
 # **What you'll learn**
 
 You will learn how to use the Java Persistence API (JPA) to map Java objects to relational database 
