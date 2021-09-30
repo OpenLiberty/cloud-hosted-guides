@@ -13,11 +13,11 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 # **What you'll learn**
 
-You'll first learn how to create a reactive JAX-RS client application using the default JAX-RS reactive provider APIs.
-You will then learn how to improve the application to take advantage of the RxJava reactive extensions with a
-pluggable reactive provider that's published by [Eclipse Jersey](https://eclipse-ee4j.github.io/jersey).
+First, you'll learn how to create a reactive JAX-RS client application by using the default reactive JAX-RS client APIs.
+You will then learn how to take advantage of the RxJava reactive extensions with a
+pluggable reactive JAX-RS client provider that's published by [Eclipse Jersey](https://eclipse-ee4j.github.io/jersey).
 The JAX-RS client is an API used to communicate with RESTful web services. 
-The API makes it easy to consume a web service that is exposed by using the HTTP protocol,
+The API makes it easy to consume a web service by using the HTTP protocol,
 which means that you can efficiently implement client-side applications. 
 The reactive client extension to JAX-RS is an API that enables you to use the reactive programming model when using the JAX-RS client.
 
@@ -78,7 +78,7 @@ Navigate to the **start** directory to begin.
 
 JAX-RS provides a default reactive provider that you can use to create a reactive REST client using the **CompletionStage** interface.
 
-Create an **InventoryClient** class, which is used to retrieve inventory data,
+Create an **InventoryClient** class, which retrieves inventory data,
 and a **QueryResource** class, which queries data from the **inventory** service.
 
 Create the **InventoryClient** interface.
@@ -340,7 +340,7 @@ curl -s http://localhost:9080/health | jq
 {: codeblock}
 
 Once the microservices are up and running, you can access the application by making requests to the **query/systemLoad** endpoint
-using the following **curl** command:
+by using the following **curl** command:
 ```
 curl -s http://localhost:9080/query/systemLoad | jq
 ```
