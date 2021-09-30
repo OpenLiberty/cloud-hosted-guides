@@ -18,7 +18,9 @@ You will learn how to access a REST service and deserialize the returned JSON th
 
 [ReactJS](https://reactjs.org/) is a JavaScript library that is used to build user interfaces. Its main purpose is to incorporate a component-based approach to create reusable UI elements. With ReactJS, you can also interface with other libraries and frameworks. Note that the names ReactJS and React are used interchangeably.
 
-The React application in this guide is provided and configured for you in the **src/main/frontend** directory. The application uses the https://reactjs.org/docs/create-a-new-react-app.html[Create React App] prebuilt configuration to set up the modern single-page React application. The [https://github.com/facebook/create-react-app]**create-react-app** integrated toolchain is a comfortable environment for learning React and is the best way to start building a new single-page application with React.
+The React application in this guide is provided and configured for you in the **src/main/frontend** directory.
+The application uses the [Create React App](https://reactjs.org/docs/create-a-new-react-app.html) prebuilt configuration to set up the modern single-page React application.
+The [create-react-app](https://github.com/facebook/create-react-app) integrated toolchain is a comfortable environment for learning React and is the best way to start building a new single-page application with React.
 
 
 The REST service that provides the resources was written for you in advance in the back end of the application, and it responds with the **artists.json** in the **src/resources** directory. You will implement a ReactJS client as the front end of your application, which consumes this JSON file and displays its contents on a single-page webpage. 
@@ -58,8 +60,8 @@ The **finish** directory contains the finished project that you will build.
 The **finish** directory in the root of this guide contains the finished application. The React front end is already pre-built for you and the static files from the production build can be found in the **src/main/webapp/static** directory.
 
 
-To try out the application, go to the `finish` directory and
-run the following command to specify the location of `artists.json` on the cloud:
+To try out the application, go to the **finish** directory and
+run the following command to specify the location of **artists.json** on the cloud:
 
 ```
 cd finish
@@ -69,10 +71,11 @@ sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_D
 
 Next, run the following Maven goal to build the application and deploy it to Open Liberty:
 
-[role='command']
 ```
 mvn liberty:run
 ```
+{: codeblock}
+
 
 After you see the following message, your application server is ready:
 
@@ -465,9 +468,10 @@ JSON data to allow it to be accessed by the **ReactTable**. You will notice the
 which is a relatively new sytnax made for simplicity. 
 To learn more about it, see [Spread in object literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax#Spread_in_object_literals).
 
-The **this.setState** function is used to update the state of your React component with the data that was fetched from the server. This update triggers a rerender of your React component, which updates the table with the artist data. For more information on how state in React works, see the React documentation on https://reactjs.org/docs/faq-state.html[state and lifecycle].
+The **this.setState** function is used to update the state of your React component with the data that was fetched from the server. This update triggers a rerender of your React component, which updates the table with the artist data.
+For more information on how state in React works, see the React documentation on [state and lifecycle](https://reactjs.org/docs/faq-state.html).
 
-Finally, run the following command to specify the location of `artists.json` on the cloud.
+Finally, run the following command to specify the location of **artists.json** on the cloud.
 ```
 sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/frontend/src/Components/ArtistTable.js
 ```
@@ -674,9 +678,8 @@ When you are done checking the application root, exit dev mode by pressing CTRL+
 
 ## **Nice Work!**
 
-Nice work! You just accessed a simple RESTful web service and consumed its resources by using ReactJS in
+Nice work! You just accessed a simple RESTful web service and consumed its resources by using ReactJS in Open Liberty.
 
-Open Liberty.
 
 
 <br/>
