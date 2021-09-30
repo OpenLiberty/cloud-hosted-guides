@@ -63,11 +63,11 @@ The **finish** directory in the root of this guide contains the finished applica
 To try out the application, go to the `finish` directory and
 run the following command to specify the location of `artists.json` on the cloud:
 
-[role='command']
 ```
 cd finish
 sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/js/consume-rest.js
 ```
+{: codeblock}
 
 Next, run the following Maven goal to build the application and deploy it to Open Liberty:
 
@@ -83,7 +83,8 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-When the server is running, run the following command to get the URL to access it.
+When the server is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
+Run the following command to get the URL to access it.
 ```
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
@@ -138,8 +139,7 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 or open the project in your editor.
 
 
-After the server is started, use the following command to get the URL to view your artist JSON.
-Open your browser and view the URL that the command returns.
+After the server is started, you can use the following command to get the URL to view your artist JSON.
 ```
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists
 ```
@@ -290,7 +290,8 @@ using the **{{ artists }}** expression. You can use the **ng-repeat** directive 
 of the **artists** property.
 
 
-When the server is running, run the following command to get the URL to access it.
+When the server is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
+Run the following command to get the URL to access the server.
 ```
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
@@ -327,9 +328,8 @@ When you develop your own applications, testing becomes a crucial part of your d
 
 ## **Nice Work!**
 
-You have just accessed a simple RESTful web service and consumed its resources by using AngularJS in
+You have just accessed a simple RESTful web service and consumed its resources by using AngularJS in Open Liberty.
 
-Open Liberty.
 
 
 <br/>
