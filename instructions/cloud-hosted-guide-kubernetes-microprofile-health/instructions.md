@@ -70,7 +70,7 @@ The **finish** directory contains the finished project that you will build.
 
 
 
-# Logging into your cluster
+# **Logging into your cluster**
 
 For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
 Get the name of your namespace with the following command:
