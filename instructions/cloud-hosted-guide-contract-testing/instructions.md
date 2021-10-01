@@ -86,6 +86,8 @@ When the Pact Broker is running, you'll see the following output:
 Creating pact-broker_postgres_1 ... done
 Creating pact-broker_pact-broker_1 ... done
 ```
+{: codeblock}
+
 
 
 Confirm that the Pact Broker is working.
