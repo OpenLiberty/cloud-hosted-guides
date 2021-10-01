@@ -345,6 +345,8 @@ You will see the following output:
 
  Integration tests finished.
 ```
+{: codeblock}
+
 
 After you are finished running tests, stop the Open Liberty server by typing `q` in the command-line session where you ran
 the server, and then press the **enter/return** key.
@@ -516,6 +518,8 @@ You will see the following output:
 
  Integration tests finished.
 ```
+{: codeblock}
+
 
 After you are finished running tests, stop the Open Liberty server by typing `q` in the command-line session where you ran
 the server, and then press the **enter/return** key.
