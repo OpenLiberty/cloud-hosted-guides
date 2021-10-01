@@ -117,6 +117,8 @@ Copy the following example input into the text box:
   "serialNumber": "Liberty0001"
 }
 ```
+{: codeblock}
+
 
 Click **Execute** and you receive the response **No Constraint Violations** because the 
 values specified pass the constraints you will create in this guide. Now try copying
@@ -135,6 +137,8 @@ the following value into the box:
   "serialNumber": "Liberty0001"
 }
 ```
+{: codeblock}
+
 
 This time you receive `Constraint Violation Found: must be greater than or equal
 to 18` as a response because the age specified was under the minimum age of 18. Try 
@@ -642,6 +646,8 @@ section and click **Try it out**. Copy the following example input into the text
   "serialNumber": "Liberty0001"
 }
 ```
+{: codeblock}
+
 
 Click **Execute** and you receive the response **No Constraint Violations** because
 the values specified pass previously defined constraints.
