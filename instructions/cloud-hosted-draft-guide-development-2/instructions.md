@@ -96,8 +96,8 @@ The defaultServer server is ready to run a smarter planet.
 
 
 Select **Launch Application** from the menu of the IDE, 
-type in **9090** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai/app/`**, 
+type in **9080** to specify the port number for the microservice, and click the **OK** button. 
+You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, 
 where **accountname** is your account name. You will see the following output:
 
 
@@ -491,8 +491,8 @@ Any local changes to your TypeScript or HTML are picked up when you build the fr
 
 
 Select **Launch Application** from the menu of the IDE, 
-type in **9090** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai/app/`**, 
+type in **9080** to specify the port number for the microservice, and click the **OK** button. 
+You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, 
 where **accountname** is your account name. You will see the following output:
 
 ```
