@@ -13,14 +13,18 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 # **What you'll learn**
 
-You'll first learn how to create a reactive JAX-RS client application using the default JAX-RS reactive provider APIs. You will then learn how to improve the application to take advantage of the RxJava reactive extensions with a pluggable reactive provider that's published by [Eclipse Jersey](https://eclipse-ee4j.github.io/jersey).
+First, you'll learn how to create a reactive JAX-RS client application by using the default reactive JAX-RS client APIs.
+You will then learn how to take advantage of the RxJava reactive extensions with a
+pluggable reactive JAX-RS client provider that's published by [Eclipse Jersey](https://eclipse-ee4j.github.io/jersey).
 The JAX-RS client is an API used to communicate with RESTful web services. 
-The API makes it easy to consume a web service that is exposed by using the HTTP protocol, which means that you can efficiently implement client-side applications. 
+The API makes it easy to consume a web service by using the HTTP protocol,
+which means that you can efficiently implement client-side applications. 
 The reactive client extension to JAX-RS is an API that enables you to use the reactive programming model when using the JAX-RS client.
 
 Reactive programming is an extension of asynchronous programming and focuses on the flow of data through data streams. 
 Reactive applications process data when it becomes available and respond to requests as soon as processing is complete. 
-The request to the application and response from the application are decoupled so that the application is not blocked from responding to other requests in the meantime. 
+The request to the application and response from the application are decoupled so that
+the application is not blocked from responding to other requests in the meantime. 
 Because reactive applications can run faster than synchronous applications, they provide a much smoother user experience.
 
 The application in this guide demonstrates how the JAX-RS client accesses remote RESTful services by using asynchronous method calls. 
@@ -30,8 +34,8 @@ Both Jersey and Apache CXF provide third-party reactive libraries for RxJava and
 
 The application that you will be working with consists of three microservices, **system**, **inventory**, and **query**. 
 Every 15 seconds, the **system** microservice calculates and publishes an event that contains its current average system load. 
-The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems and their 
-current system loads.
+The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems
+and their current system loads.
 
 ![Reactive Query Service](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-rest-client/master/assets/QueryService.png)
 
@@ -70,12 +74,12 @@ The **finish** directory contains the finished project that you will build.
 
 # **Creating a web client using the default JAX-RS API**
 
-
 Navigate to the **start** directory to begin.
 
 JAX-RS provides a default reactive provider that you can use to create a reactive REST client using the **CompletionStage** interface.
 
-Create an **InventoryClient** class, which is used to retrieve inventory data, and a **QueryResource** class, which queries data from the **inventory** service.
+Create an **InventoryClient** class, which retrieves inventory data,
+and a **QueryResource** class, which queries data from the **inventory** service.
 
 Create the **InventoryClient** interface.
 
@@ -96,19 +100,17 @@ package io.openliberty.guides.query.client;
 
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CompletionStage;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.glassfish.jersey.client.rx.rxjava.RxObservableInvoker;
-import org.glassfish.jersey.client.rx.rxjava.RxObservableInvokerProvider;
-
-import rx.Observable;
 
 @RequestScoped
 public class InventoryClient {
@@ -122,33 +124,32 @@ public class InventoryClient {
                             .target(baseUri)
                             .path("/inventory/systems")
                             .request()
-                            .header(HttpHeaders.CONTENT_TYPE,
-                            MediaType.APPLICATION_JSON)
-                            .get(new GenericType<List<String>>() { });
+                            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .get(new GenericType<List<String>>(){});
     }
 
-    public Observable<Properties> getSystem(String hostname) {
+    public CompletionStage<Properties> getSystem(String hostname) {
         return ClientBuilder.newClient()
                             .target(baseUri)
-                            .register(RxObservableInvokerProvider.class)
                             .path("/inventory/systems")
                             .path(hostname)
                             .request()
-                            .header(HttpHeaders.CONTENT_TYPE,
-                            MediaType.APPLICATION_JSON)
-                            .rx(RxObservableInvoker.class)
-                            .get(new GenericType<Properties>() { });
+                            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .rx()
+                            .get(Properties.class);
     }
 }
 ```
 {: codeblock}
 
 
+
 The **getSystem()** method returns the **CompletionStage** interface. 
 This interface represents a unit or stage of a computation.
 When the associated computation completes, the value can be retrieved. 
 The **rx()** method calls the **CompletionStage** interface. 
-It retrieves the **CompletionStageRxInvoker** class and allows these methods to function correctly with the **CompletionStage** interface return type.
+It retrieves the **CompletionStageRxInvoker** class and allows these methods to
+function correctly with the **CompletionStage** interface return type.
 
 Create the **QueryResource** class.
 
@@ -263,13 +264,16 @@ public class QueryResource {
 
 
 
-The **systemLoad** endpoint asynchronously processes the data that is retrieved by the **InventoryClient** interface and serves that data after all of the services respond. 
-The **thenAcceptAsync()** and **exceptionally()** methods together behave like an asynchronous try-catch block. 
+The **systemLoad** endpoint asynchronously processes the data that is
+retrieved by the **InventoryClient** interface and serves that data after all of the services respond. 
+The **thenAcceptAsync()** and **exceptionally()**
+methods together behave like an asynchronous try-catch block. 
 The data is processed in the **thenAcceptAsync()** method only after the **CompletionStage** interface finishes retrieving it. 
 When you return a **CompletionStage** type in the resource, it doesn’t necessarily mean that the computation completed and the response was built.
 
 A **CountDownLatch** object is used to track how many asynchronous requests are being waited on. 
-After each thread is completed, the **countdown()** method counts the **CountDownLatch** object down towards **0**. 
+After each thread is completed, the **countdown()** method
+counts the **CountDownLatch** object down towards **0**. 
 This means that the value returns only after the thread that's retrieving the value is complete.
 The **await()** method stops and waits until all of the requests are complete. 
 While the countdown completes, the main thread is free to perform other tasks. 
@@ -278,7 +282,8 @@ In this case, no such task is present.
 # **Building and running the application**
 
 The **system**, **inventory**, and **query** microservices will be built in Docker containers. 
-If you want to learn more about Docker containers, check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
+If you want to learn more about Docker containers,
+check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
 
 Start your Docker environment.
 
@@ -309,7 +314,9 @@ docker build -t query:1.0-SNAPSHOT query/.
 {: codeblock}
 
 
-Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It creates containers for Kafka, Zookeeper, and all of the microservices in the project.
+Next, use the provided script to start the application in Docker containers.
+The script creates a network for the containers to communicate with each other.
+It creates containers for Kafka, Zookeeper, and all of the microservices in the project.
 
 
 ```
@@ -319,23 +326,25 @@ Next, use the provided script to start the application in Docker containers. The
 
 
 
-The services will take some time to become available.
 
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-You can access the application by making requests to the **query/systemLoad** endpoint at the http://localhost:9080/query/systemLoad URL. 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+The microservices will take some time to become available.
+Run the following commands to confirm that the **inventory** and **query** microservices are up and running:
 ```
-curl http://localhost:9080/query/systemLoad
+curl -s http://localhost:9085/health | jq
 ```
 {: codeblock}
 
+```
+curl -s http://localhost:9080/health | jq
+```
+{: codeblock}
 
+Once the microservices are up and running, you can access the application by making requests to the **query/systemLoad** endpoint
+by using the following **curl** command:
+```
+curl -s http://localhost:9080/query/systemLoad | jq
+```
+{: codeblock}
 
 When the service is ready, you see an output similar to the following example. 
 This example was formatted for readability:
@@ -370,11 +379,8 @@ docker stop query
 # **Updating the web client to use an alternative reactive provider**
 
 
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-Although JAX-RS provides the default reactive provider that returns **CompletionStage** types, you can alternatively use another provider that supports other reactive frameworks like [RxJava](https://github.com/ReactiveX/RxJava). 
+Although JAX-RS provides the default reactive provider that returns **CompletionStage** types,
+you can alternatively use another provider that supports other reactive frameworks like [RxJava](https://github.com/ReactiveX/RxJava). 
 The Apache CXF and Eclipse Jersey projects produce such providers.
 You'll now update the web client to use the Jersey reactive provider for RxJava. 
 With this updated reactive provider, you can write clients that use RxJava objects instead of clients that use only the **CompletionStage** interface. 
@@ -535,7 +541,9 @@ Replace the Maven configuration file.
 {: codeblock}
 
 
-The **jersey-rx-client-rxjava** and **jersey-rx-client-rxjava2** dependencies provide the **RxInvokerProvider** classes, which are registered to the **jersey-client** **ClientBuilder** class.
+The **jersey-rx-client-rxjava** and
+**jersey-rx-client-rxjava2** dependencies provide the **RxInvokerProvider** classes,
+which are registered to the **jersey-client** **ClientBuilder** class.
 
 Update the client to accommodate the custom object types that you are trying to return. 
 You'll need to register the type of object that you want inside the client invocation.
@@ -603,22 +611,18 @@ public class InventoryClient {
 
 
 The return type of the **getSystem()** method is now an **Observable** object instead of a **CompletionStage** interface. 
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-[Observable](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html) is a collection of data that waits to be subscribed to before it can release any data and is part of RxJava. 
+[Observable](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html) is a
+collection of data that waits to be subscribed to before it can release any data and is part of RxJava. 
 The **rx()** method now needs to contain **RxObservableInvoker.class** as an argument.
 This argument calls the specific invoker, **RxObservableInvoker**, for the **Observable** class that's provided by Jersey. 
-In the **getSystem()** method, the **register(RxObservableInvokerProvider)** method call registers the **RxObservableInvoker** class, which means that the client can recognize the invoker provider.
+In the **getSystem()** method,
+the **register(RxObservableInvokerProvider)** method call registers the **RxObservableInvoker** class,
+which means that the client can recognize the invoker provider.
 
 In some scenarios, a producer might generate more data than the consumers can handle. 
 JAX-RS can deal with cases like these by using the RxJava **Flowable** class with backpressure. 
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-To learn more about RxJava and backpressure, see [JAX-RS reactive extensions with RxJava backpressure](https://openliberty.io/blog/2019/04/10/jaxrs-reactive-extensions.html).
+To learn more about RxJava and backpressure, see
+[JAX-RS reactive extensions with RxJava backpressure](https://openliberty.io/blog/2019/04/10/jaxrs-reactive-extensions.html).
 
 # **Updating the REST resource to support the reactive JAX-RS client**
 
@@ -732,7 +736,8 @@ The goal of the **systemLoad()** method is to return the system with the largest
 The **systemLoad** endpoint first gets all of the hostnames by calling the **getSystems()** method. 
 Then it loops through the hostnames and calls the **getSystem()** method on each one.
 
-Instead of using the **thenAcceptAsync()** method, **Observable** uses the **subscribe()** method to asynchronously process data. 
+Instead of using the **thenAcceptAsync()** method,
+**Observable** uses the **subscribe()** method to asynchronously process data. 
 Thus, any necessary data processing happens inside the **subscribe()** method. 
 In this case, the necessary data processing is saving the data in the temporary **Holder** class.
 The **Holder** class is used to store the value that is returned from the client because values cannot be returned inside the **subscribe()** method. 
@@ -767,17 +772,20 @@ Next, use the provided script to restart the query service in a Docker container
 
 
 
-You can access the application by making requests to the **query/systemLoad** endpoint at the http://localhost:9080/query/systemLoad URL. 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+The **query** microservice will take some time to become available.
+Run the following command to confirm that the **query** microservice is up and running:
 ```
-curl http://localhost:9080/query/systemLoad
+curl -s http://localhost:9080/health | jq
 ```
 {: codeblock}
 
-
+Once the **query** microservice is up and running, 
+you can access the application by making requests to the **query/systemLoad** endpoint using
+the following **curl** command:
+```
+curl -s http://localhost:9080/query/systemLoad | jq
+```
+{: codeblock}
 
 Switching to a reactive programming model freed up the thread that was handling your request to **query/systemLoad**. 
 While the client request is being handled, the thread can handle other work.
@@ -785,12 +793,11 @@ While the client request is being handled, the thread can handle other work.
 When you are done checking out the application, run the following script to stop the application:
 
 
+
 ```
 ./scripts/stopContainers.sh
 ```
 {: codeblock}
-
-
 
 
 # **Testing the query microservice**
@@ -909,7 +916,8 @@ public class QueryServiceIT {
 {: codeblock}
 
 
-The **testSystemLoad()** test case verifies that the **query** service can correctly calculate the highest and lowest system loads. 
+The **testSystemLoad()** test case verifies that the
+**query** service can correctly calculate the highest and lowest system loads. 
 
 
 
