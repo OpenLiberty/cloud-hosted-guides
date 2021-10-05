@@ -101,7 +101,7 @@ You see the OpenAPI user interface documenting the REST endpoints used in this g
 If you are interested in learning more about OpenAPI,
 read [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html). 
 Expand the **/beanvalidation/validatespacecraft POST request to validate your spacecraft bean** section 
-and click *Try it out*. Copy the following example input into the text box:
+and click **Try it out**. Copy the following example input into the text box:
 
 ```
 {
@@ -654,9 +654,8 @@ Constraint Violation Found: must be greater than or equal to 18
 Constraint Violation Found: must be a well-formed email address
 ```
 
-To try the method-level validation expand the `/beanvalidation/launchspacecraft
-POST request to specify a launch code** section.  Enter **OpenLiberty** in the text box
-to note that **launched** is returned because the launch code passes the defined
+To try the method-level validation expand the **/beanvalidation/launchspacecraft POST request to specify a launch code** section.
+Enter **OpenLiberty** in the text box to note that **launched** is returned because the launch code passes the defined
 constraints. Replace **OpenLiberty** with anything else to note that a constraint
 violation is returned.
 
