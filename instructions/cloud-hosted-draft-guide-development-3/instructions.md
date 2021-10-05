@@ -100,9 +100,8 @@ echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/o
 You see the OpenAPI user interface documenting the REST endpoints used in this guide.
 If you are interested in learning more about OpenAPI,
 read [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html). 
-Expand the `/beanvalidation/validatespacecraft POST request to validate your
-spacecraft bean` section and click *Try it out*.
-Copy the following example input into the text box:
+Expand the **/beanvalidation/validatespacecraft POST request to validate your spacecraft bean** section 
+and click *Try it out*. Copy the following example input into the text box:
 
 ```
 {
@@ -140,8 +139,8 @@ the following value into the box:
 {: codeblock}
 
 
-This time you receive `Constraint Violation Found: must be greater than or equal
-to 18` as a response because the age specified was under the minimum age of 18. Try 
+This time you receive **Constraint Violation Found: must be greater than or equal to 18** as 
+a response because the age specified was under the minimum age of 18. Try 
 other combinations of values to get a feel for the constraints that will be defined 
 in this guide.
 
