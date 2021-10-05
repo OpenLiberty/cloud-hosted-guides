@@ -253,19 +253,11 @@ the values.
 
 The **Astronaut** class has the following constraints applied:
 
-* The astronaut needs to have a name. Bean Validation 2.0 provides a built-in 
-**@NotBlank** constraint, which ensures the value is not null and contains 
-one character that isn't a blank space. The annotation constrains the **name** field.
+* The astronaut needs to have a name. Bean Validation 2.0 provides a built-in **@NotBlank** constraint, which ensures the value is not null and contains one character that isn't a blank space. The annotation constrains the **name** field.
 
-* The email supplied needs to be a valid email address. Another built-in constraint in 
-Bean Validation 2.0 is **@Email**, which can validate that the 
-**Astronaut** bean includes a correctly formatted email address. The 
-annotation constrains the **emailAddress** field.
+* The email supplied needs to be a valid email address. Another built-in constraint in Bean Validation 2.0 is **@Email**, which can validate that the **Astronaut** bean includes a correctly formatted email address. The annotation constrains the **emailAddress** field.
 
-* The astronaut needs to be between 18 and 100 years old. Bean validation allows you to 
-specify multiple constraints on a single field. The **@Min** and 
-**@Max** built-in constraints applied to the **age** 
-field check that the astronaut is between the ages of 18 and 100.
+* The astronaut needs to be between 18 and 100 years old. Bean validation allows you to specify multiple constraints on a single field. The **@Min** and **@Max** built-in constraints applied to the **age** field check that the astronaut is between the ages of 18 and 100.
 
 In this example, the annotation is on the field value itself. You can also place the 
 annotation on the getter method, which has the same effect.
@@ -364,17 +356,9 @@ a scope is necessary. A request scope is used in this example. To learn more abo
 
 The **Spacecraft** class has the following constraints applied:
 
-* Every destination that is specified needs a name and a positive distance. In Bean 
-Validation 2.0, you can specify constraints on type parameters. The **@NotBlank** 
-and **@Positive** annotations constrain the **destinations** 
-map so that the destination name is not blank, and the distance is positive. The 
-**@Positive** constraint ensures that numeric value fields are greater 
-than 0.
+* Every destination that is specified needs a name and a positive distance. In Bean Validation 2.0, you can specify constraints on type parameters. The **@NotBlank** and **@Positive** annotations constrain the **destinations** map so that the destination name is not blank, and the distance is positive. The **@Positive** constraint ensures that numeric value fields are greater than 0.
 
-* A correctly formatted serial number is required. In addition to specifying the 
-built-in constraints, you can create custom constraints to allow user-defined validation
-rules. The **@SerialNumber** annotation that constrains the 
-**serialNumber** field is a custom constraint, which will be created later.
+* A correctly formatted serial number is required. In addition to specifying the built-in constraints, you can create custom constraints to allow user-defined validation rules. The **@SerialNumber** annotation that constrains the **serialNumber** field is a custom constraint, which will be created later.
 
 Because you already specified constraints on the **Astronaut** bean, 
 the constraints do not need to be respecified in the **Spacecraft** 
@@ -624,8 +608,7 @@ exception if either of the method-level constraints is violated.
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-Once your application is up and running, open another command-line session by selecting **Terminal** > **New Terminal** 
-from the menu of the IDE. Then use the following command to get the URL.
+Once your application is up and running, use the following command to get the URL.
 Open your browser and check out your service by going to the URL that the command returns.
 ```
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/openapi/ui
@@ -843,34 +826,13 @@ to execute before the test cases. The **setup()** method retrieves the
 port number for the Open Liberty server and creates a **Client** that is 
 used throughout the tests, which are described as follows:
 
-* The **testNoFieldLevelConstraintViolations()** test case verifies that 
-constraint violations do not occur when valid data is supplied to the **Astronaut** 
-and **Spacecraft** bean attributes.
+* The **testNoFieldLevelConstraintViolations()** test case verifies that constraint violations do not occur when valid data is supplied to the **Astronaut** and **Spacecraft** bean attributes.
 
-* The **testFieldLevelConstraintViolation()** test case verifies that 
-the appropriate constraint violations occur when data that is supplied to the 
-**Astronaut** and **Spacecraft** attributes violates 
-the defined constraints. Because 3 constraint violations are defined, 3 **ConstraintViolation** 
-objects are returned as a set from the **validate** call. The 3 expected 
-messages are **"must be greater than 0"** for the negative distance specified 
-in the destination map, **"must be a well-formed email address"** for the 
-incorrect email address, and the custom **"serial number is not valid"** 
-message for the serial number.
+* The **testFieldLevelConstraintViolation()** test case verifies that the appropriate constraint violations occur when data that is supplied to the **Astronaut** and **Spacecraft** attributes violates the defined constraints. Because 3 constraint violations are defined, 3 **ConstraintViolation** objects are returned as a set from the **validate** call. The 3 expected messages are **"must be greater than 0"** for the negative distance specified in the destination map, **"must be a well-formed email address"** for the incorrect email address, and the custom **"serial number is not valid"** message for the serial number.
 
-* The **testNoMethodLevelConstraintViolations()** test case verifies 
-that the method-level constraints that are specified on the **launchSpacecraft()** 
-method of the **Spacecraft** bean are validated when the method is 
-called with no violations. In this test, the call to the **launchSpacecraft()** 
-method is made with the **OpenLiberty** argument. A value of **true** is 
-returned, which passes the specified constraints.
+* The **testNoMethodLevelConstraintViolations()** test case verifies that the method-level constraints that are specified on the **launchSpacecraft()** method of the **Spacecraft** bean are validated when the method is called with no violations. In this test, the call to the **launchSpacecraft()** method is made with the **OpenLiberty** argument. A value of **true** is returned, which passes the specified constraints.
 
-* The **testMethodLevelConstraintViolation()** test case verifies 
-that a **ConstraintViolationException** exception is thrown when one of the method-level 
-constraints is violated. A call with an incorrect parameter, **incorrectCode**, 
-is made to the **launchSpacecraft()** method of the **Spacecraft** 
-bean. The method returns **false**, which violates the defined constraint, and a **ConstraintViolationException** 
-exception is thrown. The exception includes the constraint violation message, which is 
-**must be true** in this example.
+* The **testMethodLevelConstraintViolation()** test case verifies that a **ConstraintViolationException** exception is thrown when one of the method-level constraints is violated. A call with an incorrect parameter, **incorrectCode**, is made to the **launchSpacecraft()** method of the **Spacecraft** bean. The method returns **false**, which violates the defined constraint, and a **ConstraintViolationException** exception is thrown. The exception includes the constraint violation message, which is **must be true** in this example.
 
 
 <br/>
