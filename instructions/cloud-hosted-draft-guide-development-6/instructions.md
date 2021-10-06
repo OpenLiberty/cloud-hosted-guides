@@ -971,6 +971,7 @@ You can also view the schema through GraphiQL by clicking the **Docs** button on
 
 Run the following **query** operation in GraphiQL to get every system property from the container running on Java 8:
 
+
 ```
 query {
   system(hostname: "system-java8") {
@@ -991,6 +992,8 @@ query {
   }
 }
 ```
+{: codeblock}
+
 
 The output is similar to the following example:
 
@@ -1019,6 +1022,7 @@ The output is similar to the following example:
 
 Run the following **mutation** operation to add a note to the **system** service running on Java 8:
 
+
 ```
 mutation {
   editNote(
@@ -1034,6 +1038,7 @@ You receive a response containing the Boolean **true** to let you know that the 
 You can see the note that you added by running the following query operation.
 Notice that there's no need to run a full query, as you only want the **note** property.
 Thus, the request only contains the **note** property. 
+
 
 ```
 query {
@@ -1060,6 +1065,7 @@ The response is similar to the following example:
 GraphQL returns only the **note** property, as it was the only property in the request.
 You can try out the operations using the hostname **system-java11** as well.
 To see an example of using an array as an input for an operation, try the following operation to get system loads:
+
 
 ```
 query {
