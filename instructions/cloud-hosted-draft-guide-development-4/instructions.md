@@ -151,7 +151,8 @@ The front end of your application uses Node.js to build your React code. The Mav
 Node.js is a server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to run the React build scripts that are found in the **package.json** file.
 To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
 
-The **frontend-maven-plugin** is used to **install** the dependencies that are listed in your **package.json** file from the npm registry into a folder called **`node_modules`**. The **`node_modules`** folder can be found in your **working** directory. Then, the configuration **produces** the production files to the **src/main/frontend/build** directory. 
+
+The `frontend-maven-plugin` is used to `install` the dependencies that are listed in your `package.json` file from the npm registry into a folder called **node\_modules**. The **node\_modules** folder can be found in your `working` directory. Then, the configuration `produces` the production files to the `src/main/frontend/build` directory. 
 
 The **maven-resources-plugin** copies the **static** content from the **build** directory to the **web content** of the application.
 
