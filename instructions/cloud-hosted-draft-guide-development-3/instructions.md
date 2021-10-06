@@ -1,7 +1,7 @@
 
-# **Welcome to the Enabling Cross-Origin Resource Sharing (CORS) guide!**
+# **Welcome to the Accessing and persisting data in microservices using Java Persistence API (JPA) guide!**
 
-Learn how to enable Cross-Origin Resource Sharing (CORS) in Open Liberty without writing Java code.
+
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,57 +10,37 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
+Learn how to use Java Persistence API (JPA) to access and persist data to a database for your microservices.
+
 
 
 # **What you'll learn**
 
-You will learn how to add two server configurations to enable CORS.
-Next, you will write and run tests to validate that the CORS configurations work. These tests send two different CORS requests to a REST service that has two different endpoints.
+You will learn how to use the Java Persistence API (JPA) to map Java objects to relational database 
+tables and perform create, read, update and delete (CRUD) operations on the data in your microservices. 
 
-<br/>
-### **CORS and its purpose**
+JPA is a Java EE specification for representing relational database table data as Plain Old Java Objects (POJO).
+JPA simplifies object-relational mapping (ORM) by using annotations to map Java objects 
+to tables in a relational database. In addition to providing an efficient API for performing
+CRUD operations, JPA also reduces the burden of having to write JDBC and SQL code when performing
+database operations and takes care of database vendor-specific differences. This capability allows you to 
+focus on the business logic of your application instead of wasting time implementing repetitive CRUD logic.
 
-Cross-Origin Resource Sharing (CORS) is a W3C specification and mechanism that you can use to request restricted
-resources from a domain outside the current domain. In other words, CORS is a
-technique for consuming an API served from an origin different than yours.
+The application that you will be working with is an event manager, which is composed of a UI
+and an event microservice for creating, retrieving, updating, and deleting events. In this 
+guide, you will be focused on the event microservice. The event microservice consists of
+a JPA entity class whose fields will be persisted to a database. The database logic is implemented in 
+a Data Access Object (DAO) to isolate the database operations from the rest of the service. 
+This DAO accesses and persists JPA entities to the database and can be injected 
+and consumed by other components in the microservice. An Embedded Derby database is used 
+as a data store for all the events.
 
-CORS is useful for requesting different kinds of data from websites that aren't your own. 
-These types of data might include images, videos, scripts, stylesheets, iFrames, or web fonts.
-
-However, you cannot request resources from another website domain without proper permission. In JavaScript, cross-origin requests with an **XMLHttpRequest** API and Ajax cannot happen unless CORS is enabled on the server that receives the request. Otherwise, same-origin security policy prevents the requests. For example, a web page that is served from the **http://aboutcors.com** server sends a request to get data to the
-**http://openliberty.io** server. Because of security concerns, browsers block the server response unless
-the server adds HTTP response headers to allow the web page to consume the data.
-
-Different ports and different protocols also trigger CORS. For example, the **http://abc.xyz:1234** domain is considered to be different from the **https://abc.xyz:4321** domain.
-
-Open Liberty has built-in support for CORS that gives you an easy and powerful way to configure the
-runtime to handle CORS requests without the need to write Java code.
-
-<br/>
-### **Types of CORS requests**
-
-Familiarize yourself with two kinds of CORS requests to understand
-the attributes that you will add in the two CORS configurations.
-
-<br/>
-#### **Simple CORS request**
-
-According to the CORS specification, an HTTP request is a simple CORS request if the request
-method is **GET**, **HEAD**, or **POST**. The header fields are any one of the **Accept**,
-**Accept-Language**, **Content-Language**, or **Content-Type** headers. The **Content-Type** header
-has a value of **application/x-www-form-urlencoded**, **multipart/form-data**, or **text/plain**.
-
-When clients, such as browsers, send simple CORS requests to servers on different domains, the clients include an
-**Origin** header with the client host name as the value. If the server allows the origin, the server includes an **Access-Control-Allow-Origin** header with a list of allowed origins or an asterisk (*) in the response back to the client. The asterisk indicates that all origins are allowed to access the endpoint on the server.
-
-<br/>
-#### **Preflight CORS request**
-
-A CORS request is not a simple CORS request if a client first sends a preflight CORS request before it sends the actual request. For example, the client sends a preflight request before it sends a **DELETE** HTTP request. To determine whether the request is safe to send, the client sends a preflight request, which is an **OPTIONS** HTTP request, to gather more information about the server. This preflight request has the **Origin** header and other headers to indicate the HTTP method and headers of the actual request to be sent after the preflight request.
-
-Once the server receives the preflight request, if the origin is allowed, the server responds with headers that indicate the HTTP methods and headers that are allowed in the actual requests. The response might include more CORS-related headers.
-
-Next, the client sends the actual request, and the server responds.
+You will use JPA annotations to define an entity class whose fields are persisted to the 
+database. The interaction between your service and the database is mediated by the persistence 
+context that is managed by an entity manager. In a Java EE environment, you can use an
+application-managed entity manager or a container-managed entity manager. In this guide, 
+you will use a container-managed entity manager that is injected into the DAO so the application
+server manages the opening and closing of the entity manager for you. 
 
 
 # **Getting started**
@@ -75,11 +55,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cors.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jpa-intro.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-cors.git
-cd guide-cors
+git clone https://github.com/openliberty/guide-jpa-intro.git
+cd guide-jpa-intro
 ```
 {: codeblock}
 
@@ -88,153 +68,597 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+<br/>
+### **Try what you'll build**
 
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-# **Enabling CORS**
-Navigate to the **start** directory to begin.
-
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+To try out the application, run the following commands to navigate to the **finish/frontendUI** directory and
+deploy the **frontendUI** service to Open Liberty:
 
 ```
+cd finish/frontendUI
+mvn liberty:run
+```
+{: codeblock}
+
+
+
+Open another command-line session and run the following commands to navigate to the **finish/backendServices** directory and
+deploy the service to Open Liberty:
+```
+cd finish/backendServices
+mvn liberty:run
+```
+{: codeblock}
+
+
+
+After you see the following message in both command-line sessions, both your services are ready.
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+
+Select **Launch Application** from the menu of the IDE, 
+type in **9090** to specify the port number for the microservice, and click the **OK** button. 
+You're redirected to a URL similar to **https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai**, 
+where **accountname** is your account name.
+
+The event application does not display any events because no events are stored in the database. 
+Go ahead and click **Create Event**, located in the left navigation bar. 
+After entering an event name, location and time, 
+click **Submit** to persist your event entity to the database. 
+The event is now stored in the database and is visible in the list of current events.
+
+Notice that if you stop the Open Liberty server and then restart it, 
+the events created are still displayed in the list of current events. 
+Ensure you are in the **finish/backendServices** directory and run the following Maven goals to stop and then restart the server:
+```
+mvn liberty:stop
+mvn liberty:run
+```
+{: codeblock}
+
+
+The events created are still displayed in the list of current events. The **Update** action link
+located beside each event allows you to make modifications to the persisted entity and the 
+**Delete** action link allows you to remove entities from the database.
+
+After you are finished checking out the application, stop the Open Liberty servers by pressing CTRL+C in the
+command-line sessions where you ran the **backendServices** and **frontendUI** services.
+Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another command-line session for the **frontendUI**
+and **backendServices** services:
+```
+mvn liberty:stop
+```
+{: codeblock}
+
+
+
+
+# **Defining a JPA entity class**
+
+Navigate to the **start** directory to begin.
+
+When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
+
+Run the following commands to navigate to the **frontendUI** directory and start the **frontendUI** service in dev mode:
+
+```
+cd frontendUI
 mvn liberty:dev
 ```
 {: codeblock}
 
 
+
+Open another command-line session and run the following commands to navigate to
+the **backendServices** directory and start the service in dev mode:
+
+```
+cd backendServices
+mvn liberty:dev
+```
+{: codeblock}
+
+
+
 After you see the following message, your application server in dev mode is ready:
 
 ```
-**************************************************************
+************************************************************************
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
+Dev mode holds your command line to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
-You will use a REST service that is already provided for you to test your CORS configurations.
-You can find this service in the **src/main/java/io/openliberty/guides/cors/** directory.
+To store Java objects in a database, you must define a JPA entity class. A JPA entity is a Java 
+object whose non-transient and non-static fields will be persisted to the database. Any Plain Old 
+Java Object (POJO) class can be designated as a JPA entity. However, the class must be annotated
+with the **@Entity** annotation, must not be declared final and must have a public or protected non-argument
+constructor. JPA maps an entity type to a database table and persisted instances will be represented 
+as rows in the table.
 
-You will send a simple request to the **/configurations/simple** endpoint and the preflight request
-to the **/configurations/preflight** endpoint.
+The **Event** class is a data model that represents events in the event microservice and is annotated with JPA
+annotations.
+
+Create the **Event** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
+```
+{: codeblock}
 
 
-<br/>
-### **Enabling a simple CORS configuration**
-Configure the server to allow the **/configurations/simple** endpoint to accept a **simple** CORS request.
-Add a simple CORS configuration to the **server.xml** file:
-
-Replace the server configuration file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-cors/start/src/main/liberty/config/server.xml
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
 
 
 
 
 ```
-<server description="Sample Liberty server">
+package io.openliberty.guides.event.models;
 
-<featureManager>
-    <feature>jaxrs-2.1</feature>
-</featureManager>
+import java.io.Serializable;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.NamedQuery;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Column;
+import javax.persistence.GenerationType;
 
-<variable name="default.http.port" defaultValue="9080"/>
-<variable name="default.https.port" defaultValue="9443"/>
+@Entity
+@Table(name = "Event")
+@NamedQuery(name = "Event.findAll", query = "SELECT e FROM Event e")
+@NamedQuery(name = "Event.findEvent", query = "SELECT e FROM Event e WHERE "
+    + "e.name = :name AND e.location = :location AND e.time = :time")
+public class Event implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-<httpEndpoint host="*" httpPort="${default.http.port}" httpsPort="${default.https.port}"
-    id="defaultHttpEndpoint"/>
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id
+    @Column(name = "eventId")
+    private int id;
 
-<webApplication location="guide-cors.war" contextRoot="/"/>
+    @Column(name = "eventLocation")
+    private String location;
+    @Column(name = "eventTime")
+    private String time;
+    @Column(name = "eventName")
+    private String name;
 
-<cors domain="/configurations/simple"
-    allowedOrigins="openliberty.io"
-    allowedMethods="GET"
-    allowCredentials="true"
-    exposeHeaders="MyHeader"/>
+    public Event() {
+    }
 
-</server>
+    public Event(String name, String location, String time) {
+        this.name = name;
+        this.location = location;
+        this.time = time;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+    
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + id;
+        result = prime * result + ((location == null) ? 0 : location.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result +
+                 (int) (serialVersionUID ^ (serialVersionUID >>> 32));
+        result = prime * result + ((time == null) ? 0 : time.hashCode());
+        return result;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Event other = (Event) obj;
+        if (location == null) {
+            if (other.location != null) {
+                return false;
+            }
+        } else if (!location.equals(other.location)) {
+            return false;
+        }
+        if (time == null) {
+            if (other.time != null) {
+                return false;
+            }
+        } else if (!time.equals(other.time)) {
+            return false;
+        }
+        if (name == null) {
+            if (other.name != null) {
+                return false;
+            }
+        } else if (!name.equals(other.name)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "Event [name=" + name + ", location=" + location + ", time=" + time
+                + "]";
+    }
+}
+
 ```
 {: codeblock}
 
 
 
-The CORS configuration contains the following attributes:
+The following table breaks down the new annotations:
 
-| *Configuration Attribute* | *Value*
+| *Annotation*    | *Description*
 | ---| ---
-|**domain** | The endpoint to be configured for CORS requests. The value is set to **/configurations/simple**.
-|**allowedOrigins** | Origins that are allowed to access the endpoint. The value is set to **openliberty.io**.
-|**allowedMethods** | HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to **GET**.
-|**allowCredentials** | A boolean that indicates whether the user credentials can be included in the request. The value is set to **true**.
-|**exposeHeaders** | Headers that are safe to expose to clients. The value is set to **MyHeader**.
+| **@Entity** | Declares the class as an entity
+| **@Table**  | Specifies details of the table such as name 
+| **@NamedQuery** | Specifies a predefined database query that is run by an **EntityManager** instance.
+| **@Id**       |  Declares the primary key of the entity
+| **@GeneratedValue**    | Specifies the strategy used for generating the value of the primary key. The **strategy = GenerationType.AUTO** code indicates that the generation strategy is automatically selected
+| **@Column**    | Specifies that the field is mapped to a column in the database table. The **name** attribute is optional and indicates the name of the column in the table
 
-Save the changes to the **server.xml** file. The **/configurations/simple** endpoint is now ready to be
-tested with a simple CORS request.
 
-The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
+# **Configuring JPA**
 
-Now, test the simple CORS configuration that you added. 
+The **persistence.xml** file is a configuration file that defines a persistence unit. The
+persistence unit specifies configuration information for the entity manager.
 
-Replace the **CorsIT** class.
+Create the configuration file.
 
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
 
 
 
 
 ```
-package it.io.openliberty.guides.cors;
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.2"
+    xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
+                        http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
+    <!-- tag::transaction-type[] -->
+    <persistence-unit name="jpa-unit" transaction-type="JTA">
+        <!-- tag::jta-data[] -->
+        <jta-data-source>jdbc/eventjpadatasource</jta-data-source>
+        <properties>
+            <property name="eclipselink.ddl-generation" value="create-tables"/>
+            <property name="eclipselink.ddl-generation.output-mode" value="both" />
+        </properties>
+    </persistence-unit>
+</persistence>
+```
+{: codeblock}
+
+
+
+The persistence unit is defined by the **persistence-unit** XML element. The **name** attribute is 
+required and is used to identify the persistent unit when using the **@PersistenceContext**
+annotation to inject the entity manager later in this guide. The **transaction-type="JTA"** 
+attribute specifies to use Java Transaction API (JTA) transaction management.
+Since we are using a container-managed entity manager, JTA transactions must be used. 
+
+A JTA transaction type requires a JTA data source to be provided. The **jta-data-source** 
+element specifies the Java Naming and Directory Interface (JNDI) name of 
+the data source that is used. The **data source** has already been configured for you
+in the **backendServices/src/main/liberty/config/server.xml** file. This data source configuration is where 
+the Java Database Connectivity (JDBC) connection is defined along with some database
+vendor-specific properties.
+
+
+The **eclipselink.ddl-generation** properties are used here so that you aren't required to 
+manually create a database table to run this sample application. To learn more about the 
+**ddl-generation** properties, see the 
+[JPA Extensions Reference for EclipseLink.](http://www.eclipse.org/eclipselink/documentation/2.5/jpa/extensions/p_ddl_generation.htm)
+
+
+# **Performing CRUD operations using JPA**
+
+The CRUD operations are defined in the DAO. To perform these operations by using JPA, we need an **EventDao** class. 
+
+Create the **EventDao** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
+
+
+
+
+```
+package io.openliberty.guides.event.dao;
+
+import java.util.List;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import io.openliberty.guides.event.models.Event;
+
+import javax.enterprise.context.RequestScoped;
+
+@RequestScoped
+public class EventDao {
+    
+    @PersistenceContext(name = "jpa-unit")
+    private EntityManager em;
+    
+    public void createEvent(Event event) {
+        em.persist(event);
+    }
+
+    public Event readEvent(int eventId) {
+        return em.find(Event.class, eventId);
+    }
+
+    public void updateEvent(Event event) {
+        em.merge(event);
+    }
+
+    public void deleteEvent(Event event) {
+        em.remove(event);
+    }
+
+    public List<Event> readAllEvents() {
+        return em.createNamedQuery("Event.findAll", Event.class).getResultList();
+    }
+
+    public List<Event> findEvent(String name, String location, String time) {
+        return em.createNamedQuery("Event.findEvent", Event.class)
+            .setParameter("name", name)
+            .setParameter("location", location)
+            .setParameter("time", time).getResultList();
+    }
+}
+```
+{: codeblock}
+
+
+
+To use the entity manager at runtime, inject it into our CDI bean through the
+**@PersistenceContext** annotation. The entity manager interacts with the persistence context. 
+Every **EntityManager** instance is associated with a persistence context. The persistence context 
+manages a set of entities and is aware of the different states that an entity can have.
+The persistence context synchronizes with the database when a transaction commits.
+
+The **EventDao** class has a method for each CRUD operation, so let's break them down:
+
+* The **createEvent()** method persists an instance of the **Event** entity class to the data store by calling the **persist()** method on an **EntityManager** instance. The entity instance becomes managed and changes to it will be tracked by the entity manager.
+
+* The **readEvent()** method returns an instance of the **Event** entity class with the specified primary key by calling the **find()** method on an **EntityManager** instance. If the event instance is found, it is returned in a managed state, but, if the event instance is not found, **null** is returned.
+
+* The **readAllEvents()** method demonstrates an alternative way to retrieve event objects from the database. This method returns a list of instances of the **Event** entity class by using the **Event.findAll** query specified in the **@NamedQuery** annotation on the **Event** class. Similarly, the **findEvent()** method uses the **Event.findEvent** named query to find an event with the given name, location and time. 
+
+
+* The **updateEvent()** method creates a managed instance of a detached entity instance. The entity manager automatically tracks all managed entity objects in its persistence context for changes and synchronizes them with the database. However, if an entity becomes detached, you must merge that entity into the persistence context by calling the **merge()** method so that changes to loaded fields of the detached entity are tracked.
+
+* The **deleteEvent()** method removes an instance of the **Event** entity class from the database by calling the **remove()** method on an **EntityManager** instance. The state of the entity is changed to removed and is removed from the database upon transaction commit. 
+
+The DAO is injected into the **backendServices/src/main/java/io/openliberty/guides/event/resources/EventResource.java**
+class and used to access and persist data. The **@Transactional** annotation is used in the
+**EventResource** class to declaratively control the transaction boundaries on the **@RequestScoped** CDI bean.
+This ensures that the methods run within the boundaries of an active global transaction, which is why it is not
+necessary to explicitly begin, commit or rollback transactions. At the end of the transactional
+method invocation, the transaction commits and the persistence context flushes any changes
+to Event entity instances it is managing to the database.
+
+
+
+# **Running the application**
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+When the server is running, select **Launch Application** from the menu of the IDE, 
+type in **9090** to specify the port number for the microservice, and click the **OK** button. 
+You're redirected to a URL similar to **https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai**, 
+where **accountname** is your account name.
+
+Click **Create Event** in the left navigation bar to create events that are persisted to 
+the database. After you create an event, it is available to view, update, and delete in
+the **Current Events** section.
+
+
+# **Testing the application**
+
+Create the **EventEntityIT** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
+
+
+
+
+```
+package it.io.openliberty.guides.event;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.HashMap;
+import javax.json.JsonObject;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Form;
+import javax.ws.rs.core.Response.Status;
 
+import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Test;
+import io.openliberty.guides.event.models.Event;
 
-public class CorsIT {
+public class EventEntityIT extends EventIT {
 
-    String port = System.getProperty("default.http.port");
-    String pathToHost = "http://localhost:" + port + "/";
+    private static final String JSONFIELD_LOCATION = "location";
+    private static final String JSONFIELD_NAME = "name";
+    private static final String JSONFIELD_TIME = "time";
+    private static final String EVENT_TIME = "12:00 PM, January 1 2018";
+    private static final String EVENT_LOCATION = "IBM";
+    private static final String EVENT_NAME = "JPA Guide";
+    private static final String UPDATE_EVENT_TIME = "12:00 PM, February 1 2018";
+    private static final String UPDATE_EVENT_LOCATION = "IBM Updated";
+    private static final String UPDATE_EVENT_NAME = "JPA Guide Updated";
+    
+    private static final int NO_CONTENT_CODE = Status.NO_CONTENT.getStatusCode();
+    private static final int NOT_FOUND_CODE = Status.NOT_FOUND.getStatusCode();
+
+    @BeforeAll
+    public static void oneTimeSetup() {
+        port = System.getProperty("backend.http.port");
+        baseUrl = "http://localhost:" + port + "/";
+    }
 
     @BeforeEach
-    public void setUp() {
-        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+    public void setup() {
+        form = new Form();
+        client = ClientBuilder.newClient();
+        client.register(JsrJsonpProvider.class);
+
+        eventForm = new HashMap<String, String>();
+
+        eventForm.put(JSONFIELD_NAME, EVENT_NAME);
+        eventForm.put(JSONFIELD_LOCATION, EVENT_LOCATION);
+        eventForm.put(JSONFIELD_TIME, EVENT_TIME);
     }
 
     @Test
-    public void testSimpleCorsRequest() throws IOException {
-        HttpURLConnection connection = HttpUtils.sendRequest(
-                        pathToHost + "configurations/simple", "GET",
-                        TestData.simpleRequestHeaders);
-        checkCorsResponse(connection, TestData.simpleResponseHeaders);
-
-        printResponseHeaders(connection, "Simple CORS Request");
+    public void testInvalidRead() {
+        assertEquals(true, getIndividualEvent(-1).isEmpty(),
+          "Reading an event that does not exist should return an empty list");
     }
 
-
-    public void checkCorsResponse(HttpURLConnection connection,
-                    Map<String, String> expectedHeaders) throws IOException {
-        assertEquals(200, connection.getResponseCode(), "Invalid HTTP response code");
-        expectedHeaders.forEach((responseHeader, value) -> {
-            assertEquals(value, connection.getHeaderField(responseHeader),
-                            "Unexpected value for " + responseHeader + " header");
-        });
+    @Test
+    public void testInvalidDelete() {
+        int deleteResponse = deleteRequest(-1);
+        assertEquals(NOT_FOUND_CODE, deleteResponse,
+          "Trying to delete an event that does not exist should return the " 
+          + "HTTP response code " + NOT_FOUND_CODE);
     }
 
-    public static void printResponseHeaders(HttpURLConnection connection,
-                    String label) {
-        System.out.println("--- " + label + " ---");
-        Map<String, java.util.List<String>> map = connection.getHeaderFields();
-        for (Entry<String, java.util.List<String>> entry : map.entrySet()) {
-            System.out.println("Header " + entry.getKey() + " = " + entry.getValue());
-        }
-        System.out.println();
+    @Test
+    public void testInvalidUpdate() {
+        int updateResponse = updateRequest(eventForm, -1);
+        assertEquals(NOT_FOUND_CODE, updateResponse,
+          "Trying to update an event that does not exist should return the " 
+          + "HTTP response code " + NOT_FOUND_CODE);
+    }
+    
+    @Test
+    public void testReadIndividualEvent() {
+        int postResponse = postRequest(eventForm);
+        assertEquals(NO_CONTENT_CODE, postResponse,
+          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
+
+        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+        JsonObject event = findEvent(e);
+        event = getIndividualEvent(event.getInt("id"));
+        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+
+        int deleteResponse = deleteRequest(event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, deleteResponse, 
+          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
+    }
+    
+    @Test
+    public void testCRUD() {
+        int eventCount = getRequest().size();
+        int postResponse = postRequest(eventForm);
+        assertEquals(NO_CONTENT_CODE, postResponse, 
+          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
+     
+        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+        JsonObject event = findEvent(e);
+        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+
+        eventForm.put(JSONFIELD_NAME, UPDATE_EVENT_NAME);
+        eventForm.put(JSONFIELD_LOCATION, UPDATE_EVENT_LOCATION);
+        eventForm.put(JSONFIELD_TIME, UPDATE_EVENT_TIME);
+        int updateResponse = updateRequest(eventForm, event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, updateResponse, 
+          "Updating an event should return the HTTP response code " + NO_CONTENT_CODE);
+        
+        e = new Event(UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
+        event = findEvent(e);
+        assertData(event, UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
+
+        int deleteResponse = deleteRequest(event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, deleteResponse, 
+          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
+        assertEquals(eventCount, getRequest().size(), 
+          "Total number of events stored should be the same after testing " 
+          + "CRUD operations.");
+    }
+    
+    @AfterEach
+    public void teardown() {
+        response.close();
+        client.close();
     }
 
 }
@@ -243,241 +667,54 @@ public class CorsIT {
 
 
 
-The **testSimpleCorsRequest** test simulates a client. It first sends a simple CORS request to the **/configurations/simple** endpoint, and then it checks for a valid response and expected headers. Lastly, it prints the response headers for you to inspect.
+The **testInvalidRead()**, **testInvalidDelete()** and **testInvalidUpdate()** methods use a primary key that is not in the database to test reading, updating and deleting an event that does not
+exist, respectively.
 
-The request is a **GET** HTTP request with the following header:
+The **testReadIndividualEvent()** method persists a test event to the database and retrieves the 
+event object from the database using the primary key of the entity.
 
-| *Request Header* | *Request Value*
-| ---| ---
-| Origin | The value is set to **openliberty.io**. Indicates that the request originates from **openliberty.io**.
-
-Expect the following response headers and values if the simple CORS request is successful, and the server is correctly configured:
-
-| *Response Header* | *Response Value*
-| ---| ---
-| Access-Control-Allow-Origin | The expected value is **openliberty.io**. Indicates whether a resource can be shared based on the returning value of the Origin request header **openliberty.io**.
-| Access-Control-Allow-Credentials | The expected value is **true**. Indicates that the user credentials can be included in the request.
-| Access-Control-Expose-Headers |  The expected value is **MyHeader**. Indicates that the header **MyHeader** is safe to expose.
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
-
-If the **testSimpleCorsRequest** test passes, 
-the response headers with their values from the endpoint are printed. 
-The **/configurations/simple** endpoint now accepts simple CORS requests.
-
-Response headers with their values from the endpoint:
-```
---- Simple CORS Request ---
-Header null = [HTTP/1.1 200 OK]
-Header Access-Control-Expose-Headers = [MyHeader]
-Header Access-Control-Allow-Origin = [openliberty.io]
-Header Access-Control-Allow-Credentials = [true]
-Header Content-Length = [22]
-Header Content-Language = [en-CA]
-Header Date = [Thu, 21 Mar 2019 17:50:09 GMT]
-Header Content-Type = [text/plain]
-Header X-Powered-By = [Servlet/4.0]
-```
+The **testCRUD()** method creates a test event and persists it to the database. The event object is then 
+retrieved from the database to verify that the test event was actually persisted. Next, the  
+name, location, and time of the test event are updated. The event object is retrieved 
+from the database to verify that the updated event is stored. Finally, the updated test 
+event is deleted and one final check is done to ensure that the updated test event is no longer 
+stored in the database.
 
 <br/>
-### **Enabling a preflight CORS configuration**
+### **Running the tests**
 
-
-Configure the server to allow the **/configurations/preflight** endpoint to accept a **preflight** CORS request.
-Add another CORS configuration in the **server.xml** file:
-
-Replace the server configuration file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-cors/start/src/main/liberty/config/server.xml
-
-
-
+Since you started Open Liberty in dev mode, press the **enter/return** key in the command-line session where you started the
+**backendServices** service to run the tests for the **backendServices**.
 
 ```
-<server description="Sample Liberty server">
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.event.EventEntityIT
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.703 sec - in it.io.openliberty.guides.event.EventEntityIT
 
-<featureManager>
-    <feature>jaxrs-2.1</feature>
-</featureManager>
+Results :
 
-<variable name="default.http.port" defaultValue="9080"/>
-<variable name="default.https.port" defaultValue="9443"/>
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 
+```
 
-<httpEndpoint host="*" httpPort="${default.http.port}" httpsPort="${default.https.port}"
-    id="defaultHttpEndpoint"/>
-
-<webApplication location="guide-cors.war" contextRoot="/"/>
-
-<cors domain="/configurations/simple"
-    allowedOrigins="openliberty.io"
-    allowedMethods="GET"
-    allowCredentials="true"
-    exposeHeaders="MyHeader"/>
-
-<cors domain="/configurations/preflight"
-    allowedOrigins="*"
-    allowedMethods="OPTIONS, DELETE"
-    allowCredentials="true"
-    allowedHeaders="MyOwnHeader1, MyOwnHeader2"
-    maxAge="10"/>
-</server>
+When you are done checking out the services, exit dev mode by pressing CTRL+C in the command-line sessions where you
+ran the **frontendUI** and **backendServices** services,  or by typing **q** and then pressing the **enter/return** key.
+Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another command-line session for the **frontendUI**
+and **backendServices** services:
+```
+mvn liberty:stop
 ```
 {: codeblock}
 
 
-The preflight CORS configuration has different values than the simple CORS configuration.
-
-| *Configuration Attribute* | *Value*
-| ---| ---
-| **domain**|The value is set to **/configurations/preflight** because the **domain** is a different endpoint.
-| **allowedOrigins**| Origins that are allowed to access the endpoint. The value is set to an asterisk (*) to allow requests from all origins.
-| **allowedMethods**| HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to **OPTIONS, DELETE**.
-| **allowCredentials**| A boolean that indicates whether the user credentials can be included in the request. The value is set to **true**.
-
-The following attributes were added:
-
-* **allowedHeaders**: Headers that a client can use in requests. Set the value to **MyOwnHeader1, MyOwnHeader2**.
-* **maxAge**: The number of seconds that a client can cache a response to a preflight request. Set the value to **10**.
-
-Save the changes to the **server.xml** file. The **/configurations/preflight** endpoint is now ready to
-be tested with a preflight CORS request.
-
-Add another test to the **CorsIT.java** file to test the preflight CORS configuration that you just added:
-
-Replace the **CorsIT** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java
-
-
-
-
-```
-package it.io.openliberty.guides.cors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-public class CorsIT {
-
-    String port = System.getProperty("default.http.port");
-    String pathToHost = "http://localhost:" + port + "/";
-
-    @BeforeEach
-    public void setUp() {
-        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-    }
-
-    @Test
-    public void testSimpleCorsRequest() throws IOException {
-        HttpURLConnection connection = HttpUtils.sendRequest(
-                        pathToHost + "configurations/simple", "GET",
-                        TestData.simpleRequestHeaders);
-        checkCorsResponse(connection, TestData.simpleResponseHeaders);
-
-        printResponseHeaders(connection, "Simple CORS Request");
-    }
-
-    @Test
-    public void testPreflightCorsRequest() throws IOException {
-        HttpURLConnection connection = HttpUtils.sendRequest(
-                        pathToHost + "configurations/preflight", "OPTIONS",
-                        TestData.preflightRequestHeaders);
-        checkCorsResponse(connection, TestData.preflightResponseHeaders);
-
-        printResponseHeaders(connection, "Preflight CORS Request");
-    }
-
-    public void checkCorsResponse(HttpURLConnection connection,
-                    Map<String, String> expectedHeaders) throws IOException {
-        assertEquals(200, connection.getResponseCode(), "Invalid HTTP response code");
-        expectedHeaders.forEach((responseHeader, value) -> {
-            assertEquals(value, connection.getHeaderField(responseHeader),
-                            "Unexpected value for " + responseHeader + " header");
-        });
-    }
-
-    public static void printResponseHeaders(HttpURLConnection connection,
-                    String label) {
-        System.out.println("--- " + label + " ---");
-        Map<String, java.util.List<String>> map = connection.getHeaderFields();
-        for (Entry<String, java.util.List<String>> entry : map.entrySet()) {
-            System.out.println("Header " + entry.getKey() + " = " + entry.getValue());
-        }
-        System.out.println();
-    }
-
-}
-```
-{: codeblock}
-
-
-The **testPreflightCorsRequest** test simulates a client sending a preflight CORS request. 
-It first sends the request to the **/configurations/preflight** endpoint, and then it checks for a valid response and expected headers. 
-Lastly, it prints the response headers for you to inspect.
-
-The request is an **OPTIONS** HTTP request with the following headers:
-
-| *Request Header* | *Request Value*
-| ---| ---
-| Origin | The value is set to **anywebsiteyoulike.com**. Indicates that the request originates from **anywebsiteyoulike.com**.
-| Access-Control-Request-Method | The value is set to **DELETE**. Indicates that the HTTP DELETE method will be used in the actual request.
-| Access-Control-Request-Headers | The value is set to **MyOwnHeader2**. Indicates the header **MyOwnHeader2** will be used in the actual request.
-
-Expect the following response headers and values if the preflight CORS request is successful, and the server is correctly configured:
-
-| *Response Header* | *Response Value*
-| ---| ---
-| Access-Control-Max-Age | The expected value is **10**. Indicates that the preflight request can be cached within **10** seconds.
-| Access-Control-Allow-Origin | The expected value is **anywebsiteyoulike.com**. Indicates whether a resource can be shared based on the returning value of the Origin request header **anywebsiteyoulike.com**.
-| Access-Control-Allow-Methods | The expected value is **OPTIONS, DELETE**. Indicates that HTTP OPTIONS and DELETE methods can be used in the actual request.
-| Access-Control-Allow-Credentials | The expected value is **true**. Indicates that the user credentials can be included in the request.
-| Access-Control-Allow-Headers | The expected value is **MyOwnHeader1, MyOwnHeader2**. Indicates that the header **MyOwnHeader1** and **MyOwnHeader2** are safe to expose.
-
-The **Access-Control-Allow-Origin** header has a value of **anywebsiteyoulike.com**
-because the server is configured to allow all origins, and the request came with an origin of
-**anywebsiteyoulike.com**.
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
-
-If the **testPreflightCorsRequest** test passes, the response headers with their values from the endpoint are printed.
-The **/configurations/preflight** endpoint now allows preflight CORS requests.
-
-Response headers with their values from the endpoint:
-```
---- Preflight CORS Request ---
-Header null = [HTTP/1.1 200 OK]
-Header Access-Control-Allow-Origin = [anywebsiteyoulike.com]
-Header Access-Control-Allow-Methods = [OPTIONS, DELETE]
-Header Access-Control-Allow-Credentials = [true]
-Header Content-Length = [0]
-Header Access-Control-Max-Age = [10]
-Header Date = [Thu, 21 Mar 2019 18:21:13 GMT]
-Header Content-Language = [en-CA]
-Header Access-Control-Allow-Headers = [MyOwnHeader1, MyOwnHeader2]
-Header X-Powered-By = [Servlet/4.0]
-```
-
-You can modify the server configuration and the test code to experiment with the various 
-CORS configuration attributes.
-
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
 # **Summary**
 
 ## **Nice Work!**
 
-You enabled CORS support in Open Liberty. You added two different CORS configurations to allow two kinds of CORS requests in the **server.xml** file.
+You learned how to map Java objects to database tables by defining a JPA entity class whose instances are represented as rows in the table. You have injected a container-managed entity manager into a DAO and learned how to perform CRUD operations in your microservice in Open Liberty.
 
 
 
@@ -488,11 +725,11 @@ You enabled CORS support in Open Liberty. You added two different CORS configura
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-cors** project by running the following commands:
+Delete the **guide-jpa-intro** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-cors
+rm -fr guide-jpa-intro
 ```
 {: codeblock}
 
@@ -501,7 +738,7 @@ rm -fr guide-cors
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20Cross-Origin%20Resource%20Sharing%20(CORS)&guide-id=cloud-hosted-guide-cors)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Accessing%20and%20persisting%20data%20in%20microservices%20using%20Java%20Persistence%20API%20(JPA)&guide-id=cloud-hosted-guide-jpa-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -509,16 +746,15 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-cors/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-cors/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jpa-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jpa-intro/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 <br/>
