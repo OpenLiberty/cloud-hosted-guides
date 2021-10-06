@@ -601,14 +601,12 @@ exception if either of the method-level constraints is violated.
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
-
 Use the following command to get the URL.
 Open your browser and check out your service by going to the URL that the command returns.
 ```
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/openapi/ui
 ```
 {: codeblock} 
-
 Expand the **/beanvalidation/validatespacecraft POST request to validate your spacecraft bean**
 section and click **Try it out**. Copy the following example input into the text box:
 
