@@ -60,8 +60,8 @@ The **finish** directory contains the finished project that you will build.
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
 
-To try out the application, go to the `finish` directory and
-run the following command to specify the location of `artists.json` on the cloud:
+To try out the application, go to the **finish** directory and
+run the following command to specify the location of **artists.json** on the cloud:
 
 ```
 cd finish
@@ -71,10 +71,11 @@ sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_D
 
 Next, run the following Maven goal to build the application and deploy it to Open Liberty:
 
-[role='command']
 ```
 mvn liberty:run
 ```
+{: codeblock}
+
 
 After you see the following message, your application server is ready:
 
@@ -188,7 +189,7 @@ app.controller("ArtistsCtrl", function($scope, artists) {
 
 
 
-Run the following command to specify the location of `artists.json` on the cloud.
+Run the following command to specify the location of **artists.json** on the cloud.
 ```
 sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/js/consume-rest.js
 ```
