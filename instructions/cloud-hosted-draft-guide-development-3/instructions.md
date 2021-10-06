@@ -259,8 +259,10 @@ Expect the following response headers and values if the simple CORS request is s
 | Access-Control-Allow-Credentials | The expected value is **true**. Indicates that the user credentials can be included in the request.
 | Access-Control-Expose-Headers |  The expected value is **MyHeader**. Indicates that the header **MyHeader** is safe to expose.
 
-Since you started Open Liberty in development mode at the start of the guide, 
-press the **enter/return** key to run the tests.
+<br/>
+### **Running the tests**
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 If the **testSimpleCorsRequest** test passes, 
 the response headers with their values from the endpoint are printed. 
@@ -447,7 +449,10 @@ The **Access-Control-Allow-Origin** header has a value of **anywebsiteyoulike.co
 because the server is configured to allow all origins, and the request came with an origin of
 **anywebsiteyoulike.com**.
 
-Since you started Open Liberty in development mode at the start of the guide, press the **enter/return** key to run the tests.
+<br/>
+### **Running the tests**
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 If the **testPreflightCorsRequest** test passes, the response headers with their values from the endpoint are printed.
 The **/configurations/preflight** endpoint now allows preflight CORS requests.
@@ -478,9 +483,8 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 
 ## **Nice Work!**
 
-You enabled CORS support in Open Liberty. You added two different
+You enabled CORS support in Open Liberty. You added two different CORS configurations to allow two kinds of CORS requests in the **server.xml** file.
 
-CORS configurations to allow two kinds of CORS requests in the **server.xml** file.
 
 
 
