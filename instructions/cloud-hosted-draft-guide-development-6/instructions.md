@@ -953,6 +953,8 @@ Run the following command and visit the resulting URL.
 echo http://${USERNAME}-9082.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/graphql/schema.graphql
 ```
 {: codeblock}
+
+
 This URL returns the schema that describes the GraphQL service.
 
 To access the GraphQL service, GraphiQL has already been set up and included for you.
@@ -962,6 +964,8 @@ To access GraphiQL, run the following command and visit the resulting URL.
 echo http://${USERNAME}-9082.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/graphql-ui
 ```
 {: codeblock}
+
+
 Queries that are made through GraphiQL are the same as queries that are made through HTTP requests.
 You can also view the schema through GraphiQL by clicking the **Docs** button on the menu bar.
 
@@ -1023,6 +1027,8 @@ mutation {
   )
 }
 ```
+{: codeblock}
+
 
 You receive a response containing the Boolean **true** to let you know that the request was successfully processed.
 You can see the note that you added by running the following query operation.
@@ -1036,6 +1042,8 @@ query {
   }
 }
 ```
+{: codeblock}
+
 
 The response is similar to the following example:
 
@@ -1065,6 +1073,8 @@ query {
   }
 }
 ```
+{: codeblock}
+
 
 The response is similar to the following example:
 
