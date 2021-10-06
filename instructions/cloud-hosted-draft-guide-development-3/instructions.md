@@ -92,7 +92,8 @@ Open your browser and check out your service by going to the URL that the comman
 ```
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/openapi/ui
 ```
-{: codeblock} 
+{: codeblock}
+
 You see the OpenAPI user interface documenting the REST endpoints used in this guide.
 If you are interested in learning more about OpenAPI,
 read [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html). 
@@ -607,6 +608,7 @@ Open your browser and check out your service by going to the URL that the comman
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/openapi/ui
 ```
 {: codeblock} 
+
 Expand the **/beanvalidation/validatespacecraft POST request to validate your spacecraft bean**
 section and click **Try it out**. Copy the following example input into the text box:
 
@@ -829,7 +831,7 @@ used throughout the tests, which are described as follows:
 <br/>
 ### **Running the tests**
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 ```
 -------------------------------------------------------
