@@ -857,9 +857,8 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 
 ## **Nice Work!**
 
-You developed and tested a Java microservice by using bean validation and Open 
+You developed and tested a Java microservice by using bean validation and Open Liberty.
 
-Liberty.
 
 
 <br/>
