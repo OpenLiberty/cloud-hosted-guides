@@ -39,7 +39,7 @@ You will use JPA annotations to define an entity class whose fields are persiste
 database. The interaction between your service and the database is mediated by the persistence 
 context that is managed by an entity manager. In a Java EE environment, you can use an
 application-managed entity manager or a container-managed entity manager. In this guide, 
-you will use a container-managed entity manager that is injected into the DAO so the application  
+you will use a container-managed entity manager that is injected into the DAO so the application
 server manages the opening and closing of the entity manager for you. 
 
 
@@ -103,13 +103,13 @@ The defaultServer server is ready to run a smarter planet.
 
 Select **Launch Application** from the menu of the IDE, 
 type in **9090** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
+You're redirected to a URL similar to **https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai**, 
 where **accountname** is your account name.
 
 The event application does not display any events because no events are stored in the database. 
-Go ahead and click `Create Event`, located in the left navigation bar. 
+Go ahead and click **Create Event**, located in the left navigation bar. 
 After entering an event name, location and time, 
-click `Submit` to persist your event entity to the database. 
+click **Submit** to persist your event entity to the database. 
 The event is now stored in the database and is visible in the list of current events.
 
 Notice that if you stop the Open Liberty server and then restart it, 
@@ -482,30 +482,16 @@ The persistence context synchronizes with the database when a transaction commit
 
 The **EventDao** class has a method for each CRUD operation, so let's break them down:
 
-* The **createEvent()** method persists an instance of the **Event** entity class to the data store by
-calling the **persist()** method on an **EntityManager** instance. The entity instance becomes managed
-and changes to it will be tracked by the entity manager.
+* The **createEvent()** method persists an instance of the **Event** entity class to the data store by calling the **persist()** method on an **EntityManager** instance. The entity instance becomes managed and changes to it will be tracked by the entity manager.
 
-* The **readEvent()** method returns an instance of the **Event** entity class with the specified primary 
-key by calling the **find()** method on an **EntityManager** instance. If the event instance is found, it
-is returned in a managed state, but, if the event instance is not found, **null** is returned.
+* The **readEvent()** method returns an instance of the **Event** entity class with the specified primary key by calling the **find()** method on an **EntityManager** instance. If the event instance is found, it is returned in a managed state, but, if the event instance is not found, **null** is returned.
 
-* The **readAllEvents()** method demonstrates an alternative way to retrieve event objects 
-from the database. This method returns a list of instances of the **Event** entity class by 
-using the **Event.findAll** query specified in the **@NamedQuery** annotation on the **Event** class. 
-Similarly, the **findEvent()** method uses the **Event.findEvent** named query to find an event 
-with the given name, location and time. 
+* The **readAllEvents()** method demonstrates an alternative way to retrieve event objects from the database. This method returns a list of instances of the **Event** entity class by using the **Event.findAll** query specified in the **@NamedQuery** annotation on the **Event** class. Similarly, the **findEvent()** method uses the **Event.findEvent** named query to find an event with the given name, location and time. 
 
 
-* The **updateEvent()** method creates a managed instance of a detached entity instance. 
-The entity manager automatically tracks all managed entity objects in its persistence context 
-for changes and synchronizes them with the database. However, if an entity becomes detached, 
-you must merge that entity into the persistence context by calling the **merge()** method 
-so that changes to loaded fields of the detached entity are tracked.
+* The **updateEvent()** method creates a managed instance of a detached entity instance. The entity manager automatically tracks all managed entity objects in its persistence context for changes and synchronizes them with the database. However, if an entity becomes detached, you must merge that entity into the persistence context by calling the **merge()** method so that changes to loaded fields of the detached entity are tracked.
 
-* The **deleteEvent()** method removes an instance of the **Event** entity class from the database by 
-calling the **remove()** method on an **EntityManager** instance. The state of the entity is
-changed to removed and is removed from the database upon transaction commit. 
+* The **deleteEvent()** method removes an instance of the **Event** entity class from the database by calling the **remove()** method on an **EntityManager** instance. The state of the entity is changed to removed and is removed from the database upon transaction commit. 
 
 The DAO is injected into the **backendServices/src/main/java/io/openliberty/guides/event/resources/EventResource.java**
 class and used to access and persist data. The **@Transactional** annotation is used in the
@@ -524,7 +510,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 When the server is running, select **Launch Application** from the menu of the IDE, 
 type in **9090** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
+You're redirected to a URL similar to **https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai**, 
 where **accountname** is your account name.
 
 Click **Create Event** in the left navigation bar to create events that are persisted to 
@@ -728,10 +714,8 @@ mvn liberty:stop
 
 ## **Nice Work!**
 
-You learned how to map Java objects to database tables by defining a JPA entity class whose 
+You learned how to map Java objects to database tables by defining a JPA entity class whose instances are represented as rows in the table. You have injected a container-managed entity manager into a DAO and learned how to perform CRUD operations in your microservice in Open Liberty.
 
-instances are represented as rows in the table. You have injected a container-managed 
-entity manager into a DAO and learned how to perform CRUD operations in your microservice in Open Liberty.
 
 
 
