@@ -103,7 +103,7 @@ The defaultServer server is ready to run a smarter planet.
 
 Select **Launch Application** from the menu of the IDE, 
 type in **9090** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai**, 
+You're redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
 where **accountname** is your account name.
 
 The event application does not display any events because no events are stored in the database. 
@@ -511,7 +511,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 When the server is running, select **Launch Application** from the menu of the IDE, 
 type in **9090** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai**, 
+You're redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
 where **accountname** is your account name.
 
 Click **Create Event** in the left navigation bar to create events that are persisted to 
