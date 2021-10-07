@@ -131,7 +131,8 @@ command-line sessions where you ran the **backendServices** and **frontendUI** s
 Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another command-line session for the **frontendUI**
 and **backendServices** services:
 ```
-mvn liberty:stop
+mvn -pl frontendUI liberty:stop
+mvn -pl backendServices liberty:stop
 ```
 {: codeblock}
 
@@ -700,10 +701,11 @@ Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
 
 When you are done checking out the services, exit dev mode by pressing CTRL+C in the command-line sessions where you
 ran the **frontendUI** and **backendServices** services,  or by typing **q** and then pressing the **enter/return** key.
-Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another command-line session for the **frontendUI**
+Alternatively, you can run the **liberty:stop** goal from the **start** directory in another command-line session for the **frontendUI**
 and **backendServices** services:
 ```
-mvn liberty:stop
+mvn -pl frontendUI liberty:stop
+mvn -pl backendServices liberty:stop
 ```
 {: codeblock}
 
