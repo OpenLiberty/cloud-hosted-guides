@@ -1,5 +1,5 @@
 
-# **Welcome to the Accessing and persisting data in microservices using Java Persistence API (JPA) guide!**
+# **Welcome to the Consuming a RESTful web service with Angular guide!**
 
 
 
@@ -10,37 +10,42 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-Learn how to use Java Persistence API (JPA) to access and persist data to a database for your microservices.
-
+Explore how to access a simple RESTful web service and consume its resources with Angular in Open
+Liberty.
 
 
 # **What you'll learn**
 
-You will learn how to use the Java Persistence API (JPA) to map Java objects to relational database 
-tables and perform create, read, update and delete (CRUD) operations on the data in your microservices. 
+[Angular](https://angular.io) is a framework for creating interactive web applications.
+Angular applications are written in HTML, CSS, and
+[TypeScript](https://www.typescriptlang.org), a variant of JavaScript. Angular helps you
+create responsive and intuitive applications that download once and run as a single web
+page. Consuming REST services with your Angular application allows you to request
+only the data and operations that you need, minimizing loading times.
 
-JPA is a Java EE specification for representing relational database table data as Plain Old Java Objects (POJO).
-JPA simplifies object-relational mapping (ORM) by using annotations to map Java objects 
-to tables in a relational database. In addition to providing an efficient API for performing
-CRUD operations, JPA also reduces the burden of having to write JDBC and SQL code when performing
-database operations and takes care of database vendor-specific differences. This capability allows you to 
-focus on the business logic of your application instead of wasting time implementing repetitive CRUD logic.
+You will learn how to access a REST service and deserialize the returned JSON that
+contains a list of artists and their albums by using an Angular service and the Angular
+HTTP Client. You will then present this data using an Angular component.
 
-The application that you will be working with is an event manager, which is composed of a UI
-and an event microservice for creating, retrieving, updating, and deleting events. In this 
-guide, you will be focused on the event microservice. The event microservice consists of
-a JPA entity class whose fields will be persisted to a database. The database logic is implemented in 
-a Data Access Object (DAO) to isolate the database operations from the rest of the service. 
-This DAO accesses and persists JPA entities to the database and can be injected 
-and consumed by other components in the microservice. An Embedded Derby database is used 
-as a data store for all the events.
+The REST service that provides the artists and albums resource was written for you in
+advance and responds with the **artists.json**.
 
-You will use JPA annotations to define an entity class whose fields are persisted to the 
-database. The interaction between your service and the database is mediated by the persistence 
-context that is managed by an entity manager. In a Java EE environment, you can use an
-application-managed entity manager or a container-managed entity manager. In this guide, 
-you will use a container-managed entity manager that is injected into the DAO so the application
-server manages the opening and closing of the entity manager for you. 
+The Angular application was created and configured for you in the **frontend**
+directory. It contains the default starter application. There are many files that make
+up an Angular application, but you only need to edit a few to consume the REST
+service and display its data.
+
+Angular applications must be compiled before they can be used. The Angular compilation
+step was configured as part of the Maven build. You can use the **start** folder of
+this guide as a template for getting started with your own applications built on
+Angular and Open Liberty.
+
+
+
+You will implement an Angular client that consumes this JSON and displays its contents.
+
+To learn more about REST services and how you can write them, see
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
 
 
 # **Getting started**
@@ -55,11 +60,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jpa-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-angular.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-jpa-intro.git
-cd guide-jpa-intro
+git clone https://github.com/openliberty/guide-rest-client-angular.git
+cd guide-rest-client-angular
 ```
 {: codeblock}
 
@@ -73,650 +78,462 @@ The **finish** directory contains the finished project that you will build.
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, run the following commands to navigate to the **finish/frontendUI** directory and
-deploy the **frontendUI** service to Open Liberty:
+To try out the application, first go to the **finish** directory and run the following
+Maven goal to build the application and deploy it to Open Liberty:
 
 ```
-cd finish/frontendUI
+cd finish
 mvn liberty:run
 ```
 {: codeblock}
 
 
-
-Open another command-line session and run the following commands to navigate to the **finish/backendServices** directory and
-deploy the service to Open Liberty:
-```
-cd finish/backendServices
-mvn liberty:run
-```
-{: codeblock}
-
-
-
-After you see the following message in both command-line sessions, both your services are ready.
+After you see the following message, your application server is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Select **Launch Application** from the menu of the IDE, 
-type in **9090** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
-where **accountname** is your account name.
-The event application does not display any events
-because no events are stored in the database. Go ahead and click **Create Event**, located in the 
-left navigation bar. After entering an event name, location and time, click **Submit** to persist your 
-event entity to the database. The event is now stored in the database and is visible in the list of 
-current events.
 
-Notice that if you stop the Open Liberty server and then restart it, the events created
-are still displayed in the list of current events. Ensure you are in the **finish/backendServices** directory and run the following Maven goals to stop
-and then restart the server:
+Select **Launch Application** from the menu of the IDE, 
+type in **9080** to specify the port number for the microservice, and click the **OK** button. 
+You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, 
+where **accountname** is your account name. You will see the following output:
+
+
+
+```
+foo wrote 2 albums:
+    Album titled *album_one* by *foo* contains *12* tracks
+    Album tilted *album_two* by *foo* contains *15* tracks
+bar wrote 1 albums:
+    Album titled *foo walks into a bar* by *bar* contains *12* tracks
+dj wrote 0 albums:
+```
+
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
+in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
+from the **finish** directory in another shell session:
+
 ```
 mvn liberty:stop
-mvn liberty:run
-```
-{: codeblock}
-
-
-The events created are still displayed in the list of current events. The **Update** action link
-located beside each event allows you to make modifications to the persisted entity and the 
-**Delete** action link allows you to remove entities from the database.
-
-After you are finished checking out the application, stop the Open Liberty servers by pressing CTRL+C in the
-command-line sessions where you ran the **backendServices** and **frontendUI** services.
-Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another command-line session for the **frontendUI**
-and **backendServices** services:
-```
-mvn -pl frontendUI liberty:stop
-mvn -pl backendServices liberty:stop
 ```
 {: codeblock}
 
 
 
+# **Starting the service**
 
-# **Defining a JPA entity class**
+Before you begin the implementation, start the provided REST service so that
+the artist JSON is available to you.
 
 Navigate to the **start** directory to begin.
 
-When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
-
-Run the following commands to navigate to the **frontendUI** directory and start the **frontendUI** service in dev mode:
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
+deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```
-cd frontendUI
 mvn liberty:dev
 ```
 {: codeblock}
-
-
-
-Open another command-line session and run the following commands to navigate to
-the **backendServices** directory and start the service in dev mode:
-
-```
-cd backendServices
-mvn liberty:dev
-```
-{: codeblock}
-
 
 
 After you see the following message, your application server in dev mode is ready:
 
 ```
-************************************************************************
+**************************************************************
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command line to listen for file changes. Open another command-line session to continue, 
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
-To store Java objects in a database, you must define a JPA entity class. A JPA entity is a Java 
-object whose non-transient and non-static fields will be persisted to the database. Any Plain Old 
-Java Object (POJO) class can be designated as a JPA entity. However, the class must be annotated
-with the **@Entity** annotation, must not be declared final and must have a public or protected non-argument
-constructor. JPA maps an entity type to a database table and persisted instances will be represented 
-as rows in the table.
 
-The **Event** class is a data model that represents events in the event microservice and is annotated with JPA
-annotations.
+You can find your artist JSON by running the following command at a terminal:
+```
+curl -s http://localhost:9080/artists | jq
+```
+{: codeblock} 
 
-Create the **Event** class.
+
+# **Project configuration**
+
+The front end of your application uses Node.js to execute your Angular code. The Maven project is configured for you to install Node.js and produce the production files, which are copied to the web content of your application.
+
+Node.js is server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to execute the Angular scripts found in the **package.json** file. To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
+
+The **frontend-maven-plugin** is used to **install** the dependencies listed in your **package.json** file from the npm registry into a folder called **`node_modules`**. The **`node_modules`** folder is found in your **working** directory. Then, the configuration **produces** the production files to the **src/main/frontend/src/app** directory. 
+
+The **src/main/frontend/src/angular.json** file is defined so that the production build is copied into the web content of your application.
+
+
+
+# **Creating the root Angular module**
+
+Your application needs a way to communicate with and retrieve resources from RESTful web services. 
+In this case, the provided Angular application needs to communicate with the
+artists service to retrieve the artists JSON. While there are various ways to perform
+this task, Angular contains a built-in **HttpClientModule** that you can use.
+
+Angular applications consist of modules, which are groups of classes that
+perform specific functions. The Angular framework provides its own modules
+for applications to use. One of these modules, the HTTP Client module, includes
+convenience classes that make it easier and quicker for you to consume a RESTful API
+from your application.
+
+You will create the module that organizes your application, which is called the root module. 
+The root module includes the Angular HTTP Client module.
+
+
+Create the **app.module.ts** file.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
+touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts
 
 
 
 
 ```
-package io.openliberty.guides.event.models;
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import { HttpClientModule } from '@angular/common/http';
+import { AppComponent } from './app.component';
 
-import java.io.Serializable;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.NamedQuery;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Column;
-import javax.persistence.GenerationType;
+@NgModule({
+  declarations: [
+    AppComponent
+  ],
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+```
+{: codeblock}
 
-@Entity
-@Table(name = "Event")
-@NamedQuery(name = "Event.findAll", query = "SELECT e FROM Event e")
-@NamedQuery(name = "Event.findEvent", query = "SELECT e FROM Event e WHERE "
-    + "e.name = :name AND e.location = :location AND e.time = :time")
-public class Event implements Serializable {
-    private static final long serialVersionUID = 1L;
 
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Id
-    @Column(name = "eventId")
-    private int id;
+The **HttpClientModule** imports the class into the file.
+By using the **@NgModule** tag, you can declare a module and organize 
+your dependencies within the Angular framework. The **imports** array is a declaration array that imports the **HttpClientModule** so that you can use the HTTP Client module in your application.
 
-    @Column(name = "eventLocation")
-    private String location;
-    @Column(name = "eventTime")
-    private String time;
-    @Column(name = "eventName")
-    private String name;
 
-    public Event() {
+# **Creating the Angular service to fetch data**
+
+You need to create the component that is used in the application to acquire and display
+data from the REST API. The component file contains two classes: the service, which
+handles data access, and the component itself, which handles the presentation of the
+data.
+
+Services are classes in Angular that are designed to share their functionality across
+entire applications. A good service performs only one function, and it performs this
+function well. In this case, the **ArtistsService** class requests artists data from the
+REST service.
+
+
+Create the **app.component.ts** file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts
+
+
+
+
+```
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+
+@Injectable()
+export class ArtistsService {
+  constructor(private http: HttpClient) { }
+
+  private static ARTISTS_URL = '/artists';
+
+  async fetchArtists() {
+    try {
+      const data: any = await this.http.get(ArtistsService.ARTISTS_URL).toPromise();
+      return data;
+    } catch (error) {
+      console.error('Error occurred: ' + error);
     }
-
-    public Event(String name, String location, String time) {
-        this.name = name;
-        this.location = location;
-        this.time = time;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public String getTime() {
-        return time;
-    }
-
-    public void setTime(String time) {
-        this.time = time;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-    
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + id;
-        result = prime * result + ((location == null) ? 0 : location.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result +
-                 (int) (serialVersionUID ^ (serialVersionUID >>> 32));
-        result = prime * result + ((time == null) ? 0 : time.hashCode());
-        return result;
-    }
-    
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        Event other = (Event) obj;
-        if (location == null) {
-            if (other.location != null) {
-                return false;
-            }
-        } else if (!location.equals(other.location)) {
-            return false;
-        }
-        if (time == null) {
-            if (other.time != null) {
-                return false;
-            }
-        } else if (!time.equals(other.time)) {
-            return false;
-        }
-        if (name == null) {
-            if (other.name != null) {
-                return false;
-            }
-        } else if (!name.equals(other.name)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "Event [name=" + name + ", location=" + location + ", time=" + time
-                + "]";
-    }
+  }
 }
 
-```
-{: codeblock}
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  providers: [ ArtistsService ],
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent implements OnInit {
+  artists: any[] = [];
 
+  constructor(private artistsService: ArtistsService) { }
 
-
-The following table breaks down the new annotations:
-
-| *Annotation*    | *Description*
-| ---| ---
-| **@Entity** | Declares the class as an entity
-| **@Table**  | Specifies details of the table such as name 
-| **@NamedQuery** | Specifies a predefined database query that is run by an **EntityManager** instance.
-| **@Id**       |  Declares the primary key of the entity
-| **@GeneratedValue**    | Specifies the strategy used for generating the value of the primary key. The **strategy = GenerationType.AUTO** code indicates that the generation strategy is automatically selected
-| **@Column**    | Specifies that the field is mapped to a column in the database table. The **name** attribute is optional and indicates the name of the column in the table
-
-
-# **Configuring JPA**
-
-The **persistence.xml** file is a configuration file that defines a persistence unit. The
-persistence unit specifies configuration information for the entity manager.
-
-Create the configuration file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
-
-
-
-
-```
-<?xml version="1.0" encoding="UTF-8"?>
-<persistence version="2.2"
-    xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
-                        http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
-    <!-- tag::transaction-type[] -->
-    <persistence-unit name="jpa-unit" transaction-type="JTA">
-        <!-- tag::jta-data[] -->
-        <jta-data-source>jdbc/eventjpadatasource</jta-data-source>
-        <properties>
-            <property name="eclipselink.ddl-generation" value="create-tables"/>
-            <property name="eclipselink.ddl-generation.output-mode" value="both" />
-        </properties>
-    </persistence-unit>
-</persistence>
-```
-{: codeblock}
-
-
-
-The persistence unit is defined by the **persistence-unit** XML element. The **name** attribute is 
-required and is used to identify the persistent unit when using the **@PersistenceContext**
-annotation to inject the entity manager later in this guide. The **transaction-type="JTA"** 
-attribute specifies to use Java Transaction API (JTA) transaction management.
-Since we are using a container-managed entity manager, JTA transactions must be used. 
-
-A JTA transaction type requires a JTA data source to be provided. The **jta-data-source** 
-element specifies the Java Naming and Directory Interface (JNDI) name of 
-the data source that is used. The **data source** has already been configured for you
-in the **backendServices/src/main/liberty/config/server.xml** file. This data source configuration is where 
-the Java Database Connectivity (JDBC) connection is defined along with some database
-vendor-specific properties.
-
-
-The **eclipselink.ddl-generation** properties are used here so that you aren't required to 
-manually create a database table to run this sample application. To learn more about the 
-**ddl-generation** properties, see the 
-[JPA Extensions Reference for EclipseLink.](http://www.eclipse.org/eclipselink/documentation/2.5/jpa/extensions/p_ddl_generation.htm)
-
-
-# **Performing CRUD operations using JPA**
-
-The CRUD operations are defined in the DAO. To perform these operations by using JPA, we need an **EventDao** class. 
-
-Create the **EventDao** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
-
-
-
-
-```
-package io.openliberty.guides.event.dao;
-
-import java.util.List;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
-import io.openliberty.guides.event.models.Event;
-
-import javax.enterprise.context.RequestScoped;
-
-@RequestScoped
-public class EventDao {
-    
-    @PersistenceContext(name = "jpa-unit")
-    private EntityManager em;
-    
-    public void createEvent(Event event) {
-        em.persist(event);
-    }
-
-    public Event readEvent(int eventId) {
-        return em.find(Event.class, eventId);
-    }
-
-    public void updateEvent(Event event) {
-        em.merge(event);
-    }
-
-    public void deleteEvent(Event event) {
-        em.remove(event);
-    }
-
-    public List<Event> readAllEvents() {
-        return em.createNamedQuery("Event.findAll", Event.class).getResultList();
-    }
-
-    public List<Event> findEvent(String name, String location, String time) {
-        return em.createNamedQuery("Event.findEvent", Event.class)
-            .setParameter("name", name)
-            .setParameter("location", location)
-            .setParameter("time", time).getResultList();
-    }
+  ngOnInit() {
+    this.artistsService.fetchArtists().then(data => {
+      this.artists = data;
+    });
+  }
 }
 ```
 {: codeblock}
 
 
+The file imports the **HttpClient** class and the
+**Injectable** decorator.
 
-To use the entity manager at runtime, inject it into our CDI bean through the
-**@PersistenceContext** annotation. The entity manager interacts with the persistence context. 
-Every **EntityManager** instance is associated with a persistence context. The persistence context 
-manages a set of entities and is aware of the different states that an entity can have.
-The persistence context synchronizes with the database when a transaction commits.
+The **ArtistsService** class is defined. While it shares the
+file of the component class **AppComponent**, it can also be
+defined in its own file. The class is annotated by **@Injectable**
+so instances of it can be provided to other classes anywhere in the application.
 
-The **EventDao** class has a method for each CRUD operation, so let's break them down:
+The class injects an instance of the **HttpClient** class,
+which it uses to request data from the REST API. It contains the
+**`ARTISTS_URL`** constant, which points to the API endpoint it
+requests data from. The URL does not contain a host name because the artists API
+endpoint is accessible from the same host as the Angular application. You can send
+requests to external APIs by specifying the full URL. Finally, it implements a
+**fetchArtists()** method that makes the request and returns
+the result.
 
-* The **createEvent()** method persists an instance of the **Event** entity class to the data store by calling the **persist()** method on an **EntityManager** instance. The entity instance becomes managed and changes to it will be tracked by the entity manager.
+To obtain the data for display on the page, the
+**fetchArtists()** method tries to use the injected
+**http** instance to perform a
+**GET** HTTP request to the **`ARTISTS_URL`** constant. If successful, it
+returns the result. If an error occurs, it prints the error message to the console.
 
-* The **readEvent()** method returns an instance of the **Event** entity class with the specified primary key by calling the **find()** method on an **EntityManager** instance. If the event instance is found, it is returned in a managed state, but, if the event instance is not found, **null** is returned.
-
-* The **readAllEvents()** method demonstrates an alternative way to retrieve event objects from the database. This method returns a list of instances of the **Event** entity class by using the **Event.findAll** query specified in the **@NamedQuery** annotation on the **Event** class. Similarly, the **findEvent()** method uses the **Event.findEvent** named query to find an event with the given name, location and time. 
-
-
-* The **updateEvent()** method creates a managed instance of a detached entity instance. The entity manager automatically tracks all managed entity objects in its persistence context for changes and synchronizes them with the database. However, if an entity becomes detached, you must merge that entity into the persistence context by calling the **merge()** method so that changes to loaded fields of the detached entity are tracked.
-
-* The **deleteEvent()** method removes an instance of the **Event** entity class from the database by calling the **remove()** method on an **EntityManager** instance. The state of the entity is changed to removed and is removed from the database upon transaction commit. 
-
-The DAO is injected into the **backendServices/src/main/java/io/openliberty/guides/event/resources/EventResource.java**
-class and used to access and persist data. The **@Transactional** annotation is used in the
-**EventResource** class to declaratively control the transaction boundaries on the **@RequestScoped** CDI bean.
-This ensures that the methods run within the boundaries of an active global transaction, which is why it is not
-necessary to explicitly begin, commit or rollback transactions. At the end of the transactional
-method invocation, the transaction commits and the persistence context flushes any changes
-to Event entity instances it is managing to the database.
-
-
-
-# **Running the application**
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-When the server is running, select **Launch Application** from the menu of the IDE, 
-type in **9090** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
-where **accountname** is your account name.
-
-Click **Create Event** in the left navigation bar to create events that are persisted to 
-the database. After you create an event, it is available to view, update, and delete in
-the **Current Events** section.
+The **fetchArtists()** method uses a feature of JavaScript
+called **async**/
+**await** to make requests and
+receive responses without preventing the application from working while it waits. For
+the result of the
+**HttpClient.get()** method to
+be compatible with this feature, it must be converted to a Promise by invoking its
+**toPromise()** method. A
+Promise is how JavaScript represents the state of an asynchronous operation. If you
+want to learn more, check out [](https://promisejs.org) for an introduction.
 
 
-# **Testing the application**
+# **Defining the component to consume the service**
 
-Create the **EventEntityIT** class.
+Components are the basic building blocks of Angular application user interfaces.
+Components are made up of a TypeScript class annotated with the
+**@Component** annotation and the HTML template file (specified by
+**templateUrl**) and CSS style files (specified by
+**styleUrls**.)
 
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
-```
-{: codeblock}
+Update the **AppComponent** class to use the artists service
+to fetch the artists data and save it so the component can display it.
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
+Update the **app.component.ts** file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts
 
 
 
 
 ```
-package it.io.openliberty.guides.event;
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+@Injectable()
+export class ArtistsService {
+  constructor(private http: HttpClient) { }
 
-import java.util.HashMap;
-import javax.json.JsonObject;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Form;
-import javax.ws.rs.core.Response.Status;
+  private static ARTISTS_URL = '/artists';
 
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Test;
-import io.openliberty.guides.event.models.Event;
-
-public class EventEntityIT extends EventIT {
-
-    private static final String JSONFIELD_LOCATION = "location";
-    private static final String JSONFIELD_NAME = "name";
-    private static final String JSONFIELD_TIME = "time";
-    private static final String EVENT_TIME = "12:00 PM, January 1 2018";
-    private static final String EVENT_LOCATION = "IBM";
-    private static final String EVENT_NAME = "JPA Guide";
-    private static final String UPDATE_EVENT_TIME = "12:00 PM, February 1 2018";
-    private static final String UPDATE_EVENT_LOCATION = "IBM Updated";
-    private static final String UPDATE_EVENT_NAME = "JPA Guide Updated";
-    
-    private static final int NO_CONTENT_CODE = Status.NO_CONTENT.getStatusCode();
-    private static final int NOT_FOUND_CODE = Status.NOT_FOUND.getStatusCode();
-
-    @BeforeAll
-    public static void oneTimeSetup() {
-        port = System.getProperty("backend.http.port");
-        baseUrl = "http://localhost:" + port + "/";
+  async fetchArtists() {
+    try {
+      const data: any = await this.http.get(ArtistsService.ARTISTS_URL).toPromise();
+      return data;
+    } catch (error) {
+      console.error('Error occurred: ' + error);
     }
+  }
+}
 
-    @BeforeEach
-    public void setup() {
-        form = new Form();
-        client = ClientBuilder.newClient();
-        client.register(JsrJsonpProvider.class);
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  providers: [ ArtistsService ],
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent implements OnInit {
+  artists: any[] = [];
 
-        eventForm = new HashMap<String, String>();
+  constructor(private artistsService: ArtistsService) { }
 
-        eventForm.put(JSONFIELD_NAME, EVENT_NAME);
-        eventForm.put(JSONFIELD_LOCATION, EVENT_LOCATION);
-        eventForm.put(JSONFIELD_TIME, EVENT_TIME);
-    }
-
-    @Test
-    public void testInvalidRead() {
-        assertEquals(true, getIndividualEvent(-1).isEmpty(),
-          "Reading an event that does not exist should return an empty list");
-    }
-
-    @Test
-    public void testInvalidDelete() {
-        int deleteResponse = deleteRequest(-1);
-        assertEquals(NOT_FOUND_CODE, deleteResponse,
-          "Trying to delete an event that does not exist should return the " 
-          + "HTTP response code " + NOT_FOUND_CODE);
-    }
-
-    @Test
-    public void testInvalidUpdate() {
-        int updateResponse = updateRequest(eventForm, -1);
-        assertEquals(NOT_FOUND_CODE, updateResponse,
-          "Trying to update an event that does not exist should return the " 
-          + "HTTP response code " + NOT_FOUND_CODE);
-    }
-    
-    @Test
-    public void testReadIndividualEvent() {
-        int postResponse = postRequest(eventForm);
-        assertEquals(NO_CONTENT_CODE, postResponse,
-          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
-
-        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-        JsonObject event = findEvent(e);
-        event = getIndividualEvent(event.getInt("id"));
-        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-
-        int deleteResponse = deleteRequest(event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, deleteResponse, 
-          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
-    }
-    
-    @Test
-    public void testCRUD() {
-        int eventCount = getRequest().size();
-        int postResponse = postRequest(eventForm);
-        assertEquals(NO_CONTENT_CODE, postResponse, 
-          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
-     
-        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-        JsonObject event = findEvent(e);
-        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-
-        eventForm.put(JSONFIELD_NAME, UPDATE_EVENT_NAME);
-        eventForm.put(JSONFIELD_LOCATION, UPDATE_EVENT_LOCATION);
-        eventForm.put(JSONFIELD_TIME, UPDATE_EVENT_TIME);
-        int updateResponse = updateRequest(eventForm, event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, updateResponse, 
-          "Updating an event should return the HTTP response code " + NO_CONTENT_CODE);
-        
-        e = new Event(UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
-        event = findEvent(e);
-        assertData(event, UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
-
-        int deleteResponse = deleteRequest(event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, deleteResponse, 
-          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
-        assertEquals(eventCount, getRequest().size(), 
-          "Total number of events stored should be the same after testing " 
-          + "CRUD operations.");
-    }
-    
-    @AfterEach
-    public void teardown() {
-        response.close();
-        client.close();
-    }
-
+  ngOnInit() {
+    this.artistsService.fetchArtists().then(data => {
+      this.artists = data;
+    });
+  }
 }
 ```
 {: codeblock}
 
 
+Replace the entire **AppComponent** class along with the
+**@Component** annotation. Add
+**OnInit** to the list of imported classes at
+the top.
 
-The **testInvalidRead()**, **testInvalidDelete()** and **testInvalidUpdate()** methods use a primary key that is not in the database to test reading, updating and deleting an event that does not
-exist, respectively.
+The **providers** property on the
+**@Component** annotation indicates that this component provides the
+**ArtistsService** to other classes in the application.
 
-The **testReadIndividualEvent()** method persists a test event to the database and retrieves the 
-event object from the database using the primary key of the entity.
+**AppComponent** implements **OnInit**,
+which is a special interface called a lifecycle hook. When Angular displays, updates,
+or removes a component, it calls a specific function, the lifecycle hook, on the
+component so the component can run code in response to this event. This component
+responds to the **OnInit** event via the
+**ngOnInit** method, which fetches and populates the component's
+template with data when it is initialized for display. The file imports the
+**OnInit** interface from the
+**@angular/core** package.
 
-The **testCRUD()** method creates a test event and persists it to the database. The event object is then 
-retrieved from the database to verify that the test event was actually persisted. Next, the  
-name, location, and time of the test event are updated. The event object is retrieved 
-from the database to verify that the updated event is stored. Finally, the updated test 
-event is deleted and one final check is done to ensure that the updated test event is no longer 
-stored in the database.
+**artists** is a class member of type **any[]** that starts out
+as an empty array. It holds the artists retrieved from the service so the template can
+display them.
 
-<br/>
-### **Running the tests**
+An instance of the **ArtistsService** class is
+injected into the constructor and is accessible by any function that is defined in the
+class. The **ngOnInit** function uses the
+**artistsService** instance to request the artists data.
+Since the **fetchArtists()** method is an **async** function,
+it returns a Promise. To retrieve the data from the request,
+**ngOnInit** calls the **then()** method on the
+Promise which takes in the data and stores it to the
+**artists** class member.
 
-Since you started Open Liberty in dev mode, press the **enter/return** key in the command-line session where you started the
-**backendServices** service to run the tests for the **backendServices**.
+
+# **Creating the Angular component template**
+
+Now that you have a service to fetch the data and a component to store it in, you
+will create a template to specify how the data will be displayed on the page. When you
+visit the page in the browser, the component populates the template to display
+the artists data with formatting.
+
+Create the **app.component.html** file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html
+
+
+
 
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.event.EventEntityIT
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.703 sec - in it.io.openliberty.guides.event.EventEntityIT
-
-Results :
-
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 
-```
-
-When you are done checking out the services, exit dev mode by pressing CTRL+C in the command-line sessions where you
-ran the **frontendUI** and **backendServices** services,  or by typing **q** and then pressing the **enter/return** key.
-Alternatively, you can run the **liberty:stop** goal from the **start** directory in another command-line session for the **frontendUI**
-and **backendServices** services:
-```
-mvn -pl frontendUI liberty:stop
-mvn -pl backendServices liberty:stop
+<div *ngFor="let artist of artists">
+  <p>{{ artist.name }} wrote {{ artist.albums.length }} albums: </p>
+  <!-- tag::albumDiv[] -->
+  <div *ngFor="let album of artist.albums">
+    <p style="text-indent: 20px">
+      Album titled <b>{{ album.title }}</b> by
+                   <b>{{ album.artist }}</b> contains
+                   <b>{{ album.ntracks }}</b> tracks
+    </p>
+  </div>
+</div>
 ```
 {: codeblock}
 
 
 
+The template contains a **div** element that is enumerated by using the
+**ngFor** directive. The **artist** variable is bound to the **artists** member of the
+component. The **div** element itself and all elements contained within it are repeated for
+each artist, and the **{{ artist.name }}**
+and **{{ artist.albums.length }}**
+placeholders are populated with the information from each artist. The same strategy is
+used to display each **album** by each artist.
+
+
+# **Building the front end**
+
+The Open Liberty server is already started, and the REST service is running. In a new 
+command-line session, build the front end by running the following command in the root directory:
+
+```
+mvn generate-resources
+```
+{: codeblock}
+
+
+You can rebuild the front end at any time with the **generate-resources** Maven goal. 
+Any local changes to your TypeScript or HTML are picked up when you build the front end.
+
+
+Select **Launch Application** from the menu of the IDE, 
+type in **9080** to specify the port number for the microservice, and click the **OK** button. 
+You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, 
+where **accountname** is your account name. You will see the following output:
+
+```
+foo wrote 2 albums:
+    Album titled *album_one* by *foo* contains *12* tracks
+    Album tilted *album_two* by *foo* contains *15* tracks
+bar wrote 1 albums:
+    Album titled *foo walks into a bar* by *bar* contains *12* tracks
+dj wrote 0 albums:
+```
+
+If you use the **curl** command to access the web application root URL,
+you see only the application root page in HTML. The Angular framework
+uses JavaScript to render the HTML to display the application data.
+A web browser runs JavaScript, and the **curl** command doesn't.
+
+
+# **Testing the Angular client**
+
+No explicit code directly uses the consumed artist JSON, so you don't need to write
+any test cases.
+
+
+Whenever you change and build your Angular implementation the changes will be reflected automatically
+at the URL for the launched application.
+
+When you are done checking the application root, exit development mode by
+pressing **CTRL+C** in the command-line session where you ran the server,
+or by typing **q** and then pressing the **enter/return** key.
+
+Although the Angular application that this guide shows you how to build is simple,
+when you build more complex Angular applications, testing becomes a crucial part
+of your development lifecycle. If you need to write test cases, follow the official
+unit testing and end-to-end testing documentation on the
+[official Angular page](https://angular.io/guide/testing).
 
 # **Summary**
 
 ## **Nice Work!**
 
-You learned how to map Java objects to database tables by defining a JPA entity class whose instances are represented as rows in the table. You have injected a container-managed entity manager into a DAO and learned how to perform CRUD operations in your microservice in Open Liberty.
+You just accessed a simple RESTful web service and consumed its resources by using
 
-
+Angular in Open Liberty.
 
 
 <br/>
@@ -725,11 +542,11 @@ You learned how to map Java objects to database tables by defining a JPA entity 
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-jpa-intro** project by running the following commands:
+Delete the **guide-rest-client-angular** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-jpa-intro
+rm -fr guide-rest-client-angular
 ```
 {: codeblock}
 
@@ -738,7 +555,7 @@ rm -fr guide-jpa-intro
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Accessing%20and%20persisting%20data%20in%20microservices%20using%20Java%20Persistence%20API%20(JPA)&guide-id=cloud-hosted-guide-jpa-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20Angular&guide-id=cloud-hosted-guide-rest-client-angular)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -746,15 +563,17 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jpa-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jpa-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-angular/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-angular/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
 <br/>
