@@ -476,7 +476,7 @@ used to display each **album** by each artist.
 # **Building the front end**
 
 The Open Liberty server is already started, and the REST service is running. In a new 
-command-line session, build the front end by running the following command in the root directory:
+command-line session, build the front end by running the following command in the **start** directory:
 
 ```
 mvn generate-resources
