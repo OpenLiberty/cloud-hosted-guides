@@ -149,11 +149,9 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 or open the project in your editor.
 
 
-Once your application is up and running, open another command-line session by selecting **Terminal** > **New Terminal** 
-from the menu of the IDE. Then use the following command to get the URL.
-Open your browser and check out your artist JSON by going to the URL that the command returns.
+You can find your artist JSON by running the following command at a terminal:
 ```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists
+curl -s http://localhost:9080/artists | jq
 ```
 {: codeblock} 
 
@@ -271,7 +269,7 @@ export class ArtistsService {
       const data: any = await this.http.get(ArtistsService.ARTISTS_URL).toPromise();
       return data;
     } catch (error) {
-      console.error(**Error occurred: ${error}**);
+      console.error('Error occurred: ' + error);
     }
   }
 }
@@ -368,7 +366,7 @@ export class ArtistsService {
       const data: any = await this.http.get(ArtistsService.ARTISTS_URL).toPromise();
       return data;
     } catch (error) {
-      console.error(**Error occurred: ${error}**);
+      console.error('Error occurred: ' + error);
     }
   }
 }
@@ -478,7 +476,7 @@ used to display each **album** by each artist.
 # **Building the front end**
 
 The Open Liberty server is already started, and the REST service is running. In a new 
-command-line session, build the front end by running the following command:
+command-line session, build the front end by running the following command in the **start** directory:
 
 ```
 mvn generate-resources
@@ -533,9 +531,8 @@ unit testing and end-to-end testing documentation on the
 
 ## **Nice Work!**
 
-You just accessed a simple RESTful web service and consumed its resources by using
+You just accessed a simple RESTful web service and consumed its resources by using Angular in Open Liberty.
 
-Angular in Open Liberty.
 
 
 <br/>
