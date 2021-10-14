@@ -531,9 +531,8 @@ unit testing and end-to-end testing documentation on the
 
 ## **Nice Work!**
 
-You just accessed a simple RESTful web service and consumed its resources by using
+You just accessed a simple RESTful web service and consumed its resources by using Angular in Open Liberty.
 
-Angular in Open Liberty.
 
 
 <br/>
