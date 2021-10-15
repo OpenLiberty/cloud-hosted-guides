@@ -139,6 +139,10 @@ mvn liberty:stop-server
 # **Running the services**
 
 Navigate to the **start** directory to begin.
+```
+cd /home/project/guide-microprofile-opentracing/start
+```
+{: codeblock}
 
 You'll need to start the services to see basic traces appear in Zipkin. 
 So, before you proceed, build and start the provided **system** and **inventory**
@@ -279,15 +283,8 @@ public class InventoryManager {
 
 The **@Traced** annotation can be configured with the following two parameters:
 
-* The **value=[true|false]** parameter indicates whether a particular class or method is traced. 
-For example, while all JAX-RS methods are traced by default,
-you can disable their tracing by using the **@Traced(false)** annotation. 
-This parameter is set to **true** by default.
-* The **operationName=<Span name>** parameter indicates the name of the span that is assigned to the
-particular method that is traced. If you omit this parameter, the span will be named with the following
-form: **`<package name>.<class name>.<method name>`**. If you use this parameter at a class level, then
-all methods within that class will have the same span name unless they're explicitly overridden by
-another **@Traced** annotation.
+* The **value=[true|false]** parameter indicates whether a particular class or method is traced. For example, while all JAX-RS methods are traced by default, you can disable their tracing by using the **@Traced(false)** annotation. This parameter is set to **true** by default.
+* The **operationName=<Span name>** parameter indicates the name of the span that is assigned to the particular method that is traced. If you omit this parameter, the span will be named with the following form: **<package name>.<class name>.<method name>**. If you use this parameter at a class level, then all methods within that class will have the same span name unless they're explicitly overridden by another **@Traced** annotation.
 
 Next, run the following command from the **start** directory to recompile your services. 
 ```
