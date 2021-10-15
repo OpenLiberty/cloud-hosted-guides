@@ -1,7 +1,7 @@
 
-# **Welcome to the Streaming updates to a client using Server-Sent Events guide!**
+# **Welcome to the Creating a hypermedia-driven RESTful web service guide!**
 
-Learn how to stream updates from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
+// =================================================================================================
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,53 +11,104 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+You'll explore how to use Hypermedia As The Engine Of Application State (HATEOAS) to drive your
+RESTful web service on Open Liberty.
 
 # **What you'll learn**
 
-You will learn how to stream messages from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
+You will learn how to use hypermedia to create a specific style of a response JSON, which has contents
+that you can use to navigate your REST service. You'll build on top of a simple inventory
+REST service that you can develop with MicroProfile technologies. You can find the service at the following URL:
 
-MicroProfile Reactive Messaging provides an easy way for Java services to send
-requests to other Java services, and asynchronously receive and process the
-responses as a stream of events. SSE provides a framework to stream the data in
-these events to a browser client.
+```
+http://localhost:9080/inventory/hosts
+```
+
+The service responds with a JSON file that contains all of the registered hosts. Each host has a collection
+of HATEOAS links:
+
+```
+{
+  "foo": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/foo",
+      "rel": "self"
+    }
+  ],
+  "bar": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/bar",
+      "rel": "self"
+    }
+  ],
+  "*": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/*",
+      "rel": "self"
+    }
+  ]
+}
+```
 
 <br/>
-### **What is SSE?**
+### **What is HATEOAS?**
 
-Server-Sent Events is an API that allows
-clients to subscribe to a stream of events that is pushed from a server. First, the
-client makes a connection with the server over HTTP. The server continuously pushes events to the client as
-long as the connection persists. SSE differs from traditional HTTP requests, which
-use one request for one response. SSE also differs from Web Sockets in that SSE is unidirectional from
-the server to the client, and Web Sockets allow for bidirectional communication.
+HATEOAS is a constrained form of REST application architecture.
+With HATEOAS, the client receives information about the available resources from the REST application.
+The client does not need to be hardcoded to a fixed set of resources, and the application
+and client can evolve independently. In other words, the application tells the client where it can go
+and what it can access by providing it with a simple collection of links to other available resources.
 
-For example, an application that provides real-time stock quotes might use SSE to push price
-updates from the server to the browser as soon as the server receives them. Such an application wouldn't need Web Sockets because the data travels in only one direction, and polling the server by using HTTP requests wouldn't provide real-time
-updates.
+<br/>
+### **Response JSON**
 
-The application that you will build in this guide consists of a **frontend**
-service, a **bff** (backend for frontend) service, and three instances of a
-**system** service. The **system** services periodically publish messages that
-contain their hostname and current system load. The **bff** service receives the
-messages from the **system** services and pushes the contents as SSE to a JavaScript
-client in the **frontend** service. This client uses the events to update a table
-in the UI that displays each system's hostname and its periodically updating
-load. The following diagram depicts the application that is used in this guide:
+In the context of HATEOAS, each resource must contain a link reference to itself, which is commonly referred to as **self**. In this guide, the JSON structure features a mapping between the hostname and its corresponding list of HATEOAS links:
 
-![SSE Diagram](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/master/assets/SSE_Diagram.png)
+```
+  "*": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/*",
+      "rel": "self"
+    }
+  ]
+```
 
+<br/>
+#### **Link types**
 
-In this guide, you will set up the **bff** service by creating an endpoint that
-clients can use to subscribe to events. You will also enable the service to read
-from the reactive messaging channel and push the contents to subscribers via
-SSE. After that, you will configure the Kafka connectors to allow the **bff**
-service to receive messages from the **system** services. Finally, you will
-configure the client in the **frontend** service to subscribe to these events,
-consume them, and display them in the UI.
+The following example shows two different links. The first link has a **self** relationship with the
+resource object and is generated whenever you register a host. The link points to that host
+entry in the inventory:
 
-To learn more about the reactive Java services that are used in this guide, check out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
+```
+  {
+    "href": "http://localhost:9080/inventory/hosts/<hostname>",
+    "rel": "self"
+  }
+```
 
+The second link has a **properties** relationship with the resource object and is generated
+if the host **system** service is running. The link points to the properties resource on the host:
 
+```
+  {
+    "href": "http://<hostname>:9080/system/properties",
+    "rel": "properties"
+  }
+```
+
+<br/>
+#### **Other formats**
+
+Although you should stick to the previous format for the purpose of this guide, another common
+convention has the link as the value of the relationship:
+
+```
+  "_links": {
+      "self": "http://localhost:9080/inventory/hosts/<hostname>",
+      "properties": "http://<hostname>:9080/system/properties"
+  }
+```
 
 # **Getting started**
 
@@ -71,11 +122,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-messaging-sse.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-hateoas.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-reactive-messaging-sse.git
-cd guide-reactive-messaging-sse
+git clone https://github.com/openliberty/guide-rest-hateoas.git
+cd guide-rest-hateoas
 ```
 {: codeblock}
 
@@ -84,394 +135,606 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+<br/>
+### **Try what you'll build**
 
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-# **Setting up SSE in the bff service**
+To try out the application, first go to the **finish** directory and run the following
+Maven goal to build the application and deploy it to Open Liberty:
 
-
-
-In this section, you will create a REST API for SSE in the **bff** service. When a
-client makes a request to this endpoint, the initial connection between the
-client and server is established and the client is subscribed to receive events
-that are pushed from the server. Later in this guide, the client in the **frontend**
-service uses this endpoint to subscribe to the events that are pushed from the
-**bff** service.
-
-Additionally, you will enable the **bff** service to read messages from the
-incoming stream and push the contents as events to subscribers via SSE.
-
-Navigate to the **start** directory to begin.
-
-Create the BFFResource class.
-
-> Run the following touch command in your terminal
 ```
-touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java
+cd finish
+mvn liberty:run
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java
+After you see the following message, your application server is ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+After the server runs, you can find your hypermedia-driven **inventory** service at the following URL:
+
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+
+ http://localhost:9080/inventory/hosts
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/inventory/hosts
+```
+{: codeblock}
+
+
+
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
+in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
+from the **finish** directory in another shell session:
+
+```
+mvn liberty:stop
+```
+{: codeblock}
+
+
+
+
+# **Creating the response JSON**
+
+Navigate to the **start** directory.
+
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
+deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```
+mvn liberty:dev
+```
+{: codeblock}
+
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
+or open the project in your editor.
+
+Begin by building your response JSON, which is composed of the name of the host machine and its list of HATEOAS links.
+
+<br/>
+### **Linking to inventory contents**
+
+As mentioned before, your starting point is an existing simple inventory REST service. 
+
+Look at the request handlers in the **InventoryResource.java** file.
+
+
+The **.../inventory/hosts/** URL will no longer respond with a JSON representation of your inventory contents, so you can discard the **listContents** method and integrate it into the **getPropertiesForHost** method.
+
+Replace the **InventoryResource** class.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java
 
 
 
 
 ```
-package io.openliberty.guides.bff;
-
-import io.openliberty.guides.models.SystemLoad;
-
-import org.eclipse.microprofile.reactive.messaging.Incoming;
+package io.openliberty.guides.microprofile;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.sse.OutboundSseEvent;
-import javax.ws.rs.sse.Sse;
-import javax.ws.rs.sse.SseBroadcaster;
-import javax.ws.rs.sse.SseEventSink;
-import java.util.logging.Logger;
+import javax.ws.rs.core.UriInfo;
 
 @ApplicationScoped
-@Path("/sse")
-public class BFFResource {
-
-    private Logger logger = Logger.getLogger(BFFResource.class.getName());
-
-    private Sse sse;
-    private SseBroadcaster broadcaster;
-
+@Path("hosts")
+public class InventoryResource {
+    
+    @Inject
+    InventoryManager manager;
+    
+    @Context
+    UriInfo uriInfo;
+    
     @GET
-    @Path("/")
-    @Produces(MediaType.SERVER_SENT_EVENTS)
-    public void subscribeToSystem(
-        @Context SseEventSink sink,
-        @Context Sse sse
-        ) {
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject handler() { 
+        return manager.getSystems(uriInfo.getAbsolutePath().toString());
+    }
+    
+    @GET
+    @Path("{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject getPropertiesForHost(@PathParam("hostname") String hostname) {
+        return (hostname.equals("*")) ? manager.list() : manager.get(hostname);
+    }
+}
+```
+{: codeblock}
 
-        if (this.sse == null || this.broadcaster == null) { 
-            this.sse = sse;
-            this.broadcaster = sse.newBroadcaster();
+
+The contents of your inventory are now under the asterisk (*) wildcard and reside at the **http://localhost:9080/inventory/hosts/*** URL.
+
+The **GET** request handler is responsible for handling all **GET** requests that are
+made to the target URL. This method responds with a JSON that contains HATEOAS links.
+
+The **UriInfo** object is what will be used to build your HATEOAS links.
+
+The **@Context** annotation is a part of CDI and indicates that the **UriInfo** will be injected when the
+resource is instantiated.
+
+Your new **InventoryResource** class is now replaced. Next, you will implement the **getSystems** method and build the response JSON object.
+
+
+<br/>
+### **Linking to each available resource**
+
+Take a look at your **InventoryManager** and **InventoryUtil** files.
+
+Replace the **InventoryManager** class.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java
+
+
+
+
+```
+package io.openliberty.guides.microprofile;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+
+import io.openliberty.guides.microprofile.util.ReadyJson;
+import io.openliberty.guides.microprofile.util.InventoryUtil;
+
+@ApplicationScoped
+public class InventoryManager { 
+    
+    private ConcurrentMap<String, JsonObject> inv = new ConcurrentHashMap<>();
+    
+    public JsonObject get(String hostname) {
+        JsonObject properties = inv.get(hostname);
+        if (properties == null) {
+            if (InventoryUtil.responseOk(hostname)) {
+                properties = InventoryUtil.getProperties(hostname);
+                this.add(hostname, properties);
+            } else {
+                return ReadyJson.SERVICE_UNREACHABLE.getJson();
+            }
+        }
+        return properties;
+    }
+    
+    public void add(String hostname, JsonObject systemProps) {
+        inv.putIfAbsent(hostname, systemProps);
+    }
+    
+    public JsonObject list() {
+        JsonObjectBuilder systems = Json.createObjectBuilder();
+        inv.forEach((host, props) -> {
+            JsonObject systemProps = Json.createObjectBuilder()
+                                         .add("os.name", props.getString("os.name"))
+                                         .add("user.name", props.getString("user.name"))
+                                         .build();
+            systems.add(host, systemProps);
+        }); 
+        systems.add("hosts", systems);
+        systems.add("total", inv.size());
+        return systems.build();
+    }
+    
+    public JsonObject getSystems(String url) {
+        JsonObjectBuilder systems = Json.createObjectBuilder();
+        systems.add("*", InventoryUtil.buildLinksForHost("*", url));
+        
+        for (String host : inv.keySet()) {
+            systems.add(host, InventoryUtil.buildLinksForHost(host, url));
         }
         
-        this.broadcaster.register(sink);
-        logger.info("New sink registered to broadcaster.");
+        return systems.build();
     }
 
-    private void broadcastData(String name, Object data) {
-        if (broadcaster != null) {
-            OutboundSseEvent event = sse.newEventBuilder()
-                                        .name(name)
-                                        .data(data.getClass(), data)
-                                        .mediaType(MediaType.APPLICATION_JSON_TYPE)
-                                        .build();
-            broadcaster.broadcast(event);
-        } else {
-            logger.info("Unable to send SSE. Broadcaster context is not set up.");
+}
+```
+{: codeblock}
+
+
+
+The **getSystems** method accepts a
+target URL as an argument and returns a JSON object that contains HATEOAS links.
+
+Replace the **InventoryUtil** class.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java
+
+
+
+
+```
+package io.openliberty.guides.microprofile.util;
+
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriBuilder;
+
+import org.apache.commons.lang3.StringUtils;
+
+public class InventoryUtil {
+
+    private static final int PORT = 9080;
+    private static final String PROTOCOL = "http";
+    private static final String SYSTEM_PROPERTIES = "/system/properties";
+
+    public static JsonObject getProperties(String hostname) {
+        Client client = ClientBuilder.newClient();
+        URI propURI = InventoryUtil.buildUri(hostname);
+        return client.target(propURI)
+                     .request(MediaType.APPLICATION_JSON)
+                     .get(JsonObject.class);
+    }
+    
+    public static JsonArray buildLinksForHost(String hostname, String invUri) {
+        
+        JsonArrayBuilder links = Json.createArrayBuilder(); 
+        
+        links.add(Json.createObjectBuilder()
+                      .add("href", StringUtils.appendIfMissing(invUri, "/") + hostname)
+                      .add("rel", "self"));
+        
+        if (!hostname.equals("*")) {
+            links.add(Json.createObjectBuilder()
+                 .add("href", InventoryUtil.buildUri(hostname).toString())
+                 .add("rel", "properties"));
+        }
+        
+        return links.build();
+    }
+    
+    public static boolean responseOk(String hostname) {
+        try {
+            URL target = new URL(buildUri(hostname).toString());
+            HttpURLConnection http = (HttpURLConnection) target.openConnection();
+            http.setConnectTimeout(50);
+            int response = http.getResponseCode();
+            return (response != 200) ? false : true;
+        } catch (Exception e) {
+            return false;
         }
     }
 
-    @Incoming("systemLoad")
-    public void getSystemLoadMessage(SystemLoad sl)  {
-        logger.info("Message received from system.load topic. " + sl.toString());
-        broadcastData("systemLoad", sl);
+    private static URI buildUri(String hostname) {
+        return UriBuilder.fromUri(SYSTEM_PROPERTIES)
+                .host(hostname)
+                .port(PORT)
+                .scheme(PROTOCOL)
+                .build();
+    }
+
+}
+```
+{: codeblock}
+
+
+
+The helper builds a link that points to the inventory entry with a **self** relationship. The helper also builds a link that points to the **system** service with a **properties** relationship:
+
+* http://localhost:9080/inventory/hosts/<hostname>
+* http://<hostname>:9080/system/properties
+
+<br/>
+### **Linking to inactive services or unavailable resources**
+
+Consider what happens when one of the return links does not work or when a link should be available
+for one object but not for another. In other words, it is important that a resource or service is
+available and running before it is added in the HATEOAS links array of the hostname.
+
+Although this guide does not cover this case, always make sure that you receive
+a good response code from a service before you link that service. Similarly, make sure that
+it makes sense for a particular object to access a resource it is linked to. For instance, it doesn't
+make sense for an account holder to be able to withdraw money from their account when their balance is 0.
+Hence, the account holder should not be linked to a resource that provides money withdrawal.
+
+# **Running the application**
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+After the server updates, you can find your new hypermedia-driven **inventory** service at the following URL:
+
+
+ http://localhost:9080/inventory/hosts
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/inventory/hosts
+```
+{: codeblock}
+
+
+
+
+
+# **Testing the hypermedia-driven RESTful web service**
+
+At the following URLs, access the **inventory** service that is now driven by hypermedia:
+
+
+ http://localhost:9080/inventory/hosts
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/inventory/hosts
+```
+{: codeblock}
+
+
+
+ http://localhost:9080/inventory/hosts/localhost
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/inventory/hosts/localhost
+```
+{: codeblock}
+
+
+
+If the servers are running, you can point your browser to each of the previous URLs to test the
+application manually. Nevertheless, you should rely on automated tests since they are more reliable
+and trigger a failure if a change introduces a defect.
+
+<br/>
+### **Setting up your tests**
+
+
+Create the **EndpointIT** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java
+
+
+
+
+```
+package it.io.openliberty.guides.hateoas;
+
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonValue;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
+
+import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
+
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestMethodOrder(OrderAnnotation.class)
+public class EndpointIT {
+    private String port;
+    private String baseUrl;
+    
+    private Client client;
+    
+    private final String SYSTEM_PROPERTIES = "system/properties";
+    private final String INVENTORY_HOSTS = "inventory/hosts";
+    
+    @BeforeEach
+    public void setup() {
+        port = System.getProperty("http.port");
+        baseUrl = "http://localhost:" + port + "/";
+        
+        client = ClientBuilder.newClient();
+        client.register(JsrJsonpProvider.class);
+    }
+    
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
+    
+    /**
+     * Checks if the HATEOAS link for the inventory contents (hostname=*) is as expected.
+     */
+    @Test
+    @Order(1)
+    public void testLinkForInventoryContents() {
+        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + baseUrl);
+        
+        JsonObject systems = response.readEntity(JsonObject.class);
+        
+        String expected, actual;
+        boolean isFound = false;
+
+
+        if (!systems.isNull("*")) {
+            isFound = true;
+            JsonArray links = systems.getJsonArray("*");
+
+            expected = baseUrl + INVENTORY_HOSTS + "/*";
+            actual = links.getJsonObject(0).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "self";
+            actual = links.getJsonObject(0).getString("rel");
+            assertEquals(expected, actual, "Incorrect rel");
+        }
+        
+
+        assertTrue(isFound, "Could not find system with hostname *");
+        
+        response.close();
+    }
+    
+    /**
+     * Checks that the HATEOAS links, with relationships 'self' and 'properties' for 
+     * a simple localhost system is as expected.
+     */
+    @Test
+    @Order(2)
+    public void testLinksForSystem() {
+        this.visitLocalhost();
+        
+        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + baseUrl);
+        
+        JsonObject systems = response.readEntity(JsonObject.class);
+
+        String expected, actual;
+        boolean isHostnameFound = false;
+
+        
+        if (!systems.isNull("localhost")) {
+            isHostnameFound = true;
+            JsonArray links = systems.getJsonArray("localhost");
+
+            expected = baseUrl + INVENTORY_HOSTS + "/localhost";
+            actual = links.getJsonObject(0).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "self";
+            actual = links.getJsonObject(0).getString("rel");
+            assertEquals(expected, actual, "Incorrect rel");
+
+            expected = baseUrl + SYSTEM_PROPERTIES;
+            actual = links.getJsonObject(1).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "properties";
+            actual = links.getJsonObject(1).getString("rel");
+
+            assertEquals(expected, actual, "Incorrect rel");
+        }
+        
+
+        assertTrue(isHostnameFound, "Could not find system with hostname *");
+        response.close();
+
+    }
+    
+    /**
+     * Returns a Response object for the specified URL.
+     */
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+     
+    /**
+     * Makes a GET request to localhost at the Inventory service.
+     */
+    private void visitLocalhost() {
+        Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + baseUrl);
+        response.close();
+        Response targetResponse = client.target(baseUrl + INVENTORY_HOSTS + "/localhost")
+                                        .request()
+                                        .get();
+        targetResponse.close();
     }
 }
 ```
 {: codeblock}
 
 
-<br/>
-### **Creating the SSE API endpoint**
-
-The **subscribeToSystem()** method allows
-clients to subscribe to events via an HTTP **GET** request to the **/bff/sse/**
-endpoint. The **`@Produces(MediaType.SERVER_SENT_EVENTS)`** annotation sets the **Content-Type** in the
-response header to **text/event-stream**. This content type indicates that client requests that are made
-to this endpoint are to receive Server-Sent Events. Additionally, the method
-parameters take in an instance of the **SseEventSink** class and
-the **Sse** class, both of which are injected using the **@Context**
-annotation. First, the method checks if the **sse** and
-**broadcaster** instance variables are assigned.
-If these variables aren't assigned, the
-**sse** variable is obtained from the **@Context** 
-injection and the **broadcaster** variable
-is obtained by using the **Sse.newBroadcaster()**
-method. Then, the **register()** method is called to
-register the **SseEventSink** instance to the
-**SseBroadcaster** instance to subscribe to events.
-
-For more information about these interfaces, see the Javadocs for
-[OutboundSseEvent](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.html&package=allclasses-frame.html)
-and
-[OutboundSseEvent.Builder](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.Builder.html&package=allclasses-frame.html).
+The **@BeforeEach** and **@AfterEach** annotations are placed on setup and teardown tasks that are run for each individual test.
 
 <br/>
-### **Reading from the reactive messaging channel**
+### **Writing the tests**
 
-The **getSystemLoadMessage()** method
-receives the message that contains the hostname and the average system load. The
-**@Incoming("systemLoad")** annotation indicates that
-the method retrieves the message by connecting to the **systemLoad** channel in
-Kafka, which you configure in the next section.
+Each test method must be marked with the **@Test** annotation. The execution order of test methods
+is controlled by marking them with the **@Order** annotation. The value that is passed into the annotation
+denotes the order in which the methods are run.
 
-Each time a message is received, the **getSystemLoadMessage()** 
-method is called, and the hostname and system
-load contained in that message are broadcasted in an event to all subscribers.
+The **testLinkForInventoryContents** test is responsible for asserting that
+the correct HATEOAS link is created for the inventory contents.
 
-<br/>
-### **Broadcasting events**
-
-Broadcasting events is handled in the **broadcastData()** method.
-First, it checks whether the **broadcaster** value is **null**.
-The **broadcaster** value must include at least one subscriber or there's no client to send the event to.
-If the **broadcaster** value is specified, the **OutboundSseEvent** interface is created 
-by using the **Sse.newEventBuilder()** method, 
-where the **name** of the event, the **data** it contains, and the
-**mediaType** are set. The **OutboundSseEvent** interface is then
-broadcasted, or sent to all registered sinks, by invoking the
-**SseBroadcaster.broadcast()** method.
-
-
-You just set up an endpoint in the **bff** service that the client in the
-**frontend** service can use to subscribe to events. You also enabled the
-service to read from the reactive messaging channel and broadcast the
-information as events to subscribers via SSE.
-
-
-# **Configuring the Kafka connector for the bff service**
-
-
-A complete **system** service is provided for you in the **start/system**
-directory. The **system** service is the producer of the messages that are
-published to the Kafka messaging system. The periodically
-published messages contain the system's hostname and a calculation of the
-average system load (its CPU usage) for the last minute.
-
-Configure the Kafka connector in the **bff** service to receive the messages from the **system** service.
-
-Create the microprofile-config.properties file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties
-
-
-
-
-```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
-
-mp.messaging.incoming.systemLoad.connector=liberty-kafka
-mp.messaging.incoming.systemLoad.topic=system.load
-mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
-mp.messaging.incoming.systemLoad.group.id=bff
-```
-{: codeblock}
-
-
-The **bff** service uses an incoming connector to receive messages through
-the **systemLoad** channel. The messages are
-then published by the **system** service to the **system.load** 
-topic in the Kafka message broker. The **key.deserializer** and
-**value.deserializer** properties define how to
-deserialize the messages. The **group.id** property
-defines a unique name for the consumer group. All of these properties are
-required by the [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs) documentation.
-
-
-
-# **Configuring the frontend service to subscribe to and consume events**
-
-
-In this section, you will configure the client in the **frontend** service to subscribe to events
-and display their contents in a table in the UI.
-
-The front-end UI is a table where each row contains the hostname and load of one of the three **system** services.
-The HTML and styling for the UI is provided for you but you must populate the table with
-information that is received from the Server-Sent Events.
-
-Create the index.js file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
-
-
-
-
-```
-function initSSE() {
-    var source = new EventSource('http://localhost:9084/bff/sse', { withCredentials: true });
-    source.addEventListener(
-        'systemLoad',
-        systemLoadHandler
-    );
-}
-
-function systemLoadHandler(event) {
-    var system = JSON.parse(event.data);
-    if (document.getElementById(system.hostname)) {
-        document.getElementById(system.hostname).cells[1].innerHTML =
-                                        system.loadAverage.toFixed(2);
-    } else {
-        var tableRow = document.createElement('tr');
-        tableRow.id = system.hostname;
-        tableRow.innerHTML = '<td>' + system.hostname + '</td><td>'
-                             + system.loadAverage.toFixed(2) + '</td>';
-        document.getElementById('sysPropertiesTableBody').appendChild(tableRow);
-    }
-}
-
-
-```
-{: codeblock}
-
+Finally, the **testLinksForSystem** test is responsible for asserting that the correct
+HATEOAS links are created for the **localhost** system. This method checks for both the **self** link that points
+to the **inventory** service and the **properties** link that points to the **system** service, which is running on the
+**localhost** system.
 
 <br/>
-### **Subscribing to SSE**
+### **Running the tests**
 
-The **initSSE()** method is called when the page first
-loads. This method subscribes the client to the SSE by creating a new instance of the
-**EventSource** interface and specifying the
-**http://localhost:9084/bff/sse** URL in the parameters. 
-To connect to the server, the **EventSource** interface
-makes a **GET** request to this endpoint with a request header of **Accept: text/event-stream**.
-
-In this IBM cloud environment, you need to update the **EventSource** URL with the **bff** service domain
-instead of **localhost**. Run the following command:
-```
-BFF_DOMAIN=${USERNAME}-9084.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
-sed -i 's=localhost:9084='"$BFF_DOMAIN"'=g' frontend/src/main/webapp/js/index.js
-```
-{: codeblock}
-
-Because this request comes from **localhost:9080** and is made to
-**localhost:9084**, it must follow the Cross-Origin Resource Sharing (CORS)
-specification to avoid being blocked by the browser. To enable CORS for the
-client, set the **withCredentials** configuration element to true in the
-parameters of the **EventSource** interface. CORS is
-already enabled for you in the **bff** service. To learn more about CORS, check out
-the [CORS guide](https://openliberty.io/guides/cors.html).
-
-
-<br/>
-### **Consuming the SSE**
-
-The **EventSource.addEventListener()** method is
-called to add an event listener. This event listener listens for events with
-the name of **systemLoad**. The
-**systemLoadHandler()** function is set as the
-handler function, and each time an event is received, this function is called.
-The **systemLoadHandler()** function will take the event
-object and parse the event's data property from a JSON string into a JavaScript
-object. The contents of this object are used to
-update the table with the system hostname and load. If a system is already present in the table, the load is
-updated, otherwise a new row is added for the system.
-
-
-# **Building and running the application**
-
-To build the application, navigate to the **start** directory and run the following Maven **install** and **package** goals from the command line:
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
+You will see the following output:
 
 ```
-cd /home/project/guide-reactive-messaging-sse/start
-mvn -pl models install
-mvn package
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.hateoas.EndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.951 s - in it.io.openliberty.guides.hateoas.EndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+
+Integration tests finished.
 ```
-{: codeblock}
 
-Run the following command to download or update to the latest
-Open Liberty Docker image:
-
-```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
-
-
-Run the following commands to containerize the **frontend**, **bff**, and **system** services:
-
-```
-docker build -t frontend:1.0-SNAPSHOT frontend/.
-docker build -t bff:1.0-SNAPSHOT bff/.
-docker build -t system:1.0-SNAPSHOT system/.
-```
-{: codeblock}
-
-
-Next, use the following **startContainers.sh** script to start the application in Docker containers:
-
-
-
-```
-./scripts/startContainers.sh
-```
-{: codeblock}
-
-
-This script creates a network for the containers to communicate with each other. It
-also creates containers for Kafka, Zookeeper, the **frontend** service, the **bff** service , and three
-instances of the **system** service.
-
-
-The application might take some time to get ready.
-Run the following command to confirm that the **bff** microservice is up and running:
-```
-curl -s http://localhost:9084/health | jq
-```
-{: codeblock}
-
-Once your application is up and running, use the following command to get the URL.
-Open your browser and check out your service by going to the URL that the command returns.
-```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
-```
-{: codeblock} 
-
-The latest version of most modern web browsers supports Server-Sent Events.
-The exception is Internet Explorer, which does not support SSE. 
-When you visit the URL, look for a table similar to the following example:
-
-![System table](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/master/assets/system_table.png)
-
-
-The table contains three rows, one for each of the running **system**
-containers. If you can see the loads updating, you know that your **bff** service
-is successfully receiving messages and broadcasting them as SSE to the client in the **frontend** service.
-
-
-# **Tearing down the environment**
-
-Run the following script to stop the application:
-
-
-```
-./scripts/stopContainers.sh
-```
-{: codeblock}
-
-
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
+where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 # **Summary**
 
 ## **Nice Work!**
 
-You developed an application that subscribes to Server-Sent Events by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
+You've just built and tested a hypermedia-driven RESTful web service on top of Open Liberty.
+
 
 
 
@@ -481,11 +744,11 @@ You developed an application that subscribes to Server-Sent Events by using Micr
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-reactive-messaging-sse** project by running the following commands:
+Delete the **guide-rest-hateoas** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-reactive-messaging-sse
+rm -fr guide-rest-hateoas
 ```
 {: codeblock}
 
@@ -494,7 +757,7 @@ rm -fr guide-reactive-messaging-sse
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Streaming%20updates%20to%20a%20client%20using%20Server-Sent%20Events&guide-id=cloud-hosted-guide-reactive-messaging-sse)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20hypermedia-driven%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-hateoas)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -502,26 +765,16 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-hateoas/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-hateoas/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Acknowledging messages using MicroProfile Reactive Messaging](https://openliberty.io/guides/microprofile-reactive-messaging-acknowledgment.html)
-* [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest-integration.html)
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
-
-**Learn more about MicroProfile**
-* [See the MicroProfile specs](https://microprofile.io/)
-* [View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
-* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html#_microprofile_reactive_messaging)
-* [View the JAX-RS Server-Sent Events API](https://openliberty.io/docs/ref/javaee/8/#package=javax/ws/rs/sse/package-frame.html&class=javax/ws/rs/sse/package-summary.html)
-* [View the Server-Sent Events HTML Specification](https://html.spec.whatwg.org/multipage/server-sent-events.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Creating a MicroProfile application](https://openliberty.io/guides/microprofile-intro.html)
 
 
 <br/>
