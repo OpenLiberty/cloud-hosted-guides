@@ -484,11 +484,12 @@ The Open Liberty server is already started, and the REST service is running. In 
 command-line session, build the front end by running the following command in the **start** directory:
 
 ```
+cd /home/project/guide-rest-client-angular/start
 mvn generate-resources
 ```
 {: codeblock}
 
-
+The build might take a few minutes to complete.
 You can rebuild the front end at any time with the **generate-resources** Maven goal. 
 Any local changes to your TypeScript or HTML are picked up when you build the front end.
 
