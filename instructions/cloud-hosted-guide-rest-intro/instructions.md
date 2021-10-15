@@ -111,6 +111,10 @@ mvn liberty:stop
 # **Creating a JAX-RS application**
 
 Navigate to the **start** directory to begin.
+```
+cd /home/project/guide-rest-intro/start
+```
+{: codeblock}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -267,10 +271,8 @@ Replace the server configuration file.
 The configuration does the following actions:
 
 * Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
-* Configures the server to resolve the HTTP port numbers from variables, which are then specified in
-the Maven **pom.xml** file. This is specified in the **httpEndpoint** element. Variables use the **${variableName}** syntax.
-* Configures the server to run the produced web application on a context root specified in the 
-**pom.xml** file. This is specified in the **webApplication** element.
+* Configures the server to resolve the HTTP port numbers from variables, which are then specified in the Maven **pom.xml** file. This is specified in the **httpEndpoint** element. Variables use the **${variableName}** syntax.
+* Configures the server to run the produced web application on a context root specified in the **pom.xml** file. This is specified in the **webApplication** element.
 
 
 The variables that are being used in the **server.xml** file are provided by the properties set in the Maven **pom.xml** file. The properties must be formatted as **liberty.var.variableName**.
@@ -395,7 +397,7 @@ for both JVMs is the same. You can write additional assertions to check for more
 <br/>
 ### **Running the tests**
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 You will see the following output:
 
