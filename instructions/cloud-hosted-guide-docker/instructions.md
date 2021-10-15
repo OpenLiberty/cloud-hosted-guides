@@ -105,6 +105,10 @@ are run. For example, you can start your image from scratch and run commands tha
 install Java, or you can start from an image that already contains a Java installation.
 
 Navigate to the **start** directory to begin.
+```
+cd /home/project/guide-docker/start
+```
+{: codeblock}
 
 Create the **Dockerfile**.
 
@@ -364,7 +368,7 @@ the response is correct.
 <br/>
 ### **Running the tests**
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 You will see the following output:
 
