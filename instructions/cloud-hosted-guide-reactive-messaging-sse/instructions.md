@@ -389,11 +389,11 @@ updated, otherwise a new row is added for the system.
 To build the application, navigate to the **start** directory and run the following Maven **install** and **package** goals from the command line:
 
 ```
+cd /home/project/guide-reactive-messaging-sse/start
 mvn -pl models install
 mvn package
 ```
 {: codeblock}
-
 
 Run the following command to download or update to the latest
 Open Liberty Docker image:
