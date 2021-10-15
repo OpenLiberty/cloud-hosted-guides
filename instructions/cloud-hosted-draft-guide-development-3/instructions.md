@@ -96,7 +96,7 @@ The defaultServer server is ready to run a smarter planet.
 
 
 Select **Launch Application** from the menu of the IDE, 
-type in **9080** to specify the port number for the microservice, and click the **OK** button. 
+type **9080** to specify the port number for the microservice, and click the **OK** button. 
 You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, 
 where **accountname** is your account name. You will see the following output:
 
@@ -128,6 +128,11 @@ Before you begin the implementation, start the provided REST service so that
 the artist JSON is available to you.
 
 Navigate to the **start** directory to begin.
+
+```
+cd /home/project/guide-rest-client-angular/start
+```
+{: codeblock}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -489,7 +494,7 @@ Any local changes to your TypeScript or HTML are picked up when you build the fr
 
 
 Select **Launch Application** from the menu of the IDE, 
-type in **9080** to specify the port number for the microservice, and click the **OK** button. 
+type **9080** to specify the port number for the microservice, and click the **OK** button. 
 You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, 
 where **accountname** is your account name. You will see the following output:
 
@@ -514,7 +519,7 @@ No explicit code directly uses the consumed artist JSON, so you don't need to wr
 any test cases.
 
 
-Whenever you change and build your Angular implementation the changes will be reflected automatically
+Whenever you change and build your Angular implementation, the changes are automatically reflected
 at the URL for the launched application.
 
 When you are done checking the application root, exit development mode by
