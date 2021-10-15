@@ -1,7 +1,7 @@
 
-# **Welcome to the Using Docker containers to develop microservices guide!**
+# **Welcome to the Creating reactive Java microservices guide!**
 
-Learn how to use Docker containers for iterative development.
+Learn how to write reactive Java microservices using MicroProfile Reactive Messaging.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,62 +11,24 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
-
 # **What you'll learn**
 
-You will learn how to set up, run, and iteratively develop a simple REST application in a container with Open Liberty and Docker.
-
-Open Liberty is an application server designed for the cloud.
-It’s small, lightweight, and designed with modern cloud-native application development in mind.
-Open Liberty simplifies the development process for these applications by automating 
-the repetitive actions associated with running applications inside containers,
-like rebuilding the image and stopping and starting the container. 
-
-You'll also learn how to create and run automated tests for your application and container.
-
-The implementation of the REST application can be found in the
-**start/src** directory. To learn more about this application and how to build it, check out the
-[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
+You will learn how to build reactive microservices that can send requests to other microservices, and asynchronously receive and process the responses. You will use an external messaging system to handle the asynchronous messages that are sent and received between the microservices as streams of events. MicroProfile Reactive Messaging makes it easy to write and configure your application to send, receive, and process the events efficiently.
 
 <br/>
-### **What is Docker?**
+### **Asynchronous messaging between microservices**
 
-Docker is a tool that you can use to deploy and run applications with containers. You
-can think of Docker like a virtual machine that runs various applications. However, unlike a typical virtual
-machine, you can run these applications simultaneously on a single system and independent of
-one another.
-
-Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
+Asynchronous communication between microservices can be used to build reactive and responsive applications. By decoupling the requests sent by a microservice from the responses that it receives, the microservice is not blocked from performing other tasks while waiting for the requested data to become available. Imagine asynchronous communication as a restaurant. A waiter might come to your table and take your order. While you are waiting for your food to be prepared, that waiter serves other tables and takes their orders too. When your food is ready, the waiter brings your food to the table and then continues to serve the other tables. If the waiter were to operate synchronously, they must take your order and then wait until they deliver your food before serving any other tables. In microservices, a request call from a REST client to another microservice can be time-consuming because the network might be slow, or the other service might be overwhelmed with requests and can’t respond quickly. But in an asynchronous system, the microservice sends a request to another microservice and continues to send other calls and to receive and process other responses until it receives a response to the original request.
 
 <br/>
-### **What is a container?**
+### **What is MicroProfile Reactive Messaging?**
 
-A container is a lightweight, stand-alone package that contains a piece of software that is bundled together
-with the entire environment that it needs to run. Containers are small compared to regular images and can
-run on any environment where Docker is set up. Moreover, you can run multiple containers on a single
-machine at the same time in isolation from each other.
+MicroProfile Reactive Messaging provides an easy way to asynchronously send, receive, and process messages that are received as continuous streams of events. You simply annotate application beans' methods and Open Liberty converts the annotated methods to reactive streams-compatible publishers, subscribers, and processors and connects them up to each other. MicroProfile Reactive Messaging provides a Connector API so that your methods can be connected to external messaging systems that produce and consume the streams of events, such as [Apache Kafka](https://kafka.apache.org/).
 
-Learn more about containers on the [official Docker website](https://www.docker.com/what-container).
+The application in this guide consists of two microservices, **system** and **inventory**. Every 15 seconds, the **system** microservice calculates and publishes an event that contains its current average system load. The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. The current inventory of systems can be accessed via the **/systems** REST endpoint. You'll create the **system** and **inventory** microservices using MicroProfile Reactive Messaging.
 
-<br/>
-### **Why use a container to develop?**
+![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory.png)
 
-Consider a scenario where you need to deploy your application on another environment. Your application
-works on your local machine, but when you try to run it on your cloud production environment, it breaks.
-You do some debugging and discover that you built your application with Java 8,
-but this cloud production environment has only Java 11 installed.
-Although this issue is generally easy to fix, 
-you don't want your application to be missing dozens of version-specific dependencies.
-You can develop your application in this cloud environment, but that 
-requires you to rebuild and repackage your application every time you update your code and wish to test it.
-
-To avoid this kind of problem, you can instead choose to develop your application in a container locally,
-bundled together with the entire environment that it needs to run.
-By doing this, you know that at any point in your iterative development process,
-the application can run inside that container.
-This helps avoid any unpleasant surprises when you go to test or deploy your application down the road.
-Containers run quickly and do not have a major impact on the speed of your iterative development.
 
 # **Getting started**
 
@@ -80,11 +42,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-docker.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-docker.git
-cd guide-docker
+git clone https://github.com/openliberty/guide-microprofile-reactive-messaging.git
+cd guide-microprofile-reactive-messaging
 ```
 {: codeblock}
 
@@ -93,339 +55,588 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+# **Creating the producer in the system microservice**
 
-# **Creating the Dockerfile**
-
-
-
-The first step to running your application inside of a Docker container is creating a Dockerfile.
-A Dockerfile is a collection of instructions for building a Docker image that can then be run as a
-container. Every Dockerfile begins with a parent or base image on top of which various commands
-are run. For example, you can start your image from scratch and run commands that download and
-install Java, or you can start from an image that already contains a Java installation.
-
-Navigate to the **start** directory to begin.
+Navigate to the **start** directory to begin. 
 ```
-cd /home/project/guide-docker/start
+cd /home/project/guide-microprofile-reactive-messaging/start
 ```
 {: codeblock}
 
-Create the **Dockerfile**.
+The **system** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of events. Every 15 seconds, the **system** microservice publishes an event that contains its calculation of the average system load (its CPU usage) for the last minute.
+
+Create the **SystemService** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-docker/start/Dockerfile
+touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-docker/start/Dockerfile
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 
 
 
 
 ```
-FROM openliberty/open-liberty:full-java11-openj9-ubi
+package io.openliberty.guides.system;
 
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
 
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="IBM" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-docker" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="system" \
-  version="$VERSION-$REVISION" \
-  summary="The system microservice from the Docker Guide" \
-  description="This image contains the system microservice running with the Open Liberty runtime."
+import javax.enterprise.context.ApplicationScoped;
 
-USER root
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import org.reactivestreams.Publisher;
 
-COPY --chown=1001:0 src/main/liberty/config/server.xml /config/
-COPY --chown=1001:0 target/*.war /config/apps/
-USER 1001
-```
-{: codeblock}
+import io.openliberty.guides.models.SystemLoad;
+import io.reactivex.rxjava3.core.Flowable;
 
+@ApplicationScoped
+public class SystemService {
 
-The **FROM** instruction initializes a new build stage
-and indicates the parent image from which your image is built.
-If you don't need a parent image, then use **FROM scratch**, which makes your image a base image. 
+    private static final OperatingSystemMXBean osMean = 
+            ManagementFactory.getOperatingSystemMXBean();
+    private static String hostname = null;
 
-In this case, you’re using the **openliberty/open-liberty:full-java11-openj9-ubi** image as your parent image, 
-which comes with the latest Open Liberty runtime.
-
-The **COPY** instructions are structured as **COPY** 
-**`[--chown=<user>:<group>]`** **`<source>`** **`<destination>`**. 
-They copy local files into the specified destination within your Docker image.
-In this case, the server configuration file that is located at **src/main/liberty/config/server.xml** 
-is copied to the **/config/** destination directory.
-
-<br/>
-### **Writing a .dockerignore file**
-
-When Docker runs a build, it sends all of the files and directories that are
-located in the same directory as the Dockerfile to its build context, making
-them available for use in instructions like **ADD** and **COPY**. If there are files
-or directories you wish to exclude from the build context, you can add them
-to a **.dockerignore** file. By adding files that aren't nessecary for building your
-image to the **.dockerignore** file, you can decrease the image's size and speed
-up the building process. You may also want to exclude files that contain
-sensitive information, such as a **.git** folder or private keys, from the build context. 
-
-A **.dockerignore** file is available to you in the **start** directory. This file includes 
-the **pom.xml** file and some system files.
-
-
-# **Launching Open Liberty in dev mode**
-
-The Open Liberty Maven plug-in includes a **devc** goal that builds a Docker image, mounts the required directories,
-binds the required ports, and then runs the application inside of a container.
-This development mode, known as dev mode, also listens for any changes in the application source code or
-configuration and rebuilds the image and restarts the container as necessary.
-
-Build and run the container by running the **devc** goal from the **start** directory:
-
-```
-mvn liberty:devc
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Open another command-line session and run the following command to make sure that your
-container is running and didn’t crash:
-
-```
-docker ps 
-```
-{: codeblock}
-
-
-You should see something similar to the following output:
-
-```
-CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS              PORTS                                                                    NAMES
-ee2daf0b33e1        guide-docker-dev-mode   "/opt/ol/helpers/run…"   2 minutes ago       Up 2 minutes        0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
-```
-
-
-To view a full list of all available containers, you can run the **docker ps -a** command.
-
-
-If your container runs without problems, run the following **curl** command to get a JSON response
-that contains the system properties of the JVM in your container.
-
-```
-curl -s http://localhost:9080/system/properties | jq
-```
-{: codeblock}
-
-
-# **Updating the application while the container is running**
-
-
-With your container running, make the following update to the source code:
-
-Update the **PropertiesResource** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
-
-
-
-
-```
-package io.openliberty.guides.rest;
-
-import javax.ws.rs.Path;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.GET;
-import javax.ws.rs.Produces;
-
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.Json;
-
-@Path("properties-new")
-public class PropertiesResource {
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject getProperties() {
-
-        JsonObjectBuilder builder = Json.createObjectBuilder();
-
-        System.getProperties()
-              .entrySet()
-              .stream()
-              .forEach(entry -> builder.add((String)entry.getKey(),
-                                            (String)entry.getValue()));
-
-       return builder.build();
+    private static String getHostname() {
+        if (hostname == null) {
+            try {
+                return InetAddress.getLocalHost().getHostName();
+            } catch (UnknownHostException e) {
+                return System.getenv("HOSTNAME");
+            }
+        }
+        return hostname;
     }
+
+    @Outgoing("systemLoad")
+    public Publisher<SystemLoad> sendSystemLoad() {
+        return Flowable.interval(15, TimeUnit.SECONDS)
+                .map((interval -> new SystemLoad(getHostname(),
+                        new Double(osMean.getSystemLoadAverage()))));
+    }
+
 }
 ```
 {: codeblock}
 
 
-Change the endpoint of your application from **properties** to **properties-new** by changing the **@Path**
-annotation to **"properties-new"**.
 
 
-After you make the file changes, Open Liberty automatically updates the application.
-To see the changes reflected in the application, run the following command in a terminal:
+The **SystemService** class contains a **Publisher** method that is called **sendSystemLoad()**, which calculates and returns the average system load. The **@Outgoing** annotation on the **sendSystemLoad()** method indicates that the method publishes its calculation as a message on a topic in the Kafka messaging system. The **Flowable.interval()** method from **rxJava** is used to set the frequency of how often the system service publishes the calculation to the event stream.
 
-```
-curl -s http://localhost:9080/system/properties-new | jq
-```
-{: codeblock}
+The messages are transported between the service and the Kafka messaging system through a channel called **systemLoad**. The name of the channel to use is set in the **@Outgoing("systemLoad")** annotation. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are published on a topic called **system.load**, as shown in the following diagram:
+
+![Reactive system publisher](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-publisher.png)
 
 
-# **Testing the container**
+# **Creating the consumer in the inventory microservice**
 
+The **inventory** microservice records in its inventory the average system load information that it received from potentially multiple instances of the **system** service.
 
-
-You can test this service manually by starting a server and going to the 
-**http://localhost:9080/system/properties-new** URL.
-However, automated tests are a much better approach because they trigger a failure if a change introduces a bug.
-JUnit and the JAX-RS Client API provide a simple environment to test the application. 
-You can write tests for the individual units of code outside of a running application server,
-or you can write them to call the application server directly.
-In this example, you will create a test that calls the application server directly.
-
-Create the **EndpointIT** class.
+Create the **InventoryResource** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
 
 ```
-package it.io.openliberty.guides.rest;
+package io.openliberty.guides.inventory;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.Test;
-
-import javax.json.JsonObject;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 
-public class EndpointIT {
+import io.openliberty.guides.models.SystemLoad;
 
-    @Test
-    public void testGetProperties() {
-        String port = System.getProperty("liberty.test.port");
-        String url = "http://localhost:" + port + "/";
+@ApplicationScoped
+@Path("/inventory")
+public class InventoryResource {
 
-        Client client = ClientBuilder.newClient();
-        client.register(JsrJsonpProvider.class);
+    private static Logger logger = Logger.getLogger(InventoryResource.class.getName());
 
-        WebTarget target = client.target(url + "system/properties-new");
-        Response response = target.request().get();
-        JsonObject obj = response.readEntity(JsonObject.class);
+    @Inject
+    private InventoryManager manager;
+    
+    @GET
+    @Path("/systems")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSystems() {
+        List<Properties> systems = manager.getSystems()
+                .values()
+                .stream()
+                .collect(Collectors.toList());
+        return Response
+                .status(Response.Status.OK)
+                .entity(systems)
+                .build();
+    }
 
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    @GET
+    @Path("/systems/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSystem(@PathParam("hostname") String hostname) {
+        Optional<Properties> system = manager.getSystem(hostname);
+        if (system.isPresent()) {
+            return Response
+                    .status(Response.Status.OK)
+                    .entity(system)
+                    .build();
+        }
+        return Response
+                .status(Response.Status.NOT_FOUND)
+                .entity("hostname does not exist.")
+                .build();
+    }
 
-        assertEquals("/opt/ol/wlp/output/defaultServer/",
-                     obj.getString("server.output.dir"),
-                     "The system property for the server output directory should match "
-                     + "the Open Liberty container image.");
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response resetSystems() {
+        manager.resetSystems();
+        return Response
+                .status(Response.Status.OK)
+                .build();
+    }
 
-        response.close();
+    @Incoming("systemLoad")
+    public void updateStatus(SystemLoad sl)  {
+        String hostname = sl.hostname;
+        if (manager.getSystem(hostname).isPresent()) {
+            manager.updateCpuStatus(hostname, sl.loadAverage);
+            logger.info("Host " + hostname + " was updated: " + sl);
+        } else {
+            manager.addSystem(hostname, sl.loadAverage);
+            logger.info("Host " + hostname + " was added: " + sl);
+        }
     }
 }
 ```
 {: codeblock}
 
 
-This test makes a request to the **/system/properties-new** endpoint and checks to
-make sure that the response has a valid status code, and that the information in
-the response is correct. 
 
-<br/>
-### **Running the tests**
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
+The **inventory** microservice receives the message from the **system** microservice over the **@Incoming("systemLoad")** channel. The properties of this channel are defined in the **microprofile-config.properties** file. The **inventory** microservice is also a RESTful service that is served at the **/inventory** endpoint.
 
-You will see the following output:
+The **InventoryResource** class contains a method called **updateStatus()**, which receives the message that contains the average system load and updates its existing inventory of systems and their average system load. The **@Incoming("systemLoad")** annotation on the **updateStatus()** method indicates that the method retrieves the average system load information by connecting to the channel called **systemLoad**. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are retrieved from a topic called **system.load**, as shown in the following diagram:
+
+![Reactive system inventory detail](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-detail.png)
+
+
+# **Configuring the MicroProfile Reactive Messaging connectors for Kafka**
+
+The **system** and **inventory** services exchange messages with the external messaging system through a channel. The MicroProfile Reactive Messaging Connector API makes it easy to connect each service to the channel. You just need to add configuration keys in a properties file for each of the services. These configuration keys define properties such as the name of the channel and the topic in the Kafka messaging system. Open Liberty includes the **liberty-kafka** connector for sending and receiving messages from Apache Kafka.
+
+The system and inventory microservices each have a MicroProfile Config properties file to define the properties of their outgoing and incoming streams.
+
+Create the system/microprofile-config.properties file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
+
+
+
 
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.rest.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
+mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
 
-Results :
-
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+mp.messaging.outgoing.systemLoad.connector=liberty-kafka
+mp.messaging.outgoing.systemLoad.topic=system.load
+mp.messaging.outgoing.systemLoad.key.serializer=org.apache.kafka.common.serialization.StringSerializer
+mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.SystemLoad$SystemLoadSerializer
 ```
-
-When you are finished, press **CTRL+C** in the session that the dev mode was
-started from to stop and remove the container.
+{: codeblock}
 
 
-# **Starting dev mode with run options**
 
-Another useful feature of dev mode with a container is the ability to pass additional options
-to the **docker run** command. You can do this by adding the **dockerRunOpts** tag to the **pom.xml** file under 
-the **configuration** tag of the Liberty Maven Plugin. Here is an example of an environment variable 
-being passed in:
 
+The **mp.messaging.connector.liberty-kafka.bootstrap.servers** property configures the hostname and port for connecting to the Kafka server. The **system** microservice uses an outgoing connector to send messages through the **systemLoad** channel to the **system.load** topic in the Kafka message broker so that the **inventory** microservices can consume the messages. The **key.serializer** and **value.serializer** properties characterize how to serialize the messages. The **SystemLoadSerializer** class implements the logic for turning a **SystemLoad** object into JSON and is configured as the **value.serializer**.
+
+The **inventory** microservice uses a similar **microprofile-config.properties** configuration to define its required incoming stream.
+
+Create the inventory/microprofile-config.properties file.
+
+> Run the following touch command in your terminal
 ```
-<groupId>io.openliberty.tools</groupId>
-<artifactId>liberty-maven-plugin</artifactId>
-<version>3.3.4</version>
-<configuration>
-    <dockerRunOpts>-e ENV_VAR=exampleValue</dockerRunOpts>
-</configuration>
+touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
 ```
+{: codeblock}
 
-If the Dockerfile isn't located in the directory that the **devc** goal is being
-run from, you can add the **dockerfile** tag to specify the location. Using this
-parameter sets the context for building the Docker image to the directory that
-contains this file.
 
-Additionally, both of these options can be passed from the command line when running the **devc** goal by
-adding `-D` as such:
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
+
+
+
 
 ```
-mvn liberty:devc \
--DdockerRunOpts="-e ENV_VAR=exampleValue" \
--Ddockerfile="./path/to/file"
+mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
+
+mp.messaging.incoming.systemLoad.connector=liberty-kafka
+mp.messaging.incoming.systemLoad.topic=system.load
+mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
+mp.messaging.incoming.systemLoad.group.id=system-load-status
+```
+{: codeblock}
+
+
+The **inventory** microservice uses an incoming connector to receive messages through the **systemLoad** channel. The messages were published by the **system** microservice to the **system.load** topic in the Kafka message broker. The **key.deserializer** and **value.deserializer** properties define how to deserialize the messages. The **SystemLoadDeserializer** class implements the logic for turning JSON into a **SystemLoad** object and is configured as the **value.deserializer**. The **group.id** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) and [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs).
+
+# **Configuring the server**
+
+To run the services, the Open Liberty server on which each service runs needs to be correctly configured. Relevant features, including the [MicroProfile Reactive Messaging feature](https://openliberty.io/docs/ref/feature/#mpReactiveMessaging-1.0.html), must be enabled for the **system** and **inventory** services.
+
+Create the system/server.xml configuration file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
+
+
+
+
+```
+<server description="System Service">
+
+  <featureManager>
+    <feature>cdi-2.0</feature>
+    <feature>concurrent-1.0</feature>
+    <feature>jsonb-1.0</feature>
+    <feature>mpHealth-2.2</feature>
+    <feature>mpConfig-1.4</feature>
+    <feature>mpReactiveMessaging-1.0</feature>
+  </featureManager>
+
+  <variable name="default.http.port" defaultValue="9083"/>
+  <variable name="default.https.port" defaultValue="9446"/>
+
+  <httpEndpoint host="*" httpPort="${default.http.port}"
+      httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+
+  <webApplication location="system.war" contextRoot="/"/>
+</server>
+```
+{: codeblock}
+
+
+
+
+The **server.xml** file is already configured for the **inventory** microservice.
+
+# **Building and running the application**
+
+Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
+
+Create the Maven configuration file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/pom.xml
+
+
+
+
+```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>system</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <liberty.var.default.http.port>9083</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9446</liberty.var.default.https.port>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>8.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>3.3</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile.reactive.messaging</groupId>
+            <artifactId>microprofile-reactive-messaging-api</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Required dependencies -->
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>models</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>2.8.0</version>
+        </dependency>
+        <!-- tag::rxjava[] -->
+        <dependency>
+            <groupId>io.reactivex.rxjava3</groupId>
+            <artifactId>rxjava</artifactId>
+            <version>3.0.12</version>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.microshed</groupId>
+            <artifactId>microshed-testing-liberty</artifactId>
+            <version>0.9.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>kafka</artifactId>
+            <version>1.15.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.7.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <packagingExcludes>pom.xml</packagingExcludes>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.3.4</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.2</version>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <trimStackTrace>false</trimStackTrace>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+{: codeblock}
+
+
+
+The **pom.xml** file lists the **microprofile-reactive-messaging-api**, **kafka-clients**, and **rxjava** dependencies.
+
+The **microprofile-reactive-messaging-api** dependency is needed to enable the use of MicroProfile Reactive Messaging API. The **kafka-clients** dependency is added because the application needs a Kafka client to connect to the Kafka broker. The **rxjava** dependency is used for creating events at regular intervals.
+
+Start your Docker environment. Dockerfiles are provided for you to use.
+
+To build the application, run the Maven **install** and **package** goals from the command line in the **start** directory:
+
+```
+mvn -pl models install
+mvn package
+```
+{: codeblock}
+
+
+Run the following command to download or update to the latest Open Liberty Docker image:
+
+```
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
+```
+{: codeblock}
+
+
+Run the following commands to containerize the microservices:
+
+```
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+{: codeblock}
+
+
+Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the project. For simplicity, the script starts one instance of the system service.
+
+
+```
+./scripts/startContainers.sh
+```
+{: codeblock}
+
+
+
+# **Testing the application**
+
+The application might take some time to become available. After the application is up and running, you can access it by making a GET request to the **/systems** endpoint of the **inventory** service. 
+
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+
+Visit the http://localhost:9085/health URL to confirm that the **inventory** microservice is up and running.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl -s http://localhost:9085/health | jq
+```
+{: codeblock}
+
+
+
+
+When both the liveness and readiness health checks are up, go to the http://localhost:9085/inventory/systems URL to access the **inventory** microservice.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl -s http://localhost:9085/inventory/systems | jq
+```
+{: codeblock}
+
+
+You see the CPU **systemLoad** property for all the systems:
+
+```
+{
+   "hostname":"30bec2b63a96",
+   "systemLoad":2.25927734375
+}
 ```
 
-To learn more about dev mode with a container and its different features, 
-check out the [Documentation](http://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode).
+
+You can revisit the http://localhost:9085/inventory/systems URL after a while, and you will notice the CPU **systemLoad** property for the systems changed.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl -s http://localhost:9085/inventory/systems | jq
+```
+{: codeblock}
+
+
+
+You can use the **http://localhost:9085/inventory/systems/{hostname}** URL to see the CPU **systemLoad** property for one particular system.
+
+In the following example, the **30bec2b63a96** value is the **hostname**. If you go to the **http://localhost:9085/inventory/systems/30bec2b63a96** URL, you can see the CPU **systemLoad** property only for the **30bec2b63a96** **hostname**:
+
+```
+{
+   "hostname":"30bec2b63a96",
+   "systemLoad":2.25927734375
+}
+```
+
+# **Tearing down the environment**
+
+Run the following script to stop the application:
+
+
+```
+./scripts/stopContainers.sh
+```
+{: codeblock}
+
+
 
 # **Summary**
 
 ## **Nice Work!**
 
-You just iteratively developed a simple REST application in a container with Open Liberty and Docker.
+You just developed a reactive Java application using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
 
 
@@ -435,11 +646,11 @@ You just iteratively developed a simple REST application in a container with Ope
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-docker** project by running the following commands:
+Delete the **guide-microprofile-reactive-messaging** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-docker
+rm -fr guide-microprofile-reactive-messaging
 ```
 {: codeblock}
 
@@ -448,7 +659,7 @@ rm -fr guide-docker
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Using%20Docker%20containers%20to%20develop%20microservices&guide-id=cloud-hosted-guide-docker)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20reactive%20Java%20microservices&guide-id=cloud-hosted-guide-microprofile-reactive-messaging)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -456,16 +667,15 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-docker/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-docker/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
 
 
 <br/>
