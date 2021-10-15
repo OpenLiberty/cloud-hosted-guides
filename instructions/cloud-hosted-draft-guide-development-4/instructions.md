@@ -1,7 +1,7 @@
 
-# **Welcome to the Building a web application with Maven guide!**
+# **Welcome to the Using Docker containers to develop microservices guide!**
 
-Learn how to build and test a simple web application using Maven and Open Liberty.
+Learn how to use Docker containers for iterative development.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -12,58 +12,61 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 # **What you'll learn**
 
-You will learn how to configure a simple web servlet application using Maven and the Liberty 
-Maven plugin. When you compile and build the application code, Maven downloads and installs 
-Open Liberty. If you run the application, Maven creates an Open Liberty server and runs 
-the application on it. The application displays a simple web page with a link that, when 
-clicked, calls the servlet to return a simple response of **Hello! How are you today?**.
+You will learn how to set up, run, and iteratively develop a simple REST application in a container with Open Liberty and Docker.
 
-One benefit of using a build tool like Maven is that you can define the details of the project and any dependencies it has, and Maven automatically downloads and installs the dependencies. 
-Another benefit of using Maven is that it can run repeatable, automated tests on the application. 
-You can, of course, test your application manually by starting a server and pointing a web browser at the application URL.
-However, automated tests are a much better approach because you can easily rerun the same tests each time the application is built. 
-If the tests don't pass after you change the application, the build fails, and you know that you introduced a regression that requires a fix to your code. 
+Open Liberty is an application server designed for the cloud.
+It’s small, lightweight, and designed with modern cloud-native application development in mind.
+Open Liberty simplifies the development process for these applications by automating 
+the repetitive actions associated with running applications inside containers,
+like rebuilding the image and stopping and starting the container. 
 
-Choosing a build tool often comes down to personal or organizational preference, but you might choose to use Maven for several reasons. 
-Maven defines its builds by using XML, which is probably familiar to you already. 
-As a mature, commonly used build tool, Maven probably integrates with whichever IDE you prefer to use. 
-Maven also has an extensive plug-in library that offers various ways to quickly customize your build. 
-Maven can be a good choice if your team is already familiar with it. 
+You'll also learn how to create and run automated tests for your application and container.
 
-You will create a Maven build definition file that's called a **pom.xml** file, which stands for 
-Project Object Model, and use it to build your web application. You will then create a simple, 
-automated test and configure Maven to automatically run the test.
+The implementation of the REST application can be found in the
+**start/src** directory. To learn more about this application and how to build it, check out the
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
 
+<br/>
+### **What is Docker?**
 
-# **Installing Maven**
+Docker is a tool that you can use to deploy and run applications with containers. You
+can think of Docker like a virtual machine that runs various applications. However, unlike a typical virtual
+machine, you can run these applications simultaneously on a single system and independent of
+one another.
 
-If Maven isn't already installed, [download the binary zip or tar.gz file](https://maven.apache.org/download.cgi).
-Then, follow the [installation instructions for your operating system](https://maven.apache.org/install.html)
-to extract the **.zip** file and add the **bin** directory, which contains the **mvn** command 
-to the **PATH** on your computer.
+Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
 
-Run the following command to test that Maven is installed:
+<br/>
+### **What is a container?**
 
-```
-mvn -v
-```
-{: codeblock}
+A container is a lightweight, stand-alone package that contains a piece of software that is bundled together
+with the entire environment that it needs to run. Containers are small compared to regular images and can
+run on any environment where Docker is set up. Moreover, you can run multiple containers on a single
+machine at the same time in isolation from each other.
 
+Learn more about containers on the [official Docker website](https://www.docker.com/what-container).
 
+<br/>
+### **Why use a container to develop?**
 
-If Maven is installed properly, you see information about the Maven installation 
-similar to the following example:
+Consider a scenario where you need to deploy your application on another environment. Your application
+works on your local machine, but when you try to run it on your cloud production environment, it breaks.
+You do some debugging and discover that you built your application with Java 8,
+but this cloud production environment has only Java 11 installed.
+Although this issue is generally easy to fix, 
+you don't want your application to be missing dozens of version-specific dependencies.
+You can develop your application in this cloud environment, but that 
+requires you to rebuild and repackage your application every time you update your code and wish to test it.
 
-```
-Apache Maven 3.5.0 (ff8f5e7444045639af65f6095c62210b5713f426; 2017-04-03T20:39:06+01:00)
-Maven home: /Applications/Maven/apache-maven-3.5.0
-Java version: 1.8.0_131, vendor: Oracle Corporation
-Java home: /Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre
-Default locale: en_GB, platform encoding: UTF-8
-OS name: "mac os x", version: "10.12.6", arch: "x86_64", family: "mac"
-```
+To avoid this kind of problem, you can instead choose to develop your application in a container locally,
+bundled together with the entire environment that it needs to run.
+By doing this, you know that at any point in your iterative development process,
+the application can run inside that container.
+This helps avoid any unpleasant surprises when you go to test or deploy your application down the road.
+Containers run quickly and do not have a major impact on the speed of your iterative development.
 
 # **Getting started**
 
@@ -77,11 +80,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-docker.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-maven-intro.git
-cd guide-maven-intro
+git clone https://github.com/openliberty/guide-docker.git
+cd guide-docker
 ```
 {: codeblock}
 
@@ -91,414 +94,338 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-<br/>
-### **Try what you'll build**
-
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the **finish** directory and run Maven with the
-**liberty:run** goal to build the application and deploy it to Open Liberty:
-
-```
-cd finish
-mvn liberty:run
-```
-{: codeblock}
-
-
-After you see the following message, your application server is ready.
-
-```
-The guideServer server is ready to run a smarter planet.
-```
-
-
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
-Run the following command to get the URL to access the application.
-The servlet returns a simple response of `Hello! How are you today?`.
-```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/ServletSample/servlet
-```
-{: codeblock}
-
-
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
-
-```
-mvn liberty:stop
-```
-{: codeblock}
+# **Creating the Dockerfile**
 
 
 
-# **Creating a simple application**
+The first step to running your application inside of a Docker container is creating a Dockerfile.
+A Dockerfile is a collection of instructions for building a Docker image that can then be run as a
+container. Every Dockerfile begins with a parent or base image on top of which various commands
+are run. For example, you can start your image from scratch and run commands that download and
+install Java, or you can start from an image that already contains a Java installation.
 
-The simple web application that you will build using Maven and Open Liberty is provided for you in the **start** directory so that you can focus on learning about Maven. 
-This application uses a standard Maven directory structure, eliminating the need to customize the **pom.xml** file so that Maven understands your project layout.
-
-All the application source code, including the Open Liberty server configuration 
-(**server.xml**), is in the **src/main/liberty/config** directory:
-
-```
-    └── src
-        └── main
-           └── java
-           └── resources
-           └── webapp
-           └── liberty
-                  └── config
-```
-
-
-# **Creating the project POM file**
 Navigate to the **start** directory to begin.
+```
+cd /home/project/guide-docker/start
+```
+{: codeblock}
 
-Before you can build the project, define the Maven Project Object Model (POM) file, the **pom.xml**. 
-
-Create the pom.xml file.
+Create the **Dockerfile**.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-maven-intro/start/pom.xml
+touch /home/project/guide-docker/start/Dockerfile
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-maven-intro/start/pom.xml
+> Then from the menu of the IDE, select **File** > **Open** > guide-docker/start/Dockerfile
 
 
 
 
 ```
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <!-- tag::modelVersion[] -->
-    <modelVersion>4.0.0</modelVersion>
+FROM openliberty/open-liberty:full-java11-openj9-ubi
 
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>ServletSample</artifactId>
-    <!-- tag::packaging[] -->
-    <packaging>war</packaging>
-    <version>1.0-SNAPSHOT</version>
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- tag::java-version[] -->
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-        <liberty.var.app.context.root>${project.artifactId}</liberty.var.app.context.root>
-    </properties>
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="IBM" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-docker" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Docker Guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
 
-    <dependencies>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>8.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>4.0.1</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <!-- tag::commons-httpclient[] -->
-        <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-            <version>3.1</version>
-            <scope>test</scope>
-        </dependency>
-        <!-- tag::junit[] -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.7.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+USER root
 
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.1</version>
-            </plugin>
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.3.4</version>
-                <configuration>
-                    <serverName>guideServer</serverName>
-                </configuration>
-            </plugin>
-            <!-- tag::maven-failsafe-plugin[] -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
-                        <!-- tag::war-name[] -->
-                        <war.name>${liberty.var.app.context.root}</war.name>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+COPY --chown=1001:0 src/main/liberty/config/server.xml /config/
+COPY --chown=1001:0 target/*.war /config/apps/
+USER 1001
 ```
 {: codeblock}
 
 
+The **FROM** instruction initializes a new build stage
+and indicates the parent image from which your image is built.
+If you don't need a parent image, then use **FROM scratch**, which makes your image a base image. 
 
-The **pom.xml** file starts with a root **project** 
-element and a **modelversion** element, which is always set to **4.0.0**. 
+In this case, you’re using the **openliberty/open-liberty:full-java11-openj9-ubi** image as your parent image, 
+which comes with the latest Open Liberty runtime.
 
-A typical POM for a Liberty application contains the following sections:
+The **COPY** instructions are structured as **COPY** 
+**`[--chown=<user>:<group>]`** **`<source>`** **`<destination>`**. 
+They copy local files into the specified destination within your Docker image.
+In this case, the server configuration file that is located at **src/main/liberty/config/server.xml** 
+is copied to the **/config/** destination directory.
 
-* **Project coordinates**: The identifiers for this application.
-* **Properties** (**properties**): Any properties for the project go here, including compilation details and any values that are referenced during compilation of the Java source code and generating the application.
-* **Dependencies** (**dependencies**): Any Java dependencies that are required for compiling, testing, and running the application are listed here.
-* **Build plugins** (**build**): Maven is modular and each of its capabilities is provided by a separate plugin. This is where you specify which Maven plugins should be used to build this project and any configuration information needed by those plugins.
+<br/>
+### **Writing a .dockerignore file**
 
-The project coordinates describe the name and version of the application. The 
-**artifactId** gives a name to the web application project, which is used to 
-name the output files that are generated by the build (e.g. the WAR file) and the Open 
-Liberty server that is created. You'll notice that other fields in the **pom.xml** 
-file use variables that are resolved by the **artifactId** field. This is so 
-that you can update the name of the sample application, including files generated by Maven, 
-in a single place in the **pom.xml** file. The value of the **packaging** 
-field is **war** so that the project output artifact is a WAR file.
+When Docker runs a build, it sends all of the files and directories that are
+located in the same directory as the Dockerfile to its build context, making
+them available for use in instructions like **ADD** and **COPY**. If there are files
+or directories you wish to exclude from the build context, you can add them
+to a **.dockerignore** file. By adding files that aren't nessecary for building your
+image to the **.dockerignore** file, you can decrease the image's size and speed
+up the building process. You may also want to exclude files that contain
+sensitive information, such as a **.git** folder or private keys, from the build context. 
 
-The first four properties in the properties section of the project, just define the encoding (**UTF-8**) 
-and version of Java (**Java 8**) that Maven uses to compile the application 
-source code.
-
-Open Liberty configuration properties provide you with a single place to specify values that are used in multiple 
-places throughout the application. For example, the **default.http.port** value is used in
-both the server configuration (**server.xml**) file and will be used in the test class that
-you will add (**EndpointIT.java**) to the application. Because the **default.http.port** value 
-is specified in the **pom.xml** file, you can easily 
-change the port number that the server runs on without updating the application 
-code in multiple places.
+A **.dockerignore** file is available to you in the **start** directory. This file includes 
+the **pom.xml** file and some system files.
 
 
-The **HelloServlet.java** class depends on **javax.servlet-api** to compile. 
-Maven will download this dependency from the Maven Central repository using the 
-**groupId**, **artifactId**, and **version** details that 
-you provide here. The dependency is set to **provided**, which means that the 
-API is in the server runtime and doesn't need to be packaged by the application.
+# **Launching Open Liberty in dev mode**
 
-The **build** section gives details of the two plugins that Maven uses 
-to build this project.
+The Open Liberty Maven plug-in includes a **devc** goal that builds a Docker image, mounts the required directories,
+binds the required ports, and then runs the application inside of a container.
+This development mode, known as dev mode, also listens for any changes in the application source code or
+configuration and rebuilds the image and restarts the container as necessary.
 
-* The Maven plugin for generating a WAR file as one of the output files.
-* The Liberty Maven plug-in, which allows you to install applications into Open Liberty and manage the server instances.
-
-In the **liberty-maven-plugin** plug-in section, you can add a
-**configuration** element to specify Open Liberty configuration details.
-For example, the
-**serverName** field defines the name of the Open Liberty server that Maven creates.
-You specified **guideServer** as the value for **serverName**.
-If the **serverName** field is not included, the default value is **defaultServer**.
-
-
-
-# **Running the application**
-
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+Build and run the container by running the **devc** goal from the **start** directory:
 
 ```
-mvn liberty:dev
+mvn liberty:devc
 ```
 {: codeblock}
 
 
 After you see the following message, your application server in dev mode is ready:
-
 ```
 **************************************************************
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
+Open another command-line session and run the following command to make sure that your
+container is running and didn’t crash:
 
-
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
-Run the following command to get the URL to access the application.
-The servlet returns a simple response of `Hello! How are you today?`.
 ```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/ServletSample/servlet
+docker ps 
 ```
 {: codeblock}
 
 
-# **Testing the web application**
+You should see something similar to the following output:
 
-One of the benefits of building an application with Maven is that Maven can be configured 
-to run a set of tests. You can write tests for the individual units of code outside of a 
-running application server (unit tests), or you can write them to call the application 
-server directly (integration tests). In this example you will create a simple integration 
-test that checks that the web page opens and that the correct response is returned when 
-the link is clicked.
-
-Create the **EndpointIT** class.
-
-> Run the following touch command in your terminal
 ```
-touch /home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java  
+CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS              PORTS                                                                    NAMES
+ee2daf0b33e1        guide-docker-dev-mode   "/opt/ol/helpers/run…"   2 minutes ago       Up 2 minutes        0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
+```
+
+
+To view a full list of all available containers, you can run the **docker ps -a** command.
+
+
+If your container runs without problems, run the following **curl** command to get a JSON response
+that contains the system properties of the JVM in your container.
+
+```
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java  
+# **Updating the application while the container is running**
+
+
+With your container running, make the following update to the source code:
+
+Update the **PropertiesResource** class.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 
 
 
 ```
-package io.openliberty.guides.hello.it;
+package io.openliberty.guides.rest;
 
-import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.GetMethod;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.GET;
+import javax.ws.rs.Produces;
 
-public class EndpointIT {
-    private static String URL;
- 
-    @BeforeAll
-    public static void init() {
-        String port = System.getProperty("http.port");
-        String war = System.getProperty("war.name");
-        URL = "http://localhost:" + port + "/" + war + "/" + "servlet";
-    }
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.Json;
 
-    @Test
-    public void testServlet() throws Exception {
-        HttpClient client = new HttpClient();
+@Path("properties-new")
+public class PropertiesResource {
 
-        GetMethod method = new GetMethod(URL);
-        try {
-            int statusCode = client.executeMethod(method);
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject getProperties() {
 
-            assertEquals(HttpStatus.SC_OK, statusCode, "HTTP GET failed");
+        JsonObjectBuilder builder = Json.createObjectBuilder();
 
-            String response = method.getResponseBodyAsString(1000);
+        System.getProperties()
+              .entrySet()
+              .stream()
+              .forEach(entry -> builder.add((String)entry.getKey(),
+                                            (String)entry.getValue()));
 
-            assertTrue(response.contains("Hello! How are you today?"), 
-                "Unexpected response body");
-        } finally {
-            method.releaseConnection();
-        }
+       return builder.build();
     }
 }
 ```
 {: codeblock}
 
 
-
-The test class name ends in **IT** to indicate that it contains an integration test. 
-
-Maven is configured to run the integration test using the **maven-failsafe-plugin**.
-The **systemPropertyVariables** section defines some variables 
-that the test class uses. The test code needs to know where to find the application that 
-it is testing. While the port number and context root information can be hardcoded in the 
-test class, it is better to specify it in a single place like the Maven **pom.xml** 
-file because this information is also used by other files in the project. The 
-**systemPropertyVariables** section passes these details to the 
-Java test program as a series of system properties, resolving the **http.port**
-and **war.name** variables.
+Change the endpoint of your application from **properties** to **properties-new** by changing the **@Path**
+annotation to **"properties-new"**.
 
 
-The following lines in the **EndpointIT** test class uses these 
-system variables to build up the URL of the application.
-
-In the test class, after defining how to build the application URL, the **@Test** 
-annotation indicates the start of the test method.
-
-In the **try block** of the test method, an HTTP **GET** request to the 
-URL of the application returns a status code. If the response to the request includes the 
-string **Hello! How are you today?**, the test passes. If that string is not in the response, 
-the test fails.  The HTTP client then disconnects from the application.
-
-In the **import** statements of this test class, you'll notice that the 
-test has some new dependencies. Before the test can be compiled by Maven, you need to update 
-the **pom.xml** to include these dependencies.
-
-The Apache **commons-httpclient** and **junit-jupiter-engine** 
-dependencies are needed to compile and run the integration test **EndpointIT** 
-class. The scope for each of the dependencies is set to **test** because 
-the libraries are needed only during the Maven build and do not needed to be packaged with 
-the application.
-
-Now, the created WAR file contains the web application, 
-and development mode can run any integration test classes that it finds.
-Integration test classes are classes with names that end in **IT**.
-
-The directory structure of the project should now look like this:
+After you make the file changes, Open Liberty automatically updates the application.
+To see the changes reflected in the application, run the following command in a terminal:
 
 ```
-    └── src
-        ├── main
-        │  └── java
-        │  └── resources
-        │  └── webapp
-        │  └── liberty
-        │         └── config
-        └── test
-            └── java
+curl -s http://localhost:9080/system/properties-new | jq
 ```
+{: codeblock}
 
+
+# **Testing the container**
+
+
+
+You can test this service manually by starting a server and going to the 
+**http://localhost:9080/system/properties-new** URL.
+However, automated tests are a much better approach because they trigger a failure if a change introduces a bug.
+JUnit and the JAX-RS Client API provide a simple environment to test the application. 
+You can write tests for the individual units of code outside of a running application server,
+or you can write them to call the application server directly.
+In this example, you will create a test that calls the application server directly.
+
+Create the **EndpointIT** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+
+
+
+
+```
+package it.io.openliberty.guides.rest;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
+
+import javax.json.JsonObject;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+
+import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
+
+public class EndpointIT {
+
+    @Test
+    public void testGetProperties() {
+        String port = System.getProperty("liberty.test.port");
+        String url = "http://localhost:" + port + "/";
+
+        Client client = ClientBuilder.newClient();
+        client.register(JsrJsonpProvider.class);
+
+        WebTarget target = client.target(url + "system/properties-new");
+        Response response = target.request().get();
+        JsonObject obj = response.readEntity(JsonObject.class);
+
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+
+        assertEquals("/opt/ol/wlp/output/defaultServer/",
+                     obj.getString("server.output.dir"),
+                     "The system property for the server output directory should match "
+                     + "the Open Liberty container image.");
+
+        response.close();
+    }
+}
+```
+{: codeblock}
+
+
+This test makes a request to the **/system/properties-new** endpoint and checks to
+make sure that the response has a valid status code, and that the information in
+the response is correct. 
 
 <br/>
 ### **Running the tests**
 
 Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
-You see the following output:
+You will see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running io.openliberty.guides.hello.it.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.255 sec - in io.openliberty.guides.hello.it.EndpointIT
+Running it.io.openliberty.guides.rest.EndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
 
 Results :
 
 Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-To see whether the test detects a failure, change the **response string** in the servlet 
-**src/main/java/io/openliberty/guides/hello/HelloServlet.java** so that it doesn't match 
-the string that the test is looking for. Then re-run the tests and check that the 
-test fails.
+When you are finished, press **CTRL+C** in the session that the dev mode was
+started from to stop and remove the container.
 
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
+# **Starting dev mode with run options**
+
+Another useful feature of dev mode with a container is the ability to pass additional options
+to the **docker run** command. You can do this by adding the **dockerRunOpts** tag to the **pom.xml** file under 
+the **configuration** tag of the Liberty Maven Plugin. Here is an example of an environment variable 
+being passed in:
+
+```
+<groupId>io.openliberty.tools</groupId>
+<artifactId>liberty-maven-plugin</artifactId>
+<version>3.3.4</version>
+<configuration>
+    <dockerRunOpts>-e ENV_VAR=exampleValue</dockerRunOpts>
+</configuration>
+```
+
+If the Dockerfile isn't located in the directory that the **devc** goal is being
+run from, you can add the **dockerfile** tag to specify the location. Using this
+parameter sets the context for building the Docker image to the directory that
+contains this file.
+
+Additionally, both of these options can be passed from the command line when running the **devc** goal by
+adding `-D` as such:
+
+```
+mvn liberty:devc \
+-DdockerRunOpts="-e ENV_VAR=exampleValue" \
+-Ddockerfile="./path/to/file"
+```
+
+To learn more about dev mode with a container and its different features, 
+check out the [Documentation](http://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode).
 
 # **Summary**
 
 ## **Nice Work!**
 
-You built and tested a web application project with an Open Liberty server using Maven.
+You just iteratively developed a simple REST application in a container with Open Liberty and Docker.
 
 
 
@@ -508,11 +435,11 @@ You built and tested a web application project with an Open Liberty server using
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-maven-intro** project by running the following commands:
+Delete the **guide-docker** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-maven-intro
+rm -fr guide-docker
 ```
 {: codeblock}
 
@@ -521,7 +448,7 @@ rm -fr guide-maven-intro
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20web%20application%20with%20Maven&guide-id=cloud-hosted-guide-maven-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Using%20Docker%20containers%20to%20develop%20microservices&guide-id=cloud-hosted-guide-docker)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -529,16 +456,16 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-docker/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-docker/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Creating a multi-module application](https://openliberty.io/guides/maven-multimodules.html)
-* [Building a web application with Gradle](https://openliberty.io/guides/gradle-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
 
 
 <br/>
