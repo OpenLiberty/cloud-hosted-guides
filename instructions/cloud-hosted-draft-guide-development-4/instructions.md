@@ -1,7 +1,7 @@
 
-# **Welcome to the Injecting dependencies into microservices guide!**
+# **Welcome to the Consuming RESTful services using the reactive JAX-RS client guide!**
 
-Learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies into microservices.
+Learn how to use a reactive JAX-RS client to asynchronously invoke RESTful microservices over HTTP.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -13,37 +13,39 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 # **What you'll learn**
 
-You will learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies in a simple inventory management application.
+First, you'll learn how to create a reactive JAX-RS client application by using the default reactive JAX-RS client APIs.
+You will then learn how to take advantage of the RxJava reactive extensions with a
+pluggable reactive JAX-RS client provider that's published by [Eclipse Jersey](https://eclipse-ee4j.github.io/jersey).
+The JAX-RS client is an API used to communicate with RESTful web services. 
+The API makes it easy to consume a web service by using the HTTP protocol,
+which means that you can efficiently implement client-side applications. 
+The reactive client extension to JAX-RS is an API that enables you to use the reactive programming model when using the JAX-RS client.
 
-The application that you will be working with is an **inventory** service,
-which stores the information about various JVMs that run on different systems.
-Whenever a request is made to the **inventory** service to retrieve the JVM
-system properties of a particular host, the **inventory** service communicates with the **system**
-service on that host to get these system properties. The system properties are then stored and returned.
+Reactive programming is an extension of asynchronous programming and focuses on the flow of data through data streams. 
+Reactive applications process data when it becomes available and respond to requests as soon as processing is complete. 
+The request to the application and response from the application are decoupled so that
+the application is not blocked from responding to other requests in the meantime. 
+Because reactive applications can run faster than synchronous applications, they provide a much smoother user experience.
 
-You will use scopes to bind objects in this application to their well-defined contexts.
-CDI provides a variety of scopes for you to work with and while you will not use all of them in this guide,
-there is one for almost every scenario that you may encounter. Scopes are defined by using CDI annotations.
-You will also use dependency injection to inject one bean into another to make use of its functionalities.
-This enables you to inject the bean in its specified context without having to instantiate it yourself.
+The application in this guide demonstrates how the JAX-RS client accesses remote RESTful services by using asynchronous method calls. 
+You’ll first look at the supplied client application that uses the JAX-RS default **CompletionStage**-based provider. 
+Then, you’ll modify the client application to use Jersey’s RxJava provider, which is an alternative JAX-RS reactive provider. 
+Both Jersey and Apache CXF provide third-party reactive libraries for RxJava and were tested for use in Open Liberty.
 
-The implementation of the application and its services are provided for you in the **start/src** directory.
-The **system** service can be found in the **start/src/main/java/io/openliberty/guides/system** directory, 
-and the **inventory** service can be found in the **start/src/main/java/io/openliberty/guides/inventory** directory. 
-If you want to learn more about RESTful web services and how to build them, see
-[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the **system** service.
-The **inventory** service is built in a similar way.
+The application that you will be working with consists of three microservices, **system**, **inventory**, and **query**. 
+Every 15 seconds, the **system** microservice calculates and publishes an event that contains its current average system load. 
+The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems
+and their current system loads.
 
-<br/>
-### **What is CDI?**
-
-Contexts and Dependency Injection (CDI) defines a rich set of complementary services that improve the application structure.
-The most fundamental services that are provided by CDI are contexts that bind the lifecycle of stateful components to well-defined contexts,
-and dependency injection that is the ability to inject components into an application in a typesafe way.
-With CDI, the container does all the daunting work of instantiating dependencies, and
-controlling exactly when and how these components are instantiated and destroyed.
+![Reactive Query Service](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-rest-client/master/assets/QueryService.png)
 
 
+The microservice that you will modify is the **query** service. It communicates with the **inventory** service 
+to determine which system has the highest system load and which system has the lowest system load.
+
+The **system** and **inventory** microservices use MicroProfile Reactive Messaging to send and receive the system load events.
+If you want to learn more about reactive messaging, see the 
+[Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 # **Getting started**
 
@@ -57,11 +59,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cdi-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-rest-client.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-cdi-intro.git
-cd guide-cdi-intro
+git clone https://github.com/openliberty/guide-reactive-rest-client.git
+cd guide-reactive-rest-client
 ```
 {: codeblock}
 
@@ -70,514 +72,856 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-<br/>
-### **Try what you'll build**
-
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
-
-```
-cd finish
-mvn liberty:run
-```
-{: codeblock}
-
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-Point your browser to the http://localhost:9080/inventory/systems URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/inventory/systems | jq
-```
-{: codeblock}
-
-
-This is the starting point of the **inventory** service and it displays the current contents of the inventory. 
-As you might expect, these are empty since nothing is stored in the inventory yet. 
-
-Next, point your browser to the http://localhost:9080/inventory/systems/localhost URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/inventory/systems/localhost | jq
-```
-{: codeblock}
-
-
-You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
-properties are automatically stored in the inventory. 
-
-Go back to http://localhost:9080/inventory/systems 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/inventory/systems | jq
-```
-{: codeblock}
-
-
-and you see a new entry for **localhost**. For simplicity, only the OS name and username are shown here for
-each host. You can repeat this process for your own hostname or any other machine that is running
-the **system** service.
-
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
-
-```
-mvn liberty:stop
-```
-{: codeblock}
-
-
-# **Handling dependencies in the application**
-
-You will use CDI to inject dependencies into the inventory manager application and learn how to manage the life cycles of your objects.
-
-<br/>
-### **Managing scopes and contexts**
+# **Creating a web client using the default JAX-RS API**
 
 Navigate to the **start** directory to begin.
 ```
-cd /home/project/guide-cdi-intro/start
+cd /home/project/guide-reactive-rest-client/start
 ```
 {: codeblock}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+JAX-RS provides a default reactive provider that you can use to create a reactive REST client using the **CompletionStage** interface.
 
-```
-mvn liberty:dev
-```
-{: codeblock}
+Create an **InventoryClient** class, which retrieves inventory data,
+and a **QueryResource** class, which queries data from the **inventory** service.
 
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
-
-Create the **InventoryManager** class.
+Create the **InventoryClient** interface.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
 
 
 
 
 ```
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.query.client;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-import javax.enterprise.context.ApplicationScoped;
+import java.util.concurrent.CompletionStage;
 
-@ApplicationScoped
-public class InventoryManager {
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.HttpHeaders;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+@RequestScoped
+public class InventoryClient {
 
-  public void add(String hostname, Properties systemProps) {
-    Properties props = new Properties();
-    props.setProperty("os.name", systemProps.getProperty("os.name"));
-    props.setProperty("user.name", systemProps.getProperty("user.name"));
+    @Inject
+    @ConfigProperty(name = "INVENTORY_BASE_URI", defaultValue = "http://localhost:9085")
+    private String baseUri;
 
-    SystemData system = new SystemData(hostname, props);
-    if (!systems.contains(system)) {
-      systems.add(system);
+    public List<String> getSystems() {
+        return ClientBuilder.newClient()
+                            .target(baseUri)
+                            .path("/inventory/systems")
+                            .request()
+                            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .get(new GenericType<List<String>>(){});
     }
-  }
 
-  public InventoryList list() {
-    return new InventoryList(systems);
-  }
+    public CompletionStage<Properties> getSystem(String hostname) {
+        return ClientBuilder.newClient()
+                            .target(baseUri)
+                            .path("/inventory/systems")
+                            .path(hostname)
+                            .request()
+                            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .rx()
+                            .get(Properties.class);
+    }
 }
 ```
 {: codeblock}
 
 
 
-This bean contains two simple functions. 
-The **add()** function is for adding entries to the inventory.
-The **list()** function is for listing all the entries currently stored in the inventory.
+The **getSystem()** method returns the **CompletionStage** interface. 
+This interface represents a unit or stage of a computation.
+When the associated computation completes, the value can be retrieved. 
+The **rx()** method calls the **CompletionStage** interface. 
+It retrieves the **CompletionStageRxInvoker** class and allows these methods to
+function correctly with the **CompletionStage** interface return type.
 
-This bean must be persistent between all of the clients, which means multiple clients need to share the same instance.
-To achieve this by using CDI, you can simply add the **@ApplicationScoped** annotation onto the class.
-
-This annotation indicates that this particular bean is to be initialized once per application.
-By making it application-scoped, the container ensures that the same instance of the bean is used whenever
-it is injected into the application.
-
-Create the **InventoryResource** class.
+Create the **QueryResource** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
 
 
 
 
 ```
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.query;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.client.SystemClient;
+
+import io.openliberty.guides.query.client.InventoryClient;
 
 @ApplicationScoped
-@Path("/systems")
-public class InventoryResource {
+@Path("/query")
+public class QueryResource {
+    
+    @Inject
+    private InventoryClient inventoryClient;
 
-  @Inject
-  InventoryManager manager;
+    @GET
+    @Path("/systemLoad")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, Properties> systemLoad() {
+        List<String> systems = inventoryClient.getSystems();
+        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
+        final Holder systemLoads = new Holder();
 
-  @Inject
-  SystemClient systemClient;
+        for (String system : systems) {
+            inventoryClient.getSystem(system)
+                           .thenAcceptAsync(p -> {
+                                if (p != null) {
+                                    systemLoads.updateValues(p);
+                                }
+                                remainingSystems.countDown();
+                           })
+                           .exceptionally(ex -> {
+                                remainingSystems.countDown();
+                                ex.printStackTrace();
+                                return null;
+                           });
+        }
 
-  @GET
-  @Path("/{hostname}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
-    Properties props = systemClient.getProperties(hostname);
-    if (props == null) {
-      return Response.status(Response.Status.NOT_FOUND)
-                     .entity("{ \"error\" : \"Unknown hostname " + hostname
-                             + " or the inventory service may not be running "
-                             + "on the host machine \" }")
-                     .build();
+        try {
+            remainingSystems.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return systemLoads.getValues();
     }
 
-    manager.add(hostname, props);
-    return Response.ok(props).build();
-  }
+    private class Holder {
+        private volatile Map<String, Properties> values;
 
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  public InventoryList listContents() {
-    return manager.list();
-  }
+        public Holder() {
+            this.values = new ConcurrentHashMap<String, Properties>();
+            init();
+        }
+
+        public Map<String, Properties> getValues() {
+            return this.values;
+        }
+
+        public void updateValues(Properties p) {
+            final BigDecimal load = (BigDecimal) p.get("systemLoad");
+
+            this.values.computeIfPresent("lowest", (key, curr_val) -> {
+                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(lowest) < 0 ? p : curr_val;
+            });
+            this.values.computeIfPresent("highest", (key, curr_val) -> {
+                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(highest) > 0 ? p : curr_val;
+            });
+        }
+
+        private void init() {
+            this.values.put("highest", new Properties());
+            this.values.put("lowest", new Properties());
+            this.values.get("highest").put("hostname", "temp_max");
+            this.values.get("lowest").put("hostname", "temp_min");
+            this.values.get("highest").put("systemLoad", new BigDecimal(Double.MIN_VALUE));
+            this.values.get("lowest").put("systemLoad", new BigDecimal(Double.MAX_VALUE));
+        }
+    }
 }
 ```
 {: codeblock}
 
 
 
-The inventory resource is a RESTful service that is served at the **inventory/systems** endpoint. 
+The **systemLoad** endpoint asynchronously processes the data that is
+retrieved by the **InventoryClient** interface and serves that data after all of the services respond. 
+The **thenAcceptAsync()** and **exceptionally()**
+methods together behave like an asynchronous try-catch block. 
+The data is processed in the **thenAcceptAsync()** method only after the **CompletionStage** interface finishes retrieving it. 
+When you return a **CompletionStage** type in the resource, it doesn’t necessarily mean that the computation completed and the response was built.
 
-Annotating a class with the **@ApplicationScoped** annotation indicates that the bean is initialized once and is shared between all requests while the application runs.
+A **CountDownLatch** object is used to track how many asynchronous requests are being waited on. 
+After each thread is completed, the **countdown()** method
+counts the **CountDownLatch** object down towards **0**. 
+This means that the value returns only after the thread that's retrieving the value is complete.
+The **await()** method stops and waits until all of the requests are complete. 
+While the countdown completes, the main thread is free to perform other tasks. 
+In this case, no such task is present.
 
-If you want this bean to be initialized once for every request, you can annotate the class with the **@RequestScoped** annotation instead. With the **@RequestScoped** annotation, the bean is instantiated when the request is received and destroyed when a response is sent back to the client. A request scope is short-lived.
+# **Building and running the application**
 
-<br/>
-### **Injecting a dependency**
+The **system**, **inventory**, and **query** microservices will be built in Docker containers. 
+If you want to learn more about Docker containers,
+check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
 
-Refer to the **InventoryResource** class you created above.
+Start your Docker environment.
 
-The **@Inject** annotation indicates a dependency injection.
-You are injecting your **InventoryManager** and **SystemClient** beans into the **InventoryResource** class.
-This injects the beans in their specified context and makes all of their functionalities
-available without the need of instantiating them yourself.
-The injected bean **InventoryManager** can then be invoked directly through the **manager.add(hostname, props)**
-and **manager.list()** function calls.  The injected bean **SystemClient** can be invoked through the 
-**systemClient.getProperties(hostname)** function call.
-
-Finally, you have a client component **SystemClient** that can be found in the
-**src/main/java/io/openliberty/guides/inventory/client** directory. This class communicates 
-with the **system** service to retrieve the JVM system properties for a particular host 
-that exposes them. This class also contains detailed Javadocs that you can read for reference.
-
-Your inventory application is now completed.
-
-
-
-
-# **Running the application**
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-You can find the **inventory** and **system** services at the following URLs:
-
-
- http://localhost:9080/inventory/systems
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+To build the application, run the Maven **install** and **package** goals from the command-line session in the **start** directory:
 
 ```
-curl -s http://localhost:9080/inventory/systems | jq
+mvn -pl models install
+mvn package
+```
+{: codeblock}
+
+
+Run the following command to download or update to the latest Open Liberty Docker image:
+
+```
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
+```
+{: codeblock}
+
+
+Run the following commands to containerize the microservices:
+
+```
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+docker build -t query:1.0-SNAPSHOT query/.
+```
+{: codeblock}
+
+
+Next, use the provided script to start the application in Docker containers.
+The script creates a network for the containers to communicate with each other.
+It creates containers for Kafka, Zookeeper, and all of the microservices in the project.
+
+
+```
+./scripts/startContainers.sh
 ```
 {: codeblock}
 
 
 
- http://localhost:9080/system/properties
 
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+The microservices will take some time to become available.
+Run the following commands to confirm that the **inventory** and **query** microservices are up and running:
+```
+curl -s http://localhost:9085/health | jq
+```
+{: codeblock}
 
 ```
-curl -s http://localhost:9080/system/properties | jq
+curl -s http://localhost:9080/health | jq
+```
+{: codeblock}
+
+Once the microservices are up and running, you can access the application by making requests to the **query/systemLoad** endpoint
+by using the following **curl** command:
+```
+curl -s http://localhost:9080/query/systemLoad | jq
+```
+{: codeblock}
+
+When the service is ready, you see an output similar to the following example. 
+This example was formatted for readability:
+
+```
+
+    "highest": {
+        "hostname":"30bec2b63a96",       
+        ”systemLoad": 6.1
+    },     
+    "lowest": { 
+        "hostname":"55ec2b63a96",    
+        ”systemLoad": 0.1
+    }
+}
+```
+
+The JSON output contains a **highest** attribute that represents the system with the highest load.
+Similarly, the **lowest** attribute represents the system with the lowest load. 
+The JSON output for each of these attributes contains the **hostname** and **systemLoad** of the system.
+
+When you are done checking out the application, run the following command to stop the **query** microservice. 
+Leave the **system** and **inventory** services running because they will be used when the application is rebuilt later in the guide:
+
+```
+docker stop query
+```
+{: codeblock}
+
+
+
+# **Updating the web client to use an alternative reactive provider**
+
+
+Although JAX-RS provides the default reactive provider that returns **CompletionStage** types,
+you can alternatively use another provider that supports other reactive frameworks like [RxJava](https://github.com/ReactiveX/RxJava). 
+The Apache CXF and Eclipse Jersey projects produce such providers.
+You'll now update the web client to use the Jersey reactive provider for RxJava. 
+With this updated reactive provider, you can write clients that use RxJava objects instead of clients that use only the **CompletionStage** interface. 
+These custom objects provide a simpler and faster way for you to create scalable RESTful services with a **CompletionStage** interface.
+
+Replace the Maven configuration file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-reactive-rest-client/start/query/pom.xml
+
+
+
+
+```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>query</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>8.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.enterprise.concurrent</groupId>
+            <artifactId>javax.enterprise.concurrent-api</artifactId>
+            <version>1.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>2.0.1.Final</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>3.3</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>models</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- tag::jerseyClient[] -->
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>2.34</version>
+        </dependency>
+        <!-- tag::jerseyRxjava[] -->
+        <dependency>
+            <groupId>org.glassfish.jersey.ext.rx</groupId>
+            <artifactId>jersey-rx-client-rxjava</artifactId>
+            <version>2.34</version>
+        </dependency>
+        <!-- tag::jerseyRxjava2[] -->
+        <dependency>
+            <groupId>org.glassfish.jersey.ext.rx</groupId>
+            <artifactId>jersey-rx-client-rxjava2</artifactId>
+            <version>2.34</version>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.microshed</groupId>
+            <artifactId>microshed-testing-liberty</artifactId>
+            <version>0.9.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mockserver</artifactId>
+            <version>1.15.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-client-java</artifactId>
+            <version>5.11.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.7.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <packagingExcludes>pom.xml</packagingExcludes>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.3.4</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.2</version>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+{: codeblock}
+
+
+The **jersey-rx-client-rxjava** and
+**jersey-rx-client-rxjava2** dependencies provide the **RxInvokerProvider** classes,
+which are registered to the **jersey-client** **ClientBuilder** class.
+
+Update the client to accommodate the custom object types that you are trying to return. 
+You'll need to register the type of object that you want inside the client invocation.
+
+Replace the **InventoryClient** interface.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
+
+
+
+
+```
+package io.openliberty.guides.query.client;
+
+import java.util.List;
+import java.util.Properties;
+
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.glassfish.jersey.client.rx.rxjava.RxObservableInvoker;
+import org.glassfish.jersey.client.rx.rxjava.RxObservableInvokerProvider;
+
+import rx.Observable;
+
+@RequestScoped
+public class InventoryClient {
+
+    @Inject
+    @ConfigProperty(name = "INVENTORY_BASE_URI", defaultValue = "http://localhost:9085")
+    private String baseUri;
+
+    public List<String> getSystems() {
+        return ClientBuilder.newClient()
+                            .target(baseUri)
+                            .path("/inventory/systems")
+                            .request()
+                            .header(HttpHeaders.CONTENT_TYPE,
+                            MediaType.APPLICATION_JSON)
+                            .get(new GenericType<List<String>>() { });
+    }
+
+    public Observable<Properties> getSystem(String hostname) {
+        return ClientBuilder.newClient()
+                            .target(baseUri)
+                            .register(RxObservableInvokerProvider.class)
+                            .path("/inventory/systems")
+                            .path(hostname)
+                            .request()
+                            .header(HttpHeaders.CONTENT_TYPE,
+                            MediaType.APPLICATION_JSON)
+                            .rx(RxObservableInvoker.class)
+                            .get(new GenericType<Properties>() { });
+    }
+}
+```
+{: codeblock}
+
+
+
+The return type of the **getSystem()** method is now an **Observable** object instead of a **CompletionStage** interface. 
+[Observable](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html) is a
+collection of data that waits to be subscribed to before it can release any data and is part of RxJava. 
+The **rx()** method now needs to contain **RxObservableInvoker.class** as an argument.
+This argument calls the specific invoker, **RxObservableInvoker**, for the **Observable** class that's provided by Jersey. 
+In the **getSystem()** method,
+the **register(RxObservableInvokerProvider)** method call registers the **RxObservableInvoker** class,
+which means that the client can recognize the invoker provider.
+
+In some scenarios, a producer might generate more data than the consumers can handle. 
+JAX-RS can deal with cases like these by using the RxJava **Flowable** class with backpressure. 
+To learn more about RxJava and backpressure, see
+[JAX-RS reactive extensions with RxJava backpressure](https://openliberty.io/blog/2019/04/10/jaxrs-reactive-extensions.html).
+
+# **Updating the REST resource to support the reactive JAX-RS client**
+
+
+Now that the client methods return the **Observable** class, you must update the resource to accommodate these changes.
+
+Replace the **QueryResource** class.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
+
+
+
+
+```
+package io.openliberty.guides.query;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+import io.openliberty.guides.query.client.InventoryClient;
+
+@ApplicationScoped
+@Path("/query")
+public class QueryResource {
+    
+    @Inject
+    private InventoryClient inventoryClient;
+
+    @GET
+    @Path("/systemLoad")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, Properties> systemLoad() {
+        List<String> systems = inventoryClient.getSystems();
+        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
+        final Holder systemLoads = new Holder();
+        for (String system : systems) {
+            inventoryClient.getSystem(system)
+                           .subscribe(p -> {
+                                if (p != null) {
+                                    systemLoads.updateValues(p);
+                                }
+                                remainingSystems.countDown();
+                           }, e -> {
+                                remainingSystems.countDown();
+                                e.printStackTrace();
+                           });
+        }
+
+        try {
+            remainingSystems.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        return systemLoads.getValues();
+    }
+
+    private class Holder {
+        private volatile Map<String, Properties> values;
+
+        public Holder() {
+            this.values = new ConcurrentHashMap<String, Properties>();
+            init();
+        }
+
+        public Map<String, Properties> getValues() {
+            return this.values;
+        }
+
+        public void updateValues(Properties p) {
+            final BigDecimal load = (BigDecimal) p.get("systemLoad");
+
+            this.values.computeIfPresent("lowest", (key, curr_val) -> {
+                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(lowest) < 0 ? p : curr_val;
+            });
+            this.values.computeIfPresent("highest", (key, curr_val) -> {
+                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(highest) > 0 ? p : curr_val;
+            });
+        }
+
+        private void init() {
+            this.values.put("highest", new Properties());
+            this.values.put("lowest", new Properties());
+            this.values.get("highest").put("hostname", "temp_max");
+            this.values.get("lowest").put("hostname", "temp_min");
+            this.values.get("highest").put("systemLoad", new BigDecimal(Double.MIN_VALUE));
+            this.values.get("lowest").put("systemLoad", new BigDecimal(Double.MAX_VALUE));
+        }
+    }
+}
+```
+{: codeblock}
+
+
+The goal of the **systemLoad()** method is to return the system with the largest load and the system with the smallest load. 
+The **systemLoad** endpoint first gets all of the hostnames by calling the **getSystems()** method. 
+Then it loops through the hostnames and calls the **getSystem()** method on each one.
+
+Instead of using the **thenAcceptAsync()** method,
+**Observable** uses the **subscribe()** method to asynchronously process data. 
+Thus, any necessary data processing happens inside the **subscribe()** method. 
+In this case, the necessary data processing is saving the data in the temporary **Holder** class.
+The **Holder** class is used to store the value that is returned from the client because values cannot be returned inside the **subscribe()** method. 
+The highest and lowest load systems are updated in the **updateValues()** method.
+
+# **Rebuilding and running the application**
+
+Run the Maven **install** and **package** goals from the command-line session in the **start** directory:
+
+```
+mvn -pl query package
+```
+{: codeblock}
+
+
+Run the following command to containerize the **query** microservice:
+
+```
+docker build -t query:1.0-SNAPSHOT query/.
+```
+{: codeblock}
+
+
+Next, use the provided script to restart the query service in a Docker container. 
+
+
+```
+./scripts/startQueryContainer.sh
 ```
 {: codeblock}
 
 
 
 
-# **Testing the inventory application**
+The **query** microservice will take some time to become available.
+Run the following command to confirm that the **query** microservice is up and running:
+```
+curl -s http://localhost:9080/health | jq
+```
+{: codeblock}
 
-While you can test your application manually, you should rely on automated tests since they trigger
-a failure whenever a code change introduces a defect.
-Since the application is a RESTful web service application, you can use
-JUnit and the RESTful web service Client API to write tests.
-In testing the functionality of the application, the scopes and dependencies are being tested.
+Once the **query** microservice is up and running, 
+you can access the application by making requests to the **query/systemLoad** endpoint using
+the following **curl** command:
+```
+curl -s http://localhost:9080/query/systemLoad | jq
+```
+{: codeblock}
 
-Create the **InventoryEndpointIT** class.
+Switching to a reactive programming model freed up the thread that was handling your request to **query/systemLoad**. 
+While the client request is being handled, the thread can handle other work.
+
+When you are done checking out the application, run the following script to stop the application:
+
+
+
+```
+./scripts/stopContainers.sh
+```
+{: codeblock}
+
+
+# **Testing the query microservice**
+
+A few tests are included for you to test the basic functionality of the **query** microservice. 
+If a test failure occurs, then you might have introduced a bug into the code.
+
+Create the **QueryServiceIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+touch /home/project/guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
 
 
 
 
 ```
-package it.io.openliberty.guides.inventory;
+package it.io.openliberty.guides.query;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import java.util.Map;
+import java.util.Properties;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.microshed.testing.jaxrs.RESTClient;
+import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.SharedContainerConfig;
+import org.mockserver.model.HttpRequest;
+import org.mockserver.model.HttpResponse;
 
-@TestMethodOrder(OrderAnnotation.class)
-public class InventoryEndpointIT {
+import io.openliberty.guides.query.QueryResource;
 
-  private static String port;
-  private static String baseUrl;
+@MicroShedTest
+@SharedContainerConfig(AppContainerConfig.class)
+public class QueryServiceIT {
 
-  private Client client;
+    @RESTClient
+    public static QueryResource queryResource;
 
-  private final String SYSTEM_PROPERTIES = "system/properties";
-  private final String INVENTORY_SYSTEMS = "inventory/systems";
+    private static String testHost1 = 
+        "{" + 
+            "\"hostname\" : \"testHost1\"," +
+            "\"systemLoad\" : 1.23" +
+        "}";
+    private static String testHost2 = 
+        "{" + 
+            "\"hostname\" : \"testHost2\"," +
+            "\"systemLoad\" : 3.21" +
+        "}";
+    private static String testHost3 =
+        "{" + 
+            "\"hostname\" : \"testHost3\"," +
+            "\"systemLoad\" : 2.13" +
+        "}";
 
-  @BeforeAll
-  public static void oneTimeSetup() {
-    port = System.getProperty("http.port");
-    baseUrl = "http://localhost:" + port + "/";
-  }
+    @BeforeAll
+    public static void setup() throws InterruptedException {
+        AppContainerConfig.mockClient.when(HttpRequest.request()
+                                         .withMethod("GET")
+                                         .withPath("/inventory/systems"))
+                                     .respond(HttpResponse.response()
+                                         .withStatusCode(200)
+                                         .withBody("[\"testHost1\"," + 
+                                                    "\"testHost2\"," +
+                                                    "\"testHost3\"]")
+                                         .withHeader("Content-Type", "application/json"));
 
-  @BeforeEach
-  public void setup() {
-    client = ClientBuilder.newClient();
-    client.register(JsrJsonpProvider.class);
-  }
+        AppContainerConfig.mockClient.when(HttpRequest.request()
+                                         .withMethod("GET")
+                                         .withPath("/inventory/systems/testHost1"))
+                                     .respond(HttpResponse.response()
+                                         .withStatusCode(200)
+                                         .withBody(testHost1)
+                                         .withHeader("Content-Type", "application/json"));
 
-  @AfterEach
-  public void teardown() {
-    client.close();
-  }
+        AppContainerConfig.mockClient.when(HttpRequest.request()
+                                         .withMethod("GET")
+                                         .withPath("/inventory/systems/testHost2"))
+                                     .respond(HttpResponse.response()
+                                         .withStatusCode(200)
+                                         .withBody(testHost2)
+                                         .withHeader("Content-Type", "application/json"));
 
-  @Test
-  @Order(1)
-  public void testHostRegistration() {
-    this.visitLocalhost();
-
-    Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
-    this.assertResponse(baseUrl, response);
-
-    JsonObject obj = response.readEntity(JsonObject.class);
-
-    JsonArray systems = obj.getJsonArray("systems");
-
-    boolean localhostExists = false;
-    for (int n = 0; n < systems.size(); n++) {
-      localhostExists = systems.getJsonObject(n)
-                                .get("hostname").toString()
-                                .contains("localhost");
-      if (localhostExists) {
-          break;
-      }
+        AppContainerConfig.mockClient.when(HttpRequest.request()
+                                         .withMethod("GET")
+                                         .withPath("/inventory/systems/testHost3"))
+                                     .respond(HttpResponse.response()
+                                         .withStatusCode(200)
+                                         .withBody(testHost3)
+                                         .withHeader("Content-Type", "application/json"));
     }
-    assertTrue(localhostExists, 
-              "A host was registered, but it was not localhost");
 
-    response.close();
-  }
+    @Test
+    public void testSystemLoad() {
+        Map<String, Properties> response = queryResource.systemLoad();
+        assertEquals(
+            "testHost2",
+            response.get("highest").get("hostname"),
+            "Returned highest system load incorrect"
+        );
+        assertEquals(
+            "testHost1",
+            response.get("lowest").get("hostname"),
+            "Returned lowest system load incorrect"
+        );
+    }
 
-  @Test
-  @Order(2)
-  public void testSystemPropertiesMatch() {
-    Response invResponse = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
-    Response sysResponse = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
-
-    this.assertResponse(baseUrl, invResponse);
-    this.assertResponse(baseUrl, sysResponse);
-
-    JsonObject jsonFromInventory = (JsonObject) invResponse.readEntity(JsonObject.class)
-                                                           .getJsonArray("systems")
-                                                           .getJsonObject(0)
-                                                           .get("properties");
-
-    JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
-
-    String osNameFromInventory = jsonFromInventory.getString("os.name");
-    String osNameFromSystem = jsonFromSystem.getString("os.name");
-    this.assertProperty("os.name", "localhost", osNameFromSystem,
-                        osNameFromInventory);
-
-    String userNameFromInventory = jsonFromInventory.getString("user.name");
-    String userNameFromSystem = jsonFromSystem.getString("user.name");
-    this.assertProperty("user.name", "localhost", userNameFromSystem,
-                        userNameFromInventory);
-
-    invResponse.close();
-    sysResponse.close();
-  }
-
-  @Test
-  @Order(3)
-  public void testUnknownHost() {
-    Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
-    this.assertResponse(baseUrl, response);
-
-    Response badResponse = client.target(baseUrl + INVENTORY_SYSTEMS + "/"
-        + "badhostname").request(MediaType.APPLICATION_JSON).get();
-
-    assertEquals(404, badResponse.getStatus(),
-        "BadResponse expected status: 404. Response code not as expected.");
-
-    String obj = badResponse.readEntity(String.class);
-
-    boolean isError = obj.contains("error");
-    assertTrue(isError, 
-              "badhostname is not a valid host but it didn't raise an error");
-
-    response.close();
-    badResponse.close();
-  }
-
-  private Response getResponse(String url) {
-    return client.target(url).request().get();
-  }
-
-  private void assertResponse(String url, Response response) {
-    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-  }
-
-  private void assertProperty(String propertyName, String hostname,
-      String expected, String actual) {
-    assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
-        + "in the system service does not match the one stored in "
-        + "the inventory service for " + hostname);
-  }
-
-  private void visitLocalhost() {
-    Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
-    this.assertResponse(baseUrl, response);
-    response.close();
-
-    Response targetResponse = client.target(baseUrl + INVENTORY_SYSTEMS
-        + "/localhost").request().get();
-    targetResponse.close();
-  }
 }
 ```
 {: codeblock}
 
 
-The **@BeforeAll** annotation is placed on a method that runs before any of the test cases.
-In this case, the **oneTimeSetup()** method retrieves the port number for the Open Liberty server and builds
-a base URL string that is used throughout the tests.
-
-The **@BeforeEach** and **@AfterEach** annotations are placed on methods that run before and after every test case.
-These methods are generally used to perform any setup and teardown tasks. In this case, the **setup()** method
-creates a JAX-RS client, which makes HTTP requests to the **inventory** service. This client must
-also be registered with a JSON-P provider (**JsrJsonpProvider**) to process JSON resources. The **teardown()**
-method simply destroys this client instance.
-
-See the following descriptions of the test cases:
-
-* **testHostRegistration()** verifies that a host is correctly added to the inventory.
-
-* **testSystemPropertiesMatch()** verifies that the JVM system properties returned by the **system** service match the ones stored in the **inventory** service.
-
-* **testUnknownHost()** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled as an error.
-
-To force these test cases to run in a particular order, annotate your **InventoryEndpointIT** test class with the **@TestMethodOrder(OrderAnnotation.class)** annotation.
-**OrderAnnotation.class** runs test methods in numerical order, 
-according to the values specified in the **@Order** annotation. 
-You can also create a custom **MethodOrderer** class or use built-in **MethodOrderer** implementations, 
-such as **OrderAnnotation.class**, **Alphanumeric.class**, or **Random.class**. Label your test cases
-with the **@Test** annotation so that they automatically run when your test class runs.
-
-Finally, the **src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java** file
-is included for you to test the basic functionality of the **system** service.
-If a test failure occurs, then you might have introduced a bug into the code.
+The **testSystemLoad()** test case verifies that the
+**query** service can correctly calculate the highest and lowest system loads. 
 
 
 
@@ -585,42 +929,34 @@ If a test failure occurs, then you might have introduced a bug into the code.
 <br/>
 ### **Running the tests**
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
+Navigate to the **query** directory, then verify that the tests pass by running the Maven **verify** goal:
 
-If the tests pass, you see a similar output to the following example:
+```
+cd query
+mvn verify
+```
+{: codeblock}
+
+
+When the tests succeed, you see output similar to the following example:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.99 sec - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-[WARNING ] Interceptor for {http://badhostname:9080/system/properties}WebClient has thrown exception, unwinding now
-Could not send Message.
-[err] Runtime exception: java.net.UnknownHostException: UnknownHostException invoking http://badhostname:9080/system/properties: badhostname
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.325 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Running it.io.openliberty.guides.query.QueryServiceIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.88 s - in it.io.openliberty.guides.query.QueryServiceIT
 
-Results :
+Results:
 
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
-
-The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
-
-To see whether the tests detect a failure, change the **endpoint** for the **inventory** service in
-the **src/main/java/io/openliberty/guides/inventory/InventoryResource.java** file to something else. Then,
-run the tests again to see that a test failure occurs.
-
-
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 # **Summary**
 
 ## **Nice Work!**
 
-You just used CDI services in Open Liberty to build a simple inventory application.
+You modified an application to make HTTP requests by using a reactive JAX-RS client with Open Liberty and Jersey's RxJava provider.
 
 
 
@@ -630,11 +966,11 @@ You just used CDI services in Open Liberty to build a simple inventory applicati
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-cdi-intro** project by running the following commands:
+Delete the **guide-reactive-rest-client** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-cdi-intro
+rm -fr guide-reactive-rest-client
 ```
 {: codeblock}
 
@@ -643,7 +979,7 @@ rm -fr guide-cdi-intro
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Injecting%20dependencies%20into%20microservices&guide-id=cloud-hosted-guide-cdi-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20using%20the%20reactive%20JAX-RS%20client&guide-id=cloud-hosted-guide-reactive-rest-client)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -651,15 +987,16 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-cdi-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-cdi-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-rest-client/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-rest-client/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 
 <br/>
