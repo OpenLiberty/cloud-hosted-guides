@@ -271,10 +271,8 @@ Replace the server configuration file.
 The configuration does the following actions:
 
 * Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
-* Configures the server to resolve the HTTP port numbers from variables, which are then specified in
-the Maven **pom.xml** file. This is specified in the **httpEndpoint** element. Variables use the **${variableName}** syntax.
-* Configures the server to run the produced web application on a context root specified in the 
-**pom.xml** file. This is specified in the **webApplication** element.
+* Configures the server to resolve the HTTP port numbers from variables, which are then specified in the Maven **pom.xml** file. This is specified in the **httpEndpoint** element. Variables use the **${variableName}** syntax.
+* Configures the server to run the produced web application on a context root specified in the **pom.xml** file. This is specified in the **webApplication** element.
 
 
 The variables that are being used in the **server.xml** file are provided by the properties set in the Maven **pom.xml** file. The properties must be formatted as **liberty.var.variableName**.
