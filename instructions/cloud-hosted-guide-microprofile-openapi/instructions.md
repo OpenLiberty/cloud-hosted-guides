@@ -119,6 +119,10 @@ models to manually create all elements of the OpenAPI tree. Finally, you can fil
 OpenAPI tree, changing them to your liking or removing them entirely.
 
 Navigate to the **start** directory to begin.
+```
+cd /home/project/guide-microprofile-openapi/start
+```
+{: codeblock}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -825,7 +829,7 @@ as a part of the integration test suite.
 <br/>
 ### **Running the tests**
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 You will see the following output:
 
