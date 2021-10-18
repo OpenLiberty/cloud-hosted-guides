@@ -56,6 +56,10 @@ The **finish** directory contains the finished project that you will build.
 # **Creating the producer in the system microservice**
 
 Navigate to the **start** directory to begin. 
+```
+cd /home/project/guide-microprofile-reactive-messaging/start
+```
+{: codeblock}
 
 The **system** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of events. Every 15 seconds, the **system** microservice publishes an event that contains its calculation of the average system load (its CPU usage) for the last minute.
 
