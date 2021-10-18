@@ -1,7 +1,7 @@
 
-# **Welcome to the Consuming RESTful services using the reactive JAX-RS client guide!**
+# **Welcome to the Accessing and persisting data in microservices using Java Persistence API (JPA) guide!**
 
-Learn how to use a reactive JAX-RS client to asynchronously invoke RESTful microservices over HTTP.
+
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,42 +10,38 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
+Learn how to use Java Persistence API (JPA) to access and persist data to a database for your microservices.
+
+
 
 # **What you'll learn**
 
-First, you'll learn how to create a reactive JAX-RS client application by using the default reactive JAX-RS client APIs.
-You will then learn how to take advantage of the RxJava reactive extensions with a
-pluggable reactive JAX-RS client provider that's published by [Eclipse Jersey](https://eclipse-ee4j.github.io/jersey).
-The JAX-RS client is an API used to communicate with RESTful web services. 
-The API makes it easy to consume a web service by using the HTTP protocol,
-which means that you can efficiently implement client-side applications. 
-The reactive client extension to JAX-RS is an API that enables you to use the reactive programming model when using the JAX-RS client.
+You will learn how to use the Java Persistence API (JPA) to map Java objects to relational database 
+tables and perform create, read, update and delete (CRUD) operations on the data in your microservices. 
 
-Reactive programming is an extension of asynchronous programming and focuses on the flow of data through data streams. 
-Reactive applications process data when it becomes available and respond to requests as soon as processing is complete. 
-The request to the application and response from the application are decoupled so that
-the application is not blocked from responding to other requests in the meantime. 
-Because reactive applications can run faster than synchronous applications, they provide a much smoother user experience.
+JPA is a Java EE specification for representing relational database table data as Plain Old Java Objects (POJO).
+JPA simplifies object-relational mapping (ORM) by using annotations to map Java objects 
+to tables in a relational database. In addition to providing an efficient API for performing
+CRUD operations, JPA also reduces the burden of having to write JDBC and SQL code when performing
+database operations and takes care of database vendor-specific differences. This capability allows you to 
+focus on the business logic of your application instead of wasting time implementing repetitive CRUD logic.
 
-The application in this guide demonstrates how the JAX-RS client accesses remote RESTful services by using asynchronous method calls. 
-You’ll first look at the supplied client application that uses the JAX-RS default **CompletionStage**-based provider. 
-Then, you’ll modify the client application to use Jersey’s RxJava provider, which is an alternative JAX-RS reactive provider. 
-Both Jersey and Apache CXF provide third-party reactive libraries for RxJava and were tested for use in Open Liberty.
+The application that you will be working with is an event manager, which is composed of a UI
+and an event microservice for creating, retrieving, updating, and deleting events. In this 
+guide, you will be focused on the event microservice. The event microservice consists of
+a JPA entity class whose fields will be persisted to a database. The database logic is implemented in 
+a Data Access Object (DAO) to isolate the database operations from the rest of the service. 
+This DAO accesses and persists JPA entities to the database and can be injected 
+and consumed by other components in the microservice. An Embedded Derby database is used 
+as a data store for all the events.
 
-The application that you will be working with consists of three microservices, **system**, **inventory**, and **query**. 
-Every 15 seconds, the **system** microservice calculates and publishes an event that contains its current average system load. 
-The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems
-and their current system loads.
+You will use JPA annotations to define an entity class whose fields are persisted to the 
+database. The interaction between your service and the database is mediated by the persistence 
+context that is managed by an entity manager. In a Java EE environment, you can use an
+application-managed entity manager or a container-managed entity manager. In this guide, 
+you will use a container-managed entity manager that is injected into the DAO so the application
+server manages the opening and closing of the entity manager for you. 
 
-![Reactive Query Service](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-rest-client/master/assets/QueryService.png)
-
-
-The microservice that you will modify is the **query** service. It communicates with the **inventory** service 
-to determine which system has the highest system load and which system has the lowest system load.
-
-The **system** and **inventory** microservices use MicroProfile Reactive Messaging to send and receive the system load events.
-If you want to learn more about reactive messaging, see the 
-[Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 # **Getting started**
 
@@ -59,11 +55,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-rest-client.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jpa-intro.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-reactive-rest-client.git
-cd guide-reactive-rest-client
+git clone https://github.com/openliberty/guide-jpa-intro.git
+cd guide-jpa-intro
 ```
 {: codeblock}
 
@@ -72,847 +68,600 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-# **Creating a web client using the default JAX-RS API**
+<br/>
+### **Try what you'll build**
+
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+To try out the application, run the following commands to navigate to the **finish/frontendUI** directory and
+deploy the **frontendUI** service to Open Liberty:
+
+```
+cd finish/frontendUI
+mvn liberty:run
+```
+{: codeblock}
+
+
+
+Open another command-line session and run the following commands to navigate to the **finish/backendServices** directory and
+deploy the service to Open Liberty:
+```
+cd finish/backendServices
+mvn liberty:run
+```
+{: codeblock}
+
+
+
+After you see the following message in both command-line sessions, both your services are ready.
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+Select **Launch Application** from the menu of the IDE, 
+type in **9090** to specify the port number for the microservice, and click the **OK** button. 
+You're redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
+where **accountname** is your account name.
+The event application does not display any events
+because no events are stored in the database. Go ahead and click **Create Event**, located in the 
+left navigation bar. After entering an event name, location and time, click **Submit** to persist your 
+event entity to the database. The event is now stored in the database and is visible in the list of 
+current events.
+
+Notice that if you stop the Open Liberty server and then restart it, the events created
+are still displayed in the list of current events. Ensure you are in the **finish/backendServices** directory and run the following Maven goals to stop
+and then restart the server:
+```
+mvn liberty:stop
+mvn liberty:run
+```
+{: codeblock}
+
+
+The events created are still displayed in the list of current events. The **Update** action link
+located beside each event allows you to make modifications to the persisted entity and the 
+**Delete** action link allows you to remove entities from the database.
+
+After you are finished checking out the application, stop the Open Liberty servers by pressing CTRL+C in the
+command-line sessions where you ran the **backendServices** and **frontendUI** services.
+Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another command-line session for the **frontendUI**
+and **backendServices** services:
+```
+mvn -pl frontendUI liberty:stop
+mvn -pl backendServices liberty:stop
+```
+{: codeblock}
+
+
+
+
+# **Defining a JPA entity class**
 
 Navigate to the **start** directory to begin.
 ```
-cd /home/project/guide-reactive-rest-client/start
+cd /home/project/guide-jpa-intro/start
 ```
 {: codeblock}
 
-JAX-RS provides a default reactive provider that you can use to create a reactive REST client using the **CompletionStage** interface.
+When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
 
-Create an **InventoryClient** class, which retrieves inventory data,
-and a **QueryResource** class, which queries data from the **inventory** service.
+Run the following commands to navigate to the **frontendUI** directory and start the **frontendUI** service in dev mode:
 
-Create the **InventoryClient** interface.
+```
+cd frontendUI
+mvn liberty:dev
+```
+{: codeblock}
+
+
+
+Open another command-line session and run the following commands to navigate to
+the **backendServices** directory and start the service in dev mode:
+
+```
+cd backendServices
+mvn liberty:dev
+```
+{: codeblock}
+
+
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+************************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command line to listen for file changes. Open another command-line session to continue, 
+or open the project in your editor.
+
+To store Java objects in a database, you must define a JPA entity class. A JPA entity is a Java 
+object whose non-transient and non-static fields will be persisted to the database. Any Plain Old 
+Java Object (POJO) class can be designated as a JPA entity. However, the class must be annotated
+with the **@Entity** annotation, must not be declared final and must have a public or protected non-argument
+constructor. JPA maps an entity type to a database table and persisted instances will be represented 
+as rows in the table.
+
+The **Event** class is a data model that represents events in the event microservice and is annotated with JPA
+annotations.
+
+Create the **Event** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
 
 
 
 
 ```
-package io.openliberty.guides.query.client;
+package io.openliberty.guides.event.models;
 
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.CompletionStage;
+import java.io.Serializable;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.NamedQuery;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Column;
+import javax.persistence.GenerationType;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.HttpHeaders;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+@Entity
+@Table(name = "Event")
+@NamedQuery(name = "Event.findAll", query = "SELECT e FROM Event e")
+@NamedQuery(name = "Event.findEvent", query = "SELECT e FROM Event e WHERE "
+    + "e.name = :name AND e.location = :location AND e.time = :time")
+public class Event implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-@RequestScoped
-public class InventoryClient {
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id
+    @Column(name = "eventId")
+    private int id;
 
-    @Inject
-    @ConfigProperty(name = "INVENTORY_BASE_URI", defaultValue = "http://localhost:9085")
-    private String baseUri;
+    @Column(name = "eventLocation")
+    private String location;
+    @Column(name = "eventTime")
+    private String time;
+    @Column(name = "eventName")
+    private String name;
 
-    public List<String> getSystems() {
-        return ClientBuilder.newClient()
-                            .target(baseUri)
-                            .path("/inventory/systems")
-                            .request()
-                            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                            .get(new GenericType<List<String>>(){});
+    public Event() {
     }
 
-    public CompletionStage<Properties> getSystem(String hostname) {
-        return ClientBuilder.newClient()
-                            .target(baseUri)
-                            .path("/inventory/systems")
-                            .path(hostname)
-                            .request()
-                            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                            .rx()
-                            .get(Properties.class);
+    public Event(String name, String location, String time) {
+        this.name = name;
+        this.location = location;
+        this.time = time;
     }
-}
-```
-{: codeblock}
 
+    public int getId() {
+        return id;
+    }
 
+    public void setId(int id) {
+        this.id = id;
+    }
 
-The **getSystem()** method returns the **CompletionStage** interface. 
-This interface represents a unit or stage of a computation.
-When the associated computation completes, the value can be retrieved. 
-The **rx()** method calls the **CompletionStage** interface. 
-It retrieves the **CompletionStageRxInvoker** class and allows these methods to
-function correctly with the **CompletionStage** interface return type.
+    public String getLocation() {
+        return location;
+    }
 
-Create the **QueryResource** class.
+    public void setLocation(String location) {
+        this.location = location;
+    }
 
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
-```
-{: codeblock}
+    public String getTime() {
+        return time;
+    }
 
+    public void setTime(String time) {
+        this.time = time;
+    }
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
+    public void setName(String name) {
+        this.name = name;
+    }
 
-
-
-
-```
-package io.openliberty.guides.query;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
-import io.openliberty.guides.query.client.InventoryClient;
-
-@ApplicationScoped
-@Path("/query")
-public class QueryResource {
+    public String getName() {
+        return name;
+    }
     
-    @Inject
-    private InventoryClient inventoryClient;
-
-    @GET
-    @Path("/systemLoad")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Properties> systemLoad() {
-        List<String> systems = inventoryClient.getSystems();
-        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
-        final Holder systemLoads = new Holder();
-
-        for (String system : systems) {
-            inventoryClient.getSystem(system)
-                           .thenAcceptAsync(p -> {
-                                if (p != null) {
-                                    systemLoads.updateValues(p);
-                                }
-                                remainingSystems.countDown();
-                           })
-                           .exceptionally(ex -> {
-                                remainingSystems.countDown();
-                                ex.printStackTrace();
-                                return null;
-                           });
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + id;
+        result = prime * result + ((location == null) ? 0 : location.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result +
+                 (int) (serialVersionUID ^ (serialVersionUID >>> 32));
+        result = prime * result + ((time == null) ? 0 : time.hashCode());
+        return result;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Event other = (Event) obj;
+        if (location == null) {
+            if (other.location != null) {
+                return false;
+            }
+        } else if (!location.equals(other.location)) {
+            return false;
+        }
+        if (time == null) {
+            if (other.time != null) {
+                return false;
+            }
+        } else if (!time.equals(other.time)) {
+            return false;
+        }
+        if (name == null) {
+            if (other.name != null) {
+                return false;
+            }
+        } else if (!name.equals(other.name)) {
+            return false;
         }
 
-        try {
-            remainingSystems.await(30, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return systemLoads.getValues();
+        return true;
     }
 
-    private class Holder {
-        private volatile Map<String, Properties> values;
-
-        public Holder() {
-            this.values = new ConcurrentHashMap<String, Properties>();
-            init();
-        }
-
-        public Map<String, Properties> getValues() {
-            return this.values;
-        }
-
-        public void updateValues(Properties p) {
-            final BigDecimal load = (BigDecimal) p.get("systemLoad");
-
-            this.values.computeIfPresent("lowest", (key, curr_val) -> {
-                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(lowest) < 0 ? p : curr_val;
-            });
-            this.values.computeIfPresent("highest", (key, curr_val) -> {
-                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(highest) > 0 ? p : curr_val;
-            });
-        }
-
-        private void init() {
-            this.values.put("highest", new Properties());
-            this.values.put("lowest", new Properties());
-            this.values.get("highest").put("hostname", "temp_max");
-            this.values.get("lowest").put("hostname", "temp_min");
-            this.values.get("highest").put("systemLoad", new BigDecimal(Double.MIN_VALUE));
-            this.values.get("lowest").put("systemLoad", new BigDecimal(Double.MAX_VALUE));
-        }
+    @Override
+    public String toString() {
+        return "Event [name=" + name + ", location=" + location + ", time=" + time
+                + "]";
     }
 }
+
 ```
 {: codeblock}
 
 
 
-The **systemLoad** endpoint asynchronously processes the data that is
-retrieved by the **InventoryClient** interface and serves that data after all of the services respond. 
-The **thenAcceptAsync()** and **exceptionally()**
-methods together behave like an asynchronous try-catch block. 
-The data is processed in the **thenAcceptAsync()** method only after the **CompletionStage** interface finishes retrieving it. 
-When you return a **CompletionStage** type in the resource, it doesn’t necessarily mean that the computation completed and the response was built.
+The following table breaks down the new annotations:
 
-A **CountDownLatch** object is used to track how many asynchronous requests are being waited on. 
-After each thread is completed, the **countdown()** method
-counts the **CountDownLatch** object down towards **0**. 
-This means that the value returns only after the thread that's retrieving the value is complete.
-The **await()** method stops and waits until all of the requests are complete. 
-While the countdown completes, the main thread is free to perform other tasks. 
-In this case, no such task is present.
+| *Annotation*    | *Description*
+| ---| ---
+| **@Entity** | Declares the class as an entity
+| **@Table**  | Specifies details of the table such as name 
+| **@NamedQuery** | Specifies a predefined database query that is run by an **EntityManager** instance.
+| **@Id**       |  Declares the primary key of the entity
+| **@GeneratedValue**    | Specifies the strategy used for generating the value of the primary key. The **strategy = GenerationType.AUTO** code indicates that the generation strategy is automatically selected
+| **@Column**    | Specifies that the field is mapped to a column in the database table. The **name** attribute is optional and indicates the name of the column in the table
 
-# **Building and running the application**
 
-The **system**, **inventory**, and **query** microservices will be built in Docker containers. 
-If you want to learn more about Docker containers,
-check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
+# **Configuring JPA**
 
-Start your Docker environment.
+The **persistence.xml** file is a configuration file that defines a persistence unit. The
+persistence unit specifies configuration information for the entity manager.
 
-To build the application, run the Maven **install** and **package** goals from the command-line session in the **start** directory:
+Create the configuration file.
 
+> Run the following touch command in your terminal
 ```
-mvn -pl models install
-mvn package
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
 ```
 {: codeblock}
 
 
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
-
-
-Run the following commands to containerize the microservices:
-
-```
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-docker build -t query:1.0-SNAPSHOT query/.
-```
-{: codeblock}
-
-
-Next, use the provided script to start the application in Docker containers.
-The script creates a network for the containers to communicate with each other.
-It creates containers for Kafka, Zookeeper, and all of the microservices in the project.
-
-
-```
-./scripts/startContainers.sh
-```
-{: codeblock}
-
-
-
-
-The microservices will take some time to become available.
-Run the following commands to confirm that the **inventory** and **query** microservices are up and running:
-```
-curl -s http://localhost:9085/health | jq
-```
-{: codeblock}
-
-```
-curl -s http://localhost:9080/health | jq
-```
-{: codeblock}
-
-Once the microservices are up and running, you can access the application by making requests to the **query/systemLoad** endpoint
-by using the following **curl** command:
-```
-curl -s http://localhost:9080/query/systemLoad | jq
-```
-{: codeblock}
-
-When the service is ready, you see an output similar to the following example. 
-This example was formatted for readability:
-
-```
-
-    "highest": {
-        "hostname":"30bec2b63a96",       
-        ”systemLoad": 6.1
-    },     
-    "lowest": { 
-        "hostname":"55ec2b63a96",    
-        ”systemLoad": 0.1
-    }
-}
-```
-
-The JSON output contains a **highest** attribute that represents the system with the highest load.
-Similarly, the **lowest** attribute represents the system with the lowest load. 
-The JSON output for each of these attributes contains the **hostname** and **systemLoad** of the system.
-
-When you are done checking out the application, run the following command to stop the **query** microservice. 
-Leave the **system** and **inventory** services running because they will be used when the application is rebuilt later in the guide:
-
-```
-docker stop query
-```
-{: codeblock}
-
-
-
-# **Updating the web client to use an alternative reactive provider**
-
-
-Although JAX-RS provides the default reactive provider that returns **CompletionStage** types,
-you can alternatively use another provider that supports other reactive frameworks like [RxJava](https://github.com/ReactiveX/RxJava). 
-The Apache CXF and Eclipse Jersey projects produce such providers.
-You'll now update the web client to use the Jersey reactive provider for RxJava. 
-With this updated reactive provider, you can write clients that use RxJava objects instead of clients that use only the **CompletionStage** interface. 
-These custom objects provide a simpler and faster way for you to create scalable RESTful services with a **CompletionStage** interface.
-
-Replace the Maven configuration file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-reactive-rest-client/start/query/pom.xml
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
 
 
 
 
 ```
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.2"
+    xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>query</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>8.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.enterprise.concurrent</groupId>
-            <artifactId>javax.enterprise.concurrent-api</artifactId>
-            <version>1.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-            <version>2.0.1.Final</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>3.3</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.openliberty.guides</groupId>
-            <artifactId>models</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <!-- tag::jerseyClient[] -->
-        <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-client</artifactId>
-            <version>2.34</version>
-        </dependency>
-        <!-- tag::jerseyRxjava[] -->
-        <dependency>
-            <groupId>org.glassfish.jersey.ext.rx</groupId>
-            <artifactId>jersey-rx-client-rxjava</artifactId>
-            <version>2.34</version>
-        </dependency>
-        <!-- tag::jerseyRxjava2[] -->
-        <dependency>
-            <groupId>org.glassfish.jersey.ext.rx</groupId>
-            <artifactId>jersey-rx-client-rxjava2</artifactId>
-            <version>2.34</version>
-        </dependency>
-        <!-- For tests -->
-        <dependency>
-            <groupId>org.microshed</groupId>
-            <artifactId>microshed-testing-liberty</artifactId>
-            <version>0.9.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>mockserver</artifactId>
-            <version>1.15.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mock-server</groupId>
-            <artifactId>mockserver-client-java</artifactId>
-            <version>5.11.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.7.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.1</version>
-                <configuration>
-                    <packagingExcludes>pom.xml</packagingExcludes>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.3.4</version>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <executions>
-                    <execution>
-                        <id>integration-test</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>verify</id>
-                        <goals>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-{: codeblock}
-
-
-The **jersey-rx-client-rxjava** and
-**jersey-rx-client-rxjava2** dependencies provide the **RxInvokerProvider** classes,
-which are registered to the **jersey-client** **ClientBuilder** class.
-
-Update the client to accommodate the custom object types that you are trying to return. 
-You'll need to register the type of object that you want inside the client invocation.
-
-Replace the **InventoryClient** interface.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
-
-
-
-
-```
-package io.openliberty.guides.query.client;
-
-import java.util.List;
-import java.util.Properties;
-
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.glassfish.jersey.client.rx.rxjava.RxObservableInvoker;
-import org.glassfish.jersey.client.rx.rxjava.RxObservableInvokerProvider;
-
-import rx.Observable;
-
-@RequestScoped
-public class InventoryClient {
-
-    @Inject
-    @ConfigProperty(name = "INVENTORY_BASE_URI", defaultValue = "http://localhost:9085")
-    private String baseUri;
-
-    public List<String> getSystems() {
-        return ClientBuilder.newClient()
-                            .target(baseUri)
-                            .path("/inventory/systems")
-                            .request()
-                            .header(HttpHeaders.CONTENT_TYPE,
-                            MediaType.APPLICATION_JSON)
-                            .get(new GenericType<List<String>>() { });
-    }
-
-    public Observable<Properties> getSystem(String hostname) {
-        return ClientBuilder.newClient()
-                            .target(baseUri)
-                            .register(RxObservableInvokerProvider.class)
-                            .path("/inventory/systems")
-                            .path(hostname)
-                            .request()
-                            .header(HttpHeaders.CONTENT_TYPE,
-                            MediaType.APPLICATION_JSON)
-                            .rx(RxObservableInvoker.class)
-                            .get(new GenericType<Properties>() { });
-    }
-}
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
+                        http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
+    <!-- tag::transaction-type[] -->
+    <persistence-unit name="jpa-unit" transaction-type="JTA">
+        <!-- tag::jta-data[] -->
+        <jta-data-source>jdbc/eventjpadatasource</jta-data-source>
+        <properties>
+            <property name="eclipselink.ddl-generation" value="create-tables"/>
+            <property name="eclipselink.ddl-generation.output-mode" value="both" />
+        </properties>
+    </persistence-unit>
+</persistence>
 ```
 {: codeblock}
 
 
 
-The return type of the **getSystem()** method is now an **Observable** object instead of a **CompletionStage** interface. 
-[Observable](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html) is a
-collection of data that waits to be subscribed to before it can release any data and is part of RxJava. 
-The **rx()** method now needs to contain **RxObservableInvoker.class** as an argument.
-This argument calls the specific invoker, **RxObservableInvoker**, for the **Observable** class that's provided by Jersey. 
-In the **getSystem()** method,
-the **register(RxObservableInvokerProvider)** method call registers the **RxObservableInvoker** class,
-which means that the client can recognize the invoker provider.
+The persistence unit is defined by the **persistence-unit** XML element. The **name** attribute is 
+required and is used to identify the persistent unit when using the **@PersistenceContext**
+annotation to inject the entity manager later in this guide. The **transaction-type="JTA"** 
+attribute specifies to use Java Transaction API (JTA) transaction management.
+Since we are using a container-managed entity manager, JTA transactions must be used. 
 
-In some scenarios, a producer might generate more data than the consumers can handle. 
-JAX-RS can deal with cases like these by using the RxJava **Flowable** class with backpressure. 
-To learn more about RxJava and backpressure, see
-[JAX-RS reactive extensions with RxJava backpressure](https://openliberty.io/blog/2019/04/10/jaxrs-reactive-extensions.html).
-
-# **Updating the REST resource to support the reactive JAX-RS client**
+A JTA transaction type requires a JTA data source to be provided. The **jta-data-source** 
+element specifies the Java Naming and Directory Interface (JNDI) name of 
+the data source that is used. The **data source** has already been configured for you
+in the **backendServices/src/main/liberty/config/server.xml** file. This data source configuration is where 
+the Java Database Connectivity (JDBC) connection is defined along with some database
+vendor-specific properties.
 
 
-Now that the client methods return the **Observable** class, you must update the resource to accommodate these changes.
-
-Replace the **QueryResource** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
+The **eclipselink.ddl-generation** properties are used here so that you aren't required to 
+manually create a database table to run this sample application. To learn more about the 
+**ddl-generation** properties, see the 
+[JPA Extensions Reference for EclipseLink.](http://www.eclipse.org/eclipselink/documentation/2.5/jpa/extensions/p_ddl_generation.htm)
 
 
+# **Performing CRUD operations using JPA**
 
+The CRUD operations are defined in the DAO. To perform these operations by using JPA, we need an **EventDao** class. 
 
-```
-package io.openliberty.guides.query;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
-import io.openliberty.guides.query.client.InventoryClient;
-
-@ApplicationScoped
-@Path("/query")
-public class QueryResource {
-    
-    @Inject
-    private InventoryClient inventoryClient;
-
-    @GET
-    @Path("/systemLoad")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Properties> systemLoad() {
-        List<String> systems = inventoryClient.getSystems();
-        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
-        final Holder systemLoads = new Holder();
-        for (String system : systems) {
-            inventoryClient.getSystem(system)
-                           .subscribe(p -> {
-                                if (p != null) {
-                                    systemLoads.updateValues(p);
-                                }
-                                remainingSystems.countDown();
-                           }, e -> {
-                                remainingSystems.countDown();
-                                e.printStackTrace();
-                           });
-        }
-
-        try {
-            remainingSystems.await(30, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        
-        return systemLoads.getValues();
-    }
-
-    private class Holder {
-        private volatile Map<String, Properties> values;
-
-        public Holder() {
-            this.values = new ConcurrentHashMap<String, Properties>();
-            init();
-        }
-
-        public Map<String, Properties> getValues() {
-            return this.values;
-        }
-
-        public void updateValues(Properties p) {
-            final BigDecimal load = (BigDecimal) p.get("systemLoad");
-
-            this.values.computeIfPresent("lowest", (key, curr_val) -> {
-                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(lowest) < 0 ? p : curr_val;
-            });
-            this.values.computeIfPresent("highest", (key, curr_val) -> {
-                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(highest) > 0 ? p : curr_val;
-            });
-        }
-
-        private void init() {
-            this.values.put("highest", new Properties());
-            this.values.put("lowest", new Properties());
-            this.values.get("highest").put("hostname", "temp_max");
-            this.values.get("lowest").put("hostname", "temp_min");
-            this.values.get("highest").put("systemLoad", new BigDecimal(Double.MIN_VALUE));
-            this.values.get("lowest").put("systemLoad", new BigDecimal(Double.MAX_VALUE));
-        }
-    }
-}
-```
-{: codeblock}
-
-
-The goal of the **systemLoad()** method is to return the system with the largest load and the system with the smallest load. 
-The **systemLoad** endpoint first gets all of the hostnames by calling the **getSystems()** method. 
-Then it loops through the hostnames and calls the **getSystem()** method on each one.
-
-Instead of using the **thenAcceptAsync()** method,
-**Observable** uses the **subscribe()** method to asynchronously process data. 
-Thus, any necessary data processing happens inside the **subscribe()** method. 
-In this case, the necessary data processing is saving the data in the temporary **Holder** class.
-The **Holder** class is used to store the value that is returned from the client because values cannot be returned inside the **subscribe()** method. 
-The highest and lowest load systems are updated in the **updateValues()** method.
-
-# **Rebuilding and running the application**
-
-Run the Maven **install** and **package** goals from the command-line session in the **start** directory:
-
-```
-mvn -pl query package
-```
-{: codeblock}
-
-
-Run the following command to containerize the **query** microservice:
-
-```
-docker build -t query:1.0-SNAPSHOT query/.
-```
-{: codeblock}
-
-
-Next, use the provided script to restart the query service in a Docker container. 
-
-
-```
-./scripts/startQueryContainer.sh
-```
-{: codeblock}
-
-
-
-
-The **query** microservice will take some time to become available.
-Run the following command to confirm that the **query** microservice is up and running:
-```
-curl -s http://localhost:9080/health | jq
-```
-{: codeblock}
-
-Once the **query** microservice is up and running, 
-you can access the application by making requests to the **query/systemLoad** endpoint using
-the following **curl** command:
-```
-curl -s http://localhost:9080/query/systemLoad | jq
-```
-{: codeblock}
-
-Switching to a reactive programming model freed up the thread that was handling your request to **query/systemLoad**. 
-While the client request is being handled, the thread can handle other work.
-
-When you are done checking out the application, run the following script to stop the application:
-
-
-
-```
-./scripts/stopContainers.sh
-```
-{: codeblock}
-
-
-# **Testing the query microservice**
-
-A few tests are included for you to test the basic functionality of the **query** microservice. 
-If a test failure occurs, then you might have introduced a bug into the code.
-
-Create the **QueryServiceIT** class.
+Create the **EventDao** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
+touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
 
 
 
 
 ```
-package it.io.openliberty.guides.query;
+package io.openliberty.guides.event.dao;
+
+import java.util.List;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import io.openliberty.guides.event.models.Event;
+
+import javax.enterprise.context.RequestScoped;
+
+@RequestScoped
+public class EventDao {
+    
+    @PersistenceContext(name = "jpa-unit")
+    private EntityManager em;
+    
+    public void createEvent(Event event) {
+        em.persist(event);
+    }
+
+    public Event readEvent(int eventId) {
+        return em.find(Event.class, eventId);
+    }
+
+    public void updateEvent(Event event) {
+        em.merge(event);
+    }
+
+    public void deleteEvent(Event event) {
+        em.remove(event);
+    }
+
+    public List<Event> readAllEvents() {
+        return em.createNamedQuery("Event.findAll", Event.class).getResultList();
+    }
+
+    public List<Event> findEvent(String name, String location, String time) {
+        return em.createNamedQuery("Event.findEvent", Event.class)
+            .setParameter("name", name)
+            .setParameter("location", location)
+            .setParameter("time", time).getResultList();
+    }
+}
+```
+{: codeblock}
+
+
+
+To use the entity manager at runtime, inject it into our CDI bean through the
+**@PersistenceContext** annotation. The entity manager interacts with the persistence context. 
+Every **EntityManager** instance is associated with a persistence context. The persistence context 
+manages a set of entities and is aware of the different states that an entity can have.
+The persistence context synchronizes with the database when a transaction commits.
+
+The **EventDao** class has a method for each CRUD operation, so let's break them down:
+
+* The **createEvent()** method persists an instance of the **Event** entity class to the data store by calling the **persist()** method on an **EntityManager** instance. The entity instance becomes managed and changes to it will be tracked by the entity manager.
+
+* The **readEvent()** method returns an instance of the **Event** entity class with the specified primary key by calling the **find()** method on an **EntityManager** instance. If the event instance is found, it is returned in a managed state, but, if the event instance is not found, **null** is returned.
+
+* The **readAllEvents()** method demonstrates an alternative way to retrieve event objects from the database. This method returns a list of instances of the **Event** entity class by using the **Event.findAll** query specified in the **@NamedQuery** annotation on the **Event** class. Similarly, the **findEvent()** method uses the **Event.findEvent** named query to find an event with the given name, location and time. 
+
+
+* The **updateEvent()** method creates a managed instance of a detached entity instance. The entity manager automatically tracks all managed entity objects in its persistence context for changes and synchronizes them with the database. However, if an entity becomes detached, you must merge that entity into the persistence context by calling the **merge()** method so that changes to loaded fields of the detached entity are tracked.
+
+* The **deleteEvent()** method removes an instance of the **Event** entity class from the database by calling the **remove()** method on an **EntityManager** instance. The state of the entity is changed to removed and is removed from the database upon transaction commit. 
+
+The DAO is injected into the **backendServices/src/main/java/io/openliberty/guides/event/resources/EventResource.java**
+class and used to access and persist data. The **@Transactional** annotation is used in the
+**EventResource** class to declaratively control the transaction boundaries on the **@RequestScoped** CDI bean.
+This ensures that the methods run within the boundaries of an active global transaction, which is why it is not
+necessary to explicitly begin, commit or rollback transactions. At the end of the transactional
+method invocation, the transaction commits and the persistence context flushes any changes
+to Event entity instances it is managing to the database.
+
+
+
+# **Running the application**
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+When the server is running, select **Launch Application** from the menu of the IDE, 
+type in **9090** to specify the port number for the microservice, and click the **OK** button. 
+You're redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
+where **accountname** is your account name.
+
+Click **Create Event** in the left navigation bar to create events that are persisted to 
+the database. After you create an event, it is available to view, update, and delete in
+the **Current Events** section.
+
+
+# **Testing the application**
+
+Create the **EventEntityIT** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
+
+
+
+
+```
+package it.io.openliberty.guides.event;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.Map;
-import java.util.Properties;
+import java.util.HashMap;
+import javax.json.JsonObject;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Form;
+import javax.ws.rs.core.Response.Status;
+
+import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Test;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.SharedContainerConfig;
-import org.mockserver.model.HttpRequest;
-import org.mockserver.model.HttpResponse;
+import io.openliberty.guides.event.models.Event;
 
-import io.openliberty.guides.query.QueryResource;
+public class EventEntityIT extends EventIT {
 
-@MicroShedTest
-@SharedContainerConfig(AppContainerConfig.class)
-public class QueryServiceIT {
-
-    @RESTClient
-    public static QueryResource queryResource;
-
-    private static String testHost1 = 
-        "{" + 
-            "\"hostname\" : \"testHost1\"," +
-            "\"systemLoad\" : 1.23" +
-        "}";
-    private static String testHost2 = 
-        "{" + 
-            "\"hostname\" : \"testHost2\"," +
-            "\"systemLoad\" : 3.21" +
-        "}";
-    private static String testHost3 =
-        "{" + 
-            "\"hostname\" : \"testHost3\"," +
-            "\"systemLoad\" : 2.13" +
-        "}";
+    private static final String JSONFIELD_LOCATION = "location";
+    private static final String JSONFIELD_NAME = "name";
+    private static final String JSONFIELD_TIME = "time";
+    private static final String EVENT_TIME = "12:00 PM, January 1 2018";
+    private static final String EVENT_LOCATION = "IBM";
+    private static final String EVENT_NAME = "JPA Guide";
+    private static final String UPDATE_EVENT_TIME = "12:00 PM, February 1 2018";
+    private static final String UPDATE_EVENT_LOCATION = "IBM Updated";
+    private static final String UPDATE_EVENT_NAME = "JPA Guide Updated";
+    
+    private static final int NO_CONTENT_CODE = Status.NO_CONTENT.getStatusCode();
+    private static final int NOT_FOUND_CODE = Status.NOT_FOUND.getStatusCode();
 
     @BeforeAll
-    public static void setup() throws InterruptedException {
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody("[\"testHost1\"," + 
-                                                    "\"testHost2\"," +
-                                                    "\"testHost3\"]")
-                                         .withHeader("Content-Type", "application/json"));
+    public static void oneTimeSetup() {
+        port = System.getProperty("backend.http.port");
+        baseUrl = "http://localhost:" + port + "/";
+    }
 
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems/testHost1"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody(testHost1)
-                                         .withHeader("Content-Type", "application/json"));
+    @BeforeEach
+    public void setup() {
+        form = new Form();
+        client = ClientBuilder.newClient();
+        client.register(JsrJsonpProvider.class);
 
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems/testHost2"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody(testHost2)
-                                         .withHeader("Content-Type", "application/json"));
+        eventForm = new HashMap<String, String>();
 
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems/testHost3"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody(testHost3)
-                                         .withHeader("Content-Type", "application/json"));
+        eventForm.put(JSONFIELD_NAME, EVENT_NAME);
+        eventForm.put(JSONFIELD_LOCATION, EVENT_LOCATION);
+        eventForm.put(JSONFIELD_TIME, EVENT_TIME);
     }
 
     @Test
-    public void testSystemLoad() {
-        Map<String, Properties> response = queryResource.systemLoad();
-        assertEquals(
-            "testHost2",
-            response.get("highest").get("hostname"),
-            "Returned highest system load incorrect"
-        );
-        assertEquals(
-            "testHost1",
-            response.get("lowest").get("hostname"),
-            "Returned lowest system load incorrect"
-        );
+    public void testInvalidRead() {
+        assertEquals(true, getIndividualEvent(-1).isEmpty(),
+          "Reading an event that does not exist should return an empty list");
+    }
+
+    @Test
+    public void testInvalidDelete() {
+        int deleteResponse = deleteRequest(-1);
+        assertEquals(NOT_FOUND_CODE, deleteResponse,
+          "Trying to delete an event that does not exist should return the " 
+          + "HTTP response code " + NOT_FOUND_CODE);
+    }
+
+    @Test
+    public void testInvalidUpdate() {
+        int updateResponse = updateRequest(eventForm, -1);
+        assertEquals(NOT_FOUND_CODE, updateResponse,
+          "Trying to update an event that does not exist should return the " 
+          + "HTTP response code " + NOT_FOUND_CODE);
+    }
+    
+    @Test
+    public void testReadIndividualEvent() {
+        int postResponse = postRequest(eventForm);
+        assertEquals(NO_CONTENT_CODE, postResponse,
+          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
+
+        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+        JsonObject event = findEvent(e);
+        event = getIndividualEvent(event.getInt("id"));
+        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+
+        int deleteResponse = deleteRequest(event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, deleteResponse, 
+          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
+    }
+    
+    @Test
+    public void testCRUD() {
+        int eventCount = getRequest().size();
+        int postResponse = postRequest(eventForm);
+        assertEquals(NO_CONTENT_CODE, postResponse, 
+          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
+     
+        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+        JsonObject event = findEvent(e);
+        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
+
+        eventForm.put(JSONFIELD_NAME, UPDATE_EVENT_NAME);
+        eventForm.put(JSONFIELD_LOCATION, UPDATE_EVENT_LOCATION);
+        eventForm.put(JSONFIELD_TIME, UPDATE_EVENT_TIME);
+        int updateResponse = updateRequest(eventForm, event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, updateResponse, 
+          "Updating an event should return the HTTP response code " + NO_CONTENT_CODE);
+        
+        e = new Event(UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
+        event = findEvent(e);
+        assertData(event, UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
+
+        int deleteResponse = deleteRequest(event.getInt("id"));
+        assertEquals(NO_CONTENT_CODE, deleteResponse, 
+          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
+        assertEquals(eventCount, getRequest().size(), 
+          "Total number of events stored should be the same after testing " 
+          + "CRUD operations.");
+    }
+    
+    @AfterEach
+    public void teardown() {
+        response.close();
+        client.close();
     }
 
 }
@@ -920,43 +669,57 @@ public class QueryServiceIT {
 {: codeblock}
 
 
-The **testSystemLoad()** test case verifies that the
-**query** service can correctly calculate the highest and lowest system loads. 
 
+The **testInvalidRead()**, **testInvalidDelete()** and **testInvalidUpdate()** methods use a primary key that is not in the database to test reading, updating and deleting an event that does not
+exist, respectively.
 
+The **testReadIndividualEvent()** method persists a test event to the database and retrieves the 
+event object from the database using the primary key of the entity.
 
+The **testCRUD()** method creates a test event and persists it to the database. The event object is then 
+retrieved from the database to verify that the test event was actually persisted. Next, the  
+name, location, and time of the test event are updated. The event object is retrieved 
+from the database to verify that the updated event is stored. Finally, the updated test 
+event is deleted and one final check is done to ensure that the updated test event is no longer 
+stored in the database.
 
 <br/>
 ### **Running the tests**
 
-Navigate to the **query** directory, then verify that the tests pass by running the Maven **verify** goal:
-
-```
-cd query
-mvn verify
-```
-{: codeblock}
-
-
-When the tests succeed, you see output similar to the following example:
+Since you started Open Liberty in dev mode, press the **enter/return** key in the command-line session where you started the
+**backendServices** service to run the tests for the **backendServices**.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.query.QueryServiceIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.88 s - in it.io.openliberty.guides.query.QueryServiceIT
+Running it.io.openliberty.guides.event.EventEntityIT
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.703 sec - in it.io.openliberty.guides.event.EventEntityIT
 
-Results:
+Results :
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 
 ```
+
+When you are done checking out the services, exit dev mode by pressing CTRL+C in the command-line sessions where you
+ran the **frontendUI** and **backendServices** services,  or by typing **q** and then pressing the **enter/return** key.
+Alternatively, you can run the **liberty:stop** goal from the **start** directory in another command-line session for the **frontendUI**
+and **backendServices** services:
+```
+mvn -pl frontendUI liberty:stop
+mvn -pl backendServices liberty:stop
+```
+{: codeblock}
+
+
+
 
 # **Summary**
 
 ## **Nice Work!**
 
-You modified an application to make HTTP requests by using a reactive JAX-RS client with Open Liberty and Jersey's RxJava provider.
+You learned how to map Java objects to database tables by defining a JPA entity class whose instances are represented as rows in the table. You have injected a container-managed entity manager into a DAO and learned how to perform CRUD operations in your microservice in Open Liberty.
+
 
 
 
@@ -966,11 +729,11 @@ You modified an application to make HTTP requests by using a reactive JAX-RS cli
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-reactive-rest-client** project by running the following commands:
+Delete the **guide-jpa-intro** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-reactive-rest-client
+rm -fr guide-jpa-intro
 ```
 {: codeblock}
 
@@ -979,7 +742,7 @@ rm -fr guide-reactive-rest-client
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20using%20the%20reactive%20JAX-RS%20client&guide-id=cloud-hosted-guide-reactive-rest-client)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Accessing%20and%20persisting%20data%20in%20microservices%20using%20Java%20Persistence%20API%20(JPA)&guide-id=cloud-hosted-guide-jpa-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -987,16 +750,15 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-rest-client/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-rest-client/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jpa-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jpa-intro/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 <br/>
