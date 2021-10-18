@@ -157,6 +157,10 @@ You will use CDI to inject dependencies into the inventory manager application a
 ### **Managing scopes and contexts**
 
 Navigate to the **start** directory to begin.
+```
+cd /home/project/guide-cdi-intro/start
+```
+{: codeblock}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -581,7 +585,7 @@ If a test failure occurs, then you might have introduced a bug into the code.
 <br/>
 ### **Running the tests**
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 If the tests pass, you see a similar output to the following example:
 
