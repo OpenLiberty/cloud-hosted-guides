@@ -127,6 +127,10 @@ You can also try out the **inventory** integration tests by repeating the same c
 
 
 Navigate to the **start** directory to begin.
+```
+cd /home/project/guide-reactive-service-testing/start
+```
+{: codeblock}
 
 The example reactive application consists of the **system** and **inventory** microservices. The **system** microservice produces
 messages to the Kafka message broker, and the **inventory** microservice consumes messages from the Kafka message broker.
@@ -155,6 +159,10 @@ docker pull openliberty/open-liberty:full-java11-openj9-ubi
 
 With Open Liberty development mode, known as dev mode, you can use MicroShed Testing to run tests on an already running
 Open Liberty server. Navigate to the **start/system** directory.
+```
+cd /home/project/guide-reactive-service-testing/start/system
+```
+{: codeblock}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -332,7 +340,7 @@ test method **polls** a record from Kafka every 3 seconds until the timeout limi
 <br/>
 ### **Running the tests**
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 You will see the following output:
 
@@ -388,6 +396,10 @@ consumes messages, which means that tests are written to use the Kafka producer 
 ### **Configuring your containers**
 
 Navigate to the **start/inventory** directory.
+```
+cd /home/project/guide-reactive-service-testing/start/inventory
+```
+{: codeblock}
 
 The **AppContainerConfig** class is provided, and it is configured in the same way as it was for the **system** service. The two
 containers that are configured for use in the **inventory** service integration test are the **kafka** and **inventory** containers.
@@ -503,7 +515,7 @@ guide.
 <br/>
 ### **Running the tests**
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 You will see the following output:
 
