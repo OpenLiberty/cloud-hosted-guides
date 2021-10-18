@@ -1,7 +1,7 @@
 
-# **Welcome to the Enabling Cross-Origin Resource Sharing (CORS) guide!**
+# **Welcome to the Creating a hypermedia-driven RESTful web service guide!**
 
-Learn how to enable Cross-Origin Resource Sharing (CORS) in Open Liberty without writing Java code.
+// =================================================================================================
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,57 +11,104 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+You'll explore how to use Hypermedia As The Engine Of Application State (HATEOAS) to drive your
+RESTful web service on Open Liberty.
 
 # **What you'll learn**
 
-You will learn how to add two server configurations to enable CORS.
-Next, you will write and run tests to validate that the CORS configurations work. These tests send two different CORS requests to a REST service that has two different endpoints.
+You will learn how to use hypermedia to create a specific style of a response JSON, which has contents
+that you can use to navigate your REST service. You'll build on top of a simple inventory
+REST service that you can develop with MicroProfile technologies. You can find the service at the following URL:
+
+```
+http://localhost:9080/inventory/hosts
+```
+
+The service responds with a JSON file that contains all of the registered hosts. Each host has a collection
+of HATEOAS links:
+
+```
+{
+  "foo": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/foo",
+      "rel": "self"
+    }
+  ],
+  "bar": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/bar",
+      "rel": "self"
+    }
+  ],
+  "*": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/*",
+      "rel": "self"
+    }
+  ]
+}
+```
 
 <br/>
-### **CORS and its purpose**
+### **What is HATEOAS?**
 
-Cross-Origin Resource Sharing (CORS) is a W3C specification and mechanism that you can use to request restricted
-resources from a domain outside the current domain. In other words, CORS is a
-technique for consuming an API served from an origin different than yours.
-
-CORS is useful for requesting different kinds of data from websites that aren't your own. 
-These types of data might include images, videos, scripts, stylesheets, iFrames, or web fonts.
-
-However, you cannot request resources from another website domain without proper permission. In JavaScript, cross-origin requests with an **XMLHttpRequest** API and Ajax cannot happen unless CORS is enabled on the server that receives the request. Otherwise, same-origin security policy prevents the requests. For example, a web page that is served from the **http://aboutcors.com** server sends a request to get data to the
-**http://openliberty.io** server. Because of security concerns, browsers block the server response unless
-the server adds HTTP response headers to allow the web page to consume the data.
-
-Different ports and different protocols also trigger CORS. For example, the **http://abc.xyz:1234** domain is considered to be different from the **https://abc.xyz:4321** domain.
-
-Open Liberty has built-in support for CORS that gives you an easy and powerful way to configure the
-runtime to handle CORS requests without the need to write Java code.
+HATEOAS is a constrained form of REST application architecture.
+With HATEOAS, the client receives information about the available resources from the REST application.
+The client does not need to be hardcoded to a fixed set of resources, and the application
+and client can evolve independently. In other words, the application tells the client where it can go
+and what it can access by providing it with a simple collection of links to other available resources.
 
 <br/>
-### **Types of CORS requests**
+### **Response JSON**
 
-Familiarize yourself with two kinds of CORS requests to understand
-the attributes that you will add in the two CORS configurations.
+In the context of HATEOAS, each resource must contain a link reference to itself, which is commonly referred to as **self**. In this guide, the JSON structure features a mapping between the hostname and its corresponding list of HATEOAS links:
 
-<br/>
-#### **Simple CORS request**
-
-According to the CORS specification, an HTTP request is a simple CORS request if the request
-method is **GET**, **HEAD**, or **POST**. The header fields are any one of the **Accept**,
-**Accept-Language**, **Content-Language**, or **Content-Type** headers. The **Content-Type** header
-has a value of **application/x-www-form-urlencoded**, **multipart/form-data**, or **text/plain**.
-
-When clients, such as browsers, send simple CORS requests to servers on different domains, the clients include an
-**Origin** header with the client host name as the value. If the server allows the origin, the server includes an **Access-Control-Allow-Origin** header with a list of allowed origins or an asterisk (*) in the response back to the client. The asterisk indicates that all origins are allowed to access the endpoint on the server.
+```
+  "*": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/*",
+      "rel": "self"
+    }
+  ]
+```
 
 <br/>
-#### **Preflight CORS request**
+#### **Link types**
 
-A CORS request is not a simple CORS request if a client first sends a preflight CORS request before it sends the actual request. For example, the client sends a preflight request before it sends a **DELETE** HTTP request. To determine whether the request is safe to send, the client sends a preflight request, which is an **OPTIONS** HTTP request, to gather more information about the server. This preflight request has the **Origin** header and other headers to indicate the HTTP method and headers of the actual request to be sent after the preflight request.
+The following example shows two different links. The first link has a **self** relationship with the
+resource object and is generated whenever you register a host. The link points to that host
+entry in the inventory:
 
-Once the server receives the preflight request, if the origin is allowed, the server responds with headers that indicate the HTTP methods and headers that are allowed in the actual requests. The response might include more CORS-related headers.
+```
+  {
+    "href": "http://localhost:9080/inventory/hosts/<hostname>",
+    "rel": "self"
+  }
+```
 
-Next, the client sends the actual request, and the server responds.
+The second link has a **properties** relationship with the resource object and is generated
+if the host **system** service is running. The link points to the properties resource on the host:
 
+```
+  {
+    "href": "http://<hostname>:9080/system/properties",
+    "rel": "properties"
+  }
+```
+
+<br/>
+#### **Other formats**
+
+Although you should stick to the previous format for the purpose of this guide, another common
+convention has the link as the value of the relationship:
+
+```
+  "_links": {
+      "self": "http://localhost:9080/inventory/hosts/<hostname>",
+      "properties": "http://<hostname>:9080/system/properties"
+  }
+```
 
 # **Getting started**
 
@@ -75,11 +122,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cors.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-hateoas.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-cors.git
-cd guide-cors
+git clone https://github.com/openliberty/guide-rest-hateoas.git
+cd guide-rest-hateoas
 ```
 {: codeblock}
 
@@ -88,12 +135,63 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+<br/>
+### **Try what you'll build**
 
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-# **Enabling CORS**
-Navigate to the **start** directory to begin.
+To try out the application, first go to the **finish** directory and run the following
+Maven goal to build the application and deploy it to Open Liberty:
+
 ```
-cd /home/project/guide-cors/start
+cd finish
+mvn liberty:run
+```
+{: codeblock}
+
+
+After you see the following message, your application server is ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+After the server runs, you can find your hypermedia-driven **inventory** service at the following URL:
+
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+
+ http://localhost:9080/inventory/hosts
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/inventory/hosts
+```
+{: codeblock}
+
+
+
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
+in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
+from the **finish** directory in another shell session:
+
+```
+mvn liberty:stop
+```
+{: codeblock}
+
+
+
+
+# **Creating the response JSON**
+
+Navigate to the **start** directory.
+```
+cd /home/project/guide-rest-hateoas/start
 ```
 {: codeblock}
 
@@ -116,129 +214,155 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
-You will use a REST service that is already provided for you to test your CORS configurations.
-You can find this service in the **src/main/java/io/openliberty/guides/cors/** directory.
-
-You will send a simple request to the **/configurations/simple** endpoint and the preflight request
-to the **/configurations/preflight** endpoint.
-
+Begin by building your response JSON, which is composed of the name of the host machine and its list of HATEOAS links.
 
 <br/>
-### **Enabling a simple CORS configuration**
-Configure the server to allow the **/configurations/simple** endpoint to accept a **simple** CORS request.
-Add a simple CORS configuration to the **server.xml** file:
+### **Linking to inventory contents**
 
-Replace the server configuration file.
+As mentioned before, your starting point is an existing simple inventory REST service. 
+
+Look at the request handlers in the **InventoryResource.java** file.
+
+
+The **.../inventory/hosts/** URL will no longer respond with a JSON representation of your inventory contents, so you can discard the **listContents** method and integrate it into the **getPropertiesForHost** method.
+
+Replace the **InventoryResource** class.
 
 > From the menu of the IDE, select 
-> **File** > **Open** > guide-cors/start/src/main/liberty/config/server.xml
+> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java
 
 
 
 
 ```
-<server description="Sample Liberty server">
+package io.openliberty.guides.microprofile;
 
-<featureManager>
-    <feature>jaxrs-2.1</feature>
-</featureManager>
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriInfo;
 
-<variable name="default.http.port" defaultValue="9080"/>
-<variable name="default.https.port" defaultValue="9443"/>
-
-<httpEndpoint host="*" httpPort="${default.http.port}" httpsPort="${default.https.port}"
-    id="defaultHttpEndpoint"/>
-
-<webApplication location="guide-cors.war" contextRoot="/"/>
-
-<cors domain="/configurations/simple"
-    allowedOrigins="openliberty.io"
-    allowedMethods="GET"
-    allowCredentials="true"
-    exposeHeaders="MyHeader"/>
-
-</server>
+@ApplicationScoped
+@Path("hosts")
+public class InventoryResource {
+    
+    @Inject
+    InventoryManager manager;
+    
+    @Context
+    UriInfo uriInfo;
+    
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject handler() { 
+        return manager.getSystems(uriInfo.getAbsolutePath().toString());
+    }
+    
+    @GET
+    @Path("{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject getPropertiesForHost(@PathParam("hostname") String hostname) {
+        return (hostname.equals("*")) ? manager.list() : manager.get(hostname);
+    }
+}
 ```
 {: codeblock}
 
 
+The contents of your inventory are now under the asterisk (*) wildcard and reside at the **http://localhost:9080/inventory/hosts/*** URL.
 
-The CORS configuration contains the following attributes:
+The **GET** request handler is responsible for handling all **GET** requests that are
+made to the target URL. This method responds with a JSON that contains HATEOAS links.
 
-| *Configuration Attribute* | *Value*
-| ---| ---
-|**domain** | The endpoint to be configured for CORS requests. The value is set to **/configurations/simple**.
-|**allowedOrigins** | Origins that are allowed to access the endpoint. The value is set to **openliberty.io**.
-|**allowedMethods** | HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to **GET**.
-|**allowCredentials** | A boolean that indicates whether the user credentials can be included in the request. The value is set to **true**.
-|**exposeHeaders** | Headers that are safe to expose to clients. The value is set to **MyHeader**.
+The **UriInfo** object is what will be used to build your HATEOAS links.
 
-Save the changes to the **server.xml** file. The **/configurations/simple** endpoint is now ready to be
-tested with a simple CORS request.
+The **@Context** annotation is a part of CDI and indicates that the **UriInfo** will be injected when the
+resource is instantiated.
 
-The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
+Your new **InventoryResource** class is now replaced. Next, you will implement the **getSystems** method and build the response JSON object.
 
-Now, test the simple CORS configuration that you added. 
 
-Replace the **CorsIT** class.
+<br/>
+### **Linking to each available resource**
+
+Take a look at your **InventoryManager** and **InventoryUtil** files.
+
+Replace the **InventoryManager** class.
 
 > From the menu of the IDE, select 
-> **File** > **Open** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java
+> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java
 
 
 
 
 ```
-package it.io.openliberty.guides.cors;
+package io.openliberty.guides.microprofile;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.util.Map;
-import java.util.Map.Entry;
+import javax.enterprise.context.ApplicationScoped;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import io.openliberty.guides.microprofile.util.ReadyJson;
+import io.openliberty.guides.microprofile.util.InventoryUtil;
 
-public class CorsIT {
-
-    String port = System.getProperty("default.http.port");
-    String pathToHost = "http://localhost:" + port + "/";
-
-    @BeforeEach
-    public void setUp() {
-        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-    }
-
-    @Test
-    public void testSimpleCorsRequest() throws IOException {
-        HttpURLConnection connection = HttpUtils.sendRequest(
-                        pathToHost + "configurations/simple", "GET",
-                        TestData.simpleRequestHeaders);
-        checkCorsResponse(connection, TestData.simpleResponseHeaders);
-
-        printResponseHeaders(connection, "Simple CORS Request");
-    }
-
-
-    public void checkCorsResponse(HttpURLConnection connection,
-                    Map<String, String> expectedHeaders) throws IOException {
-        assertEquals(200, connection.getResponseCode(), "Invalid HTTP response code");
-        expectedHeaders.forEach((responseHeader, value) -> {
-            assertEquals(value, connection.getHeaderField(responseHeader),
-                            "Unexpected value for " + responseHeader + " header");
-        });
-    }
-
-    public static void printResponseHeaders(HttpURLConnection connection,
-                    String label) {
-        System.out.println("--- " + label + " ---");
-        Map<String, java.util.List<String>> map = connection.getHeaderFields();
-        for (Entry<String, java.util.List<String>> entry : map.entrySet()) {
-            System.out.println("Header " + entry.getKey() + " = " + entry.getValue());
+@ApplicationScoped
+public class InventoryManager { 
+    
+    private ConcurrentMap<String, JsonObject> inv = new ConcurrentHashMap<>();
+    
+    public JsonObject get(String hostname) {
+        JsonObject properties = inv.get(hostname);
+        if (properties == null) {
+            if (InventoryUtil.responseOk(hostname)) {
+                properties = InventoryUtil.getProperties(hostname);
+                this.add(hostname, properties);
+            } else {
+                return ReadyJson.SERVICE_UNREACHABLE.getJson();
+            }
         }
-        System.out.println();
+        return properties;
+    }
+    
+    public void add(String hostname, JsonObject systemProps) {
+        inv.putIfAbsent(hostname, systemProps);
+    }
+    
+    public JsonObject list() {
+        JsonObjectBuilder systems = Json.createObjectBuilder();
+        inv.forEach((host, props) -> {
+            JsonObject systemProps = Json.createObjectBuilder()
+                                         .add("os.name", props.getString("os.name"))
+                                         .add("user.name", props.getString("user.name"))
+                                         .build();
+            systems.add(host, systemProps);
+        }); 
+        systems.add("hosts", systems);
+        systems.add("total", inv.size());
+        return systems.build();
+    }
+    
+    public JsonObject getSystems(String url) {
+        JsonObjectBuilder systems = Json.createObjectBuilder();
+        systems.add("*", InventoryUtil.buildLinksForHost("*", url));
+        
+        for (String host : inv.keySet()) {
+            systems.add(host, InventoryUtil.buildLinksForHost(host, url));
+        }
+        
+        return systems.build();
     }
 
 }
@@ -247,176 +371,84 @@ public class CorsIT {
 
 
 
-The **testSimpleCorsRequest** test simulates a client. It first sends a simple CORS request to the **/configurations/simple** endpoint, and then it checks for a valid response and expected headers. Lastly, it prints the response headers for you to inspect.
+The **getSystems** method accepts a
+target URL as an argument and returns a JSON object that contains HATEOAS links.
 
-The request is a **GET** HTTP request with the following header:
-
-| *Request Header* | *Request Value*
-| ---| ---
-| Origin | The value is set to **openliberty.io**. Indicates that the request originates from **openliberty.io**.
-
-Expect the following response headers and values if the simple CORS request is successful, and the server is correctly configured:
-
-| *Response Header* | *Response Value*
-| ---| ---
-| Access-Control-Allow-Origin | The expected value is **openliberty.io**. Indicates whether a resource can be shared based on the returning value of the Origin request header **openliberty.io**.
-| Access-Control-Allow-Credentials | The expected value is **true**. Indicates that the user credentials can be included in the request.
-| Access-Control-Expose-Headers |  The expected value is **MyHeader**. Indicates that the header **MyHeader** is safe to expose.
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
-
-If the **testSimpleCorsRequest** test passes, 
-the response headers with their values from the endpoint are printed. 
-The **/configurations/simple** endpoint now accepts simple CORS requests.
-
-Response headers with their values from the endpoint:
-```
---- Simple CORS Request ---
-Header null = [HTTP/1.1 200 OK]
-Header Access-Control-Expose-Headers = [MyHeader]
-Header Access-Control-Allow-Origin = [openliberty.io]
-Header Access-Control-Allow-Credentials = [true]
-Header Content-Length = [22]
-Header Content-Language = [en-CA]
-Header Date = [Thu, 21 Mar 2019 17:50:09 GMT]
-Header Content-Type = [text/plain]
-Header X-Powered-By = [Servlet/4.0]
-```
-
-<br/>
-### **Enabling a preflight CORS configuration**
-
-
-Configure the server to allow the **/configurations/preflight** endpoint to accept a **preflight** CORS request.
-Add another CORS configuration in the **server.xml** file:
-
-Replace the server configuration file.
+Replace the **InventoryUtil** class.
 
 > From the menu of the IDE, select 
-> **File** > **Open** > guide-cors/start/src/main/liberty/config/server.xml
+> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java
 
 
 
 
 ```
-<server description="Sample Liberty server">
+package io.openliberty.guides.microprofile.util;
 
-<featureManager>
-    <feature>jaxrs-2.1</feature>
-</featureManager>
-
-<variable name="default.http.port" defaultValue="9080"/>
-<variable name="default.https.port" defaultValue="9443"/>
-
-<httpEndpoint host="*" httpPort="${default.http.port}" httpsPort="${default.https.port}"
-    id="defaultHttpEndpoint"/>
-
-<webApplication location="guide-cors.war" contextRoot="/"/>
-
-<cors domain="/configurations/simple"
-    allowedOrigins="openliberty.io"
-    allowedMethods="GET"
-    allowCredentials="true"
-    exposeHeaders="MyHeader"/>
-
-<cors domain="/configurations/preflight"
-    allowedOrigins="*"
-    allowedMethods="OPTIONS, DELETE"
-    allowCredentials="true"
-    allowedHeaders="MyOwnHeader1, MyOwnHeader2"
-    maxAge="10"/>
-</server>
-```
-{: codeblock}
-
-
-The preflight CORS configuration has different values than the simple CORS configuration.
-
-| *Configuration Attribute* | *Value*
-| ---| ---
-| **domain**|The value is set to **/configurations/preflight** because the **domain** is a different endpoint.
-| **allowedOrigins**| Origins that are allowed to access the endpoint. The value is set to an asterisk (*) to allow requests from all origins.
-| **allowedMethods**| HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to **OPTIONS, DELETE**.
-| **allowCredentials**| A boolean that indicates whether the user credentials can be included in the request. The value is set to **true**.
-
-The following attributes were added:
-
-* **allowedHeaders**: Headers that a client can use in requests. Set the value to **MyOwnHeader1, MyOwnHeader2**.
-* **maxAge**: The number of seconds that a client can cache a response to a preflight request. Set the value to **10**.
-
-Save the changes to the **server.xml** file. The **/configurations/preflight** endpoint is now ready to
-be tested with a preflight CORS request.
-
-Add another test to the **CorsIT.java** file to test the preflight CORS configuration that you just added:
-
-Replace the **CorsIT** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java
-
-
-
-
-```
-package it.io.openliberty.guides.cors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.net.URI;
+import java.net.URL;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriBuilder;
 
-public class CorsIT {
+import org.apache.commons.lang3.StringUtils;
 
-    String port = System.getProperty("default.http.port");
-    String pathToHost = "http://localhost:" + port + "/";
+public class InventoryUtil {
 
-    @BeforeEach
-    public void setUp() {
-        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+    private static final int PORT = 9080;
+    private static final String PROTOCOL = "http";
+    private static final String SYSTEM_PROPERTIES = "/system/properties";
+
+    public static JsonObject getProperties(String hostname) {
+        Client client = ClientBuilder.newClient();
+        URI propURI = InventoryUtil.buildUri(hostname);
+        return client.target(propURI)
+                     .request(MediaType.APPLICATION_JSON)
+                     .get(JsonObject.class);
     }
-
-    @Test
-    public void testSimpleCorsRequest() throws IOException {
-        HttpURLConnection connection = HttpUtils.sendRequest(
-                        pathToHost + "configurations/simple", "GET",
-                        TestData.simpleRequestHeaders);
-        checkCorsResponse(connection, TestData.simpleResponseHeaders);
-
-        printResponseHeaders(connection, "Simple CORS Request");
-    }
-
-    @Test
-    public void testPreflightCorsRequest() throws IOException {
-        HttpURLConnection connection = HttpUtils.sendRequest(
-                        pathToHost + "configurations/preflight", "OPTIONS",
-                        TestData.preflightRequestHeaders);
-        checkCorsResponse(connection, TestData.preflightResponseHeaders);
-
-        printResponseHeaders(connection, "Preflight CORS Request");
-    }
-
-    public void checkCorsResponse(HttpURLConnection connection,
-                    Map<String, String> expectedHeaders) throws IOException {
-        assertEquals(200, connection.getResponseCode(), "Invalid HTTP response code");
-        expectedHeaders.forEach((responseHeader, value) -> {
-            assertEquals(value, connection.getHeaderField(responseHeader),
-                            "Unexpected value for " + responseHeader + " header");
-        });
-    }
-
-    public static void printResponseHeaders(HttpURLConnection connection,
-                    String label) {
-        System.out.println("--- " + label + " ---");
-        Map<String, java.util.List<String>> map = connection.getHeaderFields();
-        for (Entry<String, java.util.List<String>> entry : map.entrySet()) {
-            System.out.println("Header " + entry.getKey() + " = " + entry.getValue());
+    
+    public static JsonArray buildLinksForHost(String hostname, String invUri) {
+        
+        JsonArrayBuilder links = Json.createArrayBuilder(); 
+        
+        links.add(Json.createObjectBuilder()
+                      .add("href", StringUtils.appendIfMissing(invUri, "/") + hostname)
+                      .add("rel", "self"));
+        
+        if (!hostname.equals("*")) {
+            links.add(Json.createObjectBuilder()
+                 .add("href", InventoryUtil.buildUri(hostname).toString())
+                 .add("rel", "properties"));
         }
-        System.out.println();
+        
+        return links.build();
+    }
+    
+    public static boolean responseOk(String hostname) {
+        try {
+            URL target = new URL(buildUri(hostname).toString());
+            HttpURLConnection http = (HttpURLConnection) target.openConnection();
+            http.setConnectTimeout(50);
+            int response = http.getResponseCode();
+            return (response != 200) ? false : true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static URI buildUri(String hostname) {
+        return UriBuilder.fromUri(SYSTEM_PROPERTIES)
+                .host(hostname)
+                .port(PORT)
+                .scheme(PROTOCOL)
+                .build();
     }
 
 }
@@ -424,64 +456,288 @@ public class CorsIT {
 {: codeblock}
 
 
-The **testPreflightCorsRequest** test simulates a client sending a preflight CORS request. 
-It first sends the request to the **/configurations/preflight** endpoint, and then it checks for a valid response and expected headers. 
-Lastly, it prints the response headers for you to inspect.
 
-The request is an **OPTIONS** HTTP request with the following headers:
+The helper builds a link that points to the inventory entry with a **self** relationship. The helper also builds a link that points to the **system** service with a **properties** relationship:
 
-| *Request Header* | *Request Value*
-| ---| ---
-| Origin | The value is set to **anywebsiteyoulike.com**. Indicates that the request originates from **anywebsiteyoulike.com**.
-| Access-Control-Request-Method | The value is set to **DELETE**. Indicates that the HTTP DELETE method will be used in the actual request.
-| Access-Control-Request-Headers | The value is set to **MyOwnHeader2**. Indicates the header **MyOwnHeader2** will be used in the actual request.
+* http://localhost:9080/inventory/hosts/<hostname>
+* http://<hostname>:9080/system/properties
 
-Expect the following response headers and values if the preflight CORS request is successful, and the server is correctly configured:
+<br/>
+### **Linking to inactive services or unavailable resources**
 
-| *Response Header* | *Response Value*
-| ---| ---
-| Access-Control-Max-Age | The expected value is **10**. Indicates that the preflight request can be cached within **10** seconds.
-| Access-Control-Allow-Origin | The expected value is **anywebsiteyoulike.com**. Indicates whether a resource can be shared based on the returning value of the Origin request header **anywebsiteyoulike.com**.
-| Access-Control-Allow-Methods | The expected value is **OPTIONS, DELETE**. Indicates that HTTP OPTIONS and DELETE methods can be used in the actual request.
-| Access-Control-Allow-Credentials | The expected value is **true**. Indicates that the user credentials can be included in the request.
-| Access-Control-Allow-Headers | The expected value is **MyOwnHeader1, MyOwnHeader2**. Indicates that the header **MyOwnHeader1** and **MyOwnHeader2** are safe to expose.
+Consider what happens when one of the return links does not work or when a link should be available
+for one object but not for another. In other words, it is important that a resource or service is
+available and running before it is added in the HATEOAS links array of the hostname.
 
-The **Access-Control-Allow-Origin** header has a value of **anywebsiteyoulike.com**
-because the server is configured to allow all origins, and the request came with an origin of
-**anywebsiteyoulike.com**.
+Although this guide does not cover this case, always make sure that you receive
+a good response code from a service before you link that service. Similarly, make sure that
+it makes sense for a particular object to access a resource it is linked to. For instance, it doesn't
+make sense for an account holder to be able to withdraw money from their account when their balance is 0.
+Hence, the account holder should not be linked to a resource that provides money withdrawal.
+
+# **Running the application**
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+After the server updates, you can find your new hypermedia-driven **inventory** service at the following URL:
+
+
+ http://localhost:9080/inventory/hosts
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/inventory/hosts
+```
+{: codeblock}
+
+
+
+
+
+# **Testing the hypermedia-driven RESTful web service**
+
+At the following URLs, access the **inventory** service that is now driven by hypermedia:
+
+
+ http://localhost:9080/inventory/hosts
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/inventory/hosts
+```
+{: codeblock}
+
+
+
+ http://localhost:9080/inventory/hosts/localhost
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```
+curl http://localhost:9080/inventory/hosts/localhost
+```
+{: codeblock}
+
+
+
+If the servers are running, you can point your browser to each of the previous URLs to test the
+application manually. Nevertheless, you should rely on automated tests since they are more reliable
+and trigger a failure if a change introduces a defect.
+
+<br/>
+### **Setting up your tests**
+
+
+Create the **EndpointIT** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java
+
+
+
+
+```
+package it.io.openliberty.guides.hateoas;
+
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonValue;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
+
+import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
+
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestMethodOrder(OrderAnnotation.class)
+public class EndpointIT {
+    private String port;
+    private String baseUrl;
+    
+    private Client client;
+    
+    private final String SYSTEM_PROPERTIES = "system/properties";
+    private final String INVENTORY_HOSTS = "inventory/hosts";
+    
+    @BeforeEach
+    public void setup() {
+        port = System.getProperty("http.port");
+        baseUrl = "http://localhost:" + port + "/";
+        
+        client = ClientBuilder.newClient();
+        client.register(JsrJsonpProvider.class);
+    }
+    
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
+    
+    /**
+     * Checks if the HATEOAS link for the inventory contents (hostname=*) is as expected.
+     */
+    @Test
+    @Order(1)
+    public void testLinkForInventoryContents() {
+        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + baseUrl);
+        
+        JsonObject systems = response.readEntity(JsonObject.class);
+        
+        String expected, actual;
+        boolean isFound = false;
+
+
+        if (!systems.isNull("*")) {
+            isFound = true;
+            JsonArray links = systems.getJsonArray("*");
+
+            expected = baseUrl + INVENTORY_HOSTS + "/*";
+            actual = links.getJsonObject(0).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "self";
+            actual = links.getJsonObject(0).getString("rel");
+            assertEquals(expected, actual, "Incorrect rel");
+        }
+        
+
+        assertTrue(isFound, "Could not find system with hostname *");
+        
+        response.close();
+    }
+    
+    /**
+     * Checks that the HATEOAS links, with relationships 'self' and 'properties' for 
+     * a simple localhost system is as expected.
+     */
+    @Test
+    @Order(2)
+    public void testLinksForSystem() {
+        this.visitLocalhost();
+        
+        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + baseUrl);
+        
+        JsonObject systems = response.readEntity(JsonObject.class);
+
+        String expected, actual;
+        boolean isHostnameFound = false;
+
+        
+        if (!systems.isNull("localhost")) {
+            isHostnameFound = true;
+            JsonArray links = systems.getJsonArray("localhost");
+
+            expected = baseUrl + INVENTORY_HOSTS + "/localhost";
+            actual = links.getJsonObject(0).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "self";
+            actual = links.getJsonObject(0).getString("rel");
+            assertEquals(expected, actual, "Incorrect rel");
+
+            expected = baseUrl + SYSTEM_PROPERTIES;
+            actual = links.getJsonObject(1).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "properties";
+            actual = links.getJsonObject(1).getString("rel");
+
+            assertEquals(expected, actual, "Incorrect rel");
+        }
+        
+
+        assertTrue(isHostnameFound, "Could not find system with hostname *");
+        response.close();
+
+    }
+    
+    /**
+     * Returns a Response object for the specified URL.
+     */
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+     
+    /**
+     * Makes a GET request to localhost at the Inventory service.
+     */
+    private void visitLocalhost() {
+        Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + baseUrl);
+        response.close();
+        Response targetResponse = client.target(baseUrl + INVENTORY_HOSTS + "/localhost")
+                                        .request()
+                                        .get();
+        targetResponse.close();
+    }
+}
+```
+{: codeblock}
+
+
+The **@BeforeEach** and **@AfterEach** annotations are placed on setup and teardown tasks that are run for each individual test.
+
+<br/>
+### **Writing the tests**
+
+Each test method must be marked with the **@Test** annotation. The execution order of test methods
+is controlled by marking them with the **@Order** annotation. The value that is passed into the annotation
+denotes the order in which the methods are run.
+
+The **testLinkForInventoryContents** test is responsible for asserting that
+the correct HATEOAS link is created for the inventory contents.
+
+Finally, the **testLinksForSystem** test is responsible for asserting that the correct
+HATEOAS links are created for the **localhost** system. This method checks for both the **self** link that points
+to the **inventory** service and the **properties** link that points to the **system** service, which is running on the
+**localhost** system.
+
+<br/>
+### **Running the tests**
 
 Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
+You will see the following output:
 
-If the **testPreflightCorsRequest** test passes, the response headers with their values from the endpoint are printed.
-The **/configurations/preflight** endpoint now allows preflight CORS requests.
-
-Response headers with their values from the endpoint:
 ```
---- Preflight CORS Request ---
-Header null = [HTTP/1.1 200 OK]
-Header Access-Control-Allow-Origin = [anywebsiteyoulike.com]
-Header Access-Control-Allow-Methods = [OPTIONS, DELETE]
-Header Access-Control-Allow-Credentials = [true]
-Header Content-Length = [0]
-Header Access-Control-Max-Age = [10]
-Header Date = [Thu, 21 Mar 2019 18:21:13 GMT]
-Header Content-Language = [en-CA]
-Header Access-Control-Allow-Headers = [MyOwnHeader1, MyOwnHeader2]
-Header X-Powered-By = [Servlet/4.0]
-```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.hateoas.EndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.951 s - in it.io.openliberty.guides.hateoas.EndpointIT
 
-You can modify the server configuration and the test code to experiment with the various 
-CORS configuration attributes.
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+
+Integration tests finished.
+```
 
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
-
 
 # **Summary**
 
 ## **Nice Work!**
 
-You enabled CORS support in Open Liberty. You added two different CORS configurations to allow two kinds of CORS requests in the **server.xml** file.
+You've just built and tested a hypermedia-driven RESTful web service on top of Open Liberty.
 
 
 
@@ -492,11 +748,11 @@ You enabled CORS support in Open Liberty. You added two different CORS configura
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-cors** project by running the following commands:
+Delete the **guide-rest-hateoas** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-cors
+rm -fr guide-rest-hateoas
 ```
 {: codeblock}
 
@@ -505,7 +761,7 @@ rm -fr guide-cors
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20Cross-Origin%20Resource%20Sharing%20(CORS)&guide-id=cloud-hosted-guide-cors)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20hypermedia-driven%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-hateoas)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -513,8 +769,8 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-cors/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-cors/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-hateoas/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-hateoas/pulls)
 
 
 
@@ -522,7 +778,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 ## **Where to next?**
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Creating a MicroProfile application](https://openliberty.io/guides/microprofile-intro.html)
 
 
 <br/>
