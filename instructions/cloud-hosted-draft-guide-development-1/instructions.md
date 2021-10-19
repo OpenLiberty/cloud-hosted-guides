@@ -87,11 +87,10 @@ mvn liberty:run
 Open another command-line session and run the following commands to navigate to the **finish/backendServices** directory and
 deploy the service to Open Liberty:
 ```
-cd finish/backendServices
+cd /home/project/guide-jpa-intro/finish/backendServices
 mvn liberty:run
 ```
 {: codeblock}
-
 
 
 After you see the following message in both command-line sessions, both your services are ready.
@@ -114,6 +113,7 @@ Notice that if you stop the Open Liberty server and then restart it, the events 
 are still displayed in the list of current events. Ensure you are in the **finish/backendServices** directory and run the following Maven goals to stop
 and then restart the server:
 ```
+cd /home/project/guide-jpa-intro/finish/backendServices
 mvn liberty:stop
 mvn liberty:run
 ```
@@ -129,11 +129,11 @@ command-line sessions where you ran the **backendServices** and **frontendUI** s
 Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another command-line session for the **frontendUI**
 and **backendServices** services:
 ```
+cd /home/project/guide-jpa-intro/finish
 mvn -pl frontendUI liberty:stop
 mvn -pl backendServices liberty:stop
 ```
 {: codeblock}
-
 
 
 
@@ -161,7 +161,7 @@ mvn liberty:dev
 After you see the following message, your application server in dev mode is ready:
 
 ```
-************************************************************************
+**************************************************************
 *    Liberty is running in dev mode.
 ```
 
