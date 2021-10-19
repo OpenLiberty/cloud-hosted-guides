@@ -75,6 +75,10 @@ The **finish** directory contains the finished project that you will build.
 # **Creating a web client using the default JAX-RS API**
 
 Navigate to the **start** directory to begin.
+```
+cd /home/project/guide-reactive-rest-client/start
+```
+{: codeblock}
 
 JAX-RS provides a default reactive provider that you can use to create a reactive REST client using the **CompletionStage** interface.
 
