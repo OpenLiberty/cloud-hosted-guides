@@ -1,7 +1,7 @@
 
-# **Welcome to the Creating a RESTful web service guide!**
+# **Welcome to the Building a web application with Maven guide!**
 
-Learn how to create a REST service with JAX-RS, JSON-B, and Open Liberty.
+Learn how to build and test a simple web application using Maven and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -12,27 +12,54 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 # **What you'll learn**
 
-You will learn how to build and test a simple REST service with JAX-RS and JSON-B, which will expose
-the JVM's system properties. The REST service will respond to **GET** requests made to the **http://localhost:9080/LibertyProject/System/properties** URL.
+You will learn how to configure a simple web servlet application using Maven and the Liberty 
+Maven plugin. When you compile and build the application code, Maven downloads and installs 
+Open Liberty. If you run the application, Maven creates an Open Liberty server and runs 
+the application on it. The application displays a simple web page with a link that, when 
+clicked, calls the servlet to return a simple response of **Hello! How are you today?**.
 
-The service responds to a **GET** request with a JSON representation of the system properties, where
-each property is a field in a JSON object like this:
+One benefit of using a build tool like Maven is that you can define the details of the project and any dependencies it has, and Maven automatically downloads and installs the dependencies. 
+Another benefit of using Maven is that it can run repeatable, automated tests on the application. 
+You can, of course, test your application manually by starting a server and pointing a web browser at the application URL.
+However, automated tests are a much better approach because you can easily rerun the same tests each time the application is built. 
+If the tests don't pass after you change the application, the build fails, and you know that you introduced a regression that requires a fix to your code. 
+
+Choosing a build tool often comes down to personal or organizational preference, but you might choose to use Maven for several reasons. 
+Maven defines its builds by using XML, which is probably familiar to you already. 
+As a mature, commonly used build tool, Maven probably integrates with whichever IDE you prefer to use. 
+Maven also has an extensive plug-in library that offers various ways to quickly customize your build. 
+Maven can be a good choice if your team is already familiar with it. 
+
+You will create a Maven build definition file that's called a **pom.xml** file, which stands for 
+Project Object Model, and use it to build your web application. You will then create a simple, 
+automated test and configure Maven to automatically run the test.
+
+
+# **Installing Maven**
+
+
+Run the following command to test that Maven is installed:
 
 ```
-{
-  "os.name":"Mac",
-  "java.version": "1.8"
-}
+mvn -v
 ```
+{: codeblock}
 
-The design of an HTTP API is essential when creating a web application. The REST API has 
-become the go-to architectural style for building an HTTP API. The JAX-RS API offers 
-functionality for creating, reading, updating, and deleting exposed resources. The JAX-RS API 
-supports the creation of RESTful web services that come with desirable properties, 
-such as performance, scalability, and modifiability.
+
+
+If Maven is installed properly, you see information about the Maven installation 
+similar to the following example:
+
+```
+Apache Maven 3.5.0 (ff8f5e7444045639af65f6095c62210b5713f426; 2017-04-03T20:39:06+01:00)
+Maven home: /Applications/Maven/apache-maven-3.5.0
+Java version: 1.8.0_131, vendor: Oracle Corporation
+Java home: /Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre
+Default locale: en_GB, platform encoding: UTF-8
+OS name: "mac os x", version: "10.12.6", arch: "x86_64", family: "mac"
+```
 
 # **Getting started**
 
@@ -46,11 +73,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-intro.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-rest-intro.git
-cd guide-rest-intro
+git clone https://github.com/openliberty/guide-maven-intro.git
+cd guide-maven-intro
 ```
 {: codeblock}
 
@@ -59,13 +86,14 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+
 <br/>
 ### **Try what you'll build**
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
+To try out the application, first go to the **finish** directory and run Maven with the
+**liberty:run** goal to build the application and deploy it to Open Liberty:
 
 ```
 cd finish
@@ -74,28 +102,21 @@ mvn liberty:run
 {: codeblock}
 
 
-After you see the following message, your application server is ready:
+After you see the following message, your application server is ready.
 
 ```
-The defaultServer server is ready to run a smarter planet.
+The guideServer server is ready to run a smarter planet.
 ```
 
 
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-Check out the service at the http://localhost:9080/LibertyProject/System/properties URL. 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
+Run the following command to get the URL to access the application.
 ```
-curl -s http://localhost:9080/LibertyProject/System/properties | jq
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/ServletSample/servlet
 ```
 {: codeblock}
 
-
+The servlet returns a simple response of **Hello! How are you today?**.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -108,13 +129,189 @@ mvn liberty:stop
 
 
 
-# **Creating a JAX-RS application**
+# **Creating a simple application**
 
-Navigate to the **start** directory to begin.
+The simple web application that you will build using Maven and Open Liberty is provided for you in the **start** directory so that you can focus on learning about Maven. 
+This application uses a standard Maven directory structure, eliminating the need to customize the **pom.xml** file so that Maven understands your project layout.
+
+All the application source code, including the Open Liberty server configuration 
+(**server.xml**), is in the **src/main/liberty/config** directory:
+
 ```
-cd /home/project/guide-rest-intro/start
+    └── src
+        └── main
+           └── java
+           └── resources
+           └── webapp
+           └── liberty
+                  └── config
+```
+
+
+# **Creating the project POM file**
+Navigate to the **start** directory to begin.
+
+Before you can build the project, define the Maven Project Object Model (POM) file, the **pom.xml**. 
+
+Create the pom.xml file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-maven-intro/start/pom.xml
 ```
 {: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-maven-intro/start/pom.xml
+
+
+
+
+```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <!-- tag::modelVersion[] -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>ServletSample</artifactId>
+    <!-- tag::packaging[] -->
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- tag::java-version[] -->
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- Liberty configuration -->
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.app.context.root>${project.artifactId}</liberty.var.app.context.root>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>8.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>4.0.1</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <!-- tag::commons-httpclient[] -->
+        <dependency>
+            <groupId>commons-httpclient</groupId>
+            <artifactId>commons-httpclient</artifactId>
+            <version>3.1</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- tag::junit[] -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.7.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.1</version>
+            </plugin>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.3.4</version>
+                <configuration>
+                    <serverName>guideServer</serverName>
+                </configuration>
+            </plugin>
+            <!-- tag::maven-failsafe-plugin[] -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.default.http.port}</http.port>
+                        <!-- tag::war-name[] -->
+                        <war.name>${liberty.var.app.context.root}</war.name>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+{: codeblock}
+
+
+
+The **pom.xml** file starts with a root **project** 
+element and a **modelversion** element, which is always set to **4.0.0**. 
+
+A typical POM for a Liberty application contains the following sections:
+
+* **Project coordinates**: The identifiers for this application.
+* **Properties** (**properties**): Any properties for the project go here, including compilation details and any values that are referenced during compilation of the Java source code and generating the application.
+* **Dependencies** (**dependencies**): Any Java dependencies that are required for compiling, testing, and running the application are listed here.
+* **Build plugins** (**build**): Maven is modular and each of its capabilities is provided by a separate plugin. This is where you specify which Maven plugins should be used to build this project and any configuration information needed by those plugins.
+
+The project coordinates describe the name and version of the application. The 
+**artifactId** gives a name to the web application project, which is used to 
+name the output files that are generated by the build (e.g. the WAR file) and the Open 
+Liberty server that is created. You'll notice that other fields in the **pom.xml** 
+file use variables that are resolved by the **artifactId** field. This is so 
+that you can update the name of the sample application, including files generated by Maven, 
+in a single place in the **pom.xml** file. The value of the **packaging** 
+field is **war** so that the project output artifact is a WAR file.
+
+The first four properties in the properties section of the project, just define the encoding (**UTF-8**) 
+and version of Java (**Java 8**) that Maven uses to compile the application 
+source code.
+
+Open Liberty configuration properties provide you with a single place to specify values that are used in multiple 
+places throughout the application. For example, the **default.http.port** value is used in
+both the server configuration (**server.xml**) file and will be used in the test class that
+you will add (**EndpointIT.java**) to the application. Because the **default.http.port** value 
+is specified in the **pom.xml** file, you can easily 
+change the port number that the server runs on without updating the application 
+code in multiple places.
+
+
+The **HelloServlet.java** class depends on **javax.servlet-api** to compile. 
+Maven will download this dependency from the Maven Central repository using the 
+**groupId**, **artifactId**, and **version** details that 
+you provide here. The dependency is set to **provided**, which means that the 
+API is in the server runtime and doesn't need to be packaged by the application.
+
+The **build** section gives details of the two plugins that Maven uses 
+to build this project.
+
+* The Maven plugin for generating a WAR file as one of the output files.
+* The Liberty Maven plug-in, which allows you to install applications into Open Liberty and manage the server instances.
+
+In the **liberty-maven-plugin** plug-in section, you can add a
+**configuration** element to specify Open Liberty configuration details.
+For example, the
+**serverName** field defines the name of the Open Liberty server that Maven creates.
+You specified **guideServer** as the value for **serverName**.
+If the **serverName** field is not included, the default value is **defaultServer**.
+
+
+
+# **Running the application**
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -135,233 +332,76 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
-JAX-RS has two key concepts for creating REST APIs. The most obvious one is the resource itself, which is
-modelled as a class. The second is a JAX-RS application, which groups all exposed resources under a
-common path. You can think of the JAX-RS application as a wrapper for all of your resources.
 
-
-Replace the **SystemApplication** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
-
-
-
-
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
+Run the following command to get the URL to access the application.
 ```
-package io.openliberty.guides.rest;
-
-import javax.ws.rs.core.Application;
-import javax.ws.rs.ApplicationPath;
-
-@ApplicationPath("System")
-public class SystemApplication extends Application {
-
-}
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/ServletSample/servlet
 ```
 {: codeblock}
 
+The servlet returns a simple response of **Hello! How are you today?**.
 
-The **SystemApplication** class extends the **Application** class, which associates all JAX-RS resource classes in the WAR file with this JAX-RS application. These resources become available under the common path that's specified with the **@ApplicationPath** 
-annotation. The **@ApplicationPath** annotation has a value that indicates the path in the WAR file that 
-the JAX-RS application accepts requests from.
+# **Testing the web application**
 
-
-
-
-# **Creating the JAX-RS resource**
-
-In JAX-RS, a single class should represent a single resource, or a group of resources of the same type.
-In this application, a resource might be a system property, or a set of system properties. It is easy
-to have a single class handle multiple different resources, but keeping a clean separation between types
-of resources helps with maintainability in the long run.
-
-Create the **PropertiesResource** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
-
-
-
-
-```
-package io.openliberty.guides.rest;
-
-import java.util.Properties;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
-@Path("properties")
-public class PropertiesResource {
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Properties getProperties() {
-        return System.getProperties();
-    }
-
-}
-```
-{: codeblock}
-
-
-This resource class has quite a bit of code in it, so let's break it down into manageable chunks.
-
-The **@Path** annotation on the class indicates that this resource responds to the **properties** path
-in the JAX-RS application. The **@ApplicationPath** annotation in the **SystemApplication** class together with
-the **@Path** annotation in this class indicates that the resource is available at the **System/properties**
-path.
-
-JAX-RS maps the HTTP methods on the URL to the methods of the class by using annotations. 
-Your application uses the **GET** annotation to map an HTTP **GET** request
-to the **System/properties** path.
-
-The **@GET** annotation on the method indicates that this method is to be called for the HTTP **GET**
-method. The **@Produces** annotation indicates the format of the content that will be returned. The
-value of the **@Produces** annotation will be specified in the HTTP **Content-Type** response header.
-For this application, a JSON structure is to be returned. The desired **Content-Type** for a JSON
-response is **application/json** with **`MediaType.APPLICATION_JSON`** instead of the **String** content type. Using a constant such as **`MediaType.APPLICATION_JSON`** is better because if there's a spelling error, a compile failure occurs.
-
-JAX-RS supports a number of ways to marshal JSON. The JAX-RS 2.1 specification mandates JSON-Binding
-(JSON-B). The method body returns the result of **System.getProperties()**, which is of type **java.util.Properties**. Since the method 
-is annotated with **`@Produces(MediaType.APPLICATION_JSON)`**, JAX-RS uses JSON-B to automatically convert the returned object
-to JSON data in the HTTP response.
-
-
-
-
-
-# **Configuring the server**
-
-To get the service running, the Liberty server needs to be correctly configured.
-
-Replace the server configuration file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-rest-intro/start/src/main/liberty/config/server.xml
-
-
-
-
-```
-<server description="Intro REST Guide Liberty server">
-  <featureManager>
-      <feature>jaxrs-2.1</feature>
-  </featureManager>
-
-  <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
-                id="defaultHttpEndpoint" host="*" />
-
-  <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
-</server>
-```
-{: codeblock}
-
-
-
-The configuration does the following actions:
-
-* Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
-* Configures the server to resolve the HTTP port numbers from variables, which are then specified in the Maven **pom.xml** file. This is specified in the **httpEndpoint** element. Variables use the **${variableName}** syntax.
-* Configures the server to run the produced web application on a context root specified in the **pom.xml** file. This is specified in the **webApplication** element.
-
-
-The variables that are being used in the **server.xml** file are provided by the properties set in the Maven **pom.xml** file. The properties must be formatted as **liberty.var.variableName**.
-
-
-# **Running the application**
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-Check out the service that you created at the http://localhost:9080/LibertyProject/System/properties URL. 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/LibertyProject/System/properties | jq
-```
-{: codeblock}
-
-
-
-
-# **Testing the service**
-
-
-You can test this service manually by starting a server and visiting the
-http://localhost:9080/LibertyProject/System/properties URL. However, automated tests are a 
-much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS 
-Client API provide a simple environment to test the application.
-
-You can write tests for the individual units of code outside of a running application server, or they
-can be written to call the application server directly. In this example, you will create a test that
-does the latter.
+One of the benefits of building an application with Maven is that Maven can be configured 
+to run a set of tests. You can write tests for the individual units of code outside of a 
+running application server (unit tests), or you can write them to call the application 
+server directly (integration tests). In this example you will create a simple integration 
+test that checks that the web page opens and that the correct response is returned when 
+the link is clicked.
 
 Create the **EndpointIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+touch /home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java  
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java  
 
 
 
 
 ```
-package it.io.openliberty.guides.rest;
+package io.openliberty.guides.hello.it;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.Properties;
-
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.methods.GetMethod;
 
 public class EndpointIT {
-    
-    private static final Jsonb jsonb = JsonbBuilder.create();
+    private static String URL;
+ 
+    @BeforeAll
+    public static void init() {
+        String port = System.getProperty("http.port");
+        String war = System.getProperty("war.name");
+        URL = "http://localhost:" + port + "/" + war + "/" + "servlet";
+    }
 
     @Test
-    public void testGetProperties() {
-        String port = System.getProperty("http.port");
-        String context = System.getProperty("context.root");
-        String url = "http://localhost:" + port + "/" + context + "/";
+    public void testServlet() throws Exception {
+        HttpClient client = new HttpClient();
 
-        Client client = ClientBuilder.newClient();
+        GetMethod method = new GetMethod(URL);
+        try {
+            int statusCode = client.executeMethod(method);
 
-        WebTarget target = client.target(url + "System/properties");
-        Response response = target.request().get();
+            assertEquals(HttpStatus.SC_OK, statusCode, "HTTP GET failed");
 
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
-                     "Incorrect response code from " + url);
+            String response = method.getResponseBodyAsString(1000);
 
-        String json = response.readEntity(String.class);
-        Properties sysProps = jsonb.fromJson(json, Properties.class);
-
-        assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
-                     "The system property for the local and remote JVM should match");
-        response.close();
+            assertTrue(response.contains("Hello! How are you today?"), 
+                "Unexpected response body");
+        } finally {
+            method.releaseConnection();
+        }
     }
 }
 ```
@@ -369,62 +409,92 @@ public class EndpointIT {
 
 
 
-This test class has more lines of code than the resource implementation. This situation is common.
-The test method is indicated with the **@Test** annotation.
+The test class name ends in **IT** to indicate that it contains an integration test. 
+
+Maven is configured to run the integration test using the **maven-failsafe-plugin**.
+The **systemPropertyVariables** section defines some variables 
+that the test class uses. The test code needs to know where to find the application that 
+it is testing. While the port number and context root information can be hardcoded in the 
+test class, it is better to specify it in a single place like the Maven **pom.xml** 
+file because this information is also used by other files in the project. The 
+**systemPropertyVariables** section passes these details to the 
+Java test program as a series of system properties, resolving the **http.port**
+and **war.name** variables.
 
 
-The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the server configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven **pom.xml** file. Refer to the **pom.xml** file to see how the application information such as the **default.http.port**, **default.https.port** and **app.context.root** elements are provided in the file.
+The following lines in the **EndpointIT** test class uses these 
+system variables to build up the URL of the application.
 
+In the test class, after defining how to build the application URL, the **@Test** 
+annotation indicates the start of the test method.
 
-These Maven properties are then passed to the Java test program as the **systemPropertyVariables** element in the **pom.xml** file.
+In the **try block** of the test method, an HTTP **GET** request to the 
+URL of the application returns a status code. If the response to the request includes the 
+string **Hello! How are you today?**, the test passes. If that string is not in the response, 
+the test fails.  The HTTP client then disconnects from the application.
 
-Getting the values to create a representation of the URL is simple. The test class uses the **getProperty** method
-to get the application details.
+In the **import** statements of this test class, you'll notice that the 
+test has some new dependencies. Before the test can be compiled by Maven, you need to update 
+the **pom.xml** to include these dependencies.
 
-To call the JAX-RS service using the JAX-RS client, first create a **WebTarget** object by calling
-the **target** method that provides the URL. To cause the HTTP request to occur, the **request().get()** method
-is called on the **WebTarget** object. The **get** method
-call is a synchronous call that blocks until a response is received. This call returns a **Response**
-object, which can be inspected to determine whether the request was successful.
+The Apache **commons-httpclient** and **junit-jupiter-engine** 
+dependencies are needed to compile and run the integration test **EndpointIT** 
+class. The scope for each of the dependencies is set to **test** because 
+the libraries are needed only during the Maven build and do not needed to be packaged with 
+the application.
 
-The first thing to check is that a **200** response was received. The JUnit **assertEquals** method can be used for this check.
+Now, the created WAR file contains the web application, 
+and development mode can run any integration test classes that it finds.
+Integration test classes are classes with names that end in **IT**.
 
-Check the response body to ensure it returned the right information. Since the client and the server
-are running on the same machine, it is reasonable to expect that the system properties for the local
-and remote JVM would be the same. In this case, an **assertEquals** assertion is made so that the **os.name** system property
-for both JVMs is the same. You can write additional assertions to check for more values.
+The directory structure of the project should now look like this:
+
+```
+    └── src
+        ├── main
+        │  └── java
+        │  └── resources
+        │  └── webapp
+        │  └── liberty
+        │         └── config
+        └── test
+            └── java
+```
+
 
 <br/>
 ### **Running the tests**
 
 Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
-You will see the following output:
+You see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.rest.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
+Running io.openliberty.guides.hello.it.EndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.255 sec - in io.openliberty.guides.hello.it.EndpointIT
 
 Results :
 
 Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-To see whether the tests detect a failure, add an assertion that you know fails, or change the existing
-assertion to a constant value that doesn't match the **os.name** system property.
+To see whether the test detects a failure, change the **response string** in the servlet 
+**src/main/java/io/openliberty/guides/hello/HelloServlet.java** so that it doesn't match 
+the string that the test is looking for. Then re-run the tests and check that the 
+test fails.
+
 
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
-
 
 # **Summary**
 
 ## **Nice Work!**
 
-You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
+You built and tested a web application project with an Open Liberty server using Maven.
 
 
 
@@ -434,11 +504,11 @@ You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-rest-intro** project by running the following commands:
+Delete the **guide-maven-intro** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-rest-intro
+rm -fr guide-maven-intro
 ```
 {: codeblock}
 
@@ -447,7 +517,7 @@ rm -fr guide-rest-intro
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20web%20application%20with%20Maven&guide-id=cloud-hosted-guide-maven-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -455,16 +525,16 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-intro/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+* [Creating a multi-module application](https://openliberty.io/guides/maven-multimodules.html)
+* [Building a web application with Gradle](https://openliberty.io/guides/gradle-intro.html)
 
 
 <br/>
