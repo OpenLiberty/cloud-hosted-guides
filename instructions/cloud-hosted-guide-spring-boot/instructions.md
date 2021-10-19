@@ -104,7 +104,7 @@ Install Docker by following the instructions in the
 
 Navigate to the **start** directory. 
 
-Create the **Dockerfile**.
+Create the **Dockerfile** in the **start** directory.
 
 > Run the following touch command in your terminal
 ```
@@ -261,7 +261,7 @@ Next, you will run the Spring Boot application locally on Open Liberty by updati
 
 The **pom.xml** was created for you in this directory. 
 
-Update the **Maven POM** file.
+Update the **Maven POM** file in the **start** directory.
 
 > From the menu of the IDE, select 
 > **File** > **Open** > guide-spring-boot/start/pom.xml
@@ -472,7 +472,7 @@ You can update the **pom.xml** file to bind more Open Liberty Maven goals to the
 Binding these goals to the package phase allows the Maven **package** goal to build a Spring Boot application that is embedded with Open Liberty.
 
 
-Update the Maven POM file.
+Update the Maven POM file in the **start** directory.
 
 > From the menu of the IDE, select 
 > **File** > **Open** > guide-spring-boot/start/pom.xml
