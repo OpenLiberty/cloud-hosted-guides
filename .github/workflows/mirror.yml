@@ -47,6 +47,7 @@ jobs:
           - {"github":"cloud-hosted-guide-masterclass","gitlab":"cloud-hosted-guide-masterclass"}
           - {"github":"cloud-hosted-guide-rest-openshift","gitlab":"cloud-hosted-guide-rest-openshift"}
           - {"github":"cloud-hosted-guide-spring-boot","gitlab":"cloud-hosted-guide-spring-boot"}
+          - {"github":"cloud-hosted-guide-bean-validation","gitlab":"cloud-hosted-guide-bean-validation"}
 
     steps:
 
