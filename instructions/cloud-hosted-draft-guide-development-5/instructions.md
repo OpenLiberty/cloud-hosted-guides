@@ -300,7 +300,7 @@ the **server.xml** file.
 Take a look at the **server.xml** file.
 
 
-From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/src/main/liberty/config/server.xml
+> From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/src/main/liberty/config/server.xml
 
 The **localConnector** feature is required by the Arquillian Liberty
 Managed container to connect to and communicate with the Open Liberty runtime.
