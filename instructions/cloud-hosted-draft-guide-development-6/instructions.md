@@ -490,14 +490,13 @@ After you successfully build your components, you need to build the
 front end and package your application. The Maven **process-resources** goal generates the Node.js resources,
 creates the front-end production build, and copies and processes the resources into the destination directory. 
 
-In a new command-line session, build the front end by running the following command:
+In a new command-line session, build the front end by running the following command in the **start** directory:
 
 ```
+cd /home/project/guide-rest-client-reactjs/start
 mvn process-resources
 ```
 {: codeblock}
-
-
 
 You can rebuild the front end at any time with the Maven **process-resources** goal.
 Any local changes to your JavaScript and HTML are picked up when you build the
