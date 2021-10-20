@@ -262,7 +262,7 @@ First, configure your test build with Maven. All of the Maven configuration take
 place in the **pom.xml** file, which is provided for you.
 
 
-From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/pom.xml
+> From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/pom.xml
 
 Let's look into each of the required elements for this configuration.
 
