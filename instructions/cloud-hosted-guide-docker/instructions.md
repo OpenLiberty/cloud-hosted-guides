@@ -110,7 +110,7 @@ cd /home/project/guide-docker/start
 ```
 {: codeblock}
 
-Create the **Dockerfile**.
+Create the **Dockerfile** in the **start** directory.
 
 > Run the following touch command in your terminal
 ```
@@ -303,7 +303,7 @@ You can write tests for the individual units of code outside of a running applic
 or you can write them to call the application server directly.
 In this example, you will create a test that calls the application server directly.
 
-Create the **EndpointIT** class.
+Create the **EndpointIT** test class.
 
 > Run the following touch command in your terminal
 ```
