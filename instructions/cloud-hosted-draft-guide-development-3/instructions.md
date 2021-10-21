@@ -157,22 +157,7 @@ The defaultServer server is ready to run a smarter planet.
 
 After the server runs, you can find your hypermedia-driven **inventory** service at the following URL:
 
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
- http://localhost:9080/inventory/hosts
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/inventory/hosts
-```
-{: codeblock}
-
-
+http://localhost:9080/inventory/hosts[^]
 
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
@@ -277,7 +262,7 @@ public class InventoryResource {
 
 
 
-The contents of your inventory are now under the asterisk (`*`) wildcard and reside at the `http://localhost:9080/inventory/hosts/*`URL.
+The contents of your inventory are now under the asterisk (`*`) wildcard and reside at the `http://localhost:9080/inventory/hosts/*` URL.
 
 The **GET** request handler is responsible for handling all **GET** requests that are
 made to the target URL. This method responds with a JSON that contains HATEOAS links.
@@ -460,8 +445,9 @@ public class InventoryUtil {
 
 The helper builds a link that points to the inventory entry with a **self** relationship. The helper also builds a link that points to the **system** service with a **properties** relationship:
 
-* \**http://localhost:9080/inventory/hosts/<hostname>**
-* \**http://<hostname>\:9080/system/properties**
+* \`http://localhost:9080/inventory/hosts/<hostname>`
+* \`http://<hostname>\:9080/system/properties`
+
 
 <br/>
 ### **Linking to inactive services or unavailable resources**
@@ -482,18 +468,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 After the server updates, you can find your new hypermedia-driven **inventory** service at the following URL:
 
-
- http://localhost:9080/inventory/hosts
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/inventory/hosts
-```
-{: codeblock}
-
-
+* \http://localhost:9080/inventory/hosts[http://localhost:9080/inventory/hosts^]
 
 
 
@@ -501,29 +476,8 @@ curl http://localhost:9080/inventory/hosts
 
 At the following URLs, access the **inventory** service that is now driven by hypermedia:
 
-
- http://localhost:9080/inventory/hosts
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/inventory/hosts
-```
-{: codeblock}
-
-
-
- http://localhost:9080/inventory/hosts/localhost
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/inventory/hosts/localhost
-```
-{: codeblock}
-
+* \http://localhost:9080/inventory/hosts[http://localhost:9080/inventory/hosts^]
+* \http://localhost:9080/inventory/hosts/localhost[http://localhost:9080/inventory/hosts/localhost^]
 
 
 If the servers are running, you can point your browser to each of the previous URLs to test the
