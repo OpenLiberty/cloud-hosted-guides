@@ -225,7 +225,7 @@ A Kubernetes resource definition is a yaml file that contains a description of a
 or any other resources that you want to deploy. 
 All resources can also be deleted from the cluster by using the same yaml file that you used to deploy them.
 
-Create the Kubernetes configuration file.
+Create the Kubernetes configuration file in the **start** directory.
 
 > Run the following touch command in your terminal
 ```
