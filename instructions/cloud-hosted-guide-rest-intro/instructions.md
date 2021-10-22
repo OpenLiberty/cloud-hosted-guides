@@ -16,7 +16,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 # **What you'll learn**
 
 You will learn how to build and test a simple REST service with JAX-RS and JSON-B, which will expose
-the JVM's system properties. The REST service will respond to **GET** requests made to the **http://localhost:9080/LibertyProject/System/properties** URL.
+the JVM's system properties. The REST service will respond to **GET** requests made to the **http://localhost:9080/LibertyProject/system/properties** URL.
 
 The service responds to a **GET** request with a JSON representation of the system properties, where
 each property is a field in a JSON object like this:
@@ -85,13 +85,13 @@ The defaultServer server is ready to run a smarter planet.
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-Check out the service at the http://localhost:9080/LibertyProject/System/properties URL. 
+Check out the service at the http://localhost:9080/LibertyProject/system/properties URL. 
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl -s http://localhost:9080/LibertyProject/System/properties | jq
+curl -s http://localhost:9080/LibertyProject/system/properties | jq
 ```
 {: codeblock}
 
@@ -154,7 +154,7 @@ package io.openliberty.guides.rest;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.ApplicationPath;
 
-@ApplicationPath("System")
+@ApplicationPath("system")
 public class SystemApplication extends Application {
 
 }
@@ -218,12 +218,12 @@ This resource class has quite a bit of code in it, so let's break it down into m
 
 The **@Path** annotation on the class indicates that this resource responds to the **properties** path
 in the JAX-RS application. The **@ApplicationPath** annotation in the **SystemApplication** class together with
-the **@Path** annotation in this class indicates that the resource is available at the **System/properties**
+the **@Path** annotation in this class indicates that the resource is available at the **system/properties**
 path.
 
 JAX-RS maps the HTTP methods on the URL to the methods of the class by using annotations. 
 Your application uses the **GET** annotation to map an HTTP **GET** request
-to the **System/properties** path.
+to the **system/properties** path.
 
 The **@GET** annotation on the method indicates that this method is to be called for the HTTP **GET**
 method. The **@Produces** annotation indicates the format of the content that will be returned. The
@@ -283,13 +283,13 @@ The variables that are being used in the **server.xml** file are provided by the
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-Check out the service that you created at the http://localhost:9080/LibertyProject/System/properties URL. 
+Check out the service that you created at the http://localhost:9080/LibertyProject/system/properties URL. 
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl -s http://localhost:9080/LibertyProject/System/properties | jq
+curl -s http://localhost:9080/LibertyProject/system/properties | jq
 ```
 {: codeblock}
 
@@ -300,7 +300,7 @@ curl -s http://localhost:9080/LibertyProject/System/properties | jq
 
 
 You can test this service manually by starting a server and visiting the
-http://localhost:9080/LibertyProject/System/properties URL. However, automated tests are a 
+http://localhost:9080/LibertyProject/system/properties URL. However, automated tests are a 
 much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS 
 Client API provide a simple environment to test the application.
 
@@ -339,9 +339,7 @@ import javax.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
 public class EndpointIT {
-    
-    private static final Jsonb jsonb = JsonbBuilder.create();
-
+    private static final Jsonb JSONB = JsonbBuilder.create();
     @Test
     public void testGetProperties() {
         String port = System.getProperty("http.port");
@@ -350,14 +348,14 @@ public class EndpointIT {
 
         Client client = ClientBuilder.newClient();
 
-        WebTarget target = client.target(url + "System/properties");
+        WebTarget target = client.target(url + "system/properties");
         Response response = target.request().get();
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
                      "Incorrect response code from " + url);
 
         String json = response.readEntity(String.class);
-        Properties sysProps = jsonb.fromJson(json, Properties.class);
+        Properties sysProps = JSONB.fromJson(json, Properties.class);
 
         assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
                      "The system property for the local and remote JVM should match");
