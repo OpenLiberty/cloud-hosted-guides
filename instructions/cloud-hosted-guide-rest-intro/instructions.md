@@ -214,8 +214,6 @@ public class PropertiesResource {
 {: codeblock}
 
 
-This resource class has quite a bit of code in it, so let's break it down into manageable chunks.
-
 The **@Path** annotation on the class indicates that this resource responds to the **properties** path
 in the JAX-RS application. The **@ApplicationPath** annotation in the **SystemApplication** class together with
 the **@Path** annotation in this class indicates that the resource is available at the **system/properties**
