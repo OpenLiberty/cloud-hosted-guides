@@ -1,5 +1,5 @@
 
-# **Welcome to the Testing microservices with the Arquillian managed container guide!**
+# **Welcome to the Optimizing REST queries for microservices with GraphQL guide!**
 
 
 
@@ -10,27 +10,53 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-Learn how to develop tests for your microservices with the Arquillian managed container and run the tests on Open Liberty.
+Learn how to use MicroProfile GraphQL to query and update data from multiple services,
+and how to test GraphQL queries and mutations using an interactive GraphQL tool (GraphiQL).
 
 # **What you'll learn**
 
-You will learn how to develop tests for your microservices by using the
-[Arquillian Liberty Managed container](https://github.com/OpenLiberty/liberty-arquillian/tree/master/liberty-managed)
-and JUnit with Maven on Open Liberty. [Arquillian](http://arquillian.org/) is a testing framework to develop
-automated functional, integration and acceptance tests for your Java applications.
-Arquillian sets up the test environment and handles the application server lifecycle for you
-so you can focus on writing tests.
+You will learn how to build and use a simple GraphQL service with 
+[MicroProfile GraphQL](https://openliberty.io/docs/latest/reference/feature/mpGraphQL-1.0.html). 
 
-You will develop Arquillian tests that use JUnit
-as the runner and build your tests with Maven using the Liberty Maven plug-in.
-This technique simplifies the process of managing
-Arquillian dependencies and the setup of your Arquillian managed container.
+GraphQL is an open source data query language.
+Unlike REST APIs, each HTTP request that is sent to a GraphQL service goes to a single HTTP endpoint.
+Create, read, update, and delete operations and their details are differentiated by the contents of the request.
+If the operation returns data, the user specifies what properties of the data that they want returned. 
+For read operations, a JSON object is returned that contains only the data and properties that are specified.
+For other operations, a JSON object might be returned containing information such as a success message. 
 
-You will work with an **inventory** microservice, which stores information about various systems.
-The **inventory** service communicates with the **system** service on a particular host to retrieve its
-system properties and store them. You will develop functional and integration tests for the microservices.
-You will also learn about the Maven and server configurations so that you can run
-your tests on Open Liberty with the Arquillian Liberty Managed container.
+Returning only the specified properties in a read operation has two benefits.
+If you're dealing with large amounts of data or large resources, 
+it reduces the size of the responses.
+If you have properties that are expensive to calculate or retrieve (such as nested objects), 
+it also saves processing time.
+GraphQL calculates these properties only if they are requested. 
+
+A GraphQL service can also be used to obtain data from multiple sources such as APIs, databases, and other services. 
+It can then collate this data into a single object for the user, simplifying the data retrieval. 
+The user makes only a single request to the GraphQL service, instead of multiple requests to the individual data sources.
+GraphQL services require less data fetching than REST services, 
+which results in lower application load times and lower data transfer costs. 
+GraphQL also enables clients to better customize requests to the server.
+
+All of the available operations to retrieve or modify data are available in a single GraphQL schema.
+The GraphQL schema describes all the data types that are used in the GraphQL service.
+The schema also describes all of the available operations.
+As well, you can add names and text descriptions to the various object types and operations in the schema.
+
+You can learn more about GraphQL at the [GraphQL website](https://graphql.org/).
+
+You'll create a GraphQL application that retrieves data from multiple **system** services. 
+Users make requests to the GraphQL service, which then makes requests to the **system** services. 
+The GraphQL service returns a single JSON object containing all the system information from the **system** services.
+
+![GraphQL architecture where multiple system microservices are integrated behind one GraphQL service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-graphql/master/assets/architecture.png)
+
+
+You'll enable the interactive
+[GraphiQL](https://github.com/graphql/graphiql/tree/main/packages/graphiql) tool in the Open Liberty runtime.
+GraphiQL helps you make queries to a GraphQL service.
+In the GraphiQL UI, you need to type only the body of the query for the purposes of manual tests and examples. 
 
 # **Getting started**
 
@@ -44,11 +70,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-arquillian-managed.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-graphql.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-arquillian-managed.git
-cd guide-arquillian-managed
+git clone https://github.com/openliberty/guide-microprofile-graphql.git
+cd guide-microprofile-graphql
 ```
 {: codeblock}
 
@@ -58,364 +84,1043 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
-# **Developing Arquillian tests**
+# **Creating GraphQL object types**
 
 Navigate to the **start** directory to begin.
-```
-cd /home/project/guide-arquillian-managed/start
-```
-{: codeblock}
 
-You'll develop tests that use Arquillian and JUnit to verify the **inventory** microservice as an endpoint
-and the functions of the **InventoryResource** class.
-The code for the microservices is in the **src/main/java/io/openliberty/guides** directory.
+Object types determine the structure of the data that GraphQL returns. 
+These object types are defined by annotations that are applied to the declaration and properties of Java classes. 
 
-Create the **InventoryArquillianIT** test class.
+You will define **java**, **systemMetrics**, and **systemInfo** object types by creating and applying annotations to the **JavaInfo**, **SystemMetrics**, and **SystemInfo** classes respectively. 
+
+Create the **JavaInfo** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java
+touch /home/project/guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/JavaInfo.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/JavaInfo.java
 
 
 
 
 ```
-package it.io.openliberty.guides.inventory;
+package io.openliberty.guides.graphql.models;
 
-import java.net.URL;
-import java.util.List;
+import org.eclipse.microprofile.graphql.Description;
+import org.eclipse.microprofile.graphql.Name;
+import org.eclipse.microprofile.graphql.NonNull;
+import org.eclipse.microprofile.graphql.Type;
 
-import javax.inject.Inject;
-import javax.json.JsonObject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
+@Type("java")
+@Description("Information about a Java installation")
+public class JavaInfo {
+
+    @Name("vendorName")
+    private String vendor;
+
+    @NonNull
+    private String version;
+
+    public String getVendor() {
+        return this.vendor;
+    }
+
+    public void setVendor(String vendor) {
+        this.vendor = vendor;
+    }
+
+    public String getVersion() {
+        return this.version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+}
+```
+{: codeblock}
+
+
+The **JavaInfo** class is annotated with a **@Type** annotation. 
+The **@Type("java")** annotation maps this class to define the **java** object type in GraphQL.
+The **java** object type gives information on the Java installation of the system. 
+
+The **@Description** annotation gives a description to the **java** object type in GraphQL.
+This description is what appears in the schema and the documentation. 
+Descriptions aren't required, but it's good practice to include them. 
+
+The **@Name** annotation maps the **vendor** property 
+to the **vendorName** name of the **java** object type in GraphQL. 
+The **@Name** annotation can be used to change the name of the property used in the schema.
+Without a **@Name** annotation, the Java object property is automatically 
+mapped to a GraphQL object type property of the same name. 
+In this case, without the **@Name** annotation, the property would be displayed as **vendor** in the schema.
+
+All data types in GraphQL are nullable by default.
+Non-nullable properties are annotated with the **@NonNull** annotation.
+The **@NonNull** annotation on the **version** field ensures that, 
+when queried, a non-null value is returned by the GraphQL service. 
+The **getVendor()** and **getVersion()** getter functions 
+are automatically mapped to retrieve their respective properties in GraphQL. 
+If needed, setter functions are also supported and automatically mapped. 
+
+Create the **SystemMetrics** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemMetrics.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemMetrics.java
+
+
+
+
+```
+package io.openliberty.guides.graphql.models;
+
+import org.eclipse.microprofile.graphql.Description;
+import org.eclipse.microprofile.graphql.NonNull;
+import org.eclipse.microprofile.graphql.Type;
+
+@Type("systemMetrics")
+@Description("System metrics")
+public class SystemMetrics {
+
+    @NonNull
+    private Integer processors;
+
+    @NonNull
+    private Long heapSize;
+
+    @NonNull
+    private Long nonHeapSize;
+
+    public Integer getProcessors() {
+        return processors;
+    }
+
+    public void setProcessors(int processors) {
+        this.processors = processors;
+    }
+
+    public Long getHeapSize() {
+        return heapSize;
+    }
+
+    public void setHeapSize(long heapSize) {
+        this.heapSize = heapSize;
+    }
+
+    public Long getNonHeapSize() {
+        return nonHeapSize;
+    }
+
+    public void setNonHeapSize(Long nonHeapSize) {
+        this.nonHeapSize = nonHeapSize;
+    }
+
+}
+```
+{: codeblock}
+
+
+The **SystemMetrics** class is set up similarly.
+It maps to the **systemMetrics** object type,
+which describes system information such as the number of processor cores and the heap size.
+
+Create the **SystemInfo** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemInfo.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemInfo.java
+
+
+
+
+```
+package io.openliberty.guides.graphql.models;
+
+import org.eclipse.microprofile.graphql.Description;
+import org.eclipse.microprofile.graphql.NonNull;
+import org.eclipse.microprofile.graphql.Type;
+
+@Type("system")
+@Description("Information about a single system")
+public class SystemInfo {
+
+    @NonNull
+    private String hostname;
+
+    @NonNull
+    private String username;
+
+    private String osName;
+    private String osArch;
+    private String osVersion;
+    private String note;
+
+    private JavaInfo java;
+
+    private SystemMetrics systemMetrics;
+
+    public String getHostname() {
+        return this.hostname;
+    }
+
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
+
+    public String getUsername() {
+        return this.username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getOsName() {
+        return osName;
+    }
+
+    public void setOsName(String osName) {
+        this.osName = osName;
+    }
+
+    public String getOsArch() {
+        return osArch;
+    }
+
+    public void setOsArch(String osarch) {
+        this.osArch = osarch;
+    }
+
+    public String getOsVersion() {
+        return osVersion;
+    }
+
+    public void setOsVersion(String osVersion) {
+        this.osVersion = osVersion;
+    }
+
+    public String getNote() {
+        return this.note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public JavaInfo getJava() {
+        return java;
+    }
+
+    public void setJava(JavaInfo java) {
+        this.java = java;
+    }
+
+    public SystemMetrics getSystemMetrics() {
+        return systemMetrics;
+    }
+
+    public void setSystemMetrics(SystemMetrics systemMetrics) {
+        this.systemMetrics = systemMetrics;
+    }
+
+}
+```
+{: codeblock}
+
+
+The **SystemInfo** class is similar to the previous two classes. 
+It maps to the **system** object type, 
+which describes other information Java can retrieve from the system properties.
+
+The **java** and **systemMetrics** object types are used as nested objects within the **system** object type.
+However, nested objects and other properties that are expensive to calculate or retrieve 
+are not included in the class of an object type.
+Instead, expensive properties are added as part of implementing GraphQL resolvers. 
+
+To save time, the **SystemLoad** class and
+**SystemLoadData** class are provided for you.
+The **SystemLoad** class maps to the **systemLoad**
+object type, which describes the resource usage of a **system** service.
+The **SystemLoadData** class maps to the **loadData** object type.
+The **loadData** object will be a nested object inside the **systemLoad** object type.
+Together, these objects will contain the details of the resource usage of a **system** service.
+
+
+
+
+
+
+# **Implementing system service**
+
+The **system** microservices are backend services that use JAX-RS.
+For more details on using JAX-RS, see the
+[Creating a RESTful web service guide](https://www.openliberty.io/guides/rest-intro.html).
+These **system** microservices report system properties.
+GraphQL can access multiple instances of these **system** microservices and collate their information.
+In a real scenario, GraphQL might access multiple databases or other services.
+
+Create the **SystemPropertiesResource** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemPropertiesResource.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemPropertiesResource.java
+
+
+
+
+```
+package io.openliberty.guides.system;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.junit.InSequence;
-import org.jboss.arquillian.test.api.ArquillianResource;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.openliberty.guides.graphql.models.JavaInfo;
 
-import io.openliberty.guides.inventory.InventoryResource;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
+@ApplicationScoped
+@Path("/")
+public class SystemPropertiesResource {
 
-@RunWith(Arquillian.class)
-public class InventoryArquillianIT {
-
-    private final static String WARNAME = System.getProperty("arquillian.war.name");
-    private final String INVENTORY_SYSTEMS = "inventory/systems";
-    private Client client = ClientBuilder.newClient();
-
-    @Deployment(testable = true)
-    public static WebArchive createDeployment() {
-        WebArchive archive = ShrinkWrap.create(WebArchive.class, WARNAME)
-                                       .addPackages(true, "io.openliberty.guides");
-        return archive;
+    @GET
+    @Path("properties/{property}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String queryProperty(@PathParam("property") String property) {
+        return System.getProperty(property);
     }
 
-    @ArquillianResource
-    private URL baseURL;
-
-    @Inject
-    InventoryResource invSrv;
-
-    @Test
-    @RunAsClient
-    @InSequence(1)
-    public void testInventoryEndpoints() throws Exception {
-        String localhosturl = baseURL + INVENTORY_SYSTEMS + "/localhost";
-
-        client.register(JsrJsonpProvider.class);
-        WebTarget localhosttarget = client.target(localhosturl);
-        Response localhostresponse = localhosttarget.request().get();
-
-        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
-                            localhostresponse.getStatus());
-
-        JsonObject localhostobj = localhostresponse.readEntity(JsonObject.class);
-        Assert.assertEquals("The system property for the local and remote JVM "
-                        + "should match", System.getProperty("os.name"),
-                            localhostobj.getString("os.name"));
-
-        String invsystemsurl = baseURL + INVENTORY_SYSTEMS;
-
-        WebTarget invsystemstarget = client.target(invsystemsurl);
-        Response invsystemsresponse = invsystemstarget.request().get();
-
-        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
-                            invsystemsresponse.getStatus());
-
-        JsonObject invsystemsobj = invsystemsresponse.readEntity(JsonObject.class);
-
-        int expected = 1;
-        int actual = invsystemsobj.getInt("total");
-        Assert.assertEquals("The inventory should have one entry for localhost",
-                            expected, actual);
-        localhostresponse.close();
+    @GET
+    @Path("properties/java")
+    @Produces(MediaType.APPLICATION_JSON)
+    public JavaInfo java() {
+        JavaInfo javaInfo = new JavaInfo();
+        javaInfo.setVersion(System.getProperty("java.version"));
+        javaInfo.setVendor(System.getProperty("java.vendor"));
+        return javaInfo;
     }
 
-    @Test
-    @InSequence(2)
-    public void testInventoryResourceFunctions() {
-        InventoryList invList = invSrv.listContents();
-        Assert.assertEquals(1, invList.getTotal());
+    @POST
+    @Path("note")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response editNote(String text) {
+        System.setProperty("note", text);
+        return Response.ok().build();
+    }
 
-        List<SystemData> systemDataList = invList.getSystems();
-        Assert.assertTrue(systemDataList.get(0).getHostname().equals("localhost"));
+}
+```
+{: codeblock}
 
-        Assert.assertTrue(systemDataList.get(0).getProperties().get("os.name")
-                                        .equals(System.getProperty("os.name")));
+
+The **SystemPropertiesResource** class provides endpoints to interact with the system properties.
+The **properties/{property}** endpoint accesses system properties.
+The **properties/java** endpoint assembles and returns an object describing the system's Java installation.
+The **note** endpoint is used to write a note into the system properties.
+
+Create the **SystemMetricsResource** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemMetricsResource.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemMetricsResource.java
+
+
+
+
+```
+package io.openliberty.guides.system;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.OperatingSystemMXBean;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+import io.openliberty.guides.graphql.models.SystemLoadData;
+import io.openliberty.guides.graphql.models.SystemMetrics;
+
+@ApplicationScoped
+@Path("metrics")
+public class SystemMetricsResource {
+
+    private static final OperatingSystemMXBean OS_MEAN =
+                             ManagementFactory.getOperatingSystemMXBean();
+
+    private static final MemoryMXBean MEM_BEAN = ManagementFactory.getMemoryMXBean();
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public SystemMetrics getSystemMetrics() {
+        SystemMetrics metrics = new SystemMetrics();
+        metrics.setProcessors(OS_MEAN.getAvailableProcessors());
+        metrics.setHeapSize(MEM_BEAN.getHeapMemoryUsage().getMax());
+        metrics.setNonHeapSize(MEM_BEAN.getNonHeapMemoryUsage().getMax());
+        return metrics;
+    }
+
+    @GET
+    @Path("/systemLoad")
+    @Produces(MediaType.APPLICATION_JSON)
+    public SystemLoadData getSystemLoad() {
+        SystemLoadData systemLoadData = new SystemLoadData();
+        systemLoadData.setLoadAverage(OS_MEAN.getSystemLoadAverage());
+        systemLoadData.setHeapUsed(MEM_BEAN.getHeapMemoryUsage().getUsed());
+        systemLoadData.setNonHeapUsed(MEM_BEAN.getNonHeapMemoryUsage().getUsed());
+        return systemLoadData;
     }
 }
 ```
 {: codeblock}
 
 
-
-Notice that the JUnit Arquillian runner runs the tests instead of the standard JUnit runner.
-The **@RunWith** annotation preceding the class tells JUnit to run the tests by using Arquillian.
-
-The method annotated by **@Deployment** defines the content of the
-web archive, which is going to be deployed onto the Open Liberty server.
-The tests are either run on or against the server.
-The **testable = true** attribute enables the deployment to
-run the tests "in container", that is the tests are run on the server.
+The **SystemMetricsResource** class provides information on the system resources and their usage.
+The **systemLoad** endpoint assembles and returns an object that describes the system load. 
+It includes the JVM heap load and processor load.
 
 
-The **WARNAME** variable is used to name the web archive 
-and is defined in the **pom.xml** file.
-This name is necessary if you don't want a randomly generated web archive name.
 
-The ShrinkWrap API is used to create the web archive.
-All of the packages in the **inventory** service must be added to the web archive; otherwise,
-the code compiles successfully but fails at runtime when the injection of the
-**InventoryResource** class takes place.
-You can learn about the ShrinkWrap archive configuration in this
-[Arquillian guide](http://arquillian.org/guides/shrinkwrap_introduction/).
+# **Implementing GraphQL resolvers**
 
-The **@ArquillianResource** annotation is used to retrieve the
-**http://localhost:9080/arquillian-managed/** base URL for this web service.
-The annotation provides the host name, port number and web archive
-information for this service, so you don't need to hardcode these values
-in the test case. The **arquillian-managed** path in the URL comes
-from the WAR name you specified when you created the web archive in the
-**@Deployment** annotated method.
-It's needed when the **inventory** service communicates
-with the **system** service to get the system properties.
+Resolvers are functions that provide instructions for GraphQL operations.
+Each operation requires a corresponding resolver.
+The **query** operation type is read-only and fetches data.
+The **mutation** operation type can create, delete, or modify data. 
 
-The **testInventoryEndpoints** method is an integration
-test to test the **inventory** service endpoints. The **@RunAsClient**
-annotation added in this test case indicates that this test case is to be run
-on the client side. By running the tests on the client side,
-the tests are run against the managed container.
-The endpoint test case first calls the
-**http://localhost:9080/{WARNAME}/inventory/systems/{hostname}** endpoint with
-the **localhost** host name to add its system properties to the inventory.
-The test verifies that the system property for the local and service JVM match.
-Then, the test method calls the
-**http://localhost:9080/{WARNAME}/inventory/systems** endpoint.
-The test checks that the inventory has one host and
-that the host is **localhost**. The test also verifies that the system property
-stored in the inventory for the local and service JVM match.
+Create the **GraphQLService** class.
 
-Contexts and Dependency Injection (CDI) is used to inject an instance of the
-**InventoryResource** class into this test class.
-You can learn more about CDI in the
-[Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
-
-The injected **InventoryResource** instance is then tested
-by the **testInventoryResourceFunctions** method.
-This test case calls the **listContents()** method to get all systems
-that are stored in this inventory
-and verifies that **localhost** is the only system being found.
-Notice the functional test case doesn't store any system in the inventory,
-the **localhost** system is from the endpoint test case that ran before this test case.
-The **@InSequence** Arquillian annotation guarantees the test sequence.
-The sequence is important for the two tests, as the results in the first test impact the second one.
-
-The test cases are ready to run.
-You will configure the Maven build and the Liberty application server to run them.
-
-# **Configuring Arquillian with Liberty**
-
-Configure your build to use the Arquillian Liberty Managed container
-and set up your Open Liberty server to run your test cases by configuring the **server.xml** file.
-
-<br/>
-### **Configuring your test build**
-
-First, configure your test build with Maven. All of the Maven configuration takes
-place in the **pom.xml** file, which is provided for you.
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-graphql/start/graphql/src/main/java/io/openliberty/guides/graphql/GraphQLService.java
+```
+{: codeblock}
 
 
-> From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/pom.xml
-
-Let's look into each of the required elements for this configuration.
-
-You need the **arquillian-bom** Bill of Materials.
-It's a Maven artifact that defines the versions of Arquillian dependencies to
-make dependency management easier.
-
-The **arquillian-liberty-managed-junit** dependency bundle,
-which includes all the core dependencies, is required to run the Arquillian tests on a
-managed Liberty container that uses JUnit. You can learn more about the
-[Arquillian Liberty dependency bundles](https://github.com/OpenLiberty/arquillian-liberty-dependencies).
-The **shrinkwrap-api** dependency allows you to create your test
-archive, which is packaged into a WAR file and deployed to the Open Liberty server.
-
-The **maven-failsafe-plugin** 
-artifact runs your Arquillian integration tests by using JUnit.
-
-Lastly, specify the **liberty-maven-plugin**
-configuration that defines your Open Liberty runtime configuration.
-When the application runs in an Arquillian Liberty managed container,
-the name of the war file is used as the context root of the application.
-You can pass context root information to the application and customize the container 
-by using the **arquillianProperties** configuration.
-To learn more about the **arquillianProperties** configuration, 
-see the [Arquillian Liberty Managed documentation](https://github.com/OpenLiberty/liberty-arquillian/blob/main/liberty-managed/README.md#configuration).
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-graphql/start/graphql/src/main/java/io/openliberty/guides/graphql/GraphQLService.java
 
 
-<br/>
-### **Configuring the server.xml file**
 
-Now that you're done configuring your Maven build, set up your
-Open Liberty server to run your test cases by configuring
-the **server.xml** file.
-
-Take a look at the **server.xml** file.
-
-
-> From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/src/main/liberty/config/server.xml
-
-The **localConnector** feature is required by the Arquillian Liberty
-Managed container to connect to and communicate with the Open Liberty runtime.
-The **servlet** feature is required during the deployment of the
-Arquillian tests in which servlets are created to perform the in-container testing.
-
-
-# **Running the tests**
-
-It's now time to build and run your Arquillian tests.
-Navigate to the **start** directory. First, run the Maven command to package the application.
-Then, run the **liberty-maven-plugin** goals to create the application server, install the features, 
-and deploy the application to the server. The **configure-arquillian** goal configures
-your Arquillian container. 
-You can learn more about this goal in the [configure-arquillian goal documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/configure-arquillian.md).
 
 ```
-cd /home/project/guide-arquillian-managed/start
+package io.openliberty.guides.graphql;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+import javax.ws.rs.ProcessingException;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.graphql.Description;
+import org.eclipse.microprofile.graphql.GraphQLApi;
+import org.eclipse.microprofile.graphql.Mutation;
+import org.eclipse.microprofile.graphql.Name;
+import org.eclipse.microprofile.graphql.NonNull;
+import org.eclipse.microprofile.graphql.Query;
+import org.eclipse.microprofile.graphql.Source;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
+
+import io.openliberty.guides.graphql.client.SystemClient;
+import io.openliberty.guides.graphql.client.UnknownUriException;
+import io.openliberty.guides.graphql.client.UnknownUriExceptionMapper;
+import io.openliberty.guides.graphql.models.JavaInfo;
+import io.openliberty.guides.graphql.models.SystemInfo;
+import io.openliberty.guides.graphql.models.SystemLoad;
+import io.openliberty.guides.graphql.models.SystemLoadData;
+import io.openliberty.guides.graphql.models.SystemMetrics;
+
+@GraphQLApi
+public class GraphQLService {
+
+    private static Map<String, SystemClient> clients =
+            Collections.synchronizedMap(new HashMap<String, SystemClient>());
+
+    @Inject
+    @ConfigProperty(name = "system.http.port", defaultValue = "9080")
+    String SYSTEM_PORT;
+
+    @Query("system")
+    @NonNull
+    @Description("Gets information about the system")
+    public SystemInfo getSystemInfo(@Name("hostname") String hostname)
+        throws ProcessingException, UnknownUriException {
+        SystemClient systemClient = getSystemClient(hostname);
+        SystemInfo systemInfo = new SystemInfo();
+        systemInfo.setHostname(hostname);
+        systemInfo.setUsername(systemClient.queryProperty("user.name"));
+        systemInfo.setOsName(systemClient.queryProperty("os.name"));
+        systemInfo.setOsArch(systemClient.queryProperty("os.arch"));
+        systemInfo.setOsVersion(systemClient.queryProperty("os.version"));
+        systemInfo.setNote(systemClient.queryProperty("note"));
+
+        return systemInfo;
+    }
+
+    @Mutation("editNote")
+    @Description("Changes the note set for the system")
+    public boolean editNote(@Name("hostname") String hostname,
+                            @Name("note") String note)
+        throws ProcessingException, UnknownUriException {
+        SystemClient systemClient = getSystemClient(hostname);
+        systemClient.editNote(note);
+        return true;
+    }
+
+    @Query("systemLoad")
+    @Description("Gets system load data from the systems")
+    public SystemLoad[] getSystemLoad(@Name("hostnames") String[] hostnames)
+        throws ProcessingException, UnknownUriException {
+        if (hostnames == null || hostnames.length == 0) {
+            return new SystemLoad[0];
+        }
+
+        List<SystemLoad> systemLoads = new ArrayList<SystemLoad>(hostnames.length);
+
+        for (String hostname : hostnames) {
+            SystemLoad systemLoad = new SystemLoad();
+            systemLoad.setHostname(hostname);
+            systemLoads.add(systemLoad);
+        }
+
+        return systemLoads.toArray(new SystemLoad[systemLoads.size()]);
+    }
+
+    @NonNull
+    public SystemMetrics systemMetrics(
+        @Source @Name("system") SystemInfo systemInfo)
+        throws ProcessingException, UnknownUriException {
+        String hostname = systemInfo.getHostname();
+        SystemClient systemClient = getSystemClient(hostname);
+        return systemClient.getSystemMetrics();
+    }
+
+    @NonNull
+    public JavaInfo java(@Source @Name("system") SystemInfo systemInfo)
+        throws ProcessingException, UnknownUriException {
+        String hostname = systemInfo.getHostname();
+        SystemClient systemClient = getSystemClient(hostname);
+        return systemClient.java();
+    }
+
+    public SystemLoadData loadData(@Source @Name("systemLoad") SystemLoad systemLoad)
+        throws ProcessingException, UnknownUriException {
+        String hostname = systemLoad.getHostname();
+        SystemClient systemClient = getSystemClient(hostname);
+        return systemClient.getSystemLoad();
+    }
+
+    private SystemClient getSystemClient(String hostname) {
+        SystemClient sc = clients.get(hostname);
+        if (sc == null) {
+            String customURIString = "http://" + hostname + ":"
+                                      + SYSTEM_PORT + "/system";
+            URI customURI = URI.create(customURIString);
+            sc = RestClientBuilder
+                   .newBuilder()
+                   .baseUri(customURI)
+                   .register(UnknownUriExceptionMapper.class)
+                   .build(SystemClient.class);
+            clients.put(hostname, sc);
+        }
+        return sc;
+    }
+}
+```
+{: codeblock}
+
+
+The resolvers are defined in the **GraphQLService.java** file.
+The **@GraphQLApi** annotation 
+enables GraphQL to use the methods that are defined in this class as resolvers.
+
+Operations of the **query** type are read-only operations that retrieve data.
+They're defined by using the **@Query** annotation.
+
+One of the **query** requests in this application is the **system** request.
+This request is handled by the **getSystemInfo()** function.
+It retrieves and bundles system information into a **SystemInfo** object that is returned.
+
+It uses a **@Name** on one of its input parameters.
+The **@Name** annotation has different functions depending on the context in which it's used.
+In this context, it denotes input parameters for GraphQL operations.
+For the **getSystemInfo()** function,
+it's used to input the **hostname** for the system you want to look up information for.
+
+Recall that the **SystemInfo** class contained nested objects.
+It contained a **JavaInfo** and an **SystemMetrics** object.
+The **@Source** annotation
+is used to add these nested objects as properties to the **SystemInfo** object.
+
+The **@Name** appears again here.
+In this context alongside the **@Source** annotation,
+it's used to connect the **java** and **systemMetrics**
+object types to **system** requests and the **system** object type.
+
+The other **query** request is the **systemLoad** request, 
+which is handled by the **getSystemLoad()** function.
+The **systemLoad** request retrieves information about the resource usage of any number of system services.
+It accepts an array of **hostnames** as the input for the systems to look up.
+It's set up similarly to the **system** request, with the **loadData** function
+used for the nested **SystemLoadData** object.
+
+Operations of the **mutation** type are used to edit data. 
+They can create, update, or delete data.
+They're defined by using the **@Mutation** annotation.
+
+There's one **mutation** operation in this application - the **editNote** request.
+This request is handled by the **editNote()** function.
+This request is used to write a note into the properties of a given system.
+There are inputs for the system you want to write into, and the note you want to write.
+
+Each resolver function has a **@Description** 
+annotation, which provides a description that is used for the schema.
+Descriptions aren't required, but it's good practice to include them. 
+
+
+# **Enabling GraphQL**
+
+To use GraphQL, the MicroProfile GraphQL dependencies and features need to be included. 
+
+Replace the Maven project file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-microprofile-graphql/start/graphql/pom.xml
+
+
+
+
+```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>graphql</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <liberty.var.default.http.port>9082</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9445</liberty.var.default.https.port>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>8.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>4.1</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!-- tag::models[] -->
+        <dependency>
+           <groupId>io.openliberty.guides</groupId>
+           <artifactId>models</artifactId>
+           <version>1.0-SNAPSHOT</version>
+        </dependency>
+        
+        <!-- tag::graphQLDependency[] -->
+        <dependency>
+            <groupId>org.eclipse.microprofile.graphql</groupId>
+            <artifactId>microprofile-graphql-api</artifactId>
+            <version>1.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.7.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-rs-client</artifactId>
+            <version>3.4.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-rs-extension-providers</artifactId>
+            <version>3.4.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <version>1.1.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+            <version>1.0.9</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.3.4</version>
+                <configuration>
+                    <looseApplication>false</looseApplication>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.default.http.port}</http.port>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+{: codeblock}
+
+
+Adding the **microprofile-graphql-api** dependency to the **pom.xml** 
+enables the GraphQL annotations that are used to develop the application. 
+
+The Open Liberty server needs to be configured to support the GraphQL query language. 
+
+Replace the server configuration file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-microprofile-graphql/start/graphql/src/main/liberty/config/server.xml
+
+
+
+
+```
+<server description="GraphQL service">
+    <featureManager>
+        <feature>jaxrs-2.1</feature>
+        <feature>jsonp-1.1</feature>
+        <feature>cdi-2.0</feature>
+        <feature>mpConfig-2.0</feature>
+        <feature>mpRestClient-2.0</feature>
+        <feature>mpGraphQL-1.0</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9082"/>
+    <variable name="default.https.port" defaultValue="9445"/>
+
+    <variable name="io.openliberty.enableGraphQLUI" value="true" />
+
+    <webApplication location="graphql.war" contextRoot="/" />
+    <httpEndpoint host="*" httpPort="${default.http.port}" 
+        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+</server>
+```
+{: codeblock}
+
+
+The **mpGraphQL-1.0** feature that is added to the **server.xml** 
+enables the use of the [MicroProfile GraphQL](https://openliberty.io/docs/latest/reference/feature/mpGraphQL-1.0.html) 
+feature in Open Liberty.
+Open Liberty's MicroProfile GraphQL feature includes GraphiQL.
+Enable it by setting the **io.openliberty.enableGraphQLUI** variable to **true**.
+
+
+
+# **Building and running the application**
+
+From the **start** directory, run the following commands:
+
+```
+mvn -pl models install
 mvn clean package
-mvn liberty:create liberty:install-feature
-mvn liberty:configure-arquillian
-```
-{: codeblock}
-
-Now, you can run your Arquillian tests with the Maven **integration-test** goal:
-
-```
-mvn failsafe:integration-test
 ```
 {: codeblock}
 
 
 
-In the test output, you can see that the application server launched, and that the web archive,
-**arquillian-managed**, started as an application in the server.
-You can also see that the tests are running and that the results are reported.
+The **mvn install** command compiles and packages the object types you created to a **.jar** file.
+This allows them to be used by the **system** and **graphql** services.
+The **mvn package** command packages the **system** and **graphql** services. 
 
-After the tests stop running, the test application is automatically
-undeployed and the server shuts down.
-You should then get a message indicating that the build and tests are successful.
+Dockerfiles have already been set up for you.
+Build your Docker images with the following commands:
 
 ```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
-...
-[AUDIT   ] CWWKE0001I: The server defaultServer has been launched.
-[AUDIT   ] CWWKG0093A: Processing configuration drop-ins resource: guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/configDropins/overrides/liberty-plugin-variable-config.xml
-[INFO    ] CWWKE0002I: The kernel started after 0.854 seconds
-[INFO    ] CWWKF0007I: Feature update started.
-[AUDIT   ] CWWKZ0058I: Monitoring dropins for applications.
-[INFO    ] Aries Blueprint packages not available. So namespaces will not be registered
-[INFO    ] CWWKZ0018I: Starting application guide-arquillian-managed.
-...
-[INFO    ] SRVE0169I: Loading Web Module: guide-arquillian-managed.
-[INFO    ] SRVE0250I: Web Module guide-arquillian-managed has been bound to default_host.
-[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/
-[INFO    ] SESN0176I: A new session context will be created for application key default_host/
-[INFO    ] SESN0172I: The session manager is using the Java default SecureRandom implementation for session ID generation.
-[AUDIT   ] CWWKZ0001I: Application guide-arquillian-managed started in 1.126 seconds.
-[INFO    ] CWWKO0219I: TCP Channel defaultHttpEndpoint has been started and is now listening for requests on host localhost  (IPv4: 127.0.0.1) port 9080.
-[AUDIT   ] CWWKF0012I: The server installed the following features: [cdi-2.0, jaxrs-2.1, jaxrsClient-2.1, jndi-1.0, jsonp-1.1, localConnector-1.0, mpConfig-1.3, servlet-4.0].
-[INFO    ] CWWKF0008I: Feature update completed in 2.321 seconds.
-[AUDIT   ] CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 3.175 seconds.
-[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
-...
-[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
-[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
-[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/arquillian-managed/
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
-[INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
-[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
-[INFO    ] CWWKZ0136I: The arquillian-managed application is using the archive file at the guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/dropins/arquillian-managed.war location.
-[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
-[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
-...
-[INFO    ] Setting the server's publish address to be /inventory/
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Initialization successful.
-[INFO    ] Setting the server's publish address to be /system/
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.system.SystemApplication]: Initialization successful.
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Initialization successful.
-[AUDIT   ] CWWKT0017I: Web application removed (default_host): http://localhost:9080/arquillian-managed/
-[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Destroy successful.
-[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Destroy successful.
-[AUDIT   ] CWWKZ0009I: The application arquillian-managed has stopped successfully.
-[INFO    ] SRVE9103I: A configuration file for a web server plugin was automatically generated for this server at guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/logs/state/plugin-cfg.xml.
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.inventory.InventoryArquillianIT
-...
-Stopping server defaultServer.
-...
-Server defaultServer stopped.
-[INFO]
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-[INFO]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  12.018 s
-[INFO] Finished at: 2020-06-23T12:40:32-04:00
-[INFO] ------------------------------------------------------------------------
+docker build -t system:1.0-java8-SNAPSHOT --build-arg JAVA_VERSION=java8 system/.
+docker build -t system:1.0-java11-SNAPSHOT --build-arg JAVA_VERSION=java11 system/.
+docker build -t graphql:1.0-SNAPSHOT graphql/.
 ```
+{: codeblock}
+
+
+
+The **--build-arg** parameter is used to create two different **system** services.
+One uses Java 8, while the other uses Java 11.
+Run these Docker images using the provided **startContainers** script. 
+The script creates a network for the services to communicate through. 
+It creates two **system** services and a GraphQL service.
+
+
+```
+./scripts/startContainers.sh
+```
+{: codeblock}
+
+
+
+The containers may take some time to become available.
+
+# **Running GraphQL queries**
+Before you make any requests, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
+Run the following command and visit the resulting URL.
+```
+echo http://${USERNAME}-9082.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/graphql/schema.graphql
+```
+{: codeblock}
+This URL returns the schema that describes the GraphQL service.
+
+To access the GraphQL service, GraphiQL has already been set up and included for you.
+To access GraphiQL, run the following command and visit the resulting URL.
+```
+echo http://${USERNAME}-9082.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/graphql-ui
+```
+{: codeblock}
+Queries that are made through GraphiQL are the same as queries that are made through HTTP requests.
+You can also view the schema through GraphiQL by clicking the **Docs** button on the menu bar.
+
+Run the following **query** operation in GraphiQL to get every system property from the container running on Java 8:
+
+
+```
+query {
+  system(hostname: "system-java8") {
+    hostname
+    username
+    osArch
+    osName
+    osVersion
+    systemMetrics {
+      processors
+      heapSize
+      nonHeapSize
+    }
+    java {
+      vendorName
+      version
+    }
+  }
+}
+```
+{: codeblock}
+
+
+The output is similar to the following example:
+
+```
+{
+  "data": {
+    "system": {
+      "hostname": "system-java8",
+      "username": "default",
+      "osArch": "amd64",
+      "osName": "Linux",
+      "osVersion": "5.10.25-linuxkit",
+      "systemMetrics": {
+        "processors": 4,
+        "heapSize": 1031864320,
+        "nonHeapSize": -1
+      },
+      "java": {
+        "vendorName": "AdoptOpenJDK",
+        "version": "1.8.0_292"
+      }
+    }
+  }
+}
+```
+
+Run the following **mutation** operation to add a note to the **system** service running on Java 8:
+
+
+```
+mutation {
+  editNote(
+    hostname: "system-java8"
+    note: "I'm trying out GraphQL on Open Liberty!"
+  )
+}
+```
+{: codeblock}
+
+
+You receive a response containing the Boolean **true** to let you know that the request was successfully processed.
+You can see the note that you added by running the following query operation.
+Notice that there's no need to run a full query, as you only want the **note** property.
+Thus, the request only contains the **note** property. 
+
+
+```
+query {
+  system(hostname: "system-java8") {
+    note
+  }
+}
+```
+{: codeblock}
+
+
+The response is similar to the following example:
+
+```
+{
+  "data": {
+    "system": {
+      "note": "I'm trying out GraphQL on Open Liberty!"
+    }
+  }
+}
+```
+
+GraphQL returns only the **note** property, as it was the only property in the request.
+You can try out the operations using the hostname **system-java11** as well.
+To see an example of using an array as an input for an operation, try the following operation to get system loads:
+
+
+```
+query {
+  systemLoad(hostnames: ["system-java8", "system-java11"]) {
+    hostname
+    loadData {
+      heapUsed
+      nonHeapUsed
+      loadAverage
+    }
+  }
+}
+```
+{: codeblock}
+
+
+The response is similar to the following example:
+
+```
+{
+  "data": {
+    "systemLoad": [
+      {
+        "hostname": "system-java8",
+        "loadData": {
+          "heapUsed": 32432048,
+          "nonHeapUsed": 85147084,
+          "loadAverage": 0.36
+        }
+      },
+      {
+        "hostname": "system-java11",
+        "loadData": {
+          "heapUsed": 39373688,
+          "nonHeapUsed": 90736300,
+          "loadAverage": 0.36
+        }
+      }
+    ]
+  }
+}
+```
+
+# **Tearing down the environment**
+
+When you're done checking out the application, run the following script to stop the application:
+
+
+```
+./scripts/stopContainers.sh
+```
+{: codeblock}
+
+
 
 # **Summary**
 
 ## **Nice Work!**
 
-You just built some functional and integration tests with the Arquillian managed container and ran the tests for your microservices on Open Liberty.
+You just created a basic GraphQL service using MicroProfile GraphQL in Open Liberty!
 
 
-Try one of the related guides to learn more about the
-technologies that you come across in this guide.
 
 
 <br/>
@@ -424,11 +1129,11 @@ technologies that you come across in this guide.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-arquillian-managed** project by running the following commands:
+Delete the **guide-microprofile-graphql** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-arquillian-managed
+rm -fr guide-microprofile-graphql
 ```
 {: codeblock}
 
@@ -437,7 +1142,7 @@ rm -fr guide-arquillian-managed
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20the%20Arquillian%20managed%20container&guide-id=cloud-hosted-guide-arquillian-managed)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Optimizing%20REST%20queries%20for%20microservices%20with%20GraphQL&guide-id=cloud-hosted-guide-microprofile-graphql)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -445,16 +1150,17 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-arquillian-managed/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-arquillian-managed/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-graphql/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-graphql/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Accessing and persisting data in microservices using Java Persistence API (JPA)](https://openliberty.io/guides/jpa-intro.html)
+* [Persisting data with MongoDB](https://openliberty.io/guides/mongodb-intro.html)
 
 
 <br/>
