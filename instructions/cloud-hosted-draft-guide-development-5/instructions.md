@@ -87,6 +87,10 @@ The **finish** directory contains the finished project that you will build.
 # **Creating GraphQL object types**
 
 Navigate to the **start** directory to begin.
+```
+cd /home/project/guide-microprofile-graphql/start
+```
+{: codeblock}
 
 Object types determine the structure of the data that GraphQL returns. 
 These object types are defined by annotations that are applied to the declaration and properties of Java classes. 
@@ -946,12 +950,11 @@ The containers may take some time to become available.
 
 # **Running GraphQL queries**
 Before you make any requests, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
-Run the following command and visit the resulting URL.
+Run the following command to get the schema that describes the GraphQL service:
 ```
-echo http://${USERNAME}-9082.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/graphql/schema.graphql
+curl -s http://localhost:9082/graphql/schema.graphql
 ```
 {: codeblock}
-This URL returns the schema that describes the GraphQL service.
 
 To access the GraphQL service, GraphiQL has already been set up and included for you.
 To access GraphiQL, run the following command and visit the resulting URL.
@@ -959,6 +962,7 @@ To access GraphiQL, run the following command and visit the resulting URL.
 echo http://${USERNAME}-9082.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/graphql-ui
 ```
 {: codeblock}
+
 Queries that are made through GraphiQL are the same as queries that are made through HTTP requests.
 You can also view the schema through GraphiQL by clicking the **Docs** button on the menu bar.
 
