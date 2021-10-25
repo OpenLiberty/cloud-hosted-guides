@@ -110,9 +110,9 @@ The guideServer server is ready to run a smarter planet.
 
 
 Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
-Run the following command to get the URL to access the application.
+To view the output of the application, run the following curl command: 
 ```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/ServletSample/servlet
+curl -s http://localhost:9080/ServletSample/servlet
 ```
 {: codeblock}
 
@@ -338,9 +338,9 @@ or open the project in your editor.
 
 
 Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
-Run the following command to get the URL to access the application.
+To view the output of the application, run the following curl command: 
 ```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/ServletSample/servlet
+curl -s http://localhost:9080/ServletSample/servlet
 ```
 {: codeblock}
 
