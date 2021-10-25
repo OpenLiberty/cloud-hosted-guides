@@ -88,7 +88,7 @@ echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
 {: codeblock}
 
-Follow the link and see the following output:
+See the following output:
 
 ```
 foo wrote 2 albums:
@@ -292,8 +292,7 @@ using the **{{ artists }}** expression. You can use the **ng-repeat** directive 
 of the **artists** property.
 
 
-When the server is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
-Open your browser and check out the application by going to the URL that the following command returns:
+After everything is set up, open your browser and check out the application by going to the URL that the following command returns:
 ```
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
