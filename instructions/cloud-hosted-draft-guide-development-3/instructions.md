@@ -157,7 +157,7 @@ The defaultServer server is ready to run a smarter planet.
 
 After the server runs, you can find your hypermedia-driven **inventory** service at the following URL:
 
-http://localhost:9080/inventory/hosts[^]
+* http://localhost:9080/inventory/hosts[http://localhost:9080/inventory/hosts^]
 
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
@@ -445,8 +445,8 @@ public class InventoryUtil {
 
 The helper builds a link that points to the inventory entry with a **self** relationship. The helper also builds a link that points to the **system** service with a **properties** relationship:
 
-* \`http://localhost:9080/inventory/hosts/<hostname>`
-* \`http://<hostname>\:9080/system/properties`
+* `http://localhost:9080/inventory/hosts/<hostname>`
+* `http://<hostname>\:9080/system/properties`
 
 
 <br/>
@@ -468,7 +468,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 After the server updates, you can find your new hypermedia-driven **inventory** service at the following URL:
 
-* \http://localhost:9080/inventory/hosts[http://localhost:9080/inventory/hosts^]
+* http://localhost:9080/inventory/hosts[http://localhost:9080/inventory/hosts^]
 
 
 
@@ -476,8 +476,8 @@ After the server updates, you can find your new hypermedia-driven **inventory** 
 
 At the following URLs, access the **inventory** service that is now driven by hypermedia:
 
-* \http://localhost:9080/inventory/hosts[http://localhost:9080/inventory/hosts^]
-* \http://localhost:9080/inventory/hosts/localhost[http://localhost:9080/inventory/hosts/localhost^]
+* http://localhost:9080/inventory/hosts[http://localhost:9080/inventory/hosts^]
+* http://localhost:9080/inventory/hosts/localhost[http://localhost:9080/inventory/hosts/localhost^]
 
 
 If the servers are running, you can point your browser to each of the previous URLs to test the
