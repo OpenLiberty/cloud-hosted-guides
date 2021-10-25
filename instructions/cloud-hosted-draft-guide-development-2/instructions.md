@@ -60,22 +60,19 @@ The **finish** directory contains the finished project that you will build.
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
 
-To try out the application, go to the **finish** directory and
-run the following command to specify the specific address of your **artists.json** in the IBM cloud environment:
-
+In this IBM cloud environment, you need to update the URL to access the **artists.json** in the **consume-rest.js** file.
+Run the following commands to go to the **finish** directory and update the **consume-rest.js** file:
 ```
 cd finish
 sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/js/consume-rest.js
 ```
 {: codeblock}
 
-Next, run the following Maven goal to build the application and deploy it to Open Liberty:
-
+To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
 ```
 mvn liberty:run
 ```
 {: codeblock}
-
 
 After you see the following message, your application server is ready:
 
@@ -193,7 +190,7 @@ app.controller("ArtistsCtrl", function($scope, artists) {
 
 
 
-Run the following command to specify the specific address of your **artists.json** in the IBM cloud environment.
+Run the following command to update the URL to access the **artists.json** in the **consume-rest.js** file:
 ```
 sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js
 ```
