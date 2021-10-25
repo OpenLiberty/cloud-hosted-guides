@@ -110,7 +110,7 @@ The guideServer server is ready to run a smarter planet.
 
 
 Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
-To view the output of the application, run the following curl command: 
+Run the following curl command to view the output of the application: 
 ```
 curl -s http://localhost:9080/ServletSample/servlet
 ```
@@ -338,7 +338,7 @@ or open the project in your editor.
 
 
 Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
-To view the output of the application, run the following curl command: 
+Run the following curl command to view the output of the application: 
 ```
 curl -s http://localhost:9080/ServletSample/servlet
 ```
