@@ -1,7 +1,7 @@
 
-# **Welcome to the Consuming a RESTful web service with Angular guide!**
+# **Welcome to the Consuming a RESTful web service with AngularJS guide!**
 
-
+Explore how to access a simple RESTful web service and consume its resources with AngularJS in Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,39 +10,20 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-Explore how to access a simple RESTful web service and consume its resources with Angular in Open
-Liberty.
 
 
 # **What you'll learn**
 
-[Angular](https://angular.io) is a framework for creating interactive web applications.
-Angular applications are written in HTML, CSS, and
-[TypeScript](https://www.typescriptlang.org), a variant of JavaScript. Angular helps you
-create responsive and intuitive applications that download once and run as a single web
-page. Consuming REST services with your Angular application allows you to request
-only the data and operations that you need, minimizing loading times.
+You will learn how to access a REST service and deserialize the returned JSON that contains a list of
+artists and their albums by using the high-level **$resource** service of AngularJS.
 
-You will learn how to access a REST service and deserialize the returned JSON that
-contains a list of artists and their albums by using an Angular service and the Angular
-HTTP Client. You will then present this data using an Angular component.
-
-The REST service that provides the artists and albums resource was written for you in
-advance and responds with the **artists.json**.
-
-The Angular application was created and configured for you in the **frontend**
-directory. It contains the default starter application. There are many files that make
-up an Angular application, but you only need to edit a few to consume the REST
-service and display its data.
-
-Angular applications must be compiled before they can be used. The Angular compilation
-step was configured as part of the Maven build. You can use the **start** folder of
-this guide as a template for getting started with your own applications built on
-Angular and Open Liberty.
+The REST service that provides the artists and albums resource was written for you in advance and
+responds with the **artists.json**, located in the **start/src/resources** directory.
 
 
 
-You will implement an Angular client that consumes this JSON and displays its contents.
+You will implement an AngularJS client that consumes this JSON and displays its contents at a URL.
+
 
 To learn more about REST services and how you can write them, see
 [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
@@ -60,11 +41,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-angular.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-angularjs.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-rest-client-angular.git
-cd guide-rest-client-angular
+git clone https://github.com/openliberty/guide-rest-client-angularjs.git
+cd guide-rest-client-angularjs
 ```
 {: codeblock}
 
@@ -78,11 +59,19 @@ The **finish** directory contains the finished project that you will build.
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
+
+To try out the application, go to the **finish** directory and
+run the following command to specify the location of **artists.json** on the cloud:
 
 ```
 cd finish
+sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/js/consume-rest.js
+```
+{: codeblock}
+
+Next, run the following Maven goal to build the application and deploy it to Open Liberty:
+
+```
 mvn liberty:run
 ```
 {: codeblock}
@@ -95,12 +84,14 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-Select **Launch Application** from the menu of the IDE, 
-type in **9080** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, 
-where **accountname** is your account name. You will see the following output:
+When the server is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
+Run the following command to get the URL to access it.
+```
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
+{: codeblock}
 
-
+Follow the link and see the following output:
 
 ```
 foo wrote 2 albums:
@@ -124,10 +115,14 @@ mvn liberty:stop
 
 # **Starting the service**
 
-Before you begin the implementation, start the provided REST service so that
-the artist JSON is available to you.
+Before you begin the implementation, start the provided REST service so that the artist JSON is
+available to you.
 
 Navigate to the **start** directory to begin.
+```
+cd /home/projects/guide-rest-client-angularjs/start
+```
+{: codeblock}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -149,349 +144,165 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 or open the project in your editor.
 
 
-You can find your artist JSON by running the following command at a terminal:
+After the server is started, you can use the following command to get the URL to view your artist JSON.
 ```
-curl -s http://localhost:9080/artists | jq
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists
 ```
 {: codeblock} 
 
-
-# **Project configuration**
-
-The front end of your application uses Node.js to execute your Angular code. The Maven project is configured for you to install Node.js and produce the production files, which are copied to the web content of your application.
-
-Node.js is server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to execute the Angular scripts found in the **package.json** file. To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
-
-The **frontend-maven-plugin** is used to **install** the dependencies listed in your **package.json** file from the npm registry into a folder called **`node_modules`**. The **`node_modules`** folder is found in your **working** directory. Then, the configuration **produces** the production files to the **src/main/frontend/src/app** directory. 
-
-The **src/main/frontend/src/angular.json** file is defined so that the production build is copied into the web content of your application.
+Any local changes to your JavaScript and HTML are picked up automatically, so you don't need to 
+restart the server.
 
 
+# **Creating the AngularJS controller**
 
-# **Creating the root Angular module**
-
-Your application needs a way to communicate with and retrieve resources from RESTful web services. 
-In this case, the provided Angular application needs to communicate with the
-artists service to retrieve the artists JSON. While there are various ways to perform
-this task, Angular contains a built-in **HttpClientModule** that you can use.
-
-Angular applications consist of modules, which are groups of classes that
-perform specific functions. The Angular framework provides its own modules
-for applications to use. One of these modules, the HTTP Client module, includes
-convenience classes that make it easier and quicker for you to consume a RESTful API
-from your application.
-
-You will create the module that organizes your application, which is called the root module. 
-The root module includes the Angular HTTP Client module.
+Begin by registering your application module. Every application must contain at least one module, the
+application module, which will be bootstrapped to launch the application.
 
 
-Create the **app.module.ts** file.
+Create the **consume-rest** file.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts
+touch /home/project/guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js
 
 
 
 
 ```
-import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
-import { HttpClientModule } from '@angular/common/http';
-import { AppComponent } from './app.component';
+var app = angular.module('consumeRestApp', ['ngResource']);
 
-@NgModule({
-  declarations: [
-    AppComponent
-  ],
-  imports: [
-    BrowserModule,
-    HttpClientModule,
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
-})
-export class AppModule { }
-```
-{: codeblock}
+app.factory("artists", function($resource) {
+    return $resource("http://localhost:9080/artists");
+});
 
-
-The **HttpClientModule** imports the class into the file.
-By using the **@NgModule** tag, you can declare a module and organize 
-your dependencies within the Angular framework. The **imports** array is a declaration array that imports the **HttpClientModule** so that you can use the HTTP Client module in your application.
-
-
-# **Creating the Angular service to fetch data**
-
-You need to create the component that is used in the application to acquire and display
-data from the REST API. The component file contains two classes: the service, which
-handles data access, and the component itself, which handles the presentation of the
-data.
-
-Services are classes in Angular that are designed to share their functionality across
-entire applications. A good service performs only one function, and it performs this
-function well. In this case, the **ArtistsService** class requests artists data from the
-REST service.
-
-
-Create the **app.component.ts** file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts
-
-
-
-
-```
-import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-
-@Injectable()
-export class ArtistsService {
-  constructor(private http: HttpClient) { }
-
-  private static ARTISTS_URL = '/artists';
-
-  async fetchArtists() {
-    try {
-      const data: any = await this.http.get(ArtistsService.ARTISTS_URL).toPromise();
-      return data;
-    } catch (error) {
-      console.error('Error occurred: ' + error);
-    }
-  }
-}
-
-@Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  providers: [ ArtistsService ],
-  styleUrls: ['./app.component.css']
-})
-export class AppComponent implements OnInit {
-  artists: any[] = [];
-
-  constructor(private artistsService: ArtistsService) { }
-
-  ngOnInit() {
-    this.artistsService.fetchArtists().then(data => {
-      this.artists = data;
+app.controller("ArtistsCtrl", function($scope, artists) {
+    artists.query(function(data) {
+        $scope.artists = data;
+    }, function(err) {
+        console.error("Error occured: ", err);
     });
-  }
-}
+});
 ```
 {: codeblock}
 
 
-The file imports the **HttpClient** class and the
-**Injectable** decorator.
 
-The **ArtistsService** class is defined. While it shares the
-file of the component class **AppComponent**, it can also be
-defined in its own file. The class is annotated by **@Injectable**
-so instances of it can be provided to other classes anywhere in the application.
-
-The class injects an instance of the **HttpClient** class,
-which it uses to request data from the REST API. It contains the
-**`ARTISTS_URL`** constant, which points to the API endpoint it
-requests data from. The URL does not contain a host name because the artists API
-endpoint is accessible from the same host as the Angular application. You can send
-requests to external APIs by specifying the full URL. Finally, it implements a
-**fetchArtists()** method that makes the request and returns
-the result.
-
-To obtain the data for display on the page, the
-**fetchArtists()** method tries to use the injected
-**http** instance to perform a
-**GET** HTTP request to the **`ARTISTS_URL`** constant. If successful, it
-returns the result. If an error occurs, it prints the error message to the console.
-
-The **fetchArtists()** method uses a feature of JavaScript
-called **async**/
-**await** to make requests and
-receive responses without preventing the application from working while it waits. For
-the result of the
-**HttpClient.get()** method to
-be compatible with this feature, it must be converted to a Promise by invoking its
-**toPromise()** method. A
-Promise is how JavaScript represents the state of an asynchronous operation. If you
-want to learn more, check out [](https://promisejs.org) for an introduction.
-
-
-# **Defining the component to consume the service**
-
-Components are the basic building blocks of Angular application user interfaces.
-Components are made up of a TypeScript class annotated with the
-**@Component** annotation and the HTML template file (specified by
-**templateUrl**) and CSS style files (specified by
-**styleUrls**.)
-
-Update the **AppComponent** class to use the artists service
-to fetch the artists data and save it so the component can display it.
-
-
-Update the **app.component.ts** file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts
-
-
-
-
+Run the following command to specify the location of **artists.json** on the cloud.
 ```
-import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-
-@Injectable()
-export class ArtistsService {
-  constructor(private http: HttpClient) { }
-
-  private static ARTISTS_URL = '/artists';
-
-  async fetchArtists() {
-    try {
-      const data: any = await this.http.get(ArtistsService.ARTISTS_URL).toPromise();
-      return data;
-    } catch (error) {
-      console.error('Error occurred: ' + error);
-    }
-  }
-}
-
-@Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  providers: [ ArtistsService ],
-  styleUrls: ['./app.component.css']
-})
-export class AppComponent implements OnInit {
-  artists: any[] = [];
-
-  constructor(private artistsService: ArtistsService) { }
-
-  ngOnInit() {
-    this.artistsService.fetchArtists().then(data => {
-      this.artists = data;
-    });
-  }
-}
+sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/js/consume-rest.js
 ```
 {: codeblock}
 
+The application module is defined by **consumeRestApp**.
 
-Replace the entire **AppComponent** class along with the
-**@Component** annotation. Add
-**OnInit** to the list of imported classes at
-the top.
+Your application will need some way of communicating with RESTful web services in order to retrieve their resources.
+In the case of this guide, your application will need to communicate with the artists service to retrieve the artists JSON.
+While there exists a variety of ways of doing this, you can use the fairly straightforward AngularJS
+**$resource** service.
 
-The **providers** property on the
-**@Component** annotation indicates that this component provides the
-**ArtistsService** to other classes in the application.
+The **ngResource** module is registered as it is appended after **consumeRestApp**. By registering another module, you are performing a dependency injection, exposing all functionalities
+of that module to your main application module.
 
-**AppComponent** implements **OnInit**,
-which is a special interface called a lifecycle hook. When Angular displays, updates,
-or removes a component, it calls a specific function, the lifecycle hook, on the
-component so the component can run code in response to this event. This component
-responds to the **OnInit** event via the
-**ngOnInit** method, which fetches and populates the component's
-template with data when it is initialized for display. The file imports the
-**OnInit** interface from the
-**@angular/core** package.
+Next, the **Artists** AngularJS service is defined by using the Factory recipe. The Factory recipe constructs a new service instance with the return value of a passed in function. In this case,
+the **$resource** module that you imported earlier is the passed in function. Target the artist JSON
+URL in the **$resource()** call.
 
-**artists** is a class member of type **any[]** that starts out
-as an empty array. It holds the artists retrieved from the service so the template can
-display them.
+The **controller** controls the flow of data in your application.Each controller is instantiated with
+its own isolated scope, accessible through the **$scope** parameter. All data that is bound to this
+parameter is available in the view to which the controller is attached.
 
-An instance of the **ArtistsService** class is
-injected into the constructor and is accessible by any function that is defined in the
-class. The **ngOnInit** function uses the
-**artistsService** instance to request the artists data.
-Since the **fetchArtists()** method is an **async** function,
-it returns a Promise. To retrieve the data from the request,
-**ngOnInit** calls the **then()** method on the
-Promise which takes in the data and stores it to the
-**artists** class member.
+You can now access the **artists** property from the template at the point in the Document Object
+Model (DOM) where the controller is registered.
 
 
-# **Creating the Angular component template**
+# **Creating the AngularJS template**
 
-Now that you have a service to fetch the data and a component to store it in, you
-will create a template to specify how the data will be displayed on the page. When you
-visit the page in the browser, the component populates the template to display
-the artists data with formatting.
+You will create the starting point of your application.
+This file will contain all elements and attributes specific to AngularJS.
 
-Create the **app.component.html** file.
+Create the starting point of your application.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html
+touch /home/project/guide-rest-client-angularjs/start/src/main/webapp/index.html
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-angularjs/start/src/main/webapp/index.html
 
 
 
 
 ```
-<div *ngFor="let artist of artists">
-  <p>{{ artist.name }} wrote {{ artist.albums.length }} albums: </p>
-  <!-- tag::albumDiv[] -->
-  <div *ngFor="let album of artist.albums">
-    <p style="text-indent: 20px">
-      Album titled <b>{{ album.title }}</b> by
-                   <b>{{ album.artist }}</b> contains
-                   <b>{{ album.ntracks }}</b> tracks
-    </p>
-  </div>
-</div>
+<!-- tag::html[] -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- tag::angular-script[] -->
+        <script 
+            src='http://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.js'/>
+        </script>
+        <!-- tag::angular-resource-script[] -->
+        <script 
+           src='http://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-resource.js'>
+        </script>
+        <!-- end::AngularJS[] -->
+        <script src='./js/consume-rest.js'></script>
+    </head>
+    <!-- tag::body[] -->
+    <body ng-app='consumeRestApp'>
+        <!-- tag::controller[] -->
+        <div ng-controller='ArtistsCtrl'>
+            <!-- tag::repeat[] -->
+            <div ng-repeat='artist in artists'>
+                <!-- tag::artist-info[] -->
+                <p>{{ artist.name }} wrote {{ artist.albums.length }} albums:</p>
+                <div ng-repeat='album in artist.albums'>
+                    <p style='text-indent: 20px'>
+                        Album titled <b>{{ album.title }}</b> by 
+                                     <b>{{ album.artist }}</b> contains 
+                                     <b>{{ album.ntracks }}</b> tracks
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
 ```
 {: codeblock}
 
 
 
-The template contains a **div** element that is enumerated by using the
-**ngFor** directive. The **artist** variable is bound to the **artists** member of the
-component. The **div** element itself and all elements contained within it are repeated for
-each artist, and the **{{ artist.name }}**
-and **{{ artist.albums.length }}**
-placeholders are populated with the information from each artist. The same strategy is
-used to display each **album** by each artist.
+
+Before your application is bootstrapped, you must pull in two **AngularJS** libraries and import **consume-rest.js**.
+
+The first import is the base AngularJS library, which defines the **angular.js** script in your HTML. The second import is the library responsible for providing the APIs for the **$resource** service, which also defines the 
+**angular-resource.js** script in your HTML. The application is bootstrapped because the **consumeRestApp** application module is attached to the **body** of the template.
+
+Next, the **ArtistCtrl** controller is attached to the DOM to create a new child scope. The controller will make the
+**artists** property of the **$scope** object available to access at the point in the DOM where the
+controller is attached.
+
+Once the controller is attached, the **artists** property can be data-bounded to the template and accessed
+using the **{{ artists }}** expression. You can use the **ng-repeat** directive to iterate over the contents
+of the **artists** property.
 
 
-# **Building the front end**
-
-The Open Liberty server is already started, and the REST service is running. In a new 
-command-line session, build the front end by running the following command in the **start** directory:
-
+When the server is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
+Run the following command to get the URL to access the server.
 ```
-mvn generate-resources
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
 {: codeblock}
 
-
-You can rebuild the front end at any time with the **generate-resources** Maven goal. 
-Any local changes to your TypeScript or HTML are picked up when you build the front end.
-
-
-Select **Launch Application** from the menu of the IDE, 
-type in **9080** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, 
-where **accountname** is your account name. You will see the following output:
+See the following output:
 
 ```
 foo wrote 2 albums:
@@ -502,36 +313,27 @@ bar wrote 1 albums:
 dj wrote 0 albums:
 ```
 
-If you use the **curl** command to access the web application root URL,
-you see only the application root page in HTML. The Angular framework
-uses JavaScript to render the HTML to display the application data.
-A web browser runs JavaScript, and the **curl** command doesn't.
+
+# **Testing the AngularJS client**
+
+No explicit code directly uses the consumed artist JSON, so you do not need to write any test cases for this guide.
 
 
-# **Testing the Angular client**
+Whenever you change your AngularJS implementation, the application root at **http://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai** will
+reflect the changes automatically. You can visit the root to manually check whether the artist JSON
+was consumed correctly.
 
-No explicit code directly uses the consumed artist JSON, so you don't need to write
-any test cases.
+When you are done checking the application root, exit development mode by pressing CTRL+C in the command-line session where you ran the server, or by typing q and then pressing the **enter/return** key.
 
+When you develop your own applications, testing becomes a crucial part of your development lifecycle. If you need to write test cases, follow the official unit testing and end-to-end testing documentation on the
+[official AngularJS website](https://docs.angularjs.org/guide/unit-testing).
 
-Whenever you change and build your Angular implementation the changes will be reflected automatically
-at the URL for the launched application.
-
-When you are done checking the application root, exit development mode by
-pressing **CTRL+C** in the command-line session where you ran the server,
-or by typing **q** and then pressing the **enter/return** key.
-
-Although the Angular application that this guide shows you how to build is simple,
-when you build more complex Angular applications, testing becomes a crucial part
-of your development lifecycle. If you need to write test cases, follow the official
-unit testing and end-to-end testing documentation on the
-[official Angular page](https://angular.io/guide/testing).
 
 # **Summary**
 
 ## **Nice Work!**
 
-You just accessed a simple RESTful web service and consumed its resources by using Angular in Open Liberty.
+You have just accessed a simple RESTful web service and consumed its resources by using AngularJS in Open Liberty.
 
 
 
@@ -541,11 +343,11 @@ You just accessed a simple RESTful web service and consumed its resources by usi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-rest-client-angular** project by running the following commands:
+Delete the **guide-rest-client-angularjs** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-rest-client-angular
+rm -fr guide-rest-client-angularjs
 ```
 {: codeblock}
 
@@ -554,7 +356,7 @@ rm -fr guide-rest-client-angular
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20Angular&guide-id=cloud-hosted-guide-rest-client-angular)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20AngularJS&guide-id=cloud-hosted-guide-rest-client-angularjs)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -562,8 +364,8 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-angular/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-angular/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-angularjs/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-angularjs/pulls)
 
 
 
@@ -572,7 +374,6 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
 <br/>
