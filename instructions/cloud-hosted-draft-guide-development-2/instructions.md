@@ -18,7 +18,7 @@ You will learn how to access a REST service and deserialize the returned JSON th
 artists and their albums by using the high-level **$resource** service of AngularJS.
 
 The REST service that provides the artists and albums resource was written for you in advance and
-responds with the **artists.json**, located in the **start/src/resources** directory.
+responds with the **artists.json**.
 
 
 
@@ -61,7 +61,7 @@ The **finish** directory in the root of this guide contains the finished applica
 
 
 To try out the application, go to the **finish** directory and
-run the following command to specify the location of **artists.json** on the cloud:
+run the following command to specify the specific address of your **artists.json** in the IBM cloud environment:
 
 ```
 cd finish
@@ -120,7 +120,7 @@ available to you.
 
 Navigate to the **start** directory to begin.
 ```
-cd /home/projects/guide-rest-client-angularjs/start
+cd /home/project/guide-rest-client-angularjs/start
 ```
 {: codeblock}
 
@@ -144,9 +144,9 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 or open the project in your editor.
 
 
-After the server is started, you can use the following command to get the URL to view your artist JSON.
+After the server is started, run the following curl command to view your artist JSON.
 ```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists
+curl -s http://localhost:9080/artists | jq
 ```
 {: codeblock} 
 
@@ -193,9 +193,9 @@ app.controller("ArtistsCtrl", function($scope, artists) {
 
 
 
-Run the following command to specify the location of **artists.json** on the cloud.
+Run the following command to specify the specific address of your **artists.json** in the IBM cloud environment.
 ```
-sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/js/consume-rest.js
+sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js
 ```
 {: codeblock}
 
@@ -319,7 +319,7 @@ dj wrote 0 albums:
 No explicit code directly uses the consumed artist JSON, so you do not need to write any test cases for this guide.
 
 
-Whenever you change your AngularJS implementation, the application root at **http://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai** will
+Whenever you change your AngularJS implementation, the application root at **`http://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** will
 reflect the changes automatically. You can visit the root to manually check whether the artist JSON
 was consumed correctly.
 
