@@ -60,17 +60,15 @@ The **finish** directory contains the finished project that you will build.
 The **finish** directory in the root of this guide contains the finished application. The React front end is already pre-built for you and the static files from the production build can be found in the **src/main/webapp/static** directory.
 
 
-To try out the application, go to the **finish** directory and
-run the following command to specify the specific address of your **artists.json** in the IBM cloud environment:
-
+In this IBM cloud environment, you need to update the URL to access the **artists.json**.
+Run the following commands to go to the **finish** directory and update the file where specified the URL:
 ```
 cd finish
 sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/static/js/main.17305645.chunk.js
 ```
 {: codeblock}
 
-Next, run the following Maven goal to build the application and deploy it to Open Liberty:
-
+To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
 ```
 mvn liberty:run
 ```
@@ -85,13 +83,13 @@ The defaultServer server is ready to run a smarter planet.
 
 
 When the server is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
-Run the following command to get the URL to access it.
+Open your browser and check out the application by going to the URL that the following command returns:
 ```
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
 {: codeblock}
 
-Follow the link and see the following output:
+See the following output:
 
 ![React Paginated Table](https://raw.githubusercontent.com/OpenLiberty/guide-rest-client-reactjs/master/assets/react-table.png)
 
@@ -155,6 +153,9 @@ The front end of your application uses Node.js to build your React code. The Mav
 Node.js is a server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to run the React build scripts that are found in the **package.json** file.
 To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
 
+
+Take a look at the **pom.xml** file.
+> From the menu of the IDE, select **File** > **Open** > guide-rest-client-reactjs/start/pom.xml
 
 The **frontend-maven-plugin** is used to **install** the dependencies that are listed in your **package.json** file from the npm registry into a folder called **node_modules**.
 The **node_modules** folder can be found in your **working** directory. Then, the configuration **produces** the production files to the **src/main/frontend/build** directory. 
@@ -477,7 +478,7 @@ To learn more about it, see [Spread in object literals](https://developer.mozill
 The **this.setState** function is used to update the state of your React component with the data that was fetched from the server. This update triggers a rerender of your React component, which updates the table with the artist data.
 For more information on how state in React works, see the React documentation on [state and lifecycle](https://reactjs.org/docs/faq-state.html).
 
-Finally, run the following command to specify the specific address of your **artists.json** in the IBM cloud environment.
+Finally, run the following command to update the URL to access the **artists.json** in the **ArtistTable.js** file:
 ```
 sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js
 ```
@@ -504,7 +505,7 @@ Any local changes to your JavaScript and HTML are picked up when you build the
 front end.
 
 
-Run the following command to get the URL to view the front end of your application.
+Open your browser and view the front end of your application by going to the URL that the following command returns:
 ```
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
