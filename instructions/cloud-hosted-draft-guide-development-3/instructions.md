@@ -1,7 +1,7 @@
 
 # **Welcome to the Creating a hypermedia-driven RESTful web service guide!**
 
-You'll explore how to use Hypermedia As The Engine Of Application State (HATEOAS) to drive your
+You'll explore how to use Hypermedia As The Engine Of Application State (HATEOAS) to drive your RESTful web service on Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,7 +10,6 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-RESTful web service on Open Liberty.
 
 # **What you'll learn**
 
@@ -154,14 +153,14 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-After the server runs, you can find your hypermedia-driven `inventory` service at the **http://localhost:9080/inventory/hosts** endpoint by running the following curl command:
+After the server runs, you can find your hypermedia-driven **inventory** service at the **/inventory/hosts** endpoint.
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Run the following curl command:
 ```
 curl -s http://localhost:9080/inventory/hosts | jq
 ```
 {: codeblock}
-
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -448,9 +447,9 @@ public class InventoryUtil {
 
 The helper builds a link that points to the inventory entry with a **self** relationship. The helper also builds a link that points to the **system** service with a **properties** relationship:
 
+
 * `http://localhost:9080/inventory/hosts/<hostname>`
 * `http://<hostname>:9080/system/properties`
-
 
 <br/>
 ### **Linking to inactive services or unavailable resources**
@@ -469,24 +468,19 @@ Hence, the account holder should not be linked to a resource that provides money
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-After the server updates, you can find your new hypermedia-driven `inventory` service at the **http://localhost:9080/inventory/hosts** endpoint by running the following curl command:
+After the server updates, you can find your new hypermedia-driven **inventory** service at the **/inventory/hosts** endpoint.
+Run the following curl command by another command-line session:
 ```
 curl -s http://localhost:9080/inventory/hosts | jq
 ```
 {: codeblock}
 
 
-
 # **Testing the hypermedia-driven RESTful web service**
 
-At the following URLs, access the **inventory** service that is now driven by hypermedia:
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-At the following URLs, you can access the `inventory` service that is now driven by hypermedia by running the following curl commands:
-
+Run the following curl commands to access the **inventory** service that is now driven by hypermedia: 
 ```
 curl -s http://localhost:9080/inventory/hosts | jq
 ```
@@ -496,7 +490,6 @@ curl -s http://localhost:9080/inventory/hosts | jq
 curl -s http://localhost:9080/inventory/hosts/localhost| jq
 ```
 {: codeblock}
-
 
 If the servers are running, you can point your browser to each of the previous URLs to test the
 application manually. Nevertheless, you should rely on automated tests since they are more reliable
