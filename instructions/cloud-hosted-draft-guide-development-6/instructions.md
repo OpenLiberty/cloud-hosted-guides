@@ -61,7 +61,7 @@ The **finish** directory in the root of this guide contains the finished applica
 
 
 To try out the application, go to the **finish** directory and
-run the following command to specify the location of **artists.json** on the cloud:
+run the following command to specify the specific address of your **artists.json** in the IBM cloud environment:
 
 ```
 cd finish
@@ -138,9 +138,9 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 or open the project in your editor.
 
 
-After the server is started, you can use the following command to get the URL to view your artist JSON.
+After the server is started, run the following curl command to view your artist JSON.
 ```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists
+curl -s http://localhost:9080/artists | jq
 ```
 {: codeblock} 
 
@@ -477,9 +477,9 @@ To learn more about it, see [Spread in object literals](https://developer.mozill
 The **this.setState** function is used to update the state of your React component with the data that was fetched from the server. This update triggers a rerender of your React component, which updates the table with the artist data.
 For more information on how state in React works, see the React documentation on [state and lifecycle](https://reactjs.org/docs/faq-state.html).
 
-Finally, run the following command to specify the location of **artists.json** on the cloud.
+Finally, run the following command to specify the specific address of your **artists.json** in the IBM cloud environment.
 ```
-sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/frontend/src/Components/ArtistTable.js
+sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js
 ```
 {: codeblock}
 
@@ -498,6 +498,7 @@ mvn process-resources
 ```
 {: codeblock}
 
+The build may take a few minutes to complete.
 You can rebuild the front end at any time with the Maven **process-resources** goal.
 Any local changes to your JavaScript and HTML are picked up when you build the
 front end.
