@@ -315,7 +315,7 @@ dj wrote 0 albums:
 No explicit code directly uses the consumed artist JSON, so you do not need to write any test cases for this guide.
 
 
-Whenever you change your AngularJS implementation, the application root at **`http://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** will
+Whenever you change your AngularJS implementation, the application root at `http://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai` will
 reflect the changes automatically. You can visit the root to manually check whether the artist JSON
 was consumed correctly.
 
