@@ -479,8 +479,8 @@ curl -s http://localhost:9080/inventory/hosts | jq
 
 # **Testing the hypermedia-driven RESTful web service**
 
-
-Run the following curl commands to access the **inventory** service that is now driven by hypermedia: 
+If the servers are running, you can test the application manually by
+running the following curl commands to access the **inventory** service that is now driven by hypermedia: 
 ```
 curl -s http://localhost:9080/inventory/hosts | jq
 ```
@@ -491,8 +491,7 @@ curl -s http://localhost:9080/inventory/hosts/localhost| jq
 ```
 {: codeblock}
 
-If the servers are running, you can point your browser to each of the previous URLs to test the
-application manually. Nevertheless, you should rely on automated tests since they are more reliable
+Nevertheless, you should rely on automated tests since they are more reliable
 and trigger a failure if a change introduces a defect.
 
 <br/>
