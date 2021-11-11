@@ -1,7 +1,7 @@
 
-# **Welcome to the Consuming a RESTful web service with ReactJS guide!**
+# **Welcome to the Creating a multi-module application guide!**
 
-Explore how to access a simple RESTful web service and consume its resources with ReactJS in Open Liberty.
+You will learn how to build an application with multiple modules with Maven and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,19 +14,17 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 # **What you'll learn**
 
-You will learn how to access a REST service and deserialize the returned JSON that contains a list of artists and their albums by using an HTTP client with the ReactJS library. You will then present this data by using a ReactJS paginated table component.
+A Jakarta Platform, Enterprise Edition (Jakarta EE) application consists of modules that work together as one entity. An enterprise archive (EAR) is a wrapper for a Jakarta EE application, which consists of web archive (WAR) and Java archive (JAR) files. To deploy or distribute the Jakarta EE application into new environments, all the modules and resources must first be packaged into an EAR file.
 
-[ReactJS](https://reactjs.org/) is a JavaScript library that is used to build user interfaces. Its main purpose is to incorporate a component-based approach to create reusable UI elements. With ReactJS, you can also interface with other libraries and frameworks. Note that the names ReactJS and React are used interchangeably.
+In this guide, you will learn how to:
 
-The React application in this guide is provided and configured for you in the **src/main/frontend** directory.
-The application uses the [Create React App](https://reactjs.org/docs/create-a-new-react-app.html) prebuilt configuration to set up the modern single-page React application.
-The [create-react-app](https://github.com/facebook/create-react-app) integrated toolchain is a comfortable environment for learning React and is the best way to start building a new single-page application with React.
+* establish a dependency between a web module and a Java library module,
+* use Maven to package the WAR file and the JAR file into an EAR file so that you can run and test the application on Open Liberty, and
+* use the Liberty Maven plug-in to develop a multi-module application in development mode without having to prebuild the JAR and WAR files. In development mode, your changes are automatically picked up by the running server.
+
+You will build a unit converter application that converts heights from centimeters into feet and inches. The application will request the user to enter a height value in centimeters. Then, the application processes the input by using functions that are found in the JAR file to return the height value in imperial units.
 
 
-The REST service that provides the resources was written for you in advance in the back end of the application, and it responds with the **artists.json** in the **src/resources** directory. You will implement a ReactJS client as the front end of your application, which consumes this JSON file and displays its contents on a single-page webpage. 
-
-To learn more about REST services and how you can write them, see the
-[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
 
 # **Getting started**
 
@@ -40,11 +38,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-reactjs.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-multimodules.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-rest-client-reactjs.git
-cd guide-rest-client-reactjs
+git clone https://github.com/openliberty/guide-maven-multimodules.git
+cd guide-maven-multimodules
 ```
 {: codeblock}
 
@@ -53,66 +51,394 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+Access partial implementation of the application from the **start** folder. This folder includes a web module in the **war** folder, a Java library in the **jar** folder, and template files in the **ear** folder. However, the Java library and the web module are independent projects, and you will need to complete the following steps to implement the application:
+
+1. Add a dependency relationship between the two modules.
+
+2. Assemble the entire application into an EAR file.
+
+3. Aggregate the entire build.
+
+4. Test the multi-module application.
 
 <br/>
 ### **Try what you'll build**
 
-The **finish** directory in the root of this guide contains the finished application. The React front end is already pre-built for you and the static files from the production build can be found in the **src/main/webapp/static** directory.
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
+To try out the application, first go to the **finish** directory and run the following
+Maven goal to build the application:
 
-In this IBM cloud environment, you need to update the URL to access the **artists.json**.
-Run the following commands to go to the **finish** directory and update the file where specified the URL:
 ```
 cd finish
-sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/static/js/main.17305645.chunk.js
-```
-{: codeblock}
-
-To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
-```
-mvn liberty:run
-```
-{: codeblock}
-
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-When the server is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
-Open your browser and check out the application by going to the URL that the following command returns:
-```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
-```
-{: codeblock}
-
-See the following output:
-
-![React Paginated Table](https://raw.githubusercontent.com/OpenLiberty/guide-rest-client-reactjs/master/assets/react-table.png)
-
-
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
-
-```
-mvn liberty:stop
+mvn install
 ```
 {: codeblock}
 
 
 
-# **Starting the service**
+To deploy your EAR application on an Open Liberty server, run the Maven **liberty:run** goal from the finish directory using the **-pl** flag to specify the ear project. The **-pl** flag specifies the project where the maven goal runs.
 
-Before you begin the implementation, start the provided REST service so that
-the artist JSON is available to you.
+```
+mvn -pl ear liberty:run
+```
+{: codeblock}
+
+
+
+Once the server is running, open another command-line session by selecting **Terminal** > **New Terminal** 
+from the menu of the IDE. Then use the following command to get the URL.
+Open your browser and check out your service by going to the URL that the command returns.
+```
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/converter
+```
+{: codeblock}
+
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C** in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal using the **-pl ear** flag from the **finish** directory in another command-line session:
+
+```
+mvn -pl ear liberty:stop
+```
+{: codeblock}
+
+
+
+
+# **Adding dependencies between WAR and JAR modules**
+
+To use a Java library in your web module, you must add a dependency relationship between the two modules.
+
+As you might have noticed, each module has its own **pom.xml** file. Each module has its own **pom.xml** file because each module is treated as an independent project. You can rebuild, reuse, and reassemble every module on its own.
 
 Navigate to the **start** directory to begin.
 ```
-cd /home/project/guide-rest-client-reactjs/start
+cd /home/project/guide-maven-multimodules/start
+```
+{: codeblock}
+
+Replace the war/POM file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-maven-multimodules/start/war/pom.xml
+
+
+
+
+```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <groupId>io.openliberty.guides</groupId>
+        <artifactId>guide-maven-multimodules</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-maven-multimodules-war</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <name>guide-maven-multimodules-war</name>
+    <url>http://maven.apache.org</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>8.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>4.0.1</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-jar</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+    </dependencies>
+
+</project>
+```
+{: codeblock}
+
+
+The **dependency** element is the Java library module that implements the functions that you need for the unit converter.
+
+Although the **parent/child** structure is not normally needed for multi-module applications, here it helps us to better organize all of the projects. This structure allows all of the child projects to make use of the plugins that are defined in the parent **pom.xml** file, without having to define them again in the child **pom.xml** files.
+
+
+# **Assembling multiple modules into an EAR file**
+
+To deploy the entire application on the Open Liberty server, first package the application. Use the EAR project to assemble multiple modules into an EAR file.
+
+Navigate to the **ear** folder and find a template **pom.xml** file.
+Replace the ear/POM file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-maven-multimodules/start/ear/pom.xml
+
+
+
+
+```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <groupId>io.openliberty.guides</groupId>
+        <artifactId>guide-maven-multimodules</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-maven-multimodules-ear</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>ear</packaging>
+    <!-- end::packaging[] -->
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+    </properties>
+
+    <dependencies>
+        <!-- tag::dependencies[] -->
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-jar</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>jar</type>
+        </dependency>
+        <!-- tag::dependency-war[] -->
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-war</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>war</type>
+        </dependency>
+        <!-- end::dependencies[] -->
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.7.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-ear-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <modules>
+                        <jarModule>
+                            <groupId>io.openliberty.guides</groupId>
+                            <artifactId>guide-maven-multimodules-jar</artifactId>
+                            <uri>/guide-maven-multimodules-jar-1.0-SNAPSHOT.jar</uri>
+                        </jarModule>
+                        <!-- tag::webModule[] -->
+                        <webModule>
+                            <groupId>io.openliberty.guides</groupId>
+                            <artifactId>guide-maven-multimodules-war</artifactId>
+                            <uri>/guide-maven-multimodules-war-1.0-SNAPSHOT.war</uri>
+                            <!-- tag::contextRoot[] -->
+                            <contextRoot>/converter</contextRoot>
+                        </webModule>
+                    </modules>
+                </configuration>
+            </plugin>
+
+            <!-- Since the package type is ear,
+            need to run testCompile to compile the tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <executions>
+                    <execution>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <default.http.port>
+                            ${liberty.var.default.http.port}
+                        </default.http.port>
+                        <default.https.port>
+                            ${liberty.var.default.https.port}
+                        </default.https.port>
+                        <cf.context.root>/converter</cf.context.root>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+```
+{: codeblock}
+
+
+
+Set the **basic configuration** for the project and set the **packaging** element to **ear**.
+
+The **Java library module** and the **web module** were added as dependencies. Specify a type of **war** for the web module. If you don’t specify this type for the web module, Maven looks for a JAR file.
+
+The definition and configuration of the **maven-ear-plugin** plug-in were added to create an EAR file. Define the **jarModule** and **webModule** modules to be packaged into the EAR file.
+To customize the context root of the application, set the **contextRoot** element to **/converter** in the **webModule**. Otherwise, Maven automatically uses the WAR file **artifactId** ID as the context root for the application while generating the **application.xml** file.
+
+To deploy and run an EAR application on an Open Liberty server, you need to provide a server configuration file.
+
+Create the server configuration file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml
+
+
+
+
+```
+<server description="Sample Liberty server">
+
+    <featureManager>
+        <feature>jsp-2.3</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080" />
+    <variable name="default.https.port" defaultValue="9443" />
+
+    <httpEndpoint host="*" httpPort="${default.http.port}"
+        httpsPort="${default.https.port}" id="defaultHttpEndpoint" />
+
+    <enterpriseApplication id="guide-maven-multimodules-ear"
+        location="guide-maven-multimodules-ear.ear"
+        name="guide-maven-multimodules-ear" />
+    <!-- end::server[] -->
+</server>
+```
+{: codeblock}
+
+
+
+You must configure the **server.xml** file with the **enterpriseApplication** element to specify the location of your EAR application.
+
+
+# **Aggregating the entire build**
+
+Because you have multiple modules, aggregate the Maven projects to simplify the build process.
+
+Create a parent **pom.xml** file under the **start** directory to link all of the child modules together. A template is provided for you.
+
+Replace the start/POM file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-maven-multimodules/start/pom.xml
+
+
+
+
+```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- tag::groupId[] -->
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-maven-multimodules</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <!-- end::packaging[] -->
+
+    <modules>
+        <module>jar</module>
+        <module>war</module>
+        <module>ear</module>
+    </modules>
+
+    <build>
+        <plugins>
+            <!-- tag::liberty-maven-plugin[] -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.4</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+{: codeblock}
+
+
+Set the **basic configuration** for the project. Set **pom** as the **packaging** element of the parent **pom.xml** file.
+
+In the parent **pom.xml** file, list all of the **modules** that you want to aggregate for the application.
+
+
+
+# **Developing the application**
+
+You can now develop the application and the different modules together in dev mode by using the Liberty Maven plug-in.
+To learn more about how to use development mode with multiple modules, check out the link:[Documentation](link:https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#multiple-modules).
+
+Navigate to the **start** directory to begin.
+```
+cd /home/project/guide-arquillian-managed/start
 ```
 {: codeblock}
 
@@ -135,557 +461,276 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
+<br/>
+### **Updating the Java classes in different modules**
 
-After the server is started, run the following curl command to view your artist JSON.
-```
-curl -s http://localhost:9080/artists | jq
-```
-{: codeblock} 
+Update the **HeightsBean** class to use the Java library module that implements the functions that you need for the unit converter.
 
-All the dependencies for the React front end can be found in **src/main/frontend/src/package.json**, and 
-they are installed before the front end is built by the **frontend-maven-plugin**. Additionally, some provided **CSS** stylesheets files are provided and can be found in the **src/main/frontend/src/Styles** directory.
+Navigate to the **start\war** directory.
 
+Replace the **HeightsBean** class.
 
-# **Project configuration**
-
-The front end of your application uses Node.js to build your React code. The Maven project is configured for you to install Node.js and produce the production files, which are copied to the web content of your application.
-
-Node.js is a server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to run the React build scripts that are found in the **package.json** file.
-To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
-
-
-Take a look at the **pom.xml** file.
-> From the menu of the IDE, select **File** > **Open** > guide-rest-client-reactjs/start/pom.xml
-
-The **frontend-maven-plugin** is used to **install** the dependencies that are listed in your **package.json** file from the npm registry into a folder called **node_modules**.
-The **node_modules** folder can be found in your **working** directory. Then, the configuration **produces** the production files to the **src/main/frontend/build** directory. 
-
-The **maven-resources-plugin** copies the **static** content from the **build** directory to the **web content** of the application.
-
-
-# **Creating the default page**
-
-You need to create the entry point of your React application. **create-react-app** uses 
-the **index.js** file as the main entry point of the application. This JavaScript file 
-corresponds with the **index.html** file, which is the entry point where your code runs in the browser.
-
-Create the **index.js** file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/index.js
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/index.js
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-maven-multimodules/start/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java
 
 
 
 
 ```
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './Styles/index.css';
-import App from './Components/App';
+package io.openliberty.guides.multimodules.web;
 
-ReactDOM.render(<App />, document.getElementById('root'));
-```
-{: codeblock}
+public class HeightsBean implements java.io.Serializable {
+    private String heightCm = null;
+    private String heightFeet = null;
+    private String heightInches = null;
+    private int cm = 0;
+    private int feet = 0;
+    private int inches = 0;
 
-
-
-
-The **React** library imports the **react** package. A DOM, or Document Object Model, is a programming interface for HTML and XML documents. React offers a virtual DOM, which is essentially a copy of the browser DOM that resides in memory. The React virtual DOM improves the performance of your web application and plays a crucial role in the rendering process. The **react-dom** package provides DOM-specific methods that can be used in your application to get outside of the React model, if necessary. 
-
-The **render** method takes an HTML DOM element and tells the ReactDOM to render your React application inside of this DOM element. To learn more about the React virtual DOM, see the [ReactDOM](https://reactjs.org/docs/react-dom.html) documentation.
-
-
-# **Creating the React components**
-
-A React web application is a collection of components, and each component has a specific function. You will create the components that are used in the application to acquire and display data from the REST API. 
-
-
-
-The main component in your React application is the **App** component. You need to create the **App.js** file to act as a container for all other components. 
-
-Create the **App.js** file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/App.js
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/Components/App.js
-
-
-
-
-```
-import React from 'react';
-import ArtistTable from './ArtistTable';
-
-function App() {
-  return (
-      <ArtistTable/>
-  );
-}
-
-export default App;
-```
-{: codeblock}
-
-
-The **App.js** file returns the **ArtistTable** component to create a reusable element that encompasses your web application. 
-
-Next, create the **ArtistTable** component that fetches data from your back end and renders it in a table. 
-
-Create the **ArtistTable.js** file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js
-
-
-
-
-```
-import React, { Component } from 'react';
-import axios from 'axios';
-import ReactTable from 'react-table-6';
-import 'react-table-6/react-table.css';
-
-class ArtistTable extends Component {
-  state = {
-    posts: [],
-    isLoading: true,
-    error: null,
-  };
-
-  getArtistsInfo() {
-    axios('http://localhost:9080/artists')
-      .then(response => {
-        const artists = response.data;
-        const posts = [];
-        for (const artist of artists) {
-          const { albums, ...rest } = artist;
-          for (const album of albums) {
-            posts.push({ ...rest, ...album });
-          }
-        };
-        this.setState({
-          posts,
-          isLoading: false
-        });
-      })
-      .catch(error => this.setState({ error, isLoading: false }));
-  }
-
-  componentDidMount() {
-    this.getArtistsInfo();
-  }
-  render() {
-    const { isLoading, posts } = this.state;
-    const columns = [{
-      Header: 'Artist Info',
-      columns: [
-        {
-          Header: 'Artist ID',
-          accessor: 'id'
-        },
-        {
-          Header: 'Artist Name',
-          accessor: 'name'
-        },
-        {
-          Header: 'Genres',
-          accessor: 'genres',
-        }
-      ]
-    },
-    {
-      Header: 'Albums',
-      columns: [
-        {
-          Header: 'Title',
-          accessor: 'title',
-        },
-        {
-          Header: 'Number of Tracks',
-          accessor: 'ntracks',
-        }
-      ]
+    public HeightsBean() {
     }
-  ]
 
-  return (
-    <div>
-      <h2>Artist Web Service</h2>
-      {!isLoading ? (
-        <ReactTable
-          data={posts}
-          columns={columns}
-          defaultPageSize={4}
-          pageSizeOptions={[4, 5, 6]}
-        />) : (
-          <p>Loading .....</p>
-        )}
-    </div>
-    );
-  }
+    public String getHeightCm() {
+        return heightCm;
+    }
+
+    public String getHeightFeet() {
+        return heightFeet;
+    }
+
+    public String getHeightInches() {
+        return heightInches;
+    }
+
+    public void setHeightCm(String heightcm) {
+        this.heightCm = heightcm;
+    }
+
+    public void setHeightFeet(String heightfeet) {
+        this.cm = Integer.valueOf(heightCm);
+        this.feet = io.openliberty.guides.multimodules.lib.Converter.getFeet(cm);
+        String result = String.valueOf(feet);
+        this.heightFeet = result;
+    }
+
+    public void setHeightInches(String heightinches) {
+        this.cm = Integer.valueOf(heightCm);
+        this.inches = io.openliberty.guides.multimodules.lib.Converter.getInches(cm);
+        String result = String.valueOf(inches);
+        this.heightInches = result;
+    }
+
 }
-
-export default ArtistTable;
 ```
 {: codeblock}
 
 
 
-To display the returned data, you will use pagination. Pagination is the process of separating content into discrete pages, and it can be used for handling data sets in React. In your application, you'll render the columns in the paginated table. The **columns** constant is used to define the table that is present on the webpage.
+The **getFeet(cm)** invocation was added to the **setHeightFeet** method to convert a measurement into feet.
 
-The **return** statement returns the paginated table where you defined the properties for the **ReactTable**. The **data** property corresponds to the consumed data from the API endpoint and is assigned to the **data** of the table. The **columns** property corresponds to the rendered column object and is assigned to the **columns** of the table.
+The **getInches(cm)** invocation was added to the **setHeightInches** method to convert a measurement into inches.
+
+To check out the running application, open another command-line session by selecting **Terminal** > **New Terminal** 
+from the menu of the IDE. Then use the following command to get the URL.
+Open your browser and check out your service by going to the URL that the command returns.
+```
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/converter
+```
+{: codeblock}
+
+Now try updating the converter so that it converts heights correctly, rather than returning 0.
+
+Navigate to the **start\jar** directory.
+
+Replace the **Converter** class.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-maven-multimodules/start/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java
+
+
+
+
+```
+package io.openliberty.guides.multimodules.lib;
+
+public class Converter {
+
+    public static int getFeet(int cm) {
+        int feet = (int) (cm / 30.48);
+        return feet;
+    }
+
+    public static int getInches(int cm) {
+        double feet = cm / 30.48;
+        int inches = (int) (cm / 2.54) - ((int) feet * 12);
+        return inches;
+    }
+
+    public static int sum(int a, int b) {
+        return a + b;
+    }
+
+    public static int diff(int a, int b) {
+        return a - b;
+    }
+
+    public static int product(int a, int b) {
+        return a * b;
+    }
+
+    public static int quotient(int a, int b) {
+        return a / b;
+    }
+
+}
+```
+{: codeblock}
+
+
+
+Change the **getFeet** method so that it converts from centimetres to feet, and the **getInches** method so that it converts from centimetres to inches. Update the **sum**, **diff**, **product** and **quotient** functions so that they add, subtract, multiply, and divide 2 numbers respectively.
+
+Now revisit the application at the URL you previously output. Try entering a height in centimetres and see if it converts correctly.
 
 
 <br/>
-### **Importing the HTTP client**
+### **Testing the multi-module application**
 
-Your application needs a way to communicate with and retrieve resources from RESTful web services to output the resources onto the paginated table. The [Axios](https://github.com/axios/axios) library will provide you with an HTTP client.
-This client is used to make HTTP requests to external resources. Axios is a promise-based HTTP client that can send asynchronous requests to REST endpoints. To learn more about the Axios library and its HTTP client, see the [Axios documentation](https://www.npmjs.com/package/axios).
+To test the multi-module application, add integration tests to the EAR project.
+
+Navigate to the **start\ear** directory.
+```
+cd /home/project/guide-arquillian-managed/start/ear
+```
+{: codeblock}
+
+Create the integration test class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-maven-multimodules/start/src/test/java/it/io/openliberty/guides/multimodules/IT.java
+```
+{: codeblock}
 
 
-The **getArtistsInfo()** function uses the Axios API to fetch data from your back end. 
-This function is called when the **ArtistTable** is rendered to the page using 
-the **componentDidMount()** React lifecycle method.
-
-Update the **ArtistTable.js** file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js
+> Then from the menu of the IDE, select **File** > **Open** > guide-maven-multimodules/start/src/test/java/it/io/openliberty/guides/multimodules/IT.java
 
 
 
 
 ```
-import React, { Component } from 'react';
-import axios from 'axios';
-import ReactTable from 'react-table-6';
-import 'react-table-6/react-table.css';
+package it.io.openliberty.guides.multimodules;
 
-class ArtistTable extends Component {
-  state = {
-    posts: [],
-    isLoading: true,
-    error: null,
-  };
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-  getArtistsInfo() {
-    axios('http://localhost:9080/artists')
-      .then(response => {
-        const artists = response.data;
-        const posts = [];
-        for (const artist of artists) {
-          const { albums, ...rest } = artist;
-          for (const album of albums) {
-            posts.push({ ...rest, ...album });
-          }
-        };
-        this.setState({
-          posts,
-          isLoading: false
-        });
-      })
-      .catch(error => this.setState({ error, isLoading: false }));
-  }
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
-  componentDidMount() {
-    this.getArtistsInfo();
-  }
-  render() {
-    const { isLoading, posts } = this.state;
-    const columns = [{
-      Header: 'Artist Info',
-      columns: [
-        {
-          Header: 'Artist ID',
-          accessor: 'id'
-        },
-        {
-          Header: 'Artist Name',
-          accessor: 'name'
-        },
-        {
-          Header: 'Genres',
-          accessor: 'genres',
-        }
-      ]
-    },
-    {
-      Header: 'Albums',
-      columns: [
-        {
-          Header: 'Title',
-          accessor: 'title',
-        },
-        {
-          Header: 'Number of Tracks',
-          accessor: 'ntracks',
-        }
-      ]
+import org.junit.jupiter.api.Test;
+
+public class IT {
+    String port = System.getProperty("default.http.port");
+    String war = "converter";
+    String urlBase = "http://localhost:" + port + "/" + war + "/";
+
+    @Test
+    public void testIndexPage() throws Exception {
+        String url = this.urlBase;
+        HttpURLConnection con = testRequestHelper(url, "GET");
+        assertEquals(200, con.getResponseCode(), "Incorrect response code from " + url);
+        assertTrue(testBufferHelper(con).contains("Enter the height in centimeters"),
+                        "Incorrect response from " + url);
     }
-  ]
 
-  return (
-    <div>
-      <h2>Artist Web Service</h2>
-      {!isLoading ? (
-        <ReactTable
-          data={posts}
-          columns={columns}
-          defaultPageSize={4}
-          pageSizeOptions={[4, 5, 6]}
-        />) : (
-          <p>Loading .....</p>
-        )}
-    </div>
-    );
-  }
+    @Test
+    public void testHeightsPage() throws Exception {
+        String url = this.urlBase + "heights.jsp?heightCm=10";
+        HttpURLConnection con = testRequestHelper(url, "POST");
+        assertTrue(testBufferHelper(con).contains("3        inches"),
+                        "Incorrect response from " + url);
+    }
+
+    private HttpURLConnection testRequestHelper(String url, String method)
+                    throws Exception {
+        URL obj = new URL(url);
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+        con.setRequestMethod(method);
+        return con;
+    }
+
+    private String testBufferHelper(HttpURLConnection con) throws Exception {
+        BufferedReader in = new BufferedReader(
+                        new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer response = new StringBuffer();
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+        }
+        in.close();
+        return response.toString();
+    }
+
 }
-
-export default ArtistTable;
-```
-{: codeblock}
-
-
-Next, add the **componentDidMount()** method to your component. 
-
-The **axios** HTTP call is used to read the artist JSON
-that contains the data from the sample JSON file in the **resources** directory. 
-When a response is successful, the state of the system changes by 
-assigning **response.data** to **posts**. 
-The **convertData** function manipulates the 
-JSON data to allow it to be accessed by the **ReactTable**. You will notice the 
-**object spread syntax** that the **convertData** function uses,
-which is a relatively new sytnax made for simplicity. 
-To learn more about it, see [Spread in object literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax#Spread_in_object_literals).
-
-The **this.setState** function is used to update the state of your React component with the data that was fetched from the server. This update triggers a rerender of your React component, which updates the table with the artist data.
-For more information on how state in React works, see the React documentation on [state and lifecycle](https://reactjs.org/docs/faq-state.html).
-
-Finally, run the following command to update the URL to access the **artists.json** in the **ArtistTable.js** file:
-```
-sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js
-```
-{: codeblock}
-
-
-# **Building and packaging the front end**
-
-After you successfully build your components, you need to build the
-front end and package your application. The Maven **process-resources** goal generates the Node.js resources,
-creates the front-end production build, and copies and processes the resources into the destination directory. 
-
-In a new command-line session, build the front end by running the following command in the **start** directory:
-
-```
-cd /home/project/guide-rest-client-reactjs/start
-mvn process-resources
-```
-{: codeblock}
-
-The build may take a few minutes to complete.
-You can rebuild the front end at any time with the Maven **process-resources** goal.
-Any local changes to your JavaScript and HTML are picked up when you build the
-front end.
-
-
-Open your browser and view the front end of your application by going to the URL that the following command returns:
-```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
 {: codeblock}
 
 
 
-# **Testing the React client**
+The **testIndexPage** tests to check that you can access the landing page.
 
-New projects that are created with **create-react-app** comes with a test file
-called **App.test.js**, which is included in the **src/main/frontend/src** directory. The **App.test.js** file is a simple JavaScript file that tests against the **App.js** component. There are no explicit test cases that are written for this application. 
-The **create-react-app** configuration uses [Jest](https://jestjs.io/) as its test runner.
-To learn more about Jest, go to their documentation on [Testing React apps](https://jestjs.io/docs/en/tutorial-react). 
+The **testHeightsPage** tests to check that the application can process the input value and calculate the result correctly.
 
 
+<br/>
+### **Running the tests**
 
-Update the **pom.xml** file.
+Because you started Open Liberty in development mode, press the *enter/return* key to run the tests.
 
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-rest-client-reactjs/start/pom.xml
-
-
-
+You will see the following output:
 
 ```
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.multimodules.IT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.712 sec - in it.io.openliberty.guides.multimodules.IT
 
-    <modelVersion>4.0.0</modelVersion>
+Results :
 
-    <groupId>com.microprofile.demo</groupId>
-    <artifactId>guide-rest-client-reactjs</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-    </properties>
+```
 
-    <dependencies>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>8.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>4.0.1</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
 
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.7.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+When you are done checking out the service, exit development mode by pressing **CTRL+C** in the command-line session where you ran the server, 
+or by typing *q* and then pressing the *enter/return* key.
 
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.1</version>
-            </plugin>
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.3.4</version>            
-            </plugin>
-            <!-- tag::frontend-plugin[] -->
-            <plugin>
-                <groupId>com.github.eirslett</groupId>
-                <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.10.0</version>
-                <configuration>
-                    <workingDirectory>src/main/frontend</workingDirectory>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>install node and npm</id>
-                        <goals>
-                            <goal>install-node-and-npm</goal>
-                        </goals>
-                        <configuration>
-                            <nodeVersion>v12.18.3</nodeVersion>
-                            <npmVersion>6.14.6</npmVersion>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>npm install</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>install</arguments>
-                        </configuration>
-                    </execution>
-                    <!-- tag::node-resource-build[] -->
-                    <execution>
-                        <id>npm run build</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>run build</arguments>
-                        </configuration>
-                    </execution>
-                    <!-- tag::node-tests[] -->
-                    <execution>
-                        <id>run tests</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>test a</arguments>
-                            <environmentVariables>
-                                <CI>true</CI>
-                            </environmentVariables>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- Copy frontend static files to target directory -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.2.0</version>
-                <executions>
-                 <execution>
-                        <id>Copy frontend build to target</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>
-                                ${basedir}/src/main/webapp
-                            </outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>
-                                        ${basedir}/src/main/frontend/build
-                                    </directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+
+# **Building the multi-module application**
+
+You aggregated and developed the application. Now, you can run **mvn install** once from the **start** directory and it will automatically build all your modules. This command creates a JAR file in the **jar/target** directory, a WAR file in the **war/target** directory, and an EAR file that contains the JAR and WAR files in the **ear/target** directory.
+
+Run the following commands to navigate to the start directory and build the entire application:
+```
+cd /home/project/guide-arquillian-managed/start
+mvn install
 ```
 {: codeblock}
 
+Since the modules are independent, you can re-build them individually by running **mvn install** from the corresponding **start** directory for each module.
 
-To run the default test, you can add the **testing** configuration to the **frontend-maven-plugin**. Rerun the Maven **process-resources** goal to rebuild the front end and run the tests.
+Or, run **mvn -pl <child project> install** from the start directory.
 
-Although the React application in this guide is simple, when you build more complex React applications, testing becomes a crucial part of your development lifecycle. If you need to write application-oriented test cases, follow the official 
-[React testing documentation](https://reactjs.org/docs/testing.html).
-
-When you are done checking the application root, exit dev mode by pressing CTRL+C in the shell session where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 # **Summary**
 
 ## **Nice Work!**
 
-Nice work! You just accessed a simple RESTful web service and consumed its resources by using ReactJS in Open Liberty.
+You built and tested a multi-module unit converter application with Maven on Open Liberty.
+
 
 
 
@@ -695,11 +740,11 @@ Nice work! You just accessed a simple RESTful web service and consumed its resou
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-rest-client-reactjs** project by running the following commands:
+Delete the **guide-maven-multimodules** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-rest-client-reactjs
+rm -fr guide-maven-multimodules
 ```
 {: codeblock}
 
@@ -708,7 +753,7 @@ rm -fr guide-rest-client-reactjs
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20ReactJS&guide-id=cloud-hosted-guide-rest-client-reactjs)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20multi-module%20application&guide-id=cloud-hosted-guide-maven-multimodules)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -716,16 +761,15 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-reactjs/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-reactjs/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-multimodules/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-multimodules/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
 
 
 <br/>
