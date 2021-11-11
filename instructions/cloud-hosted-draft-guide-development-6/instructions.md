@@ -87,7 +87,7 @@ mvn -pl ear liberty:run
 
 
 Once the server is running, open another command-line session by selecting **Terminal** > **New Terminal** 
-from the menu of the IDE. Then use the following command to get the URL.
+from the menu of the IDE. Then use the following command to get the URL to access the service.
 Open your browser and check out your service by going to the URL that the command returns.
 ```
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/converter
@@ -438,7 +438,7 @@ To learn more about how to use development mode with multiple modules, check out
 
 Navigate to the **start** directory to begin.
 ```
-cd /home/project/guide-arquillian-managed/start
+cd /home/project/guide-maven-multimodules/start
 ```
 {: codeblock}
 
@@ -471,7 +471,7 @@ Navigate to the **start\war** directory.
 Replace the **HeightsBean** class.
 
 > From the menu of the IDE, select 
-> **File** > **Open** > guide-maven-multimodules/start/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java
+> **File** > **Open** > guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java
 
 
 
@@ -545,7 +545,7 @@ Navigate to the **start\jar** directory.
 Replace the **Converter** class.
 
 > From the menu of the IDE, select 
-> **File** > **Open** > guide-maven-multimodules/start/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java
+> **File** > **Open** > guide-maven-multimodules/start/jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java
 
 
 
@@ -599,21 +599,17 @@ Now revisit the application at the URL you previously output. Try entering a hei
 To test the multi-module application, add integration tests to the EAR project.
 
 Navigate to the **start\ear** directory.
-```
-cd /home/project/guide-arquillian-managed/start/ear
-```
-{: codeblock}
 
 Create the integration test class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-maven-multimodules/start/src/test/java/it/io/openliberty/guides/multimodules/IT.java
+touch /home/project/guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-maven-multimodules/start/src/test/java/it/io/openliberty/guides/multimodules/IT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java
 
 
 
@@ -715,7 +711,7 @@ You aggregated and developed the application. Now, you can run **mvn install** o
 
 Run the following commands to navigate to the start directory and build the entire application:
 ```
-cd /home/project/guide-arquillian-managed/start
+cd /home/project/guide-maven-multimodules/start
 mvn install
 ```
 {: codeblock}
