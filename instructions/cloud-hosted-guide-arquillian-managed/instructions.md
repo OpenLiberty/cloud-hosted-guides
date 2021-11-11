@@ -1,7 +1,7 @@
 
 # **Welcome to the Testing microservices with the Arquillian managed container guide!**
 
-
+Learn how to develop tests for your microservices with the Arquillian managed container and run the tests on Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,7 +10,6 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-Learn how to develop tests for your microservices with the Arquillian managed container and run the tests on Open Liberty.
 
 # **What you'll learn**
 
