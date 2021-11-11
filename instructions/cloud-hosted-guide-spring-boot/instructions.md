@@ -1,7 +1,7 @@
 
 # **Welcome to the Containerizing, packaging, and running a Spring Boot application guide!**
 
-
+Learn how to containerize, package, and run a Spring Boot application on an Open Liberty server without modification.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -9,6 +9,9 @@ This panel contains the step-by-step guide instructions. You can customize these
 
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
+
+
+# **What you'll learn**
 
 The starting point of this guide is the finished application from the
 [Building an Application with Spring Boot](https://spring.io/guides/gs/spring-boot/) guide.
