@@ -67,8 +67,8 @@ The **finish** directory contains the finished project that you will build.
 # **Installing the Operator**
 
 
-At this enviroment, the Open Liberty Operator is already installed. If you like to learn how to install the Open Liberty Operator,
-you can read the https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators[Deploying microservices to OpenShift by using Kubernetes Operators^] guide.
+In this Skill Network enviornment, the Open Liberty Operator is already installed. If you like to learn how to install the Open Liberty Operator,
+you can read this https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators[guide^].
 
 Run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 
