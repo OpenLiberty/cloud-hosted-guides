@@ -35,60 +35,29 @@ The Open Liberty Operator watches Open Liberty resources and creates various Kub
 including **Deployments**, **Services**, and **Routes**, depending on the configurations. 
 The Operator then continuously compares the current state of the resources, the desired state
 of application deployment, and reconciles them when necessary.
-You can learn more about how the reactive Java services used in this guide work by checking out the
-[Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-```
-oc version
-```
-{: codeblock}
-
-
-Look for output similar to the following example:
-
-```
-Client Version: 4.3.13
-Server Version: 4.3.13
-Kubernetes Version: v1.16.2
-```
-
-Before you install any resources, you need to create a project on your OpenShift cluster.
-Create a project named **guide** by running the following command:
-
-```
-oc new-project guide
-```
-{: codeblock}
-
-
-Ensure that you are working within the project **guide** by running the following command:
-
-```
-oc projects
-```
-{: codeblock}
-
-
-Look for an asterisk (*) with the **guide** project in the list of projects to confirm that you are in the **guide** project, as shown in the following example:
-
-```
-You have access to the following projects and can switch between them with 'oc project <projectname>':
-
-    default
-  * guide
-```
 
 
 # **Getting started**
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-projectid.git)
-into your cluster and use the projects that are provided inside:
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
+
+Run the following command to navigate to the **/home/project** directory:
 
 ```
-git clone https://github.com/openliberty/guide-{projectid}.git
-cd guide-{projectid}
-cd start
+cd /home/project
 ```
+{: codeblock}
+
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/draft-guide-openliberty-operator-intro.git) and use the projects that are provided inside:
+
+```
+git clone https://github.com/openliberty/draft-guide-openliberty-operator-intro.git
+cd draft-guide-openliberty-operator-intro
+```
+{: codeblock}
+
 
 The **start** directory contains the starting project that you will build upon.
 
@@ -97,14 +66,9 @@ The **finish** directory contains the finished project that you will build.
 
 # **Installing the Operator**
 
-When you obtained your OpenShift cluster, you received login information for the
-[OpenShift web console](https://docs.openshift.com/container-platform/4.5/web_console/web-console.html).
-The web console provides an interface to interact with your OpenShift cluster through your web browser.
 
-To install the Operator, navigate to the web console and select *Operators > OperatorHub* from the sidebar menu.
-Search for and install the *Open Liberty Operator*.
-
-Make sure you install the Operator into the **guide** namespace. 
+At this enviroment, the Open Liberty Operator is already installed. If you like to learn how to install the Open Liberty Operator,
+you can read the https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators[Deploying microservices to OpenShift by using Kubernetes Operators^] guide.
 
 Run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 
@@ -134,21 +98,6 @@ The Open Liberty Operator watches for changes to instances of the **OpenLibertyA
 You can also confirm the installation of the operator from the web console.
 Navigate to the OperatorHub.
 From the categories on the left, you can filter to see only installed operators. 
-
-# **Adding a private Docker credential**
-
-Docker limits container image pull requests for free DockerHub subscriptions. 
-For more information, see link:https://www.docker.com/increase-rate-limits[Understanding Docker Hub Rate Limiting].
-If you have a Docker account with a Pro or Team subscription, you can add a private credential to avoid any errors as a result of the limits.
-
-To add a private credential, navigate to the OpenShift web console and select *Workloads > Secrets* from the sidebar menu. 
-Ensure that the selected project is **openshift-config**. 
-Search for **pull-secret** and click the *three vertical dots* menu; then *Edit Secret*. 
-Scroll down and click *Add credentials*.  
-Enter **docker.io** to the *Registry Server Address* field, 
-your Docker user ID to the *Username* field, 
-and your Docker password to the *Password* field.
-Click the *Save* button to save the credential. 
 
 
 # **Deploying the system microservice to OpenShift**
