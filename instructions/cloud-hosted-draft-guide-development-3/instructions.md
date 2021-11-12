@@ -233,8 +233,8 @@ oc get builds
 Look for the output that is similar to the following example:
 
 ```
-NAME                      TYPE     FROM             STATUS     STARTED
-system-buildconfig-1      Docker   Binary@f24cb58   Running    45 seconds ago
+NAME                    TYPE     FROM             STATUS     STARTED
+system-buildconfig-1    Docker   Binary@f24cb58   Running    45 seconds ago
 ```
 
 You may need to wait some time until the build is complete. To check whether the build is complete, run the following
@@ -265,15 +265,15 @@ oc describe imagestream/system-imagestream
 The following example shows part of the **system-imagestream** output:
 
 ```
-Name:                     system-imagestream
-Namespace:                guide
-Created:                  2 minutes ago
-Labels:                   name=system
-Annotations:              <none>
-Image Repository:         default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
-Image Lookup:             local=false
-Unique Images:            1
-Tags:                     1
+Name:               system-imagestream
+Namespace:          guide
+Created:            2 minutes ago
+Labels:             name=system
+Annotations:        <none>
+Image Repository:   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
+Image Lookup:       local=false
+Unique Images:      1
+Tags:               1
 
 ...
 ```
@@ -340,8 +340,8 @@ After you expose the microservice, the Operator automatically creates and config
 
 Run the following commands to update the **applicationImage** and deploy the **system** microservice with the previously explained configuration:
 ```
-NAMESPACE_NAME=`oc projects -q | grep sn-labs- | sed 's/ //g'`
-sed -i 's=guide='"$NAMESPACE_NAME"'=g' deploy.yaml
+PROJECT_NAME=`oc projects -q | grep sn-labs- | sed 's/ //g'`
+sed -i 's=guide='"$PROJECT_NAME"'=g' deploy.yaml
 oc apply -f deploy.yaml
 ```
 {: codeblock}
@@ -359,8 +359,8 @@ You can also replace **OpenLibertyApplications** with the shortname **olapps**.
 Look for output that is similar to the following example:
 
 ```
-NAME        IMAGE                                      EXPOSED   RECONCILED   AGE
-system      guide/system-imagestream:1.0-SNAPSHOT      true      True         10s
+NAME      IMAGE                                    EXPOSED   RECONCILED   AGE
+system    guide/system-imagestream:1.0-SNAPSHOT    true      True         10s
 ```
 
 A **RECONCILED** state value of **True** indicates that the operator was able to successfully process the **OpenLibertyApplications** instances. 
