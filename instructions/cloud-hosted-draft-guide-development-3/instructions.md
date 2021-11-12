@@ -67,8 +67,15 @@ The **finish** directory contains the finished project that you will build.
 # **Installing the Operator**
 
 
+A project is created for you to use in this execise. Run the following command to see your project name:
+
+```
+oc projects
+```
+{: codeblock}
+
 In this Skill Network enviornment, the Open Liberty Operator is already installed. If you like to learn how to install the Open Liberty Operator,
-you can read this https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators[guide^].
+you can read the https://openliberty.io/guides/cloud-openshift-operator.html[Deploying microservices to OpenShift by using Kubernetes Operators^] guide.
 
 Run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 
@@ -409,15 +416,15 @@ The following example shows this value substituted for **HOST** in the URL:
 
 # **Tearing down the environment**
 
-When you no longer need your project, switch to another project and delete the project **guide** by running the following command:
+
+When you no longer need your deployed microservice, you can delete all resources by running the following commands:
 
 ```
-oc delete project guide
+oc delete -f deploy.yaml
+oc delete istag/system-imagestream:1.0-SNAPSHOT
+oc delete bc system-buildconfig
 ```
 {: codeblock}
-
-
-This command deletes all the applications and resources.
 
 # **Summary**
 
