@@ -1,7 +1,7 @@
 
-# **Welcome to the Creating a hypermedia-driven RESTful web service guide!**
+# **Welcome to the Deploying a microservice to OpenShift by using a Kubernetes Operator guide!**
 
-You'll explore how to use Hypermedia As The Engine Of Application State (HATEOAS) to drive your RESTful web service on Open Liberty.
+Explore how to deploy a microservice to Red Hat OpenShift by using a Kubernetes Operator.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,699 +11,470 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# **What you'll learn**
+# **What you'll learn **
 
-You will learn how to use hypermedia to create a specific style of a response JSON, which has contents
-that you can use to navigate your REST service. You'll build on top of a simple inventory
-REST service that you can develop with MicroProfile technologies. You can find the service at the following URL:
+You will learn how to deploy a cloud-native application with a microservice to Red Hat OpenShift 4 by using the Open Liberty Kubernetes Operator. 
+You will install an operator into an OpenShift cluster and use them to deploy and scale a sample microservice. 
 
-```
-http://localhost:9080/inventory/hosts
-```
+[OpenShift](https://www.openshift.com/) is a Kubernetes-based platform with added functions. It streamlines the DevOps
+process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the
+deployment and management of cloud applications easier.
+You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
 
-The service responds with a JSON file that contains all of the registered hosts. Each host has a collection
-of HATEOAS links:
+https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes[Kubernetes operators]
+provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management.
+To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
 
-```
-{
-  "foo": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/foo",
-      "rel": "self"
-    }
-  ],
-  "bar": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/bar",
-      "rel": "self"
-    }
-  ],
-  "*": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/*",
-      "rel": "self"
-    }
-  ]
-}
-```
+The application in this guide consists of one microservice, **system**. Every 15 seconds, the **system**
+microservice calculates and publishes events that contain its current average system load.
 
-<br/>
-### **What is HATEOAS?**
-
-HATEOAS is a constrained form of REST application architecture.
-With HATEOAS, the client receives information about the available resources from the REST application.
-The client does not need to be hardcoded to a fixed set of resources, and the application
-and client can evolve independently. In other words, the application tells the client where it can go
-and what it can access by providing it with a simple collection of links to other available resources.
-
-<br/>
-### **Response JSON**
-
-In the context of HATEOAS, each resource must contain a link reference to itself, which is commonly referred to as **self**. In this guide, the JSON structure features a mapping between the hostname and its corresponding list of HATEOAS links:
+You will deploy the Open Liberty microservice by using the Open Liberty Operator. 
+The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) provides a method of packaging,
+deploying, and managing Open Liberty applications on Kubernetes-based clusters. 
+The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources,
+including **Deployments**, **Services**, and **Routes**, depending on the configurations. 
+The Operator then continuously compares the current state of the resources, the desired state
+of application deployment, and reconciles them when necessary.
+You can learn more about how the reactive Java services used in this guide work by checking out the
+[Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 ```
-  "*": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/*",
-      "rel": "self"
-    }
-  ]
+oc version
 ```
+{: codeblock}
 
-<br/>
-#### **Link types**
 
-The following example shows two different links. The first link has a **self** relationship with the
-resource object and is generated whenever you register a host. The link points to that host
-entry in the inventory:
+Look for output similar to the following example:
 
 ```
-  {
-    "href": "http://localhost:9080/inventory/hosts/<hostname>",
-    "rel": "self"
-  }
+Client Version: 4.3.13
+Server Version: 4.3.13
+Kubernetes Version: v1.16.2
 ```
 
-The second link has a **properties** relationship with the resource object and is generated
-if the host **system** service is running. The link points to the properties resource on the host:
+Before you install any resources, you need to create a project on your OpenShift cluster.
+Create a project named **guide** by running the following command:
 
 ```
-  {
-    "href": "http://<hostname>:9080/system/properties",
-    "rel": "properties"
-  }
+oc new-project guide
 ```
+{: codeblock}
 
-<br/>
-#### **Other formats**
 
-Although you should stick to the previous format for the purpose of this guide, another common
-convention has the link as the value of the relationship:
+Ensure that you are working within the project **guide** by running the following command:
 
 ```
-  "_links": {
-      "self": "http://localhost:9080/inventory/hosts/<hostname>",
-      "properties": "http://<hostname>:9080/system/properties"
-  }
+oc projects
 ```
+{: codeblock}
+
+
+Look for an asterisk (*) with the **guide** project in the list of projects to confirm that you are in the **guide** project, as shown in the following example:
+
+```
+You have access to the following projects and can switch between them with 'oc project <projectname>':
+
+    default
+  * guide
+```
+
 
 # **Getting started**
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-projectid.git)
+into your cluster and use the projects that are provided inside:
 
 ```
-cd /home/project
+git clone https://github.com/openliberty/guide-{projectid}.git
+cd guide-{projectid}
+cd start
 ```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-hateoas.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-rest-hateoas.git
-cd guide-rest-hateoas
-```
-{: codeblock}
-
 
 The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-<br/>
-### **Try what you'll build**
 
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+# **Installing the Operator**
 
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
+When you obtained your OpenShift cluster, you received login information for the
+[OpenShift web console](https://docs.openshift.com/container-platform/4.5/web_console/web-console.html).
+The web console provides an interface to interact with your OpenShift cluster through your web browser.
 
-```
-cd finish
-mvn liberty:run
-```
-{: codeblock}
+To install the Operator, navigate to the web console and select *Operators > OperatorHub* from the sidebar menu.
+Search for and install the *Open Liberty Operator*.
 
+Make sure you install the Operator into the **guide** namespace. 
 
-After you see the following message, your application server is ready:
+Run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 
 ```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-After the server runs, you can find your hypermedia-driven **inventory** service at the **/inventory/hosts** endpoint.
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following curl command:
-```
-curl -s http://localhost:9080/inventory/hosts | jq
-```
-{: codeblock}
-
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
-
-```
-mvn liberty:stop
+oc api-resources --api-group=openliberty.io
 ```
 {: codeblock}
 
 
-
-
-# **Creating the response JSON**
-
-Navigate to the **start** directory.
-```
-cd /home/project/guide-rest-hateoas/start
-```
-{: codeblock}
-
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
 
 ```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
+NAME                      SHORTNAMES         APIGROUP         NAMESPACED   KIND
+openlibertyapplications   olapp,olapps       openliberty.io   true         OpenLibertyApplication
+openlibertydumps          oldump,oldumps     openliberty.io   true         OpenLibertyDump
+openlibertytraces         oltrace,oltraces   openliberty.io   true         OpenLibertyTrace
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
+Each CRD defines a kind of object that can be used, which is specified in the previous example by the **KIND** value.
+The **SHORTNAME** value specifies alternative names that you can substitute in the configuration to refer to an object kind. 
+For example, you can refer to the **OpenLibertyApplication** object kind by one of its specified shortnames, such as **olapps**. 
 
-Begin by building your response JSON, which is composed of the name of the host machine and its list of HATEOAS links.
+The **openlibertyapplications** CRD defines a set of configurations for
+deploying an Open Liberty-based application, including the application image, number of instances, and storage settings.
+The Open Liberty Operator watches for changes to instances of the **OpenLibertyApplication** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
+
+You can also confirm the installation of the operator from the web console.
+Navigate to the OperatorHub.
+From the categories on the left, you can filter to see only installed operators. 
+
+# **Adding a private Docker credential**
+
+Docker limits container image pull requests for free DockerHub subscriptions. 
+For more information, see link:https://www.docker.com/increase-rate-limits[Understanding Docker Hub Rate Limiting].
+If you have a Docker account with a Pro or Team subscription, you can add a private credential to avoid any errors as a result of the limits.
+
+To add a private credential, navigate to the OpenShift web console and select *Workloads > Secrets* from the sidebar menu. 
+Ensure that the selected project is **openshift-config**. 
+Search for **pull-secret** and click the *three vertical dots* menu; then *Edit Secret*. 
+Scroll down and click *Add credentials*.  
+Enter **docker.io** to the *Registry Server Address* field, 
+your Docker user ID to the *Username* field, 
+and your Docker password to the *Password* field.
+Click the *Save* button to save the credential. 
+
+
+# **Deploying the system microservice to OpenShift**
+
+
+To deploy the **system** microservice, you must first package the microservice, then create and
+run an OpenShift build to produce runnable container images of the packaged microservice.
 
 <br/>
-### **Linking to inventory contents**
+### **Packaging the microservice**
 
-As mentioned before, your starting point is an existing simple inventory REST service. 
-
-Look at the request handlers in the **InventoryResource.java** file.
-
-
-The **.../inventory/hosts/** URL will no longer respond with a JSON representation of your inventory contents, so you can discard the **listContents** method and integrate it into the **getPropertiesForHost** method.
-
-Replace the **InventoryResource** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java
-
-
-
+Ensure that you are in the **start** directory and run the following command to package the **system**
+microservice:
 
 ```
-package io.openliberty.guides.microprofile;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
-
-@ApplicationScoped
-@Path("hosts")
-public class InventoryResource {
-    
-    @Inject
-    InventoryManager manager;
-    
-    @Context
-    UriInfo uriInfo;
-    
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject handler() { 
-        return manager.getSystems(uriInfo.getAbsolutePath().toString());
-    }
-    
-    @GET
-    @Path("{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject getPropertiesForHost(@PathParam("hostname") String hostname) {
-        return (hostname.equals("*")) ? manager.list() : manager.get(hostname);
-    }
-}
+mvn clean package
 ```
 {: codeblock}
-
-
-
-The contents of your inventory are now under the asterisk (`*`) wildcard and reside at the `http://localhost:9080/inventory/hosts/*` URL.
-
-The **GET** request handler is responsible for handling all **GET** requests that are
-made to the target URL. This method responds with a JSON that contains HATEOAS links.
-
-The **UriInfo** object is what will be used to build your HATEOAS links.
-
-The **@Context** annotation is a part of CDI and indicates that the **UriInfo** will be injected when the
-resource is instantiated.
-
-Your new **InventoryResource** class is now replaced. Next, you will implement the **getSystems** method and build the response JSON object.
 
 
 <br/>
-### **Linking to each available resource**
+### **Building and pushing the images**
 
-Take a look at your **InventoryManager** and **InventoryUtil** files.
+Create a build template to configure how to build your container images.
 
-Replace the **InventoryManager** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java
-
-
-
-
-```
-package io.openliberty.guides.microprofile;
-
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-
-import io.openliberty.guides.microprofile.util.ReadyJson;
-import io.openliberty.guides.microprofile.util.InventoryUtil;
-
-@ApplicationScoped
-public class InventoryManager { 
-    
-    private ConcurrentMap<String, JsonObject> inv = new ConcurrentHashMap<>();
-    
-    public JsonObject get(String hostname) {
-        JsonObject properties = inv.get(hostname);
-        if (properties == null) {
-            if (InventoryUtil.responseOk(hostname)) {
-                properties = InventoryUtil.getProperties(hostname);
-                this.add(hostname, properties);
-            } else {
-                return ReadyJson.SERVICE_UNREACHABLE.getJson();
-            }
-        }
-        return properties;
-    }
-    
-    public void add(String hostname, JsonObject systemProps) {
-        inv.putIfAbsent(hostname, systemProps);
-    }
-    
-    public JsonObject list() {
-        JsonObjectBuilder systems = Json.createObjectBuilder();
-        inv.forEach((host, props) -> {
-            JsonObject systemProps = Json.createObjectBuilder()
-                                         .add("os.name", props.getString("os.name"))
-                                         .add("user.name", props.getString("user.name"))
-                                         .build();
-            systems.add(host, systemProps);
-        }); 
-        systems.add("hosts", systems);
-        systems.add("total", inv.size());
-        return systems.build();
-    }
-    
-    public JsonObject getSystems(String url) {
-        JsonObjectBuilder systems = Json.createObjectBuilder();
-        systems.add("*", InventoryUtil.buildLinksForHost("*", url));
-        
-        for (String host : inv.keySet()) {
-            systems.add(host, InventoryUtil.buildLinksForHost(host, url));
-        }
-        
-        return systems.build();
-    }
-
-}
-```
-{: codeblock}
-
-
-
-The **getSystems** method accepts a
-target URL as an argument and returns a JSON object that contains HATEOAS links.
-
-Replace the **InventoryUtil** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java
-
-
-
-
-```
-package io.openliberty.guides.microprofile.util;
-
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
-
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriBuilder;
-
-import org.apache.commons.lang3.StringUtils;
-
-public class InventoryUtil {
-
-    private static final int PORT = 9080;
-    private static final String PROTOCOL = "http";
-    private static final String SYSTEM_PROPERTIES = "/system/properties";
-
-    public static JsonObject getProperties(String hostname) {
-        Client client = ClientBuilder.newClient();
-        URI propURI = InventoryUtil.buildUri(hostname);
-        return client.target(propURI)
-                     .request(MediaType.APPLICATION_JSON)
-                     .get(JsonObject.class);
-    }
-    
-    public static JsonArray buildLinksForHost(String hostname, String invUri) {
-        
-        JsonArrayBuilder links = Json.createArrayBuilder(); 
-        
-        links.add(Json.createObjectBuilder()
-                      .add("href", StringUtils.appendIfMissing(invUri, "/") + hostname)
-                      .add("rel", "self"));
-        
-        if (!hostname.equals("*")) {
-            links.add(Json.createObjectBuilder()
-                 .add("href", InventoryUtil.buildUri(hostname).toString())
-                 .add("rel", "properties"));
-        }
-        
-        return links.build();
-    }
-    
-    public static boolean responseOk(String hostname) {
-        try {
-            URL target = new URL(buildUri(hostname).toString());
-            HttpURLConnection http = (HttpURLConnection) target.openConnection();
-            http.setConnectTimeout(50);
-            int response = http.getResponseCode();
-            return (response != 200) ? false : true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private static URI buildUri(String hostname) {
-        return UriBuilder.fromUri(SYSTEM_PROPERTIES)
-                .host(hostname)
-                .port(PORT)
-                .scheme(PROTOCOL)
-                .build();
-    }
-
-}
-```
-{: codeblock}
-
-
-
-The helper builds a link that points to the inventory entry with a **self** relationship. The helper also builds a link that points to the **system** service with a **properties** relationship:
-
-
-* `http://localhost:9080/inventory/hosts/<hostname>`
-* `http://<hostname>:9080/system/properties`
-
-<br/>
-### **Linking to inactive services or unavailable resources**
-
-Consider what happens when one of the return links does not work or when a link should be available
-for one object but not for another. In other words, it is important that a resource or service is
-available and running before it is added in the HATEOAS links array of the hostname.
-
-Although this guide does not cover this case, always make sure that you receive
-a good response code from a service before you link that service. Similarly, make sure that
-it makes sense for a particular object to access a resource it is linked to. For instance, it doesn't
-make sense for an account holder to be able to withdraw money from their account when their balance is 0.
-Hence, the account holder should not be linked to a resource that provides money withdrawal.
-
-# **Running the application**
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-After the server updates, you can find your new hypermedia-driven **inventory** service at the **/inventory/hosts** endpoint.
-Run the following curl command by another command-line session:
-```
-curl -s http://localhost:9080/inventory/hosts | jq
-```
-{: codeblock}
-
-
-# **Testing the hypermedia-driven RESTful web service**
-
-If the servers are running, you can test the application manually by
-running the following curl commands to access the **inventory** service that is now driven by hypermedia: 
-```
-curl -s http://localhost:9080/inventory/hosts | jq
-```
-{: codeblock}
-
-```
-curl -s http://localhost:9080/inventory/hosts/localhost| jq
-```
-{: codeblock}
-
-Nevertheless, you should rely on automated tests since they are more reliable
-and trigger a failure if a change introduces a defect.
-
-<br/>
-### **Setting up your tests**
-
-
-Create the **EndpointIT** class.
+Create the **build.yaml** template file in the **start** directory.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java
+touch /home/project/draft-guide-openliberty-operator-intro/start/build.yaml
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java
+> Then from the menu of the IDE, select **File** > **Open** > draft-guide-openliberty-operator-intro/start/build.yaml
 
 
 
 
 ```
-package it.io.openliberty.guides.hateoas;
-
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
-
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
-
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-@TestMethodOrder(OrderAnnotation.class)
-public class EndpointIT {
-    private String port;
-    private String baseUrl;
-    
-    private Client client;
-    
-    private final String SYSTEM_PROPERTIES = "system/properties";
-    private final String INVENTORY_HOSTS = "inventory/hosts";
-    
-    @BeforeEach
-    public void setup() {
-        port = System.getProperty("http.port");
-        baseUrl = "http://localhost:" + port + "/";
-        
-        client = ClientBuilder.newClient();
-        client.register(JsrJsonpProvider.class);
-    }
-    
-    @AfterEach
-    public void teardown() {
-        client.close();
-    }
-    
-    /**
-     * Checks if the HATEOAS link for the inventory contents (hostname=*) is as expected.
-     */
-    @Test
-    @Order(1)
-    public void testLinkForInventoryContents() {
-        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + baseUrl);
-        
-        JsonObject systems = response.readEntity(JsonObject.class);
-        
-        String expected, actual;
-        boolean isFound = false;
-
-
-        if (!systems.isNull("*")) {
-            isFound = true;
-            JsonArray links = systems.getJsonArray("*");
-
-            expected = baseUrl + INVENTORY_HOSTS + "/*";
-            actual = links.getJsonObject(0).getString("href");
-            assertEquals(expected, actual, "Incorrect href");
-
-            expected = "self";
-            actual = links.getJsonObject(0).getString("rel");
-            assertEquals(expected, actual, "Incorrect rel");
-        }
-        
-
-        assertTrue(isFound, "Could not find system with hostname *");
-        
-        response.close();
-    }
-    
-    /**
-     * Checks that the HATEOAS links, with relationships 'self' and 'properties' for 
-     * a simple localhost system is as expected.
-     */
-    @Test
-    @Order(2)
-    public void testLinksForSystem() {
-        this.visitLocalhost();
-        
-        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + baseUrl);
-        
-        JsonObject systems = response.readEntity(JsonObject.class);
-
-        String expected, actual;
-        boolean isHostnameFound = false;
-
-        
-        if (!systems.isNull("localhost")) {
-            isHostnameFound = true;
-            JsonArray links = systems.getJsonArray("localhost");
-
-            expected = baseUrl + INVENTORY_HOSTS + "/localhost";
-            actual = links.getJsonObject(0).getString("href");
-            assertEquals(expected, actual, "Incorrect href");
-
-            expected = "self";
-            actual = links.getJsonObject(0).getString("rel");
-            assertEquals(expected, actual, "Incorrect rel");
-
-            expected = baseUrl + SYSTEM_PROPERTIES;
-            actual = links.getJsonObject(1).getString("href");
-            assertEquals(expected, actual, "Incorrect href");
-
-            expected = "properties";
-            actual = links.getJsonObject(1).getString("rel");
-
-            assertEquals(expected, actual, "Incorrect rel");
-        }
-        
-
-        assertTrue(isHostnameFound, "Could not find system with hostname *");
-        response.close();
-
-    }
-    
-    /**
-     * Returns a Response object for the specified URL.
-     */
-    private Response getResponse(String url) {
-        return client.target(url).request().get();
-    }
-     
-    /**
-     * Makes a GET request to localhost at the Inventory service.
-     */
-    private void visitLocalhost() {
-        Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + baseUrl);
-        response.close();
-        Response targetResponse = client.target(baseUrl + INVENTORY_HOSTS + "/localhost")
-                                        .request()
-                                        .get();
-        targetResponse.close();
-    }
-}
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: "build-template"
+  annotations:
+    description: "Build template for the system service"
+    tags: "build"
+objects:
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      name: "system-imagestream"
+      labels:
+        name: "system"
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      name: "system-buildconfig"
+      labels:
+        name: "system"
+    spec:
+      source:
+        type: Binary
+      strategy:
+        type: Docker
+      output:
+        to:
+          kind: ImageStreamTag
+          name: "system-imagestream:1.0-SNAPSHOT"
 ```
 {: codeblock}
 
 
-The **@BeforeEach** and **@AfterEach** annotations are placed on setup and teardown tasks that are run for each individual test.
+The **build.yaml** template includes two objects. 
+The **ImageStream** object provides an abstraction from the image in the image registry. 
+This allows you to reference and tag the image. 
+The image registry used is the integrated internal OpenShift Container Registry.
 
-<br/>
-### **Writing the tests**
+The **BuildConfig** object defines a single
+build definition and any triggers that kickstart the build. The **source** spec defines the build input. In this case,
+the build inputs are your **binary** (local) files, which are streamed to OpenShift for the build.
+The uploaded files need to include the packaged **WAR** application binaries, which is why you needed to run the Maven commands. The template specifies
+a **Docker** strategy build, which invokes the **docker build** command, and creates a runnable container image of the microservice
+from the build input.
 
-Each test method must be marked with the **@Test** annotation. The execution order of test methods
-is controlled by marking them with the **@Order** annotation. The value that is passed into the annotation
-denotes the order in which the methods are run.
-
-The **testLinkForInventoryContents** test is responsible for asserting that
-the correct HATEOAS link is created for the inventory contents.
-
-Finally, the **testLinksForSystem** test is responsible for asserting that the correct
-HATEOAS links are created for the **localhost** system. This method checks for both the **self** link that points
-to the **inventory** service and the **properties** link that points to the **system** service, which is running on the
-**localhost** system.
-
-<br/>
-### **Running the tests**
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
-You will see the following output:
+Run the following command to create the objects for the **system** microservice:
 
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.hateoas.EndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.951 s - in it.io.openliberty.guides.hateoas.EndpointIT
+oc process -f build.yaml | oc create -f -
+```
+{: codeblock}
 
-Results:
 
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+Next, run the following command to view the newly created **ImageStream** objects and the build configurations for the microservice:
 
-Integration tests finished.
+```
+oc get all -l name=system
+```
+{: codeblock}
+
+
+Look for the following resources:
+
+```
+NAME                                                TYPE     FROM     LATEST
+buildconfig.build.openshift.io/system-buildconfig   Docker   Binary   0
+
+NAME                                                IMAGE REPOSITORY                                                                   TAGS           UPDATED
+imagestream.image.openshift.io/system-imagestream   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
+```   
+
+Ensure that you are in the **start** directory and trigger the build by running the following command:
+
+```
+oc start-build system-buildconfig --from-dir=system/.
+```
+{: codeblock}
+
+
+The local **system** directory is uploaded to OpenShift to be built into the Docker image. Run the
+following command to list the build and track its status:
+
+```
+oc get builds
+```
+{: codeblock}
+
+
+Look for the output that is similar to the following example:
+
+```
+NAME                      TYPE     FROM             STATUS     STARTED
+system-buildconfig-1      Docker   Binary@f24cb58   Running    45 seconds ago
 ```
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
+You may need to wait some time until the build is complete. To check whether the build is complete, run the following
+command to view the build log until the **Push successful** message appears:
+
+```
+oc logs build/system-buildconfig-1
+```
+{: codeblock}
+
+
+Run the following command to view the **ImageStream** object:
+
+```
+oc get imagestreams
+```
+{: codeblock}
+
+
+Run the following command to get more details on the newly pushed image within the stream:
+
+```
+oc describe imagestream/system-imagestream
+```
+{: codeblock}
+
+
+The following example shows part of the **system-imagestream** output:
+
+```
+Name:                     system-imagestream
+Namespace:                guide
+Created:                  2 minutes ago
+Labels:                   name=system
+Annotations:              <none>
+Image Repository:         default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
+Image Lookup:             local=false
+Unique Images:            1
+Tags:                     1
+
+...
+```
+
+Now you're ready to deploy the images.
+
+<br/>
+### **Deploying the images**
+
+You can configure the specifics of the Open Liberty Operator-controlled deployment with a YAML configuration file.
+
+Create the **deploy.yaml** configuration file in the **start** directory.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/draft-guide-openliberty-operator-intro/start/deploy.yaml
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > draft-guide-openliberty-operator-intro/start/deploy.yaml
+
+
+
+
+```
+apiVersion: openliberty.io/v1beta1
+kind: OpenLibertyApplication
+metadata:
+  name: system
+  labels:
+    name: system
+spec:
+  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
+  service:
+    port: 9080
+  expose: true
+  env:
+    - name: WLP_LOGGING_MESSAGE_FORMAT
+      value: "json"
+    - name: WLP_LOGGING_MESSAGE_SOURCE
+      value: "message,trace,accessLog,ffdc,audit"
+```
+{: codeblock}
+
+
+The **deploy.yaml** file is configured to deploy one **OpenLibertyApplication**
+resource, **system**, which is controlled by the Open Liberty Operator.
+
+The **applicationImage** parameter defines what container image is deployed as part of the **OpenLibertyApplication** CRD. 
+This parameter follows the **<project-name>/<image-stream-name>[:tag]** format.
+The parameter can also point to an image hosted on an external registry, such as Docker Hub. 
+The **system** microservice is configured to use the **image** created from the earlier build. 
+
+One of the benefits of using **ImageStream** objects is that the operator redeploys the application when it detects a new image is pushed.
+The **env** parameter is used to specify environment variables that are passed to the container at runtime.
+
+Additionally, the microservice includes the **service** and **expose** parameters.
+The **service.port** parameter specifies which port is exposed by the container,
+allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster,
+it must be exposed by setting the **expose** parameter to **true**.
+After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
+
+Run the following command to deploy the **system** microservice with the previously explained configuration:
+
+```
+oc apply -f deploy.yaml
+```
+{: codeblock}
+
+
+Next, run the following command to view your newly created **OpenLibertyApplications** resources:
+
+```
+oc get OpenLibertyApplications
+```
+{: codeblock}
+
+
+You can also replace **OpenLibertyApplications** with the shortname **olapps**.
+
+Look for output that is similar to the following example:
+
+```
+NAME        IMAGE                                      EXPOSED   RECONCILED   AGE
+system      guide/system-imagestream:1.0-SNAPSHOT      true      True         10s
+```
+
+A **RECONCILED** state value of **True** indicates that the operator was able to successfully process the **OpenLibertyApplications** instances. 
+Run the following command to view details of your microservice:
+
+```
+oc describe olapps/system
+```
+{: codeblock}
+
+
+This example shows part of the **olapps/system** output:
+
+```
+Name:         system
+Namespace:    guide
+Labels:       app.kubernetes.io/part-of=system
+              name=system
+Annotations:  <none>
+API Version:  openliberty.io/v1beta1
+Kind:         OpenLibertyApplication
+
+...
+```
+
+# **Accessing the microservice**
+
+To access the exposed **system** microservice, run the following command and make note of the **HOST**:
+
+```
+oc get routes
+```
+{: codeblock}
+
+
+Look for an output that is similar to the following example:
+
+```
+NAME     HOST/PORT                                                     PATH   SERVICES   PORT       TERMINATION   WILDCARD
+system   system-guide.2886795274-80-kota02.environments.katacoda.com          system     9080-tcp                 None
+```
+
+
+Visit the microservice by going to the following URL: 
+**http://[HOST]/inventory/systems**
+
+Make sure to substitute the appropriate **HOST** value.
+For example, using the output from the command above, **system-guide.2886795274-80-kota02.environments.katacoda.com** is the **HOST**.
+The following example shows this value substituted for **HOST** in the URL:
+**http://system-guide.2886795274-80-kota02.environments.katacoda.com/inventory/systems**.
+
+# **Tearing down the environment**
+
+When you no longer need your project, switch to another project and delete the project **guide** by running the following command:
+
+```
+oc delete project guide
+```
+{: codeblock}
+
+
+This command deletes all the applications and resources.
 
 # **Summary**
 
 ## **Nice Work!**
 
-You've just built and tested a hypermedia-driven RESTful web service on top of Open Liberty.
-
+You just deployed a microservice running in Open Liberty to OpenShift by using the Open Liberty Operator.
 
 
 
@@ -713,11 +484,11 @@ You've just built and tested a hypermedia-driven RESTful web service on top of O
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-rest-hateoas** project by running the following commands:
+Delete the **draft-guide-openliberty-operator-intro** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-rest-hateoas
+rm -fr draft-guide-openliberty-operator-intro
 ```
 {: codeblock}
 
@@ -726,7 +497,7 @@ rm -fr guide-rest-hateoas
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20hypermedia-driven%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-hateoas)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20OpenShift%20by%20using%20a%20Kubernetes%20Operator&guide-id=cloud-hosted-draft-guide-openliberty-operator-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -734,16 +505,17 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-hateoas/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-hateoas/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/draft-guide-openliberty-operator-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/draft-guide-openliberty-operator-intro/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Creating a MicroProfile application](https://openliberty.io/guides/microprofile-intro.html)
+* [Deploying microservices to OpenShift](https://openliberty.io/guides/cloud-openshift.html)
+* [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
+* [Deploying microservices to an OKD cluster using Minishift](https://openliberty.io/guides/okd.html)
 
 
 <br/>
