@@ -405,12 +405,12 @@ system   system-guide.2886795274-80-kota02.environments.katacoda.com          sy
 
 
 Visit the microservice by going to the following URL: 
-**http://[HOST]/inventory/systems**
+**http://[HOST]/system/properties**
 
 Make sure to substitute the appropriate **HOST** value.
 For example, using the output from the command above, **system-guide.2886795274-80-kota02.environments.katacoda.com** is the **HOST**.
 The following example shows this value substituted for **HOST** in the URL:
-**http://system-guide.2886795274-80-kota02.environments.katacoda.com/inventory/systems**.
+**http://system-guide.2886795274-80-kota02.environments.katacoda.com/system/properties**.
 
 # **Tearing down the environment**
 
