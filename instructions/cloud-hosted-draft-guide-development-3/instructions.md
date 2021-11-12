@@ -337,13 +337,14 @@ allowing the microservice to be accessed from outside the container. To access t
 it must be exposed by setting the **expose** parameter to **true**.
 After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
 
-Run the following command to deploy the **system** microservice with the previously explained configuration:
 
+Run the following commands to update the **applicationImage** and deploy the **system** microservice with the previously explained configuration:
 ```
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
+sed -i 's=guide='"$NAMESPACE_NAME"'=g' deploy.yaml
 oc apply -f deploy.yaml
 ```
 {: codeblock}
-
 
 Next, run the following command to view your newly created **OpenLibertyApplications** resources:
 
