@@ -243,7 +243,59 @@ which triggers the corresponding Java method in the application.
 
 Now that the setup is complete, you can write your first test case. Start by testing the basic "create person" use case for your REST-based application. To test this use case, use the REST client that's injected by MicroShed Testing to make the HTTP POST request to the application and read the response.
 
-Next, add more tests to broaden the coverage.
+Replace the **PersonServiceIT** class.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+
+
+
+
+```
+package io.openliberty.guides.testing;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.api.Test;
+import org.microshed.testing.jaxrs.RESTClient;
+import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
+
+@MicroShedTest
+public class PersonServiceIT {
+
+    @RESTClient
+    public static PersonService personSvc;
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
+    @Test
+    public void testCreatePerson() {
+        Long createId = personSvc.createPerson("Hank", 42);
+        assertNotNull(createId);
+    }
+
+}
+```
+{: codeblock}
+
+
+Replace the **PersonServiceIT** class to include the **assertNotNull** static method and write the test logic in the **testCreatePerson()** method.
+
+
+Save the changes. Then, press the **enter/return** key in your console window to run the test. 
+You see that the test ran again and exercised the REST endpoint of your application, including the response of your application's endpoint:
+
+```
+[INFO] Building rest client for class io.openliberty.guides.testing.PersonService with base path: http://localhost:9080/guide-microshed-testing/ and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
+[INFO] Response from server: 1809686877352335426
+```
+
+Next, add more tests.
 
 Replace the **PersonServiceIT** class.
 
@@ -347,18 +399,11 @@ public class PersonServiceIT {
 {: codeblock}
 
 
-Replace the **PersonServiceIT** class to include the **assertNotNull** static method and write the test logic in the **testCreatePerson()** method.
 
-The following tests are then added: **testMinSizeName()**, **testMinAge()**, **testGetPerson()**, **testGetAllPeople()**, and **testUpdateAge()**.
+The following tests are added: **testMinSizeName()**, **testMinAge()**, **testGetPerson()**, **testGetAllPeople()**, and **testUpdateAge()**.
 
 
-Save the changes. Then, press the **enter/return** key in your console window to run the test. 
-You see that the test ran again and exercised the REST endpoint of your application, including the response of your application's endpoint:
-
-```
-[INFO] Building rest client for class io.openliberty.guides.testing.PersonService with base path: http://localhost:9080/guide-microshed-testing/ and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
-[INFO] Response from server: 1809686877352335426
-```
+Save the changes, and  press the **enter/return** key in your console window to run the tests.
 
 # **Testing outside of development mode**
 
@@ -463,6 +508,9 @@ mvn verify
 
 Notice that tests for both the **PersonServiceIT** and **ErrorPathIT** classes run, but a new server starts for each test class, resulting in a longer test runtime.
 
+<br/>
+### **Creating a common configuration**
+
 To solve this issue, common configuration can be placed in a class that implements **SharedContainerConfiguration**.
 
 Create the **AppDeploymentConfig** class.
@@ -500,6 +548,9 @@ public class AppDeploymentConfig implements SharedContainerConfiguration {
 
 
 After the common configuration is created, the test classes can be updated to reference this shared configuration.
+
+<br/>
+### **Updating the PersonServiceIT class**
 
 
 Remove the container code from the **PersonServiceIT** class.
@@ -602,6 +653,9 @@ public class PersonServiceIT {
 
 Import the **SharedContainerConfig** annotation and annotate the **PersonServiceIT** class with **@SharedContainerConfig**. 
 
+
+<br/>
+### **Updating the ErrorPathIT class**
 
 
 Similarly, replace the **ErrorPathIT** class to remove the container code.
