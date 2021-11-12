@@ -100,11 +100,8 @@ For example, you can refer to the **OpenLibertyApplication** object kind by one 
 
 The **openlibertyapplications** CRD defines a set of configurations for
 deploying an Open Liberty-based application, including the application image, number of instances, and storage settings.
-The Open Liberty Operator watches for changes to instances of the **OpenLibertyApplication** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
-
-You can also confirm the installation of the operator from the web console.
-Navigate to the OperatorHub.
-From the categories on the left, you can filter to see only installed operators. 
+The Open Liberty Operator watches for changes to instances of the **OpenLibertyApplication** object kind and 
+creates Kubernetes resources that are based on the configuration that is defined in the CRD.
 
 
 # **Deploying the system microservice to OpenShift**
