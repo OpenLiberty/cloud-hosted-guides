@@ -340,7 +340,7 @@ After you expose the microservice, the Operator automatically creates and config
 
 Run the following commands to update the **applicationImage** and deploy the **system** microservice with the previously explained configuration:
 ```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
+NAMESPACE_NAME=`oc projects -q | grep sn-labs- | sed 's/ //g'`
 sed -i 's=guide='"$NAMESPACE_NAME"'=g' deploy.yaml
 oc apply -f deploy.yaml
 ```
