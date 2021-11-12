@@ -11,7 +11,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# **What you'll learn **
+# **What you'll learn**
 
 You will learn how to deploy a cloud-native application with a microservice to Red Hat OpenShift 4 by using the Open Liberty Kubernetes Operator. 
 You will install an operator into an OpenShift cluster and use them to deploy and scale a sample microservice. 
@@ -21,7 +21,7 @@ process by providing an intuitive development pipeline. It also provides integra
 deployment and management of cloud applications easier.
 You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
 
-https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes[Kubernetes operators]
+[Kubernetes operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes)
 provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management.
 To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
 
