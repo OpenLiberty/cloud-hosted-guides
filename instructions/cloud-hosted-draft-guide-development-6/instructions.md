@@ -468,63 +468,11 @@ Update the **HeightsBean** class to use the Java library module that implements 
 
 Navigate to the **start\war** directory.
 
-Replace the **HeightsBean** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java
-
-
-
-
-```
-package io.openliberty.guides.multimodules.web;
-
-public class HeightsBean implements java.io.Serializable {
-    private String heightCm = null;
-    private String heightFeet = null;
-    private String heightInches = null;
-    private int cm = 0;
-    private int feet = 0;
-    private int inches = 0;
-
-    public HeightsBean() {
-    }
-
-    public String getHeightCm() {
-        return heightCm;
-    }
-
-    public String getHeightFeet() {
-        return heightFeet;
-    }
-
-    public String getHeightInches() {
-        return heightInches;
-    }
-
-    public void setHeightCm(String heightcm) {
-        this.heightCm = heightcm;
-    }
-
-    public void setHeightFeet(String heightfeet) {
-        this.cm = Integer.valueOf(heightCm);
-        this.feet = io.openliberty.guides.multimodules.lib.Converter.getFeet(cm);
-        String result = String.valueOf(feet);
-        this.heightFeet = result;
-    }
-
-    public void setHeightInches(String heightinches) {
-        this.cm = Integer.valueOf(heightCm);
-        this.inches = io.openliberty.guides.multimodules.lib.Converter.getInches(cm);
-        String result = String.valueOf(inches);
-        this.heightInches = result;
-    }
-
-}
-```
-{: codeblock}
-
-
+[role="code_command hotspot file=0", subs="quotes"]
+----
+#Replace the `HeightsBean` class.#
+`war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java`
+----
 
 The **getFeet(cm)** invocation was added to the **setHeightFeet** method to convert a measurement into feet.
 
@@ -542,51 +490,11 @@ Now try updating the converter so that it converts heights correctly, rather tha
 
 Navigate to the **start\jar** directory.
 
-Replace the **Converter** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-maven-multimodules/start/jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java
-
-
-
-
-```
-package io.openliberty.guides.multimodules.lib;
-
-public class Converter {
-
-    public static int getFeet(int cm) {
-        int feet = (int) (cm / 30.48);
-        return feet;
-    }
-
-    public static int getInches(int cm) {
-        double feet = cm / 30.48;
-        int inches = (int) (cm / 2.54) - ((int) feet * 12);
-        return inches;
-    }
-
-    public static int sum(int a, int b) {
-        return a + b;
-    }
-
-    public static int diff(int a, int b) {
-        return a - b;
-    }
-
-    public static int product(int a, int b) {
-        return a * b;
-    }
-
-    public static int quotient(int a, int b) {
-        return a / b;
-    }
-
-}
-```
-{: codeblock}
-
-
+[role="code_command hotspot file=1", subs="quotes"]
+----
+#Replace the `Converter` class.#
+`jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java`
+----
 
 Change the **getFeet** method so that it converts from centimetres to feet, and the **getInches** method so that it converts from centimetres to inches. Update the **sum**, **diff**, **product** and **quotient** functions so that they add, subtract, multiply, and divide 2 numbers respectively.
 
@@ -600,80 +508,11 @@ To test the multi-module application, add integration tests to the EAR project.
 
 Navigate to the **start\ear** directory.
 
-Create the integration test class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java
-
-
-
-
-```
-package it.io.openliberty.guides.multimodules;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
-import org.junit.jupiter.api.Test;
-
-public class IT {
-    String port = System.getProperty("default.http.port");
-    String war = "converter";
-    String urlBase = "http://localhost:" + port + "/" + war + "/";
-
-    @Test
-    public void testIndexPage() throws Exception {
-        String url = this.urlBase;
-        HttpURLConnection con = testRequestHelper(url, "GET");
-        assertEquals(200, con.getResponseCode(), "Incorrect response code from " + url);
-        assertTrue(testBufferHelper(con).contains("Enter the height in centimeters"),
-                        "Incorrect response from " + url);
-    }
-
-    @Test
-    public void testHeightsPage() throws Exception {
-        String url = this.urlBase + "heights.jsp?heightCm=10";
-        HttpURLConnection con = testRequestHelper(url, "POST");
-        assertTrue(testBufferHelper(con).contains("3        inches"),
-                        "Incorrect response from " + url);
-    }
-
-    private HttpURLConnection testRequestHelper(String url, String method)
-                    throws Exception {
-        URL obj = new URL(url);
-        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-        con.setRequestMethod(method);
-        return con;
-    }
-
-    private String testBufferHelper(HttpURLConnection con) throws Exception {
-        BufferedReader in = new BufferedReader(
-                        new InputStreamReader(con.getInputStream()));
-        String inputLine;
-        StringBuffer response = new StringBuffer();
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-        }
-        in.close();
-        return response.toString();
-    }
-
-}
-```
-{: codeblock}
-
-
+[role="code_command hotspot", subs="quotes"]
+----
+#Create the integration test class.#
+`ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java`
+----
 
 The **testIndexPage** tests to check that you can access the landing page.
 
