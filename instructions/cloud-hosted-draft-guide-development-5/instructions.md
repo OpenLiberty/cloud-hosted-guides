@@ -555,7 +555,9 @@ After the common configuration is created, the test classes can be updated to re
 
 Remove the container code from the **PersonServiceIT** class.
 Remove **import** statements for **ApplicationContainer** and **Container** and the **ApplicationContainer app** field.
+
 Next, annotate the **PersonServiceIT** class with the **@SharedContainerConfig** annotation that references the **AppDeploymentConfig** shared configuration class.
+
 Replace the **PersonServiceIT** class.
 
 > From the menu of the IDE, select 
@@ -574,10 +576,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Collection;
 
 import org.junit.jupiter.api.Test;
+import org.microshed.testing.SharedContainerConfig;
 import org.microshed.testing.jaxrs.RESTClient;
 import org.microshed.testing.jupiter.MicroShedTest;
 
 @MicroShedTest
+@SharedContainerConfig(AppDeploymentConfig.class)
 public class PersonServiceIT {
 
     @RESTClient
@@ -660,7 +664,9 @@ Import the **SharedContainerConfig** annotation and annotate the **PersonService
 
 Similarly, replace the **ErrorPathIT** class to remove the container code.
 Remove **import** statements for **ApplicationContainer** and **Container** and the **ApplicationContainer app** field.
+
 Next, annotate the **ErrorPathIT** class with the **@SharedContainerConfig** annotation.
+
 Replace the **ErrorPathIT** class.
 
 > From the menu of the IDE, select 
