@@ -62,6 +62,7 @@ The **finish** directory contains the finished project that you will build.
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
 First, review the **PersonServiceIT** class to see what the tests look like:
+From the menu of the IDE, select **File** > **Open** > guide-microshed-testing/finish/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 To try out the application, go to the **finish** directory and run the following Maven 
