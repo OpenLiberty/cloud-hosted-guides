@@ -428,7 +428,7 @@ When you no longer need your deployed microservice, you can delete all resources
 
 ```
 oc delete -f deploy.yaml
-oc delete istag/system-imagestream:1.0-SNAPSHOT
+oc delete imagestream.image.openshift.io/system-imagestream
 oc delete bc system-buildconfig
 ```
 {: codeblock}
