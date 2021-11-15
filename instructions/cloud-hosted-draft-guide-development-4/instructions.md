@@ -1,7 +1,7 @@
 
-# **Welcome to the Documenting RESTful APIs guide!**
+# **Welcome to the Checking the health of microservices on Kubernetes guide!**
 
-Explore how to document and filter RESTful APIs from code or static files by using MicroProfile OpenAPI.
+Learn how to check the health of microservices on Kubernetes by setting up startup, liveness and readiness probes to inspect MicroProfile Health Check endpoints.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -12,26 +12,34 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 # **What you'll learn**
 
-You will learn how to document and filter RESTful APIs from annotations, POJOs, and static OpenAPI
-files by using MicroProfile OpenAPI.
+You will learn how to create health check endpoints for your microservices. Then, you 
+will configure Kubernetes to use these endpoints to keep your microservices running smoothly.
 
-The OpenAPI specification, previously known as the Swagger specification, defines a standard interface
-for documenting and exposing RESTful APIs. This specification allows both humans and computers to
-understand or process the functionalities of services without requiring direct access to underlying
-source code or documentation. The MicroProfile OpenAPI specification provides a set of Java interfaces
-and programming models that allow Java developers to natively produce OpenAPI v3 documents from their
-JAX-RS applications.
+MicroProfile Health allows services to report their health, and it publishes the overall 
+health status to defined endpoints. If a service reports **UP**, then it's available. If 
+the service reports **DOWN**, then it's unavailable. MicroProfile Health reports an individual 
+service status at the endpoint and indicates the overall status as **UP** if all the services 
+are **UP**. A service orchestrator can then use the health statuses to make decisions.
 
-You will document the RESTful APIs of the provided **inventory** service, which serves two endpoints,
-**inventory/systems** and **inventory/properties**. These two endpoints function the same way as in the
-other MicroProfile guides.
+Kubernetes provides startup, liveness, and readiness probes that are used to check the health of your 
+containers. These probes can check certain files in your containers, check a TCP socket, 
+or make HTTP requests. MicroProfile Health exposes startup, liveness and readiness endpoints on 
+your microservices. Kubernetes polls these endpoints as specified by the probes to react 
+appropriately to any change in the microservice's status. Read the 
+[Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) 
+guide to learn more about MicroProfile Health.
 
-Before you proceed, note that the 1.0 version of the MicroProfile OpenAPI specification does
-not define how the **/openapi** endpoint may be partitioned in the event of multiple JAX-RS applications
-running on the same server. In other words, you must stick to one JAX-RS application per server instance
-as the behaviour for handling multiple applications is currently undefined.
+The two microservices you will work with are called **system** and **inventory**. The **system** microservice
+returns the JVM system properties of the running container and it returns the pod's name in the HTTP header
+making replicas easy to distinguish from each other. The **inventory** microservice
+adds the properties from the **system** microservice to the inventory. This demonstrates
+how communication can be established between pods inside a cluster.
+
+
+
 
 
 # **Getting started**
@@ -46,11 +54,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-openapi.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-health.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-openapi.git
-cd guide-microprofile-openapi
+git clone https://github.com/openliberty/guide-kubernetes-microprofile-health.git
+cd guide-kubernetes-microprofile-health
 ```
 {: codeblock}
 
@@ -59,118 +67,63 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-<br/>
-### **Try what you'll build**
 
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
+
+# **Logging into your cluster**
+
+For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
+Get the name of your namespace with the following command:
 
 ```
-cd finish
-mvn liberty:run
+bx cr namespace-list
+```
+{: codeblock}
+
+Look for output that is similar to the following:
+
+```
+Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
+
+Namespace
+sn-labs-yourname
+```
+
+Run the following command to store the namespace name in a variable.
+
+```
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
+```
+{: codeblock}
+
+Verify that the variable contains your namespace name:
+
+```
+echo $NAMESPACE_NAME
+```
+{: codeblock}
+
+Log in to the registry with the following command:
+```
+bx cr login
 ```
 {: codeblock}
 
 
-After you see the following message, your application server is ready:
+# **Adding health checks to the inventory microservice**
 
+Navigate to **start** directory to begin.
+
+Create the **InventoryStartupCheck** class.
+
+> Run the following touch command in your terminal
 ```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-
-To open a new command-line session, select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Next, run the following curl command to see the RESTful APIs of the `inventory` service:
-```
-curl http://localhost:9080/openapi
-```
-{: codeblock}
-
-A UI is also available for a more interactive view of the deployed APIs.
-To visit the UI, select **Launch Application** from the menu of the IDE, 
-type in **9080** to specify the port number and click the **OK** button. 
-You’re redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`**, 
-where **accountname** is your account name. 
-Click the **interactive UI** link on the welcome page. 
-This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swagger-ui), 
-which renders the generated **/openapi** document into a very user friendly page.
-
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
-
-```
-mvn liberty:stop
+touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
 ```
 {: codeblock}
 
 
-
-# **Generating the OpenAPI document for the inventory service**
-
-You can generate an OpenAPI document in various ways. First, because
-all JAX-RS annotations are processed by default, you can augment your existing JAX-RS annotations with
-OpenAPI annotations to enrich your APIs with a minimal amount of work. Second, you can use a set of predefined
-models to manually create all elements of the OpenAPI tree. Finally, you can filter various elements of the
-OpenAPI tree, changing them to your liking or removing them entirely.
-
-Navigate to the **start** directory to begin.
-```
-cd /home/project/guide-microprofile-openapi/start
-```
-{: codeblock}
-
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
-
-Because the JAX-RS framework handles basic API generation for JAX-RS annotations, a skeleton OpenAPI
-tree will be generated from the **inventory** service. You can use this tree as a starting point and
-augment it with annotations and code to produce a complete OpenAPI document.
-
-
-
-Now, run the following curl command to see the generated OpenAPI tree:
-```
-curl http://localhost:9080/openapi
-```
-{: codeblock}
-
-To visit the UI for a more interactive view of the APIs, select **Launch Application** from the menu of the IDE, 
-type in **9080** to specify the port number and click the **OK** button. 
-You’re redirected to the **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai`** URL.
-Click the **interactive UI** link on the welcome page. 
-
-<br/>
-### **Augmenting the existing JAX-RS annotations with OpenAPI annotations**
-
-Because all JAX-RS annotations are processed by default, you can augment the existing code with OpenAPI
-annotations without needing to rewrite portions of the OpenAPI document that are already covered by
-the JAX-RS framework.
-
-Update the **InventoryResource** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
 
 
 
@@ -178,246 +131,163 @@ Update the **InventoryResource** class.
 ```
 package io.openliberty.guides.inventory;
 
-import java.util.Properties;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
+import javax.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Startup;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
 
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
-import org.eclipse.microprofile.openapi.annotations.media.Content;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
-import io.openliberty.guides.inventory.model.InventoryList;
+@Startup
+@ApplicationScoped
+public class InventoryStartupCheck implements HealthCheck {
 
-@RequestScoped
-@Path("/systems")
-public class InventoryResource {
-
-    @Inject
-    InventoryManager manager;
-
-    @GET
-    @Path("/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponse(
-        responseCode = "404",
-        description = "Missing description",
-        content = @Content(mediaType = "application/json"))
-    @APIResponseSchema(value = Properties.class,
-        responseDescription = "JVM system properties of a particular host.",
-        responseCode = "200")
-    @Operation(
-        summary = "Get JVM system properties for particular host",
-        description = "Retrieves and returns the JVM system properties from the system "
-        + "service running on the particular host.")
-    public Response getPropertiesForHost(
-        @Parameter(
-            description = "The host for whom to retrieve "
-                + "the JVM system properties for.",
-            required = true,
-            example = "foo",
-            schema = @Schema(type = SchemaType.STRING))
-        @PathParam("hostname") String hostname) {
-        Properties props = manager.get(hostname);
-        if (props == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                           .entity("{ \"error\" : "
-                                   + "\"Unknown hostname " + hostname
-                                   + " or the resource may not be "
-                                   + "running on the host machine\" }")
-                           .build();
-        }
-
-        manager.add(hostname, props);
-        return Response.ok(props).build();
-    }
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponseSchema(value = InventoryList.class,
-        responseDescription = "host:properties pairs stored in the inventory.",
-        responseCode = "200")
-    @Operation(
-        summary = "List inventory contents.",
-        description = "Returns the currently stored host:properties pairs in the "
-        + "inventory.")
-    public InventoryList listContents() {
-        return manager.list();
-    }
-
-}
-```
-{: codeblock}
-
-
-
-Add OpenAPI **@APIResponse**, **@APIResponseSchema**, 
-**@Operation**, and **@Parameter** annotations to the two JAX-RS methods, 
-**getPropertiesForHost()** and **listContents()**.
-
-
-
-Clearly, there are many more OpenAPI annotations now, so let’s break them down:
-
-| *Annotation*    | *Description*
-| ---| ---
-| **@APIResponse**  | Describes a single response from an API operation.
-| **@APIResponseSchema** | Convenient short-hand way to specify a simple response with a Java class that could otherwise be specified using @APIResponse.
-| **@Operation**    | Describes a single API operation on a path.
-| **@Parameter**    | Describes a single operation parameter.
-
-
-Since the Open Liberty server was started in development mode at the beginning of the guide, 
-your changes were automatically picked up. 
-Run the following curl command to see the updated OpenAPI tree:
-```
-curl http://localhost:9080/openapi
-```
-{: codeblock}
-
-The two endpoints at which your JAX-RS methods are served are now more meaningful:
-
-```
-/inventory/systems:
-  get:
-    summary: List inventory contents.
-    description: Returns the currently stored host:properties pairs in the inventory.
-    responses:
-      "200":
-        description: host:properties pairs stored in the inventory.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InventoryList'
-/inventory/systems/{hostname}:
-  get:
-    summary: Get JVM system properties for particular host
-    description: Retrieves and returns the JVM system properties from the system
-      service running on the particular host.
-    parameters:
-    - name: hostname
-      in: path
-      description: The host for whom to retrieve the JVM system properties for.
-      required: true
-      schema:
-        type: string
-      example: foo
-    responses:
-      "404":
-        description: Missing description
-        content:
-          application/json: {}
-      "200":
-        description: JVM system properties of a particular host.
-        content:
-          application/json:
-            schema:
-              type: object
-```
-
-
-OpenAPI annotations can also be added to POJOs to describe what they represent. 
-Currently, your OpenAPI document doesn't have a very meaningful description of the 
-**InventoryList** POJO and hence it's very difficult to tell 
-exactly what that POJO is used for. 
-To describe the **InventoryList** POJO in more detail, 
-augment the **src/main/java/io/openliberty/guides/inventory/model/InventoryList.java** 
-file with some OpenAPI annotations.
-
-Update the **InventoryList** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/InventoryList.java
-
-
-
-
-```
-package io.openliberty.guides.inventory.model;
-
-import java.util.List;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-
-@Schema(name="InventoryList", description="POJO that represents the inventory contents.")
-public class InventoryList {
-
-    @Schema(required = true)
-    private List<SystemData> systems;
-
-    public InventoryList(List<SystemData> systems) {
-        this.systems = systems;
-    }
-
-    public List<SystemData> getSystems() {
-        return systems;
-    }
-
-    public int getTotal() {
-        return systems.size();
-    }
-}
-```
-{: codeblock}
-
-
-
-Add OpenAPI **@Schema** annotations to 
-the **InventoryList** class and the **systems** variable.
-
-
-Likewise, annotate the **src/main/java/io/openliberty/guides/inventory/model/SystemData.java** POJO,
-which is referenced in the **InventoryList** class.
-
-Update the **SystemData** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/SystemData.java
-
-
-
-
-```
-package io.openliberty.guides.inventory.model;
-
-import java.util.Properties;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-
-@Schema(name="SystemData", description="POJO that represents a single inventory entry.")
-public class SystemData {
-
-    @Schema(required = true)
-    private final String hostname;
-
-    @Schema(required = true)
-    private final Properties properties;
-
-    public SystemData(String hostname, Properties properties) {
-        this.hostname = hostname;
-        this.properties = properties;
-    }
-
-    public String getHostname() {
-        return hostname;
-    }
-
-    public Properties getProperties() {
-        return properties;
-    }
+    private static final String STARTUP_CHECK = InventoryResource.class.getSimpleName()
+                                               + " Startup Check";
 
     @Override
-    public boolean equals(Object host) {
-        if (host instanceof SystemData) {
-            return hostname.equals(((SystemData) host).getHostname());
+    public HealthCheckResponse call() {
+        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
+        ManagementFactory.getOperatingSystemMXBean();
+        if (bean.getSystemCpuLoad() < 0.95) {
+           return HealthCheckResponse.up(STARTUP_CHECK);
+        } else {
+           return HealthCheckResponse.down(STARTUP_CHECK);
         }
-        return false;
+    }
+}
+
+```
+{: codeblock}
+
+
+
+A health check for startup allows applications to define startup probes that are used for initial verification of the application before the liveness probe takes over. 
+This is useful for applications which require additional startup time on their first initialization.
+The **@Startup** annotation must be applied on a HealthCheck implementation to define a startup check procedure, otherwise, this annotation is ignored.
+This startup check verifies that the cpu memory usage is below 95% of the maximum memory.
+If more than 95% of the maximum memory is used, a status of **DOWN** will be returned. 
+
+Create the **InventoryLivenessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+
+
+
+
+```
+package io.openliberty.guides.inventory;
+
+import javax.enterprise.context.ApplicationScoped;
+
+import java.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
+
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class InventoryLivenessCheck implements HealthCheck {
+
+  @Override
+  public HealthCheckResponse call() {
+      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+      long memUsed = memBean.getHeapMemoryUsage().getUsed();
+      long memMax = memBean.getHeapMemoryUsage().getMax();
+
+      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
+                                      + " Liveness Check")
+                                .withData("memory used", memUsed)
+                                .withData("memory max", memMax)
+                                .status(memUsed < memMax * 0.9).build();
+  }
+}
+```
+{: codeblock}
+
+
+
+A health Check for liveness allows third party services to determine if the application is running. 
+This means that if this procedure fails the application can be discarded (terminated, shutdown).
+The **@Liveness** annotation must be applied on a HealthCheck implementation to define a Liveness 
+check procedure, otherwise, this annotation is ignored.
+This liveness check verifies that the heap memory usage is below 90% of the maximum memory.
+If more than 90% of the maximum memory is used, a status of **DOWN** will be returned. 
+
+The **inventory** microservice should be healthy only when **system** is available. To add this 
+check to the **/health/ready** endpoint, you will create a class that is annotated with the
+**@Readiness** annotation and implements the **HealthCheck** interface. 
+A Health Check for readiness allows third party services to know if the application is ready to process requests or not.
+The **@Readiness** annotation must be applied on a HealthCheck implementation to define a readiness check procedure, otherwise, this annotation is ignored.
+
+Create the **InventoryReadinessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+
+
+
+
+```
+package io.openliberty.guides.inventory;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Readiness
+@ApplicationScoped
+public class InventoryReadinessCheck implements HealthCheck {
+
+    private static final String READINESS_CHECK = InventoryResource.class
+                                                .getSimpleName()
+                                                + " Readiness Check";
+
+    @Inject
+    @ConfigProperty(name = "SYS_APP_HOSTNAME")
+    private String hostname;
+
+    public HealthCheckResponse call() {
+        if (isSystemServiceReachable()) {
+            return HealthCheckResponse.up(READINESS_CHECK);
+        } else {
+            return HealthCheckResponse.down(READINESS_CHECK);
+        }
+    }
+
+    private boolean isSystemServiceReachable() {
+        try {
+            Client client = ClientBuilder.newClient();
+            client
+                .target("http://" + hostname + ":9080/system/properties")
+                .request()
+                .post(null);
+
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
     }
 }
 ```
@@ -425,407 +295,480 @@ public class SystemData {
 
 
 
-Add OpenAPI **@Schema** annotations 
-to the **SystemData** class, 
-the **hostname** variable and the **properties** variable.
+This health check verifies that the **system** microservice is available at 
+**http://system-service:9080/**. The **system-service** host name is only accessible from 
+inside the cluster, you can't access it yourself. If it's available, then it returns an 
+**UP** status. Similarly, if it's unavailable then it returns a **DOWN** status. When the 
+status is **DOWN**, the microservice is considered to be unhealthy.
 
+The health checks for the **system** microservice were already been implemented. The **system**
+microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. 
+This endpoint has been provided for you to observe the results of an unhealthy pod and how 
+Kubernetes reacts.
 
+# **Configuring startup, liveness and readiness probes**
 
-Run the following curl command to see the updated OpenAPI tree:
-```
-curl http://localhost:9080/openapi
-```
-{: codeblock}
+You will configure Kubernetes startup, liveness and readiness probes. Startup probes determines
+whether your application has started or not. Liveness probes determine whether a container needs to be restarted.
+Readiness probes determine whether your application is ready to accept requests. If it's not ready, traffic won't be routed to the container.
 
-```
-components:
-  schemas:
-    InventoryList:
-      description: POJO that represents the inventory contents.
-      required:
-      - systems
-      type: object
-      properties:
-        systems:
-          type: array
-          items:
-            $ref: '#/components/schemas/SystemData'
-        total:
-          format: int32
-          type: integer
-    SystemData:
-      description: POJO that represents a single inventory entry.
-      required:
-      - hostname
-      - properties
-      type: object
-      properties:
-        hostname:
-          type: string
-        properties:
-          type: object
-```
-
-
-<br/>
-### **Filtering the OpenAPI tree elements**
-
-Filtering of certain elements and fields of the generated OpenAPI document can be done by using the
-**OASFilter** interface.
-
-Create the **InventoryOASFilter** class.
+Create the kubernetes configuration file.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/filter/InventoryOASFilter.java
+touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/filter/InventoryOASFilter.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/kubernetes.yaml
 
 
 
 
 ```
-package io.openliberty.guides.inventory.filter;
-
-import java.util.Arrays;
-import java.util.Collections;
-
-import org.eclipse.microprofile.openapi.OASFactory;
-import org.eclipse.microprofile.openapi.OASFilter;
-import org.eclipse.microprofile.openapi.models.OpenAPI;
-import org.eclipse.microprofile.openapi.models.info.License;
-import org.eclipse.microprofile.openapi.models.info.Info;
-import org.eclipse.microprofile.openapi.models.responses.APIResponse;
-import org.eclipse.microprofile.openapi.models.servers.Server;
-import org.eclipse.microprofile.openapi.models.servers.ServerVariable;
-
-public class InventoryOASFilter implements OASFilter {
-
-  @Override
-  public APIResponse filterAPIResponse(APIResponse apiResponse) {
-    if ("Missing description".equals(apiResponse.getDescription())) {
-      apiResponse.setDescription("Invalid hostname or the system service may not "
-          + "be running on the particular host.");
-    }
-    return apiResponse;
-  }
-
-  @Override
-  public void filterOpenAPI(OpenAPI openAPI) {
-    openAPI.setInfo(
-        OASFactory.createObject(Info.class).title("Inventory App").version("1.0")
-                  .description(
-                      "App for storing JVM system properties of various hosts.")
-                  .license(
-                      OASFactory.createObject(License.class)
-                                .name("Eclipse Public License - v 1.0").url(
-                                    "https://www.eclipse.org/legal/epl-v10.html")));
-
-    openAPI.addServer(
-        OASFactory.createServer()
-                  .url("http://localhost:{port}")
-                  .description("Simple Open Liberty.")
-                  .variables(Collections.singletonMap("port", 
-                                 OASFactory.createServerVariable()
-                                           .defaultValue("9080")
-                                           .description("Server HTTP port."))));
-  }
-
-}
-```
-{: codeblock}
-
-
-
-The **filterAPIResponse()** method allows filtering of **APIResponse** elements. When you
-override this method, it will be called once for every **APIResponse** element in the OpenAPI tree.
-In this case, you are matching the **404** response that is returned by the **/inventory/systems/{hostname}**
-endpoint and setting the previously missing description. To remove an **APIResponse** element
-or another filterable element, simply return **null**.
-
-The **filterOpenAPI()** method allows filtering of the singleton **OpenAPI** element. 
-Unlike other filter methods, when you override **filterOpenAPI()**, 
-it is called only once as the last method for a particular filter. 
-Hence, make sure that it doesn't override any other filter operations that are called before it. 
-Your current OpenAPI document doesn't provide much information on the application itself or on what server and port it runs on. 
-This information is usually provided in the **info** and **servers** elements, which are currently missing. 
-Use the **OASFactory** class to manually set these and other elements of the OpenAPI tree from the **org.eclipse.microprofile.openapi.models**
-package. The **OpenAPI** element is the only element that cannot be removed, because that would mean
-removing the whole OpenAPI tree.
-
-Each filtering method is called once for each corresponding element in the model tree. You can think
-of each method as a callback for various key OpenAPI elements.
-
-Before you can use the filter class that you created, you need to create the **microprofile-config.properties** file.
-
-Create the configuration file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties
-
-
-
-
-```
-mp.openapi.filter = io.openliberty.guides.inventory.filter.InventoryOASFilter
-```
-{: codeblock}
-
-
-
-This configuration file is picked up automatically by MicroProfile Config and registers your filter
-by passing in the fully qualified name of the filter class into the **mp.openapi.filter** property.
-
-
-Run the following curl command to see the updated OpenAPI tree:
-```
-curl http://localhost:9080/openapi
-```
-{: codeblock}
-
-```
-info:
-  title: Inventory App
-  description: App for storing JVM system properties of various hosts.
-  license:
-    name: Eclipse Public License - v 1.0
-    url: https://www.eclipse.org/legal/epl-v10.html
-  version: "1.0"
-servers:
-- url: "http://localhost:{port}"
-  description: Simple Open Liberty.
-  variables:
-    port:
-      default: "9080"
-      description: Server HTTP port.
-```
-
-```
-responses:
-  "404":
-    description: Invalid hostname or the system service may not be running on
-      the particular host.
-    content:
-      application/json: {}
-```
-
-For more information about which elements you can filter, see the [MicroProfile API documentation](https://openliberty.io/docs/ref/microprofile/).
-
-To learn more about MicroProfile Config, visit the MicroProfile Config [GitHub repository](https://github.com/eclipse/microprofile-config)
-and try one of the MicroProfile Config [guides](https://openliberty.io/guides/?search=Config).
-
-
-
-# **Using pregenerated OpenAPI documents**
-
-As an alternative to generating the OpenAPI model tree from code, you can provide a valid pregenerated
-OpenAPI document to describe your APIs. This document must be named **openapi** with a **yml**, **yaml**, or **json**
-extension and be placed under the **META-INF** directory. Depending on the scenario, the document
-might be fully or partially complete. If the document is fully complete, then you can disable
-annotation scanning entirely by setting the **mp.openapi.scan.disable** MicroProfile Config property to **true**.
-If the document is partially complete, then you can augment it with code.
-
-To use the pre-generated OpenAPI document, create the OpenAPI document YAML file.
-
-Create the OpenAPI document file.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/openapi.yaml
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/openapi.yaml
-
-
-
-
-```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: system
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        # system probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9080
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
 ---
-openapi: 3.0.3
-info:
-  title: Inventory App
-  description: App for storing JVM system properties of various hosts.
-  license:
-    name: Eclipse Public License - v 1.0
-    url: https://www.eclipse.org/legal/epl-v10.html
-  version: "1.0"
-paths:
-  /inventory/properties:
-    get:
-      operationId: getProperties
-      responses:
-        "200":
-          description: JVM system properties of the host running this service.
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties:
-                  type: string
-  /inventory/systems:
-    get:
-      summary: List inventory contents.
-      description: Returns the currently stored host:properties pairs in the inventory.
-      responses:
-        "200":
-          description: host:properties pairs stored in the inventory.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InventoryList'
-  /inventory/systems/{hostname}:
-    get:
-      summary: Get JVM system properties for particular host
-      description: Retrieves and returns the JVM system properties from the system
-        service running on the particular host.
-      parameters:
-      - name: hostname
-        in: path
-        description: The host for whom to retrieve the JVM system properties for.
-        required: true
-        schema:
-          type: string
-        example: foo
-      responses:
-        "404":
-          description: Invalid hostname or the system service may not be running on
-            the particular host.
-          content:
-            application/json: {}
-        "200":
-          description: JVM system properties of a particular host.
-          content:
-            application/json:
-              schema:
-                type: object
-components:
-  schemas:
-    InventoryList:
-      description: POJO that represents the inventory contents.
-      required:
-      - systems
-      type: object
-      properties:
-        systems:
-          type: array
-          items:
-            $ref: '#/components/schemas/SystemData'
-        total:
-          format: int32
-          type: integer
-    SystemData:
-      description: POJO that represents a single inventory entry.
-      required:
-      - hostname
-      - properties
-      type: object
-      properties:
-        hostname:
-          type: string
-        properties:
-          type: object
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+        # inventory probe
+        startupProbe:
+          httpGet:
+            #tag::start2[]
+            path: /health/started
+            #end::start2[]
+            port: 9080
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 31000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 32000
 ```
 {: codeblock}
 
 
 
+The startup, liveness and readiness probes are configured for the containers running the **system** 
+and **inventory** microservices.
 
-This document is the same as your current OpenAPI document with extra APIs for the **/inventory/properties** endpoint. 
-Since this document is complete, you can also add the **mp.openapi.scan.disable** property
-and set it to **true** in the **src/main/webapp/META-INF/microprofile-config.properties** file.
+The startup probes are configured to poll the **/health/started** endpoint.
+The startup probe determines whether or not a container has started.
 
-Update the configuration file.
+The liveness probes are configured to poll the **/health/live** endpoint.
+The liveness probes determine whether a container needs to be restarted.
+The **initialDelaySeconds** field defines how long the probe waits before it 
+starts to poll so the probe does not start making requests before the server has started.  The **periodSeconds** 
+option defines how often the probe should poll the given endpoint. The **timeoutSeconds** 
+option defines how many seconds before the probe times out. The **failureThreshold** option defines how many times the probe fails 
+before the state changes from ready to not ready.
 
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties
+The readiness probes are configured to poll the **/health/ready** endpoint.
+The readiness probe determines the READY status of the container, as seen in the **kubectl get pods** output.
+Similar to the liveness probes, the readiness probes also define **initialDelaySeconds**,
+**periodSeconds**, **timeoutSeconds**,
+and **failureThreshold**.
 
+# **Deploying the microservices**
 
-
+To build these microservices, navigate to the **start** directory and run the following 
+command.
 
 ```
-mp.openapi.scan.disable = true
-mp.openapi.filter = io.openliberty.guides.inventory.filter.InventoryOASFilter
+mvn package
 ```
 {: codeblock}
 
 
-Add and set the **mp.openapi.scan.disable** property to **true**.
+Run the following command to download or update to the latest Open Liberty Docker image:
 
-
-
-Run the following curl command to see the updated OpenAPI tree:
 ```
-curl http://localhost:9080/openapi
+docker pull openliberty/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
+
+Next, run the **docker build** commands to build container images for your application:
 ```
-/inventory/properties:
-  get:
-    operationId: getProperties
-    responses:
-      "200":
-        description: JVM system properties of the host running this service.
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties:
-                type: string
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+{: codeblock}
+
+
+The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
+The tag for an image describes the specific image version. 
+If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
+
+Push your images to the container registry on IBM Cloud with the following commands:
+
+```
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+```
+{: codeblock}
+
+Update the image names so that the images in your IBM Cloud container registry are used.
+Set the image pull policy to **Always** 
+and remove the **nodePort** fields so that the ports can be automatically generated:
+```
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
+{: codeblock}
+
+When the builds succeed, run the following command to deploy the necessary Kubernetes 
+resources to serve the applications.
+
+```
+kubectl apply -f kubernetes.yaml
+```
+{: codeblock}
+
+
+Use the following command to view the status of the pods. There will be two **system** pods 
+and one **inventory** pod, later you'll observe their behavior as the **system** pods become unhealthy.
+
+```
+kubectl get pods
+```
+{: codeblock}
+
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          59s
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          59s
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          59s
+```
+
+Wait until the pods are ready. After the pods are ready, you will make requests to your 
+services.
+
+
+In this IBM cloud environment, you need to access the services by using the Kubernetes API.
+Run the following command to start a proxy to the Kubernetes API server:
+
+```
+kubectl proxy
+```
+{: codeblock}
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Run the following commands to store the proxy path of the **system** and **inventory** services.
+```
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
+SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
+INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/inventory-service/proxy
+```
+{: codeblock}
+
+Run the following echo commands to verify the variables:
+
+```
+echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
+```
+{: codeblock}
+
+
+The output appears as shown in the following example:
+
+```
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
+```
+
+Make a request to the system service to see the JVM system properties with the following **curl** command:
+```
+curl -s http://$SYSTEM_PROXY/system/properties | jq
+```
+{: codeblock}
+
+The readiness probe ensures the READY state won't be `1/1`
+until the container is available to accept requests.
+Without a readiness probe, you might notice an unsuccessful response from the server.
+This scenario can occur when the container is started,
+but the application server isn't fully initialized.
+With the readiness probe, you can be certain the pod accepts traffic only
+when the microservice is fully started.
+
+Similarly, access the inventory service and observe the successful request with the following command:
+```
+curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
+```
+{: codeblock}
+
+# **Changing the ready state of the system microservice**
+
+An **unhealthy** endpoint has been provided under the **system** microservice to set it to an unhealthy 
+state. The unhealthy state causes the readiness probe to fail.
+A request to the **unhealthy** endpoint puts the service in an unhealthy state as a simulation.
+
+
+Run the following **curl** command to invoke the unhealthy endpoint:
+```
+curl http://$SYSTEM_PROXY/system/unhealthy
+```
+{: codeblock}
+
+Run the following command to view the state of the pods:
+
+```
+kubectl get pods
+```
+{: codeblock}
+
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          1m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          1m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
 ```
 
 
+You will notice that one of the two **system** pods is no longer in the ready state.
+Make a request to the **/system/properties** endpoint with the following command:
+```
+curl -s http://$SYSTEM_PROXY/system/properties | jq
+```
+{: codeblock}
 
-# **Testing the service**
-
-
-No automated tests are provided to verify the correctness of the generated OpenAPI document. Manually
-verify the document by visiting the **http://localhost:9080/openapi** or the **http://localhost:9080/openapi/ui** URL.
-
-A few tests are included for you to test the basic functionality of the **inventory** service. If a test
-failure occurs, then you might have introduced a bug into the code. These tests will run automatically
-as a part of the integration test suite.
+Your request is successful because you have two replicas and one is still healthy.
 
 <br/>
-### **Running the tests**
+### **Observing the effects on the inventory microservice**
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
-You will see the following output:
+Wait until the **system-service** pod is ready again.
+Make several requests to the **/system/unhealthy** endpoint of the **system** service
+until you see two pods are unhealthy.
+```
+curl http://$SYSTEM_PROXY/system/unhealthy
+```
+{: codeblock}
+
+Observe the output of **kubectl get pods**.
+```
+kubectl get pods
+```
+{: codeblock}
+
+You will see both pods are no longer ready. 
+During this process, the readiness probe for the **inventory** microservice will also fail. 
+Observe that it's no longer in the ready state either.
+
+First, both **system** pods will no longer be ready because the readiness probe failed.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     0/1       Running   0          5m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          5m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          5m
+```
+
+Next, the **inventory** pod is no longer ready because the readiness probe failed. The probe 
+failed because **system-service** is now unavailable.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     0/1       Running   0          6m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          6m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          6m
+```
+
+Then, the **system** pods will start to become healthy again after 60 seconds.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
+system-deployment-694c7b74f7-lrlf7     0/1       Running   0          7m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
+```
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          7m
+inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
+```
+
+Finally, you will see all of the pods have recovered.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-694c7b74f7-hcf4q     1/1       Running   0          8m
+system-deployment-694c7b74f7-lrlf7     1/1       Running   0          8m
+inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
+```
+
+# **Testing the microservices**
+
+
+Run the following commands to store the proxy path of the **system** and **inventory** services.
+```
+cd /home/project/guide-kubernetes-microprofile-health/start
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
+SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
+INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/inventory-service/proxy
+```
+{: codeblock}
+
+Run the integration tests by using the following command:
+```
+mvn failsafe:integration-test \
+    -Dsystem.service.root=$SYSTEM_PROXY \
+    -Dinventory.service.root=$INVENTORY_PROXY
+```
+{: codeblock}
+
+A few tests are included for you to test the basic functions of the microservices.
+If a test fails, then you might have introduced a bug into the code.
+Wait for all pods to be in the ready state before you run the tests.
+
+When the tests succeed, you should see output similar to the following in your console.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
 Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.4 sec - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
-Could not send Message.
-[err] The specified host is unknown: java.net.UnknownHostException: UnknownHostException invoking http://badhostname:9080/inventory/properties: badhostname
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.264 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.65 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
-Results :
+Results:
 
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-The warning and error messages are expected and result from a request to a bad or an unknown hostname. 
-This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
+Results:
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
+
+# **Tearing down the environment**
+
+Press **CTRL+C** to stop the proxy server that was started at step 7.
+
+To remove all of the resources created during this guide, run the following command to 
+delete all of the resources that you created.
+
+```
+kubectl delete -f kubernetes.yaml
+```
+{: codeblock}
+
+
 
 
 
@@ -833,14 +776,10 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 
 ## **Nice Work!**
 
-You have just documented and filtered the APIs of the **inventory** service from both the code and a static file by using MicroProfile OpenAPI in Open Liberty.
+You have used MicroProfile Health and Open Liberty to create endpoints that report on 
 
-
-Feel free to try one of the related MicroProfile guides. They demonstrate additional technologies that you can learn and expand on top of what you built here.
-
-For more in-depth examples of MicroProfile OpenAPI, try one of the demo applications available in the
-MicroProfile OpenAPI
-[GitHub repository](https://github.com/eclipse/microprofile-open-api/tree/master/tck/src/main/java/org/eclipse/microprofile/openapi/apps).
+your microservice's status. Then, you observed how Kubernetes uses the **/health/started**,
+**/health/live**, and **/health/ready** endpoints to keep your microservices running smoothly.
 
 
 
@@ -850,11 +789,11 @@ MicroProfile OpenAPI
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-openapi** project by running the following commands:
+Delete the **guide-kubernetes-microprofile-health** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-openapi
+rm -fr guide-kubernetes-microprofile-health
 ```
 {: codeblock}
 
@@ -863,7 +802,7 @@ rm -fr guide-microprofile-openapi
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Documenting%20RESTful%20APIs&guide-id=cloud-hosted-guide-microprofile-openapi)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Checking%20the%20health%20of%20microservices%20on%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-health)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -871,16 +810,16 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-openapi/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-openapi/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
 <br/>
