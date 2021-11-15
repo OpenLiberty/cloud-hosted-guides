@@ -74,8 +74,9 @@ oc projects
 ```
 {: codeblock}
 
-In this Skill Network enviornment, the Open Liberty Operator is already installed. If you like to learn how to install the Open Liberty Operator,
-you can read the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide.
+In this Skill Network enviornment, the Open Liberty Operator is already installed by the administrator.
+If you like to learn how to install the Open Liberty Operator,
+you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/blob/master/deploy/releases/0.7.1/readme.adoc).
 
 Run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 
