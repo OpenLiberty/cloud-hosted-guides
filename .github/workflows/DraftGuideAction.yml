@@ -10,7 +10,11 @@ on:
         description: 'Guide changed'
         required: true
         default: 'guide-rest-into'
-        
+      converter_branch:
+        description: 'Converter branch'
+        required: true
+        default: 'main'
+
 jobs:
   printBranch:
     runs-on: ubuntu-latest
@@ -20,7 +24,8 @@ jobs:
       - name: Output message
         run: |
           echo "${{ github.event.inputs.branch }}"
-          echo "${{ github.event.inputs.guide_name }}"
+          echo "${{ github.event.inputs.guide_name }}"'
+          echo "converter_branch: ${{ github.event.inputs.converter_branch }}"
   convertStaging:
     name: Make PR to Staging
     runs-on: ubuntu-latest
@@ -35,12 +40,14 @@ jobs:
       - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
         with:
+          ref: ${{ github.event.inputs.converter_branch }}
           repository: OpenLiberty/cloud-hosted-guide-converter
           path: GuideConverter
         
       - name: Checkout guide repo
         uses: actions/checkout@v2
         with:
+          ref: ${{ github.event.inputs.branch }}
           repository: OpenLiberty/${{ github.event.inputs.guide_name }}
           path: GuideConverter/${{ github.event.inputs.guide_name }}
         
