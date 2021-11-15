@@ -468,16 +468,19 @@ Update the **HeightsBean** class to use the Java library module that implements 
 
 Navigate to the **start\war** directory.
 
+
 [role="code_command hotspot file=0", subs="quotes"]
 ----
 #Replace the `HeightsBean` class.#
 `war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java`
 ----
+
 HeightsBean.java
 [source, Java, linenums, role='code_column hide_tags=copyright']
 ----
 include::finish/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java[]
 ----
+
 
 The **getFeet(cm)** invocation was added to the **setHeightFeet** method to convert a measurement into feet.
 
@@ -495,16 +498,19 @@ Now try updating the converter so that it converts heights correctly, rather tha
 
 Navigate to the **start\jar** directory.
 
+
 [role="code_command hotspot file=1", subs="quotes"]
 ----
 #Replace the `Converter` class.#
 `jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java`
 ----
+
 Converter.java
 [source, Java, linenums, role='code_column hide_tags=copyright']
 ----
 include::finish/jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java[]
 ----
+
 
 Change the **getFeet** method so that it converts from centimetres to feet, and the **getInches** method so that it converts from centimetres to inches. Update the **sum**, **diff**, **product** and **quotient** functions so that they add, subtract, multiply, and divide 2 numbers respectively.
 
@@ -518,16 +524,19 @@ To test the multi-module application, add integration tests to the EAR project.
 
 Navigate to the **start\ear** directory.
 
+
 [role="code_command hotspot", subs="quotes"]
 ----
 #Create the integration test class.#
 `ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java`
 ----
+
 IT.java
 [source, Java, linenums, role='code_column hide_tags=copyright']
 ----
 include::finish/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java[]
 ----
+
 
 The **testIndexPage** tests to check that you can access the landing page.
 
