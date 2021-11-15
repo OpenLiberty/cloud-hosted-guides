@@ -117,11 +117,12 @@ run an OpenShift build to produce runnable container images of the packaged micr
 Ensure that you are in the **start** directory and run the following command to package the **system**
 microservice:
 
+
 ```
+cd /home/project/draft-guide-openliberty-operator-intro/start
 mvn clean package
 ```
 {: codeblock}
-
 
 <br/>
 ### **Building and pushing the images**
@@ -412,6 +413,13 @@ Make sure to substitute the appropriate **HOST** value.
 For example, using the output from the command above, **system-guide.2886795274-80-kota02.environments.katacoda.com** is the **HOST**.
 The following example shows this value substituted for **HOST** in the URL:
 **http://system-guide.2886795274-80-kota02.environments.katacoda.com/system/properties**.
+
+Or, you can run the following command to get the URL:
+```
+IFS=' ' read -r -a system_url <<< "`oc get routes | grep system`"
+echo http://${system_url[1]}/system/properties
+```
+{: codeblock}
 
 # **Tearing down the environment**
 
