@@ -1,7 +1,7 @@
 
-# **Welcome to the Consuming a RESTful web service with AngularJS guide!**
+# **Welcome to the Adding health reports to microservices guide!**
 
-Explore how to access a simple RESTful web service and consume its resources with AngularJS in Open Liberty.
+Explore how to report and check the health of a microservice with MicroProfile Health.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,19 +14,22 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 # **What you'll learn**
 
-You will learn how to access a REST service and deserialize the returned JSON that contains a list of
-artists and their albums by using the high-level **$resource** service of AngularJS.
+You will learn how to use MicroProfile Health to report the health status of microservices and take
+appropriate actions based on this report.
 
-The REST service that provides the artists and albums resource was written for you in advance and
-responds with the **artists.json**.
+MicroProfile Health allows services to report their health, and it publishes the overall health status to a defined
+endpoint. A service reports **UP** if it is available and reports **DOWN** if it is unavailable. MicroProfile Health reports
+an individual service status at the endpoint and indicates the overall status as **UP** if all the services are **UP**. A service
+orchestrator can then use the health statuses to make decisions.
 
+A service checks its own health by performing necessary self-checks and then reports its overall status by
+implementing the API provided by MicroProfile Health. A self-check can be a check on anything that the service needs, such
+as a dependency, a successful connection to an endpoint, a system property, a database connection, or
+the availability of required resources. MicroProfile offers checks for startup, liveness and readiness.
 
-
-You will implement an AngularJS client that consumes this JSON and displays its contents at a URL.
-
-
-To learn more about REST services and how you can write them, see
-[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
+You will add startup, liveness and readiness checks to the **system** and **inventory** services, which
+are provided for you, and implement what is necessary to report health status by
+using MicroProfile Health.
 
 
 # **Getting started**
@@ -41,11 +44,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-angularjs.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-health.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-rest-client-angularjs.git
-cd guide-rest-client-angularjs
+git clone https://github.com/openliberty/guide-microprofile-health.git
+cd guide-microprofile-health
 ```
 {: codeblock}
 
@@ -54,25 +57,21 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+
 <br/>
 ### **Try what you'll build**
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
+To try out the application, first go to the **finish** directory and run the following
+Maven goal to build the application and deploy it to Open Liberty:
 
-In this IBM cloud environment, you need to update the URL to access the **artists.json** in the **consume-rest.js** file.
-Run the following commands to go to the **finish** directory and update the **consume-rest.js** file:
 ```
 cd finish
-sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/js/consume-rest.js
-```
-{: codeblock}
-
-To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
-```
 mvn liberty:run
 ```
 {: codeblock}
+
 
 After you see the following message, your application server is ready:
 
@@ -81,23 +80,51 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-When the server is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
-Open your browser and check out the application by going to the URL that the following command returns:
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+To access the **system** service, run the following curl command:
 ```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
-See the following output:
+To access the **inventory** service, run the following curl command:
+```
+curl -s http://localhost:9080/inventory/systems | jq
+```
+{: codeblock}
 
+Visit the http://localhost:9080/health URL to see the
+overall health status of the application, as well as the aggregated data of the liveness
+and readiness checks. Run the following curl command:
 ```
-foo wrote 2 albums:
-    Album titled *album_one* by *foo* contains *12* tracks
-    Album tilted *album_two* by *foo* contains *15* tracks
-bar wrote 1 albums:
-    Album titled *foo walks into a bar* by *bar* contains *12* tracks
-dj wrote 0 albums:
+curl -s http://localhost:9080/health | jq
 ```
+{: codeblock}
+
+Three checks show the state of the **system** service, and the other three
+checks show the state of the **inventory** service. As you might expect, both services are in the
+**UP** state, and the overall health status of the application is in the **UP** state.
+
+Access the **/health/started** endpoint by visiting the http://localhost:9080/health/started
+URL to view the data from the startup health checks. Run the following curl command:
+```
+curl -s http://localhost:9080/health/started | jq
+```
+{: codeblock}
+
+You can also access the **/health/live** endpoint by visiting the http://localhost:9080/health/live
+URL to view the data from the liveness health checks. Run the following curl command:
+```
+curl -s http://localhost:9080/health/live | jq
+```
+{: codeblock}
+
+Similarly, access the **/health/ready** endpoint by visiting the http://localhost:9080/health/ready
+URL to view the data from the readiness health checks. Run the following curl command:
+```
+curl -s http://localhost:9080/health/ready | jq
+```
+{: codeblock}
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -110,14 +137,12 @@ mvn liberty:stop
 
 
 
-# **Starting the service**
+# **Adding health checks to microservices**
 
-Before you begin the implementation, start the provided REST service so that the artist JSON is
-available to you.
 
-Navigate to the **start** directory to begin.
+To begin, run the following command to navigate to the **start** directory:
 ```
-cd /home/project/guide-rest-client-angularjs/start
+cd /home/project/guide-microprofile-health/start
 ```
 {: codeblock}
 
@@ -140,197 +165,648 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
+A health report will be generated automatically for all services that enable MicroProfile Health. The
+**mpHealth** feature has already been enabled for you in the **src/main/liberty/config/server.xml**
+file.
 
-After the server is started, run the following curl command to view your artist JSON.
-```
-curl -s http://localhost:9080/artists | jq
-```
-{: codeblock} 
-
-Any local changes to your JavaScript and HTML are picked up automatically, so you don't need to 
-restart the server.
-
-
-# **Creating the AngularJS controller**
-
-Begin by registering your application module. Every application must contain at least one module, the
-application module, which will be bootstrapped to launch the application.
+All services must provide an implementation of the **HealthCheck** interface, which will be used to
+verify their health. MicroProfile Health offers health checks for both startup, liveness and readiness.
+A startup check allows applications to define startup probes that are used 
+for initial verification of the application before the Liveness probe takes over. For example,
+a startup check might check which applications require additional startup time on their first
+initialization. A liveness check allows third-party services to determinewhether a microservice is running. 
+If the liveness check fails, the application can be terminated. For example, a liveness check might fail if the application runs out of memory.
+A readiness check allows third-party services, such as Kubernetes, to determine whether a microservice
+is ready to process requests. For example, a readiness check might check dependencies,
+such as database connections.
 
 
-Create the **consume-rest** file.
+
+<br/>
+### **Adding health checks to the system service**
+
+Create the **SystemStartupCheck** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemStartupCheck.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemStartupCheck.java
 
 
 
 
 ```
-var app = angular.module('consumeRestApp', ['ngResource']);
+package io.openliberty.guides.system;
 
-app.factory("artists", function($resource) {
-    return $resource("http://localhost:9080/artists");
-});
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
+import javax.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Startup;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
 
-app.controller("ArtistsCtrl", function($scope, artists) {
-    artists.query(function(data) {
-        $scope.artists = data;
-    }, function(err) {
-        console.error("Error occured: ", err);
+@Startup
+@ApplicationScoped
+public class SystemStartupCheck implements HealthCheck {
+
+    private static final String STARTUP_CHECK = SystemResource.class.getSimpleName()
+                                               + " Startup Check";
+
+    @Override
+    public HealthCheckResponse call() {
+        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
+        ManagementFactory.getOperatingSystemMXBean();
+        if (bean.getSystemCpuLoad() < 0.95) {
+           return HealthCheckResponse.up(STARTUP_CHECK);
+        } else {
+           return HealthCheckResponse.down(STARTUP_CHECK);
+        }
+    }
+}
+
+```
+{: codeblock}
+
+
+
+The **@Startup** annotation indicates that this is a startup health check procedure.
+In this case, you are checking the cpu usage. If more than 90% of the cpu
+is being used, a status of **DOWN** is returned.
+
+Create the **SystemLivenessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
+
+
+
+
+```
+package io.openliberty.guides.system;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+
+import javax.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class SystemLivenessCheck implements HealthCheck {
+
+  @Override
+  public HealthCheckResponse call() {
+    MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+    long memUsed = memBean.getHeapMemoryUsage().getUsed();
+    long memMax = memBean.getHeapMemoryUsage().getMax();
+
+    return HealthCheckResponse.named(
+      SystemResource.class.getSimpleName() + " Liveness Check")
+                              .withData("memory used", memUsed)
+                              .withData("memory max", memMax)
+                              .status(memUsed < memMax * 0.9).build();
+  }
+}
+```
+{: codeblock}
+
+
+
+The **@Liveness** annotation indicates that this is a liveness health check procedure.
+In this case, you are checking the heap memory usage. If more than 90% of the maximum memory
+is being used, a status of **DOWN** is returned.
+
+Create the **SystemReadinessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
+
+
+
+
+```
+package io.openliberty.guides.system;
+
+import javax.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Readiness
+@ApplicationScoped
+public class SystemReadinessCheck implements HealthCheck {
+
+  private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
+                                               + " Readiness Check";
+  @Override
+  public HealthCheckResponse call() {
+    if (!System.getProperty("wlp.server.name").equals("defaultServer")) {
+      return HealthCheckResponse.down(READINESS_CHECK);
+    }
+    return HealthCheckResponse.up(READINESS_CHECK);
+  }
+}
+```
+{: codeblock}
+
+
+
+
+The **@Readiness** annotation indicates that this particular bean is a readiness health check procedure.
+By pairing this annotation with the **ApplicationScoped** context from the Contexts and
+Dependency Injections API, the bean is discovered automatically when the http://localhost:9080/health
+endpoint receives a request.
+
+
+The **call()** method is used to return the health status of a particular service.
+In this case, you are simply checking if the server name is **defaultServer** and
+returning **UP** if it is, and **DOWN** otherwise.  
+Overall, this is a very simple implementation of the **call()**
+method. In a real environment, you would want to orchestrate more meaningful
+health checks.
+
+
+<br/>
+### **Adding health checks to the inventory service**
+
+Create the **InventoryStartupCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+
+
+
+
+```
+package io.openliberty.guides.inventory;
+
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
+import javax.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Startup;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Startup
+@ApplicationScoped
+public class InventoryStartupCheck implements HealthCheck {
+
+    private static final String STARTUP_CHECK = InventoryResource.class.getSimpleName()
+                                               + " Startup Check";
+
+    @Override
+    public HealthCheckResponse call() {
+        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
+        ManagementFactory.getOperatingSystemMXBean();
+        if (bean.getSystemCpuLoad() < 0.95) {
+           return HealthCheckResponse.up(STARTUP_CHECK);
+        } else {
+           return HealthCheckResponse.down(STARTUP_CHECK);
+        }
+    }
+}
+
+```
+{: codeblock}
+
+
+
+This startup check verifies that the cpu memory usage is below 95% of the maximum memory.
+If more than 95% of the maximum memory is used, a status of **DOWN** will be returned. 
+
+Create the **InventoryLivenessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+
+
+
+
+```
+package io.openliberty.guides.inventory;
+
+import javax.enterprise.context.ApplicationScoped;
+
+import java.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
+
+import org.eclipse.microprofile.health.Liveness;
+
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class InventoryLivenessCheck implements HealthCheck {
+  @Override
+  public HealthCheckResponse call() {
+      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+      long memUsed = memBean.getHeapMemoryUsage().getUsed();
+      long memMax = memBean.getHeapMemoryUsage().getMax();
+
+      return HealthCheckResponse.named(
+        InventoryResource.class.getSimpleName() + " Liveness Check")
+                                .withData("memory used", memUsed)
+                                .withData("memory max", memMax)
+                                .status(memUsed < memMax * 0.9).build();
+  }
+}
+```
+{: codeblock}
+
+
+
+As with the **system** liveness check, you are checking the heap memory usage. If more
+than 90% of the maximum memory is being used, a **DOWN** status is returned.
+
+Create the **InventoryReadinessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+
+
+
+
+```
+package io.openliberty.guides.inventory;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Readiness
+@ApplicationScoped
+public class InventoryReadinessCheck implements HealthCheck {
+
+  private static final String READINESS_CHECK = InventoryResource.class.getSimpleName()
+                                               + " Readiness Check";
+  @Inject
+  InventoryConfig config;
+
+  public boolean isHealthy() {
+    if (config.isInMaintenance()) {
+      return false;
+    }
+    try {
+      String url = InventoryUtils.buildUrl("http", "localhost", config.getPortNumber(),
+          "/system/properties");
+      Client client = ClientBuilder.newClient();
+      Response response = client.target(url).request(MediaType.APPLICATION_JSON).get();
+      if (response.getStatus() != 200) {
+        return false;
+      }
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  @Override
+  public HealthCheckResponse call() {
+    if (!isHealthy()) {
+      return HealthCheckResponse
+          .down(READINESS_CHECK);
+    }
+    return HealthCheckResponse
+        .up(READINESS_CHECK);
+  }
+
+}
+```
+{: codeblock}
+
+
+
+In the **isHealthy()** method, 
+you report the **inventory** service as not ready if the service is in maintenance or if its dependant service is unavailable.
+
+For simplicity, the custom **`io_openliberty_guides_inventory_inMaintenance`**
+MicroProfile Config property, which is defined in the **resources/CustomConfigSource.json**
+file, is used to indicate whether the service is in maintenance. This file was already
+created for you.
+
+Moreover, the readiness health check procedure makes an HTTP **GET** request to the **system** service and checks its status.
+If the request is successful, the **inventory** service is healthy and ready because its dependant service is available.
+Otherwise, the **inventory** service is not ready and an unhealthy readiness status is returned.
+
+If you are curious about the injected **inventoryConfig** object or if
+you want to learn more about MicroProfile Config, see
+[Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
+
+
+
+# **Running the application**
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+While the server is running, run the following curl command to find
+the aggregated startup ,liveness and readiness health reports on the two services:
+```
+curl -s http://localhost:9080/health | jq
+```
+{: codeblock}
+
+You can also run the following curl command to view the startup health report:
+```
+curl -s http://localhost:9080/health/started | jq
+```
+{: codeblock}
+
+or run the following curl command to view the liveness health report:
+```
+curl -s http://localhost:9080/health/live | jq
+```
+{: codeblock}
+
+or run the following curl command to view the readiness health report:
+```
+curl -s http://localhost:9080/health/ready | jq
+```
+{: codeblock}
+
+Put the **inventory** service in maintenance by setting the **`io_openliberty_guides_inventory_inMaintenance`**
+property to **true** in the **resources/CustomConfigSource.json** file. 
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json
+
+```
+{
+  "config_ordinal":700,
+  "io_openliberty_guides_system_inMaintenance":true
+}
+```
+{: codeblock}
+
+Because this configuration file is picked up dynamically, simply refresh the http://localhost:9080/health
+URL to see that the state of the **inventory** service changed to **DOWN**. Run the following curl command:
+```
+curl -s http://localhost:9080/health | jq
+```
+{: codeblock}
+
+The overall state of the application also changed to **DOWN** as a result. Run the following curl command
+ to verify that the **inventory** service is indeed in maintenance:
+```
+curl -s http://localhost:9080/inventory/systems | jq
+```
+{: codeblock}
+
+Set the **`io_openliberty_guides_inventory_inMaintenance`**
+property back to **false** after you are done.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json
+
+```
+{
+  "config_ordinal":700,
+  "io_openliberty_guides_system_inMaintenance":false
+}
+```
+{: codeblock}
+
+
+
+# **Testing health checks**
+
+You will implement several test methods to validate the health of the **system** and **inventory** services.
+
+Create the **HealthIT** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
+
+
+
+
+```
+package it.io.openliberty.guides.health;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.HashMap;
+
+import javax.json.JsonArray;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class HealthIT {
+
+  private JsonArray servicesStates;
+  private static HashMap<String, String> endpointData;
+
+  private String HEALTH_ENDPOINT = "health";
+  private String READINESS_ENDPOINT = "health/ready";
+  private String LIVENES_ENDPOINT = "health/live";
+  private String STARTUP_ENDPOINT = "health/started";
+
+  @BeforeEach
+  public void setup() {
+    endpointData = new HashMap<String, String>();
+  }
+
+  @Test
+  public void testIfServicesAreUp() {
+    endpointData.put("SystemResource Startup Check", "UP");
+    endpointData.put("SystemResource Liveness Check", "UP");
+    endpointData.put("SystemResource Readiness Check", "UP");
+    endpointData.put("InventoryResource Startup Check", "UP");
+    endpointData.put("InventoryResource Liveness Check", "UP");
+    endpointData.put("InventoryResource Readiness Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, HEALTH_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+   @Test
+   public void testStartup() {
+     endpointData.put("SystemResource Startup Check", "UP");
+     endpointData.put("InventoryResource Startup Check", "UP");
+     servicesStates = HealthITUtil.connectToHealthEnpoint(200, STARTUP_ENDPOINT);
+     checkStates(endpointData, servicesStates);
+   }
+
+   @Test
+   public void testLiveness() {
+     endpointData.put("SystemResource Liveness Check", "UP");
+     endpointData.put("InventoryResource Liveness Check", "UP");
+     servicesStates = HealthITUtil.connectToHealthEnpoint(200, LIVENES_ENDPOINT);
+     checkStates(endpointData, servicesStates);
+   }
+
+  @Test
+  public void testReadiness() {
+    endpointData.put("SystemResource Readiness Check", "UP");
+    endpointData.put("InventoryResource Readiness Check", "UP");
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, READINESS_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  @Test
+  public void testIfInventoryServiceIsDown() {
+    endpointData.put("InventoryResource Startup Check", "UP");
+    endpointData.put("InventoryResource Liveness Check", "UP");
+    endpointData.put("InventoryResource Readiness Check", "UP");
+    endpointData.put("SystemResource Startup Check", "UP");
+    endpointData.put("SystemResource Liveness Check", "UP");
+    endpointData.put("SystemResource Readiness Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, HEALTH_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+
+    endpointData.put("InventoryResource Readiness Check", "DOWN");
+    HealthITUtil.changeInventoryProperty(HealthITUtil.INV_MAINTENANCE_FALSE,
+        HealthITUtil.INV_MAINTENANCE_TRUE);
+    servicesStates = HealthITUtil.connectToHealthEnpoint(503, HEALTH_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  private void checkStates(HashMap<String, String> testData, JsonArray servStates) {
+    testData.forEach((service, expectedState) -> {
+      assertEquals(expectedState, HealthITUtil.getActualState(service, servStates),
+          "The state of " + service + " service is not matching.");
     });
-});
-```
-{: codeblock}
+  }
 
+  @AfterEach
+  public void teardown() {
+    HealthITUtil.cleanUp();
+  }
 
-
-Run the following command to update the URL to access the **artists.json** in the **consume-rest.js** file:
-```
-sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js
-```
-{: codeblock}
-
-The application module is defined by **consumeRestApp**.
-
-Your application will need some way of communicating with RESTful web services in order to retrieve their resources.
-In the case of this guide, your application will need to communicate with the artists service to retrieve the artists JSON.
-While there exists a variety of ways of doing this, you can use the fairly straightforward AngularJS
-**$resource** service.
-
-The **ngResource** module is registered as it is appended after **consumeRestApp**. By registering another module, you are performing a dependency injection, exposing all functionalities
-of that module to your main application module.
-
-Next, the **Artists** AngularJS service is defined by using the Factory recipe. The Factory recipe constructs a new service instance with the return value of a passed in function. In this case,
-the **$resource** module that you imported earlier is the passed in function. Target the artist JSON
-URL in the **$resource()** call.
-
-The **controller** controls the flow of data in your application.Each controller is instantiated with
-its own isolated scope, accessible through the **$scope** parameter. All data that is bound to this
-parameter is available in the view to which the controller is attached.
-
-You can now access the **artists** property from the template at the point in the Document Object
-Model (DOM) where the controller is registered.
-
-
-# **Creating the AngularJS template**
-
-You will create the starting point of your application.
-This file will contain all elements and attributes specific to AngularJS.
-
-Create the starting point of your application.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-rest-client-angularjs/start/src/main/webapp/index.html
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-angularjs/start/src/main/webapp/index.html
-
-
-
-
-```
-<!-- tag::html[] -->
-<!DOCTYPE html>
-<html>
-    <head>
-        <!-- tag::angular-script[] -->
-        <script 
-            src='http://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.js'/>
-        </script>
-        <!-- tag::angular-resource-script[] -->
-        <script 
-           src='http://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-resource.js'>
-        </script>
-        <!-- end::AngularJS[] -->
-        <script src='./js/consume-rest.js'></script>
-    </head>
-    <!-- tag::body[] -->
-    <body ng-app='consumeRestApp'>
-        <!-- tag::controller[] -->
-        <div ng-controller='ArtistsCtrl'>
-            <!-- tag::repeat[] -->
-            <div ng-repeat='artist in artists'>
-                <!-- tag::artist-info[] -->
-                <p>{{ artist.name }} wrote {{ artist.albums.length }} albums:</p>
-                <div ng-repeat='album in artist.albums'>
-                    <p style='text-indent: 20px'>
-                        Album titled <b>{{ album.title }}</b> by 
-                                     <b>{{ album.artist }}</b> contains 
-                                     <b>{{ album.ntracks }}</b> tracks
-                    </p>
-                </div>
-            </div>
-        </div>
-    </body>
-</html>
+}
 ```
 {: codeblock}
 
 
 
 
-Before your application is bootstrapped, you must pull in two **AngularJS** libraries and import **consume-rest.js**.
+Let's break down the test cases:
 
-The first import is the base AngularJS library, which defines the **angular.js** script in your HTML. The second import is the library responsible for providing the APIs for the **$resource** service, which also defines the 
-**angular-resource.js** script in your HTML. The application is bootstrapped because the **consumeRestApp** application module is attached to the **body** of the template.
+* The **testIfServicesAreUp()** test case compares the generated health report
+with the actual status of the services.
+* The **testStartup()** test case compares the generatede health report for the
+startup checks with the actual status of the services.
+* The **testLiveness()** test case compares the generated health report for the
+liveness checks with the actual status of the services.
+* The **testReadiness()** test case compares the generated health report for the
+readiness checks with the actual status of the services.
+* The **testIfInventoryServiceIsDown()** test case puts the **inventory** service
+in maintenance by setting the **`io_openliberty_guides_inventory_inMaintenance`**
+property to **true** and comparing the generated health report with the actual status of
+the services.
 
-Next, the **ArtistCtrl** controller is attached to the DOM to create a new child scope. The controller will make the
-**artists** property of the **$scope** object available to access at the point in the DOM where the
-controller is attached.
-
-Once the controller is attached, the **artists** property can be data-bounded to the template and accessed
-using the **{{ artists }}** expression. You can use the **ng-repeat** directive to iterate over the contents
-of the **artists** property.
+A few more tests were included to verify the basic functionality of the **system** and **inventory**
+services. They can be found under the **src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java**
+and **src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java** files.
+If a test failure occurs, then you might have introduced a bug into the code. These tests
+run automatically as a part of the integration test suite.
 
 
-After everything is set up, open your browser and check out the application by going to the URL that the following command returns:
+
+
+
+
+<br/>
+### **Running the tests**
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
+
+You see the following output:
+
 ```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running it.io.openliberty.guides.health.HealthIT
+[INFO] [WARNING ] CWMH0052W: The class com.ibm.ws.microprofile.health.impl.HealthCheckResponseImpl implementing HealthCheckResponse in the guide-microprofile-health application in module guide-microprofile-health.war, reported a DOWN status with data Optional[{}].
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.923 s - in it.io.openliberty.guides.health.HealthIT
+[INFO] Running it.io.openliberty.guides.system.SystemEndpointIT
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s - in it.io.openliberty.guides.system.SystemEndpointIT
+[INFO] Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+[INFO] [WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+[INFO] Could not send Message.
+[INFO] [err] The specified host is unknown.
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.102 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0
 ```
-{: codeblock}
 
-See the following output:
+The warning messages are expected. The first warning results from a request to a service that is under maintenance. This request is made in the **testIfInventoryServiceIsDown()** test from the **InventoryEndpointIT** integration test. The second warning and error results from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
 
-```
-foo wrote 2 albums:
-    Album titled *album_one* by *foo* contains *12* tracks
-    Album tilted *album_two* by *foo* contains *15* tracks
-bar wrote 1 albums:
-    Album titled *foo walks into a bar* by *bar* contains *12* tracks
-dj wrote 0 albums:
-```
+To see whether the tests detect a failure, manually change the configuration of
+**`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**
+in the **resources/CustomConfigSource.json** file. Rerun the tests to see a test failure occur.
+The test failure occurs because the initial status of the **inventory** service is **DOWN**.
 
-
-# **Testing the AngularJS client**
-
-No explicit code directly uses the consumed artist JSON, so you do not need to write any test cases for this guide.
-
-
-Whenever you change your AngularJS implementation, the application root at `http://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai` will
-reflect the changes automatically. You can visit the root to manually check whether the artist JSON
-was consumed correctly.
-
-When you are done checking the application root, exit development mode by pressing CTRL+C in the command-line session where you ran the server, or by typing q and then pressing the **enter/return** key.
-
-When you develop your own applications, testing becomes a crucial part of your development lifecycle. If you need to write test cases, follow the official unit testing and end-to-end testing documentation on the
-[official AngularJS website](https://docs.angularjs.org/guide/unit-testing).
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
+where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
 # **Summary**
 
 ## **Nice Work!**
 
-You have just accessed a simple RESTful web service and consumed its resources by using AngularJS in Open Liberty.
+You just learned how to add health checks to report the states of microservices by using
 
+MicroProfile Health in Open Liberty. Then, you wrote tests to validate the generated
+health report.
+
+Feel free to try one of the related MicroProfile guides. They demonstrate additional
+technologies that you can learn and expand on top of what you built here.
 
 
 <br/>
@@ -339,11 +815,11 @@ You have just accessed a simple RESTful web service and consumed its resources b
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-rest-client-angularjs** project by running the following commands:
+Delete the **guide-microprofile-health** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-rest-client-angularjs
+rm -fr guide-microprofile-health
 ```
 {: codeblock}
 
@@ -352,7 +828,7 @@ rm -fr guide-rest-client-angularjs
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20AngularJS&guide-id=cloud-hosted-guide-rest-client-angularjs)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Adding%20health%20reports%20to%20microservices&guide-id=cloud-hosted-guide-microprofile-health)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -360,16 +836,18 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-angularjs/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-angularjs/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-health/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-health/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
 
 
 <br/>
