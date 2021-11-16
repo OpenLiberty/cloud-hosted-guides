@@ -247,7 +247,8 @@ oc logs build/system-buildconfig-1
 {: codeblock}
 
 
-Run the following command to view the **ImageStream** object:
+During the build process, the image associated with the **ImageStream** object that you created earlier
+was pushed to the image registry and tagged. Run the following command to view the newly updated **ImageStream** object:
 
 ```
 oc get imagestreams
