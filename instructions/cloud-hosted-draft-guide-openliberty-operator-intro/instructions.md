@@ -419,6 +419,7 @@ IFS=' ' read -r -a system_url <<< "`oc get routes | grep system`"
 echo http://${system_url[1]}/system/properties
 ```
 {: codeblock}
+
 Then, to visit the URL, press **CTRL** and mouse click on the URL in the terminal.
 
 
