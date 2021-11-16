@@ -420,7 +420,7 @@ echo http://${system_url[1]}/system/properties
 ```
 {: codeblock}
 
-Then, to visit the URL, press **CTRL** and mouse click on the URL in the terminal.
+Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
 
 
 # **Tearing down the environment**
