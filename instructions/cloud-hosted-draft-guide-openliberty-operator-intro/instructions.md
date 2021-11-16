@@ -14,7 +14,6 @@ The other panel displays the IDE that you will use to create files, edit the cod
 # **What you'll learn**
 
 You will learn how to deploy a cloud-native application with a microservice to Red Hat OpenShift 4 by using the Open Liberty Kubernetes Operator. 
-You will install an operator into an OpenShift cluster and use them to deploy and scale a sample microservice. 
 
 [OpenShift](https://www.openshift.com/) is a Kubernetes-based platform with added functions. It streamlines the DevOps
 process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the
@@ -420,6 +419,8 @@ IFS=' ' read -r -a system_url <<< "`oc get routes | grep system`"
 echo http://${system_url[1]}/system/properties
 ```
 {: codeblock}
+Then, to visit the URL, press **CTRL** and mouse click on the URL in the terminal.
+
 
 # **Tearing down the environment**
 
