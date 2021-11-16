@@ -434,7 +434,7 @@ In the parent **pom.xml** file, list all of the **modules** that you want to agg
 # **Developing the application**
 
 You can now develop the application and the different modules together in dev mode by using the Liberty Maven plug-in.
-To learn more about how to use development mode with multiple modules, check out the link:[Documentation](link:https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#multiple-modules).
+To learn more about how to use development mode with multiple modules, check out the [Documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#multiple-modules).
 
 Navigate to the **start** directory to begin.
 ```
@@ -590,7 +590,12 @@ public class Converter {
 
 Change the **getFeet** method so that it converts from centimetres to feet, and the **getInches** method so that it converts from centimetres to inches. Update the **sum**, **diff**, **product** and **quotient** functions so that they add, subtract, multiply, and divide 2 numbers respectively.
 
-Now revisit the application at the URL you previously output. Try entering a height in centimetres and see if it converts correctly.
+Now revisit the application at the URL you previously found. Use the following command to get the URL.
+```
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/converter
+```
+{: codeblock}
+Try entering a height in centimetres and see if it converts correctly.
 
 
 <br/>
