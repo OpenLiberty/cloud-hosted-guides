@@ -142,6 +142,41 @@ touch /home/project/draft-guide-openliberty-operator-intro/start/build.yaml
 
 
 
+
+```
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: "build-template"
+  annotations:
+    description: "Build template for the system service"
+    tags: "build"
+objects:
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      name: "system-imagestream"
+      labels:
+        name: "system"
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      name: "system-buildconfig"
+      labels:
+        name: "system"
+    spec:
+      source:
+        type: Binary
+      strategy:
+        type: Docker
+      output:
+        to:
+          kind: ImageStreamTag
+          name: "system-imagestream:1.0-SNAPSHOT"
+```
+{: codeblock}
+
+
 The **build.yaml** template includes two objects. 
 The **ImageStream** object provides an abstraction from the image in the image registry. 
 This allows you to reference and tag the image. 
@@ -265,6 +300,28 @@ touch /home/project/draft-guide-openliberty-operator-intro/start/deploy.yaml
 
 
 
+
+```
+apiVersion: openliberty.io/v1beta1
+kind: OpenLibertyApplication
+metadata:
+  name: system
+  labels:
+    name: system
+spec:
+  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
+  service:
+    port: 9080
+  expose: true
+  env:
+    - name: WLP_LOGGING_MESSAGE_FORMAT
+      value: "json"
+    - name: WLP_LOGGING_MESSAGE_SOURCE
+      value: "message,trace,accessLog,ffdc,audit"
+```
+{: codeblock}
+
+
 The **deploy.yaml** file is configured to deploy one **OpenLibertyApplication**
 resource, **system**, which is controlled by the Open Liberty Operator.
 
@@ -352,7 +409,7 @@ system   system-guide.2886795274-80-kota02.environments.katacoda.com          sy
 Visit the microservice by going to the following URL: 
 **http://[HOST]/system/properties**
 
-Make sure to substitute the appropriate **HOST** value.
+Make sure to substitute the appropriate **[HOST]** value.
 For example, using the output from the command above, **system-guide.2886795274-80-kota02.environments.katacoda.com** is the **HOST**.
 The following example shows this value substituted for **HOST** in the URL:
 **http://system-guide.2886795274-80-kota02.environments.katacoda.com/system/properties**.
