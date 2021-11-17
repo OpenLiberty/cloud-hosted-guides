@@ -66,7 +66,7 @@ The **finish** directory contains the finished project that you will build.
 # **Installing the Operator**
 
 
-A project is created for you to use in this execise. Run the following command to see your project name:
+A project is created for you to use in this exercise. Run the following command to see your project name:
 
 ```
 oc projects
