@@ -247,6 +247,9 @@ oc logs build/system-buildconfig-1
 {: codeblock}
 
 
+<br/>
+### **Checking the images**
+
 During the build process, the image associated with the **ImageStream** object that you created earlier
 was pushed to the image registry and tagged. Run the following command to view the newly updated **ImageStream** object:
 
@@ -280,7 +283,7 @@ Tags:               1
 ...
 ```
 
-Now you're ready to deploy the images.
+Now you're ready to deploy the image.
 
 <br/>
 ### **Deploying the images**
