@@ -1,7 +1,7 @@
 
-# **Welcome to the Accessing and persisting data in microservices using Java Persistence API (JPA) guide!**
+# **Welcome to the Containerizing microservices guide!**
 
-
+Learn how to containerize and run your microservices with Open Liberty using Docker.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,38 +10,23 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-Learn how to use Java Persistence API (JPA) to access and persist data to a database for your microservices.
-
 
 
 # **What you'll learn**
 
-You will learn how to use the Java Persistence API (JPA) to map Java objects to relational database 
-tables and perform create, read, update and delete (CRUD) operations on the data in your microservices. 
 
-JPA is a Java EE specification for representing relational database table data as Plain Old Java Objects (POJO).
-JPA simplifies object-relational mapping (ORM) by using annotations to map Java objects 
-to tables in a relational database. In addition to providing an efficient API for performing
-CRUD operations, JPA also reduces the burden of having to write JDBC and SQL code when performing
-database operations and takes care of database vendor-specific differences. This capability allows you to 
-focus on the business logic of your application instead of wasting time implementing repetitive CRUD logic.
+You can easily deploy your microservices in different environments in a lightweight and portable manner by using containers.
+From development to production and across your DevOps environments, you can deploy your microservices consistently and
+efficiently with containers. You can run a container from a container image. Each container image is a package of what you
+need to run your microservice or application, from the code to its dependencies and configuration.
 
-The application that you will be working with is an event manager, which is composed of a UI
-and an event microservice for creating, retrieving, updating, and deleting events. In this 
-guide, you will be focused on the event microservice. The event microservice consists of
-a JPA entity class whose fields will be persisted to a database. The database logic is implemented in 
-a Data Access Object (DAO) to isolate the database operations from the rest of the service. 
-This DAO accesses and persists JPA entities to the database and can be injected 
-and consumed by other components in the microservice. An Embedded Derby database is used 
-as a data store for all the events.
+You'll learn how to build container images and run containers using Docker for your microservices.
+You'll construct **Dockerfile** files, create Docker images by using the **docker build** command, and run the image as Docker containers 
+by using **docker run** command.
 
-You will use JPA annotations to define an entity class whose fields are persisted to the 
-database. The interaction between your service and the database is mediated by the persistence 
-context that is managed by an entity manager. In a Java EE environment, you can use an
-application-managed entity manager or a container-managed entity manager. In this guide, 
-you will use a container-managed entity manager that is injected into the DAO so the application
-server manages the opening and closing of the entity manager for you. 
-
+The two microservices that you'll be working with are called **system** and **inventory**. The **system** microservice returns the JVM system properties 
+of the running container. The **inventory** microservice adds the properties from the **system** microservice to the inventory. This guide demonstrates how both microservices can run and communicate
+with each other in different Docker containers. 
 
 # **Getting started**
 
@@ -55,11 +40,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jpa-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-containerize.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-jpa-intro.git
-cd guide-jpa-intro
+git clone https://github.com/openliberty/guide-containerize.git
+cd guide-containerize
 ```
 {: codeblock}
 
@@ -68,590 +53,501 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
-<br/>
-### **Try what you'll build**
 
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+# **Packaging your microservices**
 
-To try out the application, run the following commands to navigate to the **finish/frontendUI** directory and
-deploy the **frontendUI** service to Open Liberty:
 
+To begin, run the following command to navigate to the **start** directory:
 ```
-cd finish/frontendUI
-mvn liberty:run
+cd start
+```
+{: codeblock}
+
+You can find the starting Java project in the **start** directory. It is a multi-module Maven project that is made up of the **system** and **inventory** microservices. Each microservice lives in its own corresponding directory, **system** and **inventory**.
+
+To try out the microservices by using Maven, run the following Maven goal to build the **system** microservice and run it inside Open Liberty:
+```
+mvn -pl system liberty:run
 ```
 {: codeblock}
 
 
 
-Open another command-line session and run the following commands to navigate to the **finish/backendServices** directory and
-deploy the service to Open Liberty:
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session and 
+run the following Maven goal to build the **inventory** microservice and run it inside Open Liberty:
 ```
-cd /home/project/guide-jpa-intro/finish/backendServices
-mvn liberty:run
+cd /home/project/guide-containerize/start
+mvn -pl inventory liberty:run
 ```
 {: codeblock}
 
+Select **Terminal** > **New Terminal** from the menu of the IDE to open a new command-line session.
+To access the **inventory** service, which displays the current contents of the inventory, run the following curl command: 
+```
+curl -s http://localhost:9081/inventory/systems | jq
+```
+{: codeblock}
 
-After you see the following message in both command-line sessions, both your services are ready.
+After you see the following message in both command-line sessions, both of your services are ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Select **Launch Application** from the menu of the IDE, 
-type in **9090** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
-where **accountname** is your account name.
-The event application does not display any events
-because no events are stored in the database. Go ahead and click **Create Event**, located in the 
-left navigation bar. After entering an event name, location and time, click **Submit** to persist your 
-event entity to the database. The event is now stored in the database and is visible in the list of 
-current events.
-
-Notice that if you stop the Open Liberty server and then restart it, the events created
-are still displayed in the list of current events. Ensure you are in the **finish/backendServices** directory and run the following Maven goals to stop
-and then restart the server:
+The **system** service shows the system properties of the running JVM and can be found by running the following curl command:
 ```
-cd /home/project/guide-jpa-intro/finish/backendServices
-mvn liberty:stop
-mvn liberty:run
+curl -s http://localhost:9080/system/properties | jq
+```
+{: codeblock}
+
+The system properties of your localhost can be added to the **inventory** service at **http://localhost:9081/inventory/systems/localhost**. Run the following curl command:
+```
+curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 {: codeblock}
 
 
-The events created are still displayed in the list of current events. The **Update** action link
-located beside each event allows you to make modifications to the persisted entity and the 
-**Delete** action link allows you to remove entities from the database.
-
-After you are finished checking out the application, stop the Open Liberty servers by pressing CTRL+C in the
-command-line sessions where you ran the **backendServices** and **frontendUI** services.
-Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another command-line session for the **frontendUI**
-and **backendServices** services:
+After you are finished checking out the microservices, stop the Open Liberty servers by pressing **CTRL+C**
+in the command-line sessions where you ran the servers. Alternatively, you can run the **liberty:stop** goal in another command-line session from the 
+**start** directory:
 ```
-cd /home/project/guide-jpa-intro/finish
-mvn -pl frontendUI liberty:stop
-mvn -pl backendServices liberty:stop
+cd /home/project/guide-containerize/start
+mvn -pl system liberty:stop
+mvn -pl inventory liberty:stop
+```
+{: codeblock}
+
+Run the Maven **package** goal to build the application **.war** files from the **start** directory so that the **.war** files reside in the **system/target** and **inventory/target** directories.
+```
+mvn package
 ```
 {: codeblock}
 
 
+To learn more about RESTful web services and how to build them, see
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the **system** service.
+The **inventory** service is built in a similar way.
 
-# **Defining a JPA entity class**
 
-Navigate to the **start** directory to begin.
+# **Building your Docker images**
 
-When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
+A Docker image is a binary file. It is made up of multiple layers and is used to run code in a Docker container. Images are built from
+instructions in Dockerfiles to create a containerized version of the application.
 
-Run the following commands to navigate to the **frontendUI** directory and start the **frontendUI** service in dev mode:
-```
-cd /home/project/guide-jpa-intro/start/frontendUI
-mvn liberty:dev
-```
-{: codeblock}
+A **Dockerfile** is a collection of instructions for building a Docker image that can then be run as a container.
+As each instruction is run in a **Dockerfile**, a new Docker layer is created. These layers, which are known as intermediate images, are created when a change is made to your Docker image.
 
-Open another command-line session and run the following commands to navigate to
-the **backendServices** directory and start the service in dev mode:
-```
-cd /home/project/guide-jpa-intro/start/backendServices
-mvn liberty:dev
-```
-{: codeblock}
+Every **Dockerfile** begins with a parent or base image over which various commands are run. For example, you can start your image from scratch and run commands that download and install a Java runtime, or you can start from an image that already contains a Java installation.
 
-After you see the following message, your application server in dev mode is ready:
+Learn more about Docker on the [official Docker page](https://www.docker.com/what-docker).
 
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
+<br/>
+### **Creating your Dockerfiles**
+You will be creating two Docker images to run the **inventory** service and **system** service. The first step is to create Dockerfiles for both services.
 
-Dev mode holds your command line to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
-
-To store Java objects in a database, you must define a JPA entity class. A JPA entity is a Java 
-object whose non-transient and non-static fields will be persisted to the database. Any Plain Old 
-Java Object (POJO) class can be designated as a JPA entity. However, the class must be annotated
-with the **@Entity** annotation, must not be declared final and must have a public or protected non-argument
-constructor. JPA maps an entity type to a database table and persisted instances will be represented 
-as rows in the table.
-
-The **Event** class is a data model that represents events in the event microservice and is annotated with JPA
-annotations.
-
-Create the **Event** class.
+Create the **Dockerfile** for the inventory service.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
+touch /home/project/guide-containerize/start/inventory/Dockerfile
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/inventory/Dockerfile
 
 
 
 
 ```
-package io.openliberty.guides.event.models;
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 
-import java.io.Serializable;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.NamedQuery;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Column;
-import javax.persistence.GenerationType;
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
 
-@Entity
-@Table(name = "Event")
-@NamedQuery(name = "Event.findAll", query = "SELECT e FROM Event e")
-@NamedQuery(name = "Event.findEvent", query = "SELECT e FROM Event e WHERE "
-    + "e.name = :name AND e.location = :location AND e.time = :time")
-public class Event implements Serializable {
-    private static final long serialVersionUID = 1L;
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="inventory" \
+  version="$VERSION-$REVISION" \
+  summary="The inventory microservice from the Containerizing microservices guide" \
+  description="This image contains the inventory microservice running with the Open Liberty runtime."
 
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Id
-    @Column(name = "eventId")
-    private int id;
+COPY --chown=1001:0 \
+    src/main/liberty/config \
+    /config/
 
-    @Column(name = "eventLocation")
-    private String location;
-    @Column(name = "eventTime")
-    private String time;
-    @Column(name = "eventName")
-    private String name;
+COPY --chown=1001:0 \
+    target/inventory.war \
+    /config/apps
 
-    public Event() {
-    }
-
-    public Event(String name, String location, String time) {
-        this.name = name;
-        this.location = location;
-        this.time = time;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public String getTime() {
-        return time;
-    }
-
-    public void setTime(String time) {
-        this.time = time;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-    
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + id;
-        result = prime * result + ((location == null) ? 0 : location.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result +
-                 (int) (serialVersionUID ^ (serialVersionUID >>> 32));
-        result = prime * result + ((time == null) ? 0 : time.hashCode());
-        return result;
-    }
-    
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        Event other = (Event) obj;
-        if (location == null) {
-            if (other.location != null) {
-                return false;
-            }
-        } else if (!location.equals(other.location)) {
-            return false;
-        }
-        if (time == null) {
-            if (other.time != null) {
-                return false;
-            }
-        } else if (!time.equals(other.time)) {
-            return false;
-        }
-        if (name == null) {
-            if (other.name != null) {
-                return false;
-            }
-        } else if (!name.equals(other.name)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "Event [name=" + name + ", location=" + location + ", time=" + time
-                + "]";
-    }
-}
-
+RUN configure.sh
 ```
 {: codeblock}
 
 
 
-The following table breaks down the new annotations:
+The **FROM** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use **FROM scratch**, which makes your image a base image. 
 
-| *Annotation*    | *Description*
+In this case, you're using the recommended production image,
+**openliberty/open-liberty:full-java11-openj9-ubi**, as your parent image. If you
+don't want any additional runtime features for your **kernel** image, define the
+**FROM** instruction as **FROM open-liberty:kernel-slim**. To use the default image that
+comes with the Open Liberty runtime, define the **FROM** instruction as **FROM open-liberty**. 
+You can find all the [official images](https://hub.docker.com/_/open-liberty) and
+[ubi images](https://hub.docker.com/r/openliberty/open-liberty/) on the open-liberty Docker Hub.
+
+It is also recommended to label your Docker images with the **LABEL** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
+
+The **COPY** instructions are structured as **COPY** **`[--chown=<user>:<group>]`** **`<source>`** **`<destination>`**. 
+They copy local files into the specified destination within your Docker image.
+In this case, the **inventory** server configuration files that are located at **src/main/liberty/config** are copied to the **/config/** destination directory.
+The **inventory** application WAR file **inventory.war**, which was created from running **mvn package**, is copied to the **/config/apps** destination directory.
+
+The **COPY** instructions use the **1001** user ID  and **0** group because the **openliberty/open-liberty:full-java11-openj9-ubi** image runs by default with the **USER 1001** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user.
+
+Place the **RUN configure.sh** command at the end to get a pre-warmed Docker image. It improves the startup time of running your Docker container.
+
+The **Dockerfile** for the **system** service follows the same instructions as the **inventory** service, except that some **labels** are updated, and the **system.war** archive is copied into **/config/apps**.
+
+Create the **Dockerfile** for the system service.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-containerize/start/system/Dockerfile
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/system/Dockerfile
+
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Containerizing microservices guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 src/main/liberty/config /config/
+
+COPY --chown=1001:0 target/system.war /config/apps
+
+RUN configure.sh
+```
+{: codeblock}
+
+
+
+
+<br/>
+### **Building your Docker image**
+
+Now that your microservices are packaged and you have written your Dockerfiles, you will build your Docker images by using the **docker build** command.
+
+Run the following command to download or update to the latest Open Liberty Docker image:
+
+```
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+```
+{: codeblock}
+
+
+Run the following commands to build container images for your application:
+
+```
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+{: codeblock}
+
+
+The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
+The tag for an image describes the specific image version. If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
+
+To verify that the images are built, run the **docker images** command to list all local Docker images:
+
+```
+docker images
+```
+{: codeblock}
+
+
+Or, run the **docker images** command with **--filter** option to list your images:
+```
+docker images -f "label=org.opencontainers.image.authors=Your Name"
+```
+{: codeblock}
+
+
+Your two images, **inventory** and **system**, should appear in the list of all Docker images:
+
+```
+REPOSITORY    TAG             IMAGE ID        CREATED          SIZE
+inventory     1.0-SNAPSHOT    08fef024e986    4 minutes ago    471MB
+system        1.0-SNAPSHOT    1dff6d0b4f31    5 minutes ago    470MB
+```
+
+
+# **Running your microservices in Docker containers**
+Now that you have your two images built, you will run your microservices in Docker containers:
+
+```
+docker run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
+docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
+```
+{: codeblock}
+
+
+The flags are described in the table below: 
+
+| *Flag* | *Description*
 | ---| ---
-| **@Entity** | Declares the class as an entity
-| **@Table**  | Specifies details of the table such as name 
-| **@NamedQuery** | Specifies a predefined database query that is run by an **EntityManager** instance.
-| **@Id**       |  Declares the primary key of the entity
-| **@GeneratedValue**    | Specifies the strategy used for generating the value of the primary key. The **strategy = GenerationType.AUTO** code indicates that the generation strategy is automatically selected
-| **@Column**    | Specifies that the field is mapped to a column in the database table. The **name** attribute is optional and indicates the name of the column in the table
+| -d     | Runs the container in the background.
+| --name | Specifies a name for the container.
+| -p     | Maps the host ports to the container ports. For example: **`-p <HOST_PORT>:<CONTAINER_PORT>`**
+
+Next, run the **docker ps** command to verify that your containers are started:
+
+```
+docker ps
+```
+{: codeblock}
 
 
-# **Configuring JPA**
+Make sure that your containers are running and show **Up** as their status:
 
-The **persistence.xml** file is a configuration file that defines a persistence unit. The
-persistence unit specifies configuration information for the entity manager.
+```
+CONTAINER ID    IMAGE                   COMMAND                  CREATED          STATUS          PORTS                                        NAMES
+2b584282e0f5    inventory:1.0-SNAPSHOT  "/opt/ol/helpers/run…"   2 seconds ago    Up 1 second     9080/tcp, 9443/tcp, 0.0.0.0:9081->9081/tcp   inventory
+99a98313705f    system:1.0-SNAPSHOT     "/opt/ol/helpers/run…"   3 seconds ago    Up 2 seconds    0.0.0.0:9080->9080/tcp, 9443/tcp             system
+```
 
-Create the configuration file.
+If a problem occurs and your containers exit prematurely, the containers don't appear in the container
+list that the **docker ps** command displays. Instead, your containers appear with an **Exited**
+status when they run the **docker ps -a** command. Run the **docker logs system** and **docker logs inventory** commands to view the
+container logs for any potential problems. Run the **docker stats system** and **docker stats inventory** commands to display a live stream of usage statistics for your containers. You can also double-check that your Dockerfiles are correct. When you
+find the cause of the issues, remove the faulty containers with the **docker rm system** and **docker rm inventory** commands. Rebuild
+your images, and start the containers again.
+
+
+To access the application, run the following curl command. 
+An empty list is expected because no system properties are stored in the inventory yet:
+```
+curl -s http://localhost:9081/inventory/systems | jq
+```
+{: codeblock}
+
+Next, retrieve the **system** container's IP address by using the **system** container's name that is defined when it ran the Docker containers. 
+Run the following command to retrieve the **system** IP address:
+
+```
+docker inspect -f "{{.NetworkSettings.IPAddress }}" system
+```
+{: codeblock}
+
+
+You find the **system** container's IP address:
+
+```
+172.17.0.2
+```
+
+In this case, the IP address for the **system** service is **172.17.0.2**. Take note of this IP address to add the system properties to the **inventory** service. 
+
+
+Run the following commands to go to the **http://localhost:9081/inventory/systems/[system-ip-address]** by replacing **[system-ip-address]** URL with the IP address that you obtained earlier:
+```
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
+```
+{: codeblock}
+
+You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
+properties are automatically stored in the inventory. Run the following curl command and 
+you see a new entry for **[system-ip-address]**:
+```
+curl -s http://localhost:9081/inventory/systems | jq
+```
+{: codeblock}
+
+# **Externalizing server configuration**
+
+
+As mentioned at the beginning of this guide, one of the advantages of using
+containers is that they are portable and can be moved and deployed efficiently
+across all of your DevOps environments. Configuration often changes across
+different environments, and by externalizing your server configuration, you
+can simplify the development process.
+
+Imagine a scenario where you are developing an Open Liberty application on
+port **9081** but to deploy it to production, it must be available
+on port **9091**. To manage this scenario, you can keep two different versions of the
+**server.xml** file; one for production and one for development. However, trying to
+maintain two different versions of a file might lead to mistakes. A better
+solution would be to externalize the configuration of the port number and use the
+value of an environment variable that is stored in each environment. 
+
+In this example, you will use an environment variable to externally configure the
+HTTP port number of the **inventory** service. 
+
+In the **inventory/server.xml** file, 
+the **default.http.port** variable is declared and is used in the
+**httpEndpoint** element to define the service
+endpoint. The default value of the **default.http.port**
+variable is **9081**. However, this value is only used if no other value is
+specified. To find a value for this variable, Open Liberty looks for the
+following environment variables, in order:
+
+* **default.http.port**
+* **`default_http_port`**
+* **`DEFAULT_HTTP_PORT`**
+
+When you previously ran the **inventory** container, none of the environment variables mentioned were defined and thus the default value of **9081** was used.
+
+Run the following commands to stop and remove the **inventory** container and rerun it with the **default.http.port** environment variable set:
+
+```
+docker stop inventory
+docker rm inventory 
+docker run -d --name inventory -e default.http.port=9091 -p 9091:9091 inventory:1.0-SNAPSHOT
+```
+{: codeblock}
+
+
+The `-e` flag can be used to create and set the values of environment variables
+in a Docker container. In this case, you are setting the **default.http.port** environment
+variable to **9091** for the **inventory** container.
+
+Now, when the service is starting up, Open Liberty finds the
+**default.http.port** environment variable and uses it to set the value of the
+**default.http.port** variable to be used in the HTTP
+endpoint.
+
+
+The **inventory** service is now available on the new port number that you
+specified. You can see the contents of the inventory at the
+**http://localhost:9091/inventory/systems** URL. Run the following curl command:
+```
+curl -s http://localhost:9091/inventory/systems | jq
+```
+{: codeblock}
+
+You can add your local system properties at the
+**http://localhost:9091/inventory/systems/[system-ip-address]** URL by
+replacing **[system-ip-address]** with the IP address that you obtained in the previous
+section. Run the following commands:
+```
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9091/inventory/systems/{$SYSTEM_IP} | jq
+```
+{: codeblock}
+
+The **system** service remains unchanged and is available at the
+**http://localhost:9080/system/properties** URL. Run the following curl command:
+```
+curl -s http://localhost:9080/system/properties | jq
+```
+{: codeblock}
+
+You can externalize the configuration of more than just the port numbers.
+To learn more about Open Liberty server configuration, check out the
+[Server Configuration Overview](https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html) docs. 
+
+# **Testing the microservices**
+
+You can test your microservices manually by hitting the endpoints or with automated tests that check your running Docker containers.
+
+Create the **SystemEndpointIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
+touch /home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
+> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 
 
 
 
 ```
-<?xml version="1.0" encoding="UTF-8"?>
-<persistence version="2.2"
-    xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
-                        http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
-    <!-- tag::transaction-type[] -->
-    <persistence-unit name="jpa-unit" transaction-type="JTA">
-        <!-- tag::jta-data[] -->
-        <jta-data-source>jdbc/eventjpadatasource</jta-data-source>
-        <properties>
-            <property name="eclipselink.ddl-generation" value="create-tables"/>
-            <property name="eclipselink.ddl-generation.output-mode" value="both" />
-        </properties>
-    </persistence-unit>
-</persistence>
-```
-{: codeblock}
-
-
-
-The persistence unit is defined by the **persistence-unit** XML element. The **name** attribute is 
-required and is used to identify the persistent unit when using the **@PersistenceContext**
-annotation to inject the entity manager later in this guide. The **transaction-type="JTA"** 
-attribute specifies to use Java Transaction API (JTA) transaction management.
-Since we are using a container-managed entity manager, JTA transactions must be used. 
-
-A JTA transaction type requires a JTA data source to be provided. The **jta-data-source** 
-element specifies the Java Naming and Directory Interface (JNDI) name of 
-the data source that is used. The **data source** has already been configured for you
-in the **backendServices/src/main/liberty/config/server.xml** file. This data source configuration is where 
-the Java Database Connectivity (JDBC) connection is defined along with some database
-vendor-specific properties.
-
-
-The **eclipselink.ddl-generation** properties are used here so that you aren't required to 
-manually create a database table to run this sample application. To learn more about the 
-**ddl-generation** properties, see the 
-[JPA Extensions Reference for EclipseLink.](http://www.eclipse.org/eclipselink/documentation/2.5/jpa/extensions/p_ddl_generation.htm)
-
-
-# **Performing CRUD operations using JPA**
-
-The CRUD operations are defined in the DAO. To perform these operations by using JPA, we need an **EventDao** class. 
-
-Create the **EventDao** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
-
-
-
-
-```
-package io.openliberty.guides.event.dao;
-
-import java.util.List;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
-import io.openliberty.guides.event.models.Event;
-
-import javax.enterprise.context.RequestScoped;
-
-@RequestScoped
-public class EventDao {
-    
-    @PersistenceContext(name = "jpa-unit")
-    private EntityManager em;
-    
-    public void createEvent(Event event) {
-        em.persist(event);
-    }
-
-    public Event readEvent(int eventId) {
-        return em.find(Event.class, eventId);
-    }
-
-    public void updateEvent(Event event) {
-        em.merge(event);
-    }
-
-    public void deleteEvent(Event event) {
-        em.remove(event);
-    }
-
-    public List<Event> readAllEvents() {
-        return em.createNamedQuery("Event.findAll", Event.class).getResultList();
-    }
-
-    public List<Event> findEvent(String name, String location, String time) {
-        return em.createNamedQuery("Event.findEvent", Event.class)
-            .setParameter("name", name)
-            .setParameter("location", location)
-            .setParameter("time", time).getResultList();
-    }
-}
-```
-{: codeblock}
-
-
-
-To use the entity manager at runtime, inject it into our CDI bean through the
-**@PersistenceContext** annotation. The entity manager interacts with the persistence context. 
-Every **EntityManager** instance is associated with a persistence context. The persistence context 
-manages a set of entities and is aware of the different states that an entity can have.
-The persistence context synchronizes with the database when a transaction commits.
-
-The **EventDao** class has a method for each CRUD operation, so let's break them down:
-
-* The **createEvent()** method persists an instance of the **Event** entity class to the data store by calling the **persist()** method on an **EntityManager** instance. The entity instance becomes managed and changes to it will be tracked by the entity manager.
-
-* The **readEvent()** method returns an instance of the **Event** entity class with the specified primary key by calling the **find()** method on an **EntityManager** instance. If the event instance is found, it is returned in a managed state, but, if the event instance is not found, **null** is returned.
-
-* The **readAllEvents()** method demonstrates an alternative way to retrieve event objects from the database. This method returns a list of instances of the **Event** entity class by using the **Event.findAll** query specified in the **@NamedQuery** annotation on the **Event** class. Similarly, the **findEvent()** method uses the **Event.findEvent** named query to find an event with the given name, location and time. 
-
-
-* The **updateEvent()** method creates a managed instance of a detached entity instance. The entity manager automatically tracks all managed entity objects in its persistence context for changes and synchronizes them with the database. However, if an entity becomes detached, you must merge that entity into the persistence context by calling the **merge()** method so that changes to loaded fields of the detached entity are tracked.
-
-* The **deleteEvent()** method removes an instance of the **Event** entity class from the database by calling the **remove()** method on an **EntityManager** instance. The state of the entity is changed to removed and is removed from the database upon transaction commit. 
-
-The DAO is injected into the **backendServices/src/main/java/io/openliberty/guides/event/resources/EventResource.java**
-class and used to access and persist data. The **@Transactional** annotation is used in the
-**EventResource** class to declaratively control the transaction boundaries on the **@RequestScoped** CDI bean.
-This ensures that the methods run within the boundaries of an active global transaction, which is why it is not
-necessary to explicitly begin, commit or rollback transactions. At the end of the transactional
-method invocation, the transaction commits and the persistence context flushes any changes
-to Event entity instances it is managing to the database.
-
-
-
-# **Running the application**
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-When the server is running, select **Launch Application** from the menu of the IDE, 
-type in **9090** to specify the port number for the microservice, and click the **OK** button. 
-You're redirected to a URL similar to **`https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai`**, 
-where **accountname** is your account name.
-
-Click **Create Event** in the left navigation bar to create events that are persisted to 
-the database. After you create an event, it is available to view, update, and delete in
-the **Current Events** section.
-
-
-# **Testing the application**
-
-Create the **EventEntityIT** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
-
-
-
-
-```
-package it.io.openliberty.guides.event;
+package it.io.openliberty.guides.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.HashMap;
-import javax.json.JsonObject;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Form;
-import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
 
 import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Test;
-import io.openliberty.guides.event.models.Event;
 
-public class EventEntityIT extends EventIT {
+public class SystemEndpointIT {
 
-    private static final String JSONFIELD_LOCATION = "location";
-    private static final String JSONFIELD_NAME = "name";
-    private static final String JSONFIELD_TIME = "time";
-    private static final String EVENT_TIME = "12:00 PM, January 1 2018";
-    private static final String EVENT_LOCATION = "IBM";
-    private static final String EVENT_NAME = "JPA Guide";
-    private static final String UPDATE_EVENT_TIME = "12:00 PM, February 1 2018";
-    private static final String UPDATE_EVENT_LOCATION = "IBM Updated";
-    private static final String UPDATE_EVENT_NAME = "JPA Guide Updated";
-    
-    private static final int NO_CONTENT_CODE = Status.NO_CONTENT.getStatusCode();
-    private static final int NOT_FOUND_CODE = Status.NOT_FOUND.getStatusCode();
+    private static String clusterUrl;
+
+    private Client client;
 
     @BeforeAll
     public static void oneTimeSetup() {
-        port = System.getProperty("backend.http.port");
-        baseUrl = "http://localhost:" + port + "/";
+        String nodePort = System.getProperty("system.http.port");
+        clusterUrl = "http://localhost:" + nodePort + "/system/properties/";
     }
-
+    
     @BeforeEach
     public void setup() {
-        form = new Form();
-        client = ClientBuilder.newClient();
-        client.register(JsrJsonpProvider.class);
-
-        eventForm = new HashMap<String, String>();
-
-        eventForm.put(JSONFIELD_NAME, EVENT_NAME);
-        eventForm.put(JSONFIELD_LOCATION, EVENT_LOCATION);
-        eventForm.put(JSONFIELD_TIME, EVENT_TIME);
+        client = ClientBuilder.newBuilder()
+                    .hostnameVerifier(new HostnameVerifier() {
+                        public boolean verify(String hostname, SSLSession session) {
+                            return true;
+                        }
+                    })
+                    .build();
     }
 
-    @Test
-    public void testInvalidRead() {
-        assertEquals(true, getIndividualEvent(-1).isEmpty(),
-          "Reading an event that does not exist should return an empty list");
-    }
-
-    @Test
-    public void testInvalidDelete() {
-        int deleteResponse = deleteRequest(-1);
-        assertEquals(NOT_FOUND_CODE, deleteResponse,
-          "Trying to delete an event that does not exist should return the " 
-          + "HTTP response code " + NOT_FOUND_CODE);
-    }
-
-    @Test
-    public void testInvalidUpdate() {
-        int updateResponse = updateRequest(eventForm, -1);
-        assertEquals(NOT_FOUND_CODE, updateResponse,
-          "Trying to update an event that does not exist should return the " 
-          + "HTTP response code " + NOT_FOUND_CODE);
-    }
-    
-    @Test
-    public void testReadIndividualEvent() {
-        int postResponse = postRequest(eventForm);
-        assertEquals(NO_CONTENT_CODE, postResponse,
-          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
-
-        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-        JsonObject event = findEvent(e);
-        event = getIndividualEvent(event.getInt("id"));
-        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-
-        int deleteResponse = deleteRequest(event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, deleteResponse, 
-          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
-    }
-    
-    @Test
-    public void testCRUD() {
-        int eventCount = getRequest().size();
-        int postResponse = postRequest(eventForm);
-        assertEquals(NO_CONTENT_CODE, postResponse, 
-          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
-     
-        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-        JsonObject event = findEvent(e);
-        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-
-        eventForm.put(JSONFIELD_NAME, UPDATE_EVENT_NAME);
-        eventForm.put(JSONFIELD_LOCATION, UPDATE_EVENT_LOCATION);
-        eventForm.put(JSONFIELD_TIME, UPDATE_EVENT_TIME);
-        int updateResponse = updateRequest(eventForm, event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, updateResponse, 
-          "Updating an event should return the HTTP response code " + NO_CONTENT_CODE);
-        
-        e = new Event(UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
-        event = findEvent(e);
-        assertData(event, UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
-
-        int deleteResponse = deleteRequest(event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, deleteResponse, 
-          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
-        assertEquals(eventCount, getRequest().size(), 
-          "Total number of events stored should be the same after testing " 
-          + "CRUD operations.");
-    }
-    
     @AfterEach
     public void teardown() {
-        response.close();
         client.close();
+    }
+    
+    @Test
+    public void testGetProperties() {
+        Client client = ClientBuilder.newClient();
+        client.register(JsrJsonpProvider.class);
+
+        WebTarget target = client.target(clusterUrl);
+        Response response = target.request().get();
+
+        assertEquals(200, response.getStatus(), 
+            "Incorrect response code from " + clusterUrl);
+        response.close();
     }
 
 }
@@ -660,55 +556,255 @@ public class EventEntityIT extends EventIT {
 
 
 
-The **testInvalidRead()**, **testInvalidDelete()** and **testInvalidUpdate()** methods use a primary key that is not in the database to test reading, updating and deleting an event that does not
-exist, respectively.
+The **testGetProperties()** method checks for a **200** response code from the **system** service endpoint.
 
-The **testReadIndividualEvent()** method persists a test event to the database and retrieves the 
-event object from the database using the primary key of the entity.
+Create the **InventoryEndpointIT** class.
 
-The **testCRUD()** method creates a test event and persists it to the database. The event object is then 
-retrieved from the database to verify that the test event was actually persisted. Next, the  
-name, location, and time of the test event are updated. The event object is retrieved 
-from the database to verify that the updated event is stored. Finally, the updated test 
-event is deleted and one final check is done to ensure that the updated test event is no longer 
-stored in the database.
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+
+
+
+
+```
+package it.io.openliberty.guides.inventory;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import javax.json.JsonObject;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+
+@TestMethodOrder(OrderAnnotation.class)
+public class InventoryEndpointIT {
+
+    private static String invUrl;
+    private static String sysUrl;
+    private static String systemServiceIp;
+
+    private static Client client;
+
+    @BeforeAll
+    public static void oneTimeSetup() {
+
+        String invServPort = System.getProperty("inventory.http.port");
+        String sysServPort = System.getProperty("system.http.port");
+
+        systemServiceIp = System.getProperty("system.ip");
+
+        invUrl = "http://localhost" + ":" + invServPort + "/inventory/systems/";
+        sysUrl = "http://localhost" + ":" + sysServPort + "/system/properties/";
+
+        client = ClientBuilder.newBuilder().hostnameVerifier(new HostnameVerifier() {
+            public boolean verify(String hostname, SSLSession session) {
+                return true;
+            }
+        }).build();
+
+        client.register(JsrJsonpProvider.class);
+        client.target(invUrl + "reset").request().post(null);
+    }
+
+    @AfterAll
+    public static void teardown() {
+        client.close();
+    }
+
+    @Test
+    @Order(1)
+    public void testEmptyInventory() {
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
+
+        JsonObject obj = response.readEntity(JsonObject.class);
+
+        int expected = 0;
+        int actual = obj.getInt("total");
+        assertEquals(expected, actual,
+                        "The inventory should be empty on application start but it wasn't");
+
+        response.close();
+    }
+
+    @Test
+    @Order(2)
+    public void testHostRegistration() {
+        this.visitSystemService();
+
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
+
+        JsonObject obj = response.readEntity(JsonObject.class);
+
+        int expected = 1;
+        int actual = obj.getInt("total");
+        assertEquals(expected, actual,
+                        "The inventory should have one entry for " + systemServiceIp);
+
+        boolean serviceExists = obj.getJsonArray("systems").getJsonObject(0)
+                        .get("hostname").toString().contains(systemServiceIp);
+        assertTrue(serviceExists,
+                        "A host was registered, but it was not " + systemServiceIp);
+
+        response.close();
+    }
+
+    @Test
+    @Order(3)
+    public void testSystemPropertiesMatch() {
+        Response invResponse = this.getResponse(invUrl);
+        Response sysResponse = this.getResponse(sysUrl);
+
+        this.assertResponse(invUrl, invResponse);
+        this.assertResponse(sysUrl, sysResponse);
+
+        JsonObject jsonFromInventory = (JsonObject) invResponse
+                        .readEntity(JsonObject.class).getJsonArray("systems")
+                        .getJsonObject(0).get("properties");
+
+        JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
+
+        String osNameFromInventory = jsonFromInventory.getString("os.name");
+        String osNameFromSystem = jsonFromSystem.getString("os.name");
+        this.assertProperty("os.name", systemServiceIp, osNameFromSystem,
+                        osNameFromInventory);
+
+        String userNameFromInventory = jsonFromInventory.getString("user.name");
+        String userNameFromSystem = jsonFromSystem.getString("user.name");
+        this.assertProperty("user.name", systemServiceIp, userNameFromSystem,
+                        userNameFromInventory);
+
+        invResponse.close();
+        sysResponse.close();
+    }
+
+    @Test
+    @Order(4)
+    public void testUnknownHost() {
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
+
+        Response badResponse = client.target(invUrl + "badhostname")
+                        .request(MediaType.APPLICATION_JSON).get();
+
+        String obj = badResponse.readEntity(String.class);
+
+        boolean isError = obj.contains("error");
+        assertTrue(isError,
+                        "badhostname is not a valid host but it didn't raise an error");
+
+        response.close();
+        badResponse.close();
+    }
+
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+
+
+    private void assertResponse(String url, Response response) {
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
+
+    private void assertProperty(String propertyName, String hostname, String expected,
+                    String actual) {
+        assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
+                        + "in the system service does not match the one stored in "
+                        + "the inventory service for " + hostname);
+    }
+
+    private void visitSystemService() {
+        Response response = this.getResponse(sysUrl);
+        this.assertResponse(sysUrl, response);
+        response.close();
+
+        Response targetResponse = client.target(invUrl + systemServiceIp).request()
+                        .get();
+
+        targetResponse.close();
+    }
+}
+```
+{: codeblock}
+
+
+
+* The **testEmptyInventory()** method checks that the **inventory** service has a total of 0 systems before anything is added to it.
+* The **testHostRegistration()** method checks that the **system** service was added to **inventory** properly.
+* The **testSystemPropertiesMatch()** checks that the **system** properties match what was added into the **inventory** service.
+* The **testUnknownHost()** method checks that an error is raised if an unknown host name is being added into the **inventory** service.
+* The **systemServiceIp** variable has the same value as what you retrieved in the previous section when manually adding the **system** service into the **inventory** service. This value of the IP address is passed in when you run the tests.
 
 <br/>
 ### **Running the tests**
 
-Since you started Open Liberty in dev mode, press the **enter/return** key in the command-line session where you started the
-**backendServices** service to run the tests for the **backendServices**.
+Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by setting **-Dsystem.ip** to the IP address that you determined previously.
+
+```
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+mvn package
+mvn failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9091 -Dsystem.http.port=9080
+```
+{: codeblock}
+
+If the tests pass, you see a similar output as the following:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.event.EventEntityIT
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.703 sec - in it.io.openliberty.guides.event.EventEntityIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.653 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
-Results :
+Results:
 
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.935 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results:
+
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are done checking out the services, exit dev mode by pressing CTRL+C in the command-line sessions where you
-ran the **frontendUI** and **backendServices** services,  or by typing **q** and then pressing the **enter/return** key.
-Alternatively, you can run the **liberty:stop** goal from the **start** directory in another command-line session for the **frontendUI**
-and **backendServices** services:
+When you are finished with the services, run the following commands to stop and remove your containers:
+
 ```
-cd /home/project/guide-jpa-intro/start
-mvn -pl frontendUI liberty:stop
-mvn -pl backendServices liberty:stop
+docker stop inventory system 
+docker rm inventory system
 ```
 {: codeblock}
+
 
 
 # **Summary**
 
 ## **Nice Work!**
 
-You learned how to map Java objects to database tables by defining a JPA entity class whose instances are represented as rows in the table. You have injected a container-managed entity manager into a DAO and learned how to perform CRUD operations in your microservice in Open Liberty.
-
+You have just built Docker images and run two microservices on Open Liberty in containers. 
 
 
 
@@ -718,11 +814,11 @@ You learned how to map Java objects to database tables by defining a JPA entity 
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-jpa-intro** project by running the following commands:
+Delete the **guide-containerize** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-jpa-intro
+rm -fr guide-containerize
 ```
 {: codeblock}
 
@@ -731,7 +827,7 @@ rm -fr guide-jpa-intro
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Accessing%20and%20persisting%20data%20in%20microservices%20using%20Java%20Persistence%20API%20(JPA)&guide-id=cloud-hosted-guide-jpa-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Containerizing%20microservices&guide-id=cloud-hosted-guide-containerize)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -739,15 +835,16 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jpa-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jpa-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-containerize/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-containerize/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
 <br/>
