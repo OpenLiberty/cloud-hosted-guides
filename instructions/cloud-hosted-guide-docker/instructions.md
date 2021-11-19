@@ -125,7 +125,7 @@ touch /home/project/guide-docker/start/Dockerfile
 
 
 ```
-FROM openliberty/open-liberty:full-java11-openj9-ubi
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
@@ -156,7 +156,7 @@ The **FROM** instruction initializes a new build stage
 and indicates the parent image from which your image is built.
 If you don't need a parent image, then use **FROM scratch**, which makes your image a base image. 
 
-In this case, you’re using the **openliberty/open-liberty:full-java11-openj9-ubi** image as your parent image, 
+In this case, you’re using the **icr.io/appcafe/open-liberty:full-java11-openj9-ubi** image as your parent image, 
 which comes with the latest Open Liberty runtime.
 
 The **COPY** instructions are structured as **COPY** 
