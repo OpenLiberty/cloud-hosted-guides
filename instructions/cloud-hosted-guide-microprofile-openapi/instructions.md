@@ -194,7 +194,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
 import io.openliberty.guides.inventory.model.InventoryList;
 
 @RequestScoped
@@ -207,33 +207,30 @@ public class InventoryResource {
     @GET
     @Path("/{hostname}")
     @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses(
-        value = {
-            @APIResponse(
-                responseCode = "404", 
-                description = "Missing description",
-                content = @Content(mediaType = "text/plain")),
-            @APIResponse(
-                responseCode = "200",
-                description = "JVM system properties of a particular host.",
-                content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = Properties.class))) })
+    @APIResponse(
+        responseCode = "404",
+        description = "Missing description",
+        content = @Content(mediaType = "application/json"))
+    @APIResponseSchema(value = Properties.class,
+        responseDescription = "JVM system properties of a particular host.",
+        responseCode = "200")
     @Operation(
         summary = "Get JVM system properties for particular host",
         description = "Retrieves and returns the JVM system properties from the system "
         + "service running on the particular host.")
     public Response getPropertiesForHost(
         @Parameter(
-            description = "The host for whom to retrieve the JVM system properties for.",
-            required = true, 
-            example = "foo", 
-            schema = @Schema(type = SchemaType.STRING)) 
+            description = "The host for whom to retrieve "
+                + "the JVM system properties for.",
+            required = true,
+            example = "foo",
+            schema = @Schema(type = SchemaType.STRING))
         @PathParam("hostname") String hostname) {
         Properties props = manager.get(hostname);
         if (props == null) {
             return Response.status(Response.Status.NOT_FOUND)
-                           .entity("{ \"error\" : " 
-                                   + "\"Unknown hostname " + hostname 
+                           .entity("{ \"error\" : "
+                                   + "\"Unknown hostname " + hostname
                                    + " or the resource may not be "
                                    + "running on the host machine\" }")
                            .build();
@@ -245,14 +242,9 @@ public class InventoryResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @APIResponse(
-        responseCode = "200",
-        description = "host:properties pairs stored in the inventory.",
-        content = @Content(
-            mediaType = "application/json",
-            schema = @Schema(
-                type = SchemaType.OBJECT,
-                implementation = InventoryList.class)))
+    @APIResponseSchema(value = InventoryList.class,
+        responseDescription = "host:properties pairs stored in the inventory.",
+        responseCode = "200")
     @Operation(
         summary = "List inventory contents.",
         description = "Returns the currently stored host:properties pairs in the "
@@ -267,8 +259,8 @@ public class InventoryResource {
 
 
 
-Add OpenAPI **@APIResponses**, **@Operation** 
-and **@Parameter** annotations to the two JAX-RS methods, 
+Add OpenAPI **@APIResponse**, **@APIResponseSchema**, 
+**@Operation**, and **@Parameter** annotations to the two JAX-RS methods, 
 **getPropertiesForHost()** and **listContents()**.
 
 
@@ -277,10 +269,8 @@ Clearly, there are many more OpenAPI annotations now, so let’s break them down
 
 | *Annotation*    | *Description*
 | ---| ---
-| **@APIResponses** | A container for multiple responses from an API operation. This annotation is optional, but it can be helpful to organize a method with multiple responses.
 | **@APIResponse**  | Describes a single response from an API operation.
-| **@Content**      | Provides a schema and examples for a particular media type.
-| **@Schema**       | Defines the input and output data types.
+| **@APIResponseSchema** | Convenient short-hand way to specify a simple response with a Java class that could otherwise be specified using @APIResponse.
 | **@Operation**    | Describes a single API operation on a path.
 | **@Parameter**    | Describes a single operation parameter.
 
@@ -296,12 +286,22 @@ curl http://localhost:9080/openapi
 The two endpoints at which your JAX-RS methods are served are now more meaningful:
 
 ```
+/inventory/systems:
+  get:
+    summary: List inventory contents.
+    description: Returns the currently stored host:properties pairs in the inventory.
+    responses:
+      "200":
+        description: host:properties pairs stored in the inventory.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InventoryList'
 /inventory/systems/{hostname}:
   get:
     summary: Get JVM system properties for particular host
     description: Retrieves and returns the JVM system properties from the system
       service running on the particular host.
-    operationId: getPropertiesForHost
     parameters:
     - name: hostname
       in: path
@@ -311,28 +311,16 @@ The two endpoints at which your JAX-RS methods are served are now more meaningfu
         type: string
       example: foo
     responses:
-      404:
+      "404":
         description: Missing description
         content:
-          text/plain: {}
-      200:
+          application/json: {}
+      "200":
         description: JVM system properties of a particular host.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Properties'
-/inventory/systems:
-  get:
-    summary: List inventory contents.
-    description: Returns the currently stored host:properties pairs in the inventory.
-    operationId: listContents
-    responses:
-      200:
-        description: host:properties pairs stored in the inventory.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InventoryList'
+              type: object
 ```
 
 
@@ -453,6 +441,7 @@ curl http://localhost:9080/openapi
 components:
   schemas:
     InventoryList:
+      description: POJO that represents the inventory contents.
       required:
       - systems
       type: object
@@ -462,9 +451,10 @@ components:
           items:
             $ref: '#/components/schemas/SystemData'
         total:
+          format: int32
           type: integer
-      description: POJO that represents the inventory contents.
     SystemData:
+      description: POJO that represents a single inventory entry.
       required:
       - hostname
       - properties
@@ -474,13 +464,6 @@ components:
           type: string
         properties:
           type: object
-          additionalProperties:
-            type: string
-      description: POJO that represents a single inventory entry.
-    Properties:
-      type: object
-      additionalProperties:
-        type: string
 ```
 
 
@@ -570,7 +553,7 @@ Hence, make sure that it doesn't override any other filter operations that are c
 Your current OpenAPI document doesn't provide much information on the application itself or on what server and port it runs on. 
 This information is usually provided in the **info** and **servers** elements, which are currently missing. 
 Use the **OASFactory** class to manually set these and other elements of the OpenAPI tree from the **org.eclipse.microprofile.openapi.models**
-package. The **OpenAPI** element is the only element that cannot be removed since that would mean
+package. The **OpenAPI** element is the only element that cannot be removed, because that would mean
 removing the whole OpenAPI tree.
 
 Each filtering method is called once for each corresponding element in the model tree. You can think
@@ -616,9 +599,9 @@ info:
   license:
     name: Eclipse Public License - v 1.0
     url: https://www.eclipse.org/legal/epl-v10.html
-  version: 1.0.0
+  version: "1.0"
 servers:
-- url: http://localhost:{port}
+- url: "http://localhost:{port}"
   description: Simple Open Liberty.
   variables:
     port:
@@ -627,11 +610,12 @@ servers:
 ```
 
 ```
-404:
-  description: Invalid hostname or the system service may not be running on
-    the particular host.
-  content:
-    text/plain: {}
+responses:
+  "404":
+    description: Invalid hostname or the system service may not be running on
+      the particular host.
+    content:
+      application/json: {}
 ```
 
 For more information about which elements you can filter, see the [MicroProfile API documentation](https://openliberty.io/docs/ref/microprofile/).
@@ -667,29 +651,34 @@ touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/op
 
 
 ```
-openapi: 3.0.0
+---
+openapi: 3.0.3
 info:
   title: Inventory App
   description: App for storing JVM system properties of various hosts.
   license:
     name: Eclipse Public License - v 1.0
     url: https://www.eclipse.org/legal/epl-v10.html
-  version: 1.0.0
-servers:
-- url: http://localhost:{port}
-  description: Simple Open Liberty.
-  variables:
-    port:
-      default: "9080"
-      description: Server HTTP port.
+  version: "1.0"
 paths:
+  /inventory/properties:
+    get:
+      operationId: getProperties
+      responses:
+        "200":
+          description: JVM system properties of the host running this service.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
   /inventory/systems:
     get:
       summary: List inventory contents.
       description: Returns the currently stored host:properties pairs in the inventory.
-      operationId: listContents
       responses:
-        200:
+        "200":
           description: host:properties pairs stored in the inventory.
           content:
             application/json:
@@ -700,7 +689,6 @@ paths:
       summary: Get JVM system properties for particular host
       description: Retrieves and returns the JVM system properties from the system
         service running on the particular host.
-      operationId: getPropertiesForHost
       parameters:
       - name: hostname
         in: path
@@ -710,32 +698,21 @@ paths:
           type: string
         example: foo
       responses:
-        404:
+        "404":
           description: Invalid hostname or the system service may not be running on
             the particular host.
           content:
-            text/plain: {}
-        200:
+            application/json: {}
+        "200":
           description: JVM system properties of a particular host.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Properties'
-  /inventory/properties:
-    get:
-      operationId: getProperties
-      responses:
-        200:
-          description: JVM system properties of the host running this service.
-          content:
-            application/json:
-              schema:
                 type: object
-                additionalProperties:
-                  type: string
 components:
   schemas:
     InventoryList:
+      description: POJO that represents the inventory contents.
       required:
       - systems
       type: object
@@ -745,9 +722,10 @@ components:
           items:
             $ref: '#/components/schemas/SystemData'
         total:
+          format: int32
           type: integer
-      description: POJO that represents the inventory contents.
     SystemData:
+      description: POJO that represents a single inventory entry.
       required:
       - hostname
       - properties
@@ -757,13 +735,6 @@ components:
           type: string
         properties:
           type: object
-          additionalProperties:
-            type: string
-      description: POJO that represents a single inventory entry.
-    Properties:
-      type: object
-      additionalProperties:
-        type: string
 ```
 {: codeblock}
 
@@ -804,7 +775,7 @@ curl http://localhost:9080/openapi
   get:
     operationId: getProperties
     responses:
-      200:
+      "200":
         description: JVM system properties of the host running this service.
         content:
           application/json:
@@ -862,12 +833,10 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 
 ## **Nice Work!**
 
-You have just documented and filtered the APIs of the **inventory** service from both the code and a static
+You have just documented and filtered the APIs of the **inventory** service from both the code and a static file by using MicroProfile OpenAPI in Open Liberty.
 
-file by using MicroProfile OpenAPI in Open Liberty.
 
-Feel free to try one of the related MicroProfile guides. They demonstrate additional technologies that you
-can learn and expand on top of what you built here.
+Feel free to try one of the related MicroProfile guides. They demonstrate additional technologies that you can learn and expand on top of what you built here.
 
 For more in-depth examples of MicroProfile OpenAPI, try one of the demo applications available in the
 MicroProfile OpenAPI
