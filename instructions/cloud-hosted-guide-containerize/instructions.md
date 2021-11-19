@@ -160,7 +160,7 @@ touch /home/project/guide-containerize/start/inventory/Dockerfile
 
 
 ```
-FROM openliberty/open-liberty:full-java11-openj9-ubi
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
@@ -230,7 +230,7 @@ touch /home/project/guide-containerize/start/system/Dockerfile
 
 
 ```
-FROM openliberty/open-liberty:full-java11-openj9-ubi
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
@@ -267,7 +267,7 @@ Now that your microservices are packaged and you have written your Dockerfiles, 
 Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
