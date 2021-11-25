@@ -483,7 +483,7 @@ supplied serial number matches the constraint, **isValid()** returns
 
 # **Programmatically validating constraints**
 
-Finally, create a service that can be used to programmatically validate the constraints
+Next, create a service to programmatically validate the constraints
 on the **Spacecraft** and **Astronaut** JavaBeans.
 
 
@@ -600,6 +600,45 @@ The method level validation occurs in the **launchSpacecraft()** method.
 A call is then made to the **launchSpacecraft()** method on the 
 **Spacecraft** bean, which throws a **ConstraintViolationException** 
 exception if either of the method-level constraints is violated.
+
+# **Enabling the Bean Validation feature**
+
+Finally, add the Bean Validation feature in the application by updating the **server.xml** configuration file.
+
+Replace the **server** configuration file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-bean-validation/start/src/main/liberty/config/server.xml
+
+
+
+
+```
+<server description="Liberty Server for Bean Validation Guide">
+
+    <featureManager>
+        <feature>beanValidation-2.0</feature>
+        <feature>cdi-2.0</feature>
+        <feature>jaxrs-2.1</feature>
+        <feature>mpOpenAPI-2.0</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080"/>
+    <variable name="default.https.port" defaultValue="9443"/>
+    <variable name="app.context.root" defaultValue="Spacecraft"/>
+
+    <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
+        id="defaultHttpEndpoint" host="*" />
+
+   <webApplication location="guide-bean-validation.war" contextRoot="${app.context.root}"/>
+</server>
+```
+{: codeblock}
+
+
+You can now use the **beanValidation-2.0** feature to validate that the 
+supplied JavaBeans meet the defined constraints.
+
 
 
 # **Running the application**
