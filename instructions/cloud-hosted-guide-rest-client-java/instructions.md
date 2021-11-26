@@ -205,7 +205,7 @@ These annotations are required for proper parameter substitution when a custom c
 * The **@JsonbTransient** annotation to define an object property that does not map to a JSON
 property. While the use of this annotation is good practice, it is only necessary for serialization.
 
-For more information on customization with JSON-B, see the [official JSON-B site](http://json-b.net).
+For more information on customization with JSON-B, see the [official JSON-B site](https://javaee.github.io/jsonb-spec).
 
 
 # **Consuming the REST resource**
