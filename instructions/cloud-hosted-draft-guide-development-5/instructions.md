@@ -466,9 +466,9 @@ or open the project in your editor.
 
 Update the **HeightsBean** class to use the Java library module that implements the functions that you need for the unit converter.
 
-Navigate to the **start\war** directory.
+Navigate to the **start** directory.
 
-Replace the **HeightsBean** class.
+Replace the **HeightsBean** class in the **war** directory.
 
 > From the menu of the IDE, select 
 > **File** > **Open** > guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java
@@ -540,9 +540,7 @@ echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/c
 
 Now try updating the converter so that it converts heights correctly, rather than returning 0.
 
-Navigate to the **start\jar** directory.
-
-Replace the **Converter** class.
+Replace the **Converter** class in the **jar** directory.
 
 > From the menu of the IDE, select 
 > **File** > **Open** > guide-maven-multimodules/start/jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java
@@ -603,9 +601,7 @@ Try entering a height in centimetres and see if it converts correctly.
 
 To test the multi-module application, add integration tests to the EAR project.
 
-Navigate to the **start\ear** directory.
-
-Create the integration test class.
+Create the integration test class in the **ear** directory.
 
 > Run the following touch command in your terminal
 ```
