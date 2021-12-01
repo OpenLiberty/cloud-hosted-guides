@@ -1,7 +1,7 @@
 
-# **Welcome to the Building a web application with Maven guide!**
+# **Welcome to the Creating a multi-module application guide!**
 
-Learn how to build and test a simple web application using Maven and Open Liberty.
+You will learn how to build an application with multiple modules with Maven and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -14,51 +14,17 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 # **What you'll learn**
 
-You will learn how to configure a simple web servlet application using Maven and the Liberty 
-Maven plugin. When you compile and build the application code, Maven downloads and installs 
-Open Liberty. If you run the application, Maven creates an Open Liberty server and runs 
-the application on it. The application displays a simple web page with a link that, when 
-clicked, calls the servlet to return a simple response of **Hello! How are you today?**.
+A Jakarta Platform, Enterprise Edition (Jakarta EE) application consists of modules that work together as one entity. An enterprise archive (EAR) is a wrapper for a Jakarta EE application, which consists of web archive (WAR) and Java archive (JAR) files. To deploy or distribute the Jakarta EE application into new environments, all the modules and resources must first be packaged into an EAR file.
 
-One benefit of using a build tool like Maven is that you can define the details of the project and any dependencies it has, and Maven automatically downloads and installs the dependencies. 
-Another benefit of using Maven is that it can run repeatable, automated tests on the application. 
-You can, of course, test your application manually by starting a server and pointing a web browser at the application URL.
-However, automated tests are a much better approach because you can easily rerun the same tests each time the application is built. 
-If the tests don't pass after you change the application, the build fails, and you know that you introduced a regression that requires a fix to your code. 
+In this guide, you will learn how to:
 
-Choosing a build tool often comes down to personal or organizational preference, but you might choose to use Maven for several reasons. 
-Maven defines its builds by using XML, which is probably familiar to you already. 
-As a mature, commonly used build tool, Maven probably integrates with whichever IDE you prefer to use. 
-Maven also has an extensive plug-in library that offers various ways to quickly customize your build. 
-Maven can be a good choice if your team is already familiar with it. 
+* establish a dependency between a web module and a Java library module,
+* use Maven to package the WAR file and the JAR file into an EAR file so that you can run and test the application on Open Liberty, and
+* use Liberty Maven plug-in to develop a multi-module application in development mode without having to prebuild the JAR and WAR files. In development mode, your changes are automatically picked up by the running server.
 
-You will create a Maven build definition file that's called a **pom.xml** file, which stands for 
-Project Object Model, and use it to build your web application. You will then create a simple, 
-automated test and configure Maven to automatically run the test.
+You will build a unit converter application that converts heights from centimeters into feet and inches. The application will request the user to enter a height value in centimeters. Then, the application processes the input by using functions that are found in the JAR file to return the height value in imperial units.
 
 
-# **Installing Maven**
-
-
-Run the following command to test that Maven is installed:
-
-```
-mvn -v
-```
-{: codeblock}
-
-
-
-If Maven is installed properly, you see information about the Maven installation 
-similar to the following example:
-
-```
-Apache Maven 3.8.1 (05c21c65bdfed0f71a2f2ada8b84da59348c4c5d)
-Maven home: /Applications/Maven/apache-maven-3.8.1
-Java version: 11.0.12, vendor: International Business Machines Corporation, runtime: /Library/Java/JavaVirtualMachines/ibm-semeru-open-11.jdk/Contents/Home
-Default locale: en_US, platform encoding: UTF-8
-OS name: "mac os x", version: "11.6", arch: "x86_64", family: "mac"
-```
 
 # **Getting started**
 
@@ -72,11 +38,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-multimodules.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-maven-intro.git
-cd guide-maven-intro
+git clone https://github.com/openliberty/guide-maven-multimodules.git
+cd guide-maven-multimodules
 ```
 {: codeblock}
 
@@ -85,116 +51,115 @@ The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
 
+Access partial implementation of the application from the **start** folder. This folder includes a web module in the **war** folder, a Java library in the **jar** folder, and template files in the **ear** folder. However, the Java library and the web module are independent projects, and you will need to complete the following steps to implement the application:
+
+1. Add a dependency relationship between the two modules.
+
+2. Assemble the entire application into an EAR file.
+
+3. Aggregate the entire build.
+
+4. Test the multi-module application.
 
 <br/>
 ### **Try what you'll build**
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the **finish** directory and run Maven with the
-**liberty:run** goal to build the application and deploy it to Open Liberty:
+To try out the application, first go to the **finish** directory and run the following
+Maven goal to build the application:
 
 ```
 cd finish
-mvn liberty:run
-```
-{: codeblock}
-
-
-After you see the following message, your application server is ready.
-
-```
-The guideServer server is ready to run a smarter planet.
-```
-
-
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
-Run the following curl command to view the output of the application: 
-```
-curl -s http://localhost:9080/ServletSample/servlet
-```
-{: codeblock}
-
-The servlet returns a simple response of **Hello! How are you today?**.
-
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
-
-```
-mvn liberty:stop
+mvn install
 ```
 {: codeblock}
 
 
 
-# **Creating a simple application**
-
-The simple web application that you will build using Maven and Open Liberty is provided for you in the **start** directory so that you can focus on learning about Maven. 
-This application uses a standard Maven directory structure, eliminating the need to customize the **pom.xml** file so that Maven understands your project layout.
-
-All the application source code, including the Open Liberty server configuration 
-(**server.xml**), is in the **src/main/liberty/config** directory:
+To deploy your EAR application on an Open Liberty server, run the Maven **liberty:run** goal from the finish directory using the **-pl** flag to specify the **ear** project. The **-pl** flag specifies the project where the Maven goal runs.
 
 ```
-    └── src
-        └── main
-           └── java
-           └── resources
-           └── webapp
-           └── liberty
-                  └── config
+mvn -pl ear liberty:run
 ```
+{: codeblock}
 
 
-# **Creating the project POM file**
+
+Once the server is running, open another command-line session by selecting **Terminal** > **New Terminal** 
+from the menu of the IDE. Then use the following command to get the URL to access the service.
+Open your browser and check out your service by going to the URL that the command returns.
+```
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/converter
+```
+{: codeblock}
+
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C** in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal using the **-pl ear** flag from the **finish** directory in another command-line session:
+
+```
+mvn -pl ear liberty:stop
+```
+{: codeblock}
+
+
+
+
+# **Adding dependencies between WAR and JAR modules**
+
+To use a Java library in your web module, you must add a dependency relationship between the two modules.
+
+As you might have noticed, each module has its own **pom.xml** file. Each module has its own **pom.xml** file because each module is treated as an independent project. You can rebuild, reuse, and reassemble every module on its own.
+
 Navigate to the **start** directory to begin.
 ```
-cd /home/project/guide-maven-intro/start
+cd /home/project/guide-maven-multimodules/start
 ```
 {: codeblock}
 
-Before you can build the project, define the Maven Project Object Model (POM) file, the **pom.xml**. 
+Replace the war/POM file.
 
-Create the pom.xml file in the **start** directory.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-maven-intro/start/pom.xml
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-maven-intro/start/pom.xml
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-maven-multimodules/start/war/pom.xml
 
 
 
 
 ```
 <?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <!-- tag::modelVersion[] -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <groupId>io.openliberty.guides</groupId>
+        <artifactId>guide-maven-multimodules</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.openliberty.guides</groupId>
-    <artifactId>ServletSample</artifactId>
-    <!-- tag::packaging[] -->
+    <artifactId>guide-maven-multimodules-war</artifactId>
     <packaging>war</packaging>
     <version>1.0-SNAPSHOT</version>
+    <name>guide-maven-multimodules-war</name>
+    <url>http://maven.apache.org</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- tag::java-version[] -->
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-        <liberty.var.app.context.root>${project.artifactId}</liberty.var.app.context.root>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
@@ -204,22 +169,91 @@ touch /home/project/guide-maven-intro/start/pom.xml
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>4.1</version>
+            <version>4.0.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
-        <!-- tag::commons-httpclient[] -->
+
         <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-            <version>3.1</version>
-            <scope>test</scope>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-jar</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
-        <!-- tag::junit[] -->
+
+    </dependencies>
+
+</project>
+```
+{: codeblock}
+
+
+The **dependency** element is the Java library module that implements the functions that you need for the unit converter.
+
+Although the **parent/child** structure is not normally needed for multi-module applications, here it helps us to better organize all of the projects. This structure allows all of the child projects to make use of the plugins that are defined in the parent **pom.xml** file, without having to define them again in the child **pom.xml** files.
+
+
+# **Assembling multiple modules into an EAR file**
+
+To deploy the entire application on the Open Liberty server, first package the application. Use the EAR project to assemble multiple modules into an EAR file.
+
+Navigate to the **ear** folder and find a template **pom.xml** file.
+Replace the ear/POM file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-maven-multimodules/start/ear/pom.xml
+
+
+
+
+```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <groupId>io.openliberty.guides</groupId>
+        <artifactId>guide-maven-multimodules</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-maven-multimodules-ear</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>ear</packaging>
+    <!-- end::packaging[] -->
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+    </properties>
+
+    <dependencies>
+        <!-- tag::dependencies[] -->
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-jar</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>jar</type>
+        </dependency>
+        <!-- tag::dependency-war[] -->
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>guide-maven-multimodules-war</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>war</type>
+        </dependency>
+        <!-- end::dependencies[] -->
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.8.1</version>
+            <version>5.7.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -229,29 +263,160 @@ touch /home/project/guide-maven-intro/start/pom.xml
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
-            </plugin>
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5</version>
+                <artifactId>maven-ear-plugin</artifactId>
+                <version>3.2.0</version>
                 <configuration>
-                    <serverName>guideServer</serverName>
+                    <modules>
+                        <jarModule>
+                            <groupId>io.openliberty.guides</groupId>
+                            <artifactId>guide-maven-multimodules-jar</artifactId>
+                            <uri>/guide-maven-multimodules-jar-1.0-SNAPSHOT.jar</uri>
+                        </jarModule>
+                        <!-- tag::webModule[] -->
+                        <webModule>
+                            <groupId>io.openliberty.guides</groupId>
+                            <artifactId>guide-maven-multimodules-war</artifactId>
+                            <uri>/guide-maven-multimodules-war-1.0-SNAPSHOT.war</uri>
+                            <!-- tag::contextRoot[] -->
+                            <contextRoot>/converter</contextRoot>
+                        </webModule>
+                    </modules>
                 </configuration>
             </plugin>
-            <!-- tag::maven-failsafe-plugin[] -->
+
+            <!-- Since the package type is ear,
+            need to run testCompile to compile the tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <executions>
+                    <execution>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>2.22.2</version>
                 <configuration>
                     <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
-                        <!-- tag::war-name[] -->
-                        <war.name>${liberty.var.app.context.root}</war.name>
+                        <default.http.port>
+                            ${liberty.var.default.http.port}
+                        </default.http.port>
+                        <default.https.port>
+                            ${liberty.var.default.https.port}
+                        </default.https.port>
+                        <cf.context.root>/converter</cf.context.root>
                     </systemPropertyVariables>
                 </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+```
+{: codeblock}
+
+
+
+Set the **basic configuration** for the project and set the **packaging** element to **ear**.
+
+The **Java library module** and the **web module** were added as dependencies. Specify a type of **war** for the web module. If you don’t specify this type for the web module, Maven looks for a JAR file.
+
+The definition and configuration of the **maven-ear-plugin** plug-in were added to create an EAR file. Define the **jarModule** and **webModule** modules to be packaged into the EAR file.
+To customize the context root of the application, set the **contextRoot** element to **/converter** in the **webModule**. Otherwise, Maven automatically uses the WAR file **artifactId** ID as the context root for the application while generating the **application.xml** file.
+
+To deploy and run an EAR application on an Open Liberty server, you need to provide a server configuration file.
+
+Create the server configuration file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml
+
+
+
+
+```
+<server description="Sample Liberty server">
+
+    <featureManager>
+        <feature>jsp-2.3</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080" />
+    <variable name="default.https.port" defaultValue="9443" />
+
+    <httpEndpoint host="*" httpPort="${default.http.port}"
+        httpsPort="${default.https.port}" id="defaultHttpEndpoint" />
+
+    <enterpriseApplication id="guide-maven-multimodules-ear"
+        location="guide-maven-multimodules-ear.ear"
+        name="guide-maven-multimodules-ear" />
+    <!-- end::server[] -->
+</server>
+```
+{: codeblock}
+
+
+
+You must configure the **server.xml** file with the **enterpriseApplication** element to specify the location of your EAR application.
+
+
+# **Aggregating the entire build**
+
+Because you have multiple modules, aggregate the Maven projects to simplify the build process.
+
+Create a parent **pom.xml** file under the **start** directory to link all of the child modules together. A template is provided for you.
+
+Replace the start/POM file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-maven-multimodules/start/pom.xml
+
+
+
+
+```
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- tag::groupId[] -->
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-maven-multimodules</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <!-- end::packaging[] -->
+
+    <modules>
+        <module>jar</module>
+        <module>war</module>
+        <module>ear</module>
+    </modules>
+
+    <build>
+        <plugins>
+            <!-- tag::liberty-maven-plugin[] -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.4</version>
             </plugin>
         </plugins>
     </build>
@@ -260,61 +425,22 @@ touch /home/project/guide-maven-intro/start/pom.xml
 {: codeblock}
 
 
+Set the **basic configuration** for the project. Set **pom** as the **packaging** element of the parent **pom.xml** file.
 
-The **pom.xml** file starts with a root **project** 
-element and a **modelversion** element, which is always set to **4.0.0**. 
-
-A typical POM for a Liberty application contains the following sections:
-
-* **Project coordinates**: The identifiers for this application.
-* **Properties** (**properties**): Any properties for the project go here, including compilation details and any values that are referenced during compilation of the Java source code and generating the application.
-* **Dependencies** (**dependencies**): Any Java dependencies that are required for compiling, testing, and running the application are listed here.
-* **Build plugins** (**build**): Maven is modular and each of its capabilities is provided by a separate plugin. This is where you specify which Maven plugins should be used to build this project and any configuration information needed by those plugins.
-
-The project coordinates describe the name and version of the application. The 
-**artifactId** gives a name to the web application project, which is used to 
-name the output files that are generated by the build (e.g. the WAR file) and the Open 
-Liberty server that is created. You'll notice that other fields in the **pom.xml** 
-file use variables that are resolved by the **artifactId** field. This is so 
-that you can update the name of the sample application, including files generated by Maven, 
-in a single place in the **pom.xml** file. The value of the **packaging** 
-field is **war** so that the project output artifact is a WAR file.
-
-The first four properties in the properties section of the project, just define the encoding (**UTF-8**) 
-and version of Java (**Java 8**) that Maven uses to compile the application 
-source code.
-
-Open Liberty configuration properties provide you with a single place to specify values that are used in multiple 
-places throughout the application. For example, the **default.http.port** value is used in
-both the server configuration (**server.xml**) file and will be used in the test class that
-you will add (**EndpointIT.java**) to the application. Because the **default.http.port** value 
-is specified in the **pom.xml** file, you can easily 
-change the port number that the server runs on without updating the application 
-code in multiple places.
-
-
-The **HelloServlet.java** class depends on **javax.servlet-api** to compile. 
-Maven will download this dependency from the Maven Central repository using the 
-**groupId**, **artifactId**, and **version** details that 
-you provide here. The dependency is set to **provided**, which means that the 
-API is in the server runtime and doesn't need to be packaged by the application.
-
-The **build** section gives details of the two plugins that Maven uses 
-to build this project.
-
-* The Maven plugin for generating a WAR file as one of the output files.
-* The Liberty Maven plug-in, which allows you to install applications into Open Liberty and manage the server instances.
-
-In the **liberty-maven-plugin** plug-in section, you can add a
-**configuration** element to specify Open Liberty configuration details.
-For example, the
-**serverName** field defines the name of the Open Liberty server that Maven creates.
-You specified **guideServer** as the value for **serverName**.
-If the **serverName** field is not included, the default value is **defaultServer**.
+In the parent **pom.xml** file, list all of the **modules** that you want to aggregate for the application.
 
 
 
-# **Running the application**
+# **Developing the application**
+
+You can now develop the application and the different modules together in dev mode by using the Liberty Maven plug-in.
+To learn more about how to use development mode with multiple modules, check out the [Documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#multiple-modules).
+
+Navigate to the **start** directory to begin.
+```
+cd /home/project/guide-maven-multimodules/start
+```
+{: codeblock}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
 deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -335,169 +461,277 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
+<br/>
+### **Updating the Java classes in different modules**
 
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
-Run the following curl command to view the output of the application: 
-```
-curl -s http://localhost:9080/ServletSample/servlet
-```
-{: codeblock}
+Update the **HeightsBean** class to use the Java library module that implements the functions that you need for the unit converter.
 
-The servlet returns a simple response of **Hello! How are you today?**.
+Navigate to the **start\war** directory.
 
-# **Testing the web application**
+Replace the **HeightsBean** class.
 
-One of the benefits of building an application with Maven is that Maven can be configured 
-to run a set of tests. You can write tests for the individual units of code outside of a 
-running application server (unit tests), or you can write them to call the application 
-server directly (integration tests). In this example you will create a simple integration 
-test that checks that the web page opens and that the correct response is returned when 
-the link is clicked.
-
-Create the **EndpointIT** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java  
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java  
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java
 
 
 
 
 ```
-package io.openliberty.guides.hello.it;
+package io.openliberty.guides.multimodules.web;
 
-import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.GetMethod;
+public class HeightsBean implements java.io.Serializable {
+    private String heightCm = null;
+    private String heightFeet = null;
+    private String heightInches = null;
+    private int cm = 0;
+    private int feet = 0;
+    private int inches = 0;
 
-public class EndpointIT {
-    private static String URL;
- 
-    @BeforeAll
-    public static void init() {
-        String port = System.getProperty("http.port");
-        String war = System.getProperty("war.name");
-        URL = "http://localhost:" + port + "/" + war + "/" + "servlet";
+    public HeightsBean() {
     }
 
-    @Test
-    public void testServlet() throws Exception {
-        HttpClient client = new HttpClient();
-
-        GetMethod method = new GetMethod(URL);
-        try {
-            int statusCode = client.executeMethod(method);
-
-            assertEquals(HttpStatus.SC_OK, statusCode, "HTTP GET failed");
-
-            String response = method.getResponseBodyAsString(1000);
-
-            assertTrue(response.contains("Hello! How are you today?"), 
-                "Unexpected response body");
-        } finally {
-            method.releaseConnection();
-        }
+    public String getHeightCm() {
+        return heightCm;
     }
+
+    public String getHeightFeet() {
+        return heightFeet;
+    }
+
+    public String getHeightInches() {
+        return heightInches;
+    }
+
+    public void setHeightCm(String heightcm) {
+        this.heightCm = heightcm;
+    }
+
+    public void setHeightFeet(String heightfeet) {
+        this.cm = Integer.valueOf(heightCm);
+        this.feet = io.openliberty.guides.multimodules.lib.Converter.getFeet(cm);
+        String result = String.valueOf(feet);
+        this.heightFeet = result;
+    }
+
+    public void setHeightInches(String heightinches) {
+        this.cm = Integer.valueOf(heightCm);
+        this.inches = io.openliberty.guides.multimodules.lib.Converter.getInches(cm);
+        String result = String.valueOf(inches);
+        this.heightInches = result;
+    }
+
 }
 ```
 {: codeblock}
 
 
 
-The test class name ends in **IT** to indicate that it contains an integration test. 
+The **getFeet(cm)** invocation was added to the **setHeightFeet** method to convert a measurement into feet.
 
-Maven is configured to run the integration test using the **maven-failsafe-plugin**.
-The **systemPropertyVariables** section defines some variables 
-that the test class uses. The test code needs to know where to find the application that 
-it is testing. While the port number and context root information can be hardcoded in the 
-test class, it is better to specify it in a single place like the Maven **pom.xml** 
-file because this information is also used by other files in the project. The 
-**systemPropertyVariables** section passes these details to the 
-Java test program as a series of system properties, resolving the **http.port**
-and **war.name** variables.
+The **getInches(cm)** invocation was added to the **setHeightInches** method to convert a measurement into inches.
+
+To check out the running application, open another command-line session by selecting **Terminal** > **New Terminal** 
+from the menu of the IDE. Then use the following command to get the URL.
+Open your browser and check out your service by going to the URL that the command returns.
+```
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/converter
+```
+{: codeblock}
+
+Now try updating the converter so that it converts heights correctly, rather than returning 0.
+
+Navigate to the **start\jar** directory.
+
+Replace the **Converter** class.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-maven-multimodules/start/jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java
 
 
-The following lines in the **EndpointIT** test class uses these 
-system variables to build up the URL of the application.
 
-In the test class, after defining how to build the application URL, the **@Test** 
-annotation indicates the start of the test method.
-
-In the **try block** of the test method, an HTTP **GET** request to the 
-URL of the application returns a status code. If the response to the request includes the 
-string **Hello! How are you today?**, the test passes. If that string is not in the response, 
-the test fails.  The HTTP client then disconnects from the application.
-
-In the **import** statements of this test class, you'll notice that the 
-test has some new dependencies. Before the test can be compiled by Maven, you need to update 
-the **pom.xml** to include these dependencies.
-
-The Apache **commons-httpclient** and **junit-jupiter-engine** 
-dependencies are needed to compile and run the integration test **EndpointIT** 
-class. The scope for each of the dependencies is set to **test** because 
-the libraries are needed only during the Maven build and do not needed to be packaged with 
-the application.
-
-Now, the created WAR file contains the web application, 
-and development mode can run any integration test classes that it finds.
-Integration test classes are classes with names that end in **IT**.
-
-The directory structure of the project should now look like this:
 
 ```
-    └── src
-        ├── main
-        │  └── java
-        │  └── resources
-        │  └── webapp
-        │  └── liberty
-        │         └── config
-        └── test
-            └── java
+package io.openliberty.guides.multimodules.lib;
+
+public class Converter {
+
+    public static int getFeet(int cm) {
+        int feet = (int) (cm / 30.48);
+        return feet;
+    }
+
+    public static int getInches(int cm) {
+        double feet = cm / 30.48;
+        int inches = (int) (cm / 2.54) - ((int) feet * 12);
+        return inches;
+    }
+
+    public static int sum(int a, int b) {
+        return a + b;
+    }
+
+    public static int diff(int a, int b) {
+        return a - b;
+    }
+
+    public static int product(int a, int b) {
+        return a * b;
+    }
+
+    public static int quotient(int a, int b) {
+        return a / b;
+    }
+
+}
 ```
+{: codeblock}
+
+
+
+Change the **getFeet** method so that it converts from centimetres to feet, and the **getInches** method so that it converts from centimetres to inches. Update the **sum**, **diff**, **product** and **quotient** functions so that they add, subtract, multiply, and divide 2 numbers respectively.
+
+Now revisit the application at the URL you previously found. Use the following command to get the URL.
+```
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/converter
+```
+{: codeblock}
+Try entering a height in centimetres and see if it converts correctly.
+
+
+<br/>
+### **Testing the multi-module application**
+
+To test the multi-module application, add integration tests to the EAR project.
+
+Navigate to the **start\ear** directory.
+
+Create the integration test class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java
+
+
+
+
+```
+package it.io.openliberty.guides.multimodules;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import org.junit.jupiter.api.Test;
+
+public class IT {
+    String port = System.getProperty("default.http.port");
+    String war = "converter";
+    String urlBase = "http://localhost:" + port + "/" + war + "/";
+
+    @Test
+    public void testIndexPage() throws Exception {
+        String url = this.urlBase;
+        HttpURLConnection con = testRequestHelper(url, "GET");
+        assertEquals(200, con.getResponseCode(), "Incorrect response code from " + url);
+        assertTrue(testBufferHelper(con).contains("Enter the height in centimeters"),
+                        "Incorrect response from " + url);
+    }
+
+    @Test
+    public void testHeightsPage() throws Exception {
+        String url = this.urlBase + "heights.jsp?heightCm=10";
+        HttpURLConnection con = testRequestHelper(url, "POST");
+        assertTrue(testBufferHelper(con).contains("3        inches"),
+                        "Incorrect response from " + url);
+    }
+
+    private HttpURLConnection testRequestHelper(String url, String method)
+                    throws Exception {
+        URL obj = new URL(url);
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+        con.setRequestMethod(method);
+        return con;
+    }
+
+    private String testBufferHelper(HttpURLConnection con) throws Exception {
+        BufferedReader in = new BufferedReader(
+                        new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer response = new StringBuffer();
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+        }
+        in.close();
+        return response.toString();
+    }
+
+}
+```
+{: codeblock}
+
+
+
+The **testIndexPage** tests to check that you can access the landing page.
+
+The **testHeightsPage** tests to check that the application can process the input value and calculate the result correctly.
 
 
 <br/>
 ### **Running the tests**
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
+Because you started Open Liberty in development mode, press the *enter/return* key to run the tests.
 
-You see the following output:
+You will see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running io.openliberty.guides.hello.it.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.255 sec - in io.openliberty.guides.hello.it.EndpointIT
+Running it.io.openliberty.guides.multimodules.IT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.712 sec - in it.io.openliberty.guides.multimodules.IT
 
 Results :
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+
 ```
 
-To see whether the test detects a failure, change the **response string** in the servlet 
-**src/main/java/io/openliberty/guides/hello/HelloServlet.java** so that it doesn't match 
-the string that the test is looking for. Then re-run the tests and check that the 
-test fails.
+
+When you are done checking out the service, exit development mode by pressing **CTRL+C** in the command-line session where you ran the server, 
+or by typing *q* and then pressing the *enter/return* key.
 
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
+# **Building the multi-module application**
+
+You aggregated and developed the application. Now, you can run **mvn install** once from the **start** directory and it will automatically build all your modules. This command creates a JAR file in the **jar/target** directory, a WAR file in the **war/target** directory, and an EAR file that contains the JAR and WAR files in the **ear/target** directory.
+
+Run the following commands to navigate to the start directory and build the entire application:
+```
+cd /home/project/guide-maven-multimodules/start
+mvn install
+```
+{: codeblock}
+
+Since the modules are independent, you can re-build them individually by running **mvn install** from the corresponding **start** directory for each module.
+
+Or, run **mvn -pl <child project> install** from the start directory.
+
 
 # **Summary**
 
 ## **Nice Work!**
 
-You built and tested a web application project with an Open Liberty server using Maven.
+You built and tested a multi-module Java application for unit conversion with Maven on Open Liberty.
+
 
 
 
@@ -507,11 +741,11 @@ You built and tested a web application project with an Open Liberty server using
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-maven-intro** project by running the following commands:
+Delete the **guide-maven-multimodules** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-maven-intro
+rm -fr guide-maven-multimodules
 ```
 {: codeblock}
 
@@ -520,7 +754,7 @@ rm -fr guide-maven-intro
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20web%20application%20with%20Maven&guide-id=cloud-hosted-guide-maven-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20multi-module%20application&guide-id=cloud-hosted-guide-maven-multimodules)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -528,16 +762,15 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-multimodules/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-multimodules/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Creating a multi-module application](https://openliberty.io/guides/maven-multimodules.html)
-* [Building a web application with Gradle](https://openliberty.io/guides/gradle-intro.html)
+* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
 
 
 <br/>
