@@ -187,9 +187,9 @@ Replace the war/POM file.
 {: codeblock}
 
 
-The **dependency** element is the Java library module that implements the functions that you need for the unit converter.
+The added **dependency** element is the Java library module that implements the functions that you need for the unit converter.
 
-Although the **parent/child** structure is not normally needed for multi-module applications, here it helps us to better organize all of the projects. This structure allows all of the child projects to make use of the plugins that are defined in the parent **pom.xml** file, without having to define them again in the child **pom.xml** files.
+Although the **parent/child** structure is not normally needed for multi-module applications, adding it helps us to better organize all of the projects. This structure allows all of the child projects to make use of the plugins that are defined in the parent **pom.xml** file, without having to define them again in the child **pom.xml** files.
 
 
 # **Assembling multiple modules into an EAR file**
@@ -425,10 +425,12 @@ Replace the start/POM file.
 {: codeblock}
 
 
+
 Set the **basic configuration** for the project. Set **pom** as the **packaging** element of the parent **pom.xml** file.
 
 In the parent **pom.xml** file, list all of the **modules** that you want to aggregate for the application.
 
+Adding the **liberty-maven-plugin** plug-in allows each child module to inherit the plug-in, so that you can use the Liberty Maven plug-in to develop the modules.
 
 
 # **Developing the application**
@@ -720,7 +722,7 @@ mvn install
 
 Since the modules are independent, you can re-build them individually by running **mvn install** from the corresponding **start** directory for each module.
 
-Or, run **mvn -pl <child project> install** from the start directory.
+Or, run `mvn -pl <child project> install` from the start directory.
 
 
 # **Summary**
