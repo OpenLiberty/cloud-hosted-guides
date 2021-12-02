@@ -55,6 +55,7 @@ jobs:
           - {"github":"cloud-hosted-guide-spring-boot","gitlab":"cloud-hosted-guide-spring-boot"}
           - {"github":"cloud-hosted-guide-arquillian-managed","gitlab":"cloud-hosted-guide-arquillian-managed"}
           - {"github":"cloud-hosted-guide-bean-validation","gitlab":"cloud-hosted-guide-bean-validation"}
+          - {"github":"cloud-hosted-guide-cors","gitlab":"cloud-hosted-guide-cors"}
     
     steps:
 
