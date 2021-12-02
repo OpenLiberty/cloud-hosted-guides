@@ -86,7 +86,7 @@ mvn -pl ear liberty:run
 
 
 
-Once the server is running, open another command-line session by selecting **Terminal** > **New Terminal** 
+After the server is running, open another command-line session by selecting **Terminal** > **New Terminal** 
 from the menu of the IDE. Then use the following command to get the URL to access the service.
 Open your browser and check out your service by going to the URL that the command returns.
 ```
@@ -426,7 +426,7 @@ Replace the start/POM file.
 
 
 
-Set the **basic configuration** for the project. Set **pom** as the **packaging** element of the parent **pom.xml** file.
+Set the **basic configuration** for the project. Set **pom** as the value for the **packaging** element of the parent **pom.xml** file.
 
 In the parent **pom.xml** file, list all of the **modules** that you want to aggregate for the application.
 
@@ -590,7 +590,7 @@ public class Converter {
 
 Change the **getFeet** method so that it converts from centimetres to feet, and the **getInches** method so that it converts from centimetres to inches. Update the **sum**, **diff**, **product** and **quotient** functions so that they add, subtract, multiply, and divide 2 numbers respectively.
 
-Now revisit the application at the URL you previously found. Use the following command to get the URL.
+Now revisit the application at the URL you previously found by running the following command:
 ```
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/converter
 ```
