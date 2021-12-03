@@ -471,7 +471,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5</version>
+                <version>3.5.1</version>
             </plugin>
 
             <plugin>
