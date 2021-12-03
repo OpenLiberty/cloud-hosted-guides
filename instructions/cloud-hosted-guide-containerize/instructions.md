@@ -160,7 +160,7 @@ touch /home/project/guide-containerize/start/inventory/Dockerfile
 
 
 ```
-FROM openliberty/open-liberty:full-java11-openj9-ubi
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
@@ -195,12 +195,13 @@ RUN configure.sh
 The **FROM** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use **FROM scratch**, which makes your image a base image. 
 
 In this case, you're using the recommended production image,
-**openliberty/open-liberty:full-java11-openj9-ubi**, as your parent image. If you
-don't want any additional runtime features for your **kernel** image, define the
-**FROM** instruction as **FROM open-liberty:kernel-slim**. To use the default image that
-comes with the Open Liberty runtime, define the **FROM** instruction as **FROM open-liberty**. 
-You can find all the [official images](https://hub.docker.com/_/open-liberty) and
-[ubi images](https://hub.docker.com/r/openliberty/open-liberty/) on the open-liberty Docker Hub.
+**icr.io/appcafe/open-liberty:full-java11-openj9-ubi**, as your parent image. 
+To use the default image that comes with the Open Liberty runtime,
+define the **FROM** instruction as **FROM icr.io/appcafe/open-liberty**. 
+If you don't want any additional runtime features, you can use **kernel** image by defining the
+**FROM** instruction as **FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi**. 
+You can find all the [official universal base images (ubi)](https://github.com/OpenLiberty/ci.docker/blob/master/docs/icr-images.md) that
+are available from the IBM Container Registry (ICR).
 
 It is also recommended to label your Docker images with the **LABEL** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
 
@@ -209,7 +210,7 @@ They copy local files into the specified destination within your Docker image.
 In this case, the **inventory** server configuration files that are located at **src/main/liberty/config** are copied to the **/config/** destination directory.
 The **inventory** application WAR file **inventory.war**, which was created from running **mvn package**, is copied to the **/config/apps** destination directory.
 
-The **COPY** instructions use the **1001** user ID  and **0** group because the **openliberty/open-liberty:full-java11-openj9-ubi** image runs by default with the **USER 1001** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user.
+The **COPY** instructions use the **1001** user ID  and **0** group because the **icr.io/appcafe/open-liberty:full-java11-openj9-ubi** image runs by default with the **USER 1001** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user.
 
 Place the **RUN configure.sh** command at the end to get a pre-warmed Docker image. It improves the startup time of running your Docker container.
 
@@ -230,7 +231,7 @@ touch /home/project/guide-containerize/start/system/Dockerfile
 
 
 ```
-FROM openliberty/open-liberty:full-java11-openj9-ubi
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
@@ -267,7 +268,7 @@ Now that your microservices are packaged and you have written your Dockerfiles, 
 Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
