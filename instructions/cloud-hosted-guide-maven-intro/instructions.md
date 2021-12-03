@@ -235,7 +235,7 @@ touch /home/project/guide-maven-intro/start/pom.xml
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5</version>
+                <version>3.5.1</version>
                 <configuration>
                     <serverName>guideServer</serverName>
                 </configuration>
