@@ -584,7 +584,7 @@ Update the **pom.xml** file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5</version>            
+                <version>3.5.1</version>            
             </plugin>
             <!-- tag::frontend-plugin[] -->
             <plugin>
