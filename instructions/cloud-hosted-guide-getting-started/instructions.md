@@ -225,7 +225,7 @@ Replace the server configuration file.
         <feature>jsonp-1.1</feature>
         <feature>cdi-2.0</feature>
         <feature>mpMetrics-3.0</feature>
-        <feature>mpHealth-3.0</feature>
+        <feature>mpHealth-3.1</feature>
         <feature>mpConfig-2.0</feature>
     </featureManager>
 
@@ -526,7 +526,7 @@ Replace the server configuration file.
         <feature>jsonp-1.1</feature>
         <feature>cdi-2.0</feature>
         <feature>mpMetrics-3.0</feature>
-        <feature>mpHealth-3.0</feature>
+        <feature>mpHealth-3.1</feature>
         <feature>mpConfig-2.0</feature>
     </featureManager>
 
@@ -581,7 +581,7 @@ mvn package
 Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
@@ -742,7 +742,7 @@ Replace the server configuration file.
         <feature>jsonp-1.1</feature>
         <feature>cdi-2.0</feature>
         <feature>mpMetrics-3.0</feature>
-        <feature>mpHealth-3.0</feature>
+        <feature>mpHealth-3.1</feature>
         <feature>mpConfig-2.0</feature>
     </featureManager>
 
