@@ -332,7 +332,7 @@ the result of the
 be compatible with this feature, it must be converted to a Promise by invoking its
 **toPromise()** method. A
 Promise is how JavaScript represents the state of an asynchronous operation. If you
-want to learn more, check out [](https://promisejs.org) for an introduction.
+want to learn more, check out [promisejs.org](https://promisejs.org) for an introduction.
 
 
 # **Defining the component to consume the service**
