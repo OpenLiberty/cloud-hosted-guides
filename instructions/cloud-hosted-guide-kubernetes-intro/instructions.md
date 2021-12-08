@@ -41,7 +41,7 @@ Kubernetes has a lot more to offer.
 Deploying an application to Kubernetes means deploying an application to a Kubernetes cluster.
 
 A typical Kubernetes cluster is a collection of physical or virtual machines called nodes that run
-containerized applications. A cluster is made up of one master node that manages the cluster, and
+containerized applications. A cluster is made up of one parent node that manages the cluster, and
 many worker nodes that run the actual application instances inside Kubernetes objects called pods.
 
 A pod is a basic building block in a Kubernetes cluster. It represents a single running process that
@@ -169,7 +169,7 @@ mvn clean package
 Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
@@ -489,7 +489,7 @@ kubectl scale deployment/system-deployment --replicas=1
 
 When you're building your application, you might want to quickly test a change. 
 To run a quick test, you can rebuild your Docker images then delete and re-create your Kubernetes resources. 
-Note that there is only one **system** pod after you redeploy since you're deleting all of the existing pods.
+Note that there is only one **system** pod after you redeploy because you're deleting all of the existing pods.
 
 
 ```
