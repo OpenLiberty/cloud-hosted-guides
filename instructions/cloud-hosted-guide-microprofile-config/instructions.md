@@ -863,7 +863,7 @@ Remember that you must register the custom configuration source and custom conve
 <br/>
 ### **Running the tests**
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 You see the following output:
 
