@@ -641,7 +641,7 @@ In addition, a few endpoint tests are provided for you to test the basic functio
 <br/>
 ### **Running the tests**
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 ```
 -------------------------------------------------------
