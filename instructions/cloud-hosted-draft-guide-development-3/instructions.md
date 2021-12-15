@@ -68,7 +68,7 @@ The **finish** directory contains the finished project that you will build.
 # **Installing the Operator**
 
 
-In this Skill Network enviornment, the Open Liberty Operator is already installed by the administrator.
+In this Skills Network environment, the Open Liberty Operator is already installed by the administrator.
 If you like to learn how to install the Open Liberty Operator,
 you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/blob/master/deploy/releases/0.7.1/readme.adoc).
 
@@ -247,7 +247,7 @@ After you expose the microservice, the Operator automatically creates and config
 
 Run the following commands to update the **applicationImage** and deploy the **system** microservice with the previously explained configuration:
 ```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' deploy.yaml
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  imagePullPolicy: Always=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
 {: codeblock}
