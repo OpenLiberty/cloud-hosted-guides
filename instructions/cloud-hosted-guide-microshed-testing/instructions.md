@@ -62,6 +62,7 @@ The **finish** directory contains the finished project that you will build.
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
 First, review the **PersonServiceIT** class to see what the tests look like:
+From the menu of the IDE, select **File** > **Open** > guide-microshed-testing/finish/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
 
 
 To try out the application, go to the **finish** directory and run the following Maven 
@@ -166,6 +167,7 @@ package io.openliberty.guides.testing;
 
 
 import org.junit.jupiter.api.Test;
+import org.microshed.testing.jaxrs.RESTClient;
 import org.microshed.testing.jupiter.MicroShedTest;
 import org.microshed.testing.testcontainers.ApplicationContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -173,6 +175,8 @@ import org.testcontainers.junit.jupiter.Container;
 @MicroShedTest
 public class PersonServiceIT {
 
+    @RESTClient
+    public static PersonService personSvc;
 
     @Container
     public static ApplicationContainer app = new ApplicationContainer()
@@ -201,7 +205,7 @@ MicroShed Testing automatically starts the ApplicationContainer application and 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-In this case, you're using the default application readiness check at the http://localhost:9080/health/ready URL, which is enabled by the **MicroProfile Health** feature in our server.xml configuration file. When the readiness URL returns the **HTTP 200** message, the application is considered ready and the tests begin running.
+In this case, you're using the default application readiness check at the http://localhost:9080/health/ready URL, which is enabled by the **MicroProfile Health** feature in the server.xml configuration file. When the readiness URL returns the **HTTP 200** message, the application is considered ready and the tests begin running.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -221,49 +225,10 @@ not starting up a new application instance each time you initiate a test run.
 
 # **Talking to your application with a REST client**
 
-With MicroShed Testing, applications are exercised in a black box fashion. Black box means the tests can't access the application internals. 
-Instead, the application is exercised from the outside, usually with HTTP requests. To simplify the HTTP interactions, inject a REST client into the tests.
-You need to import the **org.microshed.testing.jaxrs.RESTClient** annotation, 
-create a **PersonService** REST client, and annotate the REST client with **@RESTClient**.
-
-Replace the **PersonServiceIT** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
-
-
-
-
-```
-package io.openliberty.guides.testing;
-
-
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.junit.jupiter.Container;
-
-@MicroShedTest
-public class PersonServiceIT {
-
-    @RESTClient
-    public static PersonService personSvc;
-
-    @Container
-    public static ApplicationContainer app = new ApplicationContainer()
-                    .withAppContextRoot("/guide-microshed-testing")
-                    .withReadinessPath("/health/ready");
-
-    @Test
-    public void testCreatePerson() {
-    }
-
-}
-```
-{: codeblock}
-
-
+With MicroShed Testing, applications are exercised in a black-box fashion. Black-box means the tests can't access the application internals. 
+Instead, the application is exercised from the outside, usually with HTTP requests. To simplify the HTTP interactions, a REST client is injected into the tests.
+To do this, you imported the **org.microshed.testing.jaxrs.RESTClient** annotation, 
+created a **PersonService** REST client, and annotated the REST client with **@RESTClient**.
 
 In this example, the **PersonService** injected type is the same 
 **io.openliberty.guides.testing.PersonService** class that is used in your application. 
@@ -271,6 +236,7 @@ However, the _instance_ that gets injected is a REST client proxy.
 So, if you call **personSvc.createPerson("Bob", 42)**, the REST client makes an HTTP POST request to the application 
 that is running at **http://localhost:9080/guide-microshed-testing/people** URL, 
 which triggers the corresponding Java method in the application.
+
 
 
 
@@ -405,8 +371,8 @@ public class PersonServiceIT {
 
         Collection<Person> allPeople = personSvc.getAllPeople();
         assertTrue(allPeople.size() >= 2,
-            "Expected at least 2 people to be registered, but there were only: " +
-            allPeople);
+            "Expected at least 2 people to be registered, but there were only: "
+            + allPeople);
         assertTrue(allPeople.contains(expected1),
             "Did not find person " + expected1 + " in all people: " + allPeople);
         assertTrue(allPeople.contains(expected2),
@@ -516,14 +482,14 @@ public class ErrorPathIT {
 
     @Test
     public void testCreateBadPersonNegativeAge() {
-        assertThrows(BadRequestException.class, () -> 
+        assertThrows(BadRequestException.class, () ->
           personSvc.createPerson("NegativeAgePersoN", -1));
     }
 
     @Test
     public void testCreateBadPersonNameTooLong() {
-        assertThrows(BadRequestException.class, () -> 
-          personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson", 
+        assertThrows(BadRequestException.class, () ->
+          personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson",
           5));
     }
 }
@@ -542,6 +508,9 @@ mvn verify
 
 
 Notice that tests for both the **PersonServiceIT** and **ErrorPathIT** classes run, but a new server starts for each test class, resulting in a longer test runtime.
+
+<br/>
+### **Creating a common configuration**
 
 To solve this issue, common configuration can be placed in a class that implements **SharedContainerConfiguration**.
 
@@ -567,7 +536,7 @@ import org.microshed.testing.testcontainers.ApplicationContainer;
 import org.testcontainers.junit.jupiter.Container;
 
 public class AppDeploymentConfig implements SharedContainerConfiguration {
-    
+
     @Container
     public static ApplicationContainer app = new ApplicationContainer()
                     .withAppContextRoot("/guide-microshed-testing")
@@ -581,7 +550,15 @@ public class AppDeploymentConfig implements SharedContainerConfiguration {
 
 After the common configuration is created, the test classes can be updated to reference this shared configuration.
 
+<br/>
+### **Updating the PersonServiceIT class**
+
+
 Remove the container code from the **PersonServiceIT** class.
+Remove **import** statements for **ApplicationContainer** and **Container** and the **ApplicationContainer app** field.
+
+Next, annotate the **PersonServiceIT** class with the **@SharedContainerConfig** annotation that references the **AppDeploymentConfig** shared configuration class.
+
 Replace the **PersonServiceIT** class.
 
 > From the menu of the IDE, select 
@@ -600,21 +577,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Collection;
 
 import org.junit.jupiter.api.Test;
+import org.microshed.testing.SharedContainerConfig;
 import org.microshed.testing.jaxrs.RESTClient;
 import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.junit.jupiter.Container;
 
 @MicroShedTest
+@SharedContainerConfig(AppDeploymentConfig.class)
 public class PersonServiceIT {
 
     @RESTClient
     public static PersonService personSvc;
-
-    @Container
-    public static ApplicationContainer app = new ApplicationContainer()
-                    .withAppContextRoot("/guide-microshed-testing")
-                    .withReadinessPath("/health/ready");
 
     @Test
     public void testCreatePerson() {
@@ -655,8 +627,8 @@ public class PersonServiceIT {
 
         Collection<Person> allPeople = personSvc.getAllPeople();
         assertTrue(allPeople.size() >= 2,
-            "Expected at least 2 people to be registered, but there were only: " +
-            allPeople);
+            "Expected at least 2 people to be registered, but there were only: "
+            + allPeople);
         assertTrue(allPeople.contains(expected1),
             "Did not find person " + expected1 + " in all people: " + allPeople);
         assertTrue(allPeople.contains(expected2),
@@ -684,177 +656,18 @@ public class PersonServiceIT {
 {: codeblock}
 
 
-Remove **import** statements and the **ApplicationContainer app** field.
-
-
-Annotate the **PersonServiceIT** class with the **@SharedContainerConfig** annotation that references the **AppDeploymentConfig** shared configuration class.
-Replace the **PersonServiceIT** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
-
-
-
-
-```
-package io.openliberty.guides.testing;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Collection;
-
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-
-@MicroShedTest
-@SharedContainerConfig(AppDeploymentConfig.class)
-public class PersonServiceIT {
-    
-    @RESTClient
-    public static PersonService personSvc;
-    
-    @Test
-    public void testCreatePerson() {
-        Long createId = personSvc.createPerson("Hank", 42);
-        assertNotNull(createId);
-    }
-
-    @Test
-    public void testMinSizeName() {
-        Long minSizeNameId = personSvc.createPerson("Ha", 42);
-        assertEquals(new Person("Ha", 42, minSizeNameId),
-                     personSvc.getPerson(minSizeNameId));
-    }
-
-    @Test
-    public void testMinAge() {
-        Long minAgeId = personSvc.createPerson("Newborn", 0);
-        assertEquals(new Person("Newborn", 0, minAgeId),
-                     personSvc.getPerson(minAgeId));
-    }
-
-    @Test
-    public void testGetPerson() {
-        Long bobId = personSvc.createPerson("Bob", 24);
-        Person bob = personSvc.getPerson(bobId);
-        assertEquals("Bob", bob.name);
-        assertEquals(24, bob.age);
-        assertNotNull(bob.id);
-    }
-
-    @Test
-    public void testGetAllPeople() {
-        Long person1Id = personSvc.createPerson("Person1", 1);
-        Long person2Id = personSvc.createPerson("Person2", 2);
-
-        Person expected1 = new Person("Person1", 1, person1Id);
-        Person expected2 = new Person("Person2", 2, person2Id);
-
-        Collection<Person> allPeople = personSvc.getAllPeople();
-        assertTrue(allPeople.size() >= 2,
-            "Expected at least 2 people to be registered, but there were only: " + 
-            allPeople);
-        assertTrue(allPeople.contains(expected1),
-            "Did not find person " + expected1 + " in all people: " + allPeople);
-        assertTrue(allPeople.contains(expected2),
-            "Did not find person " + expected2 + " in all people: " + allPeople);
-    }
-
-    @Test
-    public void testUpdateAge() {
-        Long personId = personSvc.createPerson("newAgePerson", 1);
-
-        Person originalPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", originalPerson.name);
-        assertEquals(1, originalPerson.age);
-        assertEquals(personId, Long.valueOf(originalPerson.id));
-
-        personSvc.updatePerson(personId, 
-            new Person(originalPerson.name, 2, originalPerson.id));
-        Person updatedPerson = personSvc.getPerson(personId);
-        assertEquals("newAgePerson", updatedPerson.name);
-        assertEquals(2, updatedPerson.age);
-        assertEquals(personId, Long.valueOf(updatedPerson.id));
-    }
-}
-```
-{: codeblock}
-
-
 Import the **SharedContainerConfig** annotation and annotate the **PersonServiceIT** class with **@SharedContainerConfig**. 
 
 
+<br/>
+### **Updating the ErrorPathIT class**
+
+
 Similarly, replace the **ErrorPathIT** class to remove the container code.
-Replace the **ErrorPathIT** class.
+Remove **import** statements for **ApplicationContainer** and **Container** and the **ApplicationContainer app** field.
 
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+Next, annotate the **ErrorPathIT** class with the **@SharedContainerConfig** annotation.
 
-
-
-
-```
-package io.openliberty.guides.testing;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.microshed.testing.jaxrs.RESTClient;
-
-@MicroShedTest
-@SharedContainerConfig(AppDeploymentConfig.class)
-public class ErrorPathIT {
-
-    @Container
-    public static ApplicationContainer app = new ApplicationContainer()
-                    .withAppContextRoot("/guide-microshed-testing")
-                    .withReadinessPath("/health/ready");
-
-    @RESTClient
-    public static PersonService personSvc;
-
-    @Test
-    public void testGetUnknownPerson() {
-        assertThrows(NotFoundException.class, () -> personSvc.getPerson(-1L));
-    }
-
-    @Test
-    public void testCreateBadPersonNullName() {
-        assertThrows(BadRequestException.class, () -> personSvc.createPerson(null, 5));
-    }
-
-    @Test
-    public void testCreateBadPersonNegativeAge() {
-        assertThrows(BadRequestException.class, () -> 
-          personSvc.createPerson("NegativeAgePersoN", -1));
-    }
-
-    @Test
-    public void testCreateBadPersonNameTooLong() {
-        assertThrows(BadRequestException.class, () -> 
-          personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson", 
-          5));
-    }
-}
-```
-{: codeblock}
-
-
-Remove **import** statements and the **ApplicationContainer app** field
-
-
-Annotate the **ErrorPathIT** class with the **@SharedContainerConfig** annotation.
 Replace the **ErrorPathIT** class.
 
 > From the menu of the IDE, select 
@@ -879,10 +692,10 @@ import org.microshed.testing.jupiter.MicroShedTest;
 @MicroShedTest
 @SharedContainerConfig(AppDeploymentConfig.class)
 public class ErrorPathIT {
-    
+
     @RESTClient
     public static PersonService personSvc;
-    
+
     @Test
     public void testGetUnknownPerson() {
         assertThrows(NotFoundException.class, () -> personSvc.getPerson(-1L));
@@ -895,14 +708,14 @@ public class ErrorPathIT {
 
     @Test
     public void testCreateBadPersonNegativeAge() {
-        assertThrows(BadRequestException.class, () -> 
+        assertThrows(BadRequestException.class, () ->
           personSvc.createPerson("NegativeAgePersoN", -1));
     }
 
     @Test
     public void testCreateBadPersonNameTooLong() {
         assertThrows(BadRequestException.class, () ->
-           personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson", 
+           personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson",
            5));
     }
 }
