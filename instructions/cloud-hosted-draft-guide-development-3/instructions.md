@@ -225,6 +225,29 @@ spec:
       value: "json"
     - name: WLP_LOGGING_MESSAGE_SOURCE
       value: "message,trace,accessLog,ffdc,audit"
+  startupProbe:
+    httpGet:
+      path: /health/started
+      port: 9080
+      scheme: HTTP
+  readinessProbe:
+    failureThreshold: 12
+    httpGet:
+      path: /health/ready
+      port: 9080
+      scheme: HTTP
+    initialDelaySeconds: 30
+    periodSeconds: 2
+    timeoutSeconds: 10
+  livenessProbe:
+    failureThreshold: 12
+    httpGet:
+      path: /health/live
+      port: 9080
+      scheme: HTTP
+    initialDelaySeconds: 30
+    periodSeconds: 2
+    timeoutSeconds: 10
 ```
 {: codeblock}
 
@@ -233,7 +256,7 @@ The **deploy.yaml** file is configured to deploy one **OpenLibertyApplication**
 resource, **system**, which is controlled by the Open Liberty Operator.
 
 The **applicationImage** parameter defines what container image is deployed as part of the **OpenLibertyApplication** CRD. 
-This parameter follows the **<image-name>****[:tag]** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. 
+This parameter follows the **[image-name][:tag]** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. 
 The **system** microservice is configured to use the **image** created from the earlier build. 
 
 The **env** parameter is used to specify environment variables that are passed to the container at runtime.
