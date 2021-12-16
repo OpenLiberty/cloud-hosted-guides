@@ -57,6 +57,7 @@ jobs:
           - {"github":"cloud-hosted-guide-rest-client-reactjs","gitlab":"cloud-hosted-guide-rest-client-reactjs"}
           - {"github":"cloud-hosted-guide-rest-client-angularjs","gitlab":"cloud-hosted-guide-rest-client-angularjs"}
           - {"github":"cloud-hosted-guide-microprofile-graphql","gitlab":"cloud-hosted-guide-microprofile-graphql"}
+          - {"github":"cloud-hosted-guide-maven-multimodules","gitlab":"cloud-hosted-guide-maven-multimodules"}
 
     steps:
 
