@@ -142,18 +142,16 @@ import org.eclipse.microprofile.health.HealthCheckResponse;
 @ApplicationScoped
 public class InventoryStartupCheck implements HealthCheck {
 
-    private static final String STARTUP_CHECK = InventoryResource.class.getSimpleName()
-                                               + " Startup Check";
-
     @Override
     public HealthCheckResponse call() {
         OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
         ManagementFactory.getOperatingSystemMXBean();
-        if (bean.getSystemCpuLoad() < 0.95) {
-           return HealthCheckResponse.up(STARTUP_CHECK);
-        } else {
-           return HealthCheckResponse.down(STARTUP_CHECK);
-        }
+        double cpuUsed = bean.getSystemCpuLoad();
+        String cpuUsage = String.valueOf(cpuUsed);
+        return HealthCheckResponse.named(InventoryResource.class
+                                            .getSimpleName() + " Startup Check")
+                                            .withData("cpu used", cpuUsage)
+                                            .status(cpuUsed < 0.95).build();
     }
 }
 
@@ -483,7 +481,7 @@ mvn package
 Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
