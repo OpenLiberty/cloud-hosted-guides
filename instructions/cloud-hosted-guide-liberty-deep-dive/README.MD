@@ -1,5 +1,5 @@
 # Mirror Instructions
-All of the folders under `https://github.com/OpenLiberty/cloud-hosted-guides/tree/master/instructions/` have a matching Gitlab repository used for SkillsNetwork labs.
+All of the folders under `https://github.com/OpenLiberty/cloud-hosted-guides/tree/prod/instructions/` have a matching Gitlab repository used for SkillsNetwork labs.
 When creating a new cloud-hosted-guides guide some steps must be taken to ensure that future changes will be mirrored.
 
 1. Create the Quicklab 
