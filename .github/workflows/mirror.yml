@@ -44,7 +44,7 @@ jobs:
           - {"github":"cloud-hosted-guide-rest-intro","gitlab":"cloud-hosted-guide-rest-intro"}
           - {"github":"cloud-hosted-guide-contract-testing","gitlab":"cloud-hosted-guide-contract-testing"}
           - {"github":"cloud-hosted-guide-reactive-messaging-sse","gitlab":"cloud-hosted-guide-reactive-messaging-sse"}
-          - {"github":"cloud-hosted-guide-liberty-deep-dive","gitlab":"cloud-hosted-guide-liberty-deep-dive"}
+          - {"github":"cloud-hosted-guide-liberty-deep-dive","gitlab":"cloud-hosted-guide-masterclass"}
           - {"github":"cloud-hosted-guide-rest-openshift","gitlab":"cloud-hosted-guide-rest-openshift"}
           - {"github":"cloud-hosted-guide-spring-boot","gitlab":"cloud-hosted-guide-spring-boot"}
           - {"github":"cloud-hosted-guide-arquillian-managed","gitlab":"cloud-hosted-guide-arquillian-managed"}
