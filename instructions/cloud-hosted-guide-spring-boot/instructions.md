@@ -122,7 +122,7 @@ touch /home/project/guide-spring-boot/start/Dockerfile
 
 
 ```
-FROM openliberty/open-liberty:full-java11-openj9-ubi as staging
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi as staging
 
 COPY --chown=1001:0 target/guide-spring-boot-0.1.0.jar \
                     /staging/fat-guide-spring-boot-0.1.0.jar
@@ -132,7 +132,7 @@ RUN springBootUtility thin \
  --targetThinAppPath=/staging/thin-guide-spring-boot-0.1.0.jar \
  --targetLibCachePath=/staging/lib.index.cache
 
-FROM openliberty/open-liberty:full-java11-openj9-ubi
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
@@ -182,7 +182,7 @@ The **lib.index.cache** directory and the **thin-guide-spring-boot-0.1.0.jar** f
 Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
@@ -284,7 +284,7 @@ Update the **Maven POM** file in the **start** directory.
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.4.5</version>
+    <version>2.6.2</version>
   </parent>
 
   <dependencies>
@@ -342,7 +342,7 @@ Update the **Maven POM** file in the **start** directory.
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.3.4</version>
+        <version>3.5.1</version>
         <configuration>
           <appsDirectory>apps</appsDirectory>
           <!-- tag::installAppPackages[] -->
@@ -495,7 +495,7 @@ Update the Maven POM file in the **start** directory.
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.4.5</version>
+    <version>2.6.2</version>
   </parent>
 
   <dependencies>
@@ -553,7 +553,7 @@ Update the Maven POM file in the **start** directory.
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.3.4</version>
+        <version>3.5.1</version>
         <configuration>
           <appsDirectory>apps</appsDirectory>
           <!-- tag::installAppPackages[] -->
