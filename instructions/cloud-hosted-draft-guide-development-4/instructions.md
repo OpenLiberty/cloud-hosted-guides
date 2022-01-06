@@ -1,7 +1,7 @@
 
 # **Welcome to the Checking the health of microservices on Kubernetes guide!**
 
-Learn how to check the health of microservices on Kubernetes by setting up startup, liveness and readiness probes to inspect MicroProfile Health Check endpoints.
+Learn how to check the health of microservices on Kubernetes by setting up startup, liveness, and readiness probes to inspect MicroProfile Health Check endpoints.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -26,7 +26,7 @@ are **UP**. A service orchestrator can then use the health statuses to make deci
 
 Kubernetes provides startup, liveness, and readiness probes that are used to check the health of your 
 containers. These probes can check certain files in your containers, check a TCP socket, 
-or make HTTP requests. MicroProfile Health exposes startup, liveness and readiness endpoints on 
+or make HTTP requests. MicroProfile Health exposes startup, liveness, and readiness endpoints on 
 your microservices. Kubernetes polls these endpoints as specified by the probes to react 
 appropriately to any change in the microservice's status. Read the 
 [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) 
@@ -160,11 +160,12 @@ public class InventoryStartupCheck implements HealthCheck {
 
 
 
-A health check for startup allows applications to define startup probes that are used for initial verification of the application before the liveness probe takes over. 
-This is useful for applications which require additional startup time on their first initialization.
-The **@Startup** annotation must be applied on a HealthCheck implementation to define a startup check procedure, otherwise, this annotation is ignored.
-This startup check verifies that the cpu memory usage is below 95% of the maximum memory.
-If more than 95% of the maximum memory is used, a status of **DOWN** will be returned. 
+A health check for startup allows applications to define startup probes that verify 
+whether deployed application is fully initialized before the liveness probe takes over.
+This check is useful for applications that require additional startup time on their first initialization.
+The **@Startup** annotation must be applied on a HealthCheck implementation to define a startup check procedure. 
+Otherwise, this annotation is ignored. This startup check verifies that the cpu usage is below 95%.
+If more than 95% of the cpu is used, a status of **DOWN** is returned. 
 
 Create the **InventoryLivenessCheck** class.
 
@@ -214,18 +215,18 @@ public class InventoryLivenessCheck implements HealthCheck {
 
 
 
-A health Check for liveness allows third party services to determine if the application is running. 
-This means that if this procedure fails the application can be discarded (terminated, shutdown).
-The **@Liveness** annotation must be applied on a HealthCheck implementation to define a Liveness 
-check procedure, otherwise, this annotation is ignored.
+A health check for liveness allows third party services to determine whether the application is running.
+If this procedure fails, the application can be stopped.
+The **@Liveness** annotation must be applied on a HealthCheck implementation to define a Liveness
+check procedure. Otherwise, this annotation is ignored.
 This liveness check verifies that the heap memory usage is below 90% of the maximum memory.
-If more than 90% of the maximum memory is used, a status of **DOWN** will be returned. 
+If more than 90% of the maximum memory is used, a status of **DOWN** is returned. 
 
-The **inventory** microservice should be healthy only when **system** is available. To add this 
-check to the **/health/ready** endpoint, you will create a class that is annotated with the
-**@Readiness** annotation and implements the **HealthCheck** interface. 
-A Health Check for readiness allows third party services to know if the application is ready to process requests or not.
-The **@Readiness** annotation must be applied on a HealthCheck implementation to define a readiness check procedure, otherwise, this annotation is ignored.
+The **inventory** microservice is healthy only when the **system** microservice is available.
+To add this check to the **/health/ready** endpoint, create a class that is annotated with the
+**@Readiness** annotation and implements the **HealthCheck** interface.
+A Health Check for readiness allows third party services to know whether the application is ready to process requests.
+The **@Readiness** annotation must be applied on a HealthCheck implementation to define a readiness check procedure. Otherwise, this annotation is ignored.
 
 Create the **InventoryReadinessCheck** class.
 
@@ -293,22 +294,22 @@ public class InventoryReadinessCheck implements HealthCheck {
 
 
 
-This health check verifies that the **system** microservice is available at 
-**http://system-service:9080/**. The **system-service** host name is only accessible from 
-inside the cluster, you can't access it yourself. If it's available, then it returns an 
-**UP** status. Similarly, if it's unavailable then it returns a **DOWN** status. When the 
-status is **DOWN**, the microservice is considered to be unhealthy.
+This health check verifies that the **system** microservice is available at **http://system-service:9080/**. 
+The **system-service** host name is accessible only from inside the cluster; you can't access it yourself.
+If it's available, then it returns an **UP** status. Similarly, if it's unavailable then it returns a **DOWN** status.
+When the status is **DOWN**, the microservice is considered to be unhealthy.
 
 The health checks for the **system** microservice were already been implemented. The **system**
 microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. 
 This endpoint has been provided for you to observe the results of an unhealthy pod and how 
 Kubernetes reacts.
 
-# **Configuring startup, liveness and readiness probes**
+# **Configuring startup, liveness, and readiness probes**
 
-You will configure Kubernetes startup, liveness and readiness probes. Startup probes determines
-whether your application has started or not. Liveness probes determine whether a container needs to be restarted.
-Readiness probes determine whether your application is ready to accept requests. If it's not ready, traffic won't be routed to the container.
+You will configure Kubernetes startup, liveness, and readiness probes. 
+Startup probes determine whether your application is fully initialized.
+Liveness probes determine whether a container needs to be restarted.
+Readiness probes determine whether your application is ready to accept requests. If it's not ready, no traffic is routed to the container.
 
 Create the kubernetes configuration file.
 
@@ -447,18 +448,19 @@ spec:
 
 
 
-The startup, liveness and readiness probes are configured for the containers running the **system** 
+The startup, liveness, and readiness probes are configured for the containers that are running the **system**
 and **inventory** microservices.
 
 The startup probes are configured to poll the **/health/started** endpoint.
-The startup probe determines whether or not a container has started.
+The startup probe determines whether a container is started.
 
 The liveness probes are configured to poll the **/health/live** endpoint.
 The liveness probes determine whether a container needs to be restarted.
-The **initialDelaySeconds** field defines how long the probe waits before it 
-starts to poll so the probe does not start making requests before the server has started.  The **periodSeconds** 
-option defines how often the probe should poll the given endpoint. The **timeoutSeconds** 
-option defines how many seconds before the probe times out. The **failureThreshold** option defines how many times the probe fails 
+The **initialDelaySeconds** field defines the duration that the probe waits 
+before it starts to poll so that it does not make requests before the server is started.
+The **periodSeconds** option defines how often the probe polls the given endpoint.
+The **timeoutSeconds** option defines how many seconds before the probe times out.
+The **failureThreshold** option defines how many times the probe fails
 before the state changes from ready to not ready.
 
 The readiness probes are configured to poll the **/health/ready** endpoint.
