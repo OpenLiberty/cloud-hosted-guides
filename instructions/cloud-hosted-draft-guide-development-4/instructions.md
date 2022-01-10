@@ -1,7 +1,7 @@
 
-# **Welcome to the Checking the health of microservices on Kubernetes guide!**
+# **Welcome to the Adding health reports to microservices guide!**
 
-Learn how to check the health of microservices on Kubernetes by setting up startup, liveness, and readiness probes to inspect MicroProfile Health Check endpoints.
+Explore how to report and check the health of a microservice with MicroProfile Health.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -12,34 +12,24 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 # **What you'll learn**
 
-You will learn how to create health check endpoints for your microservices. Then, you 
-will configure Kubernetes to use these endpoints to keep your microservices running smoothly.
+You will learn how to use MicroProfile Health to report the health status of microservices and take
+appropriate actions based on this report.
 
-MicroProfile Health allows services to report their health, and it publishes the overall 
-health status to defined endpoints. If a service reports **UP**, then it's available. If 
-the service reports **DOWN**, then it's unavailable. MicroProfile Health reports an individual 
-service status at the endpoint and indicates the overall status as **UP** if all the services 
-are **UP**. A service orchestrator can then use the health statuses to make decisions.
+MicroProfile Health allows services to report their health, and it publishes the overall health status to a defined
+endpoint. A service reports **UP** if it is available and reports **DOWN** if it is unavailable. MicroProfile Health reports
+an individual service status at the endpoint and indicates the overall status as **UP** if all the services are **UP**. A service
+orchestrator can then use the health statuses to make decisions.
 
-Kubernetes provides startup, liveness, and readiness probes that are used to check the health of your 
-containers. These probes can check certain files in your containers, check a TCP socket, 
-or make HTTP requests. MicroProfile Health exposes startup, liveness, and readiness endpoints on 
-your microservices. Kubernetes polls these endpoints as specified by the probes to react 
-appropriately to any change in the microservice's status. Read the 
-[Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) 
-guide to learn more about MicroProfile Health.
+A service checks its own health by performing necessary self-checks and then reports its overall status by
+implementing the API provided by MicroProfile Health. A self-check can be a check on anything that the service needs, such
+as a dependency, a successful connection to an endpoint, a system property, a database connection, or
+the availability of required resources. MicroProfile offers checks for startup, liveness, and readiness.
 
-The two microservices you will work with are called **system** and **inventory**. The **system** microservice
-returns the JVM system properties of the running container and it returns the pod's name in the HTTP header
-making replicas easy to distinguish from each other. The **inventory** microservice
-adds the properties from the **system** microservice to the inventory. This demonstrates
-how communication can be established between pods inside a cluster.
-
-
-
+You will add startup, liveness, and readiness checks to the **system** and **inventory** services, that
+are provided for you, and implement what is necessary to report health status by
+using MicroProfile Health.
 
 
 # **Getting started**
@@ -54,11 +44,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-health.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-health.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-kubernetes-microprofile-health.git
-cd guide-kubernetes-microprofile-health
+git clone https://github.com/openliberty/guide-microprofile-health.git
+cd guide-microprofile-health
 ```
 {: codeblock}
 
@@ -68,62 +58,303 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
+<br/>
+### **Try what you'll build**
 
+The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-# **Logging into your cluster**
-
-For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
-Get the name of your namespace with the following command:
-
-```
-bx cr namespace-list
-```
-{: codeblock}
-
-Look for output that is similar to the following:
+To try out the application, first go to the **finish** directory and run the following
+Maven goal to build the application and deploy it to Open Liberty:
 
 ```
-Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
-
-Namespace
-sn-labs-yourname
-```
-
-Run the following command to store the namespace name in a variable.
-
-```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-```
-{: codeblock}
-
-Verify that the variable contains your namespace name:
-
-```
-echo $NAMESPACE_NAME
-```
-{: codeblock}
-
-Log in to the registry with the following command:
-```
-bx cr login
+cd finish
+mvn liberty:run
 ```
 {: codeblock}
 
 
-# **Adding health checks to the inventory microservice**
+After you see the following message, your application server is ready:
 
-Navigate to **start** directory to begin.
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+To access the **system** service, run the following curl command:
+```
+curl -s http://localhost:9080/system/properties | jq
+```
+{: codeblock}
+
+To access the **inventory** service, run the following curl command:
+```
+curl -s http://localhost:9080/inventory/systems | jq
+```
+{: codeblock}
+
+Visit the http://localhost:9080/health URL to see the
+overall health status of the application, as well as the aggregated data of the startup, liveness
+and readiness checks. Run the following curl command:
+```
+curl -s http://localhost:9080/health | jq
+```
+{: codeblock}
+
+Three checks show the state of the **system** service, and the other three
+checks show the state of the **inventory** service. As you might expect, all services are in the
+**UP** state, and the overall health status of the application is in the **UP** state.
+
+Access the **/health/started** endpoint by visiting the http://localhost:9080/health/started
+URL to view the data from the startup health checks. Run the following curl command:
+```
+curl -s http://localhost:9080/health/started | jq
+```
+{: codeblock}
+
+You can also access the **/health/live** endpoint by visiting the http://localhost:9080/health/live
+URL to view the data from the liveness health checks. Run the following curl command:
+```
+curl -s http://localhost:9080/health/live | jq
+```
+{: codeblock}
+
+Similarly, access the **/health/ready** endpoint by visiting the http://localhost:9080/health/ready
+URL to view the data from the readiness health checks. Run the following curl command:
+```
+curl -s http://localhost:9080/health/ready | jq
+```
+{: codeblock}
+
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
+in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
+from the **finish** directory in another shell session:
+
+```
+mvn liberty:stop
+```
+{: codeblock}
+
+
+
+# **Adding health checks to microservices**
+
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd /home/project/guide-microprofile-health/start
+```
+{: codeblock}
+
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
+deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```
+mvn liberty:dev
+```
+{: codeblock}
+
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
+or open the project in your editor.
+
+A health report will be generated automatically for all services that enable MicroProfile Health. The
+**mpHealth** feature has already been enabled for you in the **src/main/liberty/config/server.xml**
+file.
+
+All services must provide an implementation of the **HealthCheck** interface, that are used to
+verify their health. MicroProfile Health offers health checks for startup, liveness, and readiness.
+A startup check allows applications to define startup probes that are used 
+for initial verification of the application before the Liveness probe takes over. For example,
+a startup check might check which applications require additional startup time on their first
+initialization. A liveness check allows third-party services to determine whether a microservice is running. 
+If the liveness check fails, the application can be terminated. For example, a liveness check might fail if the application runs out of memory.
+A readiness check allows third-party services, such as Kubernetes, to determine whether a microservice
+is ready to process requests. For example, a readiness check might check dependencies,
+such as database connections.
+
+
+
+<br/>
+### **Adding health checks to the system service**
+
+Create the **SystemStartupCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemStartupCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemStartupCheck.java
+
+
+
+
+```
+package io.openliberty.guides.system;
+
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
+import javax.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Startup;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Startup
+@ApplicationScoped
+public class SystemStartupCheck implements HealthCheck {
+
+    @Override
+    public HealthCheckResponse call() {
+        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
+        ManagementFactory.getOperatingSystemMXBean();
+        double cpuUsed = bean.getSystemCpuLoad();
+        String cpuUsage = String.valueOf(cpuUsed);
+        return HealthCheckResponse.named(SystemResource.class
+                                            .getSimpleName() + " Startup Check")
+                                            .withData("cpu used", cpuUsage)
+                                            .status(cpuUsed < 0.95).build();
+    }
+}
+
+```
+{: codeblock}
+
+
+
+The **@Startup** annotation indicates that this is a startup health check procedure.
+In this case, you are checking the cpu usage. If more than 95% of the cpu
+is being used, a status of **DOWN** is returned.
+
+Create the **SystemLivenessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
+
+
+
+
+```
+package io.openliberty.guides.system;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+
+import javax.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class SystemLivenessCheck implements HealthCheck {
+
+  @Override
+  public HealthCheckResponse call() {
+    MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+    long memUsed = memBean.getHeapMemoryUsage().getUsed();
+    long memMax = memBean.getHeapMemoryUsage().getMax();
+
+    return HealthCheckResponse.named(
+      SystemResource.class.getSimpleName() + " Liveness Check")
+                              .withData("memory used", memUsed)
+                              .withData("memory max", memMax)
+                              .status(memUsed < memMax * 0.9).build();
+  }
+}
+```
+{: codeblock}
+
+
+
+The **@Liveness** annotation indicates that this is a liveness health check procedure.
+In this case, you are checking the heap memory usage. If more than 90% of the maximum memory
+is being used, a status of **DOWN** is returned.
+
+Create the **SystemReadinessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
+
+
+
+
+```
+package io.openliberty.guides.system;
+
+import javax.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Readiness
+@ApplicationScoped
+public class SystemReadinessCheck implements HealthCheck {
+
+  private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
+                                               + " Readiness Check";
+  @Override
+  public HealthCheckResponse call() {
+    if (!System.getProperty("wlp.server.name").equals("defaultServer")) {
+      return HealthCheckResponse.down(READINESS_CHECK);
+    }
+    return HealthCheckResponse.up(READINESS_CHECK);
+  }
+}
+```
+{: codeblock}
+
+
+
+
+The **@Readiness** annotation indicates that this particular bean is a readiness health check procedure.
+By pairing this annotation with the **ApplicationScoped** context from the Contexts and
+Dependency Injections API, the bean is discovered automatically when the http://localhost:9080/health
+endpoint receives a request.
+
+
+The **call()** method is used to return the health status of a particular service.
+In this case, you are simply checking if the server name is **defaultServer** and
+returning **UP** if it is, and **DOWN** otherwise. 
+Overall, this is a very simple implementation of the **call()**
+method. In a real environment, you would want to orchestrate more meaningful
+health checks.
+
+
+<br/>
+### **Adding health checks to the inventory service**
 
 Create the **InventoryStartupCheck** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
 
 
 
@@ -160,23 +391,19 @@ public class InventoryStartupCheck implements HealthCheck {
 
 
 
-A health check for startup allows applications to define startup probes that verify 
-whether deployed application is fully initialized before the liveness probe takes over.
-This check is useful for applications that require additional startup time on their first initialization.
-The **@Startup** annotation must be applied on a HealthCheck implementation to define a startup check procedure. 
-Otherwise, this annotation is ignored. This startup check verifies that the cpu usage is below 95%.
-If more than 95% of the cpu is used, a status of **DOWN** is returned. 
+This startup check verifies that the cpu usage is below 95%.
+If more than 95% of the cpu is being used, a status of **DOWN** is returned.
 
 Create the **InventoryLivenessCheck** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
 
 
 
@@ -190,21 +417,21 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.ManagementFactory;
 
 import org.eclipse.microprofile.health.Liveness;
+
 import org.eclipse.microprofile.health.HealthCheck;
 import org.eclipse.microprofile.health.HealthCheckResponse;
 
 @Liveness
 @ApplicationScoped
 public class InventoryLivenessCheck implements HealthCheck {
-
   @Override
   public HealthCheckResponse call() {
       MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
       long memUsed = memBean.getHeapMemoryUsage().getUsed();
       long memMax = memBean.getHeapMemoryUsage().getMax();
 
-      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
-                                      + " Liveness Check")
+      return HealthCheckResponse.named(
+        InventoryResource.class.getSimpleName() + " Liveness Check")
                                 .withData("memory used", memUsed)
                                 .withData("memory max", memMax)
                                 .status(memUsed < memMax * 0.9).build();
@@ -215,29 +442,19 @@ public class InventoryLivenessCheck implements HealthCheck {
 
 
 
-A health check for liveness allows third party services to determine whether the application is running.
-If this procedure fails, the application can be stopped.
-The **@Liveness** annotation must be applied on a HealthCheck implementation to define a Liveness
-check procedure. Otherwise, this annotation is ignored.
-This liveness check verifies that the heap memory usage is below 90% of the maximum memory.
-If more than 90% of the maximum memory is used, a status of **DOWN** is returned. 
-
-The **inventory** microservice is healthy only when the **system** microservice is available.
-To add this check to the **/health/ready** endpoint, create a class that is annotated with the
-**@Readiness** annotation and implements the **HealthCheck** interface.
-A Health Check for readiness allows third party services to know whether the application is ready to process requests.
-The **@Readiness** annotation must be applied on a HealthCheck implementation to define a readiness check procedure. Otherwise, this annotation is ignored.
+As with the **system** liveness check, you are checking the heap memory usage. If more
+than 90% of the maximum memory is being used, a **DOWN** status is returned.
 
 Create the **InventoryReadinessCheck** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
 
 
 
@@ -249,8 +466,8 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import org.eclipse.microprofile.health.Readiness;
 import org.eclipse.microprofile.health.HealthCheck;
 import org.eclipse.microprofile.health.HealthCheckResponse;
@@ -259,528 +476,324 @@ import org.eclipse.microprofile.health.HealthCheckResponse;
 @ApplicationScoped
 public class InventoryReadinessCheck implements HealthCheck {
 
-    private static final String READINESS_CHECK = InventoryResource.class
-                                                .getSimpleName()
-                                                + " Readiness Check";
+  private static final String READINESS_CHECK = InventoryResource.class.getSimpleName()
+                                               + " Readiness Check";
+  @Inject
+  InventoryConfig config;
 
-    @Inject
-    @ConfigProperty(name = "SYS_APP_HOSTNAME")
-    private String hostname;
-
-    public HealthCheckResponse call() {
-        if (isSystemServiceReachable()) {
-            return HealthCheckResponse.up(READINESS_CHECK);
-        } else {
-            return HealthCheckResponse.down(READINESS_CHECK);
-        }
+  public boolean isHealthy() {
+    if (config.isInMaintenance()) {
+      return false;
     }
-
-    private boolean isSystemServiceReachable() {
-        try {
-            Client client = ClientBuilder.newClient();
-            client
-                .target("http://" + hostname + ":9080/system/properties")
-                .request()
-                .post(null);
-
-            return true;
-        } catch (Exception ex) {
-            return false;
-        }
+    try {
+      String url = InventoryUtils.buildUrl("http", "localhost", config.getPortNumber(),
+          "/system/properties");
+      Client client = ClientBuilder.newClient();
+      Response response = client.target(url).request(MediaType.APPLICATION_JSON).get();
+      if (response.getStatus() != 200) {
+        return false;
+      }
+      return true;
+    } catch (Exception e) {
+      return false;
     }
+  }
+
+  @Override
+  public HealthCheckResponse call() {
+    if (!isHealthy()) {
+      return HealthCheckResponse
+          .down(READINESS_CHECK);
+    }
+    return HealthCheckResponse
+        .up(READINESS_CHECK);
+  }
+
 }
 ```
 {: codeblock}
 
 
 
-This health check verifies that the **system** microservice is available at **http://system-service:9080/**. 
-The **system-service** host name is accessible only from inside the cluster; you can't access it yourself.
-If it's available, then it returns an **UP** status. Similarly, if it's unavailable then it returns a **DOWN** status.
-When the status is **DOWN**, the microservice is considered to be unhealthy.
+In the **isHealthy()** method, 
+you report the **inventory** service as not ready if the service is in maintenance or if its dependant service is unavailable.
 
-The health checks for the **system** microservice were already been implemented. The **system**
-microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. 
-This endpoint has been provided for you to observe the results of an unhealthy pod and how 
-Kubernetes reacts.
+For simplicity, the custom **`io_openliberty_guides_inventory_inMaintenance`**
+MicroProfile Config property, that is defined in the **resources/CustomConfigSource.json**
+file, is used to indicate whether the service is in maintenance. This file was already
+created for you.
 
-# **Configuring startup, liveness, and readiness probes**
+Moreover, the readiness health check procedure makes an HTTP **GET** request to the **system** service and checks its status.
+If the request is successful, the **inventory** service is healthy and ready because its dependant service is available.
+Otherwise, the **inventory** service is not ready and an unhealthy readiness status is returned.
 
-You will configure Kubernetes startup, liveness, and readiness probes. 
-Startup probes determine whether your application is fully initialized.
-Liveness probes determine whether a container needs to be restarted.
-Readiness probes determine whether your application is ready to accept requests. If it's not ready, no traffic is routed to the container.
+If you are curious about the injected **inventoryConfig** object or if
+you want to learn more about MicroProfile Config, see
+[Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
 
-Create the kubernetes configuration file.
+
+
+# **Running the application**
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+While the server is running, run the following curl command to find
+the aggregated startup ,liveness, and readiness health reports on the two services:
+```
+curl -s http://localhost:9080/health | jq
+```
+{: codeblock}
+
+You can also run the following curl command to view the startup health report:
+```
+curl -s http://localhost:9080/health/started | jq
+```
+{: codeblock}
+
+or run the following curl command to view the liveness health report:
+```
+curl -s http://localhost:9080/health/live | jq
+```
+{: codeblock}
+
+or run the following curl command to view the readiness health report:
+```
+curl -s http://localhost:9080/health/ready | jq
+```
+{: codeblock}
+
+Put the **inventory** service in maintenance by setting the **`io_openliberty_guides_inventory_inMaintenance`**
+property to **true** in the **resources/CustomConfigSource.json** file. 
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json
+
+```
+{
+  "config_ordinal":700,
+  "io_openliberty_guides_inventory_inMaintenance":true
+}
+```
+{: codeblock}
+
+Because this configuration file is picked up dynamically, simply refresh the http://localhost:9080/health
+URL to see that the state of the **inventory** service changed to **DOWN**. Run the following curl command:
+```
+curl -s http://localhost:9080/health | jq
+```
+{: codeblock}
+
+The overall state of the application also changed to **DOWN** as a result. Run the following curl command
+ to verify that the **inventory** service is indeed in maintenance:
+```
+curl -s http://localhost:9080/inventory/systems | jq
+```
+{: codeblock}
+
+Set the **`io_openliberty_guides_inventory_inMaintenance`**
+property back to **false** after you are done.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json
+
+```
+{
+  "config_ordinal":700,
+  "io_openliberty_guides_system_inMaintenance":false
+}
+```
+{: codeblock}
+
+
+# **Testing health checks**
+
+You will implement several test methods to validate the health of the **system** and **inventory** services.
+
+Create the **HealthIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
+touch /home/project/guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/kubernetes.yaml
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
 
 
 
 
 ```
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: system
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        # system probes
-        startupProbe:
-          httpGet:
-            path: /health/started
-            port: 9080
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        env:
-        - name: SYS_APP_HOSTNAME
-          value: system-service
-        # inventory probe
-        startupProbe:
-          httpGet:
-            #tag::start2[]
-            path: /health/started
-            #end::start2[]
-            port: 9080
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 31000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 32000
+package it.io.openliberty.guides.health;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.beans.Transient;
+import java.util.HashMap;
+
+import javax.json.JsonArray;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class HealthIT {
+
+  private JsonArray servicesStates;
+  private static HashMap<String, String> endpointData;
+
+  private String HEALTH_ENDPOINT = "health";
+  private String READINESS_ENDPOINT = "health/ready";
+  private String LIVENES_ENDPOINT = "health/live";
+  private String STARTUP_ENDPOINT = "health/started";
+
+  @BeforeEach
+  public void setup() {
+    endpointData = new HashMap<String, String>();
+  }
+
+  @Test
+  public void testStartup() {
+    endpointData.put("InventoryResource Startup Check", "UP");
+    endpointData.put("SystemResource Startup Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, STARTUP_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  @Test
+  public void testLiveness() {
+    endpointData.put("SystemResource Liveness Check", "UP");
+    endpointData.put("InventoryResource Liveness Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, LIVENES_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  @Test
+  public void testReadiness() {
+    endpointData.put("SystemResource Readiness Check", "UP");
+    endpointData.put("InventoryResource Readiness Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, READINESS_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  @Test
+  public void testHealth() {
+    endpointData.put("SystemResource Startup Check", "UP");
+    endpointData.put("SystemResource Liveness Check", "UP");
+    endpointData.put("SystemResource Readiness Check", "UP");
+    endpointData.put("InventoryResource Startup Check", "UP");
+    endpointData.put("InventoryResource Liveness Check", "UP");
+    endpointData.put("InventoryResource Readiness Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, HEALTH_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+
+    endpointData.put("InventoryResource Readiness Check", "DOWN");
+    HealthITUtil.changeInventoryProperty(HealthITUtil.INV_MAINTENANCE_FALSE,
+        HealthITUtil.INV_MAINTENANCE_TRUE);
+    servicesStates = HealthITUtil.connectToHealthEnpoint(503, HEALTH_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  private void checkStates(HashMap<String, String> testData, JsonArray servStates) {
+    testData.forEach((service, expectedState) -> {
+      assertEquals(expectedState, HealthITUtil.getActualState(service, servStates),
+          "The state of " + service + " service is not matching.");
+    });
+  }
+
+  @AfterEach
+  public void teardown() {
+    HealthITUtil.cleanUp();
+  }
+
+}
 ```
 {: codeblock}
 
 
 
-The startup, liveness, and readiness probes are configured for the containers that are running the **system**
-and **inventory** microservices.
 
-The startup probes are configured to poll the **/health/started** endpoint.
-The startup probe determines whether a container is started.
+Let's break down the test cases:
 
-The liveness probes are configured to poll the **/health/live** endpoint.
-The liveness probes determine whether a container needs to be restarted.
-The **initialDelaySeconds** field defines the duration that the probe waits 
-before it starts to poll so that it does not make requests before the server is started.
-The **periodSeconds** option defines how often the probe polls the given endpoint.
-The **timeoutSeconds** option defines how many seconds before the probe times out.
-The **failureThreshold** option defines how many times the probe fails
-before the state changes from ready to not ready.
+* The **testStartup()** test case compares the generated health report for the
+startup checks with the actual status of the services.
+* The **testLiveness()** test case compares the generated health report for the
+liveness checks with the actual status of the services.
+* The **testReadiness()** test case compares the generated health report for the
+readiness checks with the actual status of the services.
+* The **testHealth()** test case compares the generated health report
+with the actual status of the services. This test also puts the **inventory** service
+in maintenance by setting the **`io_openliberty_guides_inventory_inMaintenance`**
+property to **true** and comparing the generated health report with the actual status of
+the services.
 
-The readiness probes are configured to poll the **/health/ready** endpoint.
-The readiness probe determines the READY status of the container, as seen in the **kubectl get pods** output.
-Similar to the liveness probes, the readiness probes also define **initialDelaySeconds**,
-**periodSeconds**, **timeoutSeconds**,
-and **failureThreshold**.
-
-# **Deploying the microservices**
-
-To build these microservices, navigate to the **start** directory and run the following 
-command.
-
-```
-mvn package
-```
-{: codeblock}
+A few more tests were included to verify the basic functionality of the **system** and **inventory**
+services. They can be found under the **src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java**
+and **src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java** files.
+If a test failure occurs, then you might have introduced a bug into the code. These tests
+run automatically as a part of the integration test suite.
 
 
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
 
 
-Next, run the **docker build** commands to build container images for your application:
-```
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-{: codeblock}
 
-
-The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
-The tag for an image describes the specific image version. 
-If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
-
-Push your images to the container registry on IBM Cloud with the following commands:
-
-```
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-```
-{: codeblock}
-
-Update the image names so that the images in your IBM Cloud container registry are used.
-Set the image pull policy to **Always** 
-and remove the **nodePort** fields so that the ports can be automatically generated:
-```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
-```
-{: codeblock}
-
-When the builds succeed, run the following command to deploy the necessary Kubernetes 
-resources to serve the applications.
-
-```
-kubectl apply -f kubernetes.yaml
-```
-{: codeblock}
-
-
-Use the following command to view the status of the pods. There will be two **system** pods 
-and one **inventory** pod, later you'll observe their behavior as the **system** pods become unhealthy.
-
-```
-kubectl get pods
-```
-{: codeblock}
-
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          59s
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          59s
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          59s
-```
-
-Wait until the pods are ready. After the pods are ready, you will make requests to your 
-services.
-
-
-In this IBM cloud environment, you need to access the services by using the Kubernetes API.
-Run the following command to start a proxy to the Kubernetes API server:
-
-```
-kubectl proxy
-```
-{: codeblock}
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Run the following commands to store the proxy path of the **system** and **inventory** services.
-```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/inventory-service/proxy
-```
-{: codeblock}
-
-Run the following echo commands to verify the variables:
-
-```
-echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
-```
-{: codeblock}
-
-
-The output appears as shown in the following example:
-
-```
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
-```
-
-Make a request to the system service to see the JVM system properties with the following **curl** command:
-```
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-{: codeblock}
-
-The readiness probe ensures the READY state won't be `1/1`
-until the container is available to accept requests.
-Without a readiness probe, you might notice an unsuccessful response from the server.
-This scenario can occur when the container is started,
-but the application server isn't fully initialized.
-With the readiness probe, you can be certain the pod accepts traffic only
-when the microservice is fully started.
-
-Similarly, access the inventory service and observe the successful request with the following command:
-```
-curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
-```
-{: codeblock}
-
-# **Changing the ready state of the system microservice**
-
-An **unhealthy** endpoint has been provided under the **system** microservice to set it to an unhealthy 
-state. The unhealthy state causes the readiness probe to fail.
-A request to the **unhealthy** endpoint puts the service in an unhealthy state as a simulation.
-
-
-Run the following **curl** command to invoke the unhealthy endpoint:
-```
-curl http://$SYSTEM_PROXY/system/unhealthy
-```
-{: codeblock}
-
-Run the following command to view the state of the pods:
-
-```
-kubectl get pods
-```
-{: codeblock}
-
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          1m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          1m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
-```
-
-
-You will notice that one of the two **system** pods is no longer in the ready state.
-Make a request to the **/system/properties** endpoint with the following command:
-```
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-{: codeblock}
-
-Your request is successful because you have two replicas and one is still healthy.
 
 <br/>
-### **Observing the effects on the inventory microservice**
+### **Running the tests**
 
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
-Wait until the **system-service** pod is ready again.
-Make several requests to the **/system/unhealthy** endpoint of the **system** service
-until you see two pods are unhealthy.
-```
-curl http://$SYSTEM_PROXY/system/unhealthy
-```
-{: codeblock}
-
-Observe the output of **kubectl get pods**.
-```
-kubectl get pods
-```
-{: codeblock}
-
-You will see both pods are no longer ready. 
-During this process, the readiness probe for the **inventory** microservice will also fail. 
-Observe that it's no longer in the ready state either.
-
-First, both **system** pods will no longer be ready because the readiness probe failed.
+You see the following output:
 
 ```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          5m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          5m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          5m
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running it.io.openliberty.guides.health.HealthIT
+[INFO] [WARNING ] CWMMH0052W: The class io.openliberty.microprofile.health30.impl.HealthCheck30ResponseImpl implementing HealthCheckResponse in the guide-microprofile-health application in module guide-microprofile-health.war, reported a DOWN status with data Optional[{}].
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.706 s - in it.io.openliberty.guides.health.HealthIT
+[INFO] Running it.io.openliberty.guides.system.SystemEndpointIT
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in it.io.openliberty.guides.system.SystemEndpointIT
+[INFO] Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+[INFO] [WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+[INFO] Could not send Message.
+[INFO] [err] The specified host is unknown.
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.171 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-Next, the **inventory** pod is no longer ready because the readiness probe failed. The probe 
-failed because **system-service** is now unavailable.
+The warning messages are expected. The first warning results from a request to a service that is under maintenance. This request is made in the **testHealth()** test from the **InventoryEndpointIT** integration test. The second warning and error results from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
 
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          6m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          6m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          6m
-```
+The tests may fail if your system's CPU or memory is high in usage. The status of the system will be **DOWN** if the CPU usage is over 95%, or the memory usage is over 90%.
 
-Then, the **system** pods will start to become healthy again after 60 seconds.
+To see whether the tests detect a failure, manually change the configuration of
+**`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**
+in the **resources/CustomConfigSource.json** file. Rerun the tests to see a test failure occur.
+The test failure occurs because the initial status of the **inventory** service is **DOWN**.
 
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
-```
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
-```
-
-Finally, you will see all of the pods have recovered.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          8m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          8m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
-```
-
-# **Testing the microservices**
-
-
-Run the following commands to store the proxy path of the **system** and **inventory** services.
-```
-cd /home/project/guide-kubernetes-microprofile-health/start
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$NAMESPACE_NAME/services/inventory-service/proxy
-```
-{: codeblock}
-
-Run the integration tests by using the following command:
-```
-mvn failsafe:integration-test \
-    -Dsystem.service.root=$SYSTEM_PROXY \
-    -Dinventory.service.root=$INVENTORY_PROXY
-```
-{: codeblock}
-
-A few tests are included for you to test the basic functions of the microservices.
-If a test fails, then you might have introduced a bug into the code.
-Wait for all pods to be in the ready state before you run the tests.
-
-When the tests succeed, you should see output similar to the following in your console.
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.65 s - in it.io.openliberty.guides.system.SystemEndpointIT
-
-Results:
-
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-```
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
-
-Results:
-
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
-```
-
-# **Tearing down the environment**
-
-Press **CTRL+C** to stop the proxy server that was started at step 7.
-
-To remove all of the resources created during this guide, run the following command to 
-delete all of the resources that you created.
-
-```
-kubectl delete -f kubernetes.yaml
-```
-{: codeblock}
-
-
-
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
+where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
 # **Summary**
 
 ## **Nice Work!**
 
-You have used MicroProfile Health and Open Liberty to create endpoints that report on 
+You just learned how to add health checks to report the states of microservices by using 
 
-your microservice's status. Then, you observed how Kubernetes uses the **/health/started**,
-**/health/live**, and **/health/ready** endpoints to keep your microservices running smoothly.
+MicroProfile Health in Open Liberty. Then, you wrote tests to validate the generated
+health report.
 
+Feel free to try one of the related MicroProfile guides. They demonstrate additional
+technologies that you can learn and expand on top of what you built here.
 
 
 <br/>
@@ -789,11 +802,11 @@ your microservice's status. Then, you observed how Kubernetes uses the **/health
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-kubernetes-microprofile-health** project by running the following commands:
+Delete the **guide-microprofile-health** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-kubernetes-microprofile-health
+rm -fr guide-microprofile-health
 ```
 {: codeblock}
 
@@ -802,7 +815,7 @@ rm -fr guide-kubernetes-microprofile-health
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Checking%20the%20health%20of%20microservices%20on%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-health)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Adding%20health%20reports%20to%20microservices&guide-id=cloud-hosted-guide-microprofile-health)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -810,16 +823,18 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-health/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-health/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 
 
 <br/>
