@@ -25,9 +25,9 @@ orchestrator can then use the health statuses to make decisions.
 A service checks its own health by performing necessary self-checks and then reports its overall status by
 implementing the API provided by MicroProfile Health. A self-check can be a check on anything that the service needs, such
 as a dependency, a successful connection to an endpoint, a system property, a database connection, or
-the availability of required resources. MicroProfile offers checks for both liveness and readiness.
+the availability of required resources. MicroProfile offers checks for startup, liveness, and readiness.
 
-You will add liveness and readiness checks to the **system** and **inventory** services, which
+You will add startup, liveness, and readiness checks to the **system** and **inventory** services, that
 are provided for you, and implement what is necessary to report health status by
 using MicroProfile Health.
 
@@ -94,28 +94,35 @@ curl -s http://localhost:9080/inventory/systems | jq
 {: codeblock}
 
 Visit the http://localhost:9080/health URL to see the
-overall health status of the application, as well as the aggregated data of the liveness
+overall health status of the application, as well as the aggregated data of the startup, liveness,
 and readiness checks. Run the following curl command:
 ```
 curl -s http://localhost:9080/health | jq
 ```
 {: codeblock}
 
-Two checks show the state of the **system** service, and the other two
-checks show the state of the **inventory** service. As you might expect, both services are in the
+Three checks show the state of the **system** service, and the other three
+checks show the state of the **inventory** service. As you might expect, all services are in the
 **UP** state, and the overall health status of the application is in the **UP** state.
 
-You can also access the **/health/ready** endpoint by visiting the http://localhost:9080/health/ready
-URL to view the data from the readiness health checks. Run the following curl command:
+Access the **/health/started** endpoint by visiting the http://localhost:9080/health/started
+URL to view the data from the startup health checks. Run the following curl command:
 ```
-curl -s http://localhost:9080/health/ready | jq
+curl -s http://localhost:9080/health/started | jq
 ```
 {: codeblock}
 
-Similarly, access the **/health/live** endpoint by visiting the http://localhost:9080/health/live
+You can also access the **/health/live** endpoint by visiting the http://localhost:9080/health/live
 URL to view the data from the liveness health checks. Run the following curl command:
 ```
 curl -s http://localhost:9080/health/live | jq
+```
+{: codeblock}
+
+Similarly, access the **/health/ready** endpoint by visiting the http://localhost:9080/health/ready
+URL to view the data from the readiness health checks. Run the following curl command:
+```
+curl -s http://localhost:9080/health/ready | jq
 ```
 {: codeblock}
 
@@ -162,29 +169,32 @@ A health report will be generated automatically for all services that enable Mic
 **mpHealth** feature has already been enabled for you in the **src/main/liberty/config/server.xml**
 file.
 
-All services must provide an implementation of the **HealthCheck** interface, which will be used to
-verify their health. MicroProfile Health offers health checks for both readiness and liveness.
+All services must provide an implementation of the **HealthCheck** interface, which is used to
+verify their health. MicroProfile Health offers health checks for startup, liveness, and readiness.
+A startup check allows applications to define startup probes that are used 
+for initial verification of the application before the Liveness probe takes over. For example,
+a startup check might check which applications require additional startup time on their first
+initialization. A liveness check allows third-party services to determine whether a microservice is running. 
+If the liveness check fails, the application can be terminated. For example, a liveness check might fail if the application runs out of memory.
 A readiness check allows third-party services, such as Kubernetes, to determine whether a microservice
 is ready to process requests. For example, a readiness check might check dependencies,
-such as database connections. A liveness check allows third-party services to determine
-whether a microservice is running. If the liveness check fails, the application can be
-terminated. For example, a liveness check might fail if the application runs out of memory.
+such as database connections.
 
 
 
 <br/>
 ### **Adding health checks to the system service**
 
-Create the **SystemReadinessCheck** class.
+Create the **SystemStartupCheck** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemStartupCheck.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemStartupCheck.java
 
 
 
@@ -192,44 +202,38 @@ touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty
 ```
 package io.openliberty.guides.system;
 
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
 import javax.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.Startup;
 import org.eclipse.microprofile.health.HealthCheck;
 import org.eclipse.microprofile.health.HealthCheckResponse;
 
-@Readiness
+@Startup
 @ApplicationScoped
-public class SystemReadinessCheck implements HealthCheck {
+public class SystemStartupCheck implements HealthCheck {
 
-  private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
-                                               + " Readiness Check";
-  @Override
-  public HealthCheckResponse call() {
-    if (!System.getProperty("wlp.server.name").equals("defaultServer")) {
-      return HealthCheckResponse.down(READINESS_CHECK);
+    @Override
+    public HealthCheckResponse call() {
+        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
+        ManagementFactory.getOperatingSystemMXBean();
+        double cpuUsed = bean.getSystemCpuLoad();
+        String cpuUsage = String.valueOf(cpuUsed);
+        return HealthCheckResponse.named(SystemResource.class
+                                            .getSimpleName() + " Startup Check")
+                                            .withData("cpu used", cpuUsage)
+                                            .status(cpuUsed < 0.95).build();
     }
-    return HealthCheckResponse.up(READINESS_CHECK);
-  }
 }
+
 ```
 {: codeblock}
 
 
 
-
-The **@Readiness** annotation indicates that this particular bean is a readiness health check procedure.
-By pairing this annotation with the **ApplicationScoped** context from the Contexts and
-Dependency Injections API, the bean is discovered automatically when the http://localhost:9080/health
-endpoint receives a request.
-
-
-The **call()** method is used to return the health status of a particular service.
-In this case, you are simply checking if the server name is **defaultServer** and
-returning **UP** if it is, and **DOWN** otherwise.  
-Overall, this is a very simple implementation of the **call()**
-method. In a real environment, you would want to orchestrate more meaningful
-health checks.
-
+The **@Startup** annotation indicates that this class is a startup health check procedure.
+In this case, you are checking the cpu usage. If more than 95% of the cpu
+is being used, a status of **DOWN** is returned.
 
 Create the **SystemLivenessCheck** class.
 
@@ -278,13 +282,168 @@ public class SystemLivenessCheck implements HealthCheck {
 
 
 
-The **@Liveness** annotation indicates that this is a liveness health check procedure.
+The **@Liveness** annotation indicates that this class is a liveness health check procedure.
 In this case, you are checking the heap memory usage. If more than 90% of the maximum memory
 is being used, a status of **DOWN** is returned.
+
+Create the **SystemReadinessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
+
+
+
+
+```
+package io.openliberty.guides.system;
+
+import javax.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Readiness
+@ApplicationScoped
+public class SystemReadinessCheck implements HealthCheck {
+
+  private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
+                                               + " Readiness Check";
+  @Override
+  public HealthCheckResponse call() {
+    if (!System.getProperty("wlp.server.name").equals("defaultServer")) {
+      return HealthCheckResponse.down(READINESS_CHECK);
+    }
+    return HealthCheckResponse.up(READINESS_CHECK);
+  }
+}
+```
+{: codeblock}
+
+
+
+
+The **@Readiness** annotation indicates that this class is a readiness health check procedure.
+By pairing this annotation with the **ApplicationScoped** context from the Contexts and
+Dependency Injections API, the bean is discovered automatically when the http://localhost:9080/health
+endpoint receives a request.
+
+
+The **call()** method is used to return the health status of a particular service.
+In this case, you are checking if the server name is **defaultServer** and
+returning **UP** if it is, and **DOWN** otherwise. 
+This example is a very simple implementation of the **call()**
+method. In a real environment, you would orchestrate more meaningful
+health checks.
 
 
 <br/>
 ### **Adding health checks to the inventory service**
+
+Create the **InventoryStartupCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+
+
+
+
+```
+package io.openliberty.guides.inventory;
+
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
+import javax.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Startup;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Startup
+@ApplicationScoped
+public class InventoryStartupCheck implements HealthCheck {
+
+    @Override
+    public HealthCheckResponse call() {
+        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
+        ManagementFactory.getOperatingSystemMXBean();
+        double cpuUsed = bean.getSystemCpuLoad();
+        String cpuUsage = String.valueOf(cpuUsed);
+        return HealthCheckResponse.named(InventoryResource.class
+                                            .getSimpleName() + " Startup Check")
+                                            .withData("cpu used", cpuUsage)
+                                            .status(cpuUsed < 0.95).build();
+    }
+}
+
+```
+{: codeblock}
+
+
+
+This startup check verifies that the cpu usage is below 95%.
+If more than 95% of the cpu is being used, a status of **DOWN** is returned.
+
+Create the **InventoryLivenessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+
+
+
+
+```
+package io.openliberty.guides.inventory;
+
+import javax.enterprise.context.ApplicationScoped;
+
+import java.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
+
+import org.eclipse.microprofile.health.Liveness;
+
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class InventoryLivenessCheck implements HealthCheck {
+  @Override
+  public HealthCheckResponse call() {
+      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+      long memUsed = memBean.getHeapMemoryUsage().getUsed();
+      long memMax = memBean.getHeapMemoryUsage().getMax();
+
+      return HealthCheckResponse.named(
+        InventoryResource.class.getSimpleName() + " Liveness Check")
+                                .withData("memory used", memUsed)
+                                .withData("memory max", memMax)
+                                .status(memUsed < memMax * 0.9).build();
+  }
+}
+```
+{: codeblock}
+
+
+
+As with the **system** liveness check, you are checking the heap memory usage. If more
+than 90% of the maximum memory is being used, a **DOWN** status is returned.
 
 Create the **InventoryReadinessCheck** class.
 
@@ -361,7 +520,7 @@ you report the **inventory** service as not ready if the service is in maintenan
 
 For simplicity, the custom **`io_openliberty_guides_inventory_inMaintenance`**
 MicroProfile Config property, which is defined in the **resources/CustomConfigSource.json**
-file, is used to indicate whether the service is in maintenance. This file was already
+file, indicates whether the service is in maintenance. This file was already
 created for you.
 
 Moreover, the readiness health check procedure makes an HTTP **GET** request to the **system** service and checks its status.
@@ -372,57 +531,6 @@ If you are curious about the injected **inventoryConfig** object or if
 you want to learn more about MicroProfile Config, see
 [Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
 
-Create the **InventoryLivenessCheck** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
-
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import javax.enterprise.context.ApplicationScoped;
-
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
-
-import org.eclipse.microprofile.health.Liveness;
-
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class InventoryLivenessCheck implements HealthCheck {
-  @Override
-  public HealthCheckResponse call() {
-      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-      long memUsed = memBean.getHeapMemoryUsage().getUsed();
-      long memMax = memBean.getHeapMemoryUsage().getMax();
-
-      return HealthCheckResponse.named(
-        InventoryResource.class.getSimpleName() + " Liveness Check")
-                                .withData("memory used", memUsed)
-                                .withData("memory max", memMax)
-                                .status(memUsed < memMax * 0.9).build();
-  }
-}
-```
-{: codeblock}
-
-
-
-As with the **system** liveness check, you are checking the heap memory usage. If more
-than 90% of the maximum memory is being used, a **DOWN** status is returned.
-
 
 
 # **Running the application**
@@ -431,21 +539,27 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 
 While the server is running, run the following curl command to find
-the aggregated liveness and readiness health reports on the two services:
+the aggregated startup ,liveness, and readiness health reports on the two services:
 ```
 curl -s http://localhost:9080/health | jq
 ```
 {: codeblock}
 
-You can also run the following curl command to view the readiness health report:
+You can also run the following curl command to view the startup health report:
 ```
-curl -s http://localhost:9080/health/ready | jq
+curl -s http://localhost:9080/health/started | jq
 ```
 {: codeblock}
 
 or run the following curl command to view the liveness health report:
 ```
 curl -s http://localhost:9080/health/live | jq
+```
+{: codeblock}
+
+or run the following curl command to view the readiness health report:
+```
+curl -s http://localhost:9080/health/ready | jq
 ```
 {: codeblock}
 
@@ -458,7 +572,7 @@ property to **true** in the **resources/CustomConfigSource.json** file.
 ```
 {
   "config_ordinal":700,
-  "io_openliberty_guides_system_inMaintenance":true
+  "io_openliberty_guides_inventory_inMaintenance":true
 }
 ```
 {: codeblock}
@@ -492,7 +606,6 @@ property back to **false** after you are done.
 {: codeblock}
 
 
-
 # **Testing health checks**
 
 You will implement several test methods to validate the health of the **system** and **inventory** services.
@@ -516,6 +629,7 @@ package it.io.openliberty.guides.health;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.beans.Transient;
 import java.util.HashMap;
 
 import javax.json.JsonArray;
@@ -532,6 +646,7 @@ public class HealthIT {
   private String HEALTH_ENDPOINT = "health";
   private String READINESS_ENDPOINT = "health/ready";
   private String LIVENES_ENDPOINT = "health/live";
+  private String STARTUP_ENDPOINT = "health/started";
 
   @BeforeEach
   public void setup() {
@@ -539,22 +654,11 @@ public class HealthIT {
   }
 
   @Test
-  public void testIfServicesAreUp() {
-    endpointData.put("SystemResource Readiness Check", "UP");
-    endpointData.put("SystemResource Liveness Check", "UP");
-    endpointData.put("InventoryResource Readiness Check", "UP");
-    endpointData.put("InventoryResource Liveness Check", "UP");
+  public void testStartup() {
+    endpointData.put("InventoryResource Startup Check", "UP");
+    endpointData.put("SystemResource Startup Check", "UP");
 
-    servicesStates = HealthITUtil.connectToHealthEnpoint(200, HEALTH_ENDPOINT);
-    checkStates(endpointData, servicesStates);
-  }
-
-  @Test
-  public void testReadiness() {
-    endpointData.put("SystemResource Readiness Check", "UP");
-    endpointData.put("InventoryResource Readiness Check", "UP");
-
-    servicesStates = HealthITUtil.connectToHealthEnpoint(200, READINESS_ENDPOINT);
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, STARTUP_ENDPOINT);
     checkStates(endpointData, servicesStates);
   }
 
@@ -568,11 +672,22 @@ public class HealthIT {
   }
 
   @Test
-  public void testIfInventoryServiceIsDown() {
+  public void testReadiness() {
     endpointData.put("SystemResource Readiness Check", "UP");
-    endpointData.put("SystemResource Liveness Check", "UP");
     endpointData.put("InventoryResource Readiness Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, READINESS_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  @Test
+  public void testHealth() {
+    endpointData.put("SystemResource Startup Check", "UP");
+    endpointData.put("SystemResource Liveness Check", "UP");
+    endpointData.put("SystemResource Readiness Check", "UP");
+    endpointData.put("InventoryResource Startup Check", "UP");
     endpointData.put("InventoryResource Liveness Check", "UP");
+    endpointData.put("InventoryResource Readiness Check", "UP");
 
     servicesStates = HealthITUtil.connectToHealthEnpoint(200, HEALTH_ENDPOINT);
     checkStates(endpointData, servicesStates);
@@ -605,13 +720,14 @@ public class HealthIT {
 
 Let's break down the test cases:
 
-* The **testIfServicesAreUp()** test case compares the generated health report
-with the actual status of the services.
-* The **testReadiness()** test case compares the generated health report for the
-readiness checks with the actual status of the services.
+* The **testStartup()** test case compares the generated health report for the
+startup checks with the actual status of the services.
 * The **testLiveness()** test case compares the generated health report for the
 liveness checks with the actual status of the services.
-* The **testIfInventoryServiceIsDown()** test case puts the **inventory** service
+* The **testReadiness()** test case compares the generated health report for the
+readiness checks with the actual status of the services.
+* The **testHealth()** test case compares the generated health report
+with the actual status of the services. This test also puts the **inventory** service
 in maintenance by setting the **`io_openliberty_guides_inventory_inMaintenance`**
 property to **true** and comparing the generated health report with the actual status of
 the services.
@@ -630,7 +746,7 @@ run automatically as a part of the integration test suite.
 <br/>
 ### **Running the tests**
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 You see the following output:
 
@@ -639,22 +755,24 @@ You see the following output:
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
 [INFO] Running it.io.openliberty.guides.health.HealthIT
-[INFO] [WARNING ] CWMH0052W: The class com.ibm.ws.microprofile.health.impl.HealthCheckResponseImpl implementing HealthCheckResponse in the guide-microprofile-health application in module guide-microprofile-health.war, reported a DOWN status with data Optional[{}].
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.463 s - in it.io.openliberty.guides.health.HealthIT
+[INFO] [WARNING ] CWMMH0052W: The class io.openliberty.microprofile.health30.impl.HealthCheck30ResponseImpl implementing HealthCheckResponse in the guide-microprofile-health application in module guide-microprofile-health.war, reported a DOWN status with data Optional[{}].
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.706 s - in it.io.openliberty.guides.health.HealthIT
 [INFO] Running it.io.openliberty.guides.system.SystemEndpointIT
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s - in it.io.openliberty.guides.system.SystemEndpointIT
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in it.io.openliberty.guides.system.SystemEndpointIT
 [INFO] Running it.io.openliberty.guides.inventory.InventoryEndpointIT
 [INFO] [WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
 [INFO] Could not send Message.
 [INFO] [err] The specified host is unknown.
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.102 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
-[INFO]
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.171 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+[INFO] 
 [INFO] Results:
-[INFO]
+[INFO] 
 [INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-The warning messages are expected. The first warning results from a request to a service that is under maintenance. This request is made in the **testIfInventoryServiceIsDown()** test from the **InventoryEndpointIT** integration test. The second warning and error results from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
+The warning messages are expected. The first warning results from a request to a service that is under maintenance. This request is made in the **testHealth()** test from the **InventoryEndpointIT** integration test. The second warning and error results from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
+
+The tests might fail if your system CPU or memory use is high. The status of the system is DOWN if the CPU usage is over 95%, or the memory usage is over 90%.
 
 To see whether the tests detect a failure, manually change the configuration of
 **`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**
@@ -669,7 +787,7 @@ where you ran the server, or by typing **q** and then pressing the **enter/retur
 
 ## **Nice Work!**
 
-You just learned how to add health checks to report the states of microservices by using
+You just learned how to add health checks to report the states of microservices by using 
 
 MicroProfile Health in Open Liberty. Then, you wrote tests to validate the generated
 health report.
