@@ -1,7 +1,7 @@
 
 # **Welcome to the Checking the health of microservices on Kubernetes guide!**
 
-Learn how to check the health of microservices on Kubernetes by setting up readiness and liveness probes to inspect MicroProfile Health Check endpoints.
+Learn how to check the health of microservices on Kubernetes by setting up startup, liveness, and readiness probes to inspect MicroProfile Health Check endpoints.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -24,9 +24,9 @@ the service reports **DOWN**, then it's unavailable. MicroProfile Health reports
 service status at the endpoint and indicates the overall status as **UP** if all the services 
 are **UP**. A service orchestrator can then use the health statuses to make decisions.
 
-Kubernetes provides liveness and readiness probes that are used to check the health of your 
+Kubernetes provides startup, liveness, and readiness probes that are used to check the health of your 
 containers. These probes can check certain files in your containers, check a TCP socket, 
-or make HTTP requests. MicroProfile Health exposes readiness and liveness endpoints on 
+or make HTTP requests. MicroProfile Health exposes startup, liveness, and readiness endpoints on 
 your microservices. Kubernetes polls these endpoints as specified by the probes to react 
 appropriately to any change in the microservice's status. Read the 
 [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) 
@@ -114,9 +114,119 @@ bx cr login
 
 Navigate to **start** directory to begin.
 
-The **inventory** microservice should be healthy only when **system** is available. To add this 
-check to the **/health/ready** endpoint, you will create a class that is annotated with the
+Create the **InventoryStartupCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+
+
+
+
+```
+package io.openliberty.guides.inventory;
+
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
+import javax.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Startup;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Startup
+@ApplicationScoped
+public class InventoryStartupCheck implements HealthCheck {
+
+    @Override
+    public HealthCheckResponse call() {
+        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
+        ManagementFactory.getOperatingSystemMXBean();
+        double cpuUsed = bean.getSystemCpuLoad();
+        String cpuUsage = String.valueOf(cpuUsed);
+        return HealthCheckResponse.named(InventoryResource.class
+                                            .getSimpleName() + " Startup Check")
+                                            .withData("cpu used", cpuUsage)
+                                            .status(cpuUsed < 0.95).build();
+    }
+}
+
+```
+{: codeblock}
+
+
+
+A health check for startup allows applications to define startup probes that verify 
+whether deployed application is fully initialized before the liveness probe takes over.
+This check is useful for applications that require additional startup time on their first initialization.
+The **@Startup** annotation must be applied on a HealthCheck implementation to define a startup check procedure. 
+Otherwise, this annotation is ignored. This startup check verifies that the cpu usage is below 95%.
+If more than 95% of the cpu is used, a status of **DOWN** is returned. 
+
+Create the **InventoryLivenessCheck** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+```
+{: codeblock}
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+
+
+
+
+```
+package io.openliberty.guides.inventory;
+
+import javax.enterprise.context.ApplicationScoped;
+
+import java.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
+
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class InventoryLivenessCheck implements HealthCheck {
+
+  @Override
+  public HealthCheckResponse call() {
+      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+      long memUsed = memBean.getHeapMemoryUsage().getUsed();
+      long memMax = memBean.getHeapMemoryUsage().getMax();
+
+      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
+                                      + " Liveness Check")
+                                .withData("memory used", memUsed)
+                                .withData("memory max", memMax)
+                                .status(memUsed < memMax * 0.9).build();
+  }
+}
+```
+{: codeblock}
+
+
+
+A health check for liveness allows third party services to determine whether the application is running.
+If this procedure fails, the application can be stopped.
+The **@Liveness** annotation must be applied on a HealthCheck implementation to define a Liveness
+check procedure. Otherwise, this annotation is ignored.
+This liveness check verifies that the heap memory usage is below 90% of the maximum memory.
+If more than 90% of the maximum memory is used, a status of **DOWN** is returned. 
+
+The **inventory** microservice is healthy only when the **system** microservice is available.
+To add this check to the **/health/ready** endpoint, create a class that is annotated with the
 **@Readiness** annotation and implements the **HealthCheck** interface.
+A Health Check for readiness allows third party services to know whether the application is ready to process requests.
+The **@Readiness** annotation must be applied on a HealthCheck implementation to define a readiness check procedure. Otherwise, this annotation is ignored.
 
 Create the **InventoryReadinessCheck** class.
 
@@ -184,74 +294,22 @@ public class InventoryReadinessCheck implements HealthCheck {
 
 
 
-This health check verifies that the **system** microservice is available at 
-**http://system-service:9080/**. The **system-service** host name is only accessible from 
-inside the cluster, you can't access it yourself. If it's available, then it returns an 
-**UP** status. Similarly, if it's unavailable then it returns a **DOWN** status. When the 
-status is **DOWN**, the microservice is considered to be unhealthy.
-
-Create the **InventoryLivenessCheck** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
-
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import javax.enterprise.context.ApplicationScoped;
-
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
-
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class InventoryLivenessCheck implements HealthCheck {
-
-  @Override
-  public HealthCheckResponse call() {
-      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-      long memUsed = memBean.getHeapMemoryUsage().getUsed();
-      long memMax = memBean.getHeapMemoryUsage().getMax();
-
-      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
-                                      + " Liveness Check")
-                                .withData("memory used", memUsed)
-                                .withData("memory max", memMax)
-                                .status(memUsed < memMax * 0.9).build();
-  }
-}
-```
-{: codeblock}
-
-
-
-This liveness check verifies that the heap memory usage is below 90% of the maximum memory.
-If more than 90% of the maximum memory is used, a status of **DOWN** will be returned. 
+This health check verifies that the **system** microservice is available at **http://system-service:9080/**. 
+The **system-service** host name is accessible only from inside the cluster; you can't access it yourself.
+If it's available, then it returns an **UP** status. Similarly, if it's unavailable then it returns a **DOWN** status.
+When the status is **DOWN**, the microservice is considered to be unhealthy.
 
 The health checks for the **system** microservice were already been implemented. The **system**
 microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. 
 This endpoint has been provided for you to observe the results of an unhealthy pod and how 
 Kubernetes reacts.
 
-# **Configuring readiness and liveness probes**
+# **Configuring startup, liveness, and readiness probes**
 
-You will configure Kubernetes readiness and liveness probes.
-Readiness probes determine whether your application is ready to accept requests.
-If it's not ready, traffic won't be routed to the container.
+You will configure Kubernetes startup, liveness, and readiness probes. 
+Startup probes determine whether your application is fully initialized.
 Liveness probes determine whether a container needs to be restarted.
+Readiness probes determine whether your application is ready to accept requests. If it's not ready, no traffic is routed to the container.
 
 Create the kubernetes configuration file.
 
@@ -290,19 +348,23 @@ spec:
         ports:
         - containerPort: 9080
         # system probes
-        readinessProbe:
+        startupProbe:
           httpGet:
-            path: /health/ready
+            path: /health/started
             port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
         livenessProbe:
           httpGet:
             path: /health/live
             port: 9080
           initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9080
+          initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 3
           failureThreshold: 1
@@ -331,19 +393,25 @@ spec:
         - name: SYS_APP_HOSTNAME
           value: system-service
         # inventory probe
-        readinessProbe:
+        startupProbe:
           httpGet:
-            path: /health/ready
+            #tag::start2[]
+            path: /health/started
+            #end::start2[]
             port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
         livenessProbe:
           httpGet:
             path: /health/live
             port: 9080
           initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9080
+          initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 3
           failureThreshold: 1
@@ -380,25 +448,26 @@ spec:
 
 
 
-The readiness and liveness probes are configured for the containers running the **system** 
+The startup, liveness, and readiness probes are configured for the containers that are running the **system**
 and **inventory** microservices.
 
-The readiness probes are configured to poll the **/health/ready** endpoint.
-The readiness probe determines the READY status of the container, as seen in the **kubectl get pods** output.
-The **initialDelaySeconds** field defines how long the probe waits before it 
-starts to poll so the probe does not start making requests before the server has started. 
-The **failureThreshold** option defines how many times the probe fails 
-before the state changes from ready to not ready. The **timeoutSeconds** 
-option defines how many seconds before the probe times out. The **periodSeconds** 
-option defines how often the probe should poll the given endpoint.
+The startup probes are configured to poll the **/health/started** endpoint.
+The startup probe determines whether a container is started.
 
 The liveness probes are configured to poll the **/health/live** endpoint.
 The liveness probes determine whether a container needs to be restarted.
-Similar to the readiness probes, the liveness probes also define
-**initialDelaySeconds**,
-**failureThreshold**,
-**timeoutSeconds**,
-and **periodSeconds**.
+The **initialDelaySeconds** field defines the duration that the probe waits 
+before it starts to poll so that it does not make requests before the server is started.
+The **periodSeconds** option defines how often the probe polls the given endpoint.
+The **timeoutSeconds** option defines how many seconds before the probe times out.
+The **failureThreshold** option defines how many times the probe fails
+before the state changes from ready to not ready.
+
+The readiness probes are configured to poll the **/health/ready** endpoint.
+The readiness probe determines the READY status of the container, as seen in the **kubectl get pods** output.
+Similar to the liveness probes, the readiness probes also define **initialDelaySeconds**,
+**periodSeconds**, **timeoutSeconds**,
+and **failureThreshold**.
 
 # **Deploying the microservices**
 
@@ -414,7 +483,7 @@ mvn package
 Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```
-docker pull openliberty/open-liberty:full-java11-openj9-ubi
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
@@ -709,8 +778,8 @@ kubectl delete -f kubernetes.yaml
 
 You have used MicroProfile Health and Open Liberty to create endpoints that report on 
 
-your microservice's status. Then, you observed how Kubernetes uses the **/health/ready** and
-**/health/live** endpoints to keep your microservices running smoothly.
+your microservice's status. Then, you observed how Kubernetes uses the **/health/started**,
+**/health/live**, and **/health/ready** endpoints to keep your microservices running smoothly.
 
 
 
