@@ -910,7 +910,7 @@ From the **start** directory, run the following commands:
 
 ```
 mvn -pl models install
-mvn clean package
+mvn package
 ```
 {: codeblock}
 
@@ -918,7 +918,15 @@ mvn clean package
 
 The **mvn install** command compiles and packages the object types you created to a **.jar** file.
 This allows them to be used by the **system** and **graphql** services.
-The **mvn package** command packages the **system** and **graphql** services. 
+The **mvn package** command packages the **system** and **graphql** services to **.war** files.
+
+Run the following command to download or update to the latest Open Liberty Docker image:
+
+```
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+```
+{: codeblock}
+
 
 Dockerfiles have already been set up for you.
 Build your Docker images with the following commands:
