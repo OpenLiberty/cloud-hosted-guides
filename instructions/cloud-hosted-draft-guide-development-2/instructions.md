@@ -1,7 +1,7 @@
 
-# **Welcome to the Adding health reports to microservices guide!**
+# **Welcome to the Injecting dependencies into microservices guide!**
 
-Explore how to report and check the health of a microservice with MicroProfile Health.
+Learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies into microservices.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,25 +11,38 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 # **What you'll learn**
 
-You will learn how to use MicroProfile Health to report the health status of microservices and take
-appropriate actions based on this report.
+You will learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies in a simple inventory management application.
 
-MicroProfile Health allows services to report their health, and it publishes the overall health status to a defined
-endpoint. A service reports **UP** if it is available and reports **DOWN** if it is unavailable. MicroProfile Health reports
-an individual service status at the endpoint and indicates the overall status as **UP** if all the services are **UP**. A service
-orchestrator can then use the health statuses to make decisions.
+The application that you will be working with is an **inventory** service,
+which stores the information about various JVMs that run on different systems.
+Whenever a request is made to the **inventory** service to retrieve the JVM
+system properties of a particular host, the **inventory** service communicates with the **system**
+service on that host to get these system properties. The system properties are then stored and returned.
 
-A service checks its own health by performing necessary self-checks and then reports its overall status by
-implementing the API provided by MicroProfile Health. A self-check can be a check on anything that the service needs, such
-as a dependency, a successful connection to an endpoint, a system property, a database connection, or
-the availability of required resources. MicroProfile offers checks for startup, liveness and readiness.
+You will use scopes to bind objects in this application to their well-defined contexts.
+CDI provides a variety of scopes for you to work with and while you will not use all of them in this guide,
+there is one for almost every scenario that you may encounter. Scopes are defined by using CDI annotations.
+You will also use dependency injection to inject one bean into another to make use of its functionalities.
+This enables you to inject the bean in its specified context without having to instantiate it yourself.
 
-You will add startup, liveness and readiness checks to the **system** and **inventory** services, which
-are provided for you, and implement what is necessary to report health status by
-using MicroProfile Health.
+The implementation of the application and its services are provided for you in the **start/src** directory.
+The **system** service can be found in the **start/src/main/java/io/openliberty/guides/system** directory, 
+and the **inventory** service can be found in the **start/src/main/java/io/openliberty/guides/inventory** directory. 
+If you want to learn more about RESTful web services and how to build them, see
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the **system** service.
+The **inventory** service is built in a similar way.
+
+<br/>
+### **What is CDI?**
+
+Contexts and Dependency Injection (CDI) defines a rich set of complementary services that improve the application structure.
+The most fundamental services that are provided by CDI are contexts that bind the lifecycle of stateful components to well-defined contexts,
+and dependency injection that is the ability to inject components into an application in a typesafe way.
+With CDI, the container does all the daunting work of instantiating dependencies, and
+controlling exactly when and how these components are instantiated and destroyed.
+
 
 
 # **Getting started**
@@ -44,11 +57,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-health.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cdi-intro.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-health.git
-cd guide-microprofile-health
+git clone https://github.com/openliberty/guide-cdi-intro.git
+cd guide-cdi-intro
 ```
 {: codeblock}
 
@@ -56,7 +69,6 @@ cd guide-microprofile-health
 The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
-
 
 <br/>
 ### **Try what you'll build**
@@ -80,51 +92,52 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-To access the **system** service, run the following curl command:
-```
-curl -s http://localhost:9080/system/properties | jq
-```
-{: codeblock}
 
-To access the **inventory** service, run the following curl command:
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+
+Point your browser to the http://localhost:9080/inventory/systems URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
 curl -s http://localhost:9080/inventory/systems | jq
 ```
 {: codeblock}
 
-Visit the http://localhost:9080/health URL to see the
-overall health status of the application, as well as the aggregated data of the startup, liveness
-and readiness checks. Run the following curl command:
+
+This is the starting point of the **inventory** service and it displays the current contents of the inventory. 
+As you might expect, these are empty because nothing is stored in the inventory yet. 
+
+Next, point your browser to the http://localhost:9080/inventory/systems/localhost URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
-curl -s http://localhost:9080/health | jq
+curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
 {: codeblock}
 
-Three checks show the state of the **system** service, and the other three
-checks show the state of the **inventory** service. As you might expect, all services are in the
-**UP** state, and the overall health status of the application is in the **UP** state.
 
-Access the **/health/started** endpoint by visiting the http://localhost:9080/health/started
-URL to view the data from the startup health checks. Run the following curl command:
+You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
+properties are automatically stored in the inventory. 
+
+Go back to http://localhost:9080/inventory/systems 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
-curl -s http://localhost:9080/health/started | jq
+curl -s http://localhost:9080/inventory/systems | jq
 ```
 {: codeblock}
 
-You can also access the **/health/live** endpoint by visiting the http://localhost:9080/health/live
-URL to view the data from the liveness health checks. Run the following curl command:
-```
-curl -s http://localhost:9080/health/live | jq
-```
-{: codeblock}
 
-Similarly, access the **/health/ready** endpoint by visiting the http://localhost:9080/health/ready
-URL to view the data from the readiness health checks. Run the following curl command:
-```
-curl -s http://localhost:9080/health/ready | jq
-```
-{: codeblock}
+and you see a new entry for **localhost**. For simplicity, only the OS name and username are shown here for
+each host. You can repeat this process for your own hostname or any other machine that is running
+the **system** service.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -136,13 +149,16 @@ mvn liberty:stop
 {: codeblock}
 
 
+# **Handling dependencies in the application**
 
-# **Adding health checks to microservices**
+You will use CDI to inject dependencies into the inventory manager application and learn how to manage the life cycles of your objects.
 
+<br/>
+### **Managing scopes and contexts**
 
-To begin, run the following command to navigate to the **start** directory:
+Navigate to the **start** directory to begin.
 ```
-cd /home/project/guide-microprofile-health/start
+cd /home/project/guide-cdi-intro/start
 ```
 {: codeblock}
 
@@ -165,198 +181,16 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
-A health report will be generated automatically for all services that enable MicroProfile Health. The
-**mpHealth** feature has already been enabled for you in the **src/main/liberty/config/server.xml**
-file.
-
-All services must provide an implementation of the **HealthCheck** interface, which will be used to
-verify their health. MicroProfile Health offers health checks for startup, liveness and readiness.
-A startup check allows applications to define startup probes that are used 
-for initial verification of the application before the Liveness probe takes over. For example,
-a startup check might check which applications require additional startup time on their first
-initialization. A liveness check allows third-party services to determine whether a microservice is running. 
-If the liveness check fails, the application can be terminated. For example, a liveness check might fail if the application runs out of memory.
-A readiness check allows third-party services, such as Kubernetes, to determine whether a microservice
-is ready to process requests. For example, a readiness check might check dependencies,
-such as database connections.
-
-
-
-<br/>
-### **Adding health checks to the system service**
-
-Create the **SystemStartupCheck** class.
+Create the **InventoryManager** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemStartupCheck.java
+touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemStartupCheck.java
-
-
-
-
-```
-package io.openliberty.guides.system;
-
-import java.lang.management.ManagementFactory;
-import com.sun.management.OperatingSystemMXBean;
-import javax.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.health.Startup;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Startup
-@ApplicationScoped
-public class SystemStartupCheck implements HealthCheck {
-
-    private static final String STARTUP_CHECK = SystemResource.class.getSimpleName()
-                                               + " Startup Check";
-
-    @Override
-    public HealthCheckResponse call() {
-        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
-        ManagementFactory.getOperatingSystemMXBean();
-        if (bean.getSystemCpuLoad() < 0.95) {
-           return HealthCheckResponse.up(STARTUP_CHECK);
-        } else {
-           return HealthCheckResponse.down(STARTUP_CHECK);
-        }
-    }
-}
-
-```
-{: codeblock}
-
-
-
-The **@Startup** annotation indicates that this is a startup health check procedure.
-In this case, you are checking the cpu usage. If more than 95% of the cpu
-is being used, a status of **DOWN** is returned.
-
-Create the **SystemLivenessCheck** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
-
-
-
-
-```
-package io.openliberty.guides.system;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-
-import javax.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class SystemLivenessCheck implements HealthCheck {
-
-  @Override
-  public HealthCheckResponse call() {
-    MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-    long memUsed = memBean.getHeapMemoryUsage().getUsed();
-    long memMax = memBean.getHeapMemoryUsage().getMax();
-
-    return HealthCheckResponse.named(
-      SystemResource.class.getSimpleName() + " Liveness Check")
-                              .withData("memory used", memUsed)
-                              .withData("memory max", memMax)
-                              .status(memUsed < memMax * 0.9).build();
-  }
-}
-```
-{: codeblock}
-
-
-
-The **@Liveness** annotation indicates that this is a liveness health check procedure.
-In this case, you are checking the heap memory usage. If more than 90% of the maximum memory
-is being used, a status of **DOWN** is returned.
-
-Create the **SystemReadinessCheck** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
-
-
-
-
-```
-package io.openliberty.guides.system;
-
-import javax.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Readiness
-@ApplicationScoped
-public class SystemReadinessCheck implements HealthCheck {
-
-  private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
-                                               + " Readiness Check";
-  @Override
-  public HealthCheckResponse call() {
-    if (!System.getProperty("wlp.server.name").equals("defaultServer")) {
-      return HealthCheckResponse.down(READINESS_CHECK);
-    }
-    return HealthCheckResponse.up(READINESS_CHECK);
-  }
-}
-```
-{: codeblock}
-
-
-
-
-The **@Readiness** annotation indicates that this particular bean is a readiness health check procedure.
-By pairing this annotation with the **ApplicationScoped** context from the Contexts and
-Dependency Injections API, the bean is discovered automatically when the http://localhost:9080/health
-endpoint receives a request.
-
-
-The **call()** method is used to return the health status of a particular service.
-In this case, you are simply checking if the server name is **defaultServer** and
-returning **UP** if it is, and **DOWN** otherwise. 
-Overall, this is a very simple implementation of the **call()**
-method. In a real environment, you would want to orchestrate more meaningful
-health checks.
-
-
-<br/>
-### **Adding health checks to the inventory service**
-
-Create the **InventoryStartupCheck** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -364,81 +198,32 @@ touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty
 ```
 package io.openliberty.guides.inventory;
 
-import java.lang.management.ManagementFactory;
-import com.sun.management.OperatingSystemMXBean;
-import javax.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.health.Startup;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+import jakarta.enterprise.context.ApplicationScoped;
 
-@Startup
 @ApplicationScoped
-public class InventoryStartupCheck implements HealthCheck {
+public class InventoryManager {
 
-    private static final String STARTUP_CHECK = InventoryResource.class.getSimpleName()
-                                               + " Startup Check";
+  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
 
-    @Override
-    public HealthCheckResponse call() {
-        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
-        ManagementFactory.getOperatingSystemMXBean();
-        if (bean.getSystemCpuLoad() < 0.95) {
-           return HealthCheckResponse.up(STARTUP_CHECK);
-        } else {
-           return HealthCheckResponse.down(STARTUP_CHECK);
-        }
+  public void add(String hostname, Properties systemProps) {
+    Properties props = new Properties();
+    props.setProperty("os.name", systemProps.getProperty("os.name"));
+    props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+    SystemData system = new SystemData(hostname, props);
+    if (!systems.contains(system)) {
+      systems.add(system);
     }
-}
+  }
 
-```
-{: codeblock}
-
-
-
-This startup check verifies that the cpu usage is below 95%.
-If more than 95% of the cpu is being used, a status of **DOWN** is returned.
-
-Create the **InventoryLivenessCheck** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
-```
-{: codeblock}
-
-
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
-
-
-
-
-```
-package io.openliberty.guides.inventory;
-
-import javax.enterprise.context.ApplicationScoped;
-
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
-
-import org.eclipse.microprofile.health.Liveness;
-
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class InventoryLivenessCheck implements HealthCheck {
-  @Override
-  public HealthCheckResponse call() {
-      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-      long memUsed = memBean.getHeapMemoryUsage().getUsed();
-      long memMax = memBean.getHeapMemoryUsage().getMax();
-
-      return HealthCheckResponse.named(
-        InventoryResource.class.getSimpleName() + " Liveness Check")
-                                .withData("memory used", memUsed)
-                                .withData("memory max", memMax)
-                                .status(memUsed < memMax * 0.9).build();
+  public InventoryList list() {
+    return new InventoryList(systems);
   }
 }
 ```
@@ -446,19 +231,27 @@ public class InventoryLivenessCheck implements HealthCheck {
 
 
 
-As with the **system** liveness check, you are checking the heap memory usage. If more
-than 90% of the maximum memory is being used, a **DOWN** status is returned.
+This bean contains two simple functions. 
+The **add()** function is for adding entries to the inventory.
+The **list()** function is for listing all the entries currently stored in the inventory.
 
-Create the **InventoryReadinessCheck** class.
+This bean must be persistent between all of the clients, which means multiple clients need to share the same instance.
+To achieve this by using CDI, you can simply add the **@ApplicationScoped** annotation onto the class.
+
+This annotation indicates that this particular bean is to be initialized once per application.
+By making it application-scoped, the container ensures that the same instance of the bean is used whenever
+it is injected into the application.
+
+Create the **InventoryResource** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
@@ -466,74 +259,82 @@ touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty
 ```
 package io.openliberty.guides.inventory;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+import java.util.Properties;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.client.SystemClient;
 
-@Readiness
 @ApplicationScoped
-public class InventoryReadinessCheck implements HealthCheck {
+@Path("/systems")
+public class InventoryResource {
 
-  private static final String READINESS_CHECK = InventoryResource.class.getSimpleName()
-                                               + " Readiness Check";
   @Inject
-  InventoryConfig config;
+  InventoryManager manager;
 
-  public boolean isHealthy() {
-    if (config.isInMaintenance()) {
-      return false;
+  @Inject
+  SystemClient systemClient;
+
+  @GET
+  @Path("/{hostname}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
+    Properties props = systemClient.getProperties(hostname);
+    if (props == null) {
+      return Response.status(Response.Status.NOT_FOUND)
+                     .entity("{ \"error\" : \"Unknown hostname " + hostname
+                             + " or the inventory service may not be running "
+                             + "on the host machine \" }")
+                     .build();
     }
-    try {
-      String url = InventoryUtils.buildUrl("http", "localhost", config.getPortNumber(),
-          "/system/properties");
-      Client client = ClientBuilder.newClient();
-      Response response = client.target(url).request(MediaType.APPLICATION_JSON).get();
-      if (response.getStatus() != 200) {
-        return false;
-      }
-      return true;
-    } catch (Exception e) {
-      return false;
-    }
+
+    manager.add(hostname, props);
+    return Response.ok(props).build();
   }
 
-  @Override
-  public HealthCheckResponse call() {
-    if (!isHealthy()) {
-      return HealthCheckResponse
-          .down(READINESS_CHECK);
-    }
-    return HealthCheckResponse
-        .up(READINESS_CHECK);
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  public InventoryList listContents() {
+    return manager.list();
   }
-
 }
 ```
 {: codeblock}
 
 
 
-In the **isHealthy()** method, 
-you report the **inventory** service as not ready if the service is in maintenance or if its dependant service is unavailable.
+The inventory resource is a RESTful service that is served at the **inventory/systems** endpoint. 
 
-For simplicity, the custom **`io_openliberty_guides_inventory_inMaintenance`**
-MicroProfile Config property, which is defined in the **resources/CustomConfigSource.json**
-file, is used to indicate whether the service is in maintenance. This file was already
-created for you.
+Annotating a class with the **@ApplicationScoped** annotation indicates that the bean is initialized once and is shared between all requests while the application runs.
 
-Moreover, the readiness health check procedure makes an HTTP **GET** request to the **system** service and checks its status.
-If the request is successful, the **inventory** service is healthy and ready because its dependant service is available.
-Otherwise, the **inventory** service is not ready and an unhealthy readiness status is returned.
+If you want this bean to be initialized once for every request, you can annotate the class with the **@RequestScoped** annotation instead. With the **@RequestScoped** annotation, the bean is instantiated when the request is received and destroyed when a response is sent back to the client. A request scope is short-lived.
 
-If you are curious about the injected **inventoryConfig** object or if
-you want to learn more about MicroProfile Config, see
-[Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
+<br/>
+### **Injecting a dependency**
+
+Refer to the **InventoryResource** class you created above.
+
+The **@Inject** annotation indicates a dependency injection.
+You are injecting your **InventoryManager** and **SystemClient** beans into the **InventoryResource** class.
+This injects the beans in their specified context and makes all of their functionalities
+available without the need of instantiating them yourself.
+The injected bean **InventoryManager** can then be invoked directly through the **manager.add(hostname, props)**
+and **manager.list()** function calls.  The injected bean **SystemClient** can be invoked through the 
+**systemClient.getProperties(hostname)** function call.
+
+Finally, you have a client component **SystemClient** that can be found in the
+**src/main/java/io/openliberty/guides/inventory/client** directory. This class communicates 
+with the **system** service to retrieve the JVM system properties for a particular host 
+that exposes them. This class also contains detailed Javadocs that you can read for reference.
+
+Your inventory application is now completed.
+
 
 
 
@@ -541,218 +342,239 @@ you want to learn more about MicroProfile Config, see
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
+You can find the **inventory** and **system** services at the following URLs:
 
-While the server is running, run the following curl command to find
-the aggregated startup ,liveness and readiness health reports on the two services:
-```
-curl -s http://localhost:9080/health | jq
-```
-{: codeblock}
 
-You can also run the following curl command to view the startup health report:
-```
-curl -s http://localhost:9080/health/started | jq
-```
-{: codeblock}
+ http://localhost:9080/inventory/systems
 
-or run the following curl command to view the liveness health report:
-```
-curl -s http://localhost:9080/health/live | jq
-```
-{: codeblock}
 
-or run the following curl command to view the readiness health report:
-```
-curl -s http://localhost:9080/health/ready | jq
-```
-{: codeblock}
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
-Put the **inventory** service in maintenance by setting the **`io_openliberty_guides_inventory_inMaintenance`**
-property to **true** in the **resources/CustomConfigSource.json** file. 
-
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json
-
-```
-{
-  "config_ordinal":700,
-  "io_openliberty_guides_system_inMaintenance":true
-}
-```
-{: codeblock}
-
-Because this configuration file is picked up dynamically, simply refresh the http://localhost:9080/health
-URL to see that the state of the **inventory** service changed to **DOWN**. Run the following curl command:
-```
-curl -s http://localhost:9080/health | jq
-```
-{: codeblock}
-
-The overall state of the application also changed to **DOWN** as a result. Run the following curl command
- to verify that the **inventory** service is indeed in maintenance:
 ```
 curl -s http://localhost:9080/inventory/systems | jq
 ```
 {: codeblock}
 
-Set the **`io_openliberty_guides_inventory_inMaintenance`**
-property back to **false** after you are done.
 
-> From the menu of the IDE, select 
- **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json
+
+ http://localhost:9080/system/properties
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-{
-  "config_ordinal":700,
-  "io_openliberty_guides_system_inMaintenance":false
-}
+curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
 
-# **Testing health checks**
 
-You will implement several test methods to validate the health of the **system** and **inventory** services.
 
-Create the **HealthIT** class.
+# **Testing the inventory application**
+
+While you can test your application manually, you should rely on automated tests because they trigger
+a failure whenever a code change introduces a defect.
+Since the application is a RESTful web service application, you can use
+JUnit and the RESTful web service Client API to write tests.
+In testing the functionality of the application, the scopes and dependencies are being tested.
+
+Create the **InventoryEndpointIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
+touch /home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 
 
 
 
 ```
-package it.io.openliberty.guides.health;
+package it.io.openliberty.guides.inventory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.HashMap;
-
-import javax.json.JsonArray;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
-public class HealthIT {
+@TestMethodOrder(OrderAnnotation.class)
+public class InventoryEndpointIT {
 
-  private JsonArray servicesStates;
-  private static HashMap<String, String> endpointData;
+  private static String port;
+  private static String baseUrl;
 
-  private String HEALTH_ENDPOINT = "health";
-  private String READINESS_ENDPOINT = "health/ready";
-  private String LIVENES_ENDPOINT = "health/live";
-  private String STARTUP_ENDPOINT = "health/started";
+  private Client client;
+
+  private final String SYSTEM_PROPERTIES = "system/properties";
+  private final String INVENTORY_SYSTEMS = "inventory/systems";
+
+  @BeforeAll
+  public static void oneTimeSetup() {
+    port = System.getProperty("http.port");
+    baseUrl = "http://localhost:" + port + "/";
+  }
 
   @BeforeEach
   public void setup() {
-    endpointData = new HashMap<String, String>();
-  }
-
-  @Test
-  public void testIfServicesAreUp() {
-    endpointData.put("SystemResource Startup Check", "UP");
-    endpointData.put("SystemResource Liveness Check", "UP");
-    endpointData.put("SystemResource Readiness Check", "UP");
-    endpointData.put("InventoryResource Startup Check", "UP");
-    endpointData.put("InventoryResource Liveness Check", "UP");
-    endpointData.put("InventoryResource Readiness Check", "UP");
-
-    servicesStates = HealthITUtil.connectToHealthEnpoint(200, HEALTH_ENDPOINT);
-    checkStates(endpointData, servicesStates);
-  }
-
-   @Test
-   public void testStartup() {
-     endpointData.put("SystemResource Startup Check", "UP");
-     endpointData.put("InventoryResource Startup Check", "UP");
-     servicesStates = HealthITUtil.connectToHealthEnpoint(200, STARTUP_ENDPOINT);
-     checkStates(endpointData, servicesStates);
-   }
-
-   @Test
-   public void testLiveness() {
-     endpointData.put("SystemResource Liveness Check", "UP");
-     endpointData.put("InventoryResource Liveness Check", "UP");
-     servicesStates = HealthITUtil.connectToHealthEnpoint(200, LIVENES_ENDPOINT);
-     checkStates(endpointData, servicesStates);
-   }
-
-  @Test
-  public void testReadiness() {
-    endpointData.put("SystemResource Readiness Check", "UP");
-    endpointData.put("InventoryResource Readiness Check", "UP");
-    servicesStates = HealthITUtil.connectToHealthEnpoint(200, READINESS_ENDPOINT);
-    checkStates(endpointData, servicesStates);
-  }
-
-  @Test
-  public void testIfInventoryServiceIsDown() {
-    endpointData.put("InventoryResource Startup Check", "UP");
-    endpointData.put("InventoryResource Liveness Check", "UP");
-    endpointData.put("InventoryResource Readiness Check", "UP");
-    endpointData.put("SystemResource Startup Check", "UP");
-    endpointData.put("SystemResource Liveness Check", "UP");
-    endpointData.put("SystemResource Readiness Check", "UP");
-
-    servicesStates = HealthITUtil.connectToHealthEnpoint(200, HEALTH_ENDPOINT);
-    checkStates(endpointData, servicesStates);
-
-    endpointData.put("InventoryResource Readiness Check", "DOWN");
-    HealthITUtil.changeInventoryProperty(HealthITUtil.INV_MAINTENANCE_FALSE,
-        HealthITUtil.INV_MAINTENANCE_TRUE);
-    servicesStates = HealthITUtil.connectToHealthEnpoint(503, HEALTH_ENDPOINT);
-    checkStates(endpointData, servicesStates);
-  }
-
-  private void checkStates(HashMap<String, String> testData, JsonArray servStates) {
-    testData.forEach((service, expectedState) -> {
-      assertEquals(expectedState, HealthITUtil.getActualState(service, servStates),
-          "The state of " + service + " service is not matching.");
-    });
+    client = ClientBuilder.newClient();
   }
 
   @AfterEach
   public void teardown() {
-    HealthITUtil.cleanUp();
+    client.close();
   }
 
+  @Test
+  @Order(1)
+  public void testHostRegistration() {
+    this.visitLocalhost();
+
+    Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
+    this.assertResponse(baseUrl, response);
+
+    JsonObject obj = response.readEntity(JsonObject.class);
+
+    JsonArray systems = obj.getJsonArray("systems");
+
+    boolean localhostExists = false;
+    for (int n = 0; n < systems.size(); n++) {
+      localhostExists = systems.getJsonObject(n)
+                                .get("hostname").toString()
+                                .contains("localhost");
+      if (localhostExists) {
+          break;
+      }
+    }
+    assertTrue(localhostExists,
+              "A host was registered, but it was not localhost");
+
+    response.close();
+  }
+
+  @Test
+  @Order(2)
+  public void testSystemPropertiesMatch() {
+    Response invResponse = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
+    Response sysResponse = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
+
+    this.assertResponse(baseUrl, invResponse);
+    this.assertResponse(baseUrl, sysResponse);
+
+    JsonObject jsonFromInventory = (JsonObject) invResponse.readEntity(JsonObject.class)
+                                                           .getJsonArray("systems")
+                                                           .getJsonObject(0)
+                                                           .get("properties");
+
+    JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
+
+    String osNameFromInventory = jsonFromInventory.getString("os.name");
+    String osNameFromSystem = jsonFromSystem.getString("os.name");
+    this.assertProperty("os.name", "localhost", osNameFromSystem,
+                        osNameFromInventory);
+
+    String userNameFromInventory = jsonFromInventory.getString("user.name");
+    String userNameFromSystem = jsonFromSystem.getString("user.name");
+    this.assertProperty("user.name", "localhost", userNameFromSystem,
+                        userNameFromInventory);
+
+    invResponse.close();
+    sysResponse.close();
+  }
+
+  @Test
+  @Order(3)
+  public void testUnknownHost() {
+    Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
+    this.assertResponse(baseUrl, response);
+
+    Response badResponse = client.target(baseUrl + INVENTORY_SYSTEMS + "/"
+        + "badhostname").request(MediaType.APPLICATION_JSON).get();
+
+    assertEquals(404, badResponse.getStatus(),
+        "BadResponse expected status: 404. Response code not as expected.");
+
+    String obj = badResponse.readEntity(String.class);
+
+    boolean isError = obj.contains("error");
+    assertTrue(isError,
+              "badhostname is not a valid host but it didn't raise an error");
+
+    response.close();
+    badResponse.close();
+  }
+
+  private Response getResponse(String url) {
+    return client.target(url).request().get();
+  }
+
+  private void assertResponse(String url, Response response) {
+    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+  }
+
+  private void assertProperty(String propertyName, String hostname,
+      String expected, String actual) {
+    assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
+        + "in the system service does not match the one stored in "
+        + "the inventory service for " + hostname);
+  }
+
+  private void visitLocalhost() {
+    Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
+    this.assertResponse(baseUrl, response);
+    response.close();
+
+    Response targetResponse = client.target(baseUrl + INVENTORY_SYSTEMS
+        + "/localhost").request().get();
+    targetResponse.close();
+  }
 }
 ```
 {: codeblock}
 
 
+The **@BeforeAll** annotation is placed on a method that runs before any of the test cases.
+In this case, the **oneTimeSetup()** method retrieves the port number for the Open Liberty server and builds
+a base URL string that is used throughout the tests.
 
+The **@BeforeEach** and **@AfterEach** annotations are placed on methods that run before and after every test case.
+These methods are generally used to perform any setup and teardown tasks. In this case, the **setup()** method
+creates a JAX-RS client, which makes HTTP requests to the **inventory** service. The **teardown()**
+method simply destroys this client instance.
 
-Let's break down the test cases:
+See the following descriptions of the test cases:
 
-* The **testIfServicesAreUp()** test case compares the generated health report
-with the actual status of the services.
-* The **testStartup()** test case compares the generatede health report for the
-startup checks with the actual status of the services.
-* The **testLiveness()** test case compares the generated health report for the
-liveness checks with the actual status of the services.
-* The **testReadiness()** test case compares the generated health report for the
-readiness checks with the actual status of the services.
-* The **testIfInventoryServiceIsDown()** test case puts the **inventory** service
-in maintenance by setting the **`io_openliberty_guides_inventory_inMaintenance`**
-property to **true** and comparing the generated health report with the actual status of
-the services.
+* **testHostRegistration()** verifies that a host is correctly added to the inventory.
 
-A few more tests were included to verify the basic functionality of the **system** and **inventory**
-services. They can be found under the **src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java**
-and **src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java** files.
-If a test failure occurs, then you might have introduced a bug into the code. These tests
-run automatically as a part of the integration test suite.
+* **testSystemPropertiesMatch()** verifies that the JVM system properties returned by the **system** service match the ones stored in the **inventory** service.
 
+* **testUnknownHost()** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled as an error.
 
+To force these test cases to run in a particular order, annotate your **InventoryEndpointIT** test class with the **@TestMethodOrder(OrderAnnotation.class)** annotation.
+**OrderAnnotation.class** runs test methods in numerical order, 
+according to the values specified in the **@Order** annotation. 
+You can also create a custom **MethodOrderer** class or use built-in **MethodOrderer** implementations, 
+such as **OrderAnnotation.class**, **Alphanumeric.class**, or **Random.class**. Label your test cases
+with the **@Test** annotation so that they automatically run when your test class runs.
+
+Finally, the **src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java** file
+is included for you to test the basic functionality of the **system** service.
+If a test failure occurs, then you might have introduced a bug into the code.
 
 
 
@@ -762,50 +584,41 @@ run automatically as a part of the integration test suite.
 
 Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
-You see the following output:
+If the tests pass, you see a similar output to the following example:
 
 ```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running it.io.openliberty.guides.health.HealthIT
-[INFO] [WARNING ] CWMH0052W: The class com.ibm.ws.microprofile.health.impl.HealthCheckResponseImpl implementing HealthCheckResponse in the guide-microprofile-health application in module guide-microprofile-health.war, reported a DOWN status with data Optional[{}].
-[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.923 s - in it.io.openliberty.guides.health.HealthIT
-[INFO] Running it.io.openliberty.guides.system.SystemEndpointIT
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s - in it.io.openliberty.guides.system.SystemEndpointIT
-[INFO] Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-[INFO] [WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
-[INFO] Could not send Message.
-[INFO] [err] The specified host is unknown.
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.102 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
-[INFO]
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.99 sec - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+[WARNING ] Interceptor for {http://badhostname:9080/system/properties}WebClient has thrown exception, unwinding now
+Could not send Message.
+[err] Runtime exception: java.net.UnknownHostException: UnknownHostException invoking http://badhostname:9080/system/properties: badhostname
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.325 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results :
+
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-The warning messages are expected. The first warning results from a request to a service that is under maintenance. This request is made in the **testIfInventoryServiceIsDown()** test from the **InventoryEndpointIT** integration test. The second warning and error results from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
+The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
 
-To see whether the tests detect a failure, manually change the configuration of
-**`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**
-in the **resources/CustomConfigSource.json** file. Rerun the tests to see a test failure occur.
-The test failure occurs because the initial status of the **inventory** service is **DOWN**.
+To see whether the tests detect a failure, change the **endpoint** for the **inventory** service in
+the **src/main/java/io/openliberty/guides/inventory/InventoryResource.java** file to something else. Then,
+run the tests again to see that a test failure occurs.
+
 
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
-
 
 # **Summary**
 
 ## **Nice Work!**
 
-You just learned how to add health checks to report the states of microservices by using 
+You just used CDI services in Open Liberty to build a simple inventory application.
 
-MicroProfile Health in Open Liberty. Then, you wrote tests to validate the generated
-health report.
-
-Feel free to try one of the related MicroProfile guides. They demonstrate additional
-technologies that you can learn and expand on top of what you built here.
 
 
 <br/>
@@ -814,11 +627,11 @@ technologies that you can learn and expand on top of what you built here.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-microprofile-health** project by running the following commands:
+Delete the **guide-cdi-intro** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-health
+rm -fr guide-cdi-intro
 ```
 {: codeblock}
 
@@ -827,7 +640,7 @@ rm -fr guide-microprofile-health
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Adding%20health%20reports%20to%20microservices&guide-id=cloud-hosted-guide-microprofile-health)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Injecting%20dependencies%20into%20microservices&guide-id=cloud-hosted-guide-cdi-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -835,17 +648,14 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-health/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-health/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-cdi-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-cdi-intro/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 
 
