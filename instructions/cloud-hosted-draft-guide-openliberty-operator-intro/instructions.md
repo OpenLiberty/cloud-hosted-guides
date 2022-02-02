@@ -1,7 +1,7 @@
 
-# **Welcome to the Deploying a microservice to OpenShift by using a Kubernetes Operator guide!**
+# **Welcome to the Deploying a microservice to Kubernetes by using Open Liberty Operator guide!**
 
-Explore how to deploy a microservice to Red Hat OpenShift by using a Kubernetes Operator.
+Explore how to deploy a microservice to Kubernetes by using Open Liberty Operator.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -11,11 +11,12 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 # **What you'll learn**
 
-You will learn how to deploy a cloud-native application with a microservice to Red Hat OpenShift 4 by using the Open Liberty Kubernetes Operator. 
+You will learn how to deploy a cloud-native application with a microservice to Kubernetes by using the Open Liberty Operator. 
 
-[OpenShift](https://www.openshift.com/) is a Kubernetes-based platform with added functions. It streamlines the DevOps
+[Kubernetes](https://www.kubernetes.io/) is a container orchestration system. It streamlines the DevOps
 process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the
 deployment and management of cloud applications easier.
 You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
@@ -24,10 +25,9 @@ You can learn more about Kubernetes by checking out the [Deploying microservices
 provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management.
 To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
 
-The application in this guide consists of one microservice, **system**. Every 15 seconds, the **system**
-microservice calculates and publishes events that contain its current average system load.
+The application in this guide consists of one microservice, **system**. The system microservice returns the JVM system properties of its host.
 
-You will deploy the Open Liberty microservice by using the Open Liberty Operator. 
+You will deploy the **system** microservice by using the Open Liberty Operator. 
 The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) provides a method of packaging,
 deploying, and managing Open Liberty applications on Kubernetes-based clusters. 
 The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources,
@@ -63,24 +63,59 @@ The **start** directory contains the starting project that you will build upon.
 The **finish** directory contains the finished project that you will build.
 
 
+
 # **Installing the Operator**
 
 
-A project is created for you to use in this exercise. Run the following command to see your project name:
-
-```
-oc projects
-```
-{: codeblock}
-
-In this Skill Network enviornment, the Open Liberty Operator is already installed by the administrator.
+In this Skills Network environment, the Open Liberty Operator is already installed by the administrator.
 If you like to learn how to install the Open Liberty Operator,
 you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/blob/master/deploy/releases/0.7.1/readme.adoc).
 
-Run the following command to view all the supported API resources that are available through the Open Liberty Operator:
+
+
+# **Logging into your cluster**
+
+For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
+Get the name of your namespace with the following command:
 
 ```
-oc api-resources --api-group=openliberty.io
+bx cr namespace-list
+```
+{: codeblock}
+
+Look for output that is similar to the following:
+
+```
+Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
+
+Namespace
+sn-labs-yourname
+```
+
+Run the following command to store the namespace name in a variable.
+
+```
+NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
+```
+{: codeblock}
+
+Verify that the variable contains your namespace name:
+
+```
+echo $NAMESPACE_NAME
+```
+{: codeblock}
+
+Log in to the registry with the following command:
+```
+bx cr login
+```
+{: codeblock}
+
+
+To check that the Open Liberty Operator has been installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
+```
+kubectl api-resources --api-group=openliberty.io
 ```
 {: codeblock}
 
@@ -103,12 +138,10 @@ deploying an Open Liberty-based application, including the application image, nu
 The Open Liberty Operator watches for changes to instances of the **OpenLibertyApplication** object kind and 
 creates Kubernetes resources that are based on the configuration that is defined in the CRD.
 
+# **Deploying the system microservice to Kubernetes**
 
-# **Deploying the system microservice to OpenShift**
-
-
-To deploy the **system** microservice, you must first package the microservice, then create and
-run an OpenShift build to produce runnable container images of the packaged microservice.
+To deploy the **system** microservice, you must first package the microservice, then create and build
+a runnable container image of the packaged microservice.
 
 <br/>
 ### **Packaging the microservice**
@@ -124,169 +157,39 @@ mvn clean package
 {: codeblock}
 
 <br/>
-### **Building and pushing the images**
+### **Building the image**
 
-Create a build template to configure how to build your container images.
+Run the following command to download or update to the latest Open Liberty Docker image:
 
-Create the **build.yaml** template file in the **start** directory.
-
-> Run the following touch command in your terminal
 ```
-touch /home/project/draft-guide-openliberty-operator-intro/start/build.yaml
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > draft-guide-openliberty-operator-intro/start/build.yaml
-
-
-
-
+Next, run the **docker build** command to build the container image for your application:
 ```
-apiVersion: template.openshift.io/v1
-kind: Template
-metadata:
-  name: "build-template"
-  annotations:
-    description: "Build template for the system service"
-    tags: "build"
-objects:
-  - apiVersion: v1
-    kind: ImageStream
-    metadata:
-      name: "system-imagestream"
-      labels:
-        name: "system"
-  - apiVersion: v1
-    kind: BuildConfig
-    metadata:
-      name: "system-buildconfig"
-      labels:
-        name: "system"
-    spec:
-      source:
-        type: Binary
-      strategy:
-        type: Docker
-      output:
-        to:
-          kind: ImageStreamTag
-          name: "system-imagestream:1.0-SNAPSHOT"
+docker build -t system:1.0-SNAPSHOT system/.
 ```
 {: codeblock}
 
 
-The **build.yaml** template includes two objects. 
-The **ImageStream** object provides an abstraction from the image in the image registry. 
-This allows you to reference and tag the image. 
-The image registry used is the integrated internal OpenShift Container Registry.
+The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
+The tag for an image describes the specific image version.
+If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
 
-The **BuildConfig** object defines a single
-build definition and any triggers that kickstart the build. The **source** spec defines the build input. In this case,
-the build inputs are your **binary** (local) files, which are streamed to OpenShift for the build.
-The uploaded files need to include the packaged **WAR** application binaries, which is why you needed to run the Maven commands. The template specifies
-a **Docker** strategy build, which invokes the **docker build** command, and creates a runnable container image of the microservice
-from the build input.
-
-Run the following command to create the objects for the **system** microservice:
+Next, push your images to the container registry on IBM Cloud with the following commands:
 
 ```
-oc process -f build.yaml | oc create -f -
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 ```
 {: codeblock}
-
-
-Next, run the following command to view the newly created **ImageStream** objects and the build configurations for the microservice:
-
-```
-oc get all -l name=system
-```
-{: codeblock}
-
-
-Look for the following resources:
-
-```
-NAME                                                TYPE     FROM     LATEST
-buildconfig.build.openshift.io/system-buildconfig   Docker   Binary   0
-
-NAME                                                IMAGE REPOSITORY                                                                   TAGS           UPDATED
-imagestream.image.openshift.io/system-imagestream   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
-```   
-
-Ensure that you are in the **start** directory and trigger the build by running the following command:
-
-```
-oc start-build system-buildconfig --from-dir=system/.
-```
-{: codeblock}
-
-
-The local **system** directory is uploaded to OpenShift to be built into the Docker image. Run the
-following command to list the build and track its status:
-
-```
-oc get builds
-```
-{: codeblock}
-
-
-Look for the output that is similar to the following example:
-
-```
-NAME                    TYPE     FROM             STATUS     STARTED
-system-buildconfig-1    Docker   Binary@f24cb58   Running    45 seconds ago
-```
-
-You may need to wait some time until the build is complete. To check whether the build is complete, run the following
-command to view the build log until the **Push successful** message appears:
-
-```
-oc logs build/system-buildconfig-1
-```
-{: codeblock}
-
-
-<br/>
-### **Checking the images**
-
-During the build process, the image associated with the **ImageStream** object that you created earlier
-was pushed to the image registry and tagged. Run the following command to view the newly updated **ImageStream** object:
-
-```
-oc get imagestreams
-```
-{: codeblock}
-
-
-Run the following command to get more details on the newly pushed image within the stream:
-
-```
-oc describe imagestream/system-imagestream
-```
-{: codeblock}
-
-
-The following example shows part of the **system-imagestream** output:
-
-```
-Name:               system-imagestream
-Namespace:          guide
-Created:            2 minutes ago
-Labels:             name=system
-Annotations:        <none>
-Image Repository:   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
-Image Lookup:       local=false
-Unique Images:      1
-Tags:               1
-
-...
-```
 
 Now you're ready to deploy the image.
 
 <br/>
-### **Deploying the images**
+### **Deploying the image**
 
 You can configure the specifics of the Open Liberty Operator-controlled deployment with a YAML configuration file.
 
@@ -312,7 +215,7 @@ metadata:
   labels:
     name: system
 spec:
-  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
+  applicationImage: system:1.0-SNAPSHOT
   service:
     port: 9080
   expose: true
@@ -321,6 +224,24 @@ spec:
       value: "json"
     - name: WLP_LOGGING_MESSAGE_SOURCE
       value: "message,trace,accessLog,ffdc,audit"
+  readinessProbe:
+    failureThreshold: 12
+    httpGet:
+      path: /health/ready
+      port: 9080
+      scheme: HTTP
+    initialDelaySeconds: 30
+    periodSeconds: 2
+    timeoutSeconds: 10
+  livenessProbe:
+    failureThreshold: 12
+    httpGet:
+      path: /health/live
+      port: 9080
+      scheme: HTTP
+    initialDelaySeconds: 30
+    periodSeconds: 2
+    timeoutSeconds: 10
 ```
 {: codeblock}
 
@@ -329,11 +250,9 @@ The **deploy.yaml** file is configured to deploy one **OpenLibertyApplication**
 resource, **system**, which is controlled by the Open Liberty Operator.
 
 The **applicationImage** parameter defines what container image is deployed as part of the **OpenLibertyApplication** CRD. 
-This parameter follows the **<project-name>/<image-stream-name>[:tag]** format.
-The parameter can also point to an image hosted on an external registry, such as Docker Hub. 
+This parameter follows the **[image-name][:tag]** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. 
 The **system** microservice is configured to use the **image** created from the earlier build. 
 
-One of the benefits of using **ImageStream** objects is that the operator redeploys the application when it detects a new image is pushed.
 The **env** parameter is used to specify environment variables that are passed to the container at runtime.
 
 Additionally, the microservice includes the **service** and **expose** parameters.
@@ -345,16 +264,15 @@ After you expose the microservice, the Operator automatically creates and config
 
 Run the following commands to update the **applicationImage** and deploy the **system** microservice with the previously explained configuration:
 ```
-PROJECT_NAME=`oc projects -q | grep sn-labs- | sed 's/ //g'`
-sed -i 's=guide='"$PROJECT_NAME"'=g' deploy.yaml
-oc apply -f deploy.yaml
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  imagePullPolicy: Always=g' deploy.yaml
+kubectl apply -f deploy.yaml
 ```
 {: codeblock}
 
 Next, run the following command to view your newly created **OpenLibertyApplications** resources:
 
 ```
-oc get OpenLibertyApplications
+kubectl get OpenLibertyApplications
 ```
 {: codeblock}
 
@@ -364,15 +282,15 @@ You can also replace **OpenLibertyApplications** with the shortname **olapps**.
 Look for output that is similar to the following example:
 
 ```
-NAME      IMAGE                                    EXPOSED   RECONCILED   AGE
-system    guide/system-imagestream:1.0-SNAPSHOT    true      True         10s
+NAME      IMAGE                  EXPOSED   RECONCILED   AGE
+system    system:1.0-SNAPSHOT    true      True         10s
 ```
 
 A **RECONCILED** state value of **True** indicates that the operator was able to successfully process the **OpenLibertyApplications** instances. 
 Run the following command to view details of your microservice:
 
 ```
-oc describe olapps/system
+kubectl describe olapps/system
 ```
 {: codeblock}
 
@@ -381,7 +299,7 @@ This example shows part of the **olapps/system** output:
 
 ```
 Name:         system
-Namespace:    guide
+Namespace:    default
 Labels:       app.kubernetes.io/part-of=system
               name=system
 Annotations:  <none>
@@ -393,49 +311,104 @@ Kind:         OpenLibertyApplication
 
 # **Accessing the microservice**
 
-To access the exposed **system** microservice, run the following command and make note of the **HOST**:
+To access the exposed **system** microservice, the service must be port-forwarded.
+Run the following command to set up port forwarding to access the **system** service:
 
 ```
-oc get routes
+kubectl port-forward svc/system 9080
+```
+{: codeblock}
+
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Access the microservice by running the following command:
+```
+curl -s http://localhost:9080/system/properties | jq
+```
+{: codeblock}
+
+# **Specifying other parameters**
+
+You can visit the link:https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide.adoc#configuration[Open Liberty Operator user guide] to find all of the supported optional parameters.
+
+
+You can now configure the readiness and liveness probes. The **readiness probe** is used to know when a container is ready to begin accepting traffic, and the **liveness probe** is used to know when to restart a container.
+
+Replace the **deploy.yaml** configuration file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > draft-guide-openliberty-operator-intro/start/deploy.yaml
+
+
+
+
+```
+apiVersion: openliberty.io/v1beta1
+kind: OpenLibertyApplication
+metadata:
+  name: system
+  labels:
+    name: system
+spec:
+  applicationImage: system:1.0-SNAPSHOT
+  service:
+    port: 9080
+  expose: true
+  env:
+    - name: WLP_LOGGING_MESSAGE_FORMAT
+      value: "json"
+    - name: WLP_LOGGING_MESSAGE_SOURCE
+      value: "message,trace,accessLog,ffdc,audit"
+  readinessProbe:
+    failureThreshold: 12
+    httpGet:
+      path: /health/ready
+      port: 9080
+      scheme: HTTP
+    initialDelaySeconds: 30
+    periodSeconds: 2
+    timeoutSeconds: 10
+  livenessProbe:
+    failureThreshold: 12
+    httpGet:
+      path: /health/live
+      port: 9080
+      scheme: HTTP
+    initialDelaySeconds: 30
+    periodSeconds: 2
+    timeoutSeconds: 10
 ```
 {: codeblock}
 
 
-Look for an output that is similar to the following example:
+The health check endpoints **/health/ready** and **/health/live** have already been created for you. 
 
+
+Run the following commands to update the **applicationImage** and deploy the **system** microservice with the new configuration:
 ```
-NAME     HOST/PORT                                                     PATH   SERVICES   PORT       TERMINATION   WILDCARD
-system   system-guide.2886795274-80-kota02.environments.katacoda.com          system     9080-tcp                 None
-```
-
-
-Visit the microservice by going to the following URL: 
-**http://[HOST]/system/properties**
-
-Make sure to substitute the appropriate **[HOST]** value.
-For example, using the output from the command above, **system-guide.2886795274-80-kota02.environments.katacoda.com** is the **HOST**.
-The following example shows this value substituted for **HOST** in the URL:
-**http://system-guide.2886795274-80-kota02.environments.katacoda.com/system/properties**.
-
-Or, you can run the following command to get the URL:
-```
-IFS=' ' read -r -a system_url <<< "`oc get routes | grep system`"
-echo http://${system_url[1]}/system/properties
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  imagePullPolicy: Always=g' deploy.yaml
+kubectl apply -f deploy.yaml
 ```
 {: codeblock}
 
-Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
 
+Access the microservice by running the following command:
+```
+curl -s http://localhost:9080/system/properties | jq
+```
+{: codeblock}
+
+When you're done trying out the microservice, press **CTRL+C** in the command line session
+where you ran the **kubectl port-forward** command to stop the port forwarding.
 
 # **Tearing down the environment**
 
 
-When you no longer need your deployed microservice, you can delete all resources by running the following commands:
+When you no longer need your deployed microservice, you can delete all resources by running the following command:
 
 ```
-oc delete -f deploy.yaml
-oc delete imagestream.image.openshift.io/system-imagestream
-oc delete bc system-buildconfig
+kubectl delete -f deploy.yaml
 ```
 {: codeblock}
 
@@ -443,7 +416,7 @@ oc delete bc system-buildconfig
 
 ## **Nice Work!**
 
-You just deployed a microservice running in Open Liberty to OpenShift by using the Open Liberty Operator.
+You just deployed a microservice running in Open Liberty to Kubernetes by using the Open Liberty Operator.
 
 
 
@@ -466,7 +439,7 @@ rm -fr draft-guide-openliberty-operator-intro
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20OpenShift%20by%20using%20a%20Kubernetes%20Operator&guide-id=cloud-hosted-draft-guide-openliberty-operator-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20Kubernetes%20by%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-draft-guide-openliberty-operator-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
