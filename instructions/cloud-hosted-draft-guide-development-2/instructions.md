@@ -1,7 +1,7 @@
 
-# **Welcome to the Consuming a RESTful web service guide!**
+# **Welcome to the Creating a RESTful web service guide!**
 
-Explore how to access a simple RESTful web service and consume its resources in Java
+Learn how to create a REST service with JAX-RS, JSON-B, and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -10,30 +10,29 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-using JSON-B and JSON-P.
+
 
 
 # **What you'll learn**
 
-You will learn how to access a REST service, serialize a Java object that contains a
-list of artists and their albums, and use two different approaches to deserialize
-the returned JSON resources. The first approach consists of using the Java API for JSON Binding (JSON-B)
-to directly convert JSON messages into Java objects. The second approach consists of
-using the Java API for JSON Processing (JSON-P) to process the JSON.
+You will learn how to build and test a simple REST service with JAX-RS and JSON-B, which will expose
+the JVM's system properties. The REST service will respond to **GET** requests made to the **http://localhost:9080/LibertyProject/system/properties** URL.
 
-The REST service that provides the artists and albums resources is already written
-for you. When the server is running, this service is accessible at the **http://localhost:9080/artists** endpoint,
-which responds with the **artists.json** file.
+The service responds to a **GET** request with a JSON representation of the system properties, where
+each property is a field in a JSON object like this:
 
-You will implement the following two endpoints using the two deserialization approaches:
+```
+{
+  "os.name":"Mac",
+  "java.version": "1.8"
+}
+```
 
-* **.../artists/total** to return the total number of artists in the JSON
-* **.../artists/total/<artist>** to return the total number of albums in the JSON
-for the particular artist
-
-If you are interested in learning more about REST services and how you can write them, read
-[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
-
+The design of an HTTP API is essential when creating a web application. The REST API has 
+become the go-to architectural style for building an HTTP API. The JAX-RS API offers 
+functionality for creating, reading, updating, and deleting exposed resources. The JAX-RS API 
+supports the creation of RESTful web services that come with desirable properties, 
+such as performance, scalability, and modifiability.
 
 # **Getting started**
 
@@ -47,11 +46,11 @@ cd /home/project
 ```
 {: codeblock}
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-java.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-rest-client-java.git
-cd guide-rest-client-java
+git clone https://github.com/openliberty/guide-rest-intro.git
+cd guide-rest-intro
 ```
 {: codeblock}
 
@@ -59,7 +58,6 @@ cd guide-rest-client-java
 The **start** directory contains the starting project that you will build upon.
 
 The **finish** directory contains the finished project that you will build.
-
 
 <br/>
 ### **Try what you'll build**
@@ -83,26 +81,21 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
+
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-You can find your service at the **http://localhost:9080/artists** endpoint by running the following curl command:
+
+Check out the service at the http://localhost:9080/LibertyProject/system/properties URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
-curl -s http://localhost:9080/artists | jq
+curl -s http://localhost:9080/LibertyProject/system/properties | jq
 ```
 {: codeblock}
 
-Run the following curl command to retrieve the total number of artists:
-```
-curl http://localhost:9080/artists/total
-```
-{: codeblock}
 
-You can access the endpoint at **`http://localhost:9080/artists/total/<artist>`** to see a particular artist’s total number of albums.
-Run the following curl command to retrieve the artist **bar**'s total number of albums:
-```
-curl http://localhost:9080/artists/total/bar
-```
-{: codeblock}
 
 After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
 in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
@@ -115,12 +108,11 @@ mvn liberty:stop
 
 
 
-# **Starting the service**
+# **Creating a JAX-RS application**
 
-
-To begin, run the following command to navigate to the **start** directory:
+Navigate to the **start** directory to begin.
 ```
-cd /home/project/guide-rest-client-java/start
+cd /home/project/guide-rest-intro/start
 ```
 {: codeblock}
 
@@ -143,516 +135,294 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
 or open the project in your editor.
 
+JAX-RS has two key concepts for creating REST APIs. The most obvious one is the resource itself, which is
+modelled as a class. The second is a JAX-RS application, which groups all exposed resources under a
+common path. You can think of the JAX-RS application as a wrapper for all of your resources.
 
-The application that you'll build upon was created for you. After your server is
-ready, run the following curl command to access the service:
+
+Replace the **SystemApplication** class.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java
+
+
+
+
 ```
-curl -s http://localhost:9080/artists | jq
+package io.openliberty.guides.rest;
+
+import jakarta.ws.rs.core.Application;
+import jakarta.ws.rs.ApplicationPath;
+
+@ApplicationPath("system")
+public class SystemApplication extends Application {
+
+}
 ```
 {: codeblock}
 
-# **Creating POJOs**
 
-
-
-To deserialize a JSON message, start with creating Plain Old Java Objects (POJOs) that represent what
-is in the JSON and whose instance members map to the keys in the JSON.
-
-For the purpose of this guide, you are given two POJOs.
-The **Artist** object has two instance members **name** and **albums**, 
-which map to the artist name and the collection of the albums they have written. The **Album** object represents a 
-single object within the album collection, and contains three instance members **title**, **artistName**, and **totalTracks**, which map to the album title, the artist who wrote the album, and the number of tracks the album contains.
-
-# **Introducing JSON-B and JSON-P**
-
-JSON-B is a feature introduced with Java EE 8 and strengthens Java support for JSON.
-With JSON-B you directly serialize and deserialize POJOs. This API gives you a
-variety of options for working with JSON resources.
-
-In contrast, you need to use helper methods with JSON-P to process a JSON response.
-This tactic is more straightforward, but it can be cumbersome with more complex classes.
-
-JSON-B is built on top of the existing JSON-P API. JSON-B can do everything that JSON-P can do
-and allows for more customization for serializing and deserializing.
-
-<br/>
-### **Using JSON-B**
-
-JSON-B requires a POJO to have a public default no-argument constructor for deserialization
-and binding to work properly.
-
-The JSON-B engine includes a set of default mapping rules, which can be run without
-any customization annotations or custom configuration. In some instances, you might
-find it useful to deserialize a JSON message with only certain fields, specific
-field names, or classes with custom constructors. In these cases,
-annotations are necessary and recommended:
-
-* The **@JsonbProperty** annotation to map JSON keys to class instance members and vice versa.
-Without the use of this annotation, JSON-B will attempt to do POJO mapping, matching the keys in
-the JSON to the class instance members by name. JSON-B will attempt to match the JSON key 
-with a Java field or method annotated with **@JsonbProperty** where the value in the
-annotation exactly matches the JSON key. If no annotation exists with the given JSON key, 
-JSON-B will attempt to find a matching field with the same name. If no match is found, 
-JSON-B attempts to find a matching getter method for serialization or a matching setter 
-method for de-serialization. A match occurs when the property name of the method matches 
-the JSON key. If no matching getter or setter method is found, serialization or 
-de-serialization, respectively, fails with an exception. The Artist POJO does not require 
-this annotation because all instance members match the JSON keys by name.
-
-* The **@JsonbCreator** and **@JsonbProperty** annotations to annotate a custom constructor.
-These annotations are required for proper parameter substitution when a custom constructor is used.
-
-* The **@JsonbTransient** annotation to define an object property that does not map to a JSON
-property. While the use of this annotation is good practice, it is only necessary for serialization.
-
-For more information on customization with JSON-B, see the [official JSON-B site](https://javaee.github.io/jsonb-spec).
-
-
-# **Consuming the REST resource**
+The **SystemApplication** class extends the **Application** class, which associates all JAX-RS resource classes in the WAR file with this JAX-RS application. These resources become available under the common path that's specified with the **@ApplicationPath** 
+annotation. The **@ApplicationPath** annotation has a value that indicates the path in the WAR file that 
+the JAX-RS application accepts requests from.
 
 
 
 
-The **Artist** and **Album** POJOs are ready for deserialization. 
-Next, we'll learn to consume the JSON response from your REST service.
+# **Creating the JAX-RS resource**
 
-Create the **Consumer** class.
+In JAX-RS, a single class should represent a single resource, or a group of resources of the same type.
+In this application, a resource might be a system property, or a set of system properties. It is easy
+to have a single class handle multiple different resources, but keeping a clean separation between types
+of resources helps with maintainability in the long run.
+
+Create the **PropertiesResource** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java
+touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
 
 
 
 
 ```
-package io.openliberty.guides.consumingrest;
+package io.openliberty.guides.rest;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Properties;
 
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
-
-import io.openliberty.guides.consumingrest.model.Album;
-import io.openliberty.guides.consumingrest.model.Artist;
-
-public class Consumer {
-    public static Artist[] consumeWithJsonb(String targetUrl) {
-      Client client = ClientBuilder.newClient();
-      Response response = client.target(targetUrl).request().get();
-      Artist[] artists = response.readEntity(Artist[].class);
-
-      response.close();
-      client.close();
-
-      return artists;
-    }
-
-    public static Artist[] consumeWithJsonp(String targetUrl) {
-      Client client = ClientBuilder.newClient();
-      Response response = client.target(targetUrl).request().get();
-      JsonArray arr = response.readEntity(JsonArray.class);
-
-      response.close();
-      client.close();
-
-      return Consumer.collectArtists(arr);
-    }
-
-    private static Artist[] collectArtists(JsonArray artistArr) {
-      List<Artist> artists = artistArr.stream().map(artistJson -> {
-        JsonArray albumArr = ((JsonObject) artistJson).getJsonArray("albums");
-        Artist artist = new Artist(
-          ((JsonObject) artistJson).getString("name"),
-          Consumer.collectAlbums(albumArr));
-        return artist;
-      }).collect(Collectors.toList());
-
-      return artists.toArray(new Artist[artists.size()]);
-    }
-
-    private static Album[] collectAlbums(JsonArray albumArr) {
-      List<Album> albums = albumArr.stream().map(albumJson -> {
-        Album album = new Album(
-          ((JsonObject) albumJson).getString("title"),
-          ((JsonObject) albumJson).getString("artist"),
-          ((JsonObject) albumJson).getInt("ntracks"));
-        return album;
-      }).collect(Collectors.toList());
-
-      return albums.toArray(new Album[albums.size()]);
-    }
-}
-```
-{: codeblock}
-
-
-<br/>
-### **Processing JSON using JSON-B**
-
-
-JSON-B is a Java API that is used to serialize Java objects to JSON messages and vice versa.
-
-Open Liberty's JSON-B feature on Maven Central includes the JSON-B provider through transitive dependencies.
-The JSON-B APIs are provided by the MicroProfile dependency in your **pom.xml** file. 
-Look for the dependency with the **microprofile** artifact ID. 
-
-The **consumeWithJsonb()** method in the **Consumer** class makes a **GET** request to the
-running artist service and retrieves the JSON. To bind the JSON into an **Artist**
-array, use the **Artist[]** entity type in the **readEntity** call.
-
-<br/>
-### **Processing JSON using JSON-P**
-
-The **consumeWithJsonp()** method in the **Consumer** class makes a **GET** request
-to the running artist service and retrieves the JSON. This method then uses the
-**collectArtists** and **collectAlbums** helper methods. These helper methods will
-parse the JSON and collect its objects into individual POJOs. Notice that you can
-use the custom constructors to create instances of **Artist** and **Album**.
-
-# **Creating additional REST resources**
-
-
-Now that you can consume a JSON resource you can put that data to use.
-
-Replace the **ArtistResource** class.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java
-
-
-
-
-```
-package io.openliberty.guides.consumingrest.service;
-
-import jakarta.json.JsonArray;
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.UriInfo;
 
-import io.openliberty.guides.consumingrest.model.Artist;
-import io.openliberty.guides.consumingrest.Consumer;
-
-@Path("artists")
-public class ArtistResource {
-
-    @Context
-    UriInfo uriInfo;
+@Path("properties")
+public class PropertiesResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray getArtists() {
-      return Reader.getArtists();
+    public Properties getProperties() {
+        return System.getProperties();
     }
 
-    @GET
-    @Path("jsonString")
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getJsonString() {
-      Jsonb jsonb = JsonbBuilder.create();
-
-      Artist[] artists = Consumer.consumeWithJsonb(uriInfo.getBaseUri().toString()
-                                                   + "artists");
-      String result = jsonb.toJson(artists);
-
-      return result;
-    }
-
-    @GET
-    @Path("total/{artist}")
-    @Produces(MediaType.TEXT_PLAIN)
-    public int getTotalAlbums(@PathParam("artist") String artist) {
-      Artist[] artists = Consumer.consumeWithJsonb(uriInfo.getBaseUri().toString()
-        + "artists");
-
-      for (int i = 0; i < artists.length; i++) {
-        if (artists[i].name.equals(artist)) {
-          return artists[i].albums.length;
-        }
-      }
-      return -1;
-    }
-
-    @GET
-    @Path("total")
-    @Produces(MediaType.TEXT_PLAIN)
-    public int getTotalArtists() {
-      return Consumer.consumeWithJsonp(uriInfo.getBaseUri().toString()
-                                       + "artists").length;
-    }
 }
 ```
 {: codeblock}
 
 
-* The **getArtists()** method provides the raw JSON data service that you accessed at the
-beginning of this guide.
+The **@Path** annotation on the class indicates that this resource responds to the **properties** path
+in the JAX-RS application. The **@ApplicationPath** annotation in the **SystemApplication** class together with
+the **@Path** annotation in this class indicates that the resource is available at the **system/properties**
+path.
 
-* The **getJsonString()** method uses JSON-B to return the JSON as a string that will
-be used later for testing.
+JAX-RS maps the HTTP methods on the URL to the methods of the class by using annotations. 
+Your application uses the **GET** annotation to map an HTTP **GET** request
+to the **system/properties** path.
 
-* The **getTotalAlbums()** method uses JSON-B to return the total number of albums present
-in the JSON for a particular artist. The method returns -1 if this artist does not exist.
+The **@GET** annotation on the method indicates that this method is to be called for the HTTP **GET**
+method. The **@Produces** annotation indicates the format of the content that will be returned. The
+value of the **@Produces** annotation will be specified in the HTTP **Content-Type** response header.
+For this application, a JSON structure is to be returned. The desired **Content-Type** for a JSON
+response is **application/json** with **`MediaType.APPLICATION_JSON`** instead of the **String** content type. Using a constant such as **`MediaType.APPLICATION_JSON`** is better because if there's a spelling error, a compile failure occurs.
 
-* The **getTotalArtists()** method uses JSON-P to return the total number of artists
-present in the JSON.
+JAX-RS supports a number of ways to marshal JSON. The JAX-RS 2.1 specification mandates JSON-Binding
+(JSON-B). The method body returns the result of **System.getProperties()**, which is of type **java.util.Properties**. Since the method 
+is annotated with **`@Produces(MediaType.APPLICATION_JSON)`**, JAX-RS uses JSON-B to automatically convert the returned object
+to JSON data in the HTTP response.
 
-The methods that you wrote in the **Consumer** class could be written directly in the
-**ArtistResource** class. However, if you are consuming a REST resource from a third
-party service, you should separate your **GET**/**POST** requests from your data consumption.
+
+
+
+
+# **Configuring the server**
+
+To get the service running, the Liberty server needs to be correctly configured.
+
+Replace the server configuration file.
+
+> From the menu of the IDE, select 
+> **File** > **Open** > guide-rest-intro/start/src/main/liberty/config/server.xml
+
+
+
+
+```
+<server description="Intro REST Guide Liberty server">
+  <featureManager>
+      <feature>restfulWS-3.0</feature>
+      <feature>jsonb-2.0</feature>
+  </featureManager>
+
+  <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
+                id="defaultHttpEndpoint" host="*" />
+
+  <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
+</server>
+```
+{: codeblock}
+
+
+
+The configuration does the following actions:
+
+* Configures the server to enable JAX-RS. This is specified in the **featureManager** element.
+* Configures the server to resolve the HTTP port numbers from variables, which are then specified in the Maven **pom.xml** file. This is specified in the **httpEndpoint** element. Variables use the **${variableName}** syntax.
+* Configures the server to run the produced web application on a context root specified in the **pom.xml** file. This is specified in the **webApplication** element.
+
+
+The variables that are being used in the **server.xml** file are provided by the properties set in the Maven **pom.xml** file. The properties must be formatted as **liberty.var.variableName**.
 
 
 # **Running the application**
 
-The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-You can find your service at the **http://localhost:9080/artists** endpoint by running the following curl command:
-```
-curl -s http://localhost:9080/artists | jq
-```
-{: codeblock}
+Check out the service that you created at the http://localhost:9080/LibertyProject/system/properties URL. 
 
-Run the following curl command to retrieve the total number of artists:
-```
-curl http://localhost:9080/artists/total
-```
-{: codeblock}
 
-You can access the endpoint at **`http://localhost:9080/artists/total/<artist>`** to see a particular artist’s total number of albums.
-Run the following curl command to retrieve the artist **bar**'s total number of albums:
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
-curl http://localhost:9080/artists/total/bar
+curl -s http://localhost:9080/LibertyProject/system/properties | jq
 ```
 {: codeblock}
 
 
-# **Testing deserialization**
 
-Create the **ConsumingRestIT** class.
+
+# **Testing the service**
+
+
+You can test this service manually by starting a server and visiting the
+http://localhost:9080/LibertyProject/system/properties URL. However, automated tests are a 
+much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS 
+Client API provide a simple environment to test the application.
+
+You can write tests for the individual units of code outside of a running application server, or they
+can be written to call the application server directly. In this example, you will create a test that
+does the latter.
+
+Create the **EndpointIT** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java 
+touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 ```
 {: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java 
+> Then from the menu of the IDE, select **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 
 
 
 
 ```
-package it.io.openliberty.guides.consumingrest;
+package it.io.openliberty.guides.rest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.Properties;
 
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import io.openliberty.guides.consumingrest.model.Artist;
-
-public class ConsumingRestIT {
-
-    private static String port;
-    private static String baseUrl;
-    private static String targetUrl;
-
-    private Client client;
-    private Response response;
-
-    @BeforeAll
-    public static void oneTimeSetup() {
-      port = System.getProperty("http.port");
-      baseUrl = "http://localhost:" + port + "/artists/";
-      targetUrl = baseUrl + "total/";
-    }
-
-    @BeforeEach
-    public void setup() {
-      client = ClientBuilder.newClient();
-    }
-
-    @AfterEach
-    public void teardown() {
-      client.close();
-    }
-
+public class EndpointIT {
+    private static final Jsonb JSONB = JsonbBuilder.create();
     @Test
-    public void testArtistDeserialization() {
-      response = client.target(baseUrl + "jsonString").request().get();
-      this.assertResponse(baseUrl + "jsonString", response);
+    public void testGetProperties() {
+        String port = System.getProperty("http.port");
+        String context = System.getProperty("context.root");
+        String url = "http://localhost:" + port + "/" + context + "/";
 
-      Jsonb jsonb = JsonbBuilder.create();
+        Client client = ClientBuilder.newClient();
 
-      String expectedString = "{\"name\":\"foo\",\"albums\":"
-        + "[{\"title\":\"album_one\",\"artist\":\"foo\",\"ntracks\":12}]}";
-      Artist expected = jsonb.fromJson(expectedString, Artist.class);
+        WebTarget target = client.target(url + "system/properties");
+        Response response = target.request().get();
 
-      String actualString = response.readEntity(String.class);
-      Artist[] actual = jsonb.fromJson(actualString, Artist[].class);
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
+                     "Incorrect response code from " + url);
 
-      assertEquals(expected.name, actual[0].name,
-        "Expected names of artists does not match");
+        String json = response.readEntity(String.class);
+        Properties sysProps = JSONB.fromJson(json, Properties.class);
 
-      response.close();
-    }
-
-    @Test
-    public void testJsonBAlbumCount() {
-      String[] artists = {"dj", "bar", "foo"};
-      for (int i = 0; i < artists.length; i++) {
-        response = client.target(targetUrl + artists[i]).request().get();
-        this.assertResponse(targetUrl + artists[i], response);
-
-        int expected = i;
-        int actual = response.readEntity(int.class);
-        assertEquals(expected, actual, "Album count for "
-                      + artists[i] + " does not match");
-
+        assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
+                     "The system property for the local and remote JVM should match");
         response.close();
-      }
-    }
-
-    @Test
-    public void testJsonBAlbumCountForUnknownArtist() {
-      response = client.target(targetUrl + "unknown-artist").request().get();
-
-      int expected = -1;
-      int actual = response.readEntity(int.class);
-      assertEquals(expected, actual, "Unknown artist must have -1 albums");
-
-      response.close();
-    }
-
-    @Test
-    public void testJsonPArtistCount() {
-      response = client.target(targetUrl).request().get();
-      this.assertResponse(targetUrl, response);
-
-      int expected = 3;
-      int actual = response.readEntity(int.class);
-      assertEquals(expected, actual, "Expected number of artists does not match");
-
-      response.close();
-    }
-
-    /**
-     * Asserts that the given URL has the correct (200) response code.
-     */
-    private void assertResponse(String url, Response response) {
-      assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+        client.close();
     }
 }
 ```
 {: codeblock}
 
 
-Maven finds and executes all tests under the **src/test/java/it/** directory, 
-and each test method must be marked with the **@Test** annotation.
 
-You can use the **@BeforeAll** and **@AfterAll** annotations to perform any one-time setup and teardown
-tasks before and after all of your tests run. You can also use the **@BeforeEach** and **@AfterEach** annotations
-to perform setup and teardown tasks for individual test cases.
-
-<br/>
-### **Testing the binding process**
+This test class has more lines of code than the resource implementation. This situation is common.
+The test method is indicated with the **@Test** annotation.
 
 
-The **yasson** dependency was added in your **pom.xml** file so that your test classes have access to JSON-B.
+The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the server configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven **pom.xml** file. Refer to the **pom.xml** file to see how the application information such as the **default.http.port**, **default.https.port** and **app.context.root** elements are provided in the file.
 
-The **testArtistDeserialization** test case checks that **Artist** instances created from
-the REST data and those that are hardcoded perform the same.
 
-The **assertResponse** helper method ensures that the response code you receive is valid (200).
+These Maven properties are then passed to the Java test program as the **systemPropertyVariables** element in the **pom.xml** file.
 
-<br/>
-### **Processing with JSON-B test**
+Getting the values to create a representation of the URL is simple. The test class uses the **getProperty** method
+to get the application details.
 
-The **testJsonBAlbumCount** and **testJsonBAlbumCountForUnknownArtist** tests both use the **total/{artist}**
-endpoint which invokes JSON-B.
+To call the JAX-RS service using the JAX-RS client, first create a **WebTarget** object by calling
+the **target** method that provides the URL. To cause the HTTP request to occur, the **request().get()** method
+is called on the **WebTarget** object. The **get** method
+call is a synchronous call that blocks until a response is received. This call returns a **Response**
+object, which can be inspected to determine whether the request was successful.
 
-The **testJsonBAlbumCount** test case checks that deserialization with JSON-B was done correctly
-and that the correct number of albums is returned for each artist in the JSON.
+The first thing to check is that a **200** response was received. The JUnit **assertEquals** method can be used for this check.
 
-The **testJsonBAlbumCountForUnknownArtist** test case is similar to **testJsonBAlbumCount**
-but instead checks an artist that does not exist in the JSON and ensures that a
-value of `-1` is returned.
-
-<br/>
-### **Processing with JSON-P test**
-
-The **testJsonPArtistCount** test uses the **total** endpoint which invokes JSON-P. This test
-checks that deserialization with JSON-P was done correctly and that the correct number
-of artists is returned.
-
+Check the response body to ensure it returned the right information. Since the client and the server
+are running on the same machine, it is reasonable to expect that the system properties for the local
+and remote JVM would be the same. In this case, an **assertEquals** assertion is made so that the **os.name** system property
+for both JVMs is the same. You can write additional assertions to check for more values.
 
 <br/>
 ### **Running the tests**
 
-Since you started Open Liberty in development mode at the start of the guide, press the **enter/return** key to run the tests.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
-If the tests pass, you see a similar output to the following example:
+You will see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.consumingrest.ConsumingRestIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.59 sec - in it.io.openliberty.guides.consumingrest.ConsumingRestIT
+Running it.io.openliberty.guides.rest.EndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
 
 Results :
 
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are done checking out the service, exit development mode by typing `q` in the command-line session where you ran the server, 
-and then press the **enter/return** key.
+To see whether the tests detect a failure, add an assertion that you know fails, or change the existing
+assertion to a constant value that doesn't match the **os.name** system property.
 
-# **Building the application**
-
-If you are satisfied with your application, run the Maven **package** goal to build the WAR file in the **target** directory:
-
-```
-mvn package
-```
-{: codeblock}
-
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
+where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
 # **Summary**
 
 ## **Nice Work!**
 
-You just accessed a simple RESTful web service and consumed its resources by using JSON-B and JSON-P in Open Liberty.
-
-
+You just developed a REST service in Open Liberty by using JAX-RS and JSON-B.
 
 
 
@@ -662,11 +432,11 @@ You just accessed a simple RESTful web service and consumed its resources by usi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-rest-client-java** project by running the following commands:
+Delete the **guide-rest-intro** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-rest-client-java
+rm -fr guide-rest-intro
 ```
 {: codeblock}
 
@@ -675,7 +445,7 @@ rm -fr guide-rest-client-java
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-client-java)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
@@ -683,15 +453,15 @@ Or, click the **Support/Feedback** button in the IDE and select the **Give feedb
 ## **What could make this guide better?**
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-java/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-java/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-intro/pulls)
 
 
 
 <br/>
 ## **Where to next?**
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
 * [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
