@@ -1,17 +1,11 @@
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
-# **Welcome to the Injecting dependencies into microservices guide!**
-
-Learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies into microservices.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You will learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies in a simple inventory management application.
 
@@ -45,55 +39,7 @@ controlling exactly when and how these components are instantiated and destroyed
 
 
 
-# **Getting started**
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cdi-intro.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-cdi-intro.git
-cd guide-cdi-intro
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-<br/>
-### **Try what you'll build**
-
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
-
-```
-cd finish
-mvn liberty:run
-```
-{: codeblock}
-
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
 Point your browser to the http://localhost:9080/inventory/systems URL.
@@ -104,7 +50,6 @@ _To see the output for this URL in the IDE, run the following command at a termi
 ```
 curl -s http://localhost:9080/inventory/systems | jq
 ```
-{: codeblock}
 
 
 This is the starting point of the **inventory** service and it displays the current contents of the inventory. 
@@ -118,7 +63,6 @@ _To see the output for this URL in the IDE, run the following command at a termi
 ```
 curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
-{: codeblock}
 
 
 You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
@@ -132,24 +76,14 @@ _To see the output for this URL in the IDE, run the following command at a termi
 ```
 curl -s http://localhost:9080/inventory/systems | jq
 ```
-{: codeblock}
 
 
 and you see a new entry for **localhost**. For simplicity, only the OS name and username are shown here for
 each host. You can repeat this process for your own hostname or any other machine that is running
 the **system** service.
 
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
 
-```
-mvn liberty:stop
-```
-{: codeblock}
-
-
-# **Handling dependencies in the application**
+::page{title="Handling dependencies in the application"}
 
 You will use CDI to inject dependencies into the inventory manager application and learn how to manage the life cycles of your objects.
 
@@ -160,26 +94,7 @@ Navigate to the **start** directory to begin.
 ```
 cd /home/project/guide-cdi-intro/start
 ```
-{: codeblock}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
 
 Create the **InventoryManager** class.
 
@@ -187,7 +102,6 @@ Create the **InventoryManager** class.
 ```
 touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
@@ -195,7 +109,7 @@ touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/in
 
 
 
-```
+```java
 package io.openliberty.guides.inventory;
 
 import java.util.ArrayList;
@@ -227,7 +141,6 @@ public class InventoryManager {
   }
 }
 ```
-{: codeblock}
 
 
 
@@ -248,7 +161,6 @@ Create the **InventoryResource** class.
 ```
 touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
@@ -256,7 +168,7 @@ touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/in
 
 
 
-```
+```java
 package io.openliberty.guides.inventory;
 
 import java.util.Properties;
@@ -305,7 +217,6 @@ public class InventoryResource {
   }
 }
 ```
-{: codeblock}
 
 
 
@@ -338,9 +249,6 @@ Your inventory application is now completed.
 
 
 
-# **Running the application**
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 You can find the **inventory** and **system** services at the following URLs:
 
@@ -353,7 +261,6 @@ _To see the output for this URL in the IDE, run the following command at a termi
 ```
 curl -s http://localhost:9080/inventory/systems | jq
 ```
-{: codeblock}
 
 
 
@@ -365,12 +272,11 @@ _To see the output for this URL in the IDE, run the following command at a termi
 ```
 curl -s http://localhost:9080/system/properties | jq
 ```
-{: codeblock}
 
 
 
 
-# **Testing the inventory application**
+::page{title="Testing the inventory application"}
 
 While you can test your application manually, you should rely on automated tests since they trigger
 a failure whenever a code change introduces a defect.
@@ -384,7 +290,6 @@ Create the **InventoryEndpointIT** class.
 ```
 touch /home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
@@ -547,7 +452,6 @@ public class InventoryEndpointIT {
   }
 }
 ```
-{: codeblock}
 
 
 The **@BeforeAll** annotation is placed on a method that runs before any of the test cases.
@@ -582,10 +486,6 @@ If a test failure occurs, then you might have introduced a bug into the code.
 
 
 
-<br/>
-### **Running the tests**
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 If the tests pass, you see a similar output to the following example:
 
@@ -613,8 +513,6 @@ the **src/main/java/io/openliberty/guides/inventory/InventoryResource.java** fil
 run the tests again to see that a test failure occurs.
 
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 # **Summary**
 
@@ -635,8 +533,7 @@ Delete the **guide-cdi-intro** project by running the following commands:
 ```
 cd /home/project
 rm -fr guide-cdi-intro
-```
-{: codeblock}
+```}
 
 <br/>
 ## **What did you think of this guide?**

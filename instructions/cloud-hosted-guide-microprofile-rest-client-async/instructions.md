@@ -1,17 +1,11 @@
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
-# **Welcome to the Consuming RESTful services asynchronously with template interfaces guide!**
-
-Learn how to use MicroProfile Rest Client to invoke RESTful microservices asynchronously over HTTP.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You will learn how to build a MicroProfile Rest Client to access remote RESTful services using asynchronous method calls. 
 You'll update the template interface for a MicroProfile Rest Client to use the **CompletionStage** return type. 
@@ -49,39 +43,14 @@ It communicates with the **inventory** service to determine which system has the
 The **system** and **inventory** microservices use MicroProfile Reactive Messaging to send and receive the system load events. 
 If you want to learn more about reactive messaging, see the [Creating Reactive Java Microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-# **Getting started**
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client-async.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-microprofile-rest-client-async.git
-cd guide-microprofile-rest-client-async
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-# **Updating the template interface of a REST client to use asynchronous methods**
+::page{title="Updating the template interface of a REST client to use asynchronous methods"}
 
 
 To begin, run the following command to navigate to the **start** directory:
 ```
 cd /home/project/guide-microprofile-rest-client-async/start
 ```
-{: codeblock}
 
 The **query** service uses a MicroProfile Rest Client to access the **inventory** service.
 You will update the methods in the template interface for this client to be asynchronous.
@@ -94,7 +63,7 @@ Replace the **InventoryClient** interface.
 
 
 
-```
+```java
 package io.openliberty.guides.query.client;
 
 import java.util.List;
@@ -125,7 +94,6 @@ public interface InventoryClient extends AutoCloseable {
 
 }
 ```
-{: codeblock}
 
 
 
@@ -134,7 +102,7 @@ Change the return type to **CompletionStage<Properties>** to make the method asy
 Since the method now has the return type of **CompletionStage<Properties>**, you aren't able to directly manipulate the **Properties** inner type. 
 As you will see in the next section, you're able to indirectly use the **Properties** by chaining callbacks.
 
-# **Updating a REST resource to asynchronously handle HTTP requests**
+::page{title="Updating a REST resource to asynchronously handle HTTP requests"}
 
 To reduce the processing time, you will update the **/query/systemLoad** endpoint to asynchronously send the requests. 
 Multiple client requests will be sent synchronously in a loop.
@@ -148,7 +116,7 @@ Replace the **QueryResource** class.
 
 
 
-```
+```java
 package io.openliberty.guides.query;
 
 import java.math.BigDecimal;
@@ -246,7 +214,6 @@ public class QueryResource {
     }
 }
 ```
-{: codeblock}
 
 
 
@@ -271,7 +238,7 @@ The **values** variable is instantiated as a **ConcurrentHashMap** object.
 Together, the **volatile** keyword and **ConcurrentHashMap** type allow the **Holder** class to store system information and safely access it asynchronously from multiple threads.
 
 
-# **Building and running the application**
+::page{title="Building and running the application"}
 
 You will build and run the **system**, **inventory**, and **query** microservices in Docker containers. 
 You can learn more about containerizing microservices with Docker in the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
@@ -284,15 +251,6 @@ To build the application, run the Maven **install** and **package** goals from t
 mvn -pl models install
 mvn package
 ```
-{: codeblock}
-
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
 
 
 Run the following commands to containerize the microservices:
@@ -302,8 +260,6 @@ docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 docker build -t query:1.0-SNAPSHOT query/.
 ```
-{: codeblock}
-
 
 Next, use the provided **startContainers** script to start the application in Docker containers. 
 The script creates containers for Kafka, Zookeeper, and all of the microservices in the project, in addition to a network for the containers to communicate with each other.
@@ -313,9 +269,6 @@ The script also creates three instances of the **system** microservice.
 ```
 ./scripts/startContainers.sh
 ```
-{: codeblock}
-
-
 
 
 The services might take several minutes to become available.
@@ -323,7 +276,6 @@ You can access the application by making requests to the **query/systemLoad** en
 ```
 curl -s http://localhost:9080/query/systemLoad | jq
 ```
-{: codeblock}
 
 When the service is ready, you see an output similar to the following example which was formatted for readability. 
 
@@ -350,12 +302,9 @@ When you are done checking out the application, run the following script to stop
 ```
 ./scripts/stopContainers.sh
 ```
-{: codeblock}
 
 
-
-
-# **Testing the query microservice**
+::page{title="Testing the query microservice"}
 
 You will create an endpoint test to test the basic functionality of the **query** microservice. 
 If a test failure occurs, then you might have introduced a bug into the code.
@@ -366,7 +315,6 @@ Create the **QueryServiceIT** class.
 ```
 touch /home/project/guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client-async/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
@@ -374,7 +322,7 @@ touch /home/project/guide-microprofile-rest-client-async/start/query/src/test/ja
 
 
 
-```
+```java
 package it.io.openliberty.guides.query;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -469,7 +417,6 @@ public class QueryServiceIT {
 
 }
 ```
-{: codeblock}
 
 
 The **testLoads()** test case verifies that the **query** service can calculate the highest and lowest system loads. 
@@ -486,7 +433,6 @@ Run the following commands to navigate to the **query** directory and verify tha
 cd /home/project/guide-microprofile-rest-client-async/start/query
 mvn verify
 ```
-{: codeblock}
 
 The tests might take a few minutes to complete. When the tests succeed, you see output similar to the following example:
 
@@ -521,8 +467,7 @@ Delete the **guide-microprofile-rest-client-async** project by running the follo
 ```
 cd /home/project
 rm -fr guide-microprofile-rest-client-async
-```
-{: codeblock}
+```}
 
 <br/>
 ## **What did you think of this guide?**

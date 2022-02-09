@@ -1,17 +1,11 @@
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
-# **Welcome to the Consuming RESTful services using the reactive JAX-RS client guide!**
-
-Learn how to use a reactive JAX-RS client to asynchronously invoke RESTful microservices over HTTP.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 First, you'll learn how to create a reactive JAX-RS client application by using the default reactive JAX-RS client APIs.
 You will then learn how to take advantage of the RxJava reactive extensions with a
@@ -47,38 +41,13 @@ The **system** and **inventory** microservices use MicroProfile Reactive Messagi
 If you want to learn more about reactive messaging, see the 
 [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-# **Getting started**
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-rest-client.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-reactive-rest-client.git
-cd guide-reactive-rest-client
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-# **Creating a web client using the default JAX-RS API**
+::page{title="Creating a web client using the default JAX-RS API"}
 
 Navigate to the **start** directory to begin.
 ```
 cd /home/project/guide-reactive-rest-client/start
 ```
-{: codeblock}
 
 JAX-RS provides a default reactive provider that you can use to create a reactive REST client using the **CompletionStage** interface.
 
@@ -91,7 +60,6 @@ Create the **InventoryClient** interface.
 ```
 touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
@@ -99,7 +67,7 @@ touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/open
 
 
 
-```
+```java
 package io.openliberty.guides.query.client;
 
 import java.util.List;
@@ -144,7 +112,6 @@ public class InventoryClient {
     }
 }
 ```
-{: codeblock}
 
 
 
@@ -161,7 +128,6 @@ Create the **QueryResource** class.
 ```
 touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
@@ -169,7 +135,7 @@ touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/open
 
 
 
-```
+```java
 package io.openliberty.guides.query;
 
 import java.math.BigDecimal;
@@ -264,7 +230,6 @@ public class QueryResource {
     }
 }
 ```
-{: codeblock}
 
 
 
@@ -283,7 +248,7 @@ The **await()** method stops and waits until all of the requests are complete.
 While the countdown completes, the main thread is free to perform other tasks. 
 In this case, no such task is present.
 
-# **Building and running the application**
+::page{title="Building and running the application"}
 
 The **system**, **inventory**, and **query** microservices will be built in Docker containers. 
 If you want to learn more about Docker containers,
@@ -297,15 +262,6 @@ To build the application, run the Maven **install** and **package** goals from t
 mvn -pl models install
 mvn package
 ```
-{: codeblock}
-
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
 
 
 Run the following commands to containerize the microservices:
@@ -315,8 +271,6 @@ docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 docker build -t query:1.0-SNAPSHOT query/.
 ```
-{: codeblock}
-
 
 Next, use the provided script to start the application in Docker containers.
 The script creates a network for the containers to communicate with each other.
@@ -326,9 +280,6 @@ It creates containers for Kafka, Zookeeper, and all of the microservices in the 
 ```
 ./scripts/startContainers.sh
 ```
-{: codeblock}
-
-
 
 
 The microservices will take some time to become available.
@@ -336,19 +287,16 @@ Run the following commands to confirm that the **inventory** and **query** micro
 ```
 curl -s http://localhost:9085/health | jq
 ```
-{: codeblock}
 
 ```
 curl -s http://localhost:9080/health | jq
 ```
-{: codeblock}
 
 Once the microservices are up and running, you can access the application by making requests to the **query/systemLoad** endpoint
 by using the following **curl** command:
 ```
 curl -s http://localhost:9080/query/systemLoad | jq
 ```
-{: codeblock}
 
 When the service is ready, you see an output similar to the following example. 
 This example was formatted for readability:
@@ -376,11 +324,9 @@ Leave the **system** and **inventory** services running because they will be use
 ```
 docker stop query
 ```
-{: codeblock}
 
 
-
-# **Updating the web client to use an alternative reactive provider**
+::page{title="Updating the web client to use an alternative reactive provider"}
 
 
 Although JAX-RS provides the default reactive provider that returns **CompletionStage** types,
@@ -542,7 +488,6 @@ Replace the Maven configuration file.
     </build>
 </project>
 ```
-{: codeblock}
 
 
 The **jersey-rx-client-rxjava** and
@@ -560,7 +505,7 @@ Replace the **InventoryClient** interface.
 
 
 
-```
+```java
 package io.openliberty.guides.query.client;
 
 import java.util.List;
@@ -610,7 +555,6 @@ public class InventoryClient {
     }
 }
 ```
-{: codeblock}
 
 
 
@@ -628,7 +572,7 @@ JAX-RS can deal with cases like these by using the RxJava **Flowable** class wit
 To learn more about RxJava and backpressure, see
 [JAX-RS reactive extensions with RxJava backpressure](https://openliberty.io/blog/2019/04/10/jaxrs-reactive-extensions.html).
 
-# **Updating the REST resource to support the reactive JAX-RS client**
+::page{title="Updating the REST resource to support the reactive JAX-RS client"}
 
 
 Now that the client methods return the **Observable** class, you must update the resource to accommodate these changes.
@@ -733,7 +677,6 @@ public class QueryResource {
     }
 }
 ```
-{: codeblock}
 
 
 The goal of the **systemLoad()** method is to return the system with the largest load and the system with the smallest load. 
@@ -747,23 +690,19 @@ In this case, the necessary data processing is saving the data in the temporary 
 The **Holder** class is used to store the value that is returned from the client because values cannot be returned inside the **subscribe()** method. 
 The highest and lowest load systems are updated in the **updateValues()** method.
 
-# **Rebuilding and running the application**
+::page{title="Rebuilding and running the application"}
 
 Run the Maven **install** and **package** goals from the command-line session in the **start** directory:
 
 ```
 mvn -pl query package
 ```
-{: codeblock}
-
 
 Run the following command to containerize the **query** microservice:
 
 ```
 docker build -t query:1.0-SNAPSHOT query/.
 ```
-{: codeblock}
-
 
 Next, use the provided script to restart the query service in a Docker container. 
 
@@ -771,9 +710,6 @@ Next, use the provided script to restart the query service in a Docker container
 ```
 ./scripts/startQueryContainer.sh
 ```
-{: codeblock}
-
-
 
 
 The **query** microservice will take some time to become available.
@@ -781,7 +717,6 @@ Run the following command to confirm that the **query** microservice is up and r
 ```
 curl -s http://localhost:9080/health | jq
 ```
-{: codeblock}
 
 Once the **query** microservice is up and running, 
 you can access the application by making requests to the **query/systemLoad** endpoint using
@@ -789,7 +724,6 @@ the following **curl** command:
 ```
 curl -s http://localhost:9080/query/systemLoad | jq
 ```
-{: codeblock}
 
 Switching to a reactive programming model freed up the thread that was handling your request to **query/systemLoad**. 
 While the client request is being handled, the thread can handle other work.
@@ -801,10 +735,9 @@ When you are done checking out the application, run the following script to stop
 ```
 ./scripts/stopContainers.sh
 ```
-{: codeblock}
 
 
-# **Testing the query microservice**
+::page{title="Testing the query microservice"}
 
 A few tests are included for you to test the basic functionality of the **query** microservice. 
 If a test failure occurs, then you might have introduced a bug into the code.
@@ -815,7 +748,6 @@ Create the **QueryServiceIT** class.
 ```
 touch /home/project/guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
@@ -823,7 +755,7 @@ touch /home/project/guide-reactive-rest-client/start/query/src/test/java/it/io/o
 
 
 
-```
+```java
 package it.io.openliberty.guides.query;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -917,7 +849,6 @@ public class QueryServiceIT {
 
 }
 ```
-{: codeblock}
 
 
 The **testSystemLoad()** test case verifies that the
@@ -935,8 +866,6 @@ Navigate to the **query** directory, then verify that the tests pass by running 
 cd query
 mvn verify
 ```
-{: codeblock}
-
 
 When the tests succeed, you see output similar to the following example:
 
@@ -971,8 +900,7 @@ Delete the **guide-reactive-rest-client** project by running the following comma
 ```
 cd /home/project
 rm -fr guide-reactive-rest-client
-```
-{: codeblock}
+```}
 
 <br/>
 ## **What did you think of this guide?**

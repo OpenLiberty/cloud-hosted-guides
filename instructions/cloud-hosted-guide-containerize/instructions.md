@@ -1,18 +1,12 @@
-
-# **Welcome to the Containerizing microservices guide!**
-
-Learn how to containerize and run your microservices with Open Liberty using Docker.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
 
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 
 You can easily deploy your microservices in different environments in a lightweight and portable manner by using containers.
@@ -28,40 +22,15 @@ The two microservices that you'll be working with are called **system** and **in
 of the running container. The **inventory** microservice adds the properties from the **system** microservice to the inventory. This guide demonstrates how both microservices can run and communicate
 with each other in different Docker containers. 
 
-# **Getting started**
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-containerize.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-containerize.git
-cd guide-containerize
-```
-{: codeblock}
 
 
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-
-# **Packaging your microservices**
+::page{title="Packaging your microservices"}
 
 
 To begin, run the following command to navigate to the **start** directory:
 ```
 cd start
 ```
-{: codeblock}
 
 You can find the starting Java project in the **start** directory. 
 This project is a multi-module Maven project that is made up of the **system** and **inventory** microservices. Each microservice is located in its own corresponding directory, **system** and **inventory**.
@@ -70,8 +39,6 @@ To try out the microservices by using Maven, run the following Maven goal to bui
 ```
 mvn -pl system liberty:run
 ```
-{: codeblock}
-
 
 
 Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session and 
@@ -80,14 +47,12 @@ run the following Maven goal to build the **inventory** microservice and run it 
 cd /home/project/guide-containerize/start
 mvn -pl inventory liberty:run
 ```
-{: codeblock}
 
 Select **Terminal** > **New Terminal** from the menu of the IDE to open a new command-line session.
 To access the **inventory** service, which displays the current contents of the inventory, run the following curl command: 
 ```
 curl -s http://localhost:9081/inventory/systems | jq
 ```
-{: codeblock}
 
 After you see the following message in both command-line sessions, both of your services are ready:
 
@@ -99,13 +64,11 @@ The **system** service shows the system properties of the running JVM and can be
 ```
 curl -s http://localhost:9080/system/properties | jq
 ```
-{: codeblock}
 
 The system properties of your localhost can be added to the **inventory** service at **http://localhost:9081/inventory/systems/localhost**. Run the following curl command:
 ```
 curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
-{: codeblock}
 
 
 After you are finished checking out the microservices, stop the Open Liberty servers by pressing **CTRL+C**
@@ -116,21 +79,18 @@ cd /home/project/guide-containerize/start
 mvn -pl system liberty:stop
 mvn -pl inventory liberty:stop
 ```
-{: codeblock}
 
 To package your microservices, run the Maven package goal to build the application **.war** files from the start directory so that the **.war** files are in the **system/target** and **inventory/target** directories.
 ```
 mvn package
 ```
-{: codeblock}
-
 
 To learn more about RESTful web services and how to build them, see
 [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the **system** service.
 The **inventory** service is built in a similar way.
 
 
-# **Building your Docker images**
+::page{title="Building your Docker images"}
 
 A Docker image is a binary file. It is made up of multiple layers and is used to run code in a Docker container. Images are built from
 instructions in Dockerfiles to create a containerized version of the application.
@@ -160,7 +120,6 @@ Create the **Dockerfile** for the inventory service.
 ```
 touch /home/project/guide-containerize/start/inventory/Dockerfile
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/inventory/Dockerfile
@@ -197,7 +156,6 @@ COPY --chown=1001:0 \
 
 RUN configure.sh
 ```
-{: codeblock}
 
 
 
@@ -222,7 +180,6 @@ Create the **Dockerfile** for the system service.
 ```
 touch /home/project/guide-containerize/start/system/Dockerfile
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/system/Dockerfile
@@ -255,7 +212,6 @@ COPY --chown=1001:0 target/system.war /config/apps
 
 RUN configure.sh
 ```
-{: codeblock}
 
 
 
@@ -265,13 +221,6 @@ RUN configure.sh
 
 Now that your microservices are packaged and you have written your Dockerfiles, you will build your Docker images by using the **docker build** command.
 
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
-
 
 Run the following commands to build container images for your application:
 
@@ -279,8 +228,6 @@ Run the following commands to build container images for your application:
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
-{: codeblock}
-
 
 The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
 The tag for an image describes the specific image version. If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
@@ -290,15 +237,11 @@ To verify that the images are built, run the **docker images** command to list a
 ```
 docker images
 ```
-{: codeblock}
-
 
 Or, run the **docker images** command with **--filter** option to list your images:
 ```
 docker images -f "label=org.opencontainers.image.authors=Your Name"
 ```
-{: codeblock}
-
 
 Your **inventory** and **system** images appear in the list of all Docker images:
 
@@ -309,15 +252,13 @@ system        1.0-SNAPSHOT    1dff6d0b4f31    5 minutes ago    470MB
 ```
 
 
-# **Running your microservices in Docker containers**
+::page{title="Running your microservices in Docker containers"}
 Now that your two images are built, you will run your microservices in Docker containers:
 
 ```
 docker run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
 docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
 ```
-{: codeblock}
-
 
 The following table describes the flags in these commands:
 
@@ -332,8 +273,6 @@ Next, run the **docker ps** command to verify that your containers are started:
 ```
 docker ps
 ```
-{: codeblock}
-
 
 Make sure that your containers are running and show **Up** as their status:
 
@@ -356,15 +295,12 @@ An empty list is expected because no system properties are stored in the invento
 ```
 curl -s http://localhost:9081/inventory/systems | jq
 ```
-{: codeblock}
 
 Next, retrieve the **system** container's IP address by running the following:
 
 ```
 docker inspect -f "{{.NetworkSettings.IPAddress }}" system
 ```
-{: codeblock}
-
 
 The command returns the system container IP address:
 
@@ -381,7 +317,6 @@ Run the following commands to go to the **http://localhost:9081/inventory/system
 SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
 curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
 ```
-{: codeblock}
 
 You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
 properties are automatically stored in the inventory. Run the following curl command and 
@@ -389,9 +324,8 @@ you see a new entry for **[system-ip-address]**:
 ```
 curl -s http://localhost:9081/inventory/systems | jq
 ```
-{: codeblock}
 
-# **Externalizing server configuration**
+::page{title="Externalizing server configuration"}
 
 
 As mentioned at the beginning of this guide, one of the advantages of using
@@ -425,8 +359,6 @@ docker stop inventory
 docker rm inventory 
 docker run -d --name inventory -e default.http.port=9091 -p 9091:9091 inventory:1.0-SNAPSHOT
 ```
-{: codeblock}
-
 
 The `-e` flag can be used to create and set the values of environment variables
 in a Docker container. In this case, you are setting the **default.http.port** environment
@@ -444,7 +376,6 @@ specified. You can see the contents of the inventory at the
 ```
 curl -s http://localhost:9091/inventory/systems | jq
 ```
-{: codeblock}
 
 You can add your local system properties at the
 **http://localhost:9091/inventory/systems/[system-ip-address]** URL by
@@ -454,20 +385,18 @@ section. Run the following commands:
 SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
 curl -s http://localhost:9091/inventory/systems/{$SYSTEM_IP} | jq
 ```
-{: codeblock}
 
 The **system** service remains unchanged and is available at the
 **http://localhost:9080/system/properties** URL. Run the following curl command:
 ```
 curl -s http://localhost:9080/system/properties | jq
 ```
-{: codeblock}
 
 You can externalize the configuration of more than just the port numbers.
 To learn more about Open Liberty server configuration, check out the
 [Server Configuration Overview](https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html) docs. 
 
-# **Testing the microservices**
+::page{title="Testing the microservices"}
 
 You can test your microservices manually by hitting the endpoints or with automated tests that check your running Docker containers.
 
@@ -477,7 +406,6 @@ Create the **SystemEndpointIT** class.
 ```
 touch /home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
@@ -485,7 +413,7 @@ touch /home/project/guide-containerize/start/system/src/test/java/it/io/openlibe
 
 
 
-```
+```java
 package it.io.openliberty.guides.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -546,7 +474,6 @@ public class SystemEndpointIT {
 
 }
 ```
-{: codeblock}
 
 
 
@@ -558,7 +485,6 @@ Create the **InventoryEndpointIT** class.
 ```
 touch /home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
@@ -566,7 +492,7 @@ touch /home/project/guide-containerize/start/inventory/src/test/java/it/io/openl
 
 
 
-```
+```java
 package it.io.openliberty.guides.inventory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -738,7 +664,6 @@ public class InventoryEndpointIT {
     }
 }
 ```
-{: codeblock}
 
 
 
@@ -758,7 +683,6 @@ SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
 mvn package
 mvn failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9091 -Dsystem.http.port=9080
 ```
-{: codeblock}
 
 If the tests pass, you see output similar to the following example:
 
@@ -790,8 +714,6 @@ When you are finished with the services, run the following commands to stop and 
 docker stop inventory system 
 docker rm inventory system
 ```
-{: codeblock}
-
 
 
 # **Summary**
@@ -813,8 +735,7 @@ Delete the **guide-containerize** project by running the following commands:
 ```
 cd /home/project
 rm -fr guide-containerize
-```
-{: codeblock}
+```}
 
 <br/>
 ## **What did you think of this guide?**

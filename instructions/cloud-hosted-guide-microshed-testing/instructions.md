@@ -1,17 +1,11 @@
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
-# **Welcome to the Testing a MicroProfile or Jakarta EE application guide!**
-
-Learn how to use MicroShed Testing to test a MicroProfile or Jakarta EE application.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You'll start with an existing REST application that runs on Open Liberty and use [MicroShed Testing](https://microshed.org/microshed-testing/) 
 to write tests for the application that exercise the application in a Docker container.
@@ -31,30 +25,6 @@ one another.
 
 Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
 
-# **Getting started**
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microshed-testing.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-microshed-testing.git
-cd guide-microshed-testing
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
 
 <br/>
 ### **Try what you'll build**
@@ -73,7 +43,6 @@ goal to build the application and run the integration tests on an Open Liberty s
 cd /home/project/guide-microshed-testing/finish
 mvn verify
 ```
-{: codeblock}
 
 This command might take some time to run initially because the dependencies and the Docker image for Open Liberty must download. 
 If you run the same command again, it will be faster.
@@ -84,8 +53,6 @@ an active Open Liberty server. Run the following Maven goal to start Open Libert
 ```
 mvn liberty:dev
 ```
-{: codeblock}
-
 
 After you see the following message, your application server in dev mode is ready:
 
@@ -103,33 +70,14 @@ Development mode automatically recompiles and updates any application or test co
 After you're finished running tests, exit development mode by pressing **CTRL+C** in the command-line session
 where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
-# **Bootstrapping your application for testing**
+::page{title="Bootstrapping your application for testing"}
 
 
 To begin, run the following command to navigate to the **start** directory:
 ```
 cd /home/project/guide-microshed-testing/start
 ```
-{: codeblock}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
 
 Wait for the **To run tests on demand, press Enter.** message, 
 and then press the **enter/return** key to run the tests. You see that one test runs:
@@ -162,7 +110,7 @@ Replace the **PersonServiceIT** class.
 
 
 
-```
+```java
 package io.openliberty.guides.testing;
 
 
@@ -189,7 +137,6 @@ public class PersonServiceIT {
 
 }
 ```
-{: codeblock}
 
 
 Import the **ApplicationContainer** class and the **Container** annotation, create the **ApplicationContainer** application, and annotate the application with **@Container** annotation.
@@ -201,10 +148,6 @@ The **withAppContextRoot(String)** method indicates the base path of the applica
 The **withReadinessPath(String)** method indicates what path is polled by HTTP to determine application readiness. 
 MicroShed Testing automatically starts the ApplicationContainer application and waits for it to be ready before the tests start running. 
 
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
 In this case, you're using the default application readiness check at the http://localhost:9080/health/ready URL, which is enabled by the **MicroProfile Health** feature in the server.xml configuration file. When the readiness URL returns the **HTTP 200** message, the application is considered ready and the tests begin running.
 
 
@@ -213,7 +156,6 @@ _To see the output for this URL in the IDE, run the following command at a termi
 ```
 curl -s http://localhost:9080/health/ready | jq
 ```
-{: codeblock}
 
 
 
@@ -223,7 +165,7 @@ Notice that MicroShed Testing is using a **hollow** configuration mode.
 This configuration mode means that MicroShed Testing is reusing an existing application runtime for the test, 
 not starting up a new application instance each time you initiate a test run.
 
-# **Talking to your application with a REST client**
+::page{title="Talking to your application with a REST client"}
 
 With MicroShed Testing, applications are exercised in a black-box fashion. Black-box means the tests can't access the application internals. 
 Instead, the application is exercised from the outside, usually with HTTP requests. To simplify the HTTP interactions, a REST client is injected into the tests.
@@ -240,7 +182,7 @@ which triggers the corresponding Java method in the application.
 
 
 
-# **Writing your first test**
+::page{title="Writing your first test"}
 
 Now that the setup is complete, you can write your first test case. Start by testing the basic "create person" use case for your REST-based application. To test this use case, use the REST client that's injected by MicroShed Testing to make the HTTP POST request to the application and read the response.
 
@@ -252,7 +194,7 @@ Replace the **PersonServiceIT** class.
 
 
 
-```
+```java
 package io.openliberty.guides.testing;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -282,7 +224,6 @@ public class PersonServiceIT {
 
 }
 ```
-{: codeblock}
 
 
 Replace the **PersonServiceIT** class to include the **assertNotNull** static method and write the test logic in the **testCreatePerson()** method.
@@ -306,7 +247,7 @@ Replace the **PersonServiceIT** class.
 
 
 
-```
+```java
 package io.openliberty.guides.testing;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -397,7 +338,6 @@ public class PersonServiceIT {
     }
 }
 ```
-{: codeblock}
 
 
 
@@ -406,7 +346,7 @@ The following tests are added: **testMinSizeName()**, **testMinAge()**, **testGe
 
 Save the changes, and  press the **enter/return** key in your console window to run the tests.
 
-# **Testing outside of development mode**
+::page{title="Testing outside of development mode"}
 
 Running tests in development mode is convenient for local development, but it can be tedious to test against a running Open Liberty server in non-development scenarios such as CI/CD pipelines. For this reason, MicroShed Testing can start and stop the application runtime before and after the tests are run. This process is primarily accomplished by using Docker and Testcontainers.
 
@@ -417,14 +357,12 @@ Next, use the following Maven goal to run the tests from a cold start:
 ```
 mvn verify
 ```
-{: codeblock}
-
 
 Running tests from a cold start takes a little longer than running tests from development mode because the application runtime needs to start each time. 
 However, tests that are run from a cold start use a clean instance on each run to ensure consistent results. 
 These tests also automatically hook into existing build pipelines that are set up to run the **integration-test** phase.
 
-# **Sharing configuration across multiple classes**
+::page{title="Sharing configuration across multiple classes"}
 
 Typically, projects have multiple test classes that all use the same type of application deployment. 
 For these cases, it's useful to reuse an existing configuration and application lifecycle across multiple test classes.
@@ -437,7 +375,6 @@ Create the **ErrorPathIT** class.
 ```
 touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
@@ -445,7 +382,7 @@ touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/g
 
 
 
-```
+```java
 package io.openliberty.guides.testing;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -494,7 +431,6 @@ public class ErrorPathIT {
     }
 }
 ```
-{: codeblock}
 
 
 
@@ -504,8 +440,6 @@ Now, run the tests again outside of development mode:
 ```
 mvn verify
 ```
-{: codeblock}
-
 
 Notice that tests for both the **PersonServiceIT** and **ErrorPathIT** classes run, but a new server starts for each test class, resulting in a longer test runtime.
 
@@ -520,7 +454,6 @@ Create the **AppDeploymentConfig** class.
 ```
 touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
@@ -528,7 +461,7 @@ touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/g
 
 
 
-```
+```java
 package io.openliberty.guides.testing;
 
 import org.microshed.testing.SharedContainerConfiguration;
@@ -544,7 +477,6 @@ public class AppDeploymentConfig implements SharedContainerConfiguration {
 
 }
 ```
-{: codeblock}
 
 
 
@@ -567,7 +499,7 @@ Replace the **PersonServiceIT** class.
 
 
 
-```
+```java
 package io.openliberty.guides.testing;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -653,7 +585,6 @@ public class PersonServiceIT {
     }
 }
 ```
-{: codeblock}
 
 
 Import the **SharedContainerConfig** annotation and annotate the **PersonServiceIT** class with **@SharedContainerConfig**. 
@@ -676,7 +607,7 @@ Replace the **ErrorPathIT** class.
 
 
 
-```
+```java
 package io.openliberty.guides.testing;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -720,7 +651,6 @@ public class ErrorPathIT {
     }
 }
 ```
-{: codeblock}
 
 
 Import the **SharedContainerConfig** annotation and annotate the **ErrorPathIT** class with **@SharedContainerConfig**. 
@@ -730,8 +660,6 @@ If you rerun the tests now, they run in about half the time because the same ser
 ```
 mvn verify
 ```
-{: codeblock}
-
 
 # **Summary**
 
@@ -752,8 +680,7 @@ Delete the **guide-microshed-testing** project by running the following commands
 ```
 cd /home/project
 rm -fr guide-microshed-testing
-```
-{: codeblock}
+```}
 
 <br/>
 ## **What did you think of this guide?**

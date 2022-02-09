@@ -1,18 +1,12 @@
-
-# **Welcome to the Documenting RESTful APIs guide!**
-
-Explore how to document and filter RESTful APIs from code or static files by using MicroProfile OpenAPI.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
 
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You will learn how to document and filter RESTful APIs from annotations, POJOs, and static OpenAPI
 files by using MicroProfile OpenAPI.
@@ -34,51 +28,7 @@ running on the same server. In other words, you must stick to one JAX-RS applica
 as the behaviour for handling multiple applications is currently undefined.
 
 
-# **Getting started**
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-openapi.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-microprofile-openapi.git
-cd guide-microprofile-openapi
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-<br/>
-### **Try what you'll build**
-
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
-
-```
-cd finish
-mvn liberty:run
-```
-{: codeblock}
-
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
 
 
 
@@ -88,7 +38,6 @@ Next, run the following curl command to see the RESTful APIs of the `inventory` 
 ```
 curl http://localhost:9080/openapi
 ```
-{: codeblock}
 
 A UI is also available for a more interactive view of the deployed APIs.
 To visit the UI, select **Launch Application** from the menu of the IDE, 
@@ -99,18 +48,9 @@ Click the **interactive UI** link on the welcome page.
 This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swagger-ui), 
 which renders the generated **/openapi** document into a very user friendly page.
 
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
-
-```
-mvn liberty:stop
-```
-{: codeblock}
 
 
-
-# **Generating the OpenAPI document for the inventory service**
+::page{title="Generating the OpenAPI document for the inventory service"}
 
 You can generate an OpenAPI document in various ways. First, because
 all JAX-RS annotations are processed by default, you can augment your existing JAX-RS annotations with
@@ -122,26 +62,7 @@ Navigate to the **start** directory to begin.
 ```
 cd /home/project/guide-microprofile-openapi/start
 ```
-{: codeblock}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
 
 Because the JAX-RS framework handles basic API generation for JAX-RS annotations, a skeleton OpenAPI
 tree will be generated from the **inventory** service. You can use this tree as a starting point and
@@ -153,7 +74,6 @@ Now, run the following curl command to see the generated OpenAPI tree:
 ```
 curl http://localhost:9080/openapi
 ```
-{: codeblock}
 
 To visit the UI for a more interactive view of the APIs, select **Launch Application** from the menu of the IDE, 
 type in **9080** to specify the port number and click the **OK** button. 
@@ -255,7 +175,6 @@ public class InventoryResource {
 
 }
 ```
-{: codeblock}
 
 
 
@@ -281,7 +200,6 @@ Run the following curl command to see the updated OpenAPI tree:
 ```
 curl http://localhost:9080/openapi
 ```
-{: codeblock}
 
 The two endpoints at which your JAX-RS methods are served are now more meaningful:
 
@@ -340,7 +258,7 @@ Update the **InventoryList** class.
 
 
 
-```
+```java
 package io.openliberty.guides.inventory.model;
 
 import java.util.List;
@@ -365,7 +283,6 @@ public class InventoryList {
     }
 }
 ```
-{: codeblock}
 
 
 
@@ -421,7 +338,6 @@ public class SystemData {
     }
 }
 ```
-{: codeblock}
 
 
 
@@ -435,7 +351,6 @@ Run the following curl command to see the updated OpenAPI tree:
 ```
 curl http://localhost:9080/openapi
 ```
-{: codeblock}
 
 ```
 components:
@@ -479,7 +394,6 @@ Create the **InventoryOASFilter** class.
 ```
 touch /home/project/guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/filter/InventoryOASFilter.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/filter/InventoryOASFilter.java
@@ -487,7 +401,7 @@ touch /home/project/guide-microprofile-openapi/start/src/main/java/io/openlibert
 
 
 
-```
+```java
 package io.openliberty.guides.inventory.filter;
 
 import java.util.Arrays;
@@ -536,7 +450,6 @@ public class InventoryOASFilter implements OASFilter {
 
 }
 ```
-{: codeblock}
 
 
 
@@ -567,7 +480,6 @@ Create the configuration file.
 ```
 touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties
@@ -578,7 +490,6 @@ touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/mi
 ```
 mp.openapi.filter = io.openliberty.guides.inventory.filter.InventoryOASFilter
 ```
-{: codeblock}
 
 
 
@@ -590,7 +501,6 @@ Run the following curl command to see the updated OpenAPI tree:
 ```
 curl http://localhost:9080/openapi
 ```
-{: codeblock}
 
 ```
 info:
@@ -625,7 +535,7 @@ and try one of the MicroProfile Config [guides](https://openliberty.io/guides/?s
 
 
 
-# **Using pregenerated OpenAPI documents**
+::page{title="Using pregenerated OpenAPI documents"}
 
 As an alternative to generating the OpenAPI model tree from code, you can provide a valid pregenerated
 OpenAPI document to describe your APIs. This document must be named **openapi** with a **yml**, **yaml**, or **json**
@@ -642,7 +552,6 @@ Create the OpenAPI document file.
 ```
 touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/openapi.yaml
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/openapi.yaml
@@ -650,7 +559,7 @@ touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/op
 
 
 
-```
+```yaml
 ---
 openapi: 3.0.3
 info:
@@ -736,7 +645,6 @@ components:
         properties:
           type: object
 ```
-{: codeblock}
 
 
 
@@ -757,7 +665,6 @@ Update the configuration file.
 mp.openapi.scan.disable = true
 mp.openapi.filter = io.openliberty.guides.inventory.filter.InventoryOASFilter
 ```
-{: codeblock}
 
 
 Add and set the **mp.openapi.scan.disable** property to **true**.
@@ -768,7 +675,6 @@ Run the following curl command to see the updated OpenAPI tree:
 ```
 curl http://localhost:9080/openapi
 ```
-{: codeblock}
 
 ```
 /inventory/properties:
@@ -787,7 +693,7 @@ curl http://localhost:9080/openapi
 
 
 
-# **Testing the service**
+::page{title="Testing the service"}
 
 
 No automated tests are provided to verify the correctness of the generated OpenAPI document. Manually
@@ -797,10 +703,6 @@ A few tests are included for you to test the basic functionality of the **invent
 failure occurs, then you might have introduced a bug into the code. These tests will run automatically
 as a part of the integration test suite.
 
-<br/>
-### **Running the tests**
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 You will see the following output:
 
@@ -824,8 +726,6 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 The warning and error messages are expected and result from a request to a bad or an unknown hostname. 
 This request is made in the **testUnknownHost()** test from the **InventoryEndpointIT** integration test.
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
 
@@ -855,8 +755,7 @@ Delete the **guide-microprofile-openapi** project by running the following comma
 ```
 cd /home/project
 rm -fr guide-microprofile-openapi
-```
-{: codeblock}
+```}
 
 <br/>
 ## **What did you think of this guide?**

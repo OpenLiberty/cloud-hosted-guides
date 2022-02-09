@@ -1,19 +1,13 @@
-
-# **Welcome to the Using Docker containers to develop microservices guide!**
-
-Learn how to use Docker containers for iterative development.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
 
 
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You will learn how to set up, run, and iteratively develop a simple REST application in a container with Open Liberty and Docker.
 
@@ -68,33 +62,9 @@ the application can run inside that container.
 This helps avoid any unpleasant surprises when you go to test or deploy your application down the road.
 Containers run quickly and do not have a major impact on the speed of your iterative development.
 
-# **Getting started**
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-docker.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-docker.git
-cd guide-docker
-```
-{: codeblock}
 
 
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-
-# **Creating the Dockerfile**
+::page{title="Creating the Dockerfile"}
 
 
 
@@ -108,7 +78,6 @@ Navigate to the **start** directory to begin.
 ```
 cd /home/project/guide-docker/start
 ```
-{: codeblock}
 
 Create the **Dockerfile** in the **start** directory.
 
@@ -116,7 +85,6 @@ Create the **Dockerfile** in the **start** directory.
 ```
 touch /home/project/guide-docker/start/Dockerfile
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-docker/start/Dockerfile
@@ -149,7 +117,6 @@ COPY --chown=1001:0 src/main/liberty/config/server.xml /config/
 COPY --chown=1001:0 target/*.war /config/apps/
 USER 1001
 ```
-{: codeblock}
 
 
 The **FROM** instruction initializes a new build stage
@@ -181,7 +148,7 @@ A **.dockerignore** file is available to you in the **start** directory. This fi
 the **pom.xml** file and some system files.
 
 
-# **Launching Open Liberty in dev mode**
+::page{title="Launching Open Liberty in dev mode"}
 
 The Open Liberty Maven plug-in includes a **devc** goal that builds a Docker image, mounts the required directories,
 binds the required ports, and then runs the application inside of a container.
@@ -193,8 +160,6 @@ Build and run the container by running the **devc** goal from the **start** dire
 ```
 mvn liberty:devc
 ```
-{: codeblock}
-
 
 After you see the following message, your application server in dev mode is ready:
 ```
@@ -208,8 +173,6 @@ container is running and didn’t crash:
 ```
 docker ps 
 ```
-{: codeblock}
-
 
 You should see something similar to the following output:
 
@@ -228,10 +191,9 @@ that contains the system properties of the JVM in your container.
 ```
 curl -s http://localhost:9080/system/properties | jq
 ```
-{: codeblock}
 
 
-# **Updating the application while the container is running**
+::page{title="Updating the application while the container is running"}
 
 
 With your container running, make the following update to the source code:
@@ -275,7 +237,6 @@ public class PropertiesResource {
     }
 }
 ```
-{: codeblock}
 
 
 Change the endpoint of your application from **properties** to **properties-new** by changing the **@Path**
@@ -288,10 +249,9 @@ To see the changes reflected in the application, run the following command in a 
 ```
 curl -s http://localhost:9080/system/properties-new | jq
 ```
-{: codeblock}
 
 
-# **Testing the container**
+::page{title="Testing the container"}
 
 
 
@@ -309,7 +269,6 @@ Create the **EndpointIT** test class.
 ```
 touch /home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
@@ -358,17 +317,12 @@ public class EndpointIT {
     }
 }
 ```
-{: codeblock}
 
 
 This test makes a request to the **/system/properties-new** endpoint and checks to
 make sure that the response has a valid status code, and that the information in
 the response is correct. 
 
-<br/>
-### **Running the tests**
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 You will see the following output:
 
@@ -388,7 +342,7 @@ When you are finished, press **CTRL+C** in the session that the dev mode was
 started from to stop and remove the container.
 
 
-# **Starting dev mode with run options**
+::page{title="Starting dev mode with run options"}
 
 Another useful feature of dev mode with a container is the ability to pass additional options
 to the **docker run** command. You can do this by adding the **dockerRunOpts** tag to the **pom.xml** file under 
@@ -440,8 +394,7 @@ Delete the **guide-docker** project by running the following commands:
 ```
 cd /home/project
 rm -fr guide-docker
-```
-{: codeblock}
+```}
 
 <br/>
 ## **What did you think of this guide?**

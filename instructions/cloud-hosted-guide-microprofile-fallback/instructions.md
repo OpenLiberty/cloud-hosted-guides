@@ -1,18 +1,12 @@
-
-# **Welcome to the Building fault-tolerant microservices with the @Fallback annotation guide!**
-
-You'll explore how to manage the impact of failures using MicroProfile Fault Tolerance by adding fallback behavior to microservice dependencies.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
 
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You will learn how to use MicroProfile (MP) Fault Tolerance to build resilient microservices
 that reduce the impact from failure and ensure continued operation of services.
@@ -39,52 +33,8 @@ when you add the MicroProfile Metrics feature to the server.
 
 
 
-# **Getting started**
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-fallback.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-microprofile-fallback.git
-cd guide-microprofile-fallback
-```
-{: codeblock}
 
 
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-
-<br/>
-### **Try what you'll build**
-
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
-
-```
-cd finish
-mvn liberty:run
-```
-{: codeblock}
-
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
@@ -92,7 +42,6 @@ To access the **inventory** service with a localhost hostname, run the following
 ```
 curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
-{: codeblock}
 
 You see the system properties for this host.
 When you run this curl command, some of these system properties, such as the OS name and user name, are automatically stored in the inventory.
@@ -108,7 +57,6 @@ Change the **`io_openliberty_guides_system_inMaintenance`** property from **fals
 {"config_ordinal":500,
 "io_openliberty_guides_system_inMaintenance":true}
 ```
-{: codeblock}
 
 
 You do not need to restart the server. 
@@ -116,7 +64,6 @@ Next, run the following curl command:
 ```
 curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
-{: codeblock}
 
 The fallback mechanism is triggered because the **system** service is now in maintenance.
 You see the cached properties for this localhost.
@@ -135,46 +82,17 @@ condition back to its original value.
 {"config_ordinal":500,
 "io_openliberty_guides_system_inMaintenance":false}
 ```
-{: codeblock}
-
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
-
-```
-mvn liberty:stop
-```
-{: codeblock}
 
 
 
-# **Enabling fault tolerance**
+::page{title="Enabling fault tolerance"}
 
 
 To begin, run the following command to navigate to the **start** directory:
 ```
 cd /home/project/guide-microprofile-fallback/start
 ```
-{: codeblock}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
 
 The MicroProfile Fault Tolerance API is included in the MicroProfile dependency that is specified in your **pom.xml** file.
 Look for the dependency with the **microprofile** artifact ID.
@@ -234,7 +152,7 @@ Replace the **InventoryManager** class.
 
 
 
-```
+```java
 package io.openliberty.guides.inventory;
 
 import java.io.IOException;
@@ -302,7 +220,6 @@ public class InventoryManager {
     }
 }
 ```
-{: codeblock}
 
 
 
@@ -323,7 +240,7 @@ message in the browser. Otherwise, this method returns the cached property value
 You successfully set up your microservice to have fault tolerance capability.
 
 
-# **Enabling metrics for the fault tolerance methods**
+::page{title="Enabling metrics for the fault tolerance methods"}
 
 
 MicroProfile Fault Tolerance integrates with MicroProfile Metrics to provide metrics for the annotated fault tolerance methods.
@@ -336,16 +253,12 @@ server. When you go to the **/metrics** endpoint, use the credentials that are d
 You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [MicroProfile Fault Tolerance specification](https://github.com/eclipse/microprofile-fault-tolerance/releases).
 
 
-# **Running the application**
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
 When the server is running, run the following curl command:
 ```
 curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
-{: codeblock}
 
 You receive the system properties of your local JVM from the **inventory** service.
 
@@ -353,7 +266,6 @@ Next, run the following curl command which accesses the **system** service, to r
 ```
 curl -s http://localhost:9080/system/properties | jq
 ```
-{: codeblock}
 
 Notice that the results from the two URLs are identical because the **inventory** service gets its results from
 calling the **system** service.
@@ -362,12 +274,11 @@ To see the application metrics, run the following curl commmand. This command wi
 ```
 curl -k -u admin https://localhost:9443/metrics/base | grep _ft_
 ```
-{: codeblock}
 
 See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
 
 ```
-# **TYPE base_ft_invocations_total counter**
+::page{title="TYPE base_ft_invocations_total counter"}
 base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
 base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 0
 base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
@@ -389,7 +300,6 @@ Change the **`io_openliberty_guides_system_inMaintenance`** property from **fals
 {"config_ordinal":500,
 "io_openliberty_guides_system_inMaintenance":true}
 ```
-{: codeblock}
 
 
 
@@ -398,7 +308,6 @@ After saving the file, run the following curl command to view the cached version
 ```
 curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
-{: codeblock}
 
 The **fallbackForGet()** method, which is the designated fallback method, is called when the **system** service is not available.
 The cached system properties contain only the OS name and user name key and value pairs.
@@ -408,7 +317,6 @@ To see that the **system** service is down, run the following curl command:
 ```
 curl -I http://localhost:9080/system/properties
 ```
-{: codeblock}
 
 You see that the service displays a 503 HTTP response code.
 
@@ -417,12 +325,11 @@ Run the following curl command again and enter **adminpwd** as the password:
 ```
 curl -k -u admin https://localhost:9443/metrics/base | grep _ft_
 ```
-{: codeblock}
 
 See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
 
 ```
-# **TYPE base_ft_invocations_total counter**
+::page{title="TYPE base_ft_invocations_total counter"}
 base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
 base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
 base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
@@ -446,10 +353,9 @@ property value back to **false** in the **resources/CustomConfigSource.json** fi
 {"config_ordinal":500,
 "io_openliberty_guides_system_inMaintenance":false}
 ```
-{: codeblock}
 
 
-# **Testing the application**
+::page{title="Testing the application"}
 
 You can test your application manually, but automated tests ensure code quality because they trigger a failure
 whenever a code change introduces a defect. JUnit and the JAX-RS Client API provide a simple environment for you to write tests.
@@ -460,7 +366,6 @@ Create the **FaultToleranceIT** class.
 ```
 touch /home/project/guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
@@ -544,7 +449,6 @@ public class FaultToleranceIT {
     }
 }
 ```
-{: codeblock}
 
 
 The **@BeforeEach** and **@AfterEach** annotations indicate that this method runs either
@@ -569,10 +473,6 @@ In addition, a few endpoint tests have been included for you to test the basic f
 the code.
 
 
-<br/>
-### **Running the tests**
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 If the tests pass, you see a similar output to the following example:
 ```
@@ -595,8 +495,6 @@ To see if the tests detect a failure, comment out the **changeSystemProperty()**
 in the **FaultToleranceIT.java** file. Rerun the tests to see that a test failure occurs for the
 **testFallbackForGet()** and **testFallbackSkipForGet()** test cases.
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
 # **Summary**
@@ -622,8 +520,7 @@ Delete the **guide-microprofile-fallback** project by running the following comm
 ```
 cd /home/project
 rm -fr guide-microprofile-fallback
-```
-{: codeblock}
+```}
 
 <br/>
 ## **What did you think of this guide?**

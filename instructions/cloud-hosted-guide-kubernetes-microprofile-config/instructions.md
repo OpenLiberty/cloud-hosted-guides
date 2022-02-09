@@ -1,19 +1,13 @@
-
-# **Welcome to the Configuring microservices running in Kubernetes guide!**
-
-Explore how to externalize configuration using MicroProfile Config and configure your microservices using Kubernetes ConfigMaps and Secrets.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
 
 
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 You will learn how and why to externalize your microservice's configuration.
 Externalized configuration is useful because configuration usually changes depending on your environment.
 You will also learn how to configure the environment by providing required values to your application using Kubernetes.
@@ -29,75 +23,10 @@ These resources are provided by Kubernetes and act as a data source for your env
 You can use a ConfigMap or Secret to set environment variables for any number of containers.
 
 
-# **Getting started**
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-config.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-kubernetes-microprofile-config.git
-cd guide-kubernetes-microprofile-config
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
 
 
 
-
-# **Logging into your cluster**
-
-For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
-Get the name of your namespace with the following command:
-
-```
-bx cr namespace-list
-```
-{: codeblock}
-
-Look for output that is similar to the following:
-
-```
-Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
-
-Namespace
-sn-labs-yourname
-```
-
-Run the following command to store the namespace name in a variable.
-
-```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-```
-{: codeblock}
-
-Verify that the variable contains your namespace name:
-
-```
-echo $NAMESPACE_NAME
-```
-{: codeblock}
-
-Log in to the registry with the following command:
-```
-bx cr login
-```
-{: codeblock}
-
-
-# **Deploying the microservices**
+::page{title="Deploying the microservices"}
 
 The two microservices you will deploy are called **system** and **inventory**. The **system** microservice
 returns the JVM system properties of the running container. The **inventory** microservice
@@ -109,15 +38,6 @@ To build these applications, navigate to the **start** directory and run the fol
 cd start
 mvn clean package
 ```
-{: codeblock}
-
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
 
 
 Next, run the **docker build** commands to build container images for your application:
@@ -125,8 +45,6 @@ Next, run the **docker build** commands to build container images for your appli
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
-{: codeblock}
-
 
 The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
 The tag for an image describes the specific image version.
@@ -140,7 +58,6 @@ docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
 docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 ```
-{: codeblock}
 
 Update the image names and set the image pull policy to **Always**
 so that the images in your IBM Cloud container registry are used,
@@ -152,22 +69,17 @@ sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNA
 sed -i 's=nodePort: 31000==g' kubernetes.yaml
 sed -i 's=nodePort: 32000==g' kubernetes.yaml
 ```
-{: codeblock}
 
 Run the following command to deploy the necessary Kubernetes resources to serve the applications.
 ```
 kubectl apply -f kubernetes.yaml
 ```
-{: codeblock}
-
 
 When this command finishes, wait for the pods to be in the Ready state.
 Run the following command to view the status of the pods.
 ```
 kubectl get pods
 ```
-{: codeblock}
-
 
 When the pods are ready, the output shows **1/1** for READY and **Running** for STATUS.
 
@@ -187,7 +99,6 @@ Run the following commands to set up port forwarding to access the **system** se
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
 ```
-{: codeblock}
 
 Then, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 Run the following commands to set up port forwarding to access the **inventory** service.
@@ -195,7 +106,6 @@ Run the following commands to set up port forwarding to access the **inventory**
 INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
 kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
 ```
-{: codeblock}
 
 Then use the following commands to access your **system** microservice.
 The `-u` option is used to pass in the username `bob` and the password `bobpwd`.
@@ -203,19 +113,17 @@ The `-u` option is used to pass in the username `bob` and the password `bobpwd`.
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u bob:bobpwd | jq
 ```
-{: codeblock}
 
 Use the following commands to access your **inventory** microservice.
 ```
 INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
 curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
 ```
-{: codeblock}
 
 When you're done trying out the microservices, press **CTRL+C** in the command line sessions
 where you ran the `kubectl port-forward` commands to stop the port forwarding.
 
-# **Modifying system microservice**
+::page{title="Modifying system microservice"}
 
 
 The **system** service is hardcoded to use a single forward slash as the context root.
@@ -260,7 +168,6 @@ Replace the **server.xml** file.
 
 </server>
 ```
-{: codeblock}
 
 
 The **contextRoot** attribute in the **webApplication**
@@ -273,7 +180,7 @@ Open Liberty looks for the following environment variables, in order:
 * `context_root`
 * `CONTEXT_ROOT`
 
-# **Modifying inventory microservice**
+::page{title="Modifying inventory microservice"}
 
 The **inventory** service is hardcoded to use **bob** and **bobpwd** as the credentials to authenticate against the **system** service.
 You'll make these credentials configurable. 
@@ -286,7 +193,7 @@ Replace the **SystemClient** class.
 
 
 
-```
+```java
 package io.openliberty.guides.inventory.client;
 
 import java.net.URI;
@@ -396,7 +303,6 @@ public class SystemClient {
   }
 }
 ```
-{: codeblock}
 
 
 
@@ -405,7 +311,7 @@ environment variables **`SYSTEM_APP_USERNAME`** and
 **`SYSTEM_APP_PASSWORD`** into the **SystemClient** class.
 
 
-# **Creating a ConfigMap and Secret**
+::page{title="Creating a ConfigMap and Secret"}
 
 Several options exist to configure an environment variable in a Docker container.
 You can set it directly in the **Dockerfile** with the **ENV** command.
@@ -420,8 +326,6 @@ Create a ConfigMap to configure the app name with the following **kubectl** comm
 ```
 kubectl create configmap sys-app-root --from-literal contextRoot=/dev
 ```
-{: codeblock}
-
 
 This command deploys a ConfigMap named **sys-app-root** to your cluster.
 It has a key called **contextRoot** with a value of **/dev**.
@@ -436,9 +340,7 @@ authenticate against **system** with the following **kubectl** command.
 ```
 kubectl create secret generic sys-app-credentials --from-literal username=alice --from-literal password=wonderland
 ```
-{: codeblock}
-
-
+ 
 This command looks similar to the command to create a ConfigMap, but one difference is the word **generic**.
 This word creates a Secret that doesn't store information in any specialized way.
 Different types of secrets are available, such as secrets to store Docker credentials
@@ -455,7 +357,7 @@ Encryption is not required for the application to run.
 
 
 
-# **Updating Kubernetes resources**
+::page{title="Updating Kubernetes resources"}
 
 Next, you will update your Kubernetes deployments to set the environment variables in your containers
 based on the values that are configured in the ConfigMap and Secret that you created previously. 
@@ -468,7 +370,7 @@ Replace the kubernetes file.
 
 
 
-```
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -573,7 +475,6 @@ spec:
     targetPort: 9080
     nodePort: 32000
 ```
-{: codeblock}
 
 
 
@@ -596,7 +497,7 @@ gets the values **username** and
 **sys-app-credentials** Secret.
 
 
-# **Deploying your changes**
+::page{title="Deploying your changes"}
 
 
 Rebuild the application using **mvn clean package**.
@@ -604,15 +505,12 @@ Rebuild the application using **mvn clean package**.
 cd /home/project/guide-kubernetes-microprofile-config/start
 mvn clean package
 ```
-{: codeblock}
 
 Run the **docker build** commands to rebuild container images for your application:
 ```
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
-{: codeblock}
-
 
 
 Push your updated images to the container registry on IBM Cloud with the following commands:
@@ -624,7 +522,6 @@ docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
 docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 ```
-{: codeblock}
 
 Update the image names and set the image pull policy to **Always**
 so that the images in your IBM Cloud container registry are used,
@@ -636,15 +533,12 @@ sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/inventory:1.0-SNA
 sed -i 's=nodePort: 31000==g' kubernetes.yaml
 sed -i 's=nodePort: 32000==g' kubernetes.yaml
 ```
-{: codeblock}
 
 
 Run the following command to deploy your changes to the Kubernetes cluster.
 ```
 kubectl replace --force -f kubernetes.yaml
 ```
-{: codeblock}
-
 
 
 Set up port forwarding to the new services.
@@ -655,7 +549,6 @@ Run the following commands to set up port forwarding to access the **system** se
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
 ```
-{: codeblock}
 
 Then, run the following commands to set up port forwarding to access the **inventory** service.
 
@@ -663,7 +556,6 @@ Then, run the following commands to set up port forwarding to access the **inven
 INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
 kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
 ```
-{: codeblock}
 
 You now need to use the new username, `alice`, and the new password, `wonderland`, to log in.
 Access your application with the following commands:
@@ -672,7 +564,6 @@ Access your application with the following commands:
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 curl -s http://localhost:$SYSTEM_NODEPORT/dev/system/properties -u alice:wonderland | jq
 ```
-{: codeblock}
 
 Notice that the URL you are using to reach the application now has **/dev** as the context root. 
 
@@ -683,11 +574,10 @@ Verify the inventory service is working as intended by using the following comma
 INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
 curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
 ```
-{: codeblock}
 
 If it is not working, then check the configuration of the credentials.
 
-# **Testing the microservices**
+::page{title="Testing the microservices"}
 
 
 
@@ -701,7 +591,6 @@ sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' inventory/pom.xml
 sed -i 's=localhost:32000='"localhost:$INVENTORY_NODEPORT"'=g' inventory/pom.xml
 sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' system/pom.xml
 ```
-{: codeblock}
 
 Run the integration tests by using the following command:
 
@@ -711,7 +600,6 @@ mvn failsafe:integration-test \
     -Dsystem.context.root=/dev \
     -Dinventory.service.root=localhost:$INVENTORY_NODEPORT
 ```
-{: codeblock}
 
 The tests for **inventory** verify that the service can communicate with **system**
 using the configured credentials. If the credentials are misconfigured, then the
@@ -744,7 +632,7 @@ Results:
 Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-# **Tearing down the environment**
+::page{title="Tearing down the environment"}
 
 Press **CTRL+C** in the command-line sessions where you ran `kubectl port-forward` to stop the port forwarding. 
 
@@ -755,8 +643,6 @@ kubectl delete -f kubernetes.yaml
 kubectl delete configmap sys-app-root
 kubectl delete secret sys-app-credentials
 ```
-{: codeblock}
-
 
 
 
@@ -782,8 +668,7 @@ Delete the **guide-kubernetes-microprofile-config** project by running the follo
 ```
 cd /home/project
 rm -fr guide-kubernetes-microprofile-config
-```
-{: codeblock}
+```}
 
 <br/>
 ## **What did you think of this guide?**

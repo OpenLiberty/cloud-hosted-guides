@@ -1,18 +1,12 @@
-
-# **Welcome to the Providing metrics from a microservice guide!**
-
-You'll explore how to provide system and application metrics from a microservice with MicroProfile Metrics.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
 
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You will learn how to use MicroProfile Metrics to provide metrics from a microservice. You can monitor
 metrics to determine the performance and health of a service. You can also use them to pinpoint issues,
@@ -29,52 +23,8 @@ provide application-level metrics data. You will add counter, gauge, and timer m
 You will also check well-known REST endpoints that are defined by MicroProfile Metrics to review
 the metrics data collected. Monitoring agents can access these endpoints to collect metrics.
 
-# **Getting started**
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-metrics.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-microprofile-metrics.git
-cd guide-microprofile-metrics
-```
-{: codeblock}
 
 
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-
-<br/>
-### **Try what you'll build**
-
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
-
-```
-cd finish
-mvn liberty:run
-```
-{: codeblock}
-
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
@@ -83,13 +33,11 @@ Run the following curl command to access the **inventory** service. Because you 
 ```
 curl -s http://localhost:9080/inventory/systems | jq
 ```
-{: codeblock}
 
 Run the following curl command to add the **localhost** into the inventory.
 ```
 curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
-{: codeblock}
 
 Access the **inventory** service at the **http://localhost:9080/inventory/systems** URL at least once so that application metrics are collected. Otherwise, the metrics do not appear.
 
@@ -98,42 +46,40 @@ You can see both the system and application metrics in a text format.
 ```
 curl -k --user admin:adminpwd https://localhost:9443/metrics
 ```
-{: codeblock}
 
 To see only the application metrics, run the following curl command:
 ```
 curl -k --user admin:adminpwd https://localhost:9443/metrics/application
 ```
-{: codeblock}
 
 See the following sample outputs for the **@Timed**, **@Gauge**, and **@Counted** metrics:
 
 ```
-# **TYPE application_inventoryProcessingTime_rate_per_second gauge**
+::page{title="TYPE application_inventoryProcessingTime_rate_per_second gauge"}
 application_inventoryProcessingTime_rate_per_second{method="get"} 0.0019189661542898407
 ...
-# **TYPE application_inventoryProcessingTime_seconds summary**
-# **HELP application_inventoryProcessingTime_seconds Time needed to process the inventory**
+::page{title="TYPE application_inventoryProcessingTime_seconds summary"}
+::page{title="HELP application_inventoryProcessingTime_seconds Time needed to process the inventory"}
 application_inventoryProcessingTime_seconds_count{method="get"} 1
 application_inventoryProcessingTime_seconds{method="get",quantile="0.5"} 0.127965469
 ...
-# **TYPE application_inventoryProcessingTime_rate_per_second gauge**
+::page{title="TYPE application_inventoryProcessingTime_rate_per_second gauge"}
 application_inventoryProcessingTime_rate_per_second{method="list"} 0.0038379320982686884
 ...
-# **TYPE application_inventoryProcessingTime_seconds summary**
-# **HELP application_inventoryProcessingTime_seconds Time needed to process the inventory**
+::page{title="TYPE application_inventoryProcessingTime_seconds summary"}
+::page{title="HELP application_inventoryProcessingTime_seconds Time needed to process the inventory"}
 application_inventoryProcessingTime_seconds_count{method="list"} 2
 application_inventoryProcessingTime_seconds{method="list",quantile="0.5"} 2.2185000000000002E-5
 ...
 ```
 ```
-# **TYPE application_inventorySizeGauge gauge**
-# **HELP application_inventorySizeGauge Number of systems in the inventory**
+::page{title="TYPE application_inventorySizeGauge gauge"}
+::page{title="HELP application_inventorySizeGauge Number of systems in the inventory"}
 application_inventorySizeGauge 1
 ```
 ```
-# **TYPE application_inventoryAccessCount_total counter**
-# **HELP application_inventoryAccessCount_total Number of times the list of systems method is requested**
+::page{title="TYPE application_inventoryAccessCount_total counter"}
+::page{title="HELP application_inventoryAccessCount_total Number of times the list of systems method is requested"}
 application_inventoryAccessCount_total 1
 ```
 
@@ -142,18 +88,17 @@ To see only the system metrics, run the following curl command:
 ```
 curl -k --user admin:adminpwd https://localhost:9443/metrics/base
 ```
-{: codeblock}
 
 See the following sample output:
 
 ```
-# **TYPE base_jvm_uptime_seconds gauge**
-# **HELP base_jvm_uptime_seconds Displays the start time of the Java virtual machine in milliseconds. This attribute displays the approximate time when the Java virtual machine started.**
+::page{title="TYPE base_jvm_uptime_seconds gauge"}
+::page{title="HELP base_jvm_uptime_seconds Displays the start time of the Java virtual machine in milliseconds. This attribute displays the approximate time when the Java virtual machine started."}
 base_jvm_uptime_seconds 30.342000000000002
 ```
 ```
-# **TYPE base_classloader_loadedClasses_count gauge**
-# **HELP base_classloader_loadedClasses_count Displays the number of classes that are currently loaded in the Java virtual machine.**
+::page{title="TYPE base_classloader_loadedClasses_count gauge"}
+::page{title="HELP base_classloader_loadedClasses_count Displays the number of classes that are currently loaded in the Java virtual machine."}
 base_classloader_loadedClasses_count 11231
 ```
 
@@ -162,33 +107,23 @@ To see only the vendor metrics, run the following curl command:
 ```
 curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
 ```
-{: codeblock}
 
 See the following sample output:
 
 ```
-# **TYPE vendor_threadpool_size gauge**
-# **HELP vendor_threadpool_size The size of the thread pool.**
+::page{title="TYPE vendor_threadpool_size gauge"}
+::page{title="HELP vendor_threadpool_size The size of the thread pool."}
 vendor_threadpool_size{pool="Default_Executor"} 32
 ```
 ```
-# **TYPE vendor_servlet_request_total counter**
-# **HELP vendor_servlet_request_total The number of visits to this servlet since the start of the server.**
+::page{title="TYPE vendor_servlet_request_total counter"}
+::page{title="HELP vendor_servlet_request_total The number of visits to this servlet since the start of the server."}
 vendor_servlet_request_total{servlet="microprofile_metrics_io_openliberty_guides_inventory_InventoryApplication"} 1
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
-
-```
-mvn liberty:stop
-```
-{: codeblock}
 
 
-
-# **Adding MicroProfile Metrics to the inventory service**
+::page{title="Adding MicroProfile Metrics to the inventory service"}
 
 
 
@@ -197,26 +132,7 @@ To begin, run the following command to navigate to the **start** directory:
 ```
 cd /home/project/guide-microprofile-metrics/start
 ```
-{: codeblock}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
 
 The MicroProfile Metrics API is included in the MicroProfile dependency specified by your **pom.xml** file.
 Look for the dependency with the **microprofile** artifact ID.
@@ -252,7 +168,6 @@ Replace the server configuration file.
   <webApplication location="guide-microprofile-metrics.war" contextRoot="/"/>
 </server>
 ```
-{: codeblock}
 
 
 The **mpMetrics** feature enables MicroProfile Metrics support in Open Liberty. Note that this
@@ -273,7 +188,7 @@ Replace the **InventoryManager** class.
 
 
 
-```
+```java
 package io.openliberty.guides.inventory;
 
 import java.util.ArrayList;
@@ -339,7 +254,6 @@ public class InventoryManager {
   }
 }
 ```
-{: codeblock}
 
 
 
@@ -378,7 +292,7 @@ Additional information about these annotations, relevant metadata fields, and mo
 the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-4.0-javadoc.html#package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=org/eclipse/microprofile/metrics/annotation/package-summary.html).
 
 
-# **Enabling vendor metrics for the microservices**
+::page{title="Enabling vendor metrics for the microservices"}
 
 
 MicroProfile Metrics API implementers can provide vendor metrics in the same forms as the base and application metrics do.
@@ -390,7 +304,7 @@ Note that these metrics are specific to the Liberty application server. Differen
 Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metrics-list.html) for more information.
 
 
-# **Building and running the application**
+::page{title="Building and running the application"}
 
 The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
 
@@ -400,41 +314,35 @@ You see only the system and vendor metrics because the server just started, and 
 ```
 curl -k --user admin:adminpwd https://localhost:9443/metrics
 ```
-{: codeblock}
 
 Next, run the following curl command to access the **inventory** service:
 ```
 curl -s http://localhost:9080/inventory/systems | jq
 ```
-{: codeblock}
 
 Rerun the following curl command to access the all metrics:
 ```
 curl -k --user admin:adminpwd https://localhost:9443/metrics
 ```
-{: codeblock}
 
 or access only the application metrics by running following curl command:
 ```
 curl -k --user admin:adminpwd https://localhost:9443/metrics/application
 ```
-{: codeblock}
 
 You can see the system metrics by running following curl command:
 ```
 curl -k --user admin:adminpwd https://localhost:9443/metrics/base
 ```
-{: codeblock}
 
 as well as see the vendor metrics by running following curl command:
 ```
 curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
 ```
-{: codeblock}
 
 
 
-# **Testing the metrics**
+::page{title="Testing the metrics"}
 
 
 You can test your application manually, but automated tests ensure code quality because they trigger a
@@ -447,7 +355,6 @@ Create the **MetricsIT** class.
 ```
 touch /home/project/guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java
@@ -653,7 +560,6 @@ public class MetricsIT {
   }
 }
 ```
-{: codeblock}
 
 
 * The **testPropertiesRequestTimeMetric()** test case validates the **@Timed** metric. The test case sends a request to the
@@ -730,8 +636,6 @@ This request is made in the **testUnknownHost()** test from the **InventoryEndpo
 To determine whether the tests detect a failure, go to the **MetricsIT.java** file and change any of the assertions
 in the test methods. Then re-run the tests to see a test failure occur.
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
 # **Summary**
@@ -754,8 +658,7 @@ Delete the **guide-microprofile-metrics** project by running the following comma
 ```
 cd /home/project
 rm -fr guide-microprofile-metrics
-```
-{: codeblock}
+```}
 
 <br/>
 ## **What did you think of this guide?**

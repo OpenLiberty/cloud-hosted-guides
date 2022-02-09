@@ -1,17 +1,11 @@
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
-# **Welcome to the Integrating RESTful services with a reactive system guide!**
-
-Learn how to integrate RESTful Java microservices with a reactive system by using MicroProfile Reactive Messaging.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You will learn how to integrate RESTful Java microservices with a reactive system by using MicroProfile Reactive
 Messaging. RESTful Java microservices don't use reactive concepts, so you will learn how to bridge the gap between the
@@ -35,32 +29,8 @@ produced by the new endpoint. You will configure new channels to handle the even
 To learn more about how the reactive Java services that are used in this guide work, check out the
 [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-# **Getting started**
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging-rest-integration.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-microprofile-reactive-messaging-rest-integration.git
-cd guide-microprofile-reactive-messaging-rest-integration
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-# **Adding a REST endpoint that produces events**
+::page{title="Adding a REST endpoint that produces events"}
 
 
 
@@ -68,7 +38,6 @@ To begin, run the following command to navigate to the **start** directory:
 ```
 cd /home/project/guide-microprofile-reactive-messaging-rest-integration/start
 ```
-{: codeblock}
 
 
 The **inventory** microservice records and stores the average system load information from all of the connected
@@ -212,7 +181,6 @@ public class InventoryResource {
     }
 }
 ```
-{: codeblock}
 
 
 The **updateSystemProperty()** method creates the **/data** endpoint that accepts
@@ -236,7 +204,7 @@ When the **inventory** service receives a request, it adds the system property n
 The property name sent to the emitter is then sent to the publisher. The publisher sends the event to the event channel
 by using the configured **BackpressureStrategy** object when necessary.
 
-# **Adding an event processor to a reactive service**
+::page{title="Adding an event processor to a reactive service"}
 
 
 The **system** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of
@@ -314,7 +282,6 @@ public class SystemService {
     }
 }
 ```
-{: codeblock}
 
 
 A new method that is named **sendProperty()** receives a
@@ -323,7 +290,7 @@ channel. The method calculates the requested property in real time and publishes
 **@Outgoing("propertyResponse")** channel. In this scenario, the
 **sendProperty()** method acts as a processor. Next, you'll configure the channels that you need.
 
-# **Configuring the MicroProfile Reactive Messaging connectors for Kafka**
+::page{title="Configuring the MicroProfile Reactive Messaging connectors for Kafka"}
 
 
 
@@ -360,7 +327,6 @@ mp.messaging.outgoing.requestSystemProperty.topic=request.system.property
 mp.messaging.outgoing.requestSystemProperty.key.serializer=org.apache.kafka.common.serialization.StringSerializer
 mp.messaging.outgoing.requestSystemProperty.value.serializer=org.apache.kafka.common.serialization.StringSerializer
 ```
-{: codeblock}
 
 
 The newly created RESTful endpoint requires two new channels that move the requested messages between the **system**
@@ -397,7 +363,6 @@ mp.messaging.incoming.propertyRequest.key.deserializer=org.apache.kafka.common.s
 mp.messaging.incoming.propertyRequest.value.deserializer=org.apache.kafka.common.serialization.StringDeserializer
 mp.messaging.incoming.propertyRequest.group.id=property-name
 ```
-{: codeblock}
 
 
 Replace the **system** microservice **microprofile-config.properties** file to add the two new
@@ -405,7 +370,7 @@ Replace the **system** microservice **microprofile-config.properties** file to a
 channels. The **propertyRequest** channel handles receiving the property request, and the
 **propertyResponse** channel handles sending the property response.
 
-# **Building and running the application**
+::page{title="Building and running the application"}
 
 Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
 
@@ -417,15 +382,6 @@ To build the application, run the Maven **install** and **package** goals from t
 mvn -pl models install
 mvn package
 ```
-{: codeblock}
-
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
 
 
 Run the following commands to containerize the microservices:
@@ -434,8 +390,6 @@ Run the following commands to containerize the microservices:
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
-{: codeblock}
-
 
 Next, use the provided script to start the application in Docker containers. The script creates a network for the
 containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the
@@ -445,11 +399,8 @@ project. For simplicity, the script starts one instance of the **system** servic
 ```
 ./scripts/startContainers.sh
 ```
-{: codeblock}
 
-
-
-# **Testing the application**
+::page{title="Testing the application"}
 
 The application might take some time to become available. After the application is up and running,
 you can access it by making a GET request to the **/systems** endpoint of the **inventory** service.
@@ -459,13 +410,11 @@ Run the following curl command to confirm that the **inventory** microservice is
 ```
 curl -s http://localhost:9085/health | jq
 ```
-{: codeblock}
 
 When both the liveness and readiness health checks are up, run the following curl command to access the  **inventory** microservice:
 ```
 curl -s http://localhost:9085/inventory/systems | jq
 ```
-{: codeblock}
 
 You see the CPU **systemLoad** property for all the systems:
 
@@ -481,7 +430,6 @@ You can revisit the **inventory** service after a while by running the following
 ```
 curl -s http://localhost:9085/inventory/systems | jq
 ```
-{: codeblock}
 
 Notice the value of the **systemLoad** property for the systems is changed.
 
@@ -492,9 +440,6 @@ property to the set of existing properties. For example, run the following **cur
 ```
 curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-Type:text/plain"
 ```
-{: codeblock}
-
-
 
 In this example, the **PUT** request with the **os.name** system property in the request body on the **http://localhost:9085/inventory/data**
 URL adds the **os.name** system property for your system.
@@ -512,7 +457,6 @@ You can revisit the **inventory** service by running the following curl command:
 ```
 curl -s http://localhost:9085/inventory/systems | jq
 ```
-{: codeblock}
 
 Notice that the **os.name** system property value is now included with the previous values:
 
@@ -524,7 +468,7 @@ Notice that the **os.name** system property value is now included with the previ
 }
 ```
 
-# **Tearing down the environment**
+::page{title="Tearing down the environment"}
 
 Run the following script to stop the application:
 
@@ -532,11 +476,8 @@ Run the following script to stop the application:
 ```
 ./scripts/stopContainers.sh
 ```
-{: codeblock}
 
-
-
-# **Running multiple system instances**
+::page{title="Running multiple system instances"}
 
 
 This application has only one instance of the **system** service. The **inventory** service collects system properties of
@@ -563,8 +504,7 @@ Delete the **guide-microprofile-reactive-messaging-rest-integration** project by
 ```
 cd /home/project
 rm -fr guide-microprofile-reactive-messaging-rest-integration
-```
-{: codeblock}
+```}
 
 <br/>
 ## **What did you think of this guide?**

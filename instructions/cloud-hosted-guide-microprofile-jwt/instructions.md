@@ -1,18 +1,12 @@
-
-# **Welcome to the Securing microservices with JSON Web Tokens guide!**
-
-You'll explore how to control user and role access to microservices with MicroProfile JSON Web Token (MicroProfile JWT).
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
 
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You will add token-based authentication mechanisms to authenticate, authorize,
 and verify users by implementing MicroProfile JWT in the **system** microservice.
@@ -54,30 +48,6 @@ To learn more about JSON Web Tokens, check out the
 can be used for user authentication and authorization, check out the Open Liberty
 [Single Sign-on documentation](https://openliberty.io/docs/latest/single-sign-on.html).
 
-# **Getting started**
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-jwt.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-microprofile-jwt.git
-cd guide-microprofile-jwt
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
 
 <br/>
 ### **Try what you'll build**
@@ -93,8 +63,6 @@ deploy the **frontend** service to Open Liberty:
 cd finish/frontend
 mvn liberty:run
 ```
-{: codeblock}
-
 
 Open another command-line session and run the following commands to navigate to the **finish/system** directory and
 deploy the **system** service to Open Liberty:
@@ -103,8 +71,6 @@ deploy the **system** service to Open Liberty:
 cd finish/system
 mvn liberty:run
 ```
-{: codeblock}
-
 
 After you see the following message in both command-line sessions, both of your services are ready:
 
@@ -145,7 +111,6 @@ Run the following curl command from the terminal in the IDE:
 ```
 curl -k https://localhost:8443/system/properties/os
 ```
-{: codeblock}
 
 The response is empty because you don't have access.
 Access is granted if a valid JWT is sent with the request.
@@ -164,18 +129,15 @@ another command-line session:
 mvn -pl system liberty:stop
 mvn -pl frontend liberty:stop
 ```
-{: codeblock}
 
 
-
-# **Creating the secure system service**
+::page{title="Creating the secure system service"}
 
 
 To begin, run the following command to navigate to the **start** directory:
 ```
 cd /home/project/guide-microprofile-jwt/start
 ```
-{: codeblock}
 
 When you run Open Liberty in development mode, known as dev mode, the server
 listens for file changes and automatically recompiles and deploys your updates
@@ -186,8 +148,6 @@ whenever you save a new change. Run the following commands to navigate to the
 cd frontend
 mvn liberty:dev
 ```
-{: codeblock}
-
 
 Open another command-line session and run the following commands to navigate to the
 **system** directory and start the **system** service in dev mode:
@@ -195,8 +155,6 @@ Open another command-line session and run the following commands to navigate to 
 cd system
 mvn liberty:dev
 ```
-{: codeblock}
-
 
 After you see the following message, your application server in dev mode is ready:
 
@@ -219,7 +177,6 @@ Create the **SystemResource** class.
 ```
 touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
@@ -274,7 +231,6 @@ public class SystemResource {
     }
 }
 ```
-{: codeblock}
 
 
 This class has role-based access control. The role names that are used in the
@@ -302,7 +258,7 @@ To read more about different claims and ways to
 access them, check out the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
 
 
-# **Creating a client to access the secure system service**
+::page{title="Creating a client to access the secure system service"}
 
 
 
@@ -315,7 +271,6 @@ Create the **SystemClient** class.
 ```
 touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
@@ -356,7 +311,6 @@ public interface SystemClient extends AutoCloseable{
     public String getJwtRoles(@HeaderParam("Authorization") String authHeader);
 }
 ```
-{: codeblock}
 
 
 This interface declares methods for accessing each of the endpoints that were
@@ -381,7 +335,6 @@ Create the **ApplicationBean** class.
 ```
 touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
@@ -439,7 +392,6 @@ public class ApplicationBean {
 
 }
 ```
-{: codeblock}
 
 
 The application bean is used to populate the table in the front end by making
@@ -463,7 +415,7 @@ You can see that the **claim()** method is being used to set the **groups** and 
 The **groups** claim is used to provide the role-based access that you implemented.
 The **aud** claim is used to specify the audience that the JWT is intended for.
 
-# **Configuring MicroProfile JWT**
+::page{title="Configuring MicroProfile JWT"}
 
 
 
@@ -475,7 +427,6 @@ Create the microprofile-config.properties file.
 ```
 touch /home/project/guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties
@@ -490,7 +441,6 @@ mp.jwt.token.cookie=Bearer
 mp.jwt.verify.audiences=systemService, adminServices
 mp.jwt.verify.publickey.algorithm=RS256
 ```
-{: codeblock}
 
 
 The following table breaks down the new properties:
@@ -541,13 +491,12 @@ Replace the system server configuration file.
 
 </server>
 ```
-{: codeblock}
 
 
 The **mpJwt** feature adds the libraries that are required for MicroProfile JWT implementation.
 
 
-# **Building and running the application**
+::page{title="Building and running the application"}
 
 Because you are running the **frontend** and **system** services in dev mode, the changes that you made were automatically picked up. You're now ready to check out your application in your browser.
 
@@ -580,7 +529,6 @@ Run the following curl command from the terminal in the IDE:
 ```
 curl -k https://localhost:8443/system/properties/os
 ```
-{: codeblock}
 
 You'll see an empty response because you didn't authenticate with a valid JWT. 
 
@@ -614,7 +562,7 @@ The token reader also shows you the payload, which contains the claims informati
 You can learn more about these claims in the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
 
 
-# **Testing the application**
+::page{title="Testing the application"}
 
 
 You can manually check that the **system** service is secure by making requests to
@@ -628,7 +576,6 @@ Create the **SystemEndpointIT** class.
 ```
 touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
@@ -740,7 +687,6 @@ public class SystemEndpointIT {
 
 }
 ```
-{: codeblock}
 
 
 The **testOSEndpoint()**, **testUsernameEndpoint()**, and **testRolesEndpoint()**
@@ -790,8 +736,6 @@ another command-line session:
 mvn -pl system liberty:stop
 mvn -pl frontend liberty:stop
 ```
-{: codeblock}
-
 
 
 # **Summary**
@@ -813,8 +757,7 @@ Delete the **guide-microprofile-jwt** project by running the following commands:
 ```
 cd /home/project
 rm -fr guide-microprofile-jwt
-```
-{: codeblock}
+```}
 
 <br/>
 ## **What did you think of this guide?**
