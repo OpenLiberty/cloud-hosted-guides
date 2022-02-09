@@ -1,0 +1,43 @@
+name: Mirror to Gitlab lab branch
+ 
+# Triggers the workflow on push events but only for the staging branch.
+on:
+  push:
+    branches: [ staging ]
+
+jobs:
+  deploy:
+    name: Lab Mirror
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: # Uses an array of Json variables to pass the repo names.
+              # The names differ between Github and Gitlab so this is necessary.
+              # Add new cloud-hosted-guides here to add them to the mirror process.
+              # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
+        repo: 
+          - {"github":"cloud-hosted-draft-guide-devlab-1","gitlab":"cloud-hosted-draft-guide-devlab-1"}
+
+    steps:
+
+    # Any prerequisite steps
+    - uses: actions/checkout@master
+      with: 
+        ref: staging
+
+    # Mirror to Gitlab repo
+    - name: Mirror
+      uses: s0/git-publish-subdir-action@develop
+      env:
+        REPO: git@gitlab.com:ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}.git
+        BRANCH: lab-204-instruction
+        FOLDER: instructions/${{matrix.repo.github}}
+        MESSAGE: "{msg}" # Sets the commit message on gitlab to be the same as on github.
+        SSH_PRIVATE_KEY: ${{secrets.DEPLOY_KEY_QUICK_LABS}}
+        KNOWN_HOSTS_FILE: .github/workflows/known_hosts # Needed if target repo is not on github.com.
+        SKIP_EMPTY_COMMITS: "true"
+    
+    # Output link to staged files
+    - name: Print gitlab URL
+      run: echo "Gitlab url: https://gitlab.com/ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}/-/blob/lab-204-instruction/instructions.md"
+      shell: bash
