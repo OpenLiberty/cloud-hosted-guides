@@ -1,10 +1,5 @@
----
-markdown-version: v1
-title: instructions
-branch: lab-204-instruction
-version-history-start-date: 2022-02-09T14:19:17.000Z
----
-::page{title="Welcome to the Deploying a microservice to Kubernetes by using Open Liberty Operator guide!"}
+
+# **Welcome to the Deploying a microservice to Kubernetes by using Open Liberty Operator guide!**
 
 Explore how to deploy a microservice to Kubernetes by using Open Liberty Operator.
 
@@ -17,7 +12,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-::page{title="What you'll learn"}
+# **What you'll learn**
 
 You will learn how to deploy a cloud-native application with a microservice to Kubernetes by using the Open Liberty Operator. 
 
@@ -42,7 +37,7 @@ of application deployment, and reconciles them when necessary.
 
 
 
-::page{title="Getting started"}
+# **Getting started**
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
@@ -69,7 +64,7 @@ The **finish** directory contains the finished project that you will build.
 
 
 
-::page{title="Installing the Operator"}
+# **Installing the Operator**
 
 
 In this Skills Network environment, the Open Liberty Operator is already installed by the administrator.
@@ -78,7 +73,7 @@ you can learn from the [Deploying microservices to OpenShift by using Kubernetes
 
 
 
-::page{title="Logging into your cluster"}
+# **Logging into your cluster**
 
 For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
 Get the name of your namespace with the following command:
@@ -143,7 +138,7 @@ deploying an Open Liberty-based application, including the application image, nu
 The Open Liberty Operator watches for changes to instances of the **OpenLibertyApplication** object kind and 
 creates Kubernetes resources that are based on the configuration that is defined in the CRD.
 
-::page{title="Deploying the system microservice to Kubernetes"}
+# **Deploying the system microservice to Kubernetes**
 
 To deploy the **system** microservice, you must first package the microservice, then create and build
 a runnable container image of the packaged microservice.
@@ -314,7 +309,7 @@ Kind:         OpenLibertyApplication
 ...
 ```
 
-::page{title="Accessing the microservice"}
+# **Accessing the microservice**
 
 To access the exposed **system** microservice, the service must be port-forwarded.
 Run the following command to set up port forwarding to access the **system** service:
@@ -333,7 +328,7 @@ curl -s http://localhost:9080/system/properties | jq
 ```
 {: codeblock}
 
-::page{title="Specifying other parameters"}
+# **Specifying other parameters**
 
 You can visit the link:https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide.adoc#configuration[Open Liberty Operator user guide] to find all of the supported optional parameters.
 
@@ -417,7 +412,7 @@ kubectl delete -f deploy.yaml
 ```
 {: codeblock}
 
-::page{title="Summary"}
+# **Summary**
 
 ## **Nice Work!**
 
@@ -460,8 +455,8 @@ You can also provide feedback or contribute to this guide from GitHub.
 <br/>
 ## **Where to next?**
 
-* [Deploying microservices to OpenShift](https://openliberty.io/guides/cloud-openshift.html)
-* [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
+* [Deploying microservices to OpenShift 3](https://openliberty.io/guides/cloud-openshift.html)
+* [Deploying microservices to OpenShift 4 by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
 * [Deploying microservices to an OKD cluster using Minishift](https://openliberty.io/guides/okd.html)
 
 
