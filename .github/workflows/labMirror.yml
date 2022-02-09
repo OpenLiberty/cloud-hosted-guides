@@ -39,5 +39,5 @@ jobs:
     
     # Output link to staged files
     - name: Print gitlab URL
-      run: echo "Gitlab url: https://gitlab.com/ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}/-/blob/lab-204-instruction/instructions.md"
+      run: echo "Gitlab url at https://gitlab.com/ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}/-/blob/lab-204-instruction/instructions.md"
       shell: bash
