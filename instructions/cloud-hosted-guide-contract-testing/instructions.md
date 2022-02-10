@@ -1,17 +1,11 @@
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
-# **Welcome to the Testing microservices with consumer-driven contracts guide!**
-
-Learn how to test Java microservices with consumer-driven contracts in Open Liberty.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 With a microservices-based architecture, you need robust testing to ensure that
 microservices that depend on one another are able to communicate effectively.
@@ -46,40 +40,13 @@ The **inventory** microservice retrieves specific properties from the **system**
 You will learn how to use the Pact framework to write contract tests for the **inventory** microservice
 that will then be verified by the **system** microservice.
 
-# **Getting started**
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-contract-testing.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-contract-testing.git
-cd guide-contract-testing
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-<br/>
 ### **Starting the Pact Broker**
 
 Run the following command to start the Pact Broker:
 ```
 docker-compose -f "pact-broker/docker-compose.yml" up -d --build
 ```
-{: codeblock}
-
 
 When the Pact Broker is running, you'll see the following output:
 ```
@@ -97,7 +64,7 @@ where **accountname** is your account name.
 Confirm that you can access the user interface of the Pact Broker.
 The Pact Broker interface is similar to the following image:
 
-![Pact Broker webpage](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-webpage.png)
+![Pact Broker webpage](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage.png)
 
 
 
@@ -106,27 +73,9 @@ The Pact Broker interface is similar to the following image:
 You can refer to the [official Pact Broker documentation](https://docs.pact.io/pact_broker/docker_images/pactfoundation)
 for more information about the components of the Docker Compose file.
 
-# **Implementing pact testing in the inventory service**
+::page{title="Implementing pact testing in the inventory service"}
 
 Navigate to the **start/inventory** directory to begin.
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
 
 
 
@@ -136,7 +85,6 @@ Create the InventoryPactIT class file.
 ```
 touch /home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java
@@ -268,7 +216,6 @@ public class InventoryPactIT {
   }
 }
 ```
-{: codeblock}
 
 
 The **InventoryPactIT** class contains a **PactProviderRule**
@@ -286,7 +233,7 @@ Finally, the **assertEquals()** method confirms that the response is correct.
 
 Replace the inventory Maven project file.
 
-> From the menu of the IDE, select 
+> From the menu of the IDE, select
 > **File** > **Open** > guide-contract-testing/start/inventory/pom.xml
 
 
@@ -395,7 +342,6 @@ Replace the inventory Maven project file.
     </build>
 </project>
 ```
-{: codeblock}
 
 
 The Pact framework provides a **Maven** plugin that can be added to the build section of the **pom.xml** file.
@@ -470,8 +416,6 @@ Publish the generated pact file to the Pact Broker by running the following comm
 ```
 mvn pact:publish
 ```
-{: codeblock}
-
 
 After the file is published, you'll see a similar output to the following example:
 ```
@@ -479,14 +423,14 @@ After the file is published, you'll see a similar output to the following exampl
 Publishing 'Inventory-System.json' with tags 'open-liberty-pact' ... OK
 ```
 
-# **Verifying the pact in the Pact Broker**
+::page{title="Verifying the pact in the Pact Broker"}
 
 
 Refresh the Pact Broker at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
 where **accountname** is your account name.
 The last verified column doesn't show a timestamp because the `system` microservice hasn't verified the pact yet.
 
-![Pact Broker webpage for new entry](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-webpage-refresh.png)
+![Pact Broker webpage for new entry](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage-refresh.png)
 
 
 
@@ -498,10 +442,10 @@ You can see detailed insights about each interaction by going to the
 where **accountname** is your account name.
 The insights look similar to the following image:
 
-![Pact Broker webpage for Interactions](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-interactions.png)
+![Pact Broker webpage for Interactions](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-interactions.png)
 
 
-# **Implementing pact testing in the system service**
+::page{title="Implementing pact testing in the system service"}
 
 
 
@@ -512,8 +456,6 @@ Open another command-line session to start Open Liberty in dev mode for the **sy
 ```
 mvn liberty:dev
 ```
-{: codeblock}
-
 
 After you see the following message, your application server in dev mode is ready:
 
@@ -529,7 +471,6 @@ Create the SystemBrokerIT class file.
 ```
 touch /home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java
@@ -596,7 +537,6 @@ public class SystemBrokerIT {
   }
 }
 ```
-{: codeblock}
 
 
 The connection information for the Pact Broker is provided with the **@PactBroker** annotation.
@@ -614,7 +554,7 @@ that was provided in the **inventory** test class so that Pact can identify whic
 
 Replace the system Maven project file.
 
-> From the menu of the IDE, select 
+> From the menu of the IDE, select
 > **File** > **Open** > guide-contract-testing/start/system/pom.xml
 
 
@@ -703,7 +643,6 @@ Replace the system Maven project file.
     </build>
 </project>
 ```
-{: codeblock}
 
 
 The **system** microservice uses the **junit5** pact provider dependency
@@ -714,7 +653,7 @@ dynamically set to the build number so that you can identify where a breaking ch
 After you create the **SystemBrokerIT.java** class and replace the **pom.xml** file,
 Open Liberty automatically reloads its configuration.
 
-# **Verifying the contract**
+::page{title="Verifying the contract"}
 
 In the command-line session where you started the **system** microservice,
 press the **enter/return** key to run the tests to verify the pact file.
@@ -742,7 +681,7 @@ The test from the **system** microservice fails because the **inventory** micros
 Correct the value of the **system.properties.version** property to a decimal.
 Replace the SystemResource class file.
 
-> From the menu of the IDE, select 
+> From the menu of the IDE, select
 > **File** > **Open** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
 
 
@@ -806,7 +745,6 @@ public class SystemResource {
   }
 }
 ```
-{: codeblock}
 
 
 
@@ -837,7 +775,7 @@ After the tests are complete, refresh the Pact Broker at the
 where **accountname** is your account name.
 Confirm that the last verified column now shows a timestamp:
 
-![Pact Broker webpage for verified](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/master/assets/pact-broker-webpage-verified.png)
+![Pact Broker webpage for verified](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage-verified.png)
 
 
 
@@ -846,7 +784,7 @@ Confirm that the last verified column now shows a timestamp:
 The pact file that's created by the **inventory** microservice was successfully verified by the **system** microservice through the Pact Broker.
 This ensures that responses from the **system** microservice meet the expectations of the **inventory** microservice.
 
-# **Tearing down the environment**
+::page{title="Tearing down the environment"}
 
 When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line sessions
 where you ran the servers for the **system** and **inventory** microservices,
@@ -859,19 +797,16 @@ docker rmi postgres:12
 docker rmi pactfoundation/pact-broker:2.62.0.0
 docker volume rm pact-broker_postgres-volume
 ```
-{: codeblock}
 
+::page{title="Summary"}
 
-# **Summary**
-
-## **Nice Work!**
+### Nice Work!
 
 You implemented contract testing in Java microservices by using Pact and verified the contract with the Pact Broker.
 
 
 
-<br/>
-## **Clean up your environment**
+### Clean up your environment
 
 
 Clean up your online environment so that it is ready to be used with the next guide:
@@ -882,10 +817,8 @@ Delete the **guide-contract-testing** project by running the following commands:
 cd /home/project
 rm -fr guide-contract-testing
 ```
-{: codeblock}
 
-<br/>
-## **What did you think of this guide?**
+### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
@@ -893,8 +826,7 @@ We want to hear from you. To provide feedback, click the following link.
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
-<br/>
-## **What could make this guide better?**
+### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-contract-testing/issues)
@@ -902,8 +834,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/>
-## **Where to next?**
+### Where to next?
 
 * [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
 * [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
@@ -913,7 +844,6 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Go to the Pact website.](https://pact.io/)
 
 
-<br/>
-## **Log out of the session**
+### Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

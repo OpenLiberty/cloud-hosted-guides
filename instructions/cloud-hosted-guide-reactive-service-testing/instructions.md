@@ -1,17 +1,11 @@
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
-# **Welcome to the Testing reactive Java microservices guide!**
-
-Learn how to test reactive Java microservices in true-to-production environments using MicroShed Testing.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You will learn how to write integration tests for reactive Java microservices and to run the tests in true-to-production
 environments by using containers with [MicroShed Testing](https://microshed.org/microshed-testing/). MicroShed Testing tests
@@ -22,7 +16,7 @@ between services so that requests are non-blocking and decoupled from responses.
 services that use an external message broker to manage communications in the
 [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-![Reactive system inventory application](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-service-testing/master/assets/reactive-messaging-system-inventory.png)
+![Reactive system inventory application](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-service-testing/prod/assets/reactive-messaging-system-inventory.png)
 
 
 *True-to-production integration testing with MicroShed Testing*
@@ -36,32 +30,7 @@ the application’s lifecycle – from development, through testing, and into pr
 You can learn more about MicroShed Testing in the
 [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html) guide.
 
-# **Getting started**
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-service-testing.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-reactive-service-testing.git
-cd guide-reactive-service-testing
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-<br/>
 ### **Try what you'll build**
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
@@ -73,15 +42,6 @@ the local Maven repository:
 cd finish
 mvn -pl models install
 ```
-{: codeblock}
-
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
 
 
 Next, navigate to the **finish/system** directory and run the following Maven goal to build the **system** service and run
@@ -91,8 +51,6 @@ the integration tests on an Open Liberty server in a container:
 cd system
 mvn verify
 ```
-{: codeblock}
-
 
 You will see the following output:
 
@@ -118,7 +76,7 @@ must download. If you run the same command again, it will be faster.
 
 You can also try out the **inventory** integration tests by repeating the same commands in the **finish/inventory** directory.
 
-# **Testing with the Kafka consumer client**
+::page{title="Testing with the Kafka consumer client"}
 
 
 
@@ -130,7 +88,6 @@ Navigate to the **start** directory to begin.
 ```
 cd /home/project/guide-reactive-service-testing/start
 ```
-{: codeblock}
 
 The example reactive application consists of the **system** and **inventory** microservices. The **system** microservice produces
 messages to the Kafka message broker, and the **inventory** microservice consumes messages from the Kafka message broker.
@@ -146,42 +103,19 @@ so it can be used later by the **system** and **inventory** services:
 ```
 mvn -pl models install
 ```
-{: codeblock}
-
 
 If you don't have the latest Docker image, pull it by running the following command:
 
 ```
 docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
-{: codeblock}
-
 
 With Open Liberty development mode, known as dev mode, you can use MicroShed Testing to run tests on an already running
 Open Liberty server. Navigate to the **start/system** directory.
 ```
 cd /home/project/guide-reactive-service-testing/start/system
 ```
-{: codeblock}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
 
 Now you can add your test files.
 
@@ -189,7 +123,6 @@ The running **system** service searches for a Kafka topic to push its messages t
 services, the **system** service throws errors. Later in the guide, you will write and run tests that start a Kafka
 Testcontainer that can communicate with the **system** service. This will resolve the errors that you see now.
 
-<br/>
 ### **Configuring your containers**
 
 Create a class to externalize your container configurations.
@@ -200,7 +133,6 @@ Create the **AppContainerConfig** class.
 ```
 touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/AppContainerConfig.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/AppContainerConfig.java
@@ -237,7 +169,6 @@ public class AppContainerConfig implements SharedContainerConfiguration {
                     .dependsOn(kafka);
 }
 ```
-{: codeblock}
 
 
 The **AppContainerConfig** class externalizes test container setup and configuration, so
@@ -250,7 +181,6 @@ and the **kafka** container, which receives messages from the **system** service
 The **dependsOn()** method specifies that the **system** service container must wait until the **kafka**
 container is ready before it can start.
 
-<br/>
 ### **Testing your containers**
 
 Now you can start writing the test that uses the configured containers.
@@ -262,7 +192,6 @@ Create the **SystemServiceIT** class.
 ```
 touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
@@ -317,7 +246,6 @@ public class SystemServiceIT {
     }
 }
 ```
-{: codeblock}
 
 
 
@@ -337,10 +265,6 @@ as denoted by the **@Outgoing** annotation. The **testCpuStatus()**
 test method **polls** a record from Kafka every 3 seconds until the timeout limit. It then
 **verifies** that the record polled matches the expected record.
 
-<br/>
-### **Running the tests**
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 You will see the following output:
 
@@ -362,8 +286,6 @@ If you aren't running in dev mode, you can run the tests by running the followin
 ```
 mvn verify
 ```
-{: codeblock}
-
 
 You will see the following output:
 
@@ -384,7 +306,7 @@ You will see the following output:
  ------------------------------------------------------------------------
 ```
 
-# **Testing with the Kafka producer client**
+::page{title="Testing with the Kafka producer client"}
 
 
 
@@ -392,19 +314,16 @@ You will see the following output:
 The **inventory** service is tested in the same way as the **system** service. The only difference is that the **inventory** service
 consumes messages, which means that tests are written to use the Kafka producer client.
 
-<br/>
 ### **Configuring your containers**
 
 Navigate to the **start/inventory** directory.
 ```
 cd /home/project/guide-reactive-service-testing/start/inventory
 ```
-{: codeblock}
 
 The **AppContainerConfig** class is provided, and it is configured in the same way as it was for the **system** service. The two
 containers that are configured for use in the **inventory** service integration test are the **kafka** and **inventory** containers.
 
-<br/>
 ### **Testing your containers**
 
 As you did with the **system** service, run Open Liberty in dev mode to listen for file changes:
@@ -412,8 +331,6 @@ As you did with the **system** service, run Open Liberty in dev mode to listen f
 ```
 mvn liberty:dev
 ```
-{: codeblock}
-
 
 Now you can create your integrated test.
 
@@ -423,7 +340,6 @@ Create the **InventoryServiceIT** class.
 ```
 touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
@@ -494,7 +410,6 @@ public class InventoryServiceIT {
     }
 }
 ```
-{: codeblock}
 
 
 The **InventoryServiceIT** class uses the **KafkaProducer**
@@ -512,10 +427,6 @@ The **@RESTClient** annotation injects a REST client proxy of the
 To learn more about REST clients, check out the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html)
 guide.
 
-<br/>
-### **Running the tests**
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 You will see the following output:
 
@@ -537,8 +448,6 @@ If you aren't running in dev mode, you can run the tests by running the followin
 ```
 mvn verify
 ```
-{: codeblock}
-
 
 You will see the following output:
 
@@ -559,16 +468,15 @@ You will see the following output:
  ------------------------------------------------------------------------
 ```
 
-# **Summary**
+::page{title="Summary"}
 
-## **Nice Work!**
+### Nice Work!
 
 You just tested two reactive Java microservices using MicroShed Testing.
 
 
 
-<br/>
-## **Clean up your environment**
+### Clean up your environment
 
 
 Clean up your online environment so that it is ready to be used with the next guide:
@@ -579,10 +487,8 @@ Delete the **guide-reactive-service-testing** project by running the following c
 cd /home/project
 rm -fr guide-reactive-service-testing
 ```
-{: codeblock}
 
-<br/>
-## **What did you think of this guide?**
+### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
@@ -590,8 +496,7 @@ We want to hear from you. To provide feedback, click the following link.
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
-<br/>
-## **What could make this guide better?**
+### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-service-testing/issues)
@@ -599,8 +504,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/>
-## **Where to next?**
+### Where to next?
 
 * [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
 * [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
@@ -609,7 +513,6 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Visit the official MicroShed Testing website](https://microshed.org/microshed-testing/)
 
 
-<br/>
-## **Log out of the session**
+### Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

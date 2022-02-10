@@ -1,19 +1,13 @@
-
-# **Welcome to the Consuming a RESTful web service guide!**
-
-Explore how to access a simple RESTful web service and consume its resources in Java
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 using JSON-B and JSON-P.
 
 
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You will learn how to access a REST service, serialize a Java object that contains a
 list of artists and their albums, and use two different approaches to deserialize
@@ -35,52 +29,8 @@ If you are interested in learning more about REST services and how you can write
 [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
 
 
-# **Getting started**
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-java.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-rest-client-java.git
-cd guide-rest-client-java
-```
-{: codeblock}
 
 
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-
-<br/>
-### **Try what you'll build**
-
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
-
-```
-cd finish
-mvn liberty:run
-```
-{: codeblock}
-
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
@@ -89,59 +39,28 @@ You can find your service at the **http://localhost:9080/artists** endpoint by r
 ```
 curl -s http://localhost:9080/artists | jq
 ```
-{: codeblock}
 
 Run the following curl command to retrieve the total number of artists:
 ```
 curl http://localhost:9080/artists/total
 ```
-{: codeblock}
 
 You can access the endpoint at **`http://localhost:9080/artists/total/<artist>`** to see a particular artist’s total number of albums.
 Run the following curl command to retrieve the artist **bar**'s total number of albums:
 ```
 curl http://localhost:9080/artists/total/bar
 ```
-{: codeblock}
-
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
-
-```
-mvn liberty:stop
-```
-{: codeblock}
 
 
 
-# **Starting the service**
+::page{title="Starting the service"}
 
 
 To begin, run the following command to navigate to the **start** directory:
 ```
 cd /home/project/guide-rest-client-java/start
 ```
-{: codeblock}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
 
 
 The application that you'll build upon was created for you. After your server is
@@ -149,9 +68,8 @@ ready, run the following curl command to access the service:
 ```
 curl -s http://localhost:9080/artists | jq
 ```
-{: codeblock}
 
-# **Creating POJOs**
+::page{title="Creating POJOs"}
 
 
 
@@ -163,7 +81,7 @@ The **Artist** object has two instance members **name** and **albums**,
 which map to the artist name and the collection of the albums they have written. The **Album** object represents a 
 single object within the album collection, and contains three instance members **title**, **artistName**, and **totalTracks**, which map to the album title, the artist who wrote the album, and the number of tracks the album contains.
 
-# **Introducing JSON-B and JSON-P**
+::page{title="Introducing JSON-B and JSON-P"}
 
 JSON-B is a feature introduced with Java EE 8 and strengthens Java support for JSON.
 With JSON-B you directly serialize and deserialize POJOs. This API gives you a
@@ -175,7 +93,6 @@ This tactic is more straightforward, but it can be cumbersome with more complex 
 JSON-B is built on top of the existing JSON-P API. JSON-B can do everything that JSON-P can do
 and allows for more customization for serializing and deserializing.
 
-<br/>
 ### **Using JSON-B**
 
 JSON-B requires a POJO to have a public default no-argument constructor for deserialization
@@ -208,7 +125,7 @@ property. While the use of this annotation is good practice, it is only necessar
 For more information on customization with JSON-B, see the [official JSON-B site](https://javaee.github.io/jsonb-spec).
 
 
-# **Consuming the REST resource**
+::page{title="Consuming the REST resource"}
 
 
 
@@ -222,7 +139,6 @@ Create the **Consumer** class.
 ```
 touch /home/project/guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java
@@ -230,7 +146,7 @@ touch /home/project/guide-rest-client-java/start/src/main/java/io/openliberty/gu
 
 
 
-```
+```java
 package io.openliberty.guides.consumingrest;
 
 import java.util.List;
@@ -293,10 +209,8 @@ public class Consumer {
     }
 }
 ```
-{: codeblock}
 
 
-<br/>
 ### **Processing JSON using JSON-B**
 
 
@@ -310,7 +224,6 @@ The **consumeWithJsonb()** method in the **Consumer** class makes a **GET** requ
 running artist service and retrieves the JSON. To bind the JSON into an **Artist**
 array, use the **Artist[]** entity type in the **readEntity** call.
 
-<br/>
 ### **Processing JSON using JSON-P**
 
 The **consumeWithJsonp()** method in the **Consumer** class makes a **GET** request
@@ -319,14 +232,14 @@ to the running artist service and retrieves the JSON. This method then uses the
 parse the JSON and collect its objects into individual POJOs. Notice that you can
 use the custom constructors to create instances of **Artist** and **Album**.
 
-# **Creating additional REST resources**
+::page{title="Creating additional REST resources"}
 
 
 Now that you can consume a JSON resource you can put that data to use.
 
 Replace the **ArtistResource** class.
 
-> From the menu of the IDE, select 
+> From the menu of the IDE, select
 > **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java
 
 
@@ -398,7 +311,6 @@ public class ArtistResource {
     }
 }
 ```
-{: codeblock}
 
 
 * The **getArtists()** method provides the raw JSON data service that you accessed at the
@@ -418,7 +330,7 @@ The methods that you wrote in the **Consumer** class could be written directly i
 party service, you should separate your **GET**/**POST** requests from your data consumption.
 
 
-# **Running the application**
+::page{title="Running the application"}
 
 The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
 
@@ -427,23 +339,20 @@ You can find your service at the **http://localhost:9080/artists** endpoint by r
 ```
 curl -s http://localhost:9080/artists | jq
 ```
-{: codeblock}
 
 Run the following curl command to retrieve the total number of artists:
 ```
 curl http://localhost:9080/artists/total
 ```
-{: codeblock}
 
 You can access the endpoint at **`http://localhost:9080/artists/total/<artist>`** to see a particular artist’s total number of albums.
 Run the following curl command to retrieve the artist **bar**'s total number of albums:
 ```
 curl http://localhost:9080/artists/total/bar
 ```
-{: codeblock}
 
 
-# **Testing deserialization**
+::page{title="Testing deserialization"}
 
 Create the **ConsumingRestIT** class.
 
@@ -451,7 +360,6 @@ Create the **ConsumingRestIT** class.
 ```
 touch /home/project/guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java 
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java 
@@ -569,7 +477,6 @@ public class ConsumingRestIT {
     }
 }
 ```
-{: codeblock}
 
 
 Maven finds and executes all tests under the **src/test/java/it/** directory, 
@@ -579,7 +486,6 @@ You can use the **@BeforeAll** and **@AfterAll** annotations to perform any one-
 tasks before and after all of your tests run. You can also use the **@BeforeEach** and **@AfterEach** annotations
 to perform setup and teardown tasks for individual test cases.
 
-<br/>
 ### **Testing the binding process**
 
 
@@ -590,7 +496,6 @@ the REST data and those that are hardcoded perform the same.
 
 The **assertResponse** helper method ensures that the response code you receive is valid (200).
 
-<br/>
 ### **Processing with JSON-B test**
 
 The **testJsonBAlbumCount** and **testJsonBAlbumCountForUnknownArtist** tests both use the **total/{artist}**
@@ -603,7 +508,6 @@ The **testJsonBAlbumCountForUnknownArtist** test case is similar to **testJsonBA
 but instead checks an artist that does not exist in the JSON and ensures that a
 value of `-1` is returned.
 
-<br/>
 ### **Processing with JSON-P test**
 
 The **testJsonPArtistCount** test uses the **total** endpoint which invokes JSON-P. This test
@@ -611,7 +515,6 @@ checks that deserialization with JSON-P was done correctly and that the correct 
 of artists is returned.
 
 
-<br/>
 ### **Running the tests**
 
 Since you started Open Liberty in development mode at the start of the guide, press the **enter/return** key to run the tests.
@@ -634,20 +537,17 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 When you are done checking out the service, exit development mode by typing `q` in the command-line session where you ran the server, 
 and then press the **enter/return** key.
 
-# **Building the application**
+::page{title="Building the application"}
 
 If you are satisfied with your application, run the Maven **package** goal to build the WAR file in the **target** directory:
 
 ```
 mvn package
 ```
-{: codeblock}
 
+::page{title="Summary"}
 
-
-# **Summary**
-
-## **Nice Work!**
+### Nice Work!
 
 You just accessed a simple RESTful web service and consumed its resources by using JSON-B and JSON-P in Open Liberty.
 
@@ -655,8 +555,7 @@ You just accessed a simple RESTful web service and consumed its resources by usi
 
 
 
-<br/>
-## **Clean up your environment**
+### Clean up your environment
 
 
 Clean up your online environment so that it is ready to be used with the next guide:
@@ -667,10 +566,8 @@ Delete the **guide-rest-client-java** project by running the following commands:
 cd /home/project
 rm -fr guide-rest-client-java
 ```
-{: codeblock}
 
-<br/>
-## **What did you think of this guide?**
+### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
@@ -678,8 +575,7 @@ We want to hear from you. To provide feedback, click the following link.
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
-<br/>
-## **What could make this guide better?**
+### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-java/issues)
@@ -687,14 +583,12 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/>
-## **Where to next?**
+### Where to next?
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
-<br/>
-## **Log out of the session**
+### Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

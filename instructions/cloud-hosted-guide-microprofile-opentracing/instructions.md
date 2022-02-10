@@ -1,18 +1,12 @@
-
-# **Welcome to the Enabling distributed tracing in microservices with Zipkin guide!**
-
-Explore how to enable and customize tracing of JAX-RS and non-JAX-RS methods by using MicroProfile OpenTracing and the Zipkin tracing system.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
 
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You'll learn how to enable automatic tracing for JAX-RS methods and how to create custom tracers
 for non-JAX-RS methods by using MicroProfile OpenTracing.
@@ -35,30 +29,6 @@ MicroProfile OpenTracing. You'll run these services in two separate JVMs made of
 to demonstrate tracing in a distributed environment. If all the components were to run on a single
 server, then any logging software would do the trick.
 
-# **Getting started**
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-opentracing.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-microprofile-opentracing.git
-cd guide-microprofile-opentracing
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
 
 For this guide, Zipkin is used as the distributed tracing system. You can find the installation instructions
 for Zipkin at the Zipkin [quickstart page](https://zipkin.io/pages/quickstart.html). You're not required
@@ -70,7 +40,6 @@ Start Zipkin by running the following command:
 ```
 docker run -d --name zipkin -p 9411:9411 openzipkin/zipkin
 ```
-{: codeblock}
 
 Before you continue, make sure your Zipkin server is up and running.
 Select **Launch Application** from the menu of the IDE and 
@@ -78,7 +47,6 @@ type **9411** to specify the port number for the Zipkin service. Click the **OK*
 Zipkin can also be found at the **`https://accountname-9411.theiadocker-4.proxy.cognitiveclass.ai`** URL, 
 where **accountname** is your account name.
 
-<br/>
 ### **Try what you'll build**
 
 The **finish** directory in the root directory of this guide contains two services that are configured
@@ -89,22 +57,17 @@ To try out the services, navigate to the **finish** directory and run the Maven 
 cd finish
 mvn install
 ```
-{: codeblock}
-
 
 Then, run the Maven **liberty:start-server** goal to start them in two Open Liberty servers:
 ```
 mvn liberty:start-server
 ```
-{: codeblock}
-
 
 
 Make sure your Zipkin server is running and run the following curl command:
 ```
 curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
-{: codeblock}
 
 When you make this curl request, you make two HTTP GET requests, one to the **system** service and 
 one to the **inventory** service. 
@@ -132,17 +95,14 @@ When you're done checking out the services, stop both Open Liberty servers using
 ```
 mvn liberty:stop-server
 ```
-{: codeblock}
 
 
-
-# **Running the services**
+::page{title="Running the services"}
 
 Navigate to the **start** directory to begin.
 ```
 cd /home/project/guide-microprofile-opentracing/start
 ```
-{: codeblock}
 
 You'll need to start the services to see basic traces appear in Zipkin. 
 So, before you proceed, build and start the provided **system** and **inventory**
@@ -151,32 +111,26 @@ services in the starting project by running the Maven **install** goal:
 ```
 mvn install
 ```
-{: codeblock}
-
 
 Then, run the **liberty:start-server** goal:
 
 ```
 mvn liberty:start-server
 ```
-{: codeblock}
-
 
 
 When the servers start, you can access the **system** service by running the following curl command:
 ```
 curl -s http://localhost:9080/system/properties | jq
 ```
-{: codeblock}
 
 and access the **inventory** service by running the following curl command:
 ```
 curl -s http://localhost:9081/inventory/systems | jq
 ```
-{: codeblock}
 
 
-# **Existing Tracer implementation**
+::page{title="Existing Tracer implementation"}
 
 To collect traces across your systems, you need to implement the OpenTracing **Tracer**
 interface. For this guide, you can access a bare-bones **Tracer** implementation for
@@ -196,13 +150,12 @@ in IBM Documentation.
 
 
 
-# **Enabling distributed tracing**
+::page{title="Enabling distributed tracing"}
 
 The MicroProfile OpenTracing feature enables tracing of all JAX-RS methods by default.
 To further control and customize these traces, use the **@Traced** annotation to enable and disable
 tracing of particular methods. You can also inject a custom **Tracer** object to create and customize spans.
 
-<br/>
 ### **Enabling distributed tracing without code instrumentation**
 
 Because tracing is enabled by default for all JAX-RS methods, you need to enable only the
@@ -215,7 +168,6 @@ Make sure your services are running.
 Then, point your browser to any of their endpoints and check your Zipkin server for traces.
 
 
-<br/>
 ### **Enabling explicit distributed tracing**
 
 The **@Traced** annotation defines explicit span creation for specific classes and methods.
@@ -227,7 +179,7 @@ Enable tracing of the **list()** non-JAX-RS method by adding the
 
 Replace the **InventoryManager** class.
 
-> From the menu of the IDE, select 
+> From the menu of the IDE, select
 > **File** > **Open** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
@@ -278,7 +230,6 @@ public class InventoryManager {
     }
 }
 ```
-{: codeblock}
 
 
 The **@Traced** annotation can be configured with the following two parameters:
@@ -290,15 +241,12 @@ Next, run the following command from the **start** directory to recompile your s
 ```
 mvn compile
 ```
-{: codeblock}
-
 
 
 Run the following curl command, check your Zipkin server, and sort the traces by newest first:
 ```
 curl -s http://localhost:9081/inventory/systems | jq
 ```
-{: codeblock}
 
 Look for a new trace record that is two spans long with one span for the 
 **listContents()** JAX-RS method in the **InventoryResource**
@@ -313,7 +261,7 @@ on the **listContents()** JAX-RS method.
 
 Replace the **InventoryResource** class.
 
-> From the menu of the IDE, select 
+> From the menu of the IDE, select
 > **File** > **Open** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
@@ -365,23 +313,18 @@ public class InventoryResource {
     }
 }
 ```
-{: codeblock}
 
 
 Again, run the **mvn compile** command from the **start** directory to recompile your services:
 ```
 mvn compile
 ```
-{: codeblock}
-
-
 
 
 Run the following curl command again, check your Zipkin server, and sort the traces by newest first:
 ```
 curl -s http://localhost:9081/inventory/systems | jq
 ```
-{: codeblock}
 
 Look for a new trace record that is just one span long for the remaining **list()** 
 method in the **InventoryManager** class. 
@@ -391,7 +334,6 @@ Verify that this span has the following name:
 
 
 
-<br/>
 ### **Injecting a custom Tracer object**
 
 The MicroProfile OpenTracing specification also makes the underlying OpenTracing **Tracer** instance
@@ -403,7 +345,7 @@ The **Span** will be activated and used in a **Scope**.
 
 Replace the **InventoryManager** class.
 
-> From the menu of the IDE, select 
+> From the menu of the IDE, select
 > **File** > **Open** > guide-microprofile-opentracing/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
@@ -465,7 +407,6 @@ public class InventoryManager {
     }
 }
 ```
-{: codeblock}
 
 
 The **Scope** is used in a **try** block.
@@ -479,16 +420,12 @@ Next, run the following command from the **start** directory to recompile your s
 ```
 mvn compile
 ```
-{: codeblock}
-
-
 
 
 Run the following curl command, check your Zipkin server, and sort the traces by newest first:
 ```
 curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
-{: codeblock}
 
 Look for two new trace records, one for the **system** service and one for the **inventory** service. The **system** trace 
 contains one span for the **getProperties()** method in the **SystemResource** class. 
@@ -517,7 +454,7 @@ creation and customization, including setting timestamps.
 
 
 
-# **Testing the services**
+::page{title="Testing the services"}
 
 No automated tests are provided to verify the correctness of the traces. Manually verify these traces
 by viewing them on the Zipkin server.
@@ -534,20 +471,17 @@ When you're done checking out the services, stop the server by using the Maven
 ```
 mvn liberty:stop-server
 ```
-{: codeblock}
-
 
 Stop the Zipkin service by running the following command:
 ```
 docker stop zipkin
 ```
-{: codeblock}
 
 
 
-# **Summary**
+::page{title="Summary"}
 
-## **Nice Work!**
+### Nice Work!
 
 You have just used MicroProfile OpenTracing in Open Liberty to customize how and which traces are delivered to Zipkin.
 
@@ -555,8 +489,7 @@ You have just used MicroProfile OpenTracing in Open Liberty to customize how and
 Feel free to try one of the related MicroProfile guides. They demonstrate additional technologies that you
 can learn to expand on top of what you built here.
 
-<br/>
-## **Clean up your environment**
+### Clean up your environment
 
 
 Clean up your online environment so that it is ready to be used with the next guide:
@@ -567,10 +500,8 @@ Delete the **guide-microprofile-opentracing** project by running the following c
 cd /home/project
 rm -fr guide-microprofile-opentracing
 ```
-{: codeblock}
 
-<br/>
-## **What did you think of this guide?**
+### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
@@ -578,8 +509,7 @@ We want to hear from you. To provide feedback, click the following link.
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
-<br/>
-## **What could make this guide better?**
+### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-opentracing/issues)
@@ -587,14 +517,12 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/>
-## **Where to next?**
+### Where to next?
 
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Enabling distributed tracing in microservices with Jaeger](https://openliberty.io/guides/microprofile-opentracing-jaeger.html)
 
 
-<br/>
-## **Log out of the session**
+### Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

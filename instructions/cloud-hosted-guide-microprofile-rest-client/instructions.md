@@ -1,18 +1,12 @@
-
-# **Welcome to the Consuming RESTful services with template interfaces guide!**
-
-Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
 
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You will learn how to build a MicroProfile Rest Client to access remote RESTful services. You will create a template interface that maps to the remote service that you want to call.
 MicroProfile Rest Client automatically generates a client instance based on what is defined and annotated in the template interface.
@@ -30,58 +24,10 @@ In this guide, you will explore both methods to handle scenarios for providing a
  * When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose **RestClientBuilder** method.
 
 
-# **Getting started**
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-microprofile-rest-client.git
-cd guide-microprofile-rest-client
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-<br/>
-### **Try what you'll build**
-
-The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
-
-```
-cd finish
-mvn liberty:run
-```
-{: codeblock}
-
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
 
 The **system** microservice simulates a service that returns the system
 property information for the host. 
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
 
 The **system** service is accessible at the http://localhost:9080/system/properties URL. In this case, **localhost** is the host name.
 
@@ -91,7 +37,6 @@ _To see the output for this URL in the IDE, run the following command at a termi
 ```
 curl -s http://localhost:9080/system/properties | jq
 ```
-{: codeblock}
 
 
 
@@ -106,7 +51,6 @@ _To see the output for this URL in the IDE, run the following command at a termi
 ```
 curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
-{: codeblock}
 
 
 
@@ -117,38 +61,11 @@ MacOS, and Linux, get your fully qualified domain name (FQDN) by entering
 with your FQDN.
 
 
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
 
-```
-mvn liberty:stop
-```
-{: codeblock}
-
-
-# **Writing the RESTful client interface**
+::page{title="Writing the RESTful client interface"}
 
 Now, navigate to the **start** directory to begin.
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
 
 The MicroProfile Rest Client API is included in the MicroProfile dependency specified by your **pom.xml** file. Look for the dependency with the **microprofile** artifact ID.
 
@@ -169,7 +86,6 @@ Create the **SystemClient** class.
 ```
 touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
@@ -177,7 +93,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 
 
 
-```
+```java
 package io.openliberty.guides.inventory.client;
 
 import java.util.Properties;
@@ -201,7 +117,6 @@ public interface SystemClient extends AutoCloseable {
   public Properties getProperties() throws UnknownUriException, ProcessingException;
 }
 ```
-{: codeblock}
 
 
 
@@ -217,7 +132,6 @@ The **@Produces** annotation specifies the media (MIME) type of the expected res
 The **@RegisterProvider** annotation tells the framework to register the provider classes to be used when the framework invokes the interface. You can add as many providers as necessary.
 In the **SystemClient** interface, add a response exception mapper as a provider to map the **404** response code with the **UnknownUriException** exception.
 
-<br/>
 ### **Handling exceptions through ResponseExceptionMappers**
 
 Error handling is an important step to ensure that the application can fail safely. If there is an error response such as **404 NOT FOUND** when invoking the remote service, you need to handle it. First, define an exception, and map the exception with the error response code. Then, register the exception mapper in the client interface.
@@ -234,7 +148,6 @@ Create the **UnknownUriException** class.
 ```
 touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
@@ -242,7 +155,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 
 
 
-```
+```java
 package io.openliberty.guides.inventory.client;
 
 public class UnknownUriException extends Exception {
@@ -258,7 +171,6 @@ public class UnknownUriException extends Exception {
   }
 }
 ```
-{: codeblock}
 
 
 
@@ -270,7 +182,6 @@ Create the **UnknownUriExceptionMapper** class.
 ```
 touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
@@ -278,7 +189,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openli
 
 
 
-```
+```java
 package io.openliberty.guides.inventory.client;
 
 import java.util.logging.Logger;
@@ -304,13 +215,12 @@ public class UnknownUriExceptionMapper
   }
 }
 ```
-{: codeblock}
 
 
 
 The **handles()** method inspects the HTTP response code to determine whether an exception is thrown for the specific response, and the **toThrowable()** method returns the mapped exception.
 
-# **Injecting the client with dependency injection**
+::page{title="Injecting the client with dependency injection"}
 
 Now, instantiate the **SystemClient** interface and use it in the **inventory** service. If you want to connect only with the default host name, you can easily instantiate the **SystemClient** with CDI annotations. CDI injection simplifies the process of bootstrapping the client.
 
@@ -323,7 +233,6 @@ Create the configuration file.
 ```
 touch /home/project/guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
@@ -334,7 +243,6 @@ touch /home/project/guide-microprofile-rest-client/start/src/main/webapp/META-IN
 ```
 systemClient/mp-rest/uri=http://localhost:9080/system
 ```
-{: codeblock}
 
 
 
@@ -359,13 +267,13 @@ Inject the **SystemClient** interface into the **InventoryManager** class, which
 
 Replace the **InventoryManager** class.
 
-> From the menu of the IDE, select 
+> From the menu of the IDE, select
 > **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
 
-```
+```java
 package io.openliberty.guides.inventory;
 
 import java.net.ConnectException;
@@ -471,7 +379,6 @@ public class InventoryManager {
 
 }
 ```
-{: codeblock}
 
 
 
@@ -483,7 +390,7 @@ If the **hostname** parameter is **localhost**, the service runs the **getProper
 The helper function invokes the **system** service by calling the **defaultRestClient.getProperties()** method.
 
 
-# **Building the client with RestClientBuilder**
+::page{title="Building the client with RestClientBuilder"}
 
 The **inventory** service can also connect with a host other than the default **localhost** host, but you cannot configure a base URL that is not yet known.
 In this case, set the host name as a variable and build the client by using the **RestClientBuilder** method. You can customize the base URL from the host name attribute.
@@ -497,9 +404,6 @@ Then, the method instantiates a **RestClientBuilder** builder with the new URL, 
 Similarly, call the **customRestClient.getProperties()** method to invoke the **system** service.
 
 
-# **Running the application**
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 When the server is running, select either approach to fetch your system properties:
 
@@ -512,7 +416,6 @@ _To see the output for this URL in the IDE, run the following command at a termi
 ```
 curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
-{: codeblock}
 
 
 
@@ -522,7 +425,7 @@ by replacing **{your-hostname}** with your FQDN, which retrieves your system pro
 by making a request to the **system** service at **http://{your-hostname}:9080/system/properties**.
 
 
-# **Testing the application**
+::page{title="Testing the application"}
 
 Create the **RestClientIT** class.
 
@@ -530,7 +433,6 @@ Create the **RestClientIT** class.
 ```
 touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
@@ -538,7 +440,7 @@ touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/ope
 
 
 
-```
+```java
 package it.io.openliberty.guides.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -625,7 +527,6 @@ public class RestClientIT {
 
 }
 ```
-{: codeblock}
 
 
 
@@ -638,10 +539,6 @@ The **testRestClientBuilder()** test gets your IP address. Then, use your IP add
 In addition, a few endpoint tests are provided for you to test the basic functionality of the **inventory** and **system** services. If a test failure occurs, you might have introduced a bug into the code.
 
 
-<br/>
-### **Running the tests**
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the **enter/return** key from the command-line session where you started dev mode.
 
 ```
 -------------------------------------------------------
@@ -667,12 +564,10 @@ The warning and error messages are expected and result from a request to a bad o
 To see whether the tests detect a failure, change the base URL in the configuration file so that when the **inventory** service tries to access the invalid URL, an **UnknownUriException** is thrown.
 Rerun the tests to see a test failure occur.
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
-# **Summary**
+::page{title="Summary"}
 
-## **Nice Work!**
+### Nice Work!
 
 You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
 
@@ -683,8 +578,7 @@ You can learn more in the [Hostname verification with SSL on Open Liberty and Mi
 Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
 
 
-<br/>
-## **Clean up your environment**
+### Clean up your environment
 
 
 Clean up your online environment so that it is ready to be used with the next guide:
@@ -695,10 +589,8 @@ Delete the **guide-microprofile-rest-client** project by running the following c
 cd /home/project
 rm -fr guide-microprofile-rest-client
 ```
-{: codeblock}
 
-<br/>
-## **What did you think of this guide?**
+### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
@@ -706,8 +598,7 @@ We want to hear from you. To provide feedback, click the following link.
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
-<br/>
-## **What could make this guide better?**
+### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-rest-client/issues)
@@ -715,8 +606,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/>
-## **Where to next?**
+### Where to next?
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
@@ -724,7 +614,6 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 
-<br/>
-## **Log out of the session**
+### Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

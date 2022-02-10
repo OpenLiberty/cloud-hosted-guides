@@ -1,17 +1,11 @@
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
-# **Welcome to the Acknowledging messages using MicroProfile Reactive Messaging guide!**
-
-Learn how to acknowledge messages by using MicroProfile Reactive Messaging.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 MicroProfile Reactive Messaging provides a reliable way to handle messages in reactive applications. MicroProfile Reactive
 Messaging ensures that messages aren't lost by requiring that messages that were delivered to the target server are acknowledged
@@ -24,39 +18,15 @@ subscribes to that information so that it can keep an updated list of all the sy
 You can get the current inventory of systems by accessing the **/systems** REST endpoint. The following diagram depicts
 the application that is used in this guide:
 
-![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/master/assets/reactive-messaging-system-inventory-rest.png)
+![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/prod/assets/reactive-messaging-system-inventory-rest.png)
 
 
 You will explore the acknowledgment strategies that are available with MicroProfile Reactive Messaging, and you'll implement
 your own manual acknowledgment strategy. To learn more about how the reactive Java services used in this guide work, check
 out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-# **Getting started**
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-microprofile-reactive-messaging-acknowledgment.git
-cd guide-microprofile-reactive-messaging-acknowledgment
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-# **Choosing an acknowledgment strategy**
+::page{title="Choosing an acknowledgment strategy"}
 
 
 Messages must be acknowledged in reactive applications. Messages are either acknowledged explicitly, or messages are acknowledged
@@ -96,7 +66,7 @@ message must be acknowledged immediately.
 This case where a message either needs to be acknowledged immediately or some time later is one of the situations where
 the **MANUAL** acknowledgment strategy would be beneficial
 
-# **Implementing the MANUAL acknowledgment strategy**
+::page{title="Implementing the MANUAL acknowledgment strategy"}
 
 
 
@@ -104,14 +74,13 @@ To begin, run the following command to navigate to the **start** directory:
 ```
 cd /home/project/guide-microprofile-reactive-messaging-acknowledgment/start
 ```
-{: codeblock}
 
 Update the **SystemService.sendProperty** method to use the **MANUAL** acknowledgment strategy, which fits the method processing
 requirements better than the default **`PRE_PROCESSING`** strategy.
 
 Replace the **SystemService** class.
 
-> From the menu of the IDE, select 
+> From the menu of the IDE, select
 > **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 
 
@@ -192,7 +161,6 @@ public class SystemService {
     }
 }
 ```
-{: codeblock}
 
 
 The **sendProperty()** method needs to manually acknowledge the incoming messages, so it is
@@ -209,7 +177,7 @@ One of the following outcomes occurs:
   requested system property and sends it to the proper channel. The method acknowledges the incoming message only
   after the sent message is acknowledged.
 
-# **Waiting for a message to be acknowledged**
+::page{title="Waiting for a message to be acknowledged"}
 
 
 The **inventory** service contains an endpoint that accepts **PUT** requests. When a **PUT** request that contains a system property
@@ -220,7 +188,7 @@ response only after the outgoing message is acknowledged.
 
 Replace the **InventoryResource** class.
 
-> From the menu of the IDE, select 
+> From the menu of the IDE, select
 > **File** > **Open** > guide-microprofile-reactive-messaging-acknowledgment/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
@@ -379,7 +347,6 @@ public class InventoryResource {
     }
 }
 ```
-{: codeblock}
 
 
 The **sendPropertyName()** method is updated to return a
@@ -395,7 +362,7 @@ with the requested property name as the **payload** and an acknowledgment
 **CompletableFuture** variable that returns a **200** response
 code after the variable is completed in the **callback** function.
 
-# **Building and running the application**
+::page{title="Building and running the application"}
 
 Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
 
@@ -407,15 +374,6 @@ To build the application, run the Maven **install** and **package** goals from t
 mvn -pl models install
 mvn package
 ```
-{: codeblock}
-
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
 
 
 Run the following commands to containerize the microservices:
@@ -424,8 +382,6 @@ Run the following commands to containerize the microservices:
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
-{: codeblock}
-
 
 Next, use the provided script to start the application in Docker containers. The script creates a network for the
 containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices 
@@ -435,11 +391,8 @@ in the project. For simplicity, the script starts one instance of the **system**
 ```
 ./scripts/startContainers.sh
 ```
-{: codeblock}
 
-
-
-# **Testing the application**
+::page{title="Testing the application"}
 
 The application might take some time to become available. After the application is up and running, 
 you can access it by making a GET request to the **/systems** endpoint of the **inventory** service.
@@ -449,13 +402,11 @@ Run the following curl command to confirm that the **inventory** microservice is
 ```
 curl -s http://localhost:9085/health | jq
 ```
-{: codeblock}
 
 When both the liveness and readiness health checks are up, run the following curl command to access the **inventory** microservice:
 ```
 curl -s http://localhost:9085/inventory/systems | jq
 ```
-{: codeblock}
 
 Look for the CPU **systemLoad** property for all the systems:
 
@@ -474,7 +425,6 @@ If you run the curl command again after a while, notice that the CPU **systemLoa
 ```
 curl -s http://localhost:9085/inventory/systems | jq
 ```
-{: codeblock}
 
 Make a **PUT** request to the **http://localhost:9085/inventory/data** URL to add the value of a particular system property
 to the set of existing properties. For example, run the following **curl** command:
@@ -483,9 +433,6 @@ to the set of existing properties. For example, run the following **curl** comma
 ```
 curl -X PUT -d "os.name" http://localhost:9085/inventory/data --header "Content-Type:text/plain"
 ```
-{: codeblock}
-
-
 
 In this example, the **PUT** request with the **os.name** system property in the request body on the 
 **http://localhost:9085/inventory/data** URL adds the **os.name** system property for your system. 
@@ -505,7 +452,6 @@ Run the following curl command again:
 ```
 curl -s http://localhost:9085/inventory/systems | jq
 ```
-{: codeblock}
 
 The **os.name** system property value is now included with the previous values:
 
@@ -517,7 +463,7 @@ The **os.name** system property value is now included with the previous values:
 }
 ```
 
-# **Tearing down the environment**
+::page{title="Tearing down the environment"}
 
 Finally, run the following script to stop the application:
 
@@ -525,20 +471,16 @@ Finally, run the following script to stop the application:
 ```
 ./scripts/stopContainers.sh
 ```
-{: codeblock}
 
+::page{title="Summary"}
 
-
-# **Summary**
-
-## **Nice Work!**
+### Nice Work!
 
 You developed an application by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
 
 
-<br/>
-## **Clean up your environment**
+### Clean up your environment
 
 
 Clean up your online environment so that it is ready to be used with the next guide:
@@ -549,10 +491,8 @@ Delete the **guide-microprofile-reactive-messaging-acknowledgment** project by r
 cd /home/project
 rm -fr guide-microprofile-reactive-messaging-acknowledgment
 ```
-{: codeblock}
 
-<br/>
-## **What did you think of this guide?**
+### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
@@ -560,8 +500,7 @@ We want to hear from you. To provide feedback, click the following link.
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
-<br/>
-## **What could make this guide better?**
+### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging-acknowledgment/issues)
@@ -569,8 +508,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/>
-## **Where to next?**
+### Where to next?
 
 * [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
 * [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest.html)
@@ -584,7 +522,6 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
 
 
-<br/>
-## **Log out of the session**
+### Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.

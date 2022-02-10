@@ -1,17 +1,11 @@
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
-# **Welcome to the Creating reactive Java microservices guide!**
-
-Learn how to write reactive Java microservices using MicroProfile Reactive Messaging.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
-
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You will learn how to build reactive microservices that can send requests to other microservices, and asynchronously receive and process the responses. You will use an external messaging system to handle the asynchronous messages that are sent and received between the microservices as streams of events. MicroProfile Reactive Messaging makes it easy to write and configure your application to send, receive, and process the events efficiently.
 
@@ -25,41 +19,16 @@ MicroProfile Reactive Messaging provides an easy way to asynchronously send, rec
 
 The application in this guide consists of two microservices, **system** and **inventory**. Every 15 seconds, the **system** microservice calculates and publishes an event that contains its current average system load. The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads. The current inventory of systems can be accessed via the **/systems** REST endpoint. You'll create the **system** and **inventory** microservices using MicroProfile Reactive Messaging.
 
-![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory.png)
+![Reactive system inventory](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/prod/assets/reactive-messaging-system-inventory.png)
 
 
-# **Getting started**
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-reactive-messaging.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-microprofile-reactive-messaging.git
-cd guide-microprofile-reactive-messaging
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-# **Creating the producer in the system microservice**
+::page{title="Creating the producer in the system microservice"}
 
 Navigate to the **start** directory to begin. 
 ```
 cd /home/project/guide-microprofile-reactive-messaging/start
 ```
-{: codeblock}
 
 The **system** microservice is the producer of the messages that are published to the Kafka messaging system as a stream of events. Every 15 seconds, the **system** microservice publishes an event that contains its calculation of the average system load (its CPU usage) for the last minute.
 
@@ -69,7 +38,6 @@ Create the **SystemService** class.
 ```
 touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
@@ -77,7 +45,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/
 
 
 
-```
+```java
 package io.openliberty.guides.system;
 
 import java.lang.management.ManagementFactory;
@@ -121,7 +89,6 @@ public class SystemService {
 
 }
 ```
-{: codeblock}
 
 
 
@@ -130,10 +97,10 @@ The **SystemService** class contains a **Publisher** method that is called **sen
 
 The messages are transported between the service and the Kafka messaging system through a channel called **systemLoad**. The name of the channel to use is set in the **@Outgoing("systemLoad")** annotation. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are published on a topic called **system.load**, as shown in the following diagram:
 
-![Reactive system publisher](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-publisher.png)
+![Reactive system publisher](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/prod/assets/reactive-messaging-system-inventory-publisher.png)
 
 
-# **Creating the consumer in the inventory microservice**
+::page{title="Creating the consumer in the inventory microservice"}
 
 The **inventory** microservice records in its inventory the average system load information that it received from potentially multiple instances of the **system** service.
 
@@ -143,7 +110,6 @@ Create the **InventoryResource** class.
 ```
 touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
@@ -151,7 +117,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/ma
 
 
 
-```
+```java
 package io.openliberty.guides.inventory;
 
 import java.util.List;
@@ -236,7 +202,6 @@ public class InventoryResource {
     }
 }
 ```
-{: codeblock}
 
 
 
@@ -245,10 +210,10 @@ The **inventory** microservice receives the message from the **system** microser
 
 The **InventoryResource** class contains a method called **updateStatus()**, which receives the message that contains the average system load and updates its existing inventory of systems and their average system load. The **@Incoming("systemLoad")** annotation on the **updateStatus()** method indicates that the method retrieves the average system load information by connecting to the channel called **systemLoad**. Later in the guide, you will configure the service so that any messages sent by the **system** service through the **systemLoad** channel are retrieved from a topic called **system.load**, as shown in the following diagram:
 
-![Reactive system inventory detail](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/master/assets/reactive-messaging-system-inventory-detail.png)
+![Reactive system inventory detail](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-reactive-messaging/prod/assets/reactive-messaging-system-inventory-detail.png)
 
 
-# **Configuring the MicroProfile Reactive Messaging connectors for Kafka**
+::page{title="Configuring the MicroProfile Reactive Messaging connectors for Kafka"}
 
 The **system** and **inventory** services exchange messages with the external messaging system through a channel. The MicroProfile Reactive Messaging Connector API makes it easy to connect each service to the channel. You just need to add configuration keys in a properties file for each of the services. These configuration keys define properties such as the name of the channel and the topic in the Kafka messaging system. Open Liberty includes the **liberty-kafka** connector for sending and receiving messages from Apache Kafka.
 
@@ -260,7 +225,6 @@ Create the system/microprofile-config.properties file.
 ```
 touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/resources/META-INF/microprofile-config.properties
@@ -276,7 +240,6 @@ mp.messaging.outgoing.systemLoad.topic=system.load
 mp.messaging.outgoing.systemLoad.key.serializer=org.apache.kafka.common.serialization.StringSerializer
 mp.messaging.outgoing.systemLoad.value.serializer=io.openliberty.guides.models.SystemLoad$SystemLoadSerializer
 ```
-{: codeblock}
 
 
 
@@ -291,7 +254,6 @@ Create the inventory/microprofile-config.properties file.
 ```
 touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/inventory/src/main/resources/META-INF/microprofile-config.properties
@@ -308,12 +270,11 @@ mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serial
 mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
 mp.messaging.incoming.systemLoad.group.id=system-load-status
 ```
-{: codeblock}
 
 
 The **inventory** microservice uses an incoming connector to receive messages through the **systemLoad** channel. The messages were published by the **system** microservice to the **system.load** topic in the Kafka message broker. The **key.deserializer** and **value.deserializer** properties define how to deserialize the messages. The **SystemLoadDeserializer** class implements the logic for turning JSON into a **SystemLoad** object and is configured as the **value.deserializer**. The **group.id** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) and [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs).
 
-# **Configuring the server**
+::page{title="Configuring the server"}
 
 To run the services, the Open Liberty server on which each service runs needs to be correctly configured. Relevant features, including the [MicroProfile Reactive Messaging feature](https://openliberty.io/docs/ref/feature/#mpReactiveMessaging-1.0.html), must be enabled for the **system** and **inventory** services.
 
@@ -323,7 +284,6 @@ Create the system/server.xml configuration file.
 ```
 touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/src/main/liberty/config/server.xml
@@ -331,7 +291,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/
 
 
 
-```
+```xml
 <server description="System Service">
 
   <featureManager>
@@ -352,14 +312,13 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/
   <webApplication location="system.war" contextRoot="/"/>
 </server>
 ```
-{: codeblock}
 
 
 
 
 The **server.xml** file is already configured for the **inventory** microservice.
 
-# **Building and running the application**
+::page{title="Building and running the application"}
 
 Build the **system** and **inventory** microservices using Maven and then run them in Docker containers.
 
@@ -369,7 +328,6 @@ Create the Maven configuration file.
 ```
 touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-reactive-messaging/start/system/pom.xml
@@ -377,7 +335,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
 
 
 
-```
+```xml
 <?xml version='1.0' encoding='utf-8'?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -506,7 +464,6 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
     </build>
 </project>
 ```
-{: codeblock}
 
 
 
@@ -522,15 +479,6 @@ To build the application, run the Maven **install** and **package** goals from t
 mvn -pl models install
 mvn package
 ```
-{: codeblock}
-
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
 
 
 Run the following commands to containerize the microservices:
@@ -539,8 +487,6 @@ Run the following commands to containerize the microservices:
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
-{: codeblock}
-
 
 Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the project. For simplicity, the script starts one instance of the system service.
 
@@ -548,17 +494,10 @@ Next, use the provided script to start the application in Docker containers. The
 ```
 ./scripts/startContainers.sh
 ```
-{: codeblock}
 
-
-
-# **Testing the application**
+::page{title="Testing the application"}
 
 The application might take some time to become available. After the application is up and running, you can access it by making a GET request to the **/systems** endpoint of the **inventory** service. 
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
 Visit the http://localhost:9085/health URL to confirm that the **inventory** microservice is up and running.
@@ -569,7 +508,6 @@ _To see the output for this URL in the IDE, run the following command at a termi
 ```
 curl -s http://localhost:9085/health | jq
 ```
-{: codeblock}
 
 
 
@@ -582,7 +520,6 @@ _To see the output for this URL in the IDE, run the following command at a termi
 ```
 curl -s http://localhost:9085/inventory/systems | jq
 ```
-{: codeblock}
 
 
 You see the CPU **systemLoad** property for all the systems:
@@ -603,7 +540,6 @@ _To see the output for this URL in the IDE, run the following command at a termi
 ```
 curl -s http://localhost:9085/inventory/systems | jq
 ```
-{: codeblock}
 
 
 
@@ -618,7 +554,7 @@ In the following example, the **30bec2b63a96** value is the **hostname**. If you
 }
 ```
 
-# **Tearing down the environment**
+::page{title="Tearing down the environment"}
 
 Run the following script to stop the application:
 
@@ -626,20 +562,16 @@ Run the following script to stop the application:
 ```
 ./scripts/stopContainers.sh
 ```
-{: codeblock}
 
+::page{title="Summary"}
 
-
-# **Summary**
-
-## **Nice Work!**
+### Nice Work!
 
 You just developed a reactive Java application using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
 
 
-<br/>
-## **Clean up your environment**
+### Clean up your environment
 
 
 Clean up your online environment so that it is ready to be used with the next guide:
@@ -650,10 +582,8 @@ Delete the **guide-microprofile-reactive-messaging** project by running the foll
 cd /home/project
 rm -fr guide-microprofile-reactive-messaging
 ```
-{: codeblock}
 
-<br/>
-## **What did you think of this guide?**
+### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
@@ -661,8 +591,7 @@ We want to hear from you. To provide feedback, click the following link.
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
-<br/>
-## **What could make this guide better?**
+### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-reactive-messaging/issues)
@@ -670,13 +599,11 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/>
-## **Where to next?**
+### Where to next?
 
 * [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
 
 
-<br/>
-## **Log out of the session**
+### Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
