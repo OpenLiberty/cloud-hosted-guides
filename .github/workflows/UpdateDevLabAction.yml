@@ -60,7 +60,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: OpenLiberty/guides-common
-          path: GuideConverter/Guides-common
+          path: GuideConverter/guides-common
 
       - uses: actions/setup-java@v1
         with:
