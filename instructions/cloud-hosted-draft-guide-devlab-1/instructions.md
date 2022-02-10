@@ -4,17 +4,6 @@ title: instructions
 branch: lab-204-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 ---
-::page{title="Welcome to the Deploying a microservice to Kubernetes by using Open Liberty Operator guide!"}
-
-Explore how to deploy a microservice to Kubernetes by using Open Liberty Operator.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
 
 
 ::page{title="What you'll learn"}
@@ -42,30 +31,6 @@ of application deployment, and reconciles them when necessary.
 
 
 
-::page{title="Getting started"}
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/draft-guide-openliberty-operator-intro.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/draft-guide-openliberty-operator-intro.git
-cd draft-guide-openliberty-operator-intro
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
 
 
 
@@ -77,53 +42,10 @@ If you like to learn how to install the Open Liberty Operator,
 you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/blob/master/deploy/releases/0.7.1/readme.adoc).
 
 
-
-::page{title="Logging into your cluster"}
-
-For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
-Get the name of your namespace with the following command:
-
-```
-bx cr namespace-list
-```
-{: codeblock}
-
-Look for output that is similar to the following:
-
-```
-Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
-
-Namespace
-sn-labs-yourname
-```
-
-Run the following command to store the namespace name in a variable.
-
-```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-```
-{: codeblock}
-
-Verify that the variable contains your namespace name:
-
-```
-echo $NAMESPACE_NAME
-```
-{: codeblock}
-
-Log in to the registry with the following command:
-```
-bx cr login
-```
-{: codeblock}
-
-
 To check that the Open Liberty Operator has been installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 ```
 kubectl api-resources --api-group=openliberty.io
 ```
-{: codeblock}
-
 
 Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
 
@@ -148,7 +70,6 @@ creates Kubernetes resources that are based on the configuration that is defined
 To deploy the **system** microservice, you must first package the microservice, then create and build
 a runnable container image of the packaged microservice.
 
-<br/>
 ### **Packaging the microservice**
 
 Ensure that you are in the **start** directory and run the following command to package the **system**
@@ -159,25 +80,14 @@ microservice:
 cd /home/project/draft-guide-openliberty-operator-intro/start
 mvn clean package
 ```
-{: codeblock}
 
-<br/>
 ### **Building the image**
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
 
 
 Next, run the **docker build** command to build the container image for your application:
 ```
 docker build -t system:1.0-SNAPSHOT system/.
 ```
-{: codeblock}
-
 
 The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
 The tag for an image describes the specific image version.
@@ -189,11 +99,9 @@ Next, push your images to the container registry on IBM Cloud with the following
 docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 ```
-{: codeblock}
 
 Now you're ready to deploy the image.
 
-<br/>
 ### **Deploying the image**
 
 You can configure the specifics of the Open Liberty Operator-controlled deployment with a YAML configuration file.
@@ -204,7 +112,6 @@ Create the **deploy.yaml** configuration file in the **start** directory.
 ```
 touch /home/project/draft-guide-openliberty-operator-intro/start/deploy.yaml
 ```
-{: codeblock}
 
 
 > Then from the menu of the IDE, select **File** > **Open** > draft-guide-openliberty-operator-intro/start/deploy.yaml
@@ -248,7 +155,6 @@ spec:
     periodSeconds: 2
     timeoutSeconds: 10
 ```
-{: codeblock}
 
 
 The **deploy.yaml** file is configured to deploy one **OpenLibertyApplication**
@@ -272,15 +178,12 @@ Run the following commands to update the **applicationImage** and deploy the **s
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  imagePullPolicy: Always=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
-{: codeblock}
 
 Next, run the following command to view your newly created **OpenLibertyApplications** resources:
 
 ```
 kubectl get OpenLibertyApplications
 ```
-{: codeblock}
-
 
 You can also replace **OpenLibertyApplications** with the shortname **olapps**.
 
@@ -297,8 +200,6 @@ Run the following command to view details of your microservice:
 ```
 kubectl describe olapps/system
 ```
-{: codeblock}
-
 
 This example shows part of the **olapps/system** output:
 
@@ -322,8 +223,6 @@ Run the following command to set up port forwarding to access the **system** ser
 ```
 kubectl port-forward svc/system 9080
 ```
-{: codeblock}
-
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
@@ -331,7 +230,6 @@ Access the microservice by running the following command:
 ```
 curl -s http://localhost:9080/system/properties | jq
 ```
-{: codeblock}
 
 ::page{title="Specifying other parameters"}
 
@@ -342,7 +240,7 @@ You can now configure the readiness and liveness probes. The **readiness probe**
 
 Replace the **deploy.yaml** configuration file.
 
-> From the menu of the IDE, select 
+> From the menu of the IDE, select
 > **File** > **Open** > draft-guide-openliberty-operator-intro/start/deploy.yaml
 
 
@@ -384,7 +282,6 @@ spec:
     periodSeconds: 2
     timeoutSeconds: 10
 ```
-{: codeblock}
 
 
 The health check endpoints **/health/ready** and **/health/live** have already been created for you. 
@@ -395,19 +292,17 @@ Run the following commands to update the **applicationImage** and deploy the **s
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  imagePullPolicy: Always=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
-{: codeblock}
 
 
 Access the microservice by running the following command:
 ```
 curl -s http://localhost:9080/system/properties | jq
 ```
-{: codeblock}
 
 When you're done trying out the microservice, press **CTRL+C** in the command line session
 where you ran the **kubectl port-forward** command to stop the port forwarding.
 
-# **Tearing down the environment**
+::page{title="Tearing down the environment"}
 
 
 When you no longer need your deployed microservice, you can delete all resources by running the following command:
@@ -415,18 +310,16 @@ When you no longer need your deployed microservice, you can delete all resources
 ```
 kubectl delete -f deploy.yaml
 ```
-{: codeblock}
 
 ::page{title="Summary"}
 
-## **Nice Work!**
+### Nice Work!
 
 You just deployed a microservice running in Open Liberty to Kubernetes by using the Open Liberty Operator.
 
 
 
-<br/>
-## **Clean up your environment**
+### Clean up your environment
 
 
 Clean up your online environment so that it is ready to be used with the next guide:
@@ -437,10 +330,8 @@ Delete the **draft-guide-openliberty-operator-intro** project by running the fol
 cd /home/project
 rm -fr draft-guide-openliberty-operator-intro
 ```
-{: codeblock}
 
-<br/>
-## **What did you think of this guide?**
+### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
@@ -448,8 +339,7 @@ We want to hear from you. To provide feedback, click the following link.
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
-<br/>
-## **What could make this guide better?**
+### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback.](https://github.com/OpenLiberty/draft-guide-openliberty-operator-intro/issues)
@@ -457,15 +347,13 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/>
-## **Where to next?**
+### Where to next?
 
-* [Deploying microservices to OpenShift](https://openliberty.io/guides/cloud-openshift.html)
-* [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
+* [Deploying microservices to OpenShift 3](https://openliberty.io/guides/cloud-openshift.html)
+* [Deploying microservices to OpenShift 4 by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
 * [Deploying microservices to an OKD cluster using Minishift](https://openliberty.io/guides/okd.html)
 
 
-<br/>
-## **Log out of the session**
+### Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
