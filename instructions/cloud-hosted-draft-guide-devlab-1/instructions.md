@@ -21,24 +21,13 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 You will learn how to deploy a cloud-native application with a microservice to Kubernetes by using the Open Liberty Operator. 
 
-[Kubernetes](https://www.kubernetes.io/) is a container orchestration system. It streamlines the DevOps
-process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the
-deployment and management of cloud applications easier.
-You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
+[Kubernetes](https://www.kubernetes.io/) is a container orchestration system. It streamlines the DevOps process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the deployment and management of cloud applications easier. You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
 
-[Kubernetes operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes)
-provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management.
-To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
+[Kubernetes operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management. To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
 
 The application in this guide consists of one microservice, **system**. The system microservice returns the JVM system properties of its host.
 
-You will deploy the **system** microservice by using the Open Liberty Operator. 
-The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) provides a method of packaging,
-deploying, and managing Open Liberty applications on Kubernetes-based clusters. 
-The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources,
-including **Deployments**, **Services**, and **Routes**, depending on the configurations. 
-The Operator then continuously compares the current state of the resources, the desired state
-of application deployment, and reconciles them when necessary.
+You will deploy the **system** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) provides a method of packaging, deploying, and managing Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including **Deployments**, **Services**, and **Routes**, depending on the configurations. The Operator then continuously compares the current state of the resources, the desired state of application deployment, and reconciles them when necessary.
 
 
 
@@ -70,13 +59,11 @@ The **finish** directory contains the finished project that you will build.
 ::page{title="Installing the Operator"}
 
 
-In this Skills Network environment, the Open Liberty Operator is already installed by the administrator.
-If you like to learn how to install the Open Liberty Operator,
-you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/blob/master/deploy/releases/0.7.1/readme.adoc).
+In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/blob/master/deploy/releases/0.7.1/readme.adoc).
 
 
 
-# **Logging into your cluster**
+::page{title="Logging into your cluster**"}
 
 For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
 Get the name of your namespace with the following command:
@@ -126,24 +113,17 @@ openlibertydumps          oldump,oldumps     openliberty.io   true         OpenL
 openlibertytraces         oltrace,oltraces   openliberty.io   true         OpenLibertyTrace
 ```
 
-Each CRD defines a kind of object that can be used, which is specified in the previous example by the **KIND** value.
-The **SHORTNAME** value specifies alternative names that you can substitute in the configuration to refer to an object kind. 
-For example, you can refer to the **OpenLibertyApplication** object kind by one of its specified shortnames, such as **olapps**. 
+Each CRD defines a kind of object that can be used, which is specified in the previous example by the **KIND** value. The **SHORTNAME** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the **OpenLibertyApplication** object kind by one of its specified shortnames, such as **olapps**. 
 
-The **openlibertyapplications** CRD defines a set of configurations for
-deploying an Open Liberty-based application, including the application image, number of instances, and storage settings.
-The Open Liberty Operator watches for changes to instances of the **OpenLibertyApplication** object kind and 
-creates Kubernetes resources that are based on the configuration that is defined in the CRD.
+The **openlibertyapplications** CRD defines a set of configurations for deploying an Open Liberty-based application, including the application image, number of instances, and storage settings. The Open Liberty Operator watches for changes to instances of the **OpenLibertyApplication** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
 
 ::page{title="Deploying the system microservice to Kubernetes"}
 
-To deploy the **system** microservice, you must first package the microservice, then create and build
-a runnable container image of the packaged microservice.
+To deploy the **system** microservice, you must first package the microservice, then create and build a runnable container image of the packaged microservice.
 
 ### **Packaging the microservice**
 
-Ensure that you are in the **start** directory and run the following command to package the **system**
-microservice:
+Ensure that you are in the **start** directory and run the following command to package the **system** microservice:
 
 
 ```
@@ -164,9 +144,7 @@ Next, run the **docker build** command to build the container image for your app
 docker build -t system:1.0-SNAPSHOT system/.
 ```
 
-The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. 
-The tag for an image describes the specific image version.
-If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
+The **-t** flag in the **docker build** command allows the Docker image to be labeled (tagged) in the **name[:tag]** format. The tag for an image describes the specific image version. If the optional **[:tag]** tag is not specified, the **latest** tag is created by default.
 
 Next, push your images to the container registry on IBM Cloud with the following commands:
 
@@ -232,8 +210,7 @@ spec:
 ```
 
 
-The **deploy.yaml** file is configured to deploy one **OpenLibertyApplication**
-resource, **system**, which is controlled by the Open Liberty Operator.
+The **deploy.yaml** file is configured to deploy one **OpenLibertyApplication** resource, **system**, which is controlled by the Open Liberty Operator.
 
 The **applicationImage** parameter defines what container image is deployed as part of the **OpenLibertyApplication** CRD. 
 This parameter follows the **[image-name][:tag]** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. 
@@ -241,11 +218,7 @@ The **system** microservice is configured to use the **image** created from the 
 
 The **env** parameter is used to specify environment variables that are passed to the container at runtime.
 
-Additionally, the microservice includes the **service** and **expose** parameters.
-The **service.port** parameter specifies which port is exposed by the container,
-allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster,
-it must be exposed by setting the **expose** parameter to **true**.
-After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
+Additionally, the microservice includes the **service** and **expose** parameters. The **service.port** parameter specifies which port is exposed by the container, allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster, it must be exposed by setting the **expose** parameter to **true**. After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
 
 
 Run the following commands to update the **applicationImage** and deploy the **system** microservice with the previously explained configuration:
@@ -269,8 +242,7 @@ NAME      IMAGE                  EXPOSED   RECONCILED   AGE
 system    system:1.0-SNAPSHOT    true      True         10s
 ```
 
-A **RECONCILED** state value of **True** indicates that the operator was able to successfully process the **OpenLibertyApplications** instances. 
-Run the following command to view details of your microservice:
+A **RECONCILED** state value of **True** indicates that the operator was able to successfully process the **OpenLibertyApplications** instances. Run the following command to view details of your microservice:
 
 ```
 kubectl describe olapps/system
@@ -292,16 +264,14 @@ Kind:         OpenLibertyApplication
 
 ::page{title="Accessing the microservice"}
 
-To access the exposed **system** microservice, the service must be port-forwarded.
-Run the following command to set up port forwarding to access the **system** service:
+To access the exposed **system** microservice, the service must be port-forwarded. Run the following command to set up port forwarding to access the **system** service:
 
 ```
 kubectl port-forward svc/system 9080
 ```
 
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-Access the microservice by running the following command:
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Access the microservice by running the following command:
 ```
 curl -s http://localhost:9080/system/properties | jq
 ```
@@ -374,8 +344,7 @@ Access the microservice by running the following command:
 curl -s http://localhost:9080/system/properties | jq
 ```
 
-When you're done trying out the microservice, press **CTRL+C** in the command line session
-where you ran the **kubectl port-forward** command to stop the port forwarding.
+When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the **kubectl port-forward** command to stop the port forwarding.
 
 ::page{title="Tearing down the environment"}
 
