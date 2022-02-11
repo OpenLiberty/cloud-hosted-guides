@@ -17,7 +17,7 @@ jobs:
               # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
         repo: 
           - {"github":"cloud-hosted-draft-guide-devlab-1","gitlab":"cloud-hosted-draft-guide-devlab-1","gitlab-branch":"lab-204-instruction"}
-          - {"github":"cloud-hosted-draft-guide-devlab-1","gitlab":"cloud-hosted-draft-guide-devlab-2","gitlab-branch":"lab-207-instruction"}
+          - {"github":"cloud-hosted-draft-guide-devlab-2","gitlab":"cloud-hosted-draft-guide-devlab-2","gitlab-branch":"lab-207-instruction"}
 
     steps:
 
