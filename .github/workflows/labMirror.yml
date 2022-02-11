@@ -17,6 +17,7 @@ jobs:
               # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
         repo: 
           - {"github":"cloud-hosted-draft-guide-devlab-1","gitlab":"cloud-hosted-draft-guide-devlab-1"}
+          - {"github":"cloud-hosted-draft-guide-devlab-1","gitlab":"cloud-hosted-draft-guide-devlab-2"}
 
     steps:
 
