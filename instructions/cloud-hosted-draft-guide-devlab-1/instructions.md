@@ -63,7 +63,7 @@ In this Skills Network environment, the Open Liberty Operator is already install
 
 
 
-::page{title="Logging into your cluster**"}
+::page{title="Logging into your cluster"}
 
 For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
 Get the name of your namespace with the following command:
@@ -121,7 +121,7 @@ The **openlibertyapplications** CRD defines a set of configurations for deployin
 
 To deploy the **system** microservice, you must first package the microservice, then create and build a runnable container image of the packaged microservice.
 
-### **Packaging the microservice**
+### Packaging the microservice
 
 Ensure that you are in the **start** directory and run the following command to package the **system** microservice:
 
@@ -131,7 +131,7 @@ cd /home/project/draft-guide-openliberty-operator-intro/start
 mvn clean package
 ```
 
-### **Building the image**
+### Building the image
 
 Run the following command to download or update to the latest Open Liberty Docker image:
 
@@ -155,7 +155,7 @@ docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 
 Now you're ready to deploy the image.
 
-### **Deploying the image**
+### Deploying the image
 
 You can configure the specifics of the Open Liberty Operator-controlled deployment with a YAML configuration file.
 
