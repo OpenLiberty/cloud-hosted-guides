@@ -16,8 +16,8 @@ jobs:
               # Add new cloud-hosted-guides here to add them to the mirror process.
               # i.e. {"github":"new-lab-github-url","gitlab":"new-lab-gitlab-url"}
         repo: 
-          - {"github":"cloud-hosted-draft-guide-devlab-1","gitlab":"cloud-hosted-draft-guide-devlab-1"}
-          - {"github":"cloud-hosted-draft-guide-devlab-1","gitlab":"cloud-hosted-draft-guide-devlab-2"}
+          - {"github":"cloud-hosted-draft-guide-devlab-1","gitlab":"cloud-hosted-draft-guide-devlab-1","gitlab-branch":"lab-204-instruction"}
+          - {"github":"cloud-hosted-draft-guide-devlab-1","gitlab":"cloud-hosted-draft-guide-devlab-2","gitlab-branch":"lab-207-instruction"}
 
     steps:
 
@@ -31,7 +31,7 @@ jobs:
       uses: s0/git-publish-subdir-action@develop
       env:
         REPO: git@gitlab.com:ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}.git
-        BRANCH: lab-204-instruction
+        BRANCH: ${{matrix.repo.gitlab-branch}}
         FOLDER: instructions/${{matrix.repo.github}}
         MESSAGE: "{msg}" # Sets the commit message on gitlab to be the same as on github.
         SSH_PRIVATE_KEY: ${{secrets.DEPLOY_KEY_QUICK_LABS}}
@@ -40,5 +40,5 @@ jobs:
     
     # Output link to staged files
     - name: Print gitlab URL
-      run: echo "Gitlab url at https://gitlab.com/ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}/-/blob/lab-204-instruction/instructions.md"
+      run: echo "Gitlab url at https://gitlab.com/ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}/-/blob/${{matrix.repo.gitlab-branch}}/instructions.md"
       shell: bash
