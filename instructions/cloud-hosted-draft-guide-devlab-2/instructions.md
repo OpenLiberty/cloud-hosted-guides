@@ -82,9 +82,7 @@ In addition, you can run the following curl command to access a third microservi
 curl -s http://localhost:9080/config | jq
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C***
-in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal
-from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```
 mvn liberty:stop
