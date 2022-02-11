@@ -52,8 +52,7 @@ The ***finish*** directory contains the finished project that you will build.
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the ***finish*** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
 ```
 cd finish
@@ -97,8 +96,7 @@ cd /home/project/guide-microprofile-config/start
 ```
 
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```
 mvn liberty:dev
@@ -111,8 +109,7 @@ After you see the following message, your application server in dev mode is read
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 MicroProfile Config combines configuration properties from multiple sources, each known as a ConfigSource. Each ConfigSource has a specified priority, defined by its ***config_ordinal*** value.
 
@@ -837,8 +834,7 @@ The warning and error messages are expected and result from a request to a bad o
 
 To see whether the tests detect a failure, remove the configuration resetting line in the ***setup()*** method of the ***ConfigurationIT.java*** file. Then, manually change some configuration values in the ***resources/CustomConfigSource.json*** file. Rerun the tests. You will see a test failure occur.
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session
-where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
