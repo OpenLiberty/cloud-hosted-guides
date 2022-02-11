@@ -212,9 +212,7 @@ spec:
 
 The **deploy.yaml** file is configured to deploy one **OpenLibertyApplication** resource, **system**, which is controlled by the Open Liberty Operator.
 
-The **applicationImage** parameter defines what container image is deployed as part of the **OpenLibertyApplication** CRD. 
-This parameter follows the **[image-name][:tag]** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. 
-The **system** microservice is configured to use the **image** created from the earlier build. 
+The **applicationImage** parameter defines what container image is deployed as part of the **OpenLibertyApplication** CRD. This parameter follows the **<image-name>[:tag]** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The **system** microservice is configured to use the **image** created from the earlier build. 
 
 The **env** parameter is used to specify environment variables that are passed to the container at runtime.
 
@@ -278,7 +276,7 @@ curl -s http://localhost:9080/system/properties | jq
 
 ::page{title="Specifying other parameters"}
 
-You can visit the link:https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide.adoc#configuration[Open Liberty Operator user guide] to find all of the supported optional parameters.
+You can visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide.adoc#configuration) to find all of the supported optional parameters.
 
 
 You can now configure the readiness and liveness probes. The **readiness probe** is used to know when a container is ready to begin accepting traffic, and the **liveness probe** is used to know when to restart a container.
