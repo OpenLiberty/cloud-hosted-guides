@@ -657,7 +657,7 @@ Play with this application by changing configuration values for each property in
 curl -s http://localhost:9080/config | jq
 ```
 
-For example, change **`io_openliberty_guides_inventory_inMaintenance`** from **false** to **true**, then try to access http://localhost:9080/inventory/systems again by running the following curl command:
+For example, change ***io_openliberty_guides_inventory_inMaintenance*** from **false** to **true**, then try to access http://localhost:9080/inventory/systems again by running the following curl command:
 ```
 curl -s http://localhost:9080/inventory/systems | jq
 ```
