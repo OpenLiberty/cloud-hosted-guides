@@ -18,9 +18,7 @@ on:
 jobs:
   printBranch:
     runs-on: ubuntu-latest
-
     steps: 
-
       - name: Output message
         run: |
           echo "guide_name: ${{ github.event.inputs.guide_name }}"
@@ -30,7 +28,6 @@ jobs:
   convertStaging:
     name: Make PR to Staging
     runs-on: ubuntu-latest
-  
     steps:
 
       # Any prerequisite steps
