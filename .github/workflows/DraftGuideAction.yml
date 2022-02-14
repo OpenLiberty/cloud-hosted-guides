@@ -18,15 +18,14 @@ on:
 jobs:
   printBranch:
     runs-on: ubuntu-latest
-
     steps: 
-
       - name: Output message
         run: |
-          echo "${{ github.event.inputs.branch }}"
-          echo "${{ github.event.inputs.guide_name }}"'
+          echo "guide_name: ${{ github.event.inputs.guide_name }}"'
+          echo "branch: ${{ github.event.inputs.branch }}"
           echo "converter_branch: ${{ github.event.inputs.converter_branch }}"
-  convertStaging:
+
+convertStaging:
     name: Make PR to Staging
     runs-on: ubuntu-latest
   
