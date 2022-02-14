@@ -166,7 +166,7 @@ touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openlib
 
 
 
-```
+```java
 package io.openliberty.guides.system;
 
 import jakarta.json.JsonArray;
@@ -244,7 +244,7 @@ touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openl
 
 
 
-```
+```java
 package io.openliberty.guides.frontend.client;
 
 import jakarta.enterprise.context.RequestScoped;
@@ -301,7 +301,7 @@ touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openl
 
 
 
-```
+```java
 package io.openliberty.guides.frontend;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -406,7 +406,7 @@ Replace the system server configuration file.
 
 
 
-```
+```xml
 <server description="Sample Liberty server">
 
   <featureManager>
@@ -510,7 +510,7 @@ touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/open
 
 
 
-```
+```java
 package it.io.openliberty.guides.system;
 
 import jakarta.ws.rs.client.Client;
