@@ -4,9 +4,9 @@ title: instructions
 branch: lab-204-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 ---
-::page{title="Welcome to the Deploying a microservice to Kubernetes by using Open Liberty Operator guide!"}
+::page{title="Welcome to the Adding health reports to microservices guide!"}
 
-Explore how to deploy a microservice to Kubernetes by using Open Liberty Operator.
+Explore how to report and check the health of a microservice with MicroProfile Health.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -19,16 +19,13 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to deploy a cloud-native application with a microservice to Kubernetes by using the Open Liberty Operator. 
+You will learn how to use MicroProfile Health to report the health status of microservices and take appropriate actions based on this report.
 
-[Kubernetes](https://www.kubernetes.io/) is a container orchestration system. It streamlines the DevOps process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the deployment and management of cloud applications easier. You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
+MicroProfile Health allows services to report their health, and it publishes the overall health status to a defined endpoint. A service reports ***UP*** if it is available and reports ***DOWN*** if it is unavailable. MicroProfile Health reports an individual service status at the endpoint and indicates the overall status as ***UP*** if all the services are ***UP***. A service orchestrator can then use the health statuses to make decisions.
 
-[Kubernetes operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management. To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
+A service checks its own health by performing necessary self-checks and then reports its overall status by implementing the API provided by MicroProfile Health. A self-check can be a check on anything that the service needs, such as a dependency, a successful connection to an endpoint, a system property, a database connection, or the availability of required resources. MicroProfile offers checks for startup, liveness, and readiness.
 
-The application in this guide consists of one microservice, ***system***. The system microservice returns the JVM system properties of its host.
-
-You will deploy the ***system*** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) provides a method of packaging, deploying, and managing Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including ***Deployments***, ***Services***, and ***Routes***, depending on the configurations. The Operator then continuously compares the current state of the resources, the desired state of application deployment, and reconciles them when necessary.
-
+You will add startup, liveness, and readiness checks to the ***system*** and ***inventory*** services, that are provided for you, and implement what is necessary to report health status by using MicroProfile Health.
 
 
 ::page{title="Getting started"}
@@ -42,11 +39,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/draft-guide-openliberty-operator-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-health.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/draft-guide-openliberty-operator-intro.git
-cd draft-guide-openliberty-operator-intro
+git clone https://github.com/openliberty/guide-microprofile-health.git
+cd guide-microprofile-health
 ```
 
 
@@ -55,310 +52,635 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
+### Try what you'll build
 
-::page{title="Installing the Operator"}
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-
-In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/blob/master/deploy/releases/0.7.1/readme.adoc).
-
-
-
-::page{title="Logging into your cluster"}
-
-For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
-Get the name of your namespace with the following command:
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
 ```
-bx cr namespace-list
+cd finish
+mvn liberty:run
 ```
 
-Look for output that is similar to the following:
+After you see the following message, your application server is ready:
 
 ```
-Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
-
-Namespace
-sn-labs-yourname
-```
-
-Run the following command to store the namespace name in a variable.
-
-```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-```
-
-Verify that the variable contains your namespace name:
-
-```
-echo $NAMESPACE_NAME
-```
-
-Log in to the registry with the following command:
-```
-bx cr login
+The defaultServer server is ready to run a smarter planet.
 ```
 
 
-To check that the Open Liberty Operator has been installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. To access the **system** service, run the following curl command:
 ```
-kubectl api-resources --api-group=openliberty.io
-```
-
-Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
-
-```
-NAME                      SHORTNAMES         APIGROUP         NAMESPACED   KIND
-openlibertyapplications   olapp,olapps       openliberty.io   true         OpenLibertyApplication
-openlibertydumps          oldump,oldumps     openliberty.io   true         OpenLibertyDump
-openlibertytraces         oltrace,oltraces   openliberty.io   true         OpenLibertyTrace
+curl -s http://localhost:9080/system/properties | jq
 ```
 
-Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
-
-The ***openlibertyapplications*** CRD defines a set of configurations for deploying an Open Liberty-based application, including the application image, number of instances, and storage settings. The Open Liberty Operator watches for changes to instances of the ***OpenLibertyApplication*** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
-
-::page{title="Deploying the system microservice to Kubernetes"}
-
-To deploy the ***system*** microservice, you must first package the microservice, then create and build a runnable container image of the packaged microservice.
-
-### Packaging the microservice
-
-Ensure that you are in the ***start*** directory and run the following command to package the ***system*** microservice:
-
-
+To access the **inventory** service, run the following curl command:
 ```
-cd /home/project/draft-guide-openliberty-operator-intro/start
-mvn clean package
+curl -s http://localhost:9080/inventory/systems | jq
 ```
 
-### Building the image
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
+Visit the http://localhost:9080/health URL to see the overall health status of the application, as well as the aggregated data of the startup, liveness, and readiness checks. Run the following curl command:
 ```
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+curl -s http://localhost:9080/health | jq
 ```
 
-Next, run the ***docker build*** command to build the container image for your application:
-```
-docker build -t system:1.0-SNAPSHOT system/.
-```
+Three checks show the state of the **system** service, and the other three checks show the state of the **inventory** service. As you might expect, all services are in the **UP** state, and the overall health status of the application is in the **UP** state.
 
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
-
-Next, push your images to the container registry on IBM Cloud with the following commands:
-
+Access the **/health/started** endpoint by visiting the http://localhost:9080/health/started URL to view the data from the startup health checks. Run the following curl command:
 ```
-docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+curl -s http://localhost:9080/health/started | jq
 ```
 
-Now you're ready to deploy the image.
+You can also access the **/health/live** endpoint by visiting the http://localhost:9080/health/live URL to view the data from the liveness health checks. Run the following curl command:
+```
+curl -s http://localhost:9080/health/live | jq
+```
 
-### Deploying the image
+Similarly, access the **/health/ready** endpoint by visiting the http://localhost:9080/health/ready URL to view the data from the readiness health checks. Run the following curl command:
+```
+curl -s http://localhost:9080/health/ready | jq
+```
 
-You can configure the specifics of the Open Liberty Operator-controlled deployment with a YAML configuration file.
+After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
-Create the ***deploy.yaml*** configuration file in the ***start*** directory.
+```
+mvn liberty:stop
+```
+
+
+::page{title="Adding health checks to microservices"}
+
+
+To begin, run the following command to navigate to the **start** directory:
+```
+cd /home/project/guide-microprofile-health/start
+```
+
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```
+mvn liberty:dev
+```
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+A health report will be generated automatically for all services that enable MicroProfile Health. The ***mpHealth*** feature has already been enabled for you in the ***src/main/liberty/config/server.xml*** file.
+
+All services must provide an implementation of the ***HealthCheck*** interface, which is used to verify their health. MicroProfile Health offers health checks for startup, liveness, and readiness. A startup check allows applications to define startup probes that are used for initial verification of the application before the Liveness probe takes over. For example, a startup check might check which applications require additional startup time on their first initialization. A liveness check allows third-party services to determine whether a microservice is running. If the liveness check fails, the application can be terminated. For example, a liveness check might fail if the application runs out of memory. A readiness check allows third-party services, such as Kubernetes, to determine whether a microservice is ready to process requests. For example, a readiness check might check dependencies, such as database connections.
+
+
+
+### Adding health checks to the system service
+
+Create the ***SystemStartupCheck*** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/draft-guide-openliberty-operator-intro/start/deploy.yaml
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemStartupCheck.java
 ```
 
 
-> Then from the menu of the IDE, select **File** > **Open** > draft-guide-openliberty-operator-intro/start/deploy.yaml
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemStartupCheck.java
 
 
 
 
-```
-apiVersion: openliberty.io/v1beta1
-kind: OpenLibertyApplication
-metadata:
-  name: system
-  labels:
-    name: system
-spec:
-  applicationImage: system:1.0-SNAPSHOT
-  service:
-    port: 9080
-  expose: true
-  env:
-    - name: WLP_LOGGING_MESSAGE_FORMAT
-      value: "json"
-    - name: WLP_LOGGING_MESSAGE_SOURCE
-      value: "message,trace,accessLog,ffdc,audit"
-  readinessProbe:
-    failureThreshold: 12
-    httpGet:
-      path: /health/ready
-      port: 9080
-      scheme: HTTP
-    initialDelaySeconds: 30
-    periodSeconds: 2
-    timeoutSeconds: 10
-  livenessProbe:
-    failureThreshold: 12
-    httpGet:
-      path: /health/live
-      port: 9080
-      scheme: HTTP
-    initialDelaySeconds: 30
-    periodSeconds: 2
-    timeoutSeconds: 10
-```
+```java
+package io.openliberty.guides.system;
 
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
+import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Startup;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
 
-The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication*** resource, ***system***, which is controlled by the Open Liberty Operator.
+@Startup
+@ApplicationScoped
+public class SystemStartupCheck implements HealthCheck {
 
-The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\<image-name\>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
-
-The ***env*** parameter is used to specify environment variables that are passed to the container at runtime.
-
-Additionally, the microservice includes the ***service*** and ***expose*** parameters. The ***service.port*** parameter specifies which port is exposed by the container, allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster, it must be exposed by setting the ***expose*** parameter to ***true***. After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
-
-
-Run the following commands to update the **applicationImage** and deploy the **system** microservice with the previously explained configuration:
-```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  imagePullPolicy: Always=g' deploy.yaml
-kubectl apply -f deploy.yaml
-```
-
-Next, run the following command to view your newly created ***OpenLibertyApplications*** resources:
+    @Override
+    public HealthCheckResponse call() {
+        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
+        ManagementFactory.getOperatingSystemMXBean();
+        double cpuUsed = bean.getSystemCpuLoad();
+        String cpuUsage = String.valueOf(cpuUsed);
+        return HealthCheckResponse.named(SystemResource.class
+                                            .getSimpleName() + " Startup Check")
+                                            .withData("cpu used", cpuUsage)
+                                            .status(cpuUsed < 0.95).build();
+    }
+}
 
 ```
-kubectl get OpenLibertyApplications
+
+
+
+The ***@Startup*** annotation indicates that this class is a startup health check procedure. In this case, you are checking the cpu usage. If more than 95% of the cpu is being used, a status of ***DOWN*** is returned.
+
+Create the ***SystemLivenessCheck*** class.
+
+> Run the following touch command in your terminal
 ```
-
-You can also replace ***OpenLibertyApplications*** with the shortname ***olapps***.
-
-Look for output that is similar to the following example:
-
-```
-NAME      IMAGE                  EXPOSED   RECONCILED   AGE
-system    system:1.0-SNAPSHOT    true      True         10s
-```
-
-A ***RECONCILED*** state value of ***True*** indicates that the operator was able to successfully process the ***OpenLibertyApplications*** instances. Run the following command to view details of your microservice:
-
-```
-kubectl describe olapps/system
-```
-
-This example shows part of the ***olapps/system*** output:
-
-```
-Name:         system
-Namespace:    default
-Labels:       app.kubernetes.io/part-of=system
-              name=system
-Annotations:  <none>
-API Version:  openliberty.io/v1beta1
-Kind:         OpenLibertyApplication
-
-...
-```
-
-::page{title="Accessing the microservice"}
-
-To access the exposed ***system*** microservice, the service must be port-forwarded. Run the following command to set up port forwarding to access the ***system*** service:
-
-```
-kubectl port-forward svc/system 9080
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
 ```
 
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Access the microservice by running the following command:
-```
-curl -s http://localhost:9080/system/properties | jq
-```
-
-::page{title="Specifying other parameters"}
-
-You can visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide.adoc#configuration) to find all of the supported optional parameters.
-
-
-You can now configure the readiness and liveness probes. The ***readiness probe*** is used to know when a container is ready to begin accepting traffic, and the ***liveness probe*** is used to know when to restart a container.
-
-Replace the ***deploy.yaml*** configuration file.
-
-> From the menu of the IDE, select
-> **File** > **Open** > draft-guide-openliberty-operator-intro/start/deploy.yaml
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemLivenessCheck.java
 
 
 
 
-```
-apiVersion: openliberty.io/v1beta1
-kind: OpenLibertyApplication
-metadata:
-  name: system
-  labels:
-    name: system
-spec:
-  applicationImage: system:1.0-SNAPSHOT
-  service:
-    port: 9080
-  expose: true
-  env:
-    - name: WLP_LOGGING_MESSAGE_FORMAT
-      value: "json"
-    - name: WLP_LOGGING_MESSAGE_SOURCE
-      value: "message,trace,accessLog,ffdc,audit"
-  readinessProbe:
-    failureThreshold: 12
-    httpGet:
-      path: /health/ready
-      port: 9080
-      scheme: HTTP
-    initialDelaySeconds: 30
-    periodSeconds: 2
-    timeoutSeconds: 10
-  livenessProbe:
-    failureThreshold: 12
-    httpGet:
-      path: /health/live
-      port: 9080
-      scheme: HTTP
-    initialDelaySeconds: 30
-    periodSeconds: 2
-    timeoutSeconds: 10
+```java
+package io.openliberty.guides.system;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class SystemLivenessCheck implements HealthCheck {
+
+  @Override
+  public HealthCheckResponse call() {
+    MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+    long memUsed = memBean.getHeapMemoryUsage().getUsed();
+    long memMax = memBean.getHeapMemoryUsage().getMax();
+
+    return HealthCheckResponse.named(
+      SystemResource.class.getSimpleName() + " Liveness Check")
+                              .withData("memory used", memUsed)
+                              .withData("memory max", memMax)
+                              .status(memUsed < memMax * 0.9).build();
+  }
+}
 ```
 
 
-The health check endpoints ***/health/ready*** and ***/health/live*** have already been created for you. 
 
+The ***@Liveness*** annotation indicates that this class is a liveness health check procedure. In this case, you are checking the heap memory usage. If more than 90% of the maximum memory is being used, a status of ***DOWN*** is returned.
 
-Run the following commands to update the **applicationImage** and deploy the **system** microservice with the new configuration:
+Create the ***SystemReadinessCheck*** class.
+
+> Run the following touch command in your terminal
 ```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  imagePullPolicy: Always=g' deploy.yaml
-kubectl apply -f deploy.yaml
-```
-
-
-Access the microservice by running the following command:
-```
-curl -s http://localhost:9080/system/properties | jq
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
 ```
 
-When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
 
-::page{title="Tearing down the environment"}
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/system/SystemReadinessCheck.java
 
 
-When you no longer need your deployed microservice, you can delete all resources by running the following command:
+
+
+```java
+package io.openliberty.guides.system;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Readiness
+@ApplicationScoped
+public class SystemReadinessCheck implements HealthCheck {
+
+  private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
+                                               + " Readiness Check";
+  @Override
+  public HealthCheckResponse call() {
+    if (!System.getProperty("wlp.server.name").equals("defaultServer")) {
+      return HealthCheckResponse.down(READINESS_CHECK);
+    }
+    return HealthCheckResponse.up(READINESS_CHECK);
+  }
+}
+```
+
+
+
+
+The **@Readiness** annotation indicates that this class is a readiness health check procedure. By pairing this annotation with the **ApplicationScoped** context from the Contexts and Dependency Injections API, the bean is discovered automatically when the http://localhost:9080/health endpoint receives a request.
+
+
+The ***call()*** method is used to return the health status of a particular service. In this case, you are checking if the server name is ***defaultServer*** and returning ***UP*** if it is, and ***DOWN*** otherwise. This example is a very simple implementation of the ***call()*** method. In a real environment, you would orchestrate more meaningful health checks.
+
+
+### Adding health checks to the inventory service
+
+Create the ***InventoryStartupCheck*** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+```
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+
+
+
+
+```java
+package io.openliberty.guides.inventory;
+
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
+import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Startup;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Startup
+@ApplicationScoped
+public class InventoryStartupCheck implements HealthCheck {
+
+    @Override
+    public HealthCheckResponse call() {
+        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
+        ManagementFactory.getOperatingSystemMXBean();
+        double cpuUsed = bean.getSystemCpuLoad();
+        String cpuUsage = String.valueOf(cpuUsed);
+        return HealthCheckResponse.named(InventoryResource.class
+                                            .getSimpleName() + " Startup Check")
+                                            .withData("cpu used", cpuUsage)
+                                            .status(cpuUsed < 0.95).build();
+    }
+}
 
 ```
-kubectl delete -f deploy.yaml
+
+
+
+This startup check verifies that the cpu usage is below 95%.
+If more than 95% of the cpu is being used, a status of ***DOWN*** is returned.
+
+Create the ***InventoryLivenessCheck*** class.
+
+> Run the following touch command in your terminal
 ```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+```
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+
+
+
+
+```java
+package io.openliberty.guides.inventory;
+
+import jakarta.enterprise.context.ApplicationScoped;
+
+import java.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
+
+import org.eclipse.microprofile.health.Liveness;
+
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class InventoryLivenessCheck implements HealthCheck {
+  @Override
+  public HealthCheckResponse call() {
+      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+      long memUsed = memBean.getHeapMemoryUsage().getUsed();
+      long memMax = memBean.getHeapMemoryUsage().getMax();
+
+      return HealthCheckResponse.named(
+        InventoryResource.class.getSimpleName() + " Liveness Check")
+                                .withData("memory used", memUsed)
+                                .withData("memory max", memMax)
+                                .status(memUsed < memMax * 0.9).build();
+  }
+}
+```
+
+
+
+As with the ***system*** liveness check, you are checking the heap memory usage. If more than 90% of the maximum memory is being used, a ***DOWN*** status is returned.
+
+Create the ***InventoryReadinessCheck*** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+```
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+
+
+
+
+```java
+package io.openliberty.guides.inventory;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Readiness
+@ApplicationScoped
+public class InventoryReadinessCheck implements HealthCheck {
+
+  private static final String READINESS_CHECK = InventoryResource.class.getSimpleName()
+                                               + " Readiness Check";
+  @Inject
+  InventoryConfig config;
+
+  public boolean isHealthy() {
+    if (config.isInMaintenance()) {
+      return false;
+    }
+    try {
+      String url = InventoryUtils.buildUrl("http", "localhost", config.getPortNumber(),
+          "/system/properties");
+      Client client = ClientBuilder.newClient();
+      Response response = client.target(url).request(MediaType.APPLICATION_JSON).get();
+      if (response.getStatus() != 200) {
+        return false;
+      }
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  @Override
+  public HealthCheckResponse call() {
+    if (!isHealthy()) {
+      return HealthCheckResponse
+          .down(READINESS_CHECK);
+    }
+    return HealthCheckResponse
+        .up(READINESS_CHECK);
+  }
+
+}
+```
+
+
+
+In the ***isHealthy()*** method, you report the ***inventory*** service as not ready if the service is in maintenance or if its dependant service is unavailable.
+
+For simplicity, the custom ***io_openliberty_guides_inventory_inMaintenance*** MicroProfile Config property, which is defined in the ***resources/CustomConfigSource.json*** file, indicates whether the service is in maintenance. This file was already created for you.
+
+Moreover, the readiness health check procedure makes an HTTP ***GET*** request to the ***system*** service and checks its status. If the request is successful, the ***inventory*** service is healthy and ready because its dependant service is available. Otherwise, the ***inventory*** service is not ready and an unhealthy readiness status is returned.
+
+If you are curious about the injected ***inventoryConfig*** object or if you want to learn more about MicroProfile Config, see [Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
+
+
+
+::page{title="Running the application"}
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+While the server is running, run the following curl command to find the aggregated startup ,liveness, and readiness health reports on the two services:
+```
+curl -s http://localhost:9080/health | jq
+```
+
+You can also run the following curl command to view the startup health report:
+```
+curl -s http://localhost:9080/health/started | jq
+```
+
+or run the following curl command to view the liveness health report:
+```
+curl -s http://localhost:9080/health/live | jq
+```
+
+or run the following curl command to view the readiness health report:
+```
+curl -s http://localhost:9080/health/ready | jq
+```
+
+Put the **inventory** service in maintenance by setting the ***io_openliberty_guides_inventory_inMaintenance*** property to **true** in the **resources/CustomConfigSource.json** file. 
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json
+
+```
+{
+  "config_ordinal":700,
+  "io_openliberty_guides_inventory_inMaintenance":true
+}
+```
+
+Because this configuration file is picked up dynamically, simply refresh the http://localhost:9080/health URL to see that the state of the **inventory** service changed to **DOWN**. Run the following curl command:
+```
+curl -s http://localhost:9080/health | jq
+```
+
+The overall state of the application also changed to **DOWN** as a result. Run the following curl command to verify that the **inventory** service is indeed in maintenance:
+```
+curl -s http://localhost:9080/inventory/systems | jq
+```
+
+Set the ***io_openliberty_guides_inventory_inMaintenance*** property back to **false** after you are done.
+
+> From the menu of the IDE, select 
+ **File** > **Open** > guide-microprofile-health/start/resources/CustomConfigSource.json
+
+```
+{
+  "config_ordinal":700,
+  "io_openliberty_guides_system_inMaintenance":false
+}
+```
+
+
+::page{title="Testing health checks"}
+
+You will implement several test methods to validate the health of the ***system*** and ***inventory*** services.
+
+Create the ***HealthIT*** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
+```
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-health/start/src/test/java/it/io/openliberty/guides/health/HealthIT.java
+
+
+
+
+```java
+package it.io.openliberty.guides.health;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.beans.Transient;
+import java.util.HashMap;
+
+import jakarta.json.JsonArray;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class HealthIT {
+
+  private JsonArray servicesStates;
+  private static HashMap<String, String> endpointData;
+
+  private String HEALTH_ENDPOINT = "health";
+  private String READINESS_ENDPOINT = "health/ready";
+  private String LIVENES_ENDPOINT = "health/live";
+  private String STARTUP_ENDPOINT = "health/started";
+
+  @BeforeEach
+  public void setup() {
+    endpointData = new HashMap<String, String>();
+  }
+
+  @Test
+  public void testStartup() {
+    endpointData.put("InventoryResource Startup Check", "UP");
+    endpointData.put("SystemResource Startup Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, STARTUP_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  @Test
+  public void testLiveness() {
+    endpointData.put("SystemResource Liveness Check", "UP");
+    endpointData.put("InventoryResource Liveness Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, LIVENES_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  @Test
+  public void testReadiness() {
+    endpointData.put("SystemResource Readiness Check", "UP");
+    endpointData.put("InventoryResource Readiness Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, READINESS_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  @Test
+  public void testHealth() {
+    endpointData.put("SystemResource Startup Check", "UP");
+    endpointData.put("SystemResource Liveness Check", "UP");
+    endpointData.put("SystemResource Readiness Check", "UP");
+    endpointData.put("InventoryResource Startup Check", "UP");
+    endpointData.put("InventoryResource Liveness Check", "UP");
+    endpointData.put("InventoryResource Readiness Check", "UP");
+
+    servicesStates = HealthITUtil.connectToHealthEnpoint(200, HEALTH_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+
+    endpointData.put("InventoryResource Readiness Check", "DOWN");
+    HealthITUtil.changeInventoryProperty(HealthITUtil.INV_MAINTENANCE_FALSE,
+        HealthITUtil.INV_MAINTENANCE_TRUE);
+    servicesStates = HealthITUtil.connectToHealthEnpoint(503, HEALTH_ENDPOINT);
+    checkStates(endpointData, servicesStates);
+  }
+
+  private void checkStates(HashMap<String, String> testData, JsonArray servStates) {
+    testData.forEach((service, expectedState) -> {
+      assertEquals(expectedState, HealthITUtil.getActualState(service, servStates),
+          "The state of " + service + " service is not matching.");
+    });
+  }
+
+  @AfterEach
+  public void teardown() {
+    HealthITUtil.cleanUp();
+  }
+
+}
+```
+
+
+
+
+Let's break down the test cases:
+
+* The ***testStartup()*** test case compares the generated health report for the startup checks with the actual status of the services.
+* The ***testLiveness()*** test case compares the generated health report for the liveness checks with the actual status of the services.
+* The ***testReadiness()*** test case compares the generated health report for the readiness checks with the actual status of the services.
+* The ***testHealth()*** test case compares the generated health report with the actual status of the services. This test also puts the ***inventory*** service in maintenance by setting the ***io_openliberty_guides_inventory_inMaintenance*** property to ***true*** and comparing the generated health report with the actual status of the services.
+
+A few more tests were included to verify the basic functionality of the ***system*** and ***inventory*** services. They can be found under the ***src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java*** and ***src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java*** files. If a test failure occurs, then you might have introduced a bug into the code. These tests run automatically as a part of the integration test suite.
+
+
+
+
+
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+You see the following output:
+
+```
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running it.io.openliberty.guides.health.HealthIT
+[INFO] [WARNING ] CWMMH0052W: The class io.openliberty.microprofile.health30.impl.HealthCheck30ResponseImpl implementing HealthCheckResponse in the guide-microprofile-health application in module guide-microprofile-health.war, reported a DOWN status with data Optional[{}].
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.706 s - in it.io.openliberty.guides.health.HealthIT
+[INFO] Running it.io.openliberty.guides.system.SystemEndpointIT
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in it.io.openliberty.guides.system.SystemEndpointIT
+[INFO] Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+[INFO] [WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+[INFO] Could not send Message.
+[INFO] [err] The specified host is unknown.
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.171 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
+```
+
+The warning messages are expected. The first warning results from a request to a service that is under maintenance. This request is made in the ***testHealth()*** test from the ***InventoryEndpointIT*** integration test. The second warning and error results from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
+
+The tests might fail if your system CPU or memory use is high. The status of the system is DOWN if the CPU usage is over 95%, or the memory usage is over 90%.
+
+To see whether the tests detect a failure, manually change the configuration of ***io_openliberty_guides_inventory_inMaintenance*** from ***false*** to ***true*** in the ***resources/CustomConfigSource.json*** file. Rerun the tests to see a test failure occur. The test failure occurs because the initial status of the ***inventory*** service is ***DOWN***.
+
+When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just deployed a microservice running in Open Liberty to Kubernetes by using the Open Liberty Operator.
+You just learned how to add health checks to report the states of microservices by using MicroProfile Health in Open Liberty. Then, you wrote tests to validate the generated health report.
 
+
+Feel free to try one of the related MicroProfile guides. They demonstrate additional technologies that you can learn and expand on top of what you built here.
 
 
 ### Clean up your environment
@@ -366,34 +688,35 @@ You just deployed a microservice running in Open Liberty to Kubernetes by using 
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***draft-guide-openliberty-operator-intro*** project by running the following commands:
+Delete the ***guide-microprofile-health*** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr draft-guide-openliberty-operator-intro
+rm -fr guide-microprofile-health
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20Kubernetes%20by%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-draft-guide-openliberty-operator-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Adding%20health%20reports%20to%20microservices&guide-id=cloud-hosted-guide-microprofile-health)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/draft-guide-openliberty-operator-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/draft-guide-openliberty-operator-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-health/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-health/pulls)
 
 
 
 ### Where to next?
 
-* [Deploying microservices to OpenShift 3](https://openliberty.io/guides/cloud-openshift.html)
-* [Deploying microservices to OpenShift 4 by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
-* [Deploying microservices to an OKD cluster using Minishift](https://openliberty.io/guides/okd.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 
 
 ### Log out of the session
