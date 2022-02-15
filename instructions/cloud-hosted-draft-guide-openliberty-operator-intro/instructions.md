@@ -189,34 +189,8 @@ spec:
       value: "json"
     - name: WLP_LOGGING_MESSAGE_SOURCE
       value: "message,trace,accessLog,ffdc,audit"
-  startupProbe:
-    failureThreshold: 12
-    httpGet:
-      path: /health/started
-      port: 9080
-      scheme: HTTP
-    initialDelaySeconds: 30
-    periodSeconds: 2
-    timeoutSeconds: 10
-  livenessProbe:
-    failureThreshold: 12
-    httpGet:
-      path: /health/live
-      port: 9080
-      scheme: HTTP
-    initialDelaySeconds: 30
-    periodSeconds: 2
-    timeoutSeconds: 10
-  readinessProbe:
-    failureThreshold: 12
-    httpGet:
-      path: /health/ready
-      port: 9080
-      scheme: HTTP
-    initialDelaySeconds: 30
-    periodSeconds: 2
-    timeoutSeconds: 10
 ```
+
 
 
 The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication*** resource, ***system***, which is controlled by the Open Liberty Operator.
@@ -287,7 +261,6 @@ curl -s http://localhost:9080/system/properties | jq
 
 You can visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1beta2.adoc#configuration) to find all of the supported optional parameters.
 
-
 You can now configure the startup, readiness, and liveness probes. The ***startup probe*** is used to verify whether deployed application is fully initialized before the liveness probe takes over, the ***liveness probe*** is used to determine whether the application is running, and the ***readiness probe*** is used to know whether the application is ready to process requests.
 
 Replace the ***deploy.yaml*** configuration file.
@@ -343,6 +316,7 @@ spec:
     periodSeconds: 2
     timeoutSeconds: 10
 ```
+
 
 
 The health check endpoints ***/health/started***, ***/health/live*** and ***/health/ready*** have already been created for you. 
