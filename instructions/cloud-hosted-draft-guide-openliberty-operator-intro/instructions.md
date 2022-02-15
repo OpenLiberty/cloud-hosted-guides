@@ -204,7 +204,7 @@ Additionally, the microservice includes the ***service*** and ***expose*** param
 
 Run the following commands to update the **applicationImage** and deploy the **system** microservice with the previously explained configuration:
 ```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  pullPolicy: Always=g' deploy.yaml
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  pullPolicy: IfNotPresent=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
 
@@ -288,33 +288,34 @@ spec:
       value: "json"
     - name: WLP_LOGGING_MESSAGE_SOURCE
       value: "message,trace,accessLog,ffdc,audit"
-  startupProbe:
-    failureThreshold: 12
-    httpGet:
-      path: /health/started
-      port: 9080
-      scheme: HTTP
-    initialDelaySeconds: 30
-    periodSeconds: 2
-    timeoutSeconds: 10
-  livenessProbe:
-    failureThreshold: 12
-    httpGet:
-      path: /health/live
-      port: 9080
-      scheme: HTTP
-    initialDelaySeconds: 30
-    periodSeconds: 2
-    timeoutSeconds: 10
-  readinessProbe:
-    failureThreshold: 12
-    httpGet:
-      path: /health/ready
-      port: 9080
-      scheme: HTTP
-    initialDelaySeconds: 30
-    periodSeconds: 2
-    timeoutSeconds: 10
+  probes:
+    startup:
+      failureThreshold: 12
+      httpGet:
+        path: /health/started
+        port: 9080
+        scheme: HTTP
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
+    liveness:
+      failureThreshold: 12
+      httpGet:
+        path: /health/live
+        port: 9080
+        scheme: HTTP
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
+    readiness:
+      failureThreshold: 12
+      httpGet:
+        path: /health/ready
+        port: 9080
+        scheme: HTTP
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
 ```
 
 
@@ -324,7 +325,7 @@ The health check endpoints ***/health/started***, ***/health/live*** and ***/hea
 
 Run the following commands to update the **applicationImage** and deploy the **system** microservice with the new configuration:
 ```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  imagePullPolicy: Always=g' deploy.yaml
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  imagePullPolicy: IfNotPresent=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
 
