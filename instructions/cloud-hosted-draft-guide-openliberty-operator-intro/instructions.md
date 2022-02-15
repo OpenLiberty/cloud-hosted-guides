@@ -59,7 +59,7 @@ The ***finish*** directory contains the finished project that you will build.
 ::page{title="Installing the Operator"}
 
 
-In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/blob/master/deploy/releases/0.7.1/readme.adoc).
+In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/tree/main/deploy/releases/0.8.0#readme).
 
 
 
@@ -101,16 +101,16 @@ bx cr login
 
 To check that the Open Liberty Operator has been installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 ```
-kubectl api-resources --api-group=openliberty.io
+kubectl api-resources --api-group=apps.openliberty.io
 ```
 
 Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
 
 ```
-NAME                      SHORTNAMES         APIGROUP         NAMESPACED   KIND
-openlibertyapplications   olapp,olapps       openliberty.io   true         OpenLibertyApplication
-openlibertydumps          oldump,oldumps     openliberty.io   true         OpenLibertyDump
-openlibertytraces         oltrace,oltraces   openliberty.io   true         OpenLibertyTrace
+NAME                      SHORTNAMES         APIGROUP              NAMESPACED   KIND
+openlibertyapplications   olapp,olapps       apps.openliberty.io   true         OpenLibertyApplication
+openlibertydumps          oldump,oldumps     apps.openliberty.io   true         OpenLibertyDump
+openlibertytraces         oltrace,oltraces   apps.openliberty.io   true         OpenLibertyTrace
 ```
 
 Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
@@ -173,7 +173,7 @@ touch /home/project/draft-guide-openliberty-operator-intro/start/deploy.yaml
 
 
 ```yaml
-apiVersion: openliberty.io/v1beta1
+apiVersion: apps.openliberty.io/v1beta2
 kind: OpenLibertyApplication
 metadata:
   name: system
@@ -189,10 +189,10 @@ spec:
       value: "json"
     - name: WLP_LOGGING_MESSAGE_SOURCE
       value: "message,trace,accessLog,ffdc,audit"
-  readinessProbe:
+  startupProbe:
     failureThreshold: 12
     httpGet:
-      path: /health/ready
+      path: /health/started
       port: 9080
       scheme: HTTP
     initialDelaySeconds: 30
@@ -202,6 +202,15 @@ spec:
     failureThreshold: 12
     httpGet:
       path: /health/live
+      port: 9080
+      scheme: HTTP
+    initialDelaySeconds: 30
+    periodSeconds: 2
+    timeoutSeconds: 10
+  readinessProbe:
+    failureThreshold: 12
+    httpGet:
+      path: /health/ready
       port: 9080
       scheme: HTTP
     initialDelaySeconds: 30
@@ -254,7 +263,7 @@ Namespace:    default
 Labels:       app.kubernetes.io/part-of=system
               name=system
 Annotations:  <none>
-API Version:  openliberty.io/v1beta1
+API Version:  apps.openliberty.io/v1beta2
 Kind:         OpenLibertyApplication
 
 ...
@@ -276,10 +285,10 @@ curl -s http://localhost:9080/system/properties | jq
 
 ::page{title="Specifying other parameters"}
 
-You can visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide.adoc#configuration) to find all of the supported optional parameters.
+You can visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1beta2.adoc#configuration) to find all of the supported optional parameters.
 
 
-You can now configure the readiness and liveness probes. The ***readiness probe*** is used to know when a container is ready to begin accepting traffic, and the ***liveness probe*** is used to know when to restart a container.
+You can now configure the startup, readiness, and liveness probes. The ***startup probe*** is used to verify whether deployed application is fully initialized before the liveness probe takes over, the ***liveness probe*** is used to determine whether the application is running, and the ***readiness probe*** is used to know whether the application is ready to process requests.
 
 Replace the ***deploy.yaml*** configuration file.
 
@@ -290,7 +299,7 @@ Replace the ***deploy.yaml*** configuration file.
 
 
 ```yaml
-apiVersion: openliberty.io/v1beta1
+apiVersion: apps.openliberty.io/v1beta2
 kind: OpenLibertyApplication
 metadata:
   name: system
@@ -306,10 +315,10 @@ spec:
       value: "json"
     - name: WLP_LOGGING_MESSAGE_SOURCE
       value: "message,trace,accessLog,ffdc,audit"
-  readinessProbe:
+  startupProbe:
     failureThreshold: 12
     httpGet:
-      path: /health/ready
+      path: /health/started
       port: 9080
       scheme: HTTP
     initialDelaySeconds: 30
@@ -324,10 +333,19 @@ spec:
     initialDelaySeconds: 30
     periodSeconds: 2
     timeoutSeconds: 10
+  readinessProbe:
+    failureThreshold: 12
+    httpGet:
+      path: /health/ready
+      port: 9080
+      scheme: HTTP
+    initialDelaySeconds: 30
+    periodSeconds: 2
+    timeoutSeconds: 10
 ```
 
 
-The health check endpoints ***/health/ready*** and ***/health/live*** have already been created for you. 
+The health check endpoints ***/health/started***, ***/health/live*** and ***/health/ready*** have already been created for you. 
 
 
 Run the following commands to update the **applicationImage** and deploy the **system** microservice with the new configuration:
