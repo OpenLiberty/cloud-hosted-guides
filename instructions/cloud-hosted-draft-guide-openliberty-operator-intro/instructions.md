@@ -327,7 +327,7 @@ The health check endpoints ***/health/started***, ***/health/live*** and ***/hea
 
 Run the following commands to update the **applicationImage** and deploy the **system** microservice with the new configuration:
 ```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  imagePullPolicy: IfNotPresent=g' deploy.yaml
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  pullPolicy: IfNotPresent=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
 
