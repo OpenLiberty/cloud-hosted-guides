@@ -257,6 +257,8 @@ Open another command-line session by selecting **Terminal** > **New Terminal** f
 curl -s http://localhost:9080/system/properties | jq
 ```
 
+Press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
+
 ::page{title="Specifying other parameters"}
 
 You can visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1beta2.adoc#configuration) to find all of the supported optional parameters.
@@ -327,6 +329,12 @@ Run the following commands to update the **applicationImage** and deploy the **s
 ```
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  imagePullPolicy: IfNotPresent=g' deploy.yaml
 kubectl apply -f deploy.yaml
+```
+
+Run the following command to set up port forwarding to access the ***system*** service:
+
+```
+kubectl port-forward svc/system 9080
 ```
 
 
