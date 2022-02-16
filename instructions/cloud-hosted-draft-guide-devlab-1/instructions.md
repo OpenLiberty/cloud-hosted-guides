@@ -72,7 +72,7 @@ The defaultServer server is ready to run a smarter planet.
 
 To open a new command-line session, select **Terminal** > **New Terminal** from the menu of the IDE.
 
-Next, run the following curl command to see the RESTful APIs of the `inventory` service:
+Next, run the following curl command to see the RESTful APIs of the ***inventory*** service:
 ```
 curl http://localhost:9080/openapi
 ```
