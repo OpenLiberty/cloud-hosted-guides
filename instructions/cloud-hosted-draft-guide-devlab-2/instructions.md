@@ -4,9 +4,9 @@ title: instructions
 branch: lab-207-instruction
 version-history-start-date: 2022-02-11T18:24:15Z
 ---
-::page{title="Welcome to the Consuming a RESTful web service guide!"}
+::page{title="Welcome to the Enabling distributed tracing in microservices with Jaeger guide!"}
 
-Explore how to access a simple RESTful web service and consume its resources in Java using JSON-B and JSON-P.
+Explore how to enable and customize tracing of restfulWS and non-restfulWS methods by using MicroProfile OpenTracing and Jaeger.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,20 +17,23 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
+
 ::page{title="What you'll learn"}
 
-You will learn how to access a REST service, serialize a Java object that contains a list of artists and their albums, and use two different approaches to deserialize the returned JSON resources. The first approach consists of using the Java API for JSON Binding (JSON-B) to directly convert JSON messages into Java objects. The second approach consists of using the Java API for JSON Processing (JSON-P) to process the JSON.
+You will learn how to enable automatic tracing for restfulWS methods and create custom tracers for non-restfulWS methods by using MicroProfile OpenTracing.
 
-The REST service that provides the artists and albums resources is already written for you. When the server is running, this service is accessible at the ***http://localhost:9080/artists*** endpoint, which responds with the ***artists.json*** file.
+OpenTracing is a standard API for instrumenting microservices for distributed tracing. Distributed tracing helps troubleshoot microservices by examining and logging requests as they propagate through a distributed system, allowing developers to tackle the otherwise difficult task of debugging these requests. Without a distributed tracing system in place, analyzing the workflows of operations becomes difficult, particularly in regard to pinpointing when and by whom a request is received or when a response is sent back.
 
-You will implement the following two endpoints using the two deserialization approaches:
+***Tracer*** and ***Span*** are two critical types in the OpenTracing specification. The ***Span*** type is the primary building block of a distributed trace, representing an individual unit of work done in a distributed system. The ***Trace*** type in OpenTracing can be thought of as a directed acyclic graph (DAG) of ***Spans***, where the edges between ***Spans*** are called References. The ***Tracer*** interface creates ***Spans*** and ***Traces*** and understands how to serialize and deserialize their metadata across process boundaries.
 
-* ***.../artists/total*** to return the total number of artists in the JSON
-* ***.../artists/total/<artist>*** to return the total number of albums in the JSON
-for the particular artist
+MicroProfile OpenTracing enables distributed tracing in microservices. The MicroProfile OpenTracing specification doesn’t address the problem of defining, implementing, or configuring the underlying distributed tracing system. Rather, the specification makes it easier to instrument services with distributed tracing given an existing distributed tracing system.
 
-If you are interested in learning more about REST services and how you can write them, read [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
+[Jaeger](https://www.jaegertracing.io/) is an open source distributed tracing system that is compatible with the OpenTracing specification. Jaeger also provides an implementation of ***Tracer*** in the client package that is compatible with MicroProfile OpenTracing.
 
+You’ll configure the provided ***inventory*** and ***system*** services to use Jaeger for distributed tracing with MicroProfile OpenTracing.
+You’ll run these services in two separate JVMs made of two server instances to demonstrate tracing in a distributed environment.
+If all the components were run on a single server, then any logging software would be sufficient.
 
 ::page{title="Getting started"}
 
@@ -43,11 +46,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-java.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-opentracing-jaeger.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-rest-client-java.git
-cd guide-rest-client-java
+git clone https://github.com/openliberty/guide-microprofile-opentracing-jaeger.git
+cd guide-microprofile-opentracing-jaeger
 ```
 
 
@@ -55,65 +58,105 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-
 ### Try what you'll build
+
+Run the following docker command to start Jaeger server:
+```
+docker run -d --name jaeger \
+  -e COLLECTOR_ZIPKIN_HTTP_PORT=9411 \
+  -p 5775:5775/udp \
+  -p 6831:6831/udp \
+  -p 6832:6832/udp \
+  -p 5778:5778 \
+  -p 16686:16686 \
+  -p 14268:14268 \
+  -p 14250:14250 \
+  -p 9411:9411 \
+  jaegertracing/all-in-one:1.22
+```
+
+You can find information about the Jaeger server and instructions for starting the all-in-one executable file in the [Jaeger documentation](https://www.jaegertracing.io/docs/1.22/getting-started/#all-in-one).
+
+Before you proceed, make sure that your Jaeger server is up and running. Select **Launch Application** from the menu of the IDE, type in **16686** to specify the port number for the Jaeger service, and click the **OK** button. Jaeger can be found at the ***https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai*** URL, where **accountname** is your account name.
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
+Navigate to the **finish/inventory** directory. Run the following Maven goal to build the **inventory** service and deploy it to Open Liberty:
 ```
-cd finish
+cd /home/project/guide-microprofile-opentracing-jaeger/finish/inventory
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+Open another command-line session and navigate to the **finish/system** directory. Run the following Maven goal to build the **system** service and deploy it to Open Liberty:
+```
+cd /home/project/guide-microprofile-opentracing-jaeger/finish/system
+mvn liberty:run
+```
+
+After you see the following message in both command-line sessions, both of your services are ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-You can find your service at the **http://localhost:9080/artists** endpoint by running the following curl command:
+Open another command-line session and run the following curl command from the terminal:
 ```
-curl -s http://localhost:9080/artists | jq
+curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 
-Run the following curl command to retrieve the total number of artists:
-```
-curl http://localhost:9080/artists/total
-```
+When you visit this endpoint, you make two GET HTTP requests, one to the **system** service and one to the **inventory** service. Both of these requests are configured to be traced, so a new trace is recorded in Jaeger.
 
-You can access the endpoint at ***http://localhost:9080/artists/total/<artist>*** to see a particular artist’s total number of albums. Run the following curl command to retrieve the artist **bar**'s total number of albums:
-```
-curl http://localhost:9080/artists/total/bar
-```
+To view the traces, go to the ***https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai*** URL. You can view the traces for the inventory or system services under the **Search** tab. Select the services in the **Select a service** menu and click the **Find Traces** button at the end of the section.
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+If you only see the **jaeger-query** option listed in the dropdown, you might need to wait a little longer and refresh the page to see the application services.
 
-```
-mvn liberty:stop
-```
+View the traces for ***inventory***. You'll see the following trace:
+
+![Trace result](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/prod/assets/tracelist.png)
 
 
-::page{title="Starting the service"}
+The trace has four spans, three from inventory and one from system. Click the trace to view its details. Under **Service & Operation**, you see the spans in this trace. You can inspect each span by clicking it to reveal more detailed information, such as the time at which a request was received and the time at which a response was sent back.
+
+Verify that there are three spans from ***inventory*** and one span from ***system***:
+
+![Finished application's trace](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/prod/assets/trace01.png)
 
 
-To begin, run the following command to navigate to the **start** directory:
+After you’re finished reviewing the application, stop the Open Liberty servers by pressing ***CTRL+C*** in the command-line sessions where you ran the system and inventory services. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+
+
 ```
-cd /home/project/guide-rest-client-java/start
+cd /home/project/guide-microprofile-opentracing-jaeger/finish
+mvn -pl system liberty:stop
+mvn -pl inventory liberty:stop
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+::page{title="Building the application"}
+
+You need to start the services to see basic traces appear in Jaeger.
+
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
+
+Open a command-line session and navigate to the ***start/inventory*** directory.
+Run the following Maven goal to start the ***inventory*** service in dev mode:
 
 ```
+cd /home/project/guide-microprofile-opentracing-jaeger/start/inventory
+mvn liberty:dev
+```
+
+
+Open a command-line session and navigate to the ***start/system*** directory.
+Run the following Maven goal to start the ***system*** service in dev mode:
+
+```
+cd /home/project/guide-microprofile-opentracing-jaeger/start/system
 mvn liberty:dev
 ```
 
 After you see the following message, your application server in dev mode is ready:
-
 ```
 **************************************************************
 *    Liberty is running in dev mode.
@@ -122,446 +165,371 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 
-The application that you'll build upon was created for you. After your server is ready, run the following curl command to access the service:
+When the servers start, you can find the **system** service by running the following curl command:
 ```
-curl -s http://localhost:9080/artists | jq
+curl -s http://localhost:9080/system/properties | jq
 ```
 
-::page{title="Creating POJOs"}
-
-
-
-To deserialize a JSON message, start with creating Plain Old Java Objects (POJOs) that represent what is in the JSON and whose instance members map to the keys in the JSON.
-
-For the purpose of this guide, you are given two POJOs. The ***Artist*** object has two instance members ***name*** and ***albums***, which map to the artist name and the collection of the albums they have written. The ***Album*** object represents a single object within the album collection, and contains three instance members ***title***, ***artistName***, and ***totalTracks***, which map to the album title, the artist who wrote the album, and the number of tracks the album contains.
-
-::page{title="Introducing JSON-B and JSON-P"}
-
-JSON-B is a feature introduced with Java EE 8 and strengthens Java support for JSON. With JSON-B you directly serialize and deserialize POJOs. This API gives you a variety of options for working with JSON resources.
-
-In contrast, you need to use helper methods with JSON-P to process a JSON response. This tactic is more straightforward, but it can be cumbersome with more complex classes.
-
-JSON-B is built on top of the existing JSON-P API. JSON-B can do everything that JSON-P can do and allows for more customization for serializing and deserializing.
-
-### Using JSON-B
-
-JSON-B requires a POJO to have a public default no-argument constructor for deserialization and binding to work properly.
-
-The JSON-B engine includes a set of default mapping rules, which can be run without any customization annotations or custom configuration. In some instances, you might find it useful to deserialize a JSON message with only certain fields, specific field names, or classes with custom constructors. In these cases, annotations are necessary and recommended:
-
-* The ***@JsonbProperty*** annotation to map JSON keys to class instance members and vice versa. Without the use of this annotation, JSON-B will attempt to do POJO mapping, matching the keys in the JSON to the class instance members by name. JSON-B will attempt to match the JSON key with a Java field or method annotated with ***@JsonbProperty*** where the value in the annotation exactly matches the JSON key. If no annotation exists with the given JSON key, JSON-B will attempt to find a matching field with the same name. If no match is found, JSON-B attempts to find a matching getter method for serialization or a matching setter method for de-serialization. A match occurs when the property name of the method matches the JSON key. If no matching getter or setter method is found, serialization or de-serialization, respectively, fails with an exception. The Artist POJO does not require this annotation because all instance members match the JSON keys by name.
-
-* The ***@JsonbCreator*** and ***@JsonbProperty*** annotations to annotate a custom constructor. These annotations are required for proper parameter substitution when a custom constructor is used.
-
-* The ***@JsonbTransient*** annotation to define an object property that does not map to a JSON property. While the use of this annotation is good practice, it is only necessary for serialization.
-
-For more information on customization with JSON-B, see the [official JSON-B site](https://javaee.github.io/jsonb-spec).
-
-
-::page{title="Consuming the REST resource"}
-
-
-
-
-The ***Artist*** and ***Album*** POJOs are ready for deserialization. 
-Next, we'll learn to consume the JSON response from your REST service.
-
-Create the ***Consumer*** class.
-
-> Run the following touch command in your terminal
+and the **inventory** service by running the following curl command:
 ```
-touch /home/project/guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java
+::page{title="Enabling existing Tracer implementation"}
+
+To collect traces across your systems, you need to implement the OpenTracing ***Tracer*** interface. Jaeger provides a ***Tracer*** implementation for the Jaeger server in the ***jaeger-client*** package.
+
+This package is already added as a dependency for you in your ***pom.xml*** file. It's downloaded and installed automatically into each service when you run a Maven build.
+
+### Configuring the Jaeger client
+
+In a development environment, it is important that every trace is sampled. When every trace is sampled, all spans are available in the Jaeger UI.
+
+The ***JAEGER_SAMPLER_TYPE*** and ***JAEGER_SAMPLER_PARAM*** environment variables are set as Open Liberty ***configuration properties*** to sample all traces.
+
+The ***const*** value for ***JAEGER_SAMPLER_TYPE*** environment variable configures the Jaeger client sampler to make the same sampling decision for each trace, based on the sampler parameter. If the sampler parameter is 1, it samples all traces. If the sampler parameter is 0, it doesn't sample any traces.
+
+The ***1*** value for ***JAEGER_SAMPLER_PARAM*** variable configures the Jaeger sampler to sample all traces.
+
+In a production environment, this configuration might cause a lot of overhead on the application and a lower sampling rate can be used. The different values for client sampling configuration can be found in the [sampling documentation](https://www.jaegertracing.io/docs/1.18/sampling/#client-sampling-configuration).
+
+Similarly, in a production environment, Jaeger might not be running in the same host as the application. In this case, set the hostname of the Jaeger server to the ***JAEGER_AGENT_HOST*** environment variable and set the port that communicates with the Jaeger host to the ***JAEGER_AGENT_PORT*** environment variable.
+
+You can view the configuration environment variables at the [Jaeger Java client documentation](https://github.com/jaegertracing/jaeger-client-java/tree/master/jaeger-core#configuration-via-environment).
+
+
+
+
+::page{title="Enabling and disabling distributed tracing"}
+
+The [MicroProfile OpenTracing feature](https://github.com/eclipse/microprofile-opentracing) enables tracing of all restfulWS methods by default. To further control and customize these traces, use the ***@Traced*** annotation to enable and disable tracing of particular methods. You can also inject a custom ***Tracer*** object to create and customize spans.
+
+This feature is already enabled in the ***inventory*** and ***system*** configuration files.
+
+### Enabling distributed tracing without code instrumentation
+
+Because tracing of all restfulWS methods is enabled by default, you only need to enable the ***MicroProfile OpenTracing*** feature in the ***server.xml*** file to see some basic traces in Jaeger.
+
+The OpenTracing API is exposed as a third-party API in Open Liberty. To add the visibility of OpenTracing APIs to the application, add ***third-party*** to the types of API packages that this class loader supports. Instead of explicitly configuring a list of API packages that includes ***third-party***, set the ***+third-party*** value to the ***apiTypeVisibility*** attribute in the ***classLoader*** configuration. This configuration adds ***third-party*** to the default list of API package types that are supported.
+
+
+Make sure that your services are running. Then, point your browser to any of the services' endpoints and check your Jaeger server for traces.
+
+### Enabling explicit distributed tracing
+
+Use the ***@Traced*** annotation to define explicit span creation for specific classes and methods. If you place the annotation on a class, then the annotation is automatically applied to all methods within that class. If you place the annotation on a method, then the annotation overrides the class annotation if one exists.
+
+The ***@Traced*** annotation can be configured with the following two parameters:
+
+* The ***value=[true|false]*** parameter indicates whether a particular class or method is traced. For example, while all restfulWS methods are traced by default, you can disable their tracing by using the ***@Traced(false)*** annotation. This parameter is set to ***true*** by default.
+* The ***operationName=<Span name>*** parameter indicates the name of the span that is assigned to the method that is traced. If you omit this parameter, the span is named with the ***\<package name>.<class name>.<method name>*** format. If you use this parameter at a class level, then all methods within that class have the same span name unless they are explicitly overridden by another ***@Traced*** annotation.
+
+Update the ***InventoryManager*** class.
+
+> From the menu of the IDE, select
+> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
 
 ```java
-package io.openliberty.guides.consumingrest;
+package io.openliberty.guides.inventory;
 
+import java.util.ArrayList;
+import java.util.Properties;
+import io.openliberty.guides.inventory.client.SystemClient;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Collections;
 
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.opentracing.Traced;
+import io.opentracing.Scope;
+import io.opentracing.Tracer;
+import io.opentracing.Span;
 
-import io.openliberty.guides.consumingrest.model.Album;
-import io.openliberty.guides.consumingrest.model.Artist;
+@ApplicationScoped
+public class InventoryManager {
 
-public class Consumer {
-    public static Artist[] consumeWithJsonb(String targetUrl) {
-      Client client = ClientBuilder.newClient();
-      Response response = client.target(targetUrl).request().get();
-      Artist[] artists = response.readEntity(Artist[].class);
+    @Inject
+    @ConfigProperty(name = "system.http.port")
+    int SYSTEM_PORT;
 
-      response.close();
-      client.close();
+    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+    private SystemClient systemClient = new SystemClient();
+    @Inject Tracer tracer;
 
-      return artists;
+    public Properties get(String hostname) {
+        systemClient.init(hostname, SYSTEM_PORT);
+        Properties properties = systemClient.getProperties();
+        return properties;
     }
 
-    public static Artist[] consumeWithJsonp(String targetUrl) {
-      Client client = ClientBuilder.newClient();
-      Response response = client.target(targetUrl).request().get();
-      JsonArray arr = response.readEntity(JsonArray.class);
+    public void add(String hostname, Properties systemProps) {
+        Properties props = new Properties();
+        props.setProperty("os.name", systemProps.getProperty("os.name"));
+        props.setProperty("user.name", systemProps.getProperty("user.name"));
 
-      response.close();
-      client.close();
-
-      return Consumer.collectArtists(arr);
+        SystemData system = new SystemData(hostname, props);
     }
 
-    private static Artist[] collectArtists(JsonArray artistArr) {
-      List<Artist> artists = artistArr.stream().map(artistJson -> {
-        JsonArray albumArr = ((JsonObject) artistJson).getJsonArray("albums");
-        Artist artist = new Artist(
-          ((JsonObject) artistJson).getString("name"),
-          Consumer.collectAlbums(albumArr));
-        return artist;
-      }).collect(Collectors.toList());
-
-      return artists.toArray(new Artist[artists.size()]);
+    @Traced(operationName = "InventoryManager.list")
+    public InventoryList list() {
+        return new InventoryList(systems);
     }
 
-    private static Album[] collectAlbums(JsonArray albumArr) {
-      List<Album> albums = albumArr.stream().map(albumJson -> {
-        Album album = new Album(
-          ((JsonObject) albumJson).getString("title"),
-          ((JsonObject) albumJson).getString("artist"),
-          ((JsonObject) albumJson).getInt("ntracks"));
-        return album;
-      }).collect(Collectors.toList());
-
-      return albums.toArray(new Album[albums.size()]);
+    int clear() {
+        int propertiesClearedCount = systems.size();
+        systems.clear();
+        return propertiesClearedCount;
     }
 }
 ```
 
 
-### Processing JSON using JSON-B
+Enable tracing of the ***list()*** non-restfulWS method by updating ***@Traced*** as shown.
 
 
-JSON-B is a Java API that is used to serialize Java objects to JSON messages and vice versa.
+Run the following curl command:
+```
+curl -s http://localhost:9081/inventory/systems | jq
+```
 
-Open Liberty's JSON-B feature on Maven Central includes the JSON-B provider through transitive dependencies. The JSON-B APIs are provided by the MicroProfile dependency in your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. 
+Check your Jaeger server at the ***https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai*** URL. If you have the Jaeger UI open from a previous step, refresh the page. Select the **inventory** traces and click the **Find Traces** button.
 
-The ***consumeWithJsonb()*** method in the ***Consumer*** class makes a ***GET*** request to the running artist service and retrieves the JSON. To bind the JSON into an ***Artist*** array, use the ***Artist[]*** entity type in the ***readEntity*** call.
+You see a new trace record that is two spans long. One span is for the ***listContents()*** restfulWS method in the ***InventoryResource*** class, and the other span is for the ***list()*** method in the ***InventoryManager*** class.
 
-### Processing JSON using JSON-P
+Verify that you see the following spans:
 
-The ***consumeWithJsonp()*** method in the ***Consumer*** class makes a ***GET*** request to the running artist service and retrieves the JSON. This method then uses the ***collectArtists*** and ***collectAlbums*** helper methods. These helper methods will parse the JSON and collect its objects into individual POJOs. Notice that you can use the custom constructors to create instances of ***Artist*** and ***Album***.
-
-::page{title="Creating additional REST resources"}
+![Explicit trace span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/prod/assets/trace02.png)
 
 
-Now that you can consume a JSON resource you can put that data to use.
 
-Replace the ***ArtistResource*** class.
+
+### Disable automatic distributed tracing
+
+You can use the ***@Traced*** annotation with a value of ***false*** to disable automatic distributed tracing of restfulWS methods.
+
+Update the ***InventoryResource*** class.
 
 > From the menu of the IDE, select
-> **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java
+> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
 
 
 
 
 ```java
-package io.openliberty.guides.consumingrest.service;
+package io.openliberty.guides.inventory;
 
-import jakarta.json.JsonArray;
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
+import java.util.Properties;
+
+import org.eclipse.microprofile.opentracing.Traced;
+
+import io.openliberty.guides.inventory.model.InventoryList;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.Response;
 
-import io.openliberty.guides.consumingrest.model.Artist;
-import io.openliberty.guides.consumingrest.Consumer;
+@RequestScoped
+@Path("/systems")
+public class InventoryResource {
 
-@Path("artists")
-public class ArtistResource {
-
-    @Context
-    UriInfo uriInfo;
+    @Inject InventoryManager manager;
 
     @GET
+    @Path("/{hostname}")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray getArtists() {
-      return Reader.getArtists();
-    }
-
-    @GET
-    @Path("jsonString")
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getJsonString() {
-      Jsonb jsonb = JsonbBuilder.create();
-
-      Artist[] artists = Consumer.consumeWithJsonb(uriInfo.getBaseUri().toString()
-                                                   + "artists");
-      String result = jsonb.toJson(artists);
-
-      return result;
-    }
-
-    @GET
-    @Path("total/{artist}")
-    @Produces(MediaType.TEXT_PLAIN)
-    public int getTotalAlbums(@PathParam("artist") String artist) {
-      Artist[] artists = Consumer.consumeWithJsonb(uriInfo.getBaseUri().toString()
-        + "artists");
-
-      for (int i = 0; i < artists.length; i++) {
-        if (artists[i].name.equals(artist)) {
-          return artists[i].albums.length;
+    public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
+        Properties props = manager.get(hostname);
+        if (props == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                           .entity("{ \"error\" : \"Unknown hostname or the system "
+                           + "service may not be running on " + hostname + "\" }")
+                           .build();
         }
-      }
-      return -1;
+        manager.add(hostname, props);
+        return Response.ok(props).build();
     }
 
     @GET
-    @Path("total")
-    @Produces(MediaType.TEXT_PLAIN)
-    public int getTotalArtists() {
-      return Consumer.consumeWithJsonp(uriInfo.getBaseUri().toString()
-                                       + "artists").length;
+    @Traced(false)
+    @Produces(MediaType.APPLICATION_JSON)
+    public InventoryList listContents() {
+        return manager.list();
+    }
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response clearContents() {
+        int cleared = manager.clear();
+
+        if (cleared == 0) {
+            return Response.status(Response.Status.NOT_MODIFIED)
+                    .build();
+        }
+        return Response.status(Response.Status.OK)
+                .build();
     }
 }
 ```
 
 
-* The ***getArtists()*** method provides the raw JSON data service that you accessed at the beginning of this guide.
-
-* The ***getJsonString()*** method uses JSON-B to return the JSON as a string that will be used later for testing.
-
-* The ***getTotalAlbums()*** method uses JSON-B to return the total number of albums present in the JSON for a particular artist. The method returns -1 if this artist does not exist.
-
-* The ***getTotalArtists()*** method uses JSON-P to return the total number of artists present in the JSON.
-
-The methods that you wrote in the ***Consumer*** class could be written directly in the ***ArtistResource*** class. However, if you are consuming a REST resource from a third party service, you should separate your ***GET***/***POST*** requests from your data consumption.
+Disable tracing of the ***listContents()*** restfulWS method by setting ***@Traced(false)***.
 
 
-::page{title="Running the application"}
-
-The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
-
-
-You can find your service at the **http://localhost:9080/artists** endpoint by running the following curl command:
+Run the following curl command:
 ```
-curl -s http://localhost:9080/artists | jq
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 
-Run the following curl command to retrieve the total number of artists:
-```
-curl http://localhost:9080/artists/total
-```
+Check your Jaeger server at the ***https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai*** URL. If you have the Jaeger UI open from a previous step, refresh the page. Select the **inventory** traces and click the **Find Traces** button. You see a new trace record that is just one span long for the remaining **list()** method in the **InventoryManager** class.
 
-You can access the endpoint at ***http://localhost:9080/artists/total/<artist>*** to see a particular artist’s total number of albums.
-Run the following curl command to retrieve the artist **bar**'s total number of albums:
-```
-curl http://localhost:9080/artists/total/bar
-```
+Verify that you see the following span:
+
+![Disable trace span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/prod/assets/trace03.png)
 
 
-::page{title="Testing deserialization"}
-
-Create the ***ConsumingRestIT*** class.
-
-> Run the following touch command in your terminal
-```
-touch /home/project/guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java 
-```
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java 
+### Injecting a custom Tracer object
+
+The MicroProfile OpenTracing specification also makes the underlying OpenTracing ***Tracer*** instance available for use. You can access the configured ***Tracer*** by injecting it into a bean by using the ***@Inject*** annotation from the Contexts and Dependency Injections API.
+
+Inject the ***Tracer*** object into the ***inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java*** file. Then, use it to define a new child scope in the ***add()*** call.
+
+Replace the ***InventoryManager*** class.
+
+> From the menu of the IDE, select
+> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
 
 ```java
-package it.io.openliberty.guides.consumingrest;
+package io.openliberty.guides.inventory;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.ArrayList;
+import java.util.Properties;
+import io.openliberty.guides.inventory.client.SystemClient;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import java.util.List;
+import java.util.Collections;
 
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.opentracing.Traced;
+import io.opentracing.Scope;
+import io.opentracing.Tracer;
+import io.opentracing.Span;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+@ApplicationScoped
+public class InventoryManager {
 
-import io.openliberty.guides.consumingrest.model.Artist;
+    @Inject
+    @ConfigProperty(name = "system.http.port")
+    int SYSTEM_PORT;
 
-public class ConsumingRestIT {
+    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+    private SystemClient systemClient = new SystemClient();
+    @Inject Tracer tracer;
 
-    private static String port;
-    private static String baseUrl;
-    private static String targetUrl;
-
-    private Client client;
-    private Response response;
-
-    @BeforeAll
-    public static void oneTimeSetup() {
-      port = System.getProperty("http.port");
-      baseUrl = "http://localhost:" + port + "/artists/";
-      targetUrl = baseUrl + "total/";
+    public Properties get(String hostname) {
+        systemClient.init(hostname, SYSTEM_PORT);
+        Properties properties = systemClient.getProperties();
+        return properties;
     }
 
-    @BeforeEach
-    public void setup() {
-      client = ClientBuilder.newClient();
+    public void add(String hostname, Properties systemProps) {
+        Properties props = new Properties();
+        props.setProperty("os.name", systemProps.getProperty("os.name"));
+        props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+        SystemData system = new SystemData(hostname, props);
+        if (!systems.contains(system)) {
+            Span span = tracer.buildSpan("add() Span").start();
+            try (Scope childScope = tracer.activateSpan(span)) {
+                systems.add(system);
+            } finally {
+                span.finish();
+            }
+        }
     }
 
-    @AfterEach
-    public void teardown() {
-      client.close();
+    @Traced(operationName = "InventoryManager.list")
+    public InventoryList list() {
+        return new InventoryList(systems);
     }
 
-    @Test
-    public void testArtistDeserialization() {
-      response = client.target(baseUrl + "jsonString").request().get();
-      this.assertResponse(baseUrl + "jsonString", response);
-
-      Jsonb jsonb = JsonbBuilder.create();
-
-      String expectedString = "{\"name\":\"foo\",\"albums\":"
-        + "[{\"title\":\"album_one\",\"artist\":\"foo\",\"ntracks\":12}]}";
-      Artist expected = jsonb.fromJson(expectedString, Artist.class);
-
-      String actualString = response.readEntity(String.class);
-      Artist[] actual = jsonb.fromJson(actualString, Artist[].class);
-
-      assertEquals(expected.name, actual[0].name,
-        "Expected names of artists does not match");
-
-      response.close();
-    }
-
-    @Test
-    public void testJsonBAlbumCount() {
-      String[] artists = {"dj", "bar", "foo"};
-      for (int i = 0; i < artists.length; i++) {
-        response = client.target(targetUrl + artists[i]).request().get();
-        this.assertResponse(targetUrl + artists[i], response);
-
-        int expected = i;
-        int actual = response.readEntity(int.class);
-        assertEquals(expected, actual, "Album count for "
-                      + artists[i] + " does not match");
-
-        response.close();
-      }
-    }
-
-    @Test
-    public void testJsonBAlbumCountForUnknownArtist() {
-      response = client.target(targetUrl + "unknown-artist").request().get();
-
-      int expected = -1;
-      int actual = response.readEntity(int.class);
-      assertEquals(expected, actual, "Unknown artist must have -1 albums");
-
-      response.close();
-    }
-
-    @Test
-    public void testJsonPArtistCount() {
-      response = client.target(targetUrl).request().get();
-      this.assertResponse(targetUrl, response);
-
-      int expected = 3;
-      int actual = response.readEntity(int.class);
-      assertEquals(expected, actual, "Expected number of artists does not match");
-
-      response.close();
-    }
-
-    /**
-     * Asserts that the given URL has the correct (200) response code.
-     */
-    private void assertResponse(String url, Response response) {
-      assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    int clear() {
+        int propertiesClearedCount = systems.size();
+        systems.clear();
+        return propertiesClearedCount;
     }
 }
 ```
 
 
-Maven finds and executes all tests under the ***src/test/java/it/*** directory, and each test method must be marked with the ***@Test*** annotation.
 
-You can use the ***@BeforeAll*** and ***@AfterAll*** annotations to perform any one-time setup and teardown tasks before and after all of your tests run. You can also use the ***@BeforeEach*** and ***@AfterEach*** annotations to perform setup and teardown tasks for individual test cases.
-
-### Testing the binding process
+This ***try*** block is called a ***try-with-resources*** statement, meaning that the ***childScope*** object is closed at the end of the statement. It's good practice to define custom spans inside such statements. Otherwise, any exceptions that are thrown before the span closes will leak the active span.
 
 
-The ***yasson*** dependency was added in your ***pom.xml*** file so that your test classes have access to JSON-B.
+Run the following curl command:
+```
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
 
-The ***testArtistDeserialization*** test case checks that ***Artist*** instances created from the REST data and those that are hardcoded perform the same.
+Check your Jaeger server at the ***https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai*** URL. If you have the Jaeger UI open from a previous step, refresh the page. Select the **inventory** traces and click the **Find Traces** button.
 
-The ***assertResponse*** helper method ensures that the response code you receive is valid (200).
+Verify that there are three spans from ***inventory*** and one span from ***system***:
 
-### Processing with JSON-B test
+![Trace with custom span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/prod/assets/trace01.png)
 
-The ***testJsonBAlbumCount*** and ***testJsonBAlbumCountForUnknownArtist*** tests both use the ***total/{artist}*** endpoint which invokes JSON-B.
 
-The ***testJsonBAlbumCount*** test case checks that deserialization with JSON-B was done correctly and that the correct number of albums is returned for each artist in the JSON.
+This simple example shows what you can do with the injected ***Tracer*** object. More configuration options are available to you, including setting a timestamp for when a span was created and destroyed. However, these options require an implementation of their own, which doesn't come as a part of the Jaeger user feature that is provided. In a real-world scenario, implement all the OpenTracing interfaces that you deem necessary, which might include the ***SpanBuilder*** interface. You can use this interface for span creation and customization, including setting timestamps.
 
-The ***testJsonBAlbumCountForUnknownArtist*** test case is similar to ***testJsonBAlbumCount*** but instead checks an artist that does not exist in the JSON and ensures that a value of ***-1*** is returned.
 
-### Processing with JSON-P test
 
-The ***testJsonPArtistCount*** test uses the ***total*** endpoint which invokes JSON-P. This test checks that deserialization with JSON-P was done correctly and that the correct number of artists is returned.
 
+::page{title="Testing the services"}
+
+No automated tests are provided to verify the correctness of the traces. Manually verify these traces by viewing them on the Jaeger server.
+
+A few tests are included for you to test the basic functionality of the services. If a test failure occurs, then you might have introduced a bug into the code.
 
 ### Running the tests
 
-Becayse you started Open Liberty in development mode at the start of the guide, press the ***enter/return*** key to run the tests.
+Since you started Open Liberty in dev mode, run the tests for the system and inventory services by pressing the ***enter/return*** key in the command-line sessions where you started the services.
 
-If the tests pass, you see a similar output to the following example:
+When you are done checking out the services, exit dev mode by pressing ***CTRL+C*** in the shell sessions where you ran the ***system*** and ***inventory*** services,  or by typing ***q*** and then pressing the ***enter/return key***.
 
+
+Finally, stop the **Jaeger** service that you started in the previous step.
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.consumingrest.ConsumingRestIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.59 sec - in it.io.openliberty.guides.consumingrest.ConsumingRestIT
-
-Results :
-
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-
+docker stop jaeger
+docker rm jaeger
 ```
 
-When you are done checking out the service, exit development mode by typing ***q*** in the command-line session where you ran the server, and then press the ***enter/return*** key.
-
-::page{title="Building the application"}
-
-If you are satisfied with your application, run the Maven ***package*** goal to build the WAR file in the ***target*** directory:
-
-```
-mvn package
-```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just accessed a simple RESTful web service and consumed its resources by using JSON-B and JSON-P in Open Liberty.
+You just used MicroProfile OpenTracing in Open Liberty to customize how and which traces are delivered to Jaeger.
 
 
-
+Try out one of the related MicroProfile guides. These guides demonstrate more technologies that you can learn to expand on what you built in this guide.
 
 
 ### Clean up your environment
@@ -569,33 +537,33 @@ You just accessed a simple RESTful web service and consumed its resources by usi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-rest-client-java*** project by running the following commands:
+Delete the ***guide-microprofile-opentracing-jaeger*** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-rest-client-java
+rm -fr guide-microprofile-opentracing-jaeger
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-client-java)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20distributed%20tracing%20in%20microservices%20with%20Jaeger&guide-id=cloud-hosted-guide-microprofile-opentracing-jaeger)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-java/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-java/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-opentracing-jaeger/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-opentracing-jaeger/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Enabling distributed tracing in microservices with Zipkin](https://openliberty.io/guides/microprofile-opentracing.html)
 
 
 ### Log out of the session
