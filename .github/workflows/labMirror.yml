@@ -19,7 +19,7 @@ jobs:
           - {"github":"cloud-hosted-draft-guide-devlab-1","gitlab":"cloud-hosted-draft-guide-devlab-1","gitlab-branch":"lab-204-instruction"}
           - {"github":"cloud-hosted-draft-guide-devlab-2","gitlab":"cloud-hosted-draft-guide-devlab-2","gitlab-branch":"lab-207-instruction"}
           - {"github":"cloud-hosted-draft-guide-openliberty-operator-intro","gitlab":"cloud-hosted-guide-openliberty-operator-intro","gitlab-branch":"lab-85-instruction"}
-
+          - {"github":"cloud-hosted-draft-guide-openliberty-operator-openshift","gitlab":"cloud-hosted-guide-openliberty-operator-openshift","gitlab-branch":"lab-21-instruction"}
 
     steps:
 
