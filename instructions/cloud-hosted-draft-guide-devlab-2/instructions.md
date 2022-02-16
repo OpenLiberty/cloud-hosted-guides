@@ -4,9 +4,9 @@ title: instructions
 branch: lab-207-instruction
 version-history-start-date: 2022-02-11T18:24:15Z
 ---
-::page{title="Welcome to the Providing metrics from a microservice guide!"}
+::page{title="Welcome to the Consuming RESTful services with template interfaces guide!"}
 
-You'll explore how to provide system and application metrics from a microservice with MicroProfile Metrics.
+Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -19,13 +19,16 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to use MicroProfile Metrics to provide metrics from a microservice. You can monitor metrics to determine the performance and health of a service. You can also use them to pinpoint issues, collect data for capacity planning, or to decide when to scale a service to run with more or fewer resources.
+You will learn how to build a MicroProfile Rest Client to access remote RESTful services. You will create a template interface that maps to the remote service that you want to call. MicroProfile Rest Client automatically generates a client instance based on what is defined and annotated in the template interface. Thus, you don't have to worry about all of the boilerplate code, such as setting up a client class, connecting to the remote server, or invoking the correct URI with the correct parameters.
 
-The application that you will work with is an ***inventory*** service that stores information about various systems. The ***inventory*** service communicates with the ***system*** service on a particular host to retrieve its system properties when necessary.
+The application that you will be working with is an ***inventory*** service, which fetches and stores the system property information for different hosts. Whenever a request is made to retrieve the system properties of a particular host, the ***inventory*** service will create a client to invoke the ***system*** service on that host. The ***system*** service simulates a remote service in the application.
 
-You will use annotations provided by MicroProfile Metrics to instrument the ***inventory*** service to provide application-level metrics data. You will add counter, gauge, and timer metrics to the service.
+You will instantiate the client and use it in the ***inventory*** service. You can choose from two different approaches, [Context and Dependency Injection (CDI)](https://openliberty.io/docs/latest/cdi-beans.html) with the help of MicroProfile Config or the [RestClientBuilder](https://openliberty.io/blog/2018/01/31/mpRestClient.html) method. In this guide, you will explore both methods to handle scenarios for providing a valid base URL.
 
-You will also check well-known REST endpoints that are defined by MicroProfile Metrics to review the metrics data collected. Monitoring agents can access these endpoints to collect metrics.
+ * When the base URL of the remote service is static and known, define the default base URL in the configuration file. Inject the client with a CDI method.
+
+ * When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose ***RestClientBuilder*** method.
+
 
 ::page{title="Getting started"}
 
@@ -38,18 +41,17 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-metrics.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client.git) and use the projects that are provided inside:
 
 ```
-git clone https://github.com/openliberty/guide-microprofile-metrics.git
-cd guide-microprofile-metrics
+git clone https://github.com/openliberty/guide-microprofile-rest-client.git
+cd guide-microprofile-rest-client
 ```
 
 
 The ***start*** directory contains the starting project that you will build upon.
 
 The ***finish*** directory contains the finished project that you will build.
-
 
 ### Try what you'll build
 
@@ -69,98 +71,36 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
+
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-Run the following curl command to access the **inventory** service. Because you just started the application, the inventory is empty. 
+
+The ***system*** microservice simulates a service that returns the system property information for the host. The ***system*** service is accessible at the http://localhost:9080/system/properties URL. In this case, ***localhost*** is the host name.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
-curl -s http://localhost:9080/inventory/systems | jq
+curl -s http://localhost:9080/system/properties | jq
 ```
 
-Run the following curl command to add the **localhost** into the inventory.
+
+
+
+The ***inventory*** microservice makes a request to the ***system*** microservice and stores the system property information.  To fetch and store your system information, visit the http://localhost:9080/inventory/systems/localhost URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
 curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
 
-Access the **inventory** service at the **http://localhost:9080/inventory/systems** URL at least once so that application metrics are collected. Otherwise, the metrics do not appear.
-
-Next, run the following curl command to visit the MicroProfile Metrics endpoint by the **admin** user with **adminpwd** as the password.  You can see both the system and application metrics in a text format.
-```
-curl -k --user admin:adminpwd https://localhost:9443/metrics
-```
-
-To see only the application metrics, run the following curl command:
-```
-curl -k --user admin:adminpwd https://localhost:9443/metrics/application
-```
-
-See the following sample outputs for the ***@Timed***, ***@Gauge***, and ***@Counted*** metrics:
-
-```
-::page{title="TYPE application_inventoryProcessingTime_rate_per_second gauge"}
-application_inventoryProcessingTime_rate_per_second{method="get"} 0.0019189661542898407
-...
-::page{title="TYPE application_inventoryProcessingTime_seconds summary"}
-::page{title="HELP application_inventoryProcessingTime_seconds Time needed to process the inventory"}
-application_inventoryProcessingTime_seconds_count{method="get"} 1
-application_inventoryProcessingTime_seconds{method="get",quantile="0.5"} 0.127965469
-...
-::page{title="TYPE application_inventoryProcessingTime_rate_per_second gauge"}
-application_inventoryProcessingTime_rate_per_second{method="list"} 0.0038379320982686884
-...
-::page{title="TYPE application_inventoryProcessingTime_seconds summary"}
-::page{title="HELP application_inventoryProcessingTime_seconds Time needed to process the inventory"}
-application_inventoryProcessingTime_seconds_count{method="list"} 2
-application_inventoryProcessingTime_seconds{method="list",quantile="0.5"} 2.2185000000000002E-5
-...
-```
-```
-::page{title="TYPE application_inventorySizeGauge gauge"}
-::page{title="HELP application_inventorySizeGauge Number of systems in the inventory"}
-application_inventorySizeGauge 1
-```
-```
-::page{title="TYPE application_inventoryAccessCount_total counter"}
-::page{title="HELP application_inventoryAccessCount_total Number of times the list of systems method is requested"}
-application_inventoryAccessCount_total 1
-```
 
 
-To see only the system metrics, run the following curl command:
-```
-curl -k --user admin:adminpwd https://localhost:9443/metrics/base
-```
 
-See the following sample output:
+You can also use the **http://localhost:9080/inventory/systems/{your-hostname}** URL. In Windows, MacOS, and Linux, get your fully qualified domain name (FQDN) by entering **hostname** into your command-line. Visit the URL by replacing **{your-hostname}** with your FQDN.
 
-```
-::page{title="TYPE base_jvm_uptime_seconds gauge"}
-::page{title="HELP base_jvm_uptime_seconds Displays the start time of the Java virtual machine in milliseconds. This attribute displays the approximate time when the Java virtual machine started."}
-base_jvm_uptime_seconds 30.342000000000002
-```
-```
-::page{title="TYPE base_classloader_loadedClasses_count gauge"}
-::page{title="HELP base_classloader_loadedClasses_count Displays the number of classes that are currently loaded in the Java virtual machine."}
-base_classloader_loadedClasses_count 11231
-```
-
-
-To see only the vendor metrics, run the following curl command:
-```
-curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
-```
-
-See the following sample output:
-
-```
-::page{title="TYPE vendor_threadpool_size gauge"}
-::page{title="HELP vendor_threadpool_size The size of the thread pool."}
-vendor_threadpool_size{pool="Default_Executor"} 32
-```
-```
-::page{title="TYPE vendor_servlet_request_total counter"}
-::page{title="HELP vendor_servlet_request_total The number of visits to this servlet from the start of the server."}
-vendor_servlet_request_total{servlet="microprofile_metrics_io_openliberty_guides_inventory_InventoryApplication"} 1
-```
 
 After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -168,16 +108,9 @@ After you are finished checking out the application, stop the Open Liberty serve
 mvn liberty:stop
 ```
 
+::page{title="Writing the RESTful client interface"}
 
-::page{title="Adding MicroProfile Metrics to the inventory service"}
-
-
-
-
-To begin, run the following command to navigate to the **start** directory:
-```
-cd /home/project/guide-microprofile-metrics/start
-```
+Now, navigate to the ***start*** directory to begin.
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -194,52 +127,202 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-The MicroProfile Metrics API is included in the MicroProfile dependency specified by your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows you to use the MicroProfile Metrics API in your code to provide metrics from your microservices.
-
-Replace the server configuration file.
-
-> From the menu of the IDE, select
-> **File** > **Open** > guide-microprofile-metrics/start/src/main/liberty/config/server.xml
+The MicroProfile Rest Client API is included in the MicroProfile dependency specified by your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID.
 
 
+This dependency provides a library that is required to implement the MicroProfile Rest Client interface.
+
+The ***mpRestClient*** feature is also enabled in the ***src/main/liberty/config/server.xml*** file. This feature enables your Open Liberty server to use MicroProfile Rest Client to invoke RESTful microservices.
 
 
-```xml
-<server description="Sample Liberty server">
+The code for the ***system*** service in the ***src/main/java/io/openliberty/guides/system*** directory is provided for you. It simulates a remote RESTful service that the ***inventory*** service invokes.
 
-  <featureManager>
-     <feature>restfulWS-3.0</feature>
-     <feature>jsonp-2.0</feature>
-     <feature>jsonb-2.0</feature>
-     <feature>cdi-3.0</feature>
-     <feature>mpConfig-3.0</feature>
-    <feature>mpMetrics-4.0</feature>
-    <feature>mpRestClient-3.0</feature>
-  </featureManager>
+Create a RESTful client interface for the ***system*** service. Write a template interface that maps the API of the remote ***system*** service. The template interface describes the remote service that you want to access. The interface defines the resource to access as a method by mapping its annotations, return type, list of arguments, and exception declarations.
 
-  <variable name="default.http.port" defaultValue="9080"/>
-  <variable name="default.https.port" defaultValue="9443"/>
+Create the ***SystemClient*** class.
 
-  <applicationManager autoExpand="true" />
-  <quickStartSecurity userName="admin" userPassword="adminpwd"/>
-  <httpEndpoint host="*" httpPort="${default.http.port}"
-      httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-  <webApplication location="guide-microprofile-metrics.war" contextRoot="/"/>
-</server>
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 ```
 
 
-The ***mpMetrics*** feature enables MicroProfile Metrics support in Open Liberty. Note that this feature requires SSL and the configuration has been provided for you.
-
-The ***quickStartSecurity*** configuration element provides basic security to secure the server. When you visit the ***/metrics*** endpoint, use the credentials defined in the server configuration to log in and view the data.
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java
 
 
-### Adding the annotations
+
+
+```java
+package io.openliberty.guides.inventory.client;
+
+import java.util.Properties;
+
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+
+@RegisterRestClient(configKey = "systemClient",
+                     baseUri = "http://localhost:9080/system")
+@RegisterProvider(UnknownUriExceptionMapper.class)
+@Path("/properties")
+public interface SystemClient extends AutoCloseable {
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  Properties getProperties() throws UnknownUriException, ProcessingException;
+}
+```
+
+
+
+The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the ***SystemClient*** interface. There is no need to set up the client and connect with the remote service.
+
+Notice the ***SystemClient*** interface inherits the ***AutoCloseable*** interface. This allows the user to explicitly close the client instance by invoking the ***close()*** method or to implicitly close the client instance using a try-with-resources block. When the client instance is closed, all underlying resources associated with the client instance are cleaned up. Refer to the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases) for more details.
+
+When the ***getProperties()*** method is invoked, the ***SystemClient*** instance sends a GET request to the ***\<baseUrl>/properties*** endpoint, where ***\<baseUrl>*** is the default base URL of the ***system*** service. You will see how to configure the base URL in the next section.
+
+The ***@Produces*** annotation specifies the media (MIME) type of the expected response. The default value is ***MediaType.APPLICATION_JSON***.
+
+The ***@RegisterProvider*** annotation tells the framework to register the provider classes to be used when the framework invokes the interface. You can add as many providers as necessary. In the ***SystemClient*** interface, add a response exception mapper as a provider to map the ***404*** response code with the ***UnknownUriException*** exception.
+
+### Handling exceptions through ResponseExceptionMappers
+
+Error handling is an important step to ensure that the application can fail safely. If there is an error response such as ***404 NOT FOUND*** when invoking the remote service, you need to handle it. First, define an exception, and map the exception with the error response code. Then, register the exception mapper in the client interface.
+
+Look at the client interface again, the ***@RegisterProvider*** annotation registers the ***UnknownUriExceptionMapper*** response exception mapper. An exception mapper maps various response codes from the remote service to throwable exceptions.
+
+
+Implement the actual exception class and the mapper class to see how this mechanism works.
+
+Create the ***UnknownUriException*** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
+```
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriException.java
+
+
+
+
+```java
+package io.openliberty.guides.inventory.client;
+
+public class UnknownUriException extends Exception {
+
+  private static final long serialVersionUID = 1L;
+
+  public UnknownUriException() {
+    super();
+  }
+
+  public UnknownUriException(String message) {
+    super(message);
+  }
+}
+```
+
+
+
+Now, link the ***UnknownUriException*** class with the corresponding response code through a ***ResponseExceptionMapper*** mapper class.
+
+Create the ***UnknownUriExceptionMapper*** class.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+```
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/client/UnknownUriExceptionMapper.java
+
+
+
+
+```java
+package io.openliberty.guides.inventory.client;
+
+import java.util.logging.Logger;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
+import org.eclipse.microprofile.rest.client.ext.ResponseExceptionMapper;
+
+@Provider
+public class UnknownUriExceptionMapper
+    implements ResponseExceptionMapper<UnknownUriException> {
+  Logger LOG = Logger.getLogger(UnknownUriExceptionMapper.class.getName());
+
+  @Override
+  public boolean handles(int status, MultivaluedMap<String, Object> headers) {
+    LOG.info("status = " + status);
+    return status == 404;
+  }
+
+  @Override
+  public UnknownUriException toThrowable(Response response) {
+    return new UnknownUriException();
+  }
+}
+```
+
+
+
+The ***handles()*** method inspects the HTTP response code to determine whether an exception is thrown for the specific response, and the ***toThrowable()*** method returns the mapped exception.
+
+::page{title="Injecting the client with dependency injection"}
+
+Now, instantiate the ***SystemClient*** interface and use it in the ***inventory*** service. If you want to connect only with the default host name, you can easily instantiate the ***SystemClient*** with CDI annotations. CDI injection simplifies the process of bootstrapping the client.
+
+First, you need to define the base URL of the ***SystemClient*** instance. Configure the default base URL with the MicroProfile Config feature. This feature is enabled for you in the ***server.xml*** file.
+
+Create the configuration file.
+
+> Run the following touch command in your terminal
+```
+touch /home/project/guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
+```
+
+
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/main/webapp/META-INF/microprofile-config.properties
+
+
+
+
+```
+systemClient/mp-rest/uri=http://localhost:9080/system
+```
+
+
+
+The ***mp-rest/uri*** base URL config property is configured to the default ***http://localhost:9080/system*** URL.
+
+This configuration is automatically picked up by the MicroProfile Config API.
+
+Look at the annotations in the ***SystemClient*** interface again.
+
+
+The ***@RegisterRestClient*** annotation registers the interface as a RESTful client. The runtime creates a CDI managed bean for every interface that is annotated with the ***@RegisterRestClient*** annotation.
+
+The ***configKey*** value in the ***@RegisterRestClient*** annotation replaces the fully-qualified classname of the properties in the ***microprofile-config.properties*** configuration file. For example, the ***\<fully-qualified classname>/mp-rest/uri*** property becomes ***systemClient/mp-rest/uri***. The benefit of using Config Keys is when multiple client interfaces have the same ***configKey*** value, the interfaces can be configured with a single MP config property.
+
+The ***baseUri*** value can also be set in the ***@RegisterRestClient*** annotation. However, this value will be overridden by the base URI property defined in the ***microprofile-config.properties*** configuration file, which takes precedence. In a production environment, you can use the ***baseUri*** variable to specify a different URI for development and testing purposes.
+
+The ***@RegisterRestClient*** annotation, which is a bean defining annotation implies that the interface is manageable through CDI. You must have this annotation in order to inject the client.
+
+Inject the ***SystemClient*** interface into the ***InventoryManager*** class, which is another CDI managed bean.
 
 Replace the ***InventoryManager*** class.
 
 > From the menu of the IDE, select
-> **File** > **Open** > guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> **File** > **Open** > guide-microprofile-rest-client/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
 
 
 
@@ -247,39 +330,54 @@ Replace the ***InventoryManager*** class.
 ```java
 package io.openliberty.guides.inventory;
 
+import java.net.ConnectException;
+import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.ProcessingException;
 
-import org.eclipse.microprofile.metrics.MetricUnits;
-import org.eclipse.microprofile.metrics.annotation.Counted;
-import org.eclipse.microprofile.metrics.annotation.Gauge;
-import org.eclipse.microprofile.metrics.annotation.Timed;
-import org.eclipse.microprofile.metrics.annotation.SimplyTimed;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import io.openliberty.guides.inventory.client.SystemClient;
+import io.openliberty.guides.inventory.client.UnknownUriException;
+import io.openliberty.guides.inventory.client.UnknownUriExceptionMapper;
 import io.openliberty.guides.inventory.model.InventoryList;
 import io.openliberty.guides.inventory.model.SystemData;
 
 @ApplicationScoped
 public class InventoryManager {
 
-  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-  private InventoryUtils invUtils = new InventoryUtils();
+  private List<SystemData> systems = Collections.synchronizedList(
+                                       new ArrayList<SystemData>());
 
-  @Timed(name = "inventoryProcessingTime",
-         tags = {"method=get"},
-         absolute = true,
-         description = "Time needed to process the inventory")
+  @Inject
+  @ConfigProperty(name = "default.http.port")
+  String DEFAULT_PORT;
+
+  @Inject
+  @RestClient
+  private SystemClient defaultRestClient;
+
   public Properties get(String hostname) {
-    return invUtils.getProperties(hostname);
+    Properties properties = null;
+    if (hostname.equals("localhost")) {
+      properties = getPropertiesWithDefaultHostName();
+    } else {
+      properties = getPropertiesWithGivenHostName(hostname);
+    }
+
+    return properties;
   }
 
-  @SimplyTimed(name = "inventoryAddingTime",
-    absolute = true,
-    description = "Time needed to add system properties to the inventory")
   public void add(String hostname, Properties systemProps) {
     Properties props = new Properties();
     props.setProperty("os.name", systemProps.getProperty("os.name"));
@@ -291,198 +389,142 @@ public class InventoryManager {
     }
   }
 
-  @Timed(name = "inventoryProcessingTime",
-         tags = {"method=list"},
-         absolute = true,
-         description = "Time needed to process the inventory")
-  @Counted(name = "inventoryAccessCount",
-           absolute = true,
-           description = "Number of times the list of systems method is requested")
   public InventoryList list() {
     return new InventoryList(systems);
   }
 
-  @Gauge(unit = MetricUnits.NONE,
-         name = "inventorySizeGauge",
-         absolute = true,
-         description = "Number of systems in the inventory")
-  public int getTotal() {
-    return systems.size();
+  private Properties getPropertiesWithDefaultHostName() {
+    try {
+      return defaultRestClient.getProperties();
+    } catch (UnknownUriException e) {
+      System.err.println("The given URI is not formatted correctly.");
+    } catch (ProcessingException ex) {
+      handleProcessingException(ex);
+    }
+    return null;
   }
+
+  private Properties getPropertiesWithGivenHostName(String hostname) {
+    String customURIString = "http://" + hostname + ":" + DEFAULT_PORT + "/system";
+    URI customURI = null;
+    try {
+      customURI = URI.create(customURIString);
+      SystemClient customRestClient = RestClientBuilder.newBuilder()
+                                        .baseUri(customURI)
+                                        .register(UnknownUriExceptionMapper.class)
+                                        .build(SystemClient.class);
+      return customRestClient.getProperties();
+    } catch (ProcessingException ex) {
+      handleProcessingException(ex);
+    } catch (UnknownUriException e) {
+      System.err.println("The given URI is unreachable.");
+    }
+    return null;
+  }
+
+  private void handleProcessingException(ProcessingException ex) {
+    Throwable rootEx = ExceptionUtils.getRootCause(ex);
+    if (rootEx != null && (rootEx instanceof UnknownHostException
+        || rootEx instanceof ConnectException)) {
+      System.err.println("The specified host is unknown.");
+    } else {
+      throw ex;
+    }
+  }
+
 }
 ```
 
 
 
-Apply the ***@Timed*** annotation to the ***get()*** method,
-and apply the ***@Timed*** annotation to the ***list()*** method.
+***@Inject*** and ***@RestClient*** annotations inject an instance of the ***SystemClient*** called ***defaultRestClient*** to the ***InventoryManager*** class.
 
-This annotation has these metadata fields:
+Because the ***InventoryManager*** class is ***@ApplicationScoped***, and the ***SystemClient*** CDI bean maintains the same scope through the default dependent scope, the client is initialized once per application.
 
-|***name*** | Optional. Use this field to name the metric.
-| ---| ---
-|***tags*** | Optional. Use this field to add tags to the metric with the same ***name***.
-|***absolute*** | Optional. Use this field to determine whether the metric name is the exact name that is specified in the ***name*** field or that is specified with the package prefix.
-|***description*** | Optional. Use this field to describe the purpose of the metric.
-
-The ***@Timed*** annotation tracks how frequently the method is invoked and how long it takes for each invocation of the method to complete. Both the ***get()*** and ***list()*** methods are annotated with the ***@Timed*** metric and have the same ***inventoryProcessingTime*** name. The ***method=get*** and ***method=list*** tags add a dimension that uniquely identifies the collected metric data from the inventory processing time in getting the system properties.
-
-* The ***method=get*** tag identifies the ***inventoryProcessingTime*** metric that measures the elapsed time to get the system properties when you call the ***system*** service.
-* The ***method=list*** tag identifies the ***inventoryProcessingTime*** metric that measures the elapsed time for the ***inventory*** service to list all of the system properties in the inventory.
-
-The tags allow you to query the metrics together or separately based on the functionality of the monitoring tool of your choice. The ***inventoryProcessingTime*** metrics for example could be queried to display an aggregate time of both tagged metrics or individual times.
-
-Apply the ***@SimplyTimed*** annotation to the ***add()*** method to track how frequently the method is invoked and how long it takes for each invocation of the method to complete. ***@SimplyTimed*** supports the same fields as ***@Timed*** in the previous table.
-
-Apply the ***@Counted*** annotation to the ***list()*** method to count how many times the ***http://localhost:9080/inventory/systems*** URL is accessed monotonically, which is counting up sequentially.
-
-Apply the ***@Gauge*** annotation to the ***getTotal()*** method to track the number of systems that are stored in the inventory. When the value of the gauge is retrieved, the underlying ***getTotal()*** method is called to return the size of the inventory. Note the additional metadata field:
-
-| ***unit*** | Set the unit of the metric. If it is ***MetricUnits.NONE***, the metric name is used without appending the unit name, no scaling is applied.
-| ---| ---
-
-Additional information about these annotations, relevant metadata fields, and more are available at
-the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-4.0-javadoc.html#package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=org/eclipse/microprofile/metrics/annotation/package-summary.html).
+If the ***hostname*** parameter is ***localhost***, the service runs the ***getPropertiesWithDefaultHostName()*** helper function to fetch system properties. The helper function invokes the ***system*** service by calling the ***defaultRestClient.getProperties()*** method.
 
 
-::page{title="Enabling vendor metrics for the microservices"}
+::page{title="Building the client with RestClientBuilder"}
+
+The ***inventory*** service can also connect with a host other than the default ***localhost*** host, but you cannot configure a base URL that is not yet known. In this case, set the host name as a variable and build the client by using the ***RestClientBuilder*** method. You can customize the base URL from the host name attribute.
+
+Look at the ***getPropertiesWithGivenHostName()*** method in the ***src/main/java/io/openliberty/guides/inventory/InventoryManager.java*** file.
 
 
-MicroProfile Metrics API implementers can provide vendor metrics in the same forms as the base and application metrics do. Open Liberty as a vendor supplies server component metrics when the ***mpMetrics*** feature is enabled in the ***server.xml*** configuration file.
+The host name is provided as a parameter. This method first assembles the base URL that consists of the new host name. Then, the method instantiates a ***RestClientBuilder*** builder with the new URL, registers the response exception mapper, and builds the ***SystemClient*** instance.
 
-You can see the vendor-only metrics in the ***metrics/vendor*** endpoint. You see metrics from the runtime components, such as Web Application, ThreadPool and Session Management. Note that these metrics are specific to the Liberty application server. Different vendors may provide other metrics. Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metrics-list.html) for more information.
-
-
-::page{title="Building and running the application"}
-
-The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
+Similarly, call the ***customRestClient.getProperties()*** method to invoke the ***system*** service.
 
 
-Run the following curl command to review all the metrics that are enabled through MicroProfile Metrics. You see only the system and vendor metrics because the server just started, and the **inventory** service has not been accessed.
+::page{title="Running the application"}
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+When the server is running, select either approach to fetch your system properties:
+
+
+ Visit the http://localhost:9080/inventory/systems/localhost URL. The URL retrieves the system property information for the ***localhost*** host name by making a request to the ***system*** service at ***http://localhost:9080/system/properties***.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```
-curl -k --user admin:adminpwd https://localhost:9443/metrics
-```
-
-Next, run the following curl command to access the **inventory** service:
-```
-curl -s http://localhost:9080/inventory/systems | jq
-```
-
-Rerun the following curl command to access the all metrics:
-```
-curl -k --user admin:adminpwd https://localhost:9443/metrics
-```
-
-or access only the application metrics by running following curl command:
-```
-curl -k --user admin:adminpwd https://localhost:9443/metrics/application
-```
-
-You can see the system metrics by running following curl command:
-```
-curl -k --user admin:adminpwd https://localhost:9443/metrics/base
-```
-
-as well as see the vendor metrics by running following curl command:
-```
-curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
+curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
 
 
 
-::page{title="Testing the metrics"}
+
+Or, get your FQDN first. Then, visit the **http://localhost:9080/inventory/systems/{your-hostname}** URL by replacing **{your-hostname}** with your FQDN, which retrieves your system properties by making a request to the **system** service at **http://{your-hostname}:9080/system/properties**.
 
 
-You can test your application manually, but automated tests ensure code quality because they trigger a failure whenever a code change introduces a defect. JUnit and the restfulWS Client API provide a simple environment for you to write tests.
+::page{title="Testing the application"}
 
-Create the ***MetricsIT*** class.
+Create the ***RestClientIT*** class.
 
 > Run the following touch command in your terminal
 ```
-touch /home/project/guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java
+touch /home/project/guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 ```
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java
+> Then from the menu of the IDE, select **File** > **Open** > guide-microprofile-rest-client/start/src/test/java/it/io/openliberty/guides/client/RestClientIT.java
 
 
 
 
 ```java
-package it.io.openliberty.guides.metrics;
+package it.io.openliberty.guides.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
+import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-
+import jakarta.ws.rs.client.WebTarget;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
-@TestMethodOrder(OrderAnnotation.class)
-public class MetricsIT {
+public class RestClientIT {
 
-  private static final String KEYSTORE_PATH = System.getProperty("user.dir")
-                              + "/target/liberty/wlp/usr/servers/"
-                              + "defaultServer/resources/security/key.p12";
-  private static final String SYSTEM_ENV_PATH =  System.getProperty("user.dir")
-                              + "/target/liberty/wlp/usr/servers/"
-                              + "defaultServer/server.env";
+  private static String port;
 
-  private static String httpPort;
-  private static String httpsPort;
-  private static String baseHttpUrl;
-  private static String baseHttpsUrl;
-  private static KeyStore keystore;
-
-  private List<String> metrics;
   private Client client;
 
-  private final String INVENTORY_HOSTS = "inventory/systems";
-  private final String INVENTORY_HOSTNAME = "inventory/systems/localhost";
-  private final String METRICS_APPLICATION = "metrics/application";
+  private final String INVENTORY_SYSTEMS = "inventory/systems";
 
   @BeforeAll
-  public static void oneTimeSetup() throws Exception {
-    httpPort = System.getProperty("http.port");
-    httpsPort = System.getProperty("https.port");
-    baseHttpUrl = "http://localhost:" + httpPort + "/";
-    baseHttpsUrl = "https://localhost:" + httpsPort + "/";
-    loadKeystore();
-  }
-
-  private static void loadKeystore() throws Exception {
-    Properties sysEnv = new Properties();
-    sysEnv.load(new FileInputStream(SYSTEM_ENV_PATH));
-    char[] password = sysEnv.getProperty("keystore_password").toCharArray();
-    keystore = KeyStore.getInstance("PKCS12");
-    keystore.load(new FileInputStream(KEYSTORE_PATH), password);
+  public static void oneTimeSetup() {
+    port = System.getProperty("http.port");
   }
 
   @BeforeEach
   public void setup() {
-    client = ClientBuilder.newBuilder().trustStore(keystore).build();
+    client = ClientBuilder.newClient();
   }
 
   @AfterEach
@@ -491,175 +533,102 @@ public class MetricsIT {
   }
 
   @Test
-  @Order(1)
-  public void testPropertiesRequestTimeMetric() {
-    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
-    metrics = getMetrics();
-    for (String metric : metrics) {
-      if (metric.startsWith(
-          "application_inventoryProcessingTime_rate_per_second")) {
-        float seconds = Float.parseFloat(metric.split(" ")[1]);
-        assertTrue(4 > seconds);
-      }
-    }
+  public void testSuite() {
+    this.testDefaultLocalhost();
+    this.testRestClientBuilder();
   }
 
-  @Test
-  @Order(2)
-  public void testInventoryAccessCountMetric() {
-    metrics = getMetrics();
-    Map<String, Integer> accessCountsBefore = getIntMetrics(metrics,
-            "application_inventoryAccessCount_total");
-    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTS);
-    metrics = getMetrics();
-    Map<String, Integer> accessCountsAfter = getIntMetrics(metrics,
-            "application_inventoryAccessCount_total");
-    for (String key : accessCountsBefore.keySet()) {
-      Integer accessCountBefore = accessCountsBefore.get(key);
-      Integer accessCountAfter = accessCountsAfter.get(key);
-      assertTrue(accessCountAfter > accessCountBefore);
-    }
+  public void testDefaultLocalhost() {
+    String hostname = "localhost";
+
+    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
+
+    JsonObject obj = fetchProperties(url);
+
+    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
+                 "The system property for the local and remote JVM should match");
   }
 
-  @Test
-  @Order(3)
-  public void testInventorySizeGaugeMetric() {
-    metrics = getMetrics();
-    Map<String, Integer> inventorySizeGauges = getIntMetrics(metrics,
-            "application_inventorySizeGauge");
-    for (Integer value : inventorySizeGauges.values()) {
-      assertTrue(1 <= value);
-    }
-  }
-
-  @Test
-  @Order(4)
-  public void testPropertiesAddSimplyTimeMetric() {
-    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
-    metrics = getMetrics();
-    boolean checkMetric = false;
-    for (String metric : metrics) {
-      if (metric.startsWith(
-          "application_inventoryAddingTime_total")) {
-            checkMetric = true;
-      }
-    }
-    assertTrue(checkMetric);
-  }
-
-  public void connectToEndpoint(String url) {
-    Response response = this.getResponse(url);
-    this.assertResponse(url, response);
-    response.close();
-  }
-
-  private List<String> getMetrics() {
-    String usernameAndPassword = "admin" + ":" + "adminpwd";
-    String authorizationHeaderValue = "Basic "
-        + java.util.Base64.getEncoder()
-                          .encodeToString(usernameAndPassword.getBytes());
-    Response metricsResponse = client.target(baseHttpsUrl + METRICS_APPLICATION)
-                                     .request(MediaType.TEXT_PLAIN)
-                                     .header("Authorization",
-                                         authorizationHeaderValue)
-                                     .get();
-
-    BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)
-    metricsResponse.getEntity()));
-    List<String> result = new ArrayList<String>();
+  public void testRestClientBuilder() {
+    String hostname = null;
     try {
-      String input;
-      while ((input = br.readLine()) != null) {
-        result.add(input);
-      }
-      br.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-      fail();
+      hostname = InetAddress.getLocalHost().getHostAddress();
+    } catch (UnknownHostException e) {
+      System.err.println("Unknown Host.");
     }
 
-    metricsResponse.close();
-    return result;
+    String url = "http://localhost:" + port + "/" + INVENTORY_SYSTEMS + "/" + hostname;
+
+    JsonObject obj = fetchProperties(url);
+
+    assertEquals(System.getProperty("os.name"), obj.getString("os.name"),
+                 "The system property for the local and remote JVM should match");
   }
 
-  private Response getResponse(String url) {
-    return client.target(url).request().get();
-  }
+  private JsonObject fetchProperties(String url) {
+    WebTarget target = client.target(url);
+    Response response = target.request().get();
 
-  private void assertResponse(String url, Response response) {
     assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+
+    JsonObject obj = response.readEntity(JsonObject.class);
+    response.close();
+    return obj;
   }
 
-  private Map<String, Integer> getIntMetrics(List<String> metrics, String metricName) {
-    Map<String, Integer> output = new HashMap<String, Integer>();
-    for (String metric : metrics) {
-      if (metric.startsWith(metricName)) {
-        String[] mSplit = metric.split(" ");
-        String key = mSplit[0];
-        Integer value = Integer.parseInt(mSplit[mSplit.length - 1]);
-        output.put(key, value);
-      }
-    }
-    return output;
-  }
 }
 ```
 
 
-* The ***testPropertiesRequestTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics/application*** URL to retrieve application metrics as plain text. Then, it asserts whether the time that is needed to retrieve the system properties for localhost is less than 4 seconds.
 
-* The ***testInventoryAccessCountMetric()*** test case validates the ***@Counted*** metric. The test case obtains metric data before and after a request to the ***http://localhost:9080/inventory/systems*** URL. It then asserts that the metric was increased after the URL was accessed.
+Each test case tests one of the methods for instantiating a RESTful client.
 
-* The ***testInventorySizeGaugeMetric()*** test case validates the ***@Gauge*** metric. The test case first ensures that the localhost is in the inventory, then looks for the ***@Gauge*** metric and asserts that the inventory size is greater or equal to 1.
+The ***testDefaultLocalhost()*** test fetches and compares system properties from the http://localhost:9080/inventory/systems/localhost URL.
 
-* The ***testPropertiesAddSimplyTimeMetric()*** test case validates the ***@SimplyTimed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics/application*** URL to retrieve application metrics as plain text. Then, it looks for the ***@SimplyTimed*** metric and asserts true if the metric exists.
+The ***testRestClientBuilder()*** test gets your IP address. Then, use your IP address as the host name to fetch your system properties and compare them.
 
-The ***oneTimeSetup()*** method retrieves the port number for the server and builds a base URL string to set up the tests. Apply the ***@BeforeAll*** annotation to this method to run it before any of the test cases.
-
-The ***setup()*** method creates a restfulWS client that makes HTTP requests to the ***inventory*** service. The ***teardown()*** method destroys this client instance. Apply the ***@BeforeEach*** annotation so that a method runs before a test case and apply the ***@AfterEach*** annotation so that a method runs after a test case. Apply these annotations to methods that are generally used to perform any setup and teardown tasks before and after a test.
-
-To force these test cases to run in a particular order, annotate your ***MetricsIT*** test class with the ***@TestMethodOrder(OrderAnnotation.class)*** annotation. ***OrderAnnotation.class*** runs test methods in numerical order, according to the values specified in the ***@Order*** annotation. You can also create a custom ***MethodOrderer*** class or use built-in ***MethodOrderer*** implementations, such as ***OrderAnnotation.class***, ***Alphanumeric.class***, or ***Random.class***. Label your test cases with the ***@Test*** annotation so that they automatically run when your test class runs.
-
-In addition, the endpoint tests ***src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java*** and ***src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java*** are provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, then you might have introduced a bug into the code.
+In addition, a few endpoint tests are provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, you might have introduced a bug into the code.
 
 
 ### Running the tests
 
-Because you started Open Liberty in development mode at the start of the guide, press the ***enter/return*** key to run the tests and see the following output:
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
 Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.4 sec - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.metrics.MetricsIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.476 sec - in it.io.openliberty.guides.metrics.MetricsIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.377 sec - in it.io.openliberty.guides.system.SystemEndpointIT
 Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
 Could not send Message.
 [err] The specified host is unknown.
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.264 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.379 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Running it.io.openliberty.guides.client.RestClientIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.121 sec - in it.io.openliberty.guides.client.RestClientIT
 
 Results :
 
-Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
 
-To determine whether the tests detect a failure, go to the ***MetricsIT.java*** file and change any of the assertions in the test methods. Then re-run the tests to see a test failure occur.
+To see whether the tests detect a failure, change the base URL in the configuration file so that when the ***inventory*** service tries to access the invalid URL, an ***UnknownUriException*** is thrown. Rerun the tests to see a test failure occur.
 
 When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
-
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You learned how to enable system, application and vendor metrics for microservices by using MicroProfile Metrics
+You just invoked a remote service by using a template interface with MicroProfile Rest Client in Open Liberty.
 
-and wrote tests to validate them in Open Liberty.
+
+MicroProfile Rest Client also provides a uniform way to configure SSL for the client. You can learn more in the [Hostname verification with SSL on Open Liberty and MicroProfile Rest Client](https://openliberty.io/blog/2019/06/21/microprofile-rest-client-19006.html#ssl) blog and the [MicroProfile Rest Client specification](https://github.com/eclipse/microprofile-rest-client/releases).
+
+Feel free to try one of the related guides where you can learn more technologies and expand on what you built here.
 
 
 ### Clean up your environment
@@ -667,34 +636,35 @@ and wrote tests to validate them in Open Liberty.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-metrics*** project by running the following commands:
+Delete the ***guide-microprofile-rest-client*** project by running the following commands:
 
 ```
 cd /home/project
-rm -fr guide-microprofile-metrics
+rm -fr guide-microprofile-rest-client
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Providing%20metrics%20from%20a%20microservice&guide-id=cloud-hosted-guide-microprofile-metrics)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20with%20template%20interfaces&guide-id=cloud-hosted-guide-microprofile-rest-client)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-metrics/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-metrics/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-rest-client/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-rest-client/pulls)
 
 
 
 ### Where to next?
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 
 ### Log out of the session
