@@ -527,7 +527,7 @@ The ***testJsonPArtistCount*** test uses the ***total*** endpoint which invokes 
 
 ### Running the tests
 
-Since you started Open Liberty in development mode at the start of the guide, press the ***enter/return*** key to run the tests.
+Becayse you started Open Liberty in development mode at the start of the guide, press the ***enter/return*** key to run the tests.
 
 If the tests pass, you see a similar output to the following example:
 
@@ -544,8 +544,7 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 
 ```
 
-When you are done checking out the service, exit development mode by typing `q` in the command-line session where you ran the server, 
-and then press the ***enter/return*** key.
+When you are done checking out the service, exit development mode by typing ***q*** in the command-line session where you ran the server, and then press the ***enter/return*** key.
 
 ::page{title="Building the application"}
 
