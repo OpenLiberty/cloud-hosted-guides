@@ -204,7 +204,7 @@ Additionally, the microservice includes the ***service*** and ***expose*** param
 
 Run the following commands to update the **applicationImage** and deploy the **system** microservice with the previously explained configuration:
 ```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  pullPolicy: IfNotPresent=g' deploy.yaml
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  pullPolicy: Always=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
 
