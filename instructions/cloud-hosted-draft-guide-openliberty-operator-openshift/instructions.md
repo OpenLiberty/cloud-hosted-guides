@@ -96,7 +96,7 @@ Ensure that you are in the ***start*** directory and run the following command t
 
 
 ```
-cd /home/project/draft-guide-openliberty-operator-intro/start
+cd /home/project/draft-guide-openliberty-operator-openshift/start
 mvn clean package
 ```
 
@@ -166,7 +166,7 @@ Next, run the following command to view the newly created ***ImageStream*** obje
 oc get all -l name=system
 ```
 
-Look for the following resources:
+Look for the following similar resources:
 
 ```
 NAME                                                TYPE     FROM     LATEST
@@ -182,8 +182,7 @@ Ensure that you are in the ***start*** directory and trigger the build by runnin
 oc start-build system-buildconfig --from-dir=system/.
 ```
 
-The local ***system*** directory is uploaded to OpenShift to be built into the Docker image. Run the
-following command to list the build and track its status:
+The local ***system*** directory is uploaded to OpenShift to be built into the Docker image. Run the following command to list the build and track its status:
 
 ```
 oc get builds
@@ -196,8 +195,7 @@ NAME                    TYPE     FROM             STATUS     STARTED
 system-buildconfig-1    Docker   Binary@f24cb58   Running    45 seconds ago
 ```
 
-You may need to wait some time until the build is complete. To check whether the build is complete, run the following
-command to view the build log until the ***Push successful*** message appears:
+You may need to wait some time until the build is complete. To check whether the build is complete, run the following command to view the build log until the ***Push successful*** message appears:
 
 ```
 oc logs build/system-buildconfig-1
@@ -284,8 +282,7 @@ Additionally, the microservice includes the ***service*** and ***expose*** param
 
 Run the following commands to update the **applicationImage** and deploy the **system** microservice with the previously explained configuration:
 ```
-PROJECT_NAME=`oc projects -q | grep sn-labs- | sed 's/ //g'`
-sed -i 's=guide='"$PROJECT_NAME"'=g' deploy.yaml
+sed -i 's=guide='"$SN_ICR_NAMESPACE"'=g' deploy.yaml
 oc apply -f deploy.yaml
 ```
 
