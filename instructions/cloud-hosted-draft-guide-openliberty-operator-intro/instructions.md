@@ -61,44 +61,6 @@ The ***finish*** directory contains the finished project that you will build.
 
 In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/tree/main/deploy/releases/0.8.0#readme).
 
-
-
-::page{title="Logging into your cluster"}
-
-For this guide, you will use a container registry on IBM Cloud to deploy to Kubernetes.
-Get the name of your namespace with the following command:
-
-```
-bx cr namespace-list
-```
-
-Look for output that is similar to the following:
-
-```
-Listing namespaces for account 'QuickLabs - IBM Skills Network' in registry 'us.icr.io'...
-
-Namespace
-sn-labs-yourname
-```
-
-Run the following command to store the namespace name in a variable.
-
-```
-NAMESPACE_NAME=`bx cr namespace-list | grep sn-labs- | sed 's/ //g'`
-```
-
-Verify that the variable contains your namespace name:
-
-```
-echo $NAMESPACE_NAME
-```
-
-Log in to the registry with the following command:
-```
-bx cr login
-```
-
-
 To check that the Open Liberty Operator has been installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 ```
 kubectl api-resources --api-group=apps.openliberty.io
@@ -149,8 +111,21 @@ The ***-t*** flag in the ***docker build*** command allows the Docker image to b
 Next, push your images to the container registry on IBM Cloud with the following commands:
 
 ```
-docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
-docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+```
+
+Run the following command to check the docker images:
+```
+docker images
+```
+
+The output is similar to the following example:
+```
+REPOSITORY                          TAG                      IMAGE ID       CREATED         SIZE
+us.icr.io/sn-labs-yourname/system   1.0-SNAPSHOT             5c5890296d6e   2 minutes ago   1.23GB
+system                              1.0-SNAPSHOT             5c5890296d6e   2 minutes ago   1.23GB
+icr.io/appcafe/open-liberty         full-java11-openj9-ubi   e959985784c2   2 days ago      1.2GB
 ```
 
 Now you're ready to deploy the image.
@@ -202,9 +177,9 @@ The ***env*** parameter is used to specify environment variables that are passed
 Additionally, the microservice includes the ***service*** and ***expose*** parameters. The ***service.port*** parameter specifies which port is exposed by the container, allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster, it must be exposed by setting the ***expose*** parameter to ***true***. After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
 
 
-Run the following commands to update the **applicationImage** and deploy the **system** microservice with the previously explained configuration:
+Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
 ```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  pullPolicy: Always=g' deploy.yaml
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
 
@@ -257,7 +232,12 @@ Open another command-line session by selecting **Terminal** > **New Terminal** f
 curl -s http://localhost:9080/system/properties | jq
 ```
 
-Press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
+When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
+
+Run the following command to remove the deployed ***system*** microservice:
+```
+kubectl delete -f deploy.yaml
+```
 
 ::page{title="Specifying other parameters"}
 
@@ -325,9 +305,9 @@ spec:
 The health check endpoints ***/health/started***, ***/health/live*** and ***/health/ready*** have already been created for you. 
 
 
-Run the following commands to update the **applicationImage** and deploy the **system** microservice with the new configuration:
+Run the following commands to update the **applicationImage** with the **pullSecret** and redeploy the **system** microservice with the new configuration:
 ```
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$NAMESPACE_NAME"'/system:1.0-SNAPSHOT\n  pullPolicy: IfNotPresent=g' deploy.yaml
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
 
