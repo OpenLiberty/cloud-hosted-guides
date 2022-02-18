@@ -522,7 +522,7 @@ INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services
 kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
 ```
 
-You now need to use the new username, `alice`, and the new password, `wonderland`, to log in. Access your application with the following commands:
+You now need to use the new username, ***alice***, and the new password, ***wonderland***, to log in. Access your application with the following commands:
 
 ```
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
