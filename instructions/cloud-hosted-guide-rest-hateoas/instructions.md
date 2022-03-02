@@ -50,7 +50,7 @@ of HATEOAS links:
 <br/>
 ### **What is HATEOAS?**
 
-HATEOAS is a constrained form of REST application architecture.
+HATEOAS is a constraint of REST application architectures.
 With HATEOAS, the client receives information about the available resources from the REST application.
 The client does not need to be hardcoded to a fixed set of resources, and the application
 and client can evolve independently. In other words, the application tells the client where it can go
@@ -137,8 +137,7 @@ The **finish** directory contains the finished project that you will build.
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
+To try out the application, first go to the **finish** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
 ```
 cd finish
@@ -162,9 +161,7 @@ curl -s http://localhost:9080/inventory/hosts | jq
 ```
 {: codeblock}
 
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C** in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another shell session:
 
 ```
 mvn liberty:stop
@@ -182,8 +179,7 @@ cd /home/project/guide-rest-hateoas/start
 ```
 {: codeblock}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```
 mvn liberty:dev
@@ -198,8 +194,7 @@ After you see the following message, your application server in dev mode is read
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 Begin by building your response JSON, which is composed of the name of the host machine and its list of HATEOAS links.
 
@@ -695,8 +690,7 @@ Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 Integration tests finished.
 ```
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 # **Summary**
 
