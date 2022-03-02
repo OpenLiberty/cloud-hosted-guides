@@ -94,9 +94,7 @@ See the following output:
 ![React Paginated Table](https://raw.githubusercontent.com/OpenLiberty/guide-rest-client-reactjs/master/assets/react-table.png)
 
 
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C** in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another shell session:
 
 ```
 mvn liberty:stop
@@ -116,8 +114,7 @@ cd /home/project/guide-rest-client-reactjs/start
 ```
 {: codeblock}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```
 mvn liberty:dev
@@ -132,8 +129,7 @@ After you see the following message, your application server in dev mode is read
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 
 After the server is started, run the following curl command to view your artist JSON.
