@@ -59,7 +59,7 @@ The ***finish*** directory contains the finished project that you will build.
 
 A project is created for you to use in this exercise. Run the following command to see your project name:
 
-```
+```bash
 oc projects
 ```
 
@@ -94,7 +94,7 @@ To deploy the ***system*** microservice, you must first package the microservice
 Ensure that you are in the ***start*** directory and run the following command to package the ***system*** microservice:
 
 
-```
+```bash
 cd /home/project/draft-guide-openliberty-operator-openshift/start
 mvn clean package
 ```
@@ -285,7 +285,7 @@ Additionally, the microservice includes the ***service*** and ***expose*** param
 
 
 Run the following commands to update the **applicationImage** and deploy the **system** microservice with the previously explained configuration:
-```
+```bash
 sed -i 's=guide='"$SN_ICR_NAMESPACE"'=g' deploy.yaml
 oc apply -f deploy.yaml
 ```
@@ -347,7 +347,7 @@ Visit the microservice by going to the following URL:
 Make sure to substitute the appropriate ***[HOST]*** value. For example, using the output from the command above, ***system-guide.2886795274-80-kota02.environments.katacoda.com*** is the ***HOST***. The following example shows this value substituted for ***HOST*** in the URL: ***http://system-guide.2886795274-80-kota02.environments.katacoda.com/system/properties***.
 
 Or, you can run the following command to get the URL:
-```
+```bash
 IFS=' ' read -r -a system_url <<< "`oc get routes | grep system`"
 echo http://${system_url[1]}/system/properties
 ```
@@ -427,7 +427,7 @@ The health check endpoints ***/health/started***, ***/health/live*** and ***/hea
 
 
 Run the following commands to update the **applicationImage** and deploy the **system** microservice with the new configuration:
-```
+```bash
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always=g' deploy.yaml
 oc apply -f deploy.yaml
 ```
@@ -439,7 +439,7 @@ You can revisit the microservice at ***http://[HOST]/system/properties*** as the
 
 When you no longer need your deployed microservice, you can delete all resources by running the following commands:
 
-```
+```bash
 oc delete -f deploy.yaml
 oc delete imagestream.image.openshift.io/system-imagestream
 oc delete bc system-buildconfig
