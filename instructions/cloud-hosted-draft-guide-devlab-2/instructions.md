@@ -42,13 +42,13 @@ select **Terminal** > **New Terminal** from the menu of the IDE.
 
 Run the following command to navigate to the **/home/project** directory:
 
-```
+```bash
 cd /home/project
 ```
 
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-opentracing-jaeger.git) and use the projects that are provided inside:
 
-```
+```bash
 git clone https://github.com/openliberty/guide-microprofile-opentracing-jaeger.git
 cd guide-microprofile-opentracing-jaeger
 ```
@@ -227,9 +227,10 @@ The ***@Traced*** annotation can be configured with the following two parameters
 
 Update the ***InventoryManager*** class.
 
-> From the menu of the IDE, select
-> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> To open the InventoryManager.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
 
+::openFile{path="/home/project/guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
 
 
@@ -291,6 +292,7 @@ public class InventoryManager {
 ```
 
 
+
 Enable tracing of the ***list()*** non-restfulWS method by updating ***@Traced*** as shown.
 
 
@@ -309,16 +311,16 @@ Verify that you see the following spans:
 
 
 
-
 ### Disable automatic distributed tracing
 
 You can use the ***@Traced*** annotation with a value of ***false*** to disable automatic distributed tracing of restfulWS methods.
 
 Update the ***InventoryResource*** class.
 
-> From the menu of the IDE, select
-> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
+> To open the InventoryResource.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
 
+::openFile{path="/home/project/guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
 
 
 
@@ -384,6 +386,7 @@ public class InventoryResource {
 ```
 
 
+
 Disable tracing of the ***listContents()*** restfulWS method by setting ***@Traced(false)***.
 
 
@@ -400,7 +403,6 @@ Verify that you see the following span:
 
 
 
-
 ### Injecting a custom Tracer object
 
 The MicroProfile OpenTracing specification also makes the underlying OpenTracing ***Tracer*** instance available for use. You can access the configured ***Tracer*** by injecting it into a bean by using the ***@Inject*** annotation from the Contexts and Dependency Injections API.
@@ -409,9 +411,10 @@ Inject the ***Tracer*** object into the ***inventory/src/main/java/io/openlibert
 
 Replace the ***InventoryManager*** class.
 
-> From the menu of the IDE, select
-> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+> To open the InventoryManager.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
 
+::openFile{path="/home/project/guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
 
 
@@ -539,7 +542,7 @@ Clean up your online environment so that it is ready to be used with the next gu
 
 Delete the ***guide-microprofile-opentracing-jaeger*** project by running the following commands:
 
-```
+```bash
 cd /home/project
 rm -fr guide-microprofile-opentracing-jaeger
 ```
