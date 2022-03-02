@@ -61,7 +61,7 @@ The ***finish*** directory contains the finished project that you will build.
 ### Try what you'll build
 
 Run the following docker command to start Jaeger server:
-```
+```bash
 docker run -d --name jaeger \
   -e COLLECTOR_ZIPKIN_HTTP_PORT=9411 \
   -p 5775:5775/udp \
@@ -83,13 +83,13 @@ The ***finish*** directory in the root of this guide contains the finished appli
 
 
 Navigate to the **finish/inventory** directory. Run the following Maven goal to build the **inventory** service and deploy it to Open Liberty:
-```
+```bash
 cd /home/project/guide-microprofile-opentracing-jaeger/finish/inventory
 mvn liberty:run
 ```
 
 Open another command-line session and navigate to the **finish/system** directory. Run the following Maven goal to build the **system** service and deploy it to Open Liberty:
-```
+```bash
 cd /home/project/guide-microprofile-opentracing-jaeger/finish/system
 mvn liberty:run
 ```
@@ -102,7 +102,7 @@ The defaultServer server is ready to run a smarter planet.
 
 
 Open another command-line session and run the following curl command from the terminal:
-```
+```bash
 curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 
@@ -127,7 +127,7 @@ Verify that there are three spans from ***inventory*** and one span from ***syst
 After you’re finished reviewing the application, stop the Open Liberty servers by pressing ***CTRL+C*** in the command-line sessions where you ran the system and inventory services. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
 
 
-```
+```bash
 cd /home/project/guide-microprofile-opentracing-jaeger/finish
 mvn -pl system liberty:stop
 mvn -pl inventory liberty:stop
@@ -142,7 +142,7 @@ When you run Open Liberty in development mode, known as dev mode, the server lis
 Open a command-line session and navigate to the ***start/inventory*** directory.
 Run the following Maven goal to start the ***inventory*** service in dev mode:
 
-```
+```bash
 cd /home/project/guide-microprofile-opentracing-jaeger/start/inventory
 mvn liberty:dev
 ```
@@ -151,7 +151,7 @@ mvn liberty:dev
 Open a command-line session and navigate to the ***start/system*** directory.
 Run the following Maven goal to start the ***system*** service in dev mode:
 
-```
+```bash
 cd /home/project/guide-microprofile-opentracing-jaeger/start/system
 mvn liberty:dev
 ```
@@ -166,12 +166,12 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 
 
 When the servers start, you can find the **system** service by running the following curl command:
-```
+```bash
 curl -s http://localhost:9080/system/properties | jq
 ```
 
 and the **inventory** service by running the following curl command:
-```
+```bash
 curl -s http://localhost:9081/inventory/systems | jq
 ```
 
@@ -297,7 +297,7 @@ Enable tracing of the ***list()*** non-restfulWS method by updating ***@Traced**
 
 
 Run the following curl command:
-```
+```bash
 curl -s http://localhost:9081/inventory/systems | jq
 ```
 
@@ -391,7 +391,7 @@ Disable tracing of the ***listContents()*** restfulWS method by setting ***@Trac
 
 
 Run the following curl command:
-```
+```bash
 curl -s http://localhost:9081/inventory/systems | jq
 ```
 
@@ -489,7 +489,7 @@ This ***try*** block is called a ***try-with-resources*** statement, meaning tha
 
 
 Run the following curl command:
-```
+```bash
 curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 
@@ -519,7 +519,7 @@ When you are done checking out the services, exit dev mode by pressing ***CTRL+C
 
 
 Finally, stop the **Jaeger** service that you started in the previous step.
-```
+```bash
 docker stop jaeger
 docker rm jaeger
 ```
