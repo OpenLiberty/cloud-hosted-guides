@@ -37,13 +37,13 @@ select **Terminal** > **New Terminal** from the menu of the IDE.
 
 Run the following command to navigate to the **/home/project** directory:
 
-```
+```bash
 cd /home/project
 ```
 
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/draft-guide-openliberty-operator-openshift.git) and use the projects that are provided inside:
 
-```
+```bash
 git clone https://github.com/openliberty/draft-guide-openliberty-operator-openshift.git
 cd draft-guide-openliberty-operator-openshift
 ```
@@ -67,7 +67,7 @@ In this Skill Network enviornment, the Open Liberty Operator is already installe
 
 Run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 
-```
+```bash
 oc api-resources --api-group=apps.openliberty.io
 ```
 
@@ -107,47 +107,15 @@ Create a build template to configure how to build your container image.
 Create the ***build.yaml*** template file in the ***start*** directory.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/draft-guide-openliberty-operator-openshift/start/build.yaml
 ```
 
 
-> Then from the menu of the IDE, select **File** > **Open** > draft-guide-openliberty-operator-openshift/start/build.yaml
+> Then, to open the unknown file in your IDE, select
+> **File** > **Open** > draft-guide-openliberty-operator-openshift/start/unknown, or click the following button
 
-
-
-
-```yaml
-apiVersion: template.openshift.io/v1
-kind: Template
-metadata:
-  name: "build-template"
-  annotations:
-    description: "Build template for the system service"
-    tags: "build"
-objects:
-  - apiVersion: v1
-    kind: ImageStream
-    metadata:
-      name: "system-imagestream"
-      labels:
-        name: "system"
-  - apiVersion: v1
-    kind: BuildConfig
-    metadata:
-      name: "system-buildconfig"
-      labels:
-        name: "system"
-    spec:
-      source:
-        type: Binary
-      strategy:
-        type: Docker
-      output:
-        to:
-          kind: ImageStreamTag
-          name: "system-imagestream:1.0-SNAPSHOT"
-```
+::openFile{path="/home/project/draft-guide-openliberty-operator-openshift/start/unknown"}
 
 
 The ***build.yaml*** template includes two objects. The ***ImageStream*** object provides an abstraction from the image in the image registry. This allows you to reference and tag the image. The image registry used is the integrated internal OpenShift Container Registry.
@@ -156,13 +124,13 @@ The ***BuildConfig*** object defines a single build definition and any triggers 
 
 Run the following command to create the objects for the ***system*** microservice:
 
-```
+```bash
 oc process -f build.yaml | oc create -f -
 ```
 
 Next, run the following command to view the newly created ***ImageStream*** objects and the build configurations for the microservice:
 
-```
+```bash
 oc get all -l name=system
 ```
 
@@ -178,13 +146,13 @@ imagestream.image.openshift.io/system-imagestream   default-route-openshift-imag
 
 Ensure that you are in the ***start*** directory and trigger the build by running the following command:
 
-```
+```bash
 oc start-build system-buildconfig --from-dir=system/.
 ```
 
 The local ***system*** directory is uploaded to OpenShift to be built into the Docker image. Run the following command to list the build and track its status:
 
-```
+```bash
 oc get builds
 ```
 
@@ -197,7 +165,7 @@ system-buildconfig-1    Docker   Binary@f24cb58   Running    45 seconds ago
 
 You may need to wait some time until the build is complete. To check whether the build is complete, run the following command to view the build log until the ***Push successful*** message appears:
 
-```
+```bash
 oc logs build/system-buildconfig-1
 ```
 
@@ -205,13 +173,13 @@ oc logs build/system-buildconfig-1
 
 During the build process, the image associated with the ***ImageStream*** object that you created earlier was pushed to the image registry and tagged. Run the following command to view the newly updated ***ImageStream*** object:
 
-```
+```bash
 oc get imagestreams
 ```
 
 Run the following command to get more details on the newly pushed image within the stream:
 
-```
+```bash
 oc describe imagestream/system-imagestream
 ```
 
@@ -240,13 +208,15 @@ You can configure the specifics of the Open Liberty Operator-controlled deployme
 Create the ***deploy.yaml*** configuration file in the ***start*** directory.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/draft-guide-openliberty-operator-openshift/start/deploy.yaml
 ```
 
 
-> Then from the menu of the IDE, select **File** > **Open** > draft-guide-openliberty-operator-openshift/start/deploy.yaml
+> Then, to open the deploy.yaml file in your IDE, select
+> **File** > **Open** > draft-guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
 
+::openFile{path="/home/project/draft-guide-openliberty-operator-openshift/start/deploy.yaml"}
 
 
 
@@ -288,7 +258,7 @@ oc apply -f deploy.yaml
 
 Next, run the following command to view your newly created ***OpenLibertyApplications*** resources:
 
-```
+```bash
 oc get OpenLibertyApplications
 ```
 
@@ -303,7 +273,7 @@ system    guide/system-imagestream:1.0-SNAPSHOT    true      True         10s
 
 A ***RECONCILED*** state value of ***True*** indicates that the operator was able to successfully process the ***OpenLibertyApplications*** instances. Run the following command to view details of your microservice:
 
-```
+```bash
 oc describe olapps/system
 ```
 
@@ -325,7 +295,7 @@ Kind:         OpenLibertyApplication
 
 To access the exposed ***system*** microservice, run the following command and make note of the ***HOST***:
 
-```
+```bash
 oc get routes
 ```
 
@@ -351,7 +321,7 @@ echo http://${system_url[1]}/system/properties
 Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
 
 When you’re done trying out the microservice, run following command to stop the microservice:
-```
+```bash
 oc delete -f deploy.yaml
 ```
 
@@ -363,9 +333,10 @@ You can now configure the startup, readiness, and liveness probes. The ***startu
 
 Replace the ***deploy.yaml*** configuration file.
 
-> From the menu of the IDE, select
-> **File** > **Open** > draft-guide-openliberty-operator-openshift/start/deploy.yaml
+> To open the deploy.yaml file in your IDE, select
+> **File** > **Open** > draft-guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
 
+::openFile{path="/home/project/draft-guide-openliberty-operator-openshift/start/deploy.yaml"}
 
 
 
@@ -455,7 +426,7 @@ Clean up your online environment so that it is ready to be used with the next gu
 
 Delete the ***draft-guide-openliberty-operator-openshift*** project by running the following commands:
 
-```
+```bash
 cd /home/project
 rm -fr draft-guide-openliberty-operator-openshift
 ```
