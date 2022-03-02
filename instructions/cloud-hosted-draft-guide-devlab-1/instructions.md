@@ -39,13 +39,13 @@ select **Terminal** > **New Terminal** from the menu of the IDE.
 
 Run the following command to navigate to the **/home/project** directory:
 
-```
+```bash
 cd /home/project
 ```
 
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-health.git) and use the projects that are provided inside:
 
-```
+```bash
 git clone https://github.com/openliberty/guide-kubernetes-microprofile-health.git
 cd guide-kubernetes-microprofile-health
 ```
@@ -63,13 +63,15 @@ Navigate to ***start*** directory to begin.
 Create the ***InventoryStartupCheck*** class.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
 ```
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+> Then, to open the InventoryStartupCheck.java file in your IDE, select
+> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java, or click the following button
 
+::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java"}
 
 
 
@@ -109,13 +111,15 @@ A health check for startup allows applications to define startup probes that ver
 Create the ***InventoryLivenessCheck*** class.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
 ```
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+> Then, to open the InventoryLivenessCheck.java file in your IDE, select
+> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java, or click the following button
 
+::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java"}
 
 
 
@@ -159,13 +163,15 @@ The ***inventory*** microservice is healthy only when the ***system*** microserv
 Create the ***InventoryReadinessCheck*** class.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
 ```
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+> Then, to open the InventoryReadinessCheck.java file in your IDE, select
+> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java, or click the following button
 
+::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java"}
 
 
 
@@ -231,13 +237,15 @@ You will configure Kubernetes startup, liveness, and readiness probes. Startup p
 Create the kubernetes configuration file.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
 ```
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-kubernetes-microprofile-health/start/kubernetes.yaml
+> Then, to open the kubernetes.yaml file in your IDE, select
+> **File** > **Open** > guide-kubernetes-microprofile-health/start/kubernetes.yaml, or click the following button
 
+::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml"}
 
 
 
@@ -375,18 +383,18 @@ The readiness probes are configured to poll the ***/health/ready*** endpoint. Th
 
 To build these microservices, navigate to the ***start*** directory and run the following command.
 
-```
+```bash
 mvn package
 ```
 
 Run the following command to download or update to the latest Open Liberty Docker image:
 
-```
+```bash
 docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 
 Next, run the ***docker build*** commands to build container images for your application:
-```
+```bash
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
@@ -395,7 +403,7 @@ The ***-t*** flag in the ***docker build*** command allows the Docker image to b
 
 Push your images to the container registry on IBM Cloud with the following commands:
 
-```
+```bash
 docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
 docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
@@ -403,7 +411,7 @@ docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 ```
 
 Update the image names so that the images in your IBM Cloud container registry are used. Set the image pull policy to **Always** and remove the **nodePort** fields so that the ports can be automatically generated:
-```
+```bash
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
 sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
 sed -i 's=nodePort: 31000==g' kubernetes.yaml
@@ -412,13 +420,13 @@ sed -i 's=nodePort: 32000==g' kubernetes.yaml
 
 When the builds succeed, run the following command to deploy the necessary Kubernetes resources to serve the applications.
 
-```
+```bash
 kubectl apply -f kubernetes.yaml
 ```
 
 Use the following command to view the status of the pods. There will be two ***system*** pods and one ***inventory*** pod, later you'll observe their behavior as the ***system*** pods become unhealthy. 
 
-```
+```bash
 kubectl get pods
 ```
 
@@ -434,22 +442,21 @@ Wait until the pods are ready. After the pods are ready, you will make requests 
 
 In this IBM cloud environment, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
 
-```
+```bash
 kubectl proxy
 ```
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to store the proxy path of the **system** and **inventory** services.
-```
+```bash
 SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
 INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
 ```
 
 Run the following echo commands to verify the variables:
 
-```
+```bash
 echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
 ```
-
 
 The output appears as shown in the following example:
 
@@ -459,14 +466,14 @@ localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/pro
 ```
 
 Make a request to the system service to see the JVM system properties with the following **curl** command:
-```
+```bash
 curl -s http://$SYSTEM_PROXY/system/properties | jq
 ```
 
 The readiness probe ensures the READY state won't be ***1/1*** until the container is available to accept requests. Without a readiness probe, you might notice an unsuccessful response from the server. This scenario can occur when the container is started, but the application server isn't fully initialized. With the readiness probe, you can be certain the pod accepts traffic only when the microservice is fully started.
 
 Similarly, access the inventory service and observe the successful request with the following command:
-```
+```bash
 curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
 ```
 
@@ -476,13 +483,13 @@ An ***unhealthy*** endpoint has been provided under the ***system*** microservic
 
 
 Run the following **curl** command to invoke the unhealthy endpoint:
-```
+```bash
 curl http://$SYSTEM_PROXY/system/unhealthy
 ```
 
 Run the following command to view the state of the pods:
 
-```
+```bash
 kubectl get pods
 ```
 
@@ -495,7 +502,7 @@ inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
 
 
 You will notice that one of the two ***system*** pods is no longer in the ready state. Make a request to the ***/system/properties*** endpoint with the following command:
-```
+```bash
 curl -s http://$SYSTEM_PROXY/system/properties | jq
 ```
 
@@ -505,12 +512,12 @@ Your request is successful because you have two replicas and one is still health
 
 
 Wait until the ***system-service*** pod is ready again. Make several requests to the ***/system/unhealthy*** endpoint of the **system** service until you see two pods are unhealthy.
-```
+```bash
 curl http://$SYSTEM_PROXY/system/unhealthy
 ```
 
 Observe the output of **kubectl get pods**.
-```
+```bash
 kubectl get pods
 ```
 
@@ -563,14 +570,14 @@ inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
 
 
 Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
-```
+```bash
 cd /home/project/guide-kubernetes-microprofile-health/start
 SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
 INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
 ```
 
 Run the integration tests by using the following command:
-```
+```bash
 mvn failsafe:integration-test \
     -Dsystem.service.root=$SYSTEM_PROXY \
     -Dinventory.service.root=$INVENTORY_PROXY
@@ -610,7 +617,7 @@ Press **CTRL+C** to stop the proxy server that was started at step 7.
 
 To remove all of the resources created during this guide, run the following command to delete all of the resources that you created.
 
-```
+```bash
 kubectl delete -f kubernetes.yaml
 ```
 
@@ -633,7 +640,7 @@ Clean up your online environment so that it is ready to be used with the next gu
 
 Delete the ***guide-kubernetes-microprofile-health*** project by running the following commands:
 
-```
+```bash
 cd /home/project
 rm -fr guide-kubernetes-microprofile-health
 ```
