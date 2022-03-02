@@ -277,7 +277,7 @@ spec:
 
 The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication*** resource, ***system***, which is controlled by the Open Liberty Operator.
 
-The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\<project-name>/<image-stream-name>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
+The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\<project-name\>/\<image-stream-name\>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
 
 One of the benefits of using ***ImageStream*** objects is that the operator redeploys the application when it detects a new image is pushed. The ***env*** parameter is used to specify environment variables that are passed to the container at runtime.
 
