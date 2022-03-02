@@ -77,7 +77,9 @@ docker run -d --name jaeger \
 
 You can find information about the Jaeger server and instructions for starting the all-in-one executable file in the [Jaeger documentation](https://www.jaegertracing.io/docs/1.22/getting-started/#all-in-one).
 
-Before you proceed, make sure that your Jaeger server is up and running. Select **Launch Application** from the menu of the IDE, type in **16686** to specify the port number for the Jaeger service, and click the **OK** button. Jaeger can be found at the ***https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai*** URL, where **accountname** is your account name.
+Before you proceed, make sure that your Jaeger server is up and running. Click the following button or select **Launch Application** from the menu of the IDE, type in **16686** to specify the port number for the Jaeger service, and click the **OK** button. Jaeger can be found at the ***https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai*** URL, where **accountname** is your account name.
+
+::startApplication{port="16686" display="internal" name="Launch the Jaeger service" route="/"}
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
@@ -108,7 +110,10 @@ curl -s http://localhost:9081/inventory/systems/localhost | jq
 
 When you visit this endpoint, you make two GET HTTP requests, one to the **system** service and one to the **inventory** service. Both of these requests are configured to be traced, so a new trace is recorded in Jaeger.
 
-To view the traces, go to the ***https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai*** URL. You can view the traces for the inventory or system services under the **Search** tab. Select the services in the **Select a service** menu and click the **Find Traces** button at the end of the section.
+To view the traces, click the following button or go to the ***https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai*** URL. 
+::startApplication{port="16686" display="internal" name="Launch the Jaeger service" route="/"}
+
+You can view the traces for the inventory or system services under the **Search** tab. Select the services in the **Select a service** menu and click the **Find Traces** button at the end of the section.
 
 If you only see the **jaeger-query** option listed in the dropdown, you might need to wait a little longer and refresh the page to see the application services.
 
@@ -302,6 +307,7 @@ curl -s http://localhost:9081/inventory/systems | jq
 ```
 
 Check your Jaeger server at the ***https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai*** URL. If you have the Jaeger UI open from a previous step, refresh the page. Select the **inventory** traces and click the **Find Traces** button.
+::startApplication{port="16686" display="internal" name="Launch the Jaeger service" route="/"}
 
 You see a new trace record that is two spans long. One span is for the ***listContents()*** restfulWS method in the ***InventoryResource*** class, and the other span is for the ***list()*** method in the ***InventoryManager*** class.
 
@@ -396,6 +402,7 @@ curl -s http://localhost:9081/inventory/systems | jq
 ```
 
 Check your Jaeger server at the ***https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai*** URL. If you have the Jaeger UI open from a previous step, refresh the page. Select the **inventory** traces and click the **Find Traces** button. You see a new trace record that is just one span long for the remaining **list()** method in the **InventoryManager** class.
+::startApplication{port="16686" display="internal" name="Launch the Jaeger service" route="/"}
 
 Verify that you see the following span:
 
@@ -494,6 +501,7 @@ curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 
 Check your Jaeger server at the ***https://accountname-16686.theiadocker-4.proxy.cognitiveclass.ai*** URL. If you have the Jaeger UI open from a previous step, refresh the page. Select the **inventory** traces and click the **Find Traces** button.
+::startApplication{port="16686" display="internal" name="Launch the Jaeger service" route="/"}
 
 Verify that there are three spans from ***inventory*** and one span from ***system***:
 
