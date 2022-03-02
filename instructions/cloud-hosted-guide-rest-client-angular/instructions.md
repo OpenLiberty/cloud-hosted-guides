@@ -78,8 +78,7 @@ The **finish** directory contains the finished project that you will build.
 
 The **finish** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the **finish** directory and run the following
-Maven goal to build the application and deploy it to Open Liberty:
+To try out the application, first go to the **finish** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
 ```
 cd finish
@@ -111,9 +110,7 @@ bar wrote 1 albums:
 dj wrote 0 albums:
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C**
-in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal
-from the **finish** directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server by pressing **CTRL+C** in the command-line session where you ran the server. Alternatively, you can run the **liberty:stop** goal from the **finish** directory in another shell session:
 
 ```
 mvn liberty:stop
@@ -134,8 +131,7 @@ cd /home/project/guide-rest-client-angular/start
 ```
 {: codeblock}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and 
-deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```
 mvn liberty:dev
@@ -150,8 +146,7 @@ After you see the following message, your application server in dev mode is read
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, 
-or open the project in your editor.
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 
 You can find your artist JSON by running the following command at a terminal:
