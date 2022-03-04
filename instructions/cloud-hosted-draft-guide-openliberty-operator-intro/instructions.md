@@ -38,13 +38,13 @@ select **Terminal** > **New Terminal** from the menu of the IDE.
 
 Run the following command to navigate to the **/home/project** directory:
 
-```
+```bash
 cd /home/project
 ```
 
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/draft-guide-openliberty-operator-intro.git) and use the projects that are provided inside:
 
-```
+```bash
 git clone https://github.com/openliberty/draft-guide-openliberty-operator-intro.git
 cd draft-guide-openliberty-operator-intro
 ```
@@ -62,7 +62,7 @@ The ***finish*** directory contains the finished project that you will build.
 In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/tree/main/deploy/releases/0.8.0#readme).
 
 To check that the Open Liberty Operator has been installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
-```
+```bash
 kubectl api-resources --api-group=apps.openliberty.io
 ```
 
@@ -97,12 +97,12 @@ mvn clean package
 
 Run the following command to download or update to the latest Open Liberty Docker image:
 
-```
+```bash
 docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 
 Next, run the ***docker build*** command to build the container image for your application:
-```
+```bash
 docker build -t system:1.0-SNAPSHOT system/.
 ```
 
@@ -137,13 +137,15 @@ You can configure the specifics of the Open Liberty Operator-controlled deployme
 Create the ***deploy.yaml*** configuration file in the ***start*** directory.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/draft-guide-openliberty-operator-intro/start/deploy.yaml
 ```
 
 
-> Then from the menu of the IDE, select **File** > **Open** > draft-guide-openliberty-operator-intro/start/deploy.yaml
+> Then, to open the deploy.yaml file in your IDE, select
+> **File** > **Open** > draft-guide-openliberty-operator-intro/start/deploy.yaml, or click the following button
 
+::openFile{path="/home/project/draft-guide-openliberty-operator-intro/start/deploy.yaml"}
 
 
 
@@ -170,7 +172,7 @@ spec:
 
 The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication*** resource, ***system***, which is controlled by the Open Liberty Operator.
 
-The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\<image-name\>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
+The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\\<image-name\\>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
 
 The ***env*** parameter is used to specify environment variables that are passed to the container at runtime.
 
@@ -185,7 +187,7 @@ kubectl apply -f deploy.yaml
 
 Next, run the following command to view your newly created ***OpenLibertyApplications*** resources:
 
-```
+```bash
 kubectl get OpenLibertyApplications
 ```
 
@@ -200,7 +202,7 @@ system    system:1.0-SNAPSHOT    true      True         10s
 
 A ***RECONCILED*** state value of ***True*** indicates that the operator was able to successfully process the ***OpenLibertyApplications*** instances. Run the following command to view details of your microservice:
 
-```
+```bash
 kubectl describe olapps/system
 ```
 
@@ -222,7 +224,7 @@ Kind:         OpenLibertyApplication
 
 To access the exposed ***system*** microservice, the service must be port-forwarded. Run the following command to set up port forwarding to access the ***system*** service:
 
-```
+```bash
 kubectl port-forward svc/system 9080
 ```
 
@@ -235,7 +237,7 @@ curl -s http://localhost:9080/system/properties | jq
 When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
 
 Run the following command to remove the deployed ***system*** microservice:
-```
+```bash
 kubectl delete -f deploy.yaml
 ```
 
@@ -247,9 +249,10 @@ You can now configure the startup, readiness, and liveness probes. The ***startu
 
 Replace the ***deploy.yaml*** configuration file.
 
-> From the menu of the IDE, select
-> **File** > **Open** > draft-guide-openliberty-operator-intro/start/deploy.yaml
+> To open the deploy.yaml file in your IDE, select
+> **File** > **Open** > draft-guide-openliberty-operator-intro/start/deploy.yaml, or click the following button
 
+::openFile{path="/home/project/draft-guide-openliberty-operator-intro/start/deploy.yaml"}
 
 
 
@@ -313,7 +316,7 @@ kubectl apply -f deploy.yaml
 
 Run the following command to set up port forwarding to access the ***system*** service:
 
-```
+```bash
 kubectl port-forward svc/system 9080
 ```
 
@@ -349,7 +352,7 @@ Clean up your online environment so that it is ready to be used with the next gu
 
 Delete the ***draft-guide-openliberty-operator-intro*** project by running the following commands:
 
-```
+```bash
 cd /home/project
 rm -fr draft-guide-openliberty-operator-intro
 ```
