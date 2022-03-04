@@ -88,7 +88,7 @@ To deploy the ***system*** microservice, you must first package the microservice
 Ensure that you are in the ***start*** directory and run the following command to package the ***system*** microservice:
 
 
-```
+```bash
 cd /home/project/draft-guide-openliberty-operator-intro/start
 mvn clean package
 ```
@@ -110,13 +110,13 @@ The ***-t*** flag in the ***docker build*** command allows the Docker image to b
 
 Next, push your images to the container registry on IBM Cloud with the following commands:
 
-```
+```bash
 docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 ```
 
 Run the following command to check the docker images:
-```
+```bash
 docker images
 ```
 
@@ -180,7 +180,7 @@ Additionally, the microservice includes the ***service*** and ***expose*** param
 
 
 Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
-```
+```bash
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
@@ -230,7 +230,7 @@ kubectl port-forward svc/system 9080
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Access the microservice by running the following command:
-```
+```bash
 curl -s http://localhost:9080/system/properties | jq
 ```
 
@@ -309,7 +309,7 @@ The health check endpoints ***/health/started***, ***/health/live*** and ***/hea
 
 
 Run the following commands to update the **applicationImage** with the **pullSecret** and redeploy the **system** microservice with the new configuration:
-```
+```bash
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
@@ -322,7 +322,7 @@ kubectl port-forward svc/system 9080
 
 
 Access the microservice by running the following command:
-```
+```bash
 curl -s http://localhost:9080/system/properties | jq
 ```
 
@@ -333,7 +333,7 @@ When you're done trying out the microservice, press **CTRL+C** in the command li
 
 When you no longer need your deployed microservice, you can delete all resources by running the following command:
 
-```
+```bash
 kubectl delete -f deploy.yaml
 ```
 
