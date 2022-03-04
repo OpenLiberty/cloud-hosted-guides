@@ -396,8 +396,6 @@ public class SystemLivenessCheck implements HealthCheck {
 
         return HealthCheckResponse.named(
             SystemResource.class.getSimpleName() + " Liveness Check")
-                                  .withData("memory used", memUsed)
-                                  .withData("memory max", memMax)
                                   .status(memUsed < memMax * 0.9).build();
     }
 
@@ -444,10 +442,7 @@ This time you see the overall status of your server and the aggregated data of t
          "status":"UP"
       },
       {  
-         "data":{
-            "memory used":40434888,
-            "memory max":4294967296
-         },
+         "data":{},
          "name":"SystemResource Liveness Check",
          "status":"UP"
       }
@@ -553,8 +548,7 @@ After you change the file, Open Liberty automatically reloads its configuration.
 
 Now, when you visit the **/health** endpoint, additional traces are logged in the **trace.log** file.
 
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
+When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session where you ran the server, or by typing **q** and then pressing the **enter/return** key.
 
 
 # **Running the application in a Docker container**
