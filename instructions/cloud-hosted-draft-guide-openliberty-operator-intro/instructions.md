@@ -161,6 +161,8 @@ spec:
   service:
     port: 9080
   expose: true
+  route:
+    pathType: ImplementationSpecific
   env:
     - name: WLP_LOGGING_MESSAGE_FORMAT
       value: "json"
@@ -268,6 +270,8 @@ spec:
   service:
     port: 9080
   expose: true
+  route:
+    pathType: ImplementationSpecific
   env:
     - name: WLP_LOGGING_MESSAGE_FORMAT
       value: "json"
