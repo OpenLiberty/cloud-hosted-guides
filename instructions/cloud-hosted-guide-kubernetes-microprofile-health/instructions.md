@@ -49,7 +49,7 @@ select **Terminal** > **New Terminal** from the menu of the IDE.
 
 Run the following command to navigate to the **/home/project** directory:
 
-```bash
+```
 cd /home/project
 ```
 {: codeblock}
