@@ -613,7 +613,7 @@ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 
 ::page{title="Tearing down the environment"}
 
-Press **CTRL+C** to stop the proxy server that was started at step 7.
+Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
 
 To remove all of the resources created during this guide, run the following command to delete all of the resources that you created.
 
