@@ -4,9 +4,9 @@ title: instructions
 branch: lab-207-instruction
 version-history-start-date: 2022-02-11T18:24:15Z
 ---
-::page{title="Welcome to the Accessing and persisting data in microservices using Java Persistence API (JPA) guide!"}
+::page{title="Welcome to the Building fault-tolerant microservices with the @Fallback annotation guide!"}
 
-Learn how to use Java Persistence API (JPA) to access and persist data to a database for your microservices.
+You'll explore how to manage the impact of failures using MicroProfile Fault Tolerance by adding fallback behavior to microservice dependencies.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,16 +17,18 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to use the Java Persistence API (JPA) to map Java objects to relational database tables and perform create, read, update and delete (CRUD) operations on the data in your microservices. 
+You will learn how to use MicroProfile (MP) Fault Tolerance to build resilient microservices that reduce the impact from failure and ensure continued operation of services.
 
-JPA is a Java EE specification for representing relational database table data as Plain Old Java Objects (POJO). JPA simplifies object-relational mapping (ORM) by using annotations to map Java objects to tables in a relational database. In addition to providing an efficient API for performing CRUD operations, JPA also reduces the burden of having to write JDBC and SQL code when performing database operations and takes care of database vendor-specific differences. This capability allows you to focus on the business logic of your application instead of wasting time implementing repetitive CRUD logic.
+MP Fault Tolerance provides a simple and flexible solution to build fault-tolerant microservices. Fault tolerance leverages different strategies to guide the execution and result of logic. As stated in the [MicroProfile website](https://microprofile.io/project/eclipse/microprofile-fault-tolerance), retry policies, bulkheads, and circuit breakers are popular concepts in this area. They dictate whether and when executions take place, and fallbacks offer an alternative result when an execution does not complete successfully.
 
-The application that you will be working with is an event manager, which is composed of a UI and an event microservice for creating, retrieving, updating, and deleting events. In this guide, you will be focused on the event microservice. The event microservice consists of a JPA entity class whose fields will be persisted to a database. The database logic is implemented in a Data Access Object (DAO) to isolate the database operations from the rest of the service. This DAO accesses and persists JPA entities to the database and can be injected and consumed by other components in the microservice. An Embedded Derby database is used as a data store for all the events.
+The application that you will be working with is an ***inventory*** service, which collects, stores, and returns the system properties. It uses the ***system*** service to retrieve the system properties for a particular host. You will add fault tolerance to the ***inventory*** service so that it reacts accordingly when the ***system*** service is unavailable.
 
-You will use JPA annotations to define an entity class whose fields are persisted to the database. The interaction between your service and the database is mediated by the persistence context that is managed by an entity manager. In a Java EE environment, you can use an application-managed entity manager or a container-managed entity manager. In this guide, you will use a container-managed entity manager that is injected into the DAO so the application server manages the opening and closing of the entity manager for you. 
+You will use the ***@Fallback*** annotations from the MicroProfile Fault Tolerance specification to define criteria for when to provide an alternative solution for a failed execution.
+
+You will also see the application metrics for the fault tolerance methods that are automatically enabled when you add the MicroProfile Metrics feature to the server.
+
 
 
 ::page{title="Getting started"}
@@ -40,11 +42,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jpa-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-fallback.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-jpa-intro.git
-cd guide-jpa-intro
+git clone https://github.com/openliberty/guide-microprofile-fallback.git
+cd guide-microprofile-fallback
 ```
 
 
@@ -52,68 +54,86 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+
 ### Try what you'll build
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, run the following commands to navigate to the ***finish/frontendUI*** directory and deploy the ***frontendUI*** service to Open Liberty:
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
 ```bash
-cd finish/frontendUI
+cd finish
 mvn liberty:run
 ```
 
-Open another command-line session and run the following commands to navigate to the ***finish/backendServices*** directory and deploy the service to Open Liberty:
-```bash
-cd /home/project/guide-jpa-intro/finish/backendServices
-mvn liberty:run
-```
-
-
-After you see the following message in both command-line sessions, both your services are ready.
+After you see the following message, your application server is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Click the following button or select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to ***https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai***, where **accountname** is your account name.
-::startApplication{port="9090" display="internal" name="View the Event Manager application" route="/"}
-The event application does not display any events because no events are stored in the database. Go ahead and click ***Create Event***, located in the left navigation bar. After entering an event name, location and time, click ***Submit*** to persist your event entity to the database. The event is now stored in the database and is visible in the list of current events.
 
-Notice that if you stop the Open Liberty server and then restart it, the events created are still displayed in the list of current events. Ensure you are in the ***finish/backendServices*** directory and run the following Maven goals to stop and then restart the server:
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. To access the **inventory** service with a localhost hostname, run the following curl command:
 ```bash
-cd /home/project/guide-jpa-intro/finish/backendServices
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
+
+You see the system properties for this host. When you run this curl command, some of these system properties, such as the OS name and user name, are automatically stored in the inventory.
+
+
+Update the **CustomConfigSource** configuration file. Change the ***io_openliberty_guides_system_inMaintenance*** property from **false** to **true** and save the file.
+
+> To open the CustomConfigSource.json file in your IDE, select 
+> **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-fallback/finish/resources/CustomConfigSource.json"}
+
+```
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":true}
+```
+
+
+You do not need to restart the server. Next, run the following curl command:
+```bash
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
+
+The fallback mechanism is triggered because the **system** service is now in maintenance. You see the cached properties for this localhost.
+
+When you are done checking out the application, go to the ***CustomConfigSource.json*** file again.
+
+
+Update the **CustomConfigSource** configuration file. Change the ***io_openliberty_guides_system_inMaintenance*** property from **true** to **false** to set this condition back to its original value.
+
+> To open the CustomConfigSource.json file in your IDE, select 
+> **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-fallback/finish/resources/CustomConfigSource.json"}
+
+```
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":false}
+```
+
+After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+```bash
 mvn liberty:stop
-mvn liberty:run
 ```
 
 
-The events created are still displayed in the list of current events. The ***Update*** action link located beside each event allows you to make modifications to the persisted entity and the ***Delete*** action link allows you to remove entities from the database.
+::page{title="Enabling fault tolerance"}
 
-After you are finished checking out the application, stop the Open Liberty servers by pressing CTRL+C in the command-line sessions where you ran the ***backendServices*** and ***frontendUI*** services. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another command-line session for the ***frontendUI*** and ***backendServices*** services:
+
+To begin, run the following command to navigate to the **start** directory:
 ```bash
-cd /home/project/guide-jpa-intro/finish
-mvn -pl frontendUI liberty:stop
-mvn -pl backendServices liberty:stop
+cd /home/project/guide-microprofile-fallback/start
 ```
 
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
-
-::page{title="Defining a JPA entity class"}
-
-Navigate to the ***start*** directory to begin.
-
-When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
-
-Run the following commands to navigate to the ***frontendUI*** directory and start the ***frontendUI*** service in dev mode:
 ```bash
-cd /home/project/guide-jpa-intro/start/frontendUI
-mvn liberty:dev
-```
-
-Open another command-line session and run the following commands to navigate to the ***backendServices*** directory and start the service in dev mode:
-```bash
-cd /home/project/guide-jpa-intro/start/backendServices
 mvn liberty:dev
 ```
 
@@ -124,305 +144,131 @@ After you see the following message, your application server in dev mode is read
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command line to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-To store Java objects in a database, you must define a JPA entity class. A JPA entity is a Java object whose non-transient and non-static fields will be persisted to the database. Any Plain Old Java Object (POJO) class can be designated as a JPA entity. However, the class must be annotated with the ***@Entity*** annotation, must not be declared final and must have a public or protected non-argument constructor. JPA maps an entity type to a database table and persisted instances will be represented as rows in the table.
+The MicroProfile Fault Tolerance API is included in the MicroProfile dependency that is specified in your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows you to use fault tolerance policies in your microservices.
 
-The ***Event*** class is a data model that represents events in the event microservice and is annotated with JPA annotations.
+You can also find the ***mpFaultTolerance*** feature in your ***src/main/liberty/config/server.xml*** server configuration, which turns on MicroProfile Fault Tolerance capabilities in Open Liberty.
 
-Create the ***Event*** class.
+To easily work through this guide, the two provided microservices are set up to run on the same server. To simulate the availability of the services and then to enable fault tolerance, dynamic configuration with MicroProfile Configuration is used so that you can easily take one service or the other down for maintenance. If you want to learn more about setting up dynamic configuration, see [Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
-```
+The following two steps set up the dynamic configuration on the ***system*** service and its client. You can move on to the next section, which adds the fallback mechanism on the ***inventory*** service.
 
+First, the ***src/main/java/io/openliberty/guides/system/SystemResource.java*** file has the ***isInMaintenance()*** condition, which determines that the system properties are returned only if you set the ***io_openliberty_guides_system_inMaintenance*** configuration property to ***false*** in the ***CustomConfigSource*** file. Otherwise, the service returns a ***Status.SERVICE_UNAVAILABLE*** message, which makes it unavailable.
 
-> Then, to open the Event.java file in your IDE, select
-> **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java, or click the following button
+Next, the ***src/main/java/io/openliberty/guides/inventory/client/SystemClient.java*** file makes a request to the ***system*** service through the MicroProfile Rest Client API. If you want to learn more about MicroProfile Rest Client, you can follow the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html) guide. The ***system*** service as described in the ***SystemResource.java*** file may return a ***Status.SERVICE_UNAVAILABLE*** message, which is a 503 status code. This code indicates that the server being called is unable to handle the request because of a temporary overload or scheduled maintenance, which would likely be alleviated after some delay. To simulate that the system is unavailable, an ***IOException*** is thrown.
 
-::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java"}
+The ***InventoryManager*** class calls the ***getProperties()*** method in the ***SystemClient.java*** class. You will look into the ***InventoryManager*** class in more detail in the next section.
 
 
 
-```java
-package io.openliberty.guides.event.models;
-
-import java.io.Serializable;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.NamedQuery;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Column;
-import jakarta.persistence.GenerationType;
-
-@Entity
-@Table(name = "Event")
-@NamedQuery(name = "Event.findAll", query = "SELECT e FROM Event e")
-@NamedQuery(name = "Event.findEvent", query = "SELECT e FROM Event e WHERE "
-    + "e.name = :name AND e.location = :location AND e.time = :time")
-public class Event implements Serializable {
-    private static final long serialVersionUID = 1L;
-
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Id
-    @Column(name = "eventId")
-    private int id;
-
-    @Column(name = "eventLocation")
-    private String location;
-    @Column(name = "eventTime")
-    private String time;
-    @Column(name = "eventName")
-    private String name;
-
-    public Event() {
-    }
-
-    public Event(String name, String location, String time) {
-        this.name = name;
-        this.location = location;
-        this.time = time;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public String getTime() {
-        return time;
-    }
-
-    public void setTime(String time) {
-        this.time = time;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + id;
-        result = prime * result + ((location == null) ? 0 : location.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result
-                 + (int) (serialVersionUID ^ (serialVersionUID >>> 32));
-        result = prime * result + ((time == null) ? 0 : time.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        Event other = (Event) obj;
-        if (location == null) {
-            if (other.location != null) {
-                return false;
-            }
-        } else if (!location.equals(other.location)) {
-            return false;
-        }
-        if (time == null) {
-            if (other.time != null) {
-                return false;
-            }
-        } else if (!time.equals(other.time)) {
-            return false;
-        }
-        if (name == null) {
-            if (other.name != null) {
-                return false;
-            }
-        } else if (!name.equals(other.name)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "Event [name=" + name + ", location=" + location + ", time=" + time
-                + "]";
-    }
-}
-
-```
 
 
 
-The following table breaks down the new annotations:
 
-| *Annotation*    | *Description*
-| ---| ---
-| ***@Entity*** | Declares the class as an entity
-| ***@Table***  | Specifies details of the table such as name 
-| ***@NamedQuery*** | Specifies a predefined database query that is run by an ***EntityManager*** instance.
-| ***@Id***       |  Declares the primary key of the entity
-| ***@GeneratedValue***    | Specifies the strategy used for generating the value of the primary key. The ***strategy = GenerationType.AUTO*** code indicates that the generation strategy is automatically selected
-| ***@Column***    | Specifies that the field is mapped to a column in the database table. The ***name*** attribute is optional and indicates the name of the column in the table
+### Adding the @Fallback annotation
+
+The ***inventory*** service is now able to recognize that the ***system*** service was taken down for maintenance. An IOException is thrown to simulate the ***system*** service is unavailable. Now, set a fallback method to deal with this failure.
 
 
-::page{title="Configuring JPA"}
+Replace the ***InventoryManager*** class.
 
-The ***persistence.xml*** file is a configuration file that defines a persistence unit. The persistence unit specifies configuration information for the entity manager.
+> To open the InventoryManager.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
 
-Create the configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
-```
-
-
-> Then, to open the persistence.xml file in your IDE, select
-> **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml, or click the following button
-
-::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml"}
-
-
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<persistence version="2.2"
-    xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
-                        http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
-    <!-- tag::transaction-type[] -->
-    <persistence-unit name="jpa-unit" transaction-type="JTA">
-        <!-- tag::jta-data[] -->
-        <jta-data-source>jdbc/eventjpadatasource</jta-data-source>
-        <properties>
-            <property name="eclipselink.ddl-generation" value="create-tables"/>
-            <property name="eclipselink.ddl-generation.output-mode" value="both" />
-        </properties>
-    </persistence-unit>
-</persistence>
-```
-
-
-
-The persistence unit is defined by the ***persistence-unit*** XML element. The ***name*** attribute is required and is used to identify the persistent unit when using the ***@PersistenceContext*** annotation to inject the entity manager later in this guide. The ***transaction-type="JTA"*** attribute specifies to use Java Transaction API (JTA) transaction management. Because of using a container-managed entity manager, JTA transactions must be used. 
-
-A JTA transaction type requires a JTA data source to be provided. The ***jta-data-source*** element specifies the Java Naming and Directory Interface (JNDI) name of the data source that is used. The ***data source*** has already been configured for you in the ***backendServices/src/main/liberty/config/server.xml*** file. This data source configuration is where the Java Database Connectivity (JDBC) connection is defined along with some database vendor-specific properties.
-
-
-The ***eclipselink.ddl-generation*** properties are used here so that you aren't required to manually create a database table to run this sample application. To learn more about the ***ddl-generation*** properties, see the [JPA Extensions Reference for EclipseLink.](http://www.eclipse.org/eclipselink/documentation/2.5/jpa/extensions/p_ddl_generation.htm)
-
-
-::page{title="Performing CRUD operations using JPA"}
-
-The CRUD operations are defined in the DAO. To perform these operations by using JPA, you need an ***EventDao*** class. 
-
-Create the ***EventDao*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
-```
-
-
-> Then, to open the EventDao.java file in your IDE, select
-> **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java, or click the following button
-
-::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java"}
+::openFile{path="/home/project/guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
 
 
 ```java
-package io.openliberty.guides.event.dao;
+package io.openliberty.guides.inventory;
 
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.Properties;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.faulttolerance.Fallback;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
 
-import io.openliberty.guides.event.models.Event;
+@ApplicationScoped
+public class InventoryManager {
 
-import jakarta.enterprise.context.RequestScoped;
+    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+    private InventoryUtils invUtils = new InventoryUtils();
 
-@RequestScoped
-public class EventDao {
-
-    @PersistenceContext(name = "jpa-unit")
-    private EntityManager em;
-
-    public void createEvent(Event event) {
-        em.persist(event);
+    @Fallback(fallbackMethod = "fallbackForGet",
+            applyOn = {IOException.class},
+            skipOn = {UnknownHostException.class})
+    public Properties get(String hostname) throws IOException {
+        return invUtils.getProperties(hostname);
     }
 
-    public Event readEvent(int eventId) {
-        return em.find(Event.class, eventId);
+    public Properties fallbackForGet(String hostname) {
+        Properties properties = findHost(hostname);
+        if (properties == null) {
+            Properties msgProp = new Properties();
+            msgProp.setProperty(hostname,
+                    "System is not found in the inventory or system is in maintenance");
+            return msgProp;
+        }
+        return properties;
     }
 
-    public void updateEvent(Event event) {
-        em.merge(event);
+    public void add(String hostname, Properties systemProps) {
+        Properties props = new Properties();
+
+        String osName = systemProps.getProperty("os.name");
+        if (osName == null) {
+            return;
+        }
+
+        props.setProperty("os.name", systemProps.getProperty("os.name"));
+        props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+        SystemData system = new SystemData(hostname, props);
+        if (!systems.contains(system)) {
+            systems.add(system);
+        }
     }
 
-    public void deleteEvent(Event event) {
-        em.remove(event);
+    public InventoryList list() {
+        return new InventoryList(systems);
     }
 
-    public List<Event> readAllEvents() {
-        return em.createNamedQuery("Event.findAll", Event.class).getResultList();
-    }
-
-    public List<Event> findEvent(String name, String location, String time) {
-        return em.createNamedQuery("Event.findEvent", Event.class)
-            .setParameter("name", name)
-            .setParameter("location", location)
-            .setParameter("time", time).getResultList();
+    private Properties findHost(String hostname) {
+        for (SystemData system : systems) {
+            if (system.getHostname().equals(hostname)) {
+                return system.getProperties();
+            }
+        }
+        return null;
     }
 }
 ```
 
 
 
-To use the entity manager at runtime, inject it into the CDI bean through the ***@PersistenceContext*** annotation. The entity manager interacts with the persistence context. Every ***EntityManager*** instance is associated with a persistence context. The persistence context manages a set of entities and is aware of the different states that an entity can have. The persistence context synchronizes with the database when a transaction commits.
+The ***@Fallback*** annotation dictates a method to call when the original method encounters a failed execution. In this example, use the ***fallbackForGet()*** method.
 
-The ***EventDao*** class has a method for each CRUD operation, so let's break them down:
+The ***@Fallback*** annotation provides two parameters, ***applyOn*** and ***skipOn***, which allow you to configure which exceptions trigger a fallback and which exceptions do not, respectively. In this example, the ***get()*** method throws ***IOException*** when the system service is unavailable, and throws ***UnknownHostException*** when the system service cannot be found on the specified host. The ***fallbackForGet()*** method can handle the first case, but not the second.
 
-* The ***createEvent()*** method persists an instance of the ***Event*** entity class to the data store by calling the ***persist()*** method on an ***EntityManager*** instance. The entity instance becomes managed and changes to it will be tracked by the entity manager.
+The ***fallbackForGet()*** method, which is the designated fallback method for the original ***get()*** method, checks to see if the system's properties exist in the inventory. If the system properties entry is not found in the inventory, the method prints out a warning message in the browser. Otherwise, this method returns the cached property values from the inventory.
 
-* The ***readEvent()*** method returns an instance of the ***Event*** entity class with the specified primary key by calling the ***find()*** method on an ***EntityManager*** instance. If the event instance is found, it is returned in a managed state, but, if the event instance is not found, ***null*** is returned.
-
-* The ***readAllEvents()*** method demonstrates an alternative way to retrieve event objects from the database. This method returns a list of instances of the ***Event*** entity class by using the ***Event.findAll*** query specified in the ***@NamedQuery*** annotation on the ***Event*** class. Similarly, the ***findEvent()*** method uses the ***Event.findEvent*** named query to find an event with the given name, location and time. 
+You successfully set up your microservice to have fault tolerance capability.
 
 
-* The ***updateEvent()*** method creates a managed instance of a detached entity instance. The entity manager automatically tracks all managed entity objects in its persistence context for changes and synchronizes them with the database. However, if an entity becomes detached, you must merge that entity into the persistence context by calling the ***merge()*** method so that changes to loaded fields of the detached entity are tracked.
+::page{title="Enabling metrics for the fault tolerance methods"}
 
-* The ***deleteEvent()*** method removes an instance of the ***Event*** entity class from the database by calling the ***remove()*** method on an ***EntityManager*** instance. The state of the entity is changed to removed and is removed from the database upon transaction commit. 
 
-The DAO is injected into the ***backendServices/src/main/java/io/openliberty/guides/event/resources/EventResource.java*** class and used to access and persist data. The ***@Transactional*** annotation is used in the ***EventResource*** class to declaratively control the transaction boundaries on the ***@RequestScoped*** CDI bean. This ensures that the methods run within the boundaries of an active global transaction, which is why it is not necessary to explicitly begin, commit or rollback transactions. At the end of the transactional method invocation, the transaction commits and the persistence context flushes any changes to Event entity instances it is managing to the database.
+MicroProfile Fault Tolerance integrates with MicroProfile Metrics to provide metrics for the annotated fault tolerance methods. When both the ***mpFaultTolerance*** and the ***mpMetrics*** features are included in the ***server.xml*** configuration file, the ***@Fallback*** fault tolerance annotation provides metrics that count the following things: the total number of annotated method invocations, the total number of failed annotated method invocations, and the total number of the fallback method calls.
 
+The ***mpMetrics*** feature requires SSL and the configuration is provided for you. The ***quickStartSecurity*** configuration element provides basic security to secure the server. When you go to the ***/metrics*** endpoint, use the credentials that are defined in the server configuration to log in to view the data for the fault tolerance methods.
+
+You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [MicroProfile Fault Tolerance specification](https://github.com/eclipse/microprofile-fault-tolerance/releases).
 
 
 ::page{title="Running the application"}
@@ -430,195 +276,164 @@ The DAO is injected into the ***backendServices/src/main/java/io/openliberty/gui
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-When the server is running, click the following button or select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to ***https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai***, where **accountname** is your account name.
-::startApplication{port="9090" display="internal" name="View the Event Manager application" route="/"}
+When the server is running, run the following curl command:
+```bash
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
 
-Click ***Create Event*** in the left navigation bar to create events that are persisted to the database. After you create an event, it is available to view, update, and delete in the ***Current Events*** section.
+You receive the system properties of your local JVM from the **inventory** service.
+
+Next, run the following curl command which accesses the **system** service, to retrieve the system properties for the specific localhost:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+Notice that the results from the two URLs are identical because the **inventory** service gets its results from calling the **system** service.
+
+To see the application metrics, run the following curl commmand. This command will Log in using **admin** user, and you will have to enter **adminpwd** as the password.
+```bash
+curl -k -u admin https://localhost:9443/metrics/base | grep _ft_
+```
+
+See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
+
+```
+::page{title="TYPE base_ft_invocations_total counter"}
+base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 0
+base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+```
+
+You can test the fault tolerance mechanism of your microservices by dynamically changing the ***io_openliberty_guides_system_inMaintenance*** property value to ***true*** in the ***resources/CustomConfigSource.json*** file, which puts the ***system*** service in maintenance.
+
+
+Update the configuration file. Change the ***io_openliberty_guides_system_inMaintenance*** property from **false** to **true** and save the file.
+
+> To open the CustomConfigSource.json file in your IDE, select 
+> **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-fallback/start/resources/CustomConfigSource.json"}
+
+```
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":true}
+```
+
+
+
+
+After saving the file, run the following curl command to view the cached version of the properties:
+```bash
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
+
+The **fallbackForGet()** method, which is the designated fallback method, is called when the **system** service is not available. The cached system properties contain only the OS name and user name key and value pairs.
+
+
+To see that the **system** service is down, run the following curl command:
+```bash
+curl -I http://localhost:9080/system/properties
+```
+
+You see that the service displays a 503 HTTP response code.
+
+
+Run the following curl command again and enter **adminpwd** as the password:
+```bash
+curl -k -u admin https://localhost:9443/metrics/base | grep _ft_
+```
+
+See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
+
+```
+::page{title="TYPE base_ft_invocations_total counter"}
+base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
+base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
+```
+
+
+From the output, the ***base_ft_invocations_total{fallback="notApplied",*** ***method="io.openliberty.guides.inventory.InventoryManager.get",*** ***result="valueReturned"}*** data shows that the **get()** method was called once without triggering a fallback method. The ***base_ft_invocations_total{fallback="applied",*** ***method="io.openliberty.guides.inventory.InventoryManager.get",*** ***result="valueReturned"}*** data indicates that the **get()** method was called once and the fallback **fallbackForGet()** method was triggered.
+
+
+Update the configuration file. After you finish, change the ***io_openliberty_guides_system_inMaintenance*** property value back to **false** in the **resources/CustomConfigSource.json** file.
+
+> To open the CustomConfigSource.json file in your IDE, select 
+> **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-fallback/start/resources/CustomConfigSource.json"}
+
+```
+{"config_ordinal":500,
+"io_openliberty_guides_system_inMaintenance":false}
+```
 
 
 ::page{title="Testing the application"}
 
-Create the ***EventEntityIT*** class.
+You can test your application manually, but automated tests ensure code quality because they trigger a failure whenever a code change introduces a defect. JUnit and the JAX-RS Client API provide a simple environment for you to write tests.
+
+Create the ***FaultToleranceIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
+touch /home/project/guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
 ```
 
 
-> Then, to open the EventEntityIT.java file in your IDE, select
-> **File** > **Open** > guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java, or click the following button
+> Then, to open the unknown file in your IDE, select
+> **File** > **Open** > guide-microprofile-fallback/start/unknown, or click the following button
 
-::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.event;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.HashMap;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Form;
-import jakarta.ws.rs.core.Response.Status;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Test;
-import io.openliberty.guides.event.models.Event;
-
-public class EventEntityIT extends EventIT {
-
-    private static final String JSONFIELD_LOCATION = "location";
-    private static final String JSONFIELD_NAME = "name";
-    private static final String JSONFIELD_TIME = "time";
-    private static final String EVENT_TIME = "12:00 PM, January 1 2018";
-    private static final String EVENT_LOCATION = "IBM";
-    private static final String EVENT_NAME = "JPA Guide";
-    private static final String UPDATE_EVENT_TIME = "12:00 PM, February 1 2018";
-    private static final String UPDATE_EVENT_LOCATION = "IBM Updated";
-    private static final String UPDATE_EVENT_NAME = "JPA Guide Updated";
-
-    private static final int NO_CONTENT_CODE = Status.NO_CONTENT.getStatusCode();
-    private static final int NOT_FOUND_CODE = Status.NOT_FOUND.getStatusCode();
-
-    @BeforeAll
-    public static void oneTimeSetup() {
-        port = System.getProperty("backend.http.port");
-        baseUrl = "http://localhost:" + port + "/";
-    }
-
-    @BeforeEach
-    public void setup() {
-        form = new Form();
-        client = ClientBuilder.newClient();
-
-        eventForm = new HashMap<String, String>();
-
-        eventForm.put(JSONFIELD_NAME, EVENT_NAME);
-        eventForm.put(JSONFIELD_LOCATION, EVENT_LOCATION);
-        eventForm.put(JSONFIELD_TIME, EVENT_TIME);
-    }
-
-    @Test
-    public void testInvalidRead() {
-        assertEquals(true, getIndividualEvent(-1).isEmpty(),
-          "Reading an event that does not exist should return an empty list");
-    }
-
-    @Test
-    public void testInvalidDelete() {
-        int deleteResponse = deleteRequest(-1);
-        assertEquals(NOT_FOUND_CODE, deleteResponse,
-          "Trying to delete an event that does not exist should return the "
-          + "HTTP response code " + NOT_FOUND_CODE);
-    }
-
-    @Test
-    public void testInvalidUpdate() {
-        int updateResponse = updateRequest(eventForm, -1);
-        assertEquals(NOT_FOUND_CODE, updateResponse,
-          "Trying to update an event that does not exist should return the "
-          + "HTTP response code " + NOT_FOUND_CODE);
-    }
-
-    @Test
-    public void testReadIndividualEvent() {
-        int postResponse = postRequest(eventForm);
-        assertEquals(NO_CONTENT_CODE, postResponse,
-          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
-
-        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-        JsonObject event = findEvent(e);
-        event = getIndividualEvent(event.getInt("id"));
-        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-
-        int deleteResponse = deleteRequest(event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, deleteResponse,
-          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
-    }
-
-    @Test
-    public void testCRUD() {
-        int eventCount = getRequest().size();
-        int postResponse = postRequest(eventForm);
-        assertEquals(NO_CONTENT_CODE, postResponse,
-          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
-
-        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-        JsonObject event = findEvent(e);
-        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-
-        eventForm.put(JSONFIELD_NAME, UPDATE_EVENT_NAME);
-        eventForm.put(JSONFIELD_LOCATION, UPDATE_EVENT_LOCATION);
-        eventForm.put(JSONFIELD_TIME, UPDATE_EVENT_TIME);
-        int updateResponse = updateRequest(eventForm, event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, updateResponse,
-          "Updating an event should return the HTTP response code " + NO_CONTENT_CODE);
-
-        e = new Event(UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
-        event = findEvent(e);
-        assertData(event, UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
-
-        int deleteResponse = deleteRequest(event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, deleteResponse,
-          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
-        assertEquals(eventCount, getRequest().size(),
-          "Total number of events stored should be the same after testing "
-          + "CRUD operations.");
-    }
-
-    @AfterEach
-    public void teardown() {
-        response.close();
-        client.close();
-    }
-
-}
-```
+::openFile{path="/home/project/guide-microprofile-fallback/start/unknown"}
 
 
+The ***@BeforeEach*** and ***@AfterEach*** annotations indicate that this method runs either before or after the other test case. These methods are generally used to perform any setup and teardown tasks. In this case, the setup method creates a JAX-RS client, which makes HTTP requests to the ***inventory*** service. This client must also be registered with a JSON-P provider to process JSON resources. The teardown method simply destroys this client instance as well as the HTTP responses.
 
-The ***testInvalidRead()***, ***testInvalidDelete()*** and ***testInvalidUpdate()*** methods use a primary key that is not in the database to test reading, updating and deleting an event that does not exist, respectively.
+The ***testFallbackForGet()*** test case sends a request to the ***inventory*** service to get the systems properties for a hostname before and after the ***system*** service becomes unavailable. Then, it asserts outputs from the two requests to ensure that they are different from each other.
 
-The ***testReadIndividualEvent()*** method persists a test event to the database and retrieves the event object from the database using the primary key of the entity.
+The ***testFallbackSkipForGet()*** test case sends a request to the ***inventory*** service to get the system properties for an incorrect hostname (***unknown***). Then, it confirms that the fallback method has not been called by asserting that the response's status code is ***404*** with an error message in the response body.
 
-The ***testCRUD()*** method creates a test event and persists it to the database. The event object is then retrieved from the database to verify that the test event was actually persisted. Next, the name, location, and time of the test event are updated. The event object is retrieved from the database to verify that the updated event is stored. Finally, the updated test event is deleted and one final check is done to ensure that the updated test event is no longer stored in the database.
+The ***@Test*** annotations indicate that the methods automatically execute when your test class runs.
+
+In addition, a few endpoint tests have been included for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, then you might have introduced a bug into the code.
+
 
 ### Running the tests
 
-Since you started Open Liberty in dev mode, press the ***enter/return*** key in the command-line session where you started the ***backendServices*** service to run the tests for the ***backendServices***.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
+If the tests pass, you see a similar output to the following example:
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.event.EventEntityIT
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.703 sec - in it.io.openliberty.guides.event.EventEntityIT
+Running it.io.openliberty.guides.faulttolerance.FaultToleranceIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.517 sec - in it.io.openliberty.guides.faulttolerance.FaultToleranceIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.937 sec - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.396 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
 Results :
 
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are done checking out the services, exit dev mode by pressing CTRL+C in the command-line sessions where you ran the ***frontendUI*** and ***backendServices*** services,  or by typing ***q*** and then pressing the ***enter/return*** key. Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in another command-line session for the ***frontendUI*** and ***backendServices*** services:
-```bash
-cd /home/project/guide-jpa-intro/start
-mvn -pl frontendUI liberty:stop
-mvn -pl backendServices liberty:stop
-```
+To see if the tests detect a failure, comment out the ***changeSystemProperty()*** methods in the ***FaultToleranceIT.java*** file. Rerun the tests to see that a test failure occurs for the ***testFallbackForGet()*** and ***testFallbackSkipForGet()*** test cases.
+
+When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You learned how to map Java objects to database tables by defining a JPA entity class whose instances are represented as rows in the table. You have injected a container-managed entity manager into a DAO and learned how to perform CRUD operations in your microservice in Open Liberty.
+You just learned how to build a fallback mechanism for a microservice with MicroProfile Fault Tolerance in Open Liberty and wrote a test to validate it.
 
+
+You can try one of the related MicroProfile guides. They demonstrate technologies that you can learn and expand on what you built here.
 
 
 
@@ -627,32 +442,35 @@ You learned how to map Java objects to database tables by defining a JPA entity 
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-jpa-intro*** project by running the following commands:
+Delete the ***guide-microprofile-fallback*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-jpa-intro
+rm -fr guide-microprofile-fallback
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Accessing%20and%20persisting%20data%20in%20microservices%20using%20Java%20Persistence%20API%20(JPA)&guide-id=cloud-hosted-guide-jpa-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20fault-tolerant%20microservices%20with%20the%20@Fallback%20annotation&guide-id=cloud-hosted-guide-microprofile-fallback)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jpa-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jpa-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-fallback/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-fallback/pulls)
 
 
 
 ### Where to next?
 
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Preventing repeated failed calls to microservices](https://openliberty.io/guides/circuit-breaker.html)
 
 
 ### Log out of the session
