@@ -58,7 +58,7 @@ The ***finish*** directory in the root of this guide contains the finished appli
 
 To try out the application, run the following commands to navigate to the ***finish/frontendUI*** directory and deploy the ***frontendUI*** service to Open Liberty:
 
-```
+```bash
 cd finish/frontendUI
 mvn liberty:run
 ```
