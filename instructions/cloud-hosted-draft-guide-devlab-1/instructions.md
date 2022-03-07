@@ -420,13 +420,13 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 
 ::page{title="Tearing down the environment"}
 
+Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
+
 When you no longer need your deployed microservices, you can delete all Kubernetes resources by running the ***kubectl delete*** command:
 ```bash
 kubectl delete -f kubernetes.yaml
 ```
 
-
-Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
 
 
 ::page{title="Summary"}
