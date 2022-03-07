@@ -119,7 +119,7 @@ openliberty/open-liberty                  full-java11-openj9-ubi
 
 If you don't see the ***system:1.0-SNAPSHOT*** and ***inventory:1.0-SNAPSHOT*** images, then check the Maven build log for any potential errors. If the images built without errors, push them to your container registry on IBM Cloud with the following commands:
 
-```
+```bash
 docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
 docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
@@ -227,7 +227,7 @@ This file defines four Kubernetes resources. It defines two deployments and two 
 
 Update the image names so that the images in your IBM Cloud container registry are used, and remove the **nodePort** fields so that the ports can be generated automatically:
 
-```
+```bash
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT=g' kubernetes.yaml
 sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT=g' kubernetes.yaml
 sed -i 's=nodePort: 31000==g' kubernetes.yaml
@@ -262,22 +262,21 @@ You can also issue the ***kubectl get*** and ***kubectl describe*** commands on 
 
 In this execise, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
 
-```
+```bash
 kubectl proxy
 ```
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to store the proxy path of the **system** and **inventory** services.
-```
+```bash
 SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
 INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
 ```
 
 Run the following echo commands to verify the variables:
 
-```
+```bash
 echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
 ```
-
 
 The output appears as shown in the following example:
 
@@ -288,19 +287,19 @@ localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/pro
 
 Then, use the following **curl** command to access your **system** microservice:
 
-```
+```bash
 curl -s http://$SYSTEM_PROXY/system/properties | jq
 ```
 
 Also, use the following **curl** command to access your **inventory** microservice:
 
-```
+```bash
 curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
 ```
 
 The ***http://$SYSTEM_PROXY/system/properties*** URL returns system properties and the name of the pod in an HTTP header that is called **X-Pod-Name**. To view the header, you can use the **-I** option in the **curl** command when you make a request to the ***http://$SYSTEM_PROXY/system/properties*** URL.
 
-```
+```bash
 curl -I http://$SYSTEM_PROXY/system/properties
 ```
 
@@ -332,7 +331,7 @@ inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
 
 Wait for your two new pods to be in the ready state, then make the following **curl** command:
 
-```
+```bash
 curl -I http://$SYSTEM_PROXY/system/properties
 ```
 
@@ -347,7 +346,7 @@ kubectl scale deployment/system-deployment --replicas=1
 When you're building your application, you might want to quickly test a change. To run a quick test, you can rebuild your Docker images then delete and re-create your Kubernetes resources. Note that there is only one ***system*** pod after you redeploy because you're deleting all of the existing pods.
 
 
-```
+```bash
 cd /home/project/guide-kubernetes-intro/start
 kubectl delete -f kubernetes.yaml
 
@@ -380,7 +379,7 @@ Navigate back to the ***start*** directory.
 
 Update the **pom.xml** files so that the **system.service.root** and **inventory.service.root** properties match the values to access the **system** and **inventory** services.
 
-```
+```bash
 sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' inventory/pom.xml
 sed -i 's=localhost:32000='"$INVENTORY_PROXY"'=g' inventory/pom.xml
 sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
@@ -388,7 +387,7 @@ sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
 
 Run the integration tests by using the following command:
 
-```
+```bash
 mvn failsafe:integration-test
 ```
 
@@ -427,7 +426,7 @@ kubectl delete -f kubernetes.yaml
 ```
 
 
-Press **CTRL+C** to stop the proxy server that was started at step 7.
+Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
 
 
 ::page{title="Summary"}
