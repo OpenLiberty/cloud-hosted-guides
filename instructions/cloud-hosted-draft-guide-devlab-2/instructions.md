@@ -64,7 +64,7 @@ mvn liberty:run
 ```
 
 Open another command-line session and run the following commands to navigate to the ***finish/backendServices*** directory and deploy the service to Open Liberty:
-```
+```bash
 cd /home/project/guide-jpa-intro/finish/backendServices
 mvn liberty:run
 ```
@@ -76,11 +76,12 @@ After you see the following message in both command-line sessions, both your ser
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to ***https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai***, where **accountname** is your account name.
+Click the following button or select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to ***https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai***, where **accountname** is your account name.
+::startApplication{port="9090" display="internal" name="View the Event Manager application" route="/"}
 The event application does not display any events because no events are stored in the database. Go ahead and click ***Create Event***, located in the left navigation bar. After entering an event name, location and time, click ***Submit*** to persist your event entity to the database. The event is now stored in the database and is visible in the list of current events.
 
 Notice that if you stop the Open Liberty server and then restart it, the events created are still displayed in the list of current events. Ensure you are in the ***finish/backendServices*** directory and run the following Maven goals to stop and then restart the server:
-```
+```bash
 cd /home/project/guide-jpa-intro/finish/backendServices
 mvn liberty:stop
 mvn liberty:run
@@ -90,7 +91,7 @@ mvn liberty:run
 The events created are still displayed in the list of current events. The ***Update*** action link located beside each event allows you to make modifications to the persisted entity and the ***Delete*** action link allows you to remove entities from the database.
 
 After you are finished checking out the application, stop the Open Liberty servers by pressing CTRL+C in the command-line sessions where you ran the ***backendServices*** and ***frontendUI*** services. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another command-line session for the ***frontendUI*** and ***backendServices*** services:
-```
+```bash
 cd /home/project/guide-jpa-intro/finish
 mvn -pl frontendUI liberty:stop
 mvn -pl backendServices liberty:stop
@@ -105,13 +106,13 @@ Navigate to the ***start*** directory to begin.
 When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
 
 Run the following commands to navigate to the ***frontendUI*** directory and start the ***frontendUI*** service in dev mode:
-```
+```bash
 cd /home/project/guide-jpa-intro/start/frontendUI
 mvn liberty:dev
 ```
 
 Open another command-line session and run the following commands to navigate to the ***backendServices*** directory and start the service in dev mode:
-```
+```bash
 cd /home/project/guide-jpa-intro/start/backendServices
 mvn liberty:dev
 ```
@@ -429,7 +430,8 @@ The DAO is injected into the ***backendServices/src/main/java/io/openliberty/gui
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-When the server is running, select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to ***https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai***, where **accountname** is your account name.
+When the server is running, click the following button or select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to ***https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai***, where **accountname** is your account name.
+::startApplication{port="9090" display="internal" name="View the Event Manager application" route="/"}
 
 Click ***Create Event*** in the left navigation bar to create events that are persisted to the database. After you create an event, it is available to view, update, and delete in the ***Current Events*** section.
 
@@ -604,7 +606,7 @@ Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 When you are done checking out the services, exit dev mode by pressing CTRL+C in the command-line sessions where you ran the ***frontendUI*** and ***backendServices*** services,  or by typing ***q*** and then pressing the ***enter/return*** key. Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in another command-line session for the ***frontendUI*** and ***backendServices*** services:
-```
+```bash
 cd /home/project/guide-jpa-intro/start
 mvn -pl frontendUI liberty:stop
 mvn -pl backendServices liberty:stop
