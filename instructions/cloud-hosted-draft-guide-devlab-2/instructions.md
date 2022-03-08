@@ -383,10 +383,89 @@ touch /home/project/guide-microprofile-fallback/start/src/test/java/it/io/openli
 ```
 
 
-> Then, to open the unknown file in your IDE, select
-> **File** > **Open** > guide-microprofile-fallback/start/unknown, or click the following button
+> Then, to open the FaultToleranceIT.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-fallback/start/unknown"}
+::openFile{path="/home/project/guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.faulttolerance;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import it.io.openliberty.guides.utils.TestUtils;
+
+public class FaultToleranceIT {
+
+    private Response response;
+    private Client client;
+
+    @BeforeEach
+    public void setup() {
+        client = ClientBuilder.newClient();
+    }
+
+    @AfterEach
+    public void teardown() {
+        client.close();
+        response.close();
+    }
+
+    @Test
+    public void testFallbackForGet() throws InterruptedException {
+        response = TestUtils.getResponse(client,
+                                         TestUtils.INVENTORY_LOCALHOST_URL);
+        assertResponse(TestUtils.baseUrl, response);
+        JsonObject obj = response.readEntity(JsonObject.class);
+        int propertiesSize = obj.size();
+        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_FALSE,
+                                       TestUtils.SYSTEM_MAINTENANCE_TRUE);
+        Thread.sleep(3000);
+        response = TestUtils.getResponse(client,
+                                         TestUtils.INVENTORY_LOCALHOST_URL);
+        assertResponse(TestUtils.baseUrl, response);
+        obj = response.readEntity(JsonObject.class);
+        int propertiesSizeFallBack = obj.size();
+        assertTrue(propertiesSize > propertiesSizeFallBack,
+                   "The total number of properties from the @Fallback method "
+                 + "is not smaller than the number from the system service"
+                 +  "as expected.");
+        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_TRUE,
+                                       TestUtils.SYSTEM_MAINTENANCE_FALSE);
+        Thread.sleep(3000);
+    }
+
+    @Test
+    public void testFallbackSkipForGet() {
+        response = TestUtils.getResponse(client,
+                TestUtils.INVENTORY_UNKNOWN_HOST_URL);
+        assertResponse(TestUtils.baseUrl, response, 404);
+        assertTrue(response.readEntity(String.class).contains("error"),
+                   "Incorrect response body from "
+                   + TestUtils.INVENTORY_UNKNOWN_HOST_URL);
+    }
+
+    private void assertResponse(String url, Response response, int statusCode) {
+        assertEquals(statusCode, response.getStatus(),
+                "Incorrect response code from " + url);
+    }
+
+    private void assertResponse(String url, Response response) {
+        assertResponse(url, response, 200);
+    }
+}
+```
+
 
 
 The ***@BeforeEach*** and ***@AfterEach*** annotations indicate that this method runs either before or after the other test case. These methods are generally used to perform any setup and teardown tasks. In this case, the setup method creates a JAX-RS client, which makes HTTP requests to the ***inventory*** service. This client must also be registered with a JSON-P provider to process JSON resources. The teardown method simply destroys this client instance as well as the HTTP responses.
