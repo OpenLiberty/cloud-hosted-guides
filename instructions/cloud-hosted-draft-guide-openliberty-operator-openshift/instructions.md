@@ -74,10 +74,10 @@ oc api-resources --api-group=apps.openliberty.io
 Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
 
 ```
-NAME                      SHORTNAMES         APIGROUP              NAMESPACED   KIND
-openlibertyapplications   olapp,olapps       apps.openliberty.io   true         OpenLibertyApplication
-openlibertydumps          oldump,oldumps     apps.openliberty.io   true         OpenLibertyDump
-openlibertytraces         oltrace,oltraces   apps.openliberty.io   true         OpenLibertyTrace
+NAME                     SHORTNAMES        APIGROUP                     NAMESPACED  KIND
+openlibertyapplications  olapp,olapps      apps.openliberty.io/v1beta2  true        OpenLibertyApplication
+openlibertydumps         oldump,oldumps    apps.openliberty.io/v1beta2  true        OpenLibertyDump
+openlibertytraces        oltrace,oltraces  apps.openliberty.io/v1beta2  true        OpenLibertyTrace
 ```
 
 Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
