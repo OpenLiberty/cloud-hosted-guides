@@ -140,16 +140,48 @@ When you're done trying out the microservices, press **CTRL+C** in the command l
 
 ::page{title="Modifying system microservice"}
 
-
 The ***system*** service is hardcoded to use a single forward slash as the context root. The context root is set in the ***webApplication***
 element, where the ***contextRoot*** attribute is specified as ***"/"***. You'll make the value of the ***contextRoot*** attribute configurable by implementing it as a variable.
 
 Replace the ***server.xml*** file.
 
-> To open the unknown file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-config/start/unknown, or click the following button
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/unknown"}
+::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Sample Liberty server">
+
+  <featureManager>
+    <feature>restfulWS-3.0</feature>
+    <feature>jsonb-2.0</feature>
+    <feature>cdi-3.0</feature>
+    <feature>jsonp-2.0</feature>
+    <feature>mpConfig-3.0</feature>
+    <feature>appSecurity-4.0</feature>
+  </featureManager>
+
+  <variable name="default.http.port" defaultValue="9080"/>
+  <variable name="default.https.port" defaultValue="9443"/>
+  <variable name="system.app.username" defaultValue="bob"/>
+  <variable name="system.app.password" defaultValue="bobpwd"/>
+  <variable name="context.root" defaultValue="/"/>
+
+  <httpEndpoint host="*" httpPort="${default.http.port}" 
+    httpsPort="${default.https.port}" id="defaultHttpEndpoint" />
+
+  <webApplication location="guide-kubernetes-microprofile-config-system.war" contextRoot="${context.root}"/>
+
+  <basicRegistry id="basic" realm="BasicRegistry">
+    <user name="${system.app.username}" password="${system.app.password}" />
+  </basicRegistry>
+
+</server>
+```
+
 
 
 The ***contextRoot*** attribute in the ***webApplication*** element now gets its value from the ***context.root*** variable. To find a value for the ***context.root*** variable, Open Liberty looks for the following environment variables, in order:
