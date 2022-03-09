@@ -4,9 +4,9 @@ title: instructions
 branch: lab-207-instruction
 version-history-start-date: 2022-02-11T18:24:15Z
 ---
-::page{title="Welcome to the Building fault-tolerant microservices with the @Fallback annotation guide!"}
+::page{title="Welcome to the Containerizing microservices guide!"}
 
-You'll explore how to manage the impact of failures using MicroProfile Fault Tolerance by adding fallback behavior to microservice dependencies.
+Learn how to containerize and run your microservices with Open Liberty using Docker.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -19,17 +19,12 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to use MicroProfile (MP) Fault Tolerance to build resilient microservices that reduce the impact from failure and ensure continued operation of services.
 
-MP Fault Tolerance provides a simple and flexible solution to build fault-tolerant microservices. Fault tolerance leverages different strategies to guide the execution and result of logic. As stated in the [MicroProfile website](https://microprofile.io/project/eclipse/microprofile-fault-tolerance), retry policies, bulkheads, and circuit breakers are popular concepts in this area. They dictate whether and when executions take place, and fallbacks offer an alternative result when an execution does not complete successfully.
+You can easily deploy your microservices in different environments in a lightweight and portable manner by using containers. From development to production and across your DevOps environments, you can deploy your microservices consistently and efficiently with containers. You can run a container from a container image. Each container image is a package of what you need to run your microservice or application, from the code to its dependencies and configuration.
 
-The application that you will be working with is an ***inventory*** service, which collects, stores, and returns the system properties. It uses the ***system*** service to retrieve the system properties for a particular host. You will add fault tolerance to the ***inventory*** service so that it reacts accordingly when the ***system*** service is unavailable.
+You'll learn how to build container images and run containers using Docker for your microservices. You'll construct ***Dockerfile*** files, create Docker images by using the ***docker build*** command, and run the image as Docker containers by using ***docker run*** command.
 
-You will use the ***@Fallback*** annotations from the MicroProfile Fault Tolerance specification to define criteria for when to provide an alternative solution for a failed execution.
-
-You will also see the application metrics for the fault tolerance methods that are automatically enabled when you add the MicroProfile Metrics feature to the server.
-
-
+The two microservices that you'll be working with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This guide demonstrates how both microservices can run and communicate with each other in different Docker containers. 
 
 ::page{title="Getting started"}
 
@@ -42,11 +37,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-fallback.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-containerize.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-fallback.git
-cd guide-microprofile-fallback
+git clone https://github.com/openliberty/guide-containerize.git
+cd guide-containerize
 ```
 
 
@@ -55,464 +50,655 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-### Try what you'll build
+::page{title="Packaging your microservices"}
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
-
+To begin, run the following command to navigate to the **start** directory:
 ```bash
-cd finish
-mvn liberty:run
+cd start
 ```
 
-After you see the following message, your application server is ready:
+You can find the starting Java project in the ***start*** directory. This project is a multi-module Maven project that is made up of the ***system*** and ***inventory*** microservices. Each microservice is located in its own corresponding directory, ***system*** and ***inventory***.
+
+To try out the microservices by using Maven, run the following Maven goal to build the ***system*** microservice and run it inside Open Liberty:
+```bash
+mvn -pl system liberty:run
+```
+
+
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session and run the following Maven goal to build the **inventory** microservice and run it inside Open Liberty:
+```bash
+cd /home/project/guide-containerize/start
+mvn -pl inventory liberty:run
+```
+
+Select **Terminal** > **New Terminal** from the menu of the IDE to open a new command-line session. To access the **inventory** service, which displays the current contents of the inventory, run the following curl command: 
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+After you see the following message in both command-line sessions, both of your services are ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. To access the **inventory** service with a localhost hostname, run the following curl command:
-```bash
-curl -s http://localhost:9080/inventory/systems/localhost | jq
-```
-
-You see the system properties for this host. When you run this curl command, some of these system properties, such as the OS name and user name, are automatically stored in the inventory.
-
-
-Update the **CustomConfigSource** configuration file. Change the ***io_openliberty_guides_system_inMaintenance*** property from **false** to **true** and save the file.
-
-> To open the CustomConfigSource.json file in your IDE, select 
-> **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-fallback/finish/resources/CustomConfigSource.json"}
-
-```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":true}
-```
-
-
-You do not need to restart the server. Next, run the following curl command:
-```bash
-curl -s http://localhost:9080/inventory/systems/localhost | jq
-```
-
-The fallback mechanism is triggered because the **system** service is now in maintenance. You see the cached properties for this localhost.
-
-When you are done checking out the application, go to the ***CustomConfigSource.json*** file again.
-
-
-Update the **CustomConfigSource** configuration file. Change the ***io_openliberty_guides_system_inMaintenance*** property from **true** to **false** to set this condition back to its original value.
-
-> To open the CustomConfigSource.json file in your IDE, select 
-> **File** > **Open** > guide-microprofile-fallback/finish/resources/CustomConfigSource.json, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-fallback/finish/resources/CustomConfigSource.json"}
-
-```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":false}
-```
-
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
-
-```bash
-mvn liberty:stop
-```
-
-
-::page{title="Enabling fault tolerance"}
-
-
-To begin, run the following command to navigate to the **start** directory:
-```bash
-cd /home/project/guide-microprofile-fallback/start
-```
-
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```bash
-mvn liberty:dev
-```
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
-
-The MicroProfile Fault Tolerance API is included in the MicroProfile dependency that is specified in your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows you to use fault tolerance policies in your microservices.
-
-You can also find the ***mpFaultTolerance*** feature in your ***src/main/liberty/config/server.xml*** server configuration, which turns on MicroProfile Fault Tolerance capabilities in Open Liberty.
-
-To easily work through this guide, the two provided microservices are set up to run on the same server. To simulate the availability of the services and then to enable fault tolerance, dynamic configuration with MicroProfile Configuration is used so that you can easily take one service or the other down for maintenance. If you want to learn more about setting up dynamic configuration, see [Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
-
-The following two steps set up the dynamic configuration on the ***system*** service and its client. You can move on to the next section, which adds the fallback mechanism on the ***inventory*** service.
-
-First, the ***src/main/java/io/openliberty/guides/system/SystemResource.java*** file has the ***isInMaintenance()*** condition, which determines that the system properties are returned only if you set the ***io_openliberty_guides_system_inMaintenance*** configuration property to ***false*** in the ***CustomConfigSource*** file. Otherwise, the service returns a ***Status.SERVICE_UNAVAILABLE*** message, which makes it unavailable.
-
-Next, the ***src/main/java/io/openliberty/guides/inventory/client/SystemClient.java*** file makes a request to the ***system*** service through the MicroProfile Rest Client API. If you want to learn more about MicroProfile Rest Client, you can follow the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html) guide. The ***system*** service as described in the ***SystemResource.java*** file may return a ***Status.SERVICE_UNAVAILABLE*** message, which is a 503 status code. This code indicates that the server being called is unable to handle the request because of a temporary overload or scheduled maintenance, which would likely be alleviated after some delay. To simulate that the system is unavailable, an ***IOException*** is thrown.
-
-The ***InventoryManager*** class calls the ***getProperties()*** method in the ***SystemClient.java*** class. You will look into the ***InventoryManager*** class in more detail in the next section.
-
-
-
-
-
-
-
-### Adding the @Fallback annotation
-
-The ***inventory*** service is now able to recognize that the ***system*** service was taken down for maintenance. An IOException is thrown to simulate the ***system*** service is unavailable. Now, set a fallback method to deal with this failure.
-
-
-Replace the ***InventoryManager*** class.
-
-> To open the InventoryManager.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-fallback/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.Properties;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.faulttolerance.Fallback;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-
-@ApplicationScoped
-public class InventoryManager {
-
-    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-    private InventoryUtils invUtils = new InventoryUtils();
-
-    @Fallback(fallbackMethod = "fallbackForGet",
-            applyOn = {IOException.class},
-            skipOn = {UnknownHostException.class})
-    public Properties get(String hostname) throws IOException {
-        return invUtils.getProperties(hostname);
-    }
-
-    public Properties fallbackForGet(String hostname) {
-        Properties properties = findHost(hostname);
-        if (properties == null) {
-            Properties msgProp = new Properties();
-            msgProp.setProperty(hostname,
-                    "System is not found in the inventory or system is in maintenance");
-            return msgProp;
-        }
-        return properties;
-    }
-
-    public void add(String hostname, Properties systemProps) {
-        Properties props = new Properties();
-
-        String osName = systemProps.getProperty("os.name");
-        if (osName == null) {
-            return;
-        }
-
-        props.setProperty("os.name", systemProps.getProperty("os.name"));
-        props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-        SystemData system = new SystemData(hostname, props);
-        if (!systems.contains(system)) {
-            systems.add(system);
-        }
-    }
-
-    public InventoryList list() {
-        return new InventoryList(systems);
-    }
-
-    private Properties findHost(String hostname) {
-        for (SystemData system : systems) {
-            if (system.getHostname().equals(hostname)) {
-                return system.getProperties();
-            }
-        }
-        return null;
-    }
-}
-```
-
-
-
-The ***@Fallback*** annotation dictates a method to call when the original method encounters a failed execution. In this example, use the ***fallbackForGet()*** method.
-
-The ***@Fallback*** annotation provides two parameters, ***applyOn*** and ***skipOn***, which allow you to configure which exceptions trigger a fallback and which exceptions do not, respectively. In this example, the ***get()*** method throws ***IOException*** when the system service is unavailable, and throws ***UnknownHostException*** when the system service cannot be found on the specified host. The ***fallbackForGet()*** method can handle the first case, but not the second.
-
-The ***fallbackForGet()*** method, which is the designated fallback method for the original ***get()*** method, checks to see if the system's properties exist in the inventory. If the system properties entry is not found in the inventory, the method prints out a warning message in the browser. Otherwise, this method returns the cached property values from the inventory.
-
-You successfully set up your microservice to have fault tolerance capability.
-
-
-::page{title="Enabling metrics for the fault tolerance methods"}
-
-
-MicroProfile Fault Tolerance integrates with MicroProfile Metrics to provide metrics for the annotated fault tolerance methods. When both the ***mpFaultTolerance*** and the ***mpMetrics*** features are included in the ***server.xml*** configuration file, the ***@Fallback*** fault tolerance annotation provides metrics that count the following things: the total number of annotated method invocations, the total number of failed annotated method invocations, and the total number of the fallback method calls.
-
-The ***mpMetrics*** feature requires SSL and the configuration is provided for you. The ***quickStartSecurity*** configuration element provides basic security to secure the server. When you go to the ***/metrics*** endpoint, use the credentials that are defined in the server configuration to log in to view the data for the fault tolerance methods.
-
-You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [MicroProfile Fault Tolerance specification](https://github.com/eclipse/microprofile-fault-tolerance/releases).
-
-
-::page{title="Running the application"}
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-When the server is running, run the following curl command:
-```bash
-curl -s http://localhost:9080/inventory/systems/localhost | jq
-```
-
-You receive the system properties of your local JVM from the **inventory** service.
-
-Next, run the following curl command which accesses the **system** service, to retrieve the system properties for the specific localhost:
+The **system** service shows the system properties of the running JVM and can be found by running the following curl command:
 ```bash
 curl -s http://localhost:9080/system/properties | jq
 ```
 
-Notice that the results from the two URLs are identical because the **inventory** service gets its results from calling the **system** service.
-
-To see the application metrics, run the following curl commmand. This command will Log in using **admin** user, and you will have to enter **adminpwd** as the password.
+The system properties of your localhost can be added to the **inventory** service at **http://localhost:9081/inventory/systems/localhost**. Run the following curl command:
 ```bash
-curl -k -u admin https://localhost:9443/metrics/base | grep _ft_
-```
-
-See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
-
-```
-::page{title="TYPE base_ft_invocations_total counter"}
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 0
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
-```
-
-You can test the fault tolerance mechanism of your microservices by dynamically changing the ***io_openliberty_guides_system_inMaintenance*** property value to ***true*** in the ***resources/CustomConfigSource.json*** file, which puts the ***system*** service in maintenance.
-
-
-Update the configuration file. Change the ***io_openliberty_guides_system_inMaintenance*** property from **false** to **true** and save the file.
-
-> To open the CustomConfigSource.json file in your IDE, select 
-> **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-fallback/start/resources/CustomConfigSource.json"}
-
-```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":true}
+curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 
 
-
-
-After saving the file, run the following curl command to view the cached version of the properties:
+After you are finished checking out the microservices, stop the Open Liberty servers by pressing **CTRL+C** in the command-line sessions where you ran the servers. Alternatively, you can run the **liberty:stop** goal in another command-line session from the 
+**start** directory:
 ```bash
-curl -s http://localhost:9080/inventory/systems/localhost | jq
+cd /home/project/guide-containerize/start
+mvn -pl system liberty:stop
+mvn -pl inventory liberty:stop
 ```
 
-The **fallbackForGet()** method, which is the designated fallback method, is called when the **system** service is not available. The cached system properties contain only the OS name and user name key and value pairs.
-
-
-To see that the **system** service is down, run the following curl command:
+To package your microservices, run the Maven package goal to build the application ***.war*** files from the start directory so that the ***.war*** files are in the ***system/target*** and ***inventory/target*** directories.
 ```bash
-curl -I http://localhost:9080/system/properties
+mvn package
 ```
 
-You see that the service displays a 503 HTTP response code.
+To learn more about RESTful web services and how to build them, see [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the ***system*** service. The ***inventory*** service is built in a similar way.
 
 
-Run the following curl command again and enter **adminpwd** as the password:
-```bash
-curl -k -u admin https://localhost:9443/metrics/base | grep _ft_
-```
+::page{title="Building your Docker images"}
 
-See the following sample outputs for the **@Fallback** annotated method and the fallback method after a fallback occurs:
+A Docker image is a binary file. It is made up of multiple layers and is used to run code in a Docker container. Images are built from instructions in Dockerfiles to create a containerized version of the application.
 
-```
-::page{title="TYPE base_ft_invocations_total counter"}
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="valueReturned"} 1
-base_ft_invocations_total{fallback="notApplied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
-base_ft_invocations_total{fallback="applied",method="io.openliberty.guides.inventory.InventoryManager.get",result="exceptionThrown"} 0
-```
+A ***Dockerfile*** is a collection of instructions for building a Docker image that can then be run as a container. As each instruction is run in a ***Dockerfile***, a new Docker layer is created. These layers, which are known as intermediate images, are created when a change is made to your Docker image.
 
+Every ***Dockerfile*** begins with a parent or base image over which various commands are run. For example, you can start your image from scratch and run commands that download and install a Java runtime, or you can start from an image that already contains a Java installation.
 
-From the output, the ***base_ft_invocations_total{fallback="notApplied",*** ***method="io.openliberty.guides.inventory.InventoryManager.get",*** ***result="valueReturned"}*** data shows that the **get()** method was called once without triggering a fallback method. The ***base_ft_invocations_total{fallback="applied",*** ***method="io.openliberty.guides.inventory.InventoryManager.get",*** ***result="valueReturned"}*** data indicates that the **get()** method was called once and the fallback **fallbackForGet()** method was triggered.
+Learn more about Docker on the [official Docker page](https://www.docker.com/what-docker).
 
+### Creating your Dockerfiles
+You will be creating two Docker images to run the ***inventory*** service and ***system*** service. The first step is to create Dockerfiles for both services.
 
-Update the configuration file. After you finish, change the ***io_openliberty_guides_system_inMaintenance*** property value back to **false** in the **resources/CustomConfigSource.json** file.
+In this guide, you're using an official image from the IBM Container Registry (ICR), ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi***, as your parent image. This image is tagged with the word ***full***, meaning it includes all Liberty features. ***full*** images are recommended for development only because they significantly expand the image size with features that are not required by the application.
 
-> To open the CustomConfigSource.json file in your IDE, select 
-> **File** > **Open** > guide-microprofile-fallback/start/resources/CustomConfigSource.json, or click the following button
+To minimize your image footprint in production, you can use one of the ***kernel-slim*** images, such as ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi***.  This image installs the basic server. You can then add all the necessary features for your application with the usage pattern that is detailed in the Open Liberty [container image documentation](https://github.com/OpenLiberty/ci.docker#building-an-application-image). To use the default image that comes with the Open Liberty runtime, define the ***FROM*** instruction as ***FROM icr.io/appcafe/open-liberty***. You can find all official images on the Open Liberty [container image repository](https://github.com/OpenLiberty/ci.docker#container-images).
 
-::openFile{path="/home/project/guide-microprofile-fallback/start/resources/CustomConfigSource.json"}
-
-```
-{"config_ordinal":500,
-"io_openliberty_guides_system_inMaintenance":false}
-```
-
-
-::page{title="Testing the application"}
-
-You can test your application manually, but automated tests ensure code quality because they trigger a failure whenever a code change introduces a defect. JUnit and the JAX-RS Client API provide a simple environment for you to write tests.
-
-Create the ***FaultToleranceIT*** class.
+Create the ***Dockerfile*** for the inventory service.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java
+touch /home/project/guide-containerize/start/inventory/Dockerfile
 ```
 
 
-> Then, to open the FaultToleranceIT.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java, or click the following button
+> Then, to open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-containerize/start/inventory/Dockerfile, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-fallback/start/src/test/java/it/io/openliberty/guides/faulttolerance/FaultToleranceIT.java"}
+::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="inventory" \
+  version="$VERSION-$REVISION" \
+  summary="The inventory microservice from the Containerizing microservices guide" \
+  description="This image contains the inventory microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 \
+    src/main/liberty/config \
+    /config/
+
+COPY --chown=1001:0 \
+    target/guide-containerize-inventory.war \
+    /config/apps
+
+RUN configure.sh
+```
+
+
+
+The ***FROM*** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use ***FROM scratch***, which makes your image a base image. 
+
+It is also recommended to label your Docker images with the ***LABEL*** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
+
+The ***COPY*** instructions are structured as ***COPY*** ***`[--chown=<user>:<group>]`*`*** ***\<source\>`*** ***\<destination\>`***. They copy local files into the specified destination within your Docker image. In this case, the ***inventory*** server configuration files that are located at ***src/main/liberty/config*** are copied to the ***/config/*** destination directory. The ***inventory*** application WAR file ***inventory.war***, which was created from running ***mvn package***, is copied to the ***/config/apps*** destination directory.
+
+The ***COPY*** instructions use the ***1001*** user ID  and ***0*** group because the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image runs by default with the ***USER 1001*** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user.
+
+Place the ***RUN configure.sh*** command at the end to get a pre-warmed Docker image. It improves the startup time of running your Docker container.
+
+The ***Dockerfile*** for the ***system*** service follows the same instructions as the ***inventory*** service, except that some ***labels*** are updated, and the ***system.war*** archive is copied into ***/config/apps***.
+
+Create the ***Dockerfile*** for the system service.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-containerize/start/system/Dockerfile
+```
+
+
+> Then, to open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-containerize/start/system/Dockerfile, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Containerizing microservices guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 src/main/liberty/config /config/
+
+COPY --chown=1001:0 target/guide-containerize-system.war /config/apps
+
+RUN configure.sh
+```
+
+
+
+
+### Building your Docker image
+
+Now that your microservices are packaged and you have written your Dockerfiles, you will build your Docker images by using the ***docker build*** command.
+
+Run the following command to download or update to the latest Open Liberty Docker image:
+
+```bash
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+```
+
+Run the following commands to build container images for your application:
+
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
+
+To verify that the images are built, run the ***docker images*** command to list all local Docker images:
+
+```bash
+docker images
+```
+
+Or, run the ***docker images*** command with ***--filter*** option to list your images:
+```bash
+docker images -f "label=org.opencontainers.image.authors=Your Name"
+```
+
+Your ***inventory*** and ***system*** images appear in the list of all Docker images:
+
+```
+REPOSITORY    TAG             IMAGE ID        CREATED          SIZE
+inventory     1.0-SNAPSHOT    08fef024e986    4 minutes ago    471MB
+system        1.0-SNAPSHOT    1dff6d0b4f31    5 minutes ago    470MB
+```
+
+
+::page{title="Running your microservices in Docker containers"}
+Now that your two images are built, you will run your microservices in Docker containers:
+
+```bash
+docker run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
+docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
+```
+
+The following table describes the flags in these commands:
+
+| *Flag* | *Description*
+| ---| ---
+| -d     | Runs the container in the background.
+| --name | Specifies a name for the container.
+| -p     | Maps the host ports to the container ports. For example: ***-p \<HOST_PORT\>:\<CONTAINER_PORT\>***
+
+Next, run the ***docker ps*** command to verify that your containers are started:
+
+```bash
+docker ps
+```
+
+Make sure that your containers are running and show ***Up*** as their status:
+
+```
+CONTAINER ID    IMAGE                   COMMAND                  CREATED          STATUS          PORTS                                        NAMES
+2b584282e0f5    inventory:1.0-SNAPSHOT  "/opt/ol/helpers/run…"   2 seconds ago    Up 1 second     9080/tcp, 9443/tcp, 0.0.0.0:9081->9081/tcp   inventory
+99a98313705f    system:1.0-SNAPSHOT     "/opt/ol/helpers/run…"   3 seconds ago    Up 2 seconds    0.0.0.0:9080->9080/tcp, 9443/tcp             system
+```
+
+If a problem occurs and your containers exit prematurely, the containers don't appear in the container list that the ***docker ps*** command displays. Instead, your containers appear with an ***Exited*** status when they run the ***docker ps -a*** command. Run the ***docker logs system*** and ***docker logs inventory*** commands to view the container logs for any potential problems. Run the ***docker stats system*** and ***docker stats inventory*** commands to display a live stream of usage statistics for your containers. You can also double-check that your Dockerfiles are correct. When you find the cause of the issues, remove the faulty containers with the ***docker rm system*** and ***docker rm inventory*** commands. Rebuild your images, and start the containers again.
+
+
+To access the application, run the following curl command. An empty list is expected because no system properties are stored in the inventory yet:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+Next, retrieve the ***system*** container's IP address by running the following:
+
+```bash
+docker inspect -f "{{.NetworkSettings.IPAddress }}" system
+```
+
+The command returns the system container IP address:
+
+```
+172.17.0.2
+```
+
+In this case, the IP address for the ***system*** service is ***172.17.0.2***. Take note of this IP address to construct the URL to view the system properties. 
+
+
+Run the following commands to go to the **http://localhost:9081/inventory/systems/[system-ip-address]** by replacing **[system-ip-address]** URL with the IP address that you obtained earlier:
+```bash
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
+```
+
+You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. Run the following curl command and you see a new entry for **[system-ip-address]**:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+::page{title="Externalizing server configuration"}
+
+
+As mentioned at the beginning of this guide, one of the advantages of using containers is that they are portable and can be moved and deployed efficiently across all of your DevOps environments. Configuration often changes across different environments, and by externalizing your server configuration, you can simplify the development process.
+
+Imagine a scenario where you are developing an Open Liberty application on port ***9081*** but to deploy it to production, it must be available on port ***9091***. To manage this scenario, you can keep two different versions of the ***server.xml*** file; one for production and one for development. However, trying to maintain two different versions of a file might lead to mistakes. A better solution would be to externalize the configuration of the port number and use the value of an environment variable that is stored in each environment. 
+
+In this example, you will use an environment variable to externally configure the HTTP port number of the ***inventory*** service. 
+
+In the ***inventory/server.xml*** file, the ***default.http.port*** variable is declared and is used in the ***httpEndpoint*** element to define the service endpoint. The default value of the ***default.http.port*** variable is ***9081***. However, this value is only used if no other value is specified. You can replace this value in the container by using the -e flag for the podman run command. 
+
+Run the following commands to stop and remove the ***inventory*** container and rerun it with the ***default.http.port*** environment variable set:
+
+```bash
+docker stop inventory
+docker rm inventory 
+docker run -d --name inventory -e default.http.port=9091 -p 9091:9091 inventory:1.0-SNAPSHOT
+```
+
+The ***-e*** flag can be used to create and set the values of environment variables in a Docker container. In this case, you are setting the ***default.http.port*** environment variable to ***9091*** for the ***inventory*** container.
+
+Now, when the service is starting up, Open Liberty finds the ***default.http.port*** environment variable and uses it to set the value of the ***default.http.port*** variable to be used in the HTTP endpoint.
+
+
+The **inventory** service is now available on the new port number that you specified. You can see the contents of the inventory at the **http://localhost:9091/inventory/systems** URL. Run the following curl command:
+```bash
+curl -s http://localhost:9091/inventory/systems | jq
+```
+
+You can add your local system properties at the **http://localhost:9091/inventory/systems/[system-ip-address]** URL by replacing **[system-ip-address]** with the IP address that you obtained in the previous section. Run the following commands:
+```bash
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9091/inventory/systems/{$SYSTEM_IP} | jq
+```
+
+The **system** service remains unchanged and is available at the **http://localhost:9080/system/properties** URL. Run the following curl command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+You can externalize the configuration of more than just the port numbers. To learn more about Open Liberty server configuration, check out the [Server Configuration Overview](https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html) docs. 
+
+::page{title="Testing the microservices"}
+
+You can test your microservices manually by hitting the endpoints or with automated tests that check your running Docker containers.
+
+Create the ***SystemEndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+```
+
+
+> Then, to open the SystemEndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.faulttolerance;
+package it.io.openliberty.guides.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import jakarta.json.JsonObject;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
+
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import it.io.openliberty.guides.utils.TestUtils;
+public class SystemEndpointIT {
 
-public class FaultToleranceIT {
+    private static String clusterUrl;
 
-    private Response response;
     private Client client;
+
+    @BeforeAll
+    public static void oneTimeSetup() {
+        String nodePort = System.getProperty("system.http.port");
+        clusterUrl = "http://localhost:" + nodePort + "/system/properties/";
+    }
 
     @BeforeEach
     public void setup() {
-        client = ClientBuilder.newClient();
+        client = ClientBuilder.newBuilder()
+                    .hostnameVerifier(new HostnameVerifier() {
+                        public boolean verify(String hostname, SSLSession session) {
+                            return true;
+                        }
+                    })
+                    .build();
     }
 
     @AfterEach
     public void teardown() {
         client.close();
+    }
+
+    @Test
+    public void testGetProperties() {
+        Client client = ClientBuilder.newClient();
+
+        WebTarget target = client.target(clusterUrl);
+        Response response = target.request().get();
+
+        assertEquals(200, response.getStatus(),
+            "Incorrect response code from " + clusterUrl);
+        response.close();
+    }
+
+}
+```
+
+
+
+The ***testGetProperties()*** method checks for a ***200*** response code from the ***system*** service endpoint.
+
+Create the ***InventoryEndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+```
+
+
+> Then, to open the InventoryEndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import jakarta.json.JsonObject;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+
+@TestMethodOrder(OrderAnnotation.class)
+public class InventoryEndpointIT {
+
+    private static String invUrl;
+    private static String sysUrl;
+    private static String systemServiceIp;
+
+    private static Client client;
+
+    @BeforeAll
+    public static void oneTimeSetup() {
+
+        String invServPort = System.getProperty("inventory.http.port");
+        String sysServPort = System.getProperty("system.http.port");
+
+        systemServiceIp = System.getProperty("system.ip");
+
+        invUrl = "http://localhost" + ":" + invServPort + "/inventory/systems/";
+        sysUrl = "http://localhost" + ":" + sysServPort + "/system/properties/";
+
+        client = ClientBuilder.newBuilder().hostnameVerifier(new HostnameVerifier() {
+            public boolean verify(String hostname, SSLSession session) {
+                return true;
+            }
+        }).build();
+
+        client.target(invUrl + "reset").request().post(null);
+    }
+
+    @AfterAll
+    public static void teardown() {
+        client.close();
+    }
+
+    @Test
+    @Order(1)
+    public void testEmptyInventory() {
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
+
+        JsonObject obj = response.readEntity(JsonObject.class);
+
+        int expected = 0;
+        int actual = obj.getInt("total");
+        assertEquals(expected, actual,
+                    "The inventory should be empty on application start but it wasn't");
+
         response.close();
     }
 
     @Test
-    public void testFallbackForGet() throws InterruptedException {
-        response = TestUtils.getResponse(client,
-                                         TestUtils.INVENTORY_LOCALHOST_URL);
-        assertResponse(TestUtils.baseUrl, response);
+    @Order(2)
+    public void testHostRegistration() {
+        this.visitSystemService();
+
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
+
         JsonObject obj = response.readEntity(JsonObject.class);
-        int propertiesSize = obj.size();
-        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_FALSE,
-                                       TestUtils.SYSTEM_MAINTENANCE_TRUE);
-        Thread.sleep(3000);
-        response = TestUtils.getResponse(client,
-                                         TestUtils.INVENTORY_LOCALHOST_URL);
-        assertResponse(TestUtils.baseUrl, response);
-        obj = response.readEntity(JsonObject.class);
-        int propertiesSizeFallBack = obj.size();
-        assertTrue(propertiesSize > propertiesSizeFallBack,
-                   "The total number of properties from the @Fallback method "
-                 + "is not smaller than the number from the system service"
-                 +  "as expected.");
-        TestUtils.changeSystemProperty(TestUtils.SYSTEM_MAINTENANCE_TRUE,
-                                       TestUtils.SYSTEM_MAINTENANCE_FALSE);
-        Thread.sleep(3000);
+
+        int expected = 1;
+        int actual = obj.getInt("total");
+        assertEquals(expected, actual,
+                        "The inventory should have one entry for " + systemServiceIp);
+
+        boolean serviceExists = obj.getJsonArray("systems").getJsonObject(0)
+                        .get("hostname").toString().contains(systemServiceIp);
+        assertTrue(serviceExists,
+                        "A host was registered, but it was not " + systemServiceIp);
+
+        response.close();
     }
 
     @Test
-    public void testFallbackSkipForGet() {
-        response = TestUtils.getResponse(client,
-                TestUtils.INVENTORY_UNKNOWN_HOST_URL);
-        assertResponse(TestUtils.baseUrl, response, 404);
-        assertTrue(response.readEntity(String.class).contains("error"),
-                   "Incorrect response body from "
-                   + TestUtils.INVENTORY_UNKNOWN_HOST_URL);
+    @Order(3)
+    public void testSystemPropertiesMatch() {
+        Response invResponse = this.getResponse(invUrl);
+        Response sysResponse = this.getResponse(sysUrl);
+
+        this.assertResponse(invUrl, invResponse);
+        this.assertResponse(sysUrl, sysResponse);
+
+        JsonObject jsonFromInventory = (JsonObject) invResponse
+                        .readEntity(JsonObject.class).getJsonArray("systems")
+                        .getJsonObject(0).get("properties");
+
+        JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
+
+        String osNameFromInventory = jsonFromInventory.getString("os.name");
+        String osNameFromSystem = jsonFromSystem.getString("os.name");
+        this.assertProperty("os.name", systemServiceIp, osNameFromSystem,
+                        osNameFromInventory);
+
+        String userNameFromInventory = jsonFromInventory.getString("user.name");
+        String userNameFromSystem = jsonFromSystem.getString("user.name");
+        this.assertProperty("user.name", systemServiceIp, userNameFromSystem,
+                        userNameFromInventory);
+
+        invResponse.close();
+        sysResponse.close();
     }
 
-    private void assertResponse(String url, Response response, int statusCode) {
-        assertEquals(statusCode, response.getStatus(),
-                "Incorrect response code from " + url);
+    @Test
+    @Order(4)
+    public void testUnknownHost() {
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
+
+        Response badResponse = client.target(invUrl + "badhostname")
+                        .request(MediaType.APPLICATION_JSON).get();
+
+        String obj = badResponse.readEntity(String.class);
+
+        boolean isError = obj.contains("error");
+        assertTrue(isError,
+                        "badhostname is not a valid host but it didn't raise an error");
+
+        response.close();
+        badResponse.close();
     }
+
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+
 
     private void assertResponse(String url, Response response) {
-        assertResponse(url, response, 200);
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
+
+    private void assertProperty(String propertyName, String hostname, String expected,
+                    String actual) {
+        assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
+                        + "in the system service does not match the one stored in "
+                        + "the inventory service for " + hostname);
+    }
+
+    private void visitSystemService() {
+        Response response = this.getResponse(sysUrl);
+        this.assertResponse(sysUrl, response);
+        response.close();
+
+        Response targetResponse = client.target(invUrl + systemServiceIp).request()
+                        .get();
+
+        targetResponse.close();
     }
 }
 ```
 
 
 
-The ***@BeforeEach*** and ***@AfterEach*** annotations indicate that this method runs either before or after the other test case. These methods are generally used to perform any setup and teardown tasks. In this case, the setup method creates a JAX-RS client, which makes HTTP requests to the ***inventory*** service. This client must also be registered with a JSON-P provider to process JSON resources. The teardown method simply destroys this client instance as well as the HTTP responses.
-
-The ***testFallbackForGet()*** test case sends a request to the ***inventory*** service to get the systems properties for a hostname before and after the ***system*** service becomes unavailable. Then, it asserts outputs from the two requests to ensure that they are different from each other.
-
-The ***testFallbackSkipForGet()*** test case sends a request to the ***inventory*** service to get the system properties for an incorrect hostname (***unknown***). Then, it confirms that the fallback method has not been called by asserting that the response's status code is ***404*** with an error message in the response body.
-
-The ***@Test*** annotations indicate that the methods automatically execute when your test class runs.
-
-In addition, a few endpoint tests have been included for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, then you might have introduced a bug into the code.
-
+* The ***testEmptyInventory()*** method checks that the ***inventory*** service has a total of 0 systems before anything is added to it.
+* The ***testHostRegistration()*** method checks that the ***system*** service was added to ***inventory*** properly.
+* The ***testSystemPropertiesMatch()*** checks that the ***system*** properties match what was added into the ***inventory*** service.
+* The ***testUnknownHost()*** method checks that an error is raised if an unknown host name is being added into the ***inventory*** service.
+* The ***systemServiceIp*** variable has the same value as the IP address that you retrieved in the previous section when you manually added the ***system*** service into the ***inventory*** service. This value of the IP address is passed in when you run the tests.
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by setting **-Dsystem.ip** to the IP address that you determined previously.
 
-If the tests pass, you see a similar output to the following example:
+```bash
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+mvn package
+mvn failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9091 -Dsystem.http.port=9080
+```
+
+If the tests pass, you see output similar to the following example:
+
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.faulttolerance.FaultToleranceIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.517 sec - in it.io.openliberty.guides.faulttolerance.FaultToleranceIT
 Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.937 sec - in it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.653 s - in it.io.openliberty.guides.system.SystemEndpointIT
+
+Results:
+
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
 Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.396 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.935 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
-Results :
+Results:
 
-Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-To see if the tests detect a failure, comment out the ***changeSystemProperty()*** methods in the ***FaultToleranceIT.java*** file. Rerun the tests to see that a test failure occurs for the ***testFallbackForGet()*** and ***testFallbackSkipForGet()*** test cases.
+When you are finished with the services, run the following commands to stop and remove your containers:
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+```bash
+docker stop inventory system 
+docker rm inventory system
+```
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just learned how to build a fallback mechanism for a microservice with MicroProfile Fault Tolerance in Open Liberty and wrote a test to validate it.
-
-
-You can try one of the related MicroProfile guides. They demonstrate technologies that you can learn and expand on what you built here.
+You have just built Docker images and run two microservices on Open Liberty in containers. 
 
 
 
@@ -521,35 +707,33 @@ You can try one of the related MicroProfile guides. They demonstrate technologie
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-fallback*** project by running the following commands:
+Delete the ***guide-containerize*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-fallback
+rm -fr guide-containerize
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20fault-tolerant%20microservices%20with%20the%20@Fallback%20annotation&guide-id=cloud-hosted-guide-microprofile-fallback)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Containerizing%20microservices&guide-id=cloud-hosted-guide-containerize)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-fallback/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-fallback/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-containerize/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-containerize/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-* [Preventing repeated failed calls to microservices](https://openliberty.io/guides/circuit-breaker.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
 ### Log out of the session
