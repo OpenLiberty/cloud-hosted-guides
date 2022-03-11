@@ -348,8 +348,7 @@ Make sure to substitute the appropriate ***[HOST]*** value. For example, using t
 
 Or, you can run the following command to get the URL:
 ```bash
-IFS=' ' read -r -a system_url <<< "`oc get routes | grep system`"
-echo http://${system_url[1]}/system/properties
+echo http://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
 ```
 
 Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
@@ -428,7 +427,7 @@ The health check endpoints ***/health/started***, ***/health/live*** and ***/hea
 
 Run the following commands to update the **applicationImage** and deploy the **system** microservice with the new configuration:
 ```bash
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always=g' deploy.yaml
+sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 oc apply -f deploy.yaml
 ```
 
