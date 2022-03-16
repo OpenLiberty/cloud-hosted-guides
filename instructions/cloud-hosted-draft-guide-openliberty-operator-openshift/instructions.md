@@ -284,7 +284,7 @@ One of the benefits of using ***ImageStream*** objects is that the operator rede
 Additionally, the microservice includes the ***service*** and ***expose*** parameters. The ***service.port*** parameter specifies which port is exposed by the container, allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster, it must be exposed by setting the ***expose*** parameter to ***true***. After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
 
 
-Run the following commands to update the **applicationImage** and deploy the **system** microservice with the previously explained configuration:
+Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
 ```bash
 sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 oc apply -f deploy.yaml
@@ -425,13 +425,18 @@ spec:
 The health check endpoints ***/health/started***, ***/health/live*** and ***/health/ready*** have already been created for you. 
 
 
-Run the following commands to update the **applicationImage** and deploy the **system** microservice with the new configuration:
+Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the new configuration:
 ```bash
 sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 oc apply -f deploy.yaml
 ```
 
-You can revisit the microservice at ***http://[HOST]/system/properties*** as the previous section.
+Run the following command to get the URL:
+```bash
+echo http://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
+```
+
+Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
 
 ::page{title="Tearing down the environment"}
 
