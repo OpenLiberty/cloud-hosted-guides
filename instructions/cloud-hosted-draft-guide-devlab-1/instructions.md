@@ -72,8 +72,6 @@ The ***finish*** directory contains the finished project that you will build.
 
 ::page{title="Creating the Dockerfile"}
 
-
-
 The first step to running your application inside of a Docker container is creating a Dockerfile. A Dockerfile is a collection of instructions for building a Docker image that can then be run as a container. Every Dockerfile begins with a parent or base image on top of which various commands are run. For example, you can start your image from scratch and run commands that download and install Java, or you can start from an image that already contains a Java installation.
 
 Navigate to the ***start*** directory to begin.
@@ -89,10 +87,39 @@ touch /home/project/guide-docker/start/Dockerfile
 ```
 
 
-> Then, to open the unknown file in your IDE, select
-> **File** > **Open** > guide-docker/start/unknown, or click the following button
+> Then, to open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-docker/start/Dockerfile, or click the following button
 
-::openFile{path="/home/project/guide-docker/start/unknown"}
+::openFile{path="/home/project/guide-docker/start/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="IBM" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-docker" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Docker Guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
+
+USER root
+
+COPY --chown=1001:0 src/main/liberty/config/server.xml /config/
+COPY --chown=1001:0 target/*.war /config/apps/
+USER 1001
+```
+
 
 
 The ***FROM*** instruction initializes a new build stage and indicates the parent image from which your image is built. If you don't need a parent image, then use ***FROM scratch***, which makes your image a base image. 
@@ -102,6 +129,7 @@ In this case, you’re using the ***icr.io/appcafe/open-liberty:full-java11-open
 The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the server configuration file that is located at ***src/main/liberty/config/server.xml*** is copied to the ***/config/*** destination directory.
 
 ### Writing a .dockerignore file
+
 
 When Docker runs a build, it sends all of the files and directories that are located in the same directory as the Dockerfile to its build context, making them available for use in instructions like ***ADD*** and ***COPY***. If there are files or directories you wish to exclude from the build context, you can add them to a ***.dockerignore*** file. By adding files that aren't nessecary for building your image to the ***.dockerignore*** file, you can decrease the image's size and speed up the building process. You may also want to exclude files that contain sensitive information, such as a ***.git*** folder or private keys, from the build context. 
 
@@ -150,15 +178,49 @@ curl -s http://localhost:9080/system/properties | jq
 
 ::page{title="Updating the application while the container is running"}
 
-
 With your container running, make the following update to the source code:
 
 Update the ***PropertiesResource*** class.
 
-> To open the unknown file in your IDE, select
-> **File** > **Open** > guide-docker/start/unknown, or click the following button
+> To open the PropertiesResource.java file in your IDE, select
+> **File** > **Open** > guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
 
-::openFile{path="/home/project/guide-docker/start/unknown"}
+::openFile{path="/home/project/guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java"}
+
+
+
+```java
+package io.openliberty.guides.rest;
+
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Produces;
+
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.Json;
+
+@Path("properties-new")
+public class PropertiesResource {
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject getProperties() {
+
+        JsonObjectBuilder builder = Json.createObjectBuilder();
+
+        System.getProperties()
+              .entrySet()
+              .stream()
+              .forEach(entry -> builder.add((String) entry.getKey(),
+                                            (String) entry.getValue()));
+
+       return builder.build();
+    }
+}
+```
+
 
 
 Change the endpoint of your application from ***properties*** to ***properties-new*** by changing the ***@Path*** annotation to ***"properties-new"***.
@@ -174,7 +236,6 @@ curl -s http://localhost:9080/system/properties-new | jq
 ::page{title="Testing the container"}
 
 
-
 You can test this service manually by starting a server and going to the **http://localhost:9080/system/properties-new** URL.
 However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS Client API provide a simple environment to test the application. You can write tests for the individual units of code outside of a running application server, or you can write them to call the application server directly. In this example, you will create a test that calls the application server directly.
 
@@ -186,10 +247,53 @@ touch /home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/re
 ```
 
 
-> Then, to open the unknown file in your IDE, select
-> **File** > **Open** > guide-docker/start/unknown, or click the following button
+> Then, to open the EndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-docker/start/unknown"}
+::openFile{path="/home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.rest;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
+
+import jakarta.json.JsonObject;
+
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
+
+
+public class EndpointIT {
+
+    @Test
+    public void testGetProperties() {
+        String port = System.getProperty("liberty.test.port");
+        String url = "http://localhost:" + port + "/";
+
+        Client client = ClientBuilder.newClient();
+
+        WebTarget target = client.target(url + "system/properties-new");
+        Response response = target.request().get();
+        JsonObject obj = response.readEntity(JsonObject.class);
+
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+
+        assertEquals("/opt/ol/wlp/output/defaultServer/",
+                     obj.getString("server.output.dir"),
+                     "The system property for the server output directory should match "
+                     + "the Open Liberty container image.");
+
+        response.close();
+    }
+}
+```
+
 
 
 This test makes a request to the ***/system/properties-new*** endpoint and checks to make sure that the response has a valid status code, and that the information in the response is correct. 
