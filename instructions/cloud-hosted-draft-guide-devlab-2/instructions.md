@@ -4,9 +4,9 @@ title: instructions
 branch: lab-207-instruction
 version-history-start-date: 2022-02-11T18:24:15Z
 ---
-::page{title="Welcome to the Containerizing microservices guide!"}
+::page{title="Welcome to the Validating constraints with microservices guide!"}
 
-Learn how to containerize and run your microservices with Open Liberty using Docker.
+Explore how to use bean validation to validate user input data for microservices.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,15 +16,16 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
+You will learn the basics of writing and testing a microservice that uses bean validation and the new functionality of Bean Validation 2.0. The service uses bean validation to validate that the supplied JavaBeans meet the defined constraints.
 
-You can easily deploy your microservices in different environments in a lightweight and portable manner by using containers. From development to production and across your DevOps environments, you can deploy your microservices consistently and efficiently with containers. You can run a container from a container image. Each container image is a package of what you need to run your microservice or application, from the code to its dependencies and configuration.
+Bean Validation is a Java specification that simplifies data validation and error checking. Bean validation uses a standard way to validate data stored in JavaBeans. Validation can be performed manually or with integration with other specifications and frameworks, such as Contexts and Dependency Injection (CDI), Java Persistence API (JPA), or JavaServer Faces (JSF). To set rules on data, apply constraints by using annotations or XML configuration files. Bean validation provides both built-in constraints and the ability to create custom constraints. Bean validation allows for validation of both JavaBean fields and methods. For method-level validation, both the input parameters and return value can be validated.
 
-You'll learn how to build container images and run containers using Docker for your microservices. You'll construct ***Dockerfile*** files, create Docker images by using the ***docker build*** command, and run the image as Docker containers by using ***docker run*** command.
+Several additional built-in constraints are included in Bean Validation 2.0, which reduces the need for custom validation in common validation scenarios. Some of the new built-in constraints include ***@Email***, ***@NotBlank***, ***@Positive***, and ***@Negative***. Also in Bean Validation 2.0, you can now specify constraints on type parameters.
 
-The two microservices that you'll be working with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This guide demonstrates how both microservices can run and communicate with each other in different Docker containers. 
+The example microservice uses both field-level and method-level validation as well as several of the built-in constraints and a custom constraint.
+
 
 ::page{title="Getting started"}
 
@@ -37,11 +38,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-containerize.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-bean-validation.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-containerize.git
-cd guide-containerize
+git clone https://github.com/openliberty/guide-bean-validation.git
+cd guide-bean-validation
 ```
 
 
@@ -50,388 +51,606 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-::page{title="Packaging your microservices"}
+### Try what you'll build
 
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To begin, run the following command to navigate to the **start** directory:
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+
 ```bash
-cd start
+cd finish
+mvn liberty:run
 ```
 
-You can find the starting Java project in the ***start*** directory. This project is a multi-module Maven project that is made up of the ***system*** and ***inventory*** microservices. Each microservice is located in its own corresponding directory, ***system*** and ***inventory***.
-
-To try out the microservices by using Maven, run the following Maven goal to build the ***system*** microservice and run it inside Open Liberty:
-```bash
-mvn -pl system liberty:run
-```
-
-
-Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session and run the following Maven goal to build the **inventory** microservice and run it inside Open Liberty:
-```bash
-cd /home/project/guide-containerize/start
-mvn -pl inventory liberty:run
-```
-
-Select **Terminal** > **New Terminal** from the menu of the IDE to open a new command-line session. To access the **inventory** service, which displays the current contents of the inventory, run the following curl command: 
-```bash
-curl -s http://localhost:9081/inventory/systems | jq
-```
-
-After you see the following message in both command-line sessions, both of your services are ready:
+After you see the following message, your application server is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
-The **system** service shows the system properties of the running JVM and can be found by running the following curl command:
-```bash
-curl -s http://localhost:9080/system/properties | jq
+Once your application is up and running, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Then use the following command to get the URL. Open your browser and check out your service by going to the URL that the command returns.
+```
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/openapi/ui
 ```
 
-The system properties of your localhost can be added to the **inventory** service at **http://localhost:9081/inventory/systems/localhost**. Run the following curl command:
+You see the OpenAPI user interface documenting the REST endpoints used in this guide. If you are interested in learning more about OpenAPI, read [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html). Expand the ***/beanvalidation/validatespacecraft POST request to validate your spacecraft bean*** section and click ***Try it out***. Copy the following example input into the text box:
+
 ```bash
-curl -s http://localhost:9081/inventory/systems/localhost | jq
+{
+  "astronaut": {
+    "name": "Libby",
+    "age": 25,
+    "emailAddress": "libbybot@openliberty.io"
+  },
+  "destinations": {
+    "Mars": 500
+  },
+  "serialNumber": "Liberty0001"
+}
 ```
 
+Click ***Execute*** and you receive the response ***No Constraint Violations*** because the values specified pass the constraints you will create in this guide. Now try copying the following value into the box:
 
-After you are finished checking out the microservices, stop the Open Liberty servers by pressing **CTRL+C** in the command-line sessions where you ran the servers. Alternatively, you can run the **liberty:stop** goal in another command-line session from the 
-**start** directory:
 ```bash
-cd /home/project/guide-containerize/start
-mvn -pl system liberty:stop
-mvn -pl inventory liberty:stop
+{
+  "astronaut": {
+    "name": "Libby",
+    "age": 12,
+    "emailAddress": "libbybot@openliberty.io"
+  },
+  "destinations": {
+    "Mars": 500
+  },
+  "serialNumber": "Liberty0001"
+}
 ```
 
-To package your microservices, run the Maven package goal to build the application ***.war*** files from the start directory so that the ***.war*** files are in the ***system/target*** and ***inventory/target*** directories.
+This time you receive ***Constraint Violation Found: must be greater than or equal to 18*** as a response because the age specified was under the minimum age of 18. Try other combinations of values to get a feel for the constraints that will be defined in this guide.
+
+After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
 ```bash
-mvn package
+mvn liberty:stop
 ```
 
-To learn more about RESTful web services and how to build them, see [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the ***system*** service. The ***inventory*** service is built in a similar way.
+::page{title="Applying constraints on the JavaBeans"}
 
+Navigate to the ***start*** directory to begin.
+```
+cd /home/project/guide-bean-validation/start
+```
 
-::page{title="Building your Docker images"}
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
-A Docker image is a binary file. It is made up of multiple layers and is used to run code in a Docker container. Images are built from instructions in Dockerfiles to create a containerized version of the application.
+```bash
+mvn liberty:dev
+```
 
-A ***Dockerfile*** is a collection of instructions for building a Docker image that can then be run as a container. As each instruction is run in a ***Dockerfile***, a new Docker layer is created. These layers, which are known as intermediate images, are created when a change is made to your Docker image.
+After you see the following message, your application server in dev mode is ready:
 
-Every ***Dockerfile*** begins with a parent or base image over which various commands are run. For example, you can start your image from scratch and run commands that download and install a Java runtime, or you can start from an image that already contains a Java installation.
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
 
-Learn more about Docker on the [official Docker page](https://www.docker.com/what-docker).
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-### Creating your Dockerfiles
-You will be creating two Docker images to run the ***inventory*** service and ***system*** service. The first step is to create Dockerfiles for both services.
-
-In this guide, you're using an official image from the IBM Container Registry (ICR), ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi***, as your parent image. This image is tagged with the word ***full***, meaning it includes all Liberty features. ***full*** images are recommended for development only because they significantly expand the image size with features that are not required by the application.
-
-To minimize your image footprint in production, you can use one of the ***kernel-slim*** images, such as ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi***.  This image installs the basic server. You can then add all the necessary features for your application with the usage pattern that is detailed in the Open Liberty [container image documentation](https://github.com/OpenLiberty/ci.docker#building-an-application-image). To use the default image that comes with the Open Liberty runtime, define the ***FROM*** instruction as ***FROM icr.io/appcafe/open-liberty***. You can find all official images on the Open Liberty [container image repository](https://github.com/OpenLiberty/ci.docker#container-images).
-
-Create the ***Dockerfile*** for the inventory service.
+First, create the JavaBeans to be constrained. 
+Create the ***Astronaut*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-containerize/start/inventory/Dockerfile
+touch /home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Astronaut.java
 ```
 
 
-> Then, to open the Dockerfile file in your IDE, select
-> **File** > **Open** > guide-containerize/start/inventory/Dockerfile, or click the following button
+> Then, to open the Astronaut.java file in your IDE, select
+> **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Astronaut.java, or click the following button
 
-::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
-
-
-
-```
-FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
-
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="Open Liberty" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="inventory" \
-  version="$VERSION-$REVISION" \
-  summary="The inventory microservice from the Containerizing microservices guide" \
-  description="This image contains the inventory microservice running with the Open Liberty runtime."
-
-COPY --chown=1001:0 \
-    src/main/liberty/config \
-    /config/
-
-COPY --chown=1001:0 \
-    target/guide-containerize-inventory.war \
-    /config/apps
-
-RUN configure.sh
-```
-
-
-
-The ***FROM*** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use ***FROM scratch***, which makes your image a base image. 
-
-It is also recommended to label your Docker images with the ***LABEL*** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
-
-The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the ***inventory*** server configuration files that are located at ***src/main/liberty/config*** are copied to the ***/config/*** destination directory. The ***inventory*** application WAR file ***inventory.war***, which was created from running ***mvn package***, is copied to the ***/config/apps*** destination directory.
-
-The ***COPY*** instructions use the ***1001*** user ID  and ***0*** group because the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image runs by default with the ***USER 1001*** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user.
-
-Place the ***RUN configure.sh*** command at the end to get a pre-warmed Docker image. It improves the startup time of running your Docker container.
-
-The ***Dockerfile*** for the ***system*** service follows the same instructions as the ***inventory*** service, except that some ***labels*** are updated, and the ***system.war*** archive is copied into ***/config/apps***.
-
-Create the ***Dockerfile*** for the system service.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-containerize/start/system/Dockerfile
-```
-
-
-> Then, to open the Dockerfile file in your IDE, select
-> **File** > **Open** > guide-containerize/start/system/Dockerfile, or click the following button
-
-::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
-
-
-
-```
-FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
-
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="Open Liberty" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="system" \
-  version="$VERSION-$REVISION" \
-  summary="The system microservice from the Containerizing microservices guide" \
-  description="This image contains the system microservice running with the Open Liberty runtime."
-
-COPY --chown=1001:0 src/main/liberty/config /config/
-
-COPY --chown=1001:0 target/guide-containerize-system.war /config/apps
-
-RUN configure.sh
-```
-
-
-
-
-### Building your Docker image
-
-Now that your microservices are packaged and you have written your Dockerfiles, you will build your Docker images by using the ***docker build*** command.
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-
-Run the following commands to build container images for your application:
-
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
-
-To verify that the images are built, run the ***docker images*** command to list all local Docker images:
-
-```bash
-docker images
-```
-
-Or, run the ***docker images*** command with ***--filter*** option to list your images:
-```bash
-docker images -f "label=org.opencontainers.image.authors=Your Name"
-```
-
-Your ***inventory*** and ***system*** images appear in the list of all Docker images:
-
-```
-REPOSITORY    TAG             IMAGE ID        CREATED          SIZE
-inventory     1.0-SNAPSHOT    08fef024e986    4 minutes ago    471MB
-system        1.0-SNAPSHOT    1dff6d0b4f31    5 minutes ago    470MB
-```
-
-
-::page{title="Running your microservices in Docker containers"}
-Now that your two images are built, you will run your microservices in Docker containers:
-
-```bash
-docker run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
-docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
-```
-
-The following table describes the flags in these commands:
-
-| *Flag* | *Description*
-| ---| ---
-| -d     | Runs the container in the background.
-| --name | Specifies a name for the container.
-| -p     | Maps the host ports to the container ports. For example: ***-p \<HOST_PORT\>:\<CONTAINER_PORT\>***
-
-Next, run the ***docker ps*** command to verify that your containers are started:
-
-```bash
-docker ps
-```
-
-Make sure that your containers are running and show ***Up*** as their status:
-
-```
-CONTAINER ID    IMAGE                   COMMAND                  CREATED          STATUS          PORTS                                        NAMES
-2b584282e0f5    inventory:1.0-SNAPSHOT  "/opt/ol/helpers/run…"   2 seconds ago    Up 1 second     9080/tcp, 9443/tcp, 0.0.0.0:9081->9081/tcp   inventory
-99a98313705f    system:1.0-SNAPSHOT     "/opt/ol/helpers/run…"   3 seconds ago    Up 2 seconds    0.0.0.0:9080->9080/tcp, 9443/tcp             system
-```
-
-If a problem occurs and your containers exit prematurely, the containers don't appear in the container list that the ***docker ps*** command displays. Instead, your containers appear with an ***Exited*** status when they run the ***docker ps -a*** command. Run the ***docker logs system*** and ***docker logs inventory*** commands to view the container logs for any potential problems. Run the ***docker stats system*** and ***docker stats inventory*** commands to display a live stream of usage statistics for your containers. You can also double-check that your Dockerfiles are correct. When you find the cause of the issues, remove the faulty containers with the ***docker rm system*** and ***docker rm inventory*** commands. Rebuild your images, and start the containers again.
-
-
-To access the application, run the following curl command. An empty list is expected because no system properties are stored in the inventory yet:
-```bash
-curl -s http://localhost:9081/inventory/systems | jq
-```
-
-Next, retrieve the ***system*** container's IP address by running the following:
-
-```bash
-docker inspect -f "{{.NetworkSettings.IPAddress }}" system
-```
-
-The command returns the system container IP address:
-
-```
-172.17.0.2
-```
-
-In this case, the IP address for the ***system*** service is ***172.17.0.2***. Take note of this IP address to construct the URL to view the system properties. 
-
-
-Run the following commands to go to the **http://localhost:9081/inventory/systems/[system-ip-address]** by replacing **[system-ip-address]** URL with the IP address that you obtained earlier:
-```bash
-SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
-curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
-```
-
-You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. Run the following curl command and you see a new entry for **[system-ip-address]**:
-```bash
-curl -s http://localhost:9081/inventory/systems | jq
-```
-
-::page{title="Externalizing server configuration"}
-
-
-As mentioned at the beginning of this guide, one of the advantages of using containers is that they are portable and can be moved and deployed efficiently across all of your DevOps environments. Configuration often changes across different environments, and by externalizing your server configuration, you can simplify the development process.
-
-Imagine a scenario where you are developing an Open Liberty application on port ***9081*** but to deploy it to production, it must be available on port ***9091***. To manage this scenario, you can keep two different versions of the ***server.xml*** file; one for production and one for development. However, trying to maintain two different versions of a file might lead to mistakes. A better solution would be to externalize the configuration of the port number and use the value of an environment variable that is stored in each environment. 
-
-In this example, you will use an environment variable to externally configure the HTTP port number of the ***inventory*** service. 
-
-In the ***inventory/server.xml*** file, the ***default.http.port*** variable is declared and is used in the ***httpEndpoint*** element to define the service endpoint. The default value of the ***default.http.port*** variable is ***9081***. However, this value is only used if no other value is specified. You can replace this value in the container by using the -e flag for the podman run command. 
-
-Run the following commands to stop and remove the ***inventory*** container and rerun it with the ***default.http.port*** environment variable set:
-
-```bash
-docker stop inventory
-docker rm inventory 
-docker run -d --name inventory -e default.http.port=9091 -p 9091:9091 inventory:1.0-SNAPSHOT
-```
-
-The ***-e*** flag can be used to create and set the values of environment variables in a Docker container. In this case, you are setting the ***default.http.port*** environment variable to ***9091*** for the ***inventory*** container.
-
-Now, when the service is starting up, Open Liberty finds the ***default.http.port*** environment variable and uses it to set the value of the ***default.http.port*** variable to be used in the HTTP endpoint.
-
-
-The **inventory** service is now available on the new port number that you specified. You can see the contents of the inventory at the **http://localhost:9091/inventory/systems** URL. Run the following curl command:
-```bash
-curl -s http://localhost:9091/inventory/systems | jq
-```
-
-You can add your local system properties at the **http://localhost:9091/inventory/systems/[system-ip-address]** URL by replacing **[system-ip-address]** with the IP address that you obtained in the previous section. Run the following commands:
-```bash
-SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
-curl -s http://localhost:9091/inventory/systems/{$SYSTEM_IP} | jq
-```
-
-The **system** service remains unchanged and is available at the **http://localhost:9080/system/properties** URL. Run the following curl command:
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-You can externalize the configuration of more than just the port numbers. To learn more about Open Liberty server configuration, check out the [Server Configuration Overview](https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html) docs. 
-
-::page{title="Testing the microservices"}
-
-You can test your microservices manually by hitting the endpoints or with automated tests that check your running Docker containers.
-
-Create the ***SystemEndpointIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
-```
-
-
-> Then, to open the SystemEndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
-
-::openFile{path="/home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
+::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Astronaut.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.system;
+package io.openliberty.guides.beanvalidation;
+
+import java.io.Serializable;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Email;
+
+public class Astronaut implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @NotBlank
+    private String name;
+
+    @Min(18)
+    @Max(100)
+    private Integer age;
+
+    @Email
+    private String emailAddress;
+
+    public Astronaut() {
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public String getEmailAddress() {
+        return emailAddress;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public void setEmailAddress(String emailAddress) {
+        this.emailAddress = emailAddress;
+    }
+}
+```
+
+
+
+The bean stores the attributes of an astronaut, ***name***, ***age***, and ***emailAddress***, and provides getters and setters to access and set the values.
+
+The ***Astronaut*** class has the following constraints applied:
+
+* The astronaut needs to have a name. Bean Validation 2.0 provides a built-in ***@NotBlank*** constraint, which ensures the value is not null and contains one character that isn't a blank space. The annotation constrains the ***name*** field.
+
+* The email supplied needs to be a valid email address. Another built-in constraint in Bean Validation 2.0 is ***@Email***, which can validate that the ***Astronaut*** bean includes a correctly formatted email address. The annotation constrains the ***emailAddress*** field.
+
+* The astronaut needs to be between 18 and 100 years old. Bean validation allows you to specify multiple constraints on a single field. The ***@Min*** and ***@Max*** built-in constraints applied to the ***age*** field check that the astronaut is between the ages of 18 and 100.
+
+In this example, the annotation is on the field value itself. You can also place the annotation on the getter method, which has the same effect.
+
+Create the ***Spacecraft*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Spacecraft.java
+```
+
+
+> Then, to open the Spacecraft.java file in your IDE, select
+> **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Spacecraft.java, or click the following button
+
+::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/Spacecraft.java"}
+
+
+
+```java
+package io.openliberty.guides.beanvalidation;
+
+import java.io.Serializable;
+import java.util.Map;
+import java.util.HashMap;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.inject.Named;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.validation.Valid;
+
+@Named
+@RequestScoped
+public class Spacecraft implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @Valid
+    private Astronaut astronaut;
+
+    private Map<@NotBlank String, @Positive Integer> destinations;
+
+    @SerialNumber
+    private String serialNumber;
+
+    public Spacecraft() {
+        destinations = new HashMap<String, Integer>();
+    }
+
+    public void setAstronaut(Astronaut astronaut) {
+        this.astronaut = astronaut;
+    }
+
+    public void setDestinations(Map<String, Integer> destinations) {
+        this.destinations = destinations;
+    }
+
+    public void setSerialNumber(String serialNumber) {
+        this.serialNumber = serialNumber;
+    }
+
+    public Astronaut getAstronaut() {
+        return astronaut;
+    }
+
+    public Map<String, Integer> getDestinations() {
+        return destinations;
+    }
+
+    public String getSerialNumber() {
+        return serialNumber;
+    }
+
+    @AssertTrue
+    public boolean launchSpacecraft(@NotNull String launchCode) {
+        if (launchCode.equals("OpenLiberty")) {
+            return true;
+        }
+        return false;
+    }
+}
+```
+
+
+
+
+The ***Spacecraft*** bean contains 3 fields, ***astronaut***, ***serialNumber***, and ***destinations***. The JavaBean needs to be a CDI managed bean to allow for method-level validation, which uses CDI interceptions. Because the ***Spacecraft*** bean is a CDI managed bean, a scope is necessary. A request scope is used in this example. To learn more about CDI, see [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html).
+
+The ***Spacecraft*** class has the following constraints applied:
+
+* Every destination that is specified needs a name and a positive distance. In Bean Validation 2.0, you can specify constraints on type parameters. The ***@NotBlank*** and ***@Positive*** annotations constrain the ***destinations*** map so that the destination name is not blank, and the distance is positive. The ***@Positive*** constraint ensures that numeric value fields are greater than 0.
+
+* A correctly formatted serial number is required. In addition to specifying the built-in constraints, you can create custom constraints to allow user-defined validation rules. The ***@SerialNumber*** annotation that constrains the ***serialNumber*** field is a custom constraint, which you will create later.
+
+Because you already specified constraints on the ***Astronaut*** bean, the constraints do not need to be respecified in the ***Spacecraft*** bean. Instead, because of the ***@Valid*** annotation on the field, all the nested constraints on the ***Astronaut*** bean are validated.
+
+You can also use bean validation with CDI to provide method-level validation. The ***launchSpacecraft()*** method on the ***Spacecraft*** bean accepts a ***launchCode*** parameter, and if the ***launchCode*** parameter is ***OpenLiberty***, the method returns ***true*** that the spacecraft is launched. Otherwise, the method returns ***false***. The ***launchSpacecraft()*** method uses both parameter and return value validation. The ***@NotNull*** constraint eliminates the need to manually check within the method that the parameter is not null. Additionally, the method has the ***@AssertTrue*** return-level constraint to enforce that the method must return the ***true*** boolean.
+
+::page{title="Creating custom constraints"}
+
+To create the custom constraint for ***@SerialNumber***, begin by creating an annotation.
+
+
+Replace the annotation.
+
+> To open the SerialNumber.java file in your IDE, select
+> **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumber.java, or click the following button
+
+::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumber.java"}
+
+
+
+```java
+package io.openliberty.guides.beanvalidation;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
+
+@Target({ FIELD })
+@Retention(RUNTIME)
+@Documented
+@Constraint(validatedBy = { SerialNumberValidator.class })
+public @interface SerialNumber {
+
+    String message() default "serial number is not valid.";
+
+    Class<?>[] groups() default {};
+
+    Class<? extends Payload>[] payload() default {};
+}
+```
+
+
+
+
+The ***@Target*** annotation indicates the element types to which you can apply the custom constraint. Because the ***@SerialNumber*** constraint is used only on a field, only the ***FIELD*** target is specified.
+
+When you define a constraint annotation, the specification requires the ***RUNTIME*** retention policy.
+
+The ***@Constraint*** annotation specifies the class that contains the validation logic for the custom constraint.
+
+In the ***SerialNumber*** body, the ***message()*** method provides the message that is output when a validation constraint is violated. The ***groups()*** and ***payload()*** methods associate this constraint only with certain groups or payloads. The defaults are used in the example.
+
+Now, create the class that provides the validation for the ***@SerialNumber*** constraint.
+
+Replace the ***SerialNumberValidator*** class.
+
+> To open the SerialNumberValidator.java file in your IDE, select
+> **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumberValidator.java, or click the following button
+
+::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/SerialNumberValidator.java"}
+
+
+
+```java
+package io.openliberty.guides.beanvalidation;
+
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+
+public class SerialNumberValidator
+    implements ConstraintValidator<SerialNumber, Object> {
+
+    @Override
+    public boolean isValid(Object arg0, ConstraintValidatorContext arg1) {
+        boolean isValid = false;
+        if (arg0 == null) {
+            return isValid;
+        }
+        String serialNumber = arg0.toString();
+        isValid = serialNumber.length() == 11 && serialNumber.startsWith("Liberty");
+        try {
+            Integer.parseInt(serialNumber.substring(7));
+        } catch (Exception ex) {
+            isValid = false;
+        }
+        return isValid;
+    }
+}
+```
+
+
+
+
+The ***SerialNumberValidator*** class has one method, ***isValid()***, which contains the custom validation logic. In this case, the serial number must start with ***Liberty*** followed by 4 numbers, such as ***Liberty0001***. If the supplied serial number matches the constraint, ***isValid()*** returns ***true***. If the serial number does not match, it returns ***false***.
+
+::page{title="Programmatically validating constraints"}
+
+Next, create a service to programmatically validate the constraints on the ***Spacecraft*** and ***Astronaut*** JavaBeans.
+
+
+
+Create the ***BeanValidationEndpoint*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/BeanValidationEndpoint.java
+```
+
+
+> Then, to open the BeanValidationEndpoint.java file in your IDE, select
+> **File** > **Open** > guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/BeanValidationEndpoint.java, or click the following button
+
+::openFile{path="/home/project/guide-bean-validation/start/src/main/java/io/openliberty/guides/beanvalidation/BeanValidationEndpoint.java"}
+
+
+
+```java
+package io.openliberty.guides.beanvalidation;
+
+import java.util.Set;
+
+import jakarta.inject.Inject;
+import jakarta.validation.Validator;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
+
+@Path("/")
+public class BeanValidationEndpoint {
+
+    @Inject
+    Validator validator;
+
+    @Inject
+    Spacecraft bean;
+
+    @POST
+    @Path("/validatespacecraft")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(summary = "POST request to validate your spacecraft bean")
+    public String validateSpacecraft(
+        @RequestBody(description = "Specify the values to create the "
+                + "Astronaut and Spacecraft beans.",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = Spacecraft.class)))
+        Spacecraft spacecraft) {
+
+            Set<ConstraintViolation<Spacecraft>> violations
+                = validator.validate(spacecraft);
+
+            if (violations.size() == 0) {
+                return "No Constraint Violations";
+            }
+
+            StringBuilder sb = new StringBuilder();
+            for (ConstraintViolation<Spacecraft> violation : violations) {
+                sb.append("Constraint Violation Found: ")
+                .append(violation.getMessage())
+                .append(System.lineSeparator());
+            }
+            return sb.toString();
+    }
+
+    @POST
+    @Path("/launchspacecraft")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Operation(summary = "POST request to specify a launch code")
+    public String launchSpacecraft(
+        @RequestBody(description = "Enter the launch code.  Must not be "
+                + "null and must equal OpenLiberty for successful launch.",
+            content = @Content(mediaType = "text/plain"))
+        String launchCode) {
+            try {
+                bean.launchSpacecraft(launchCode);
+                return "launched";
+            } catch (ConstraintViolationException ex) {
+                return ex.getMessage();
+            }
+    }
+}
+```
+
+
+
+
+Two resources, a validator and an instance of the ***Spacecraft*** JavaBean, are injected into the class. The default validator is used and is obtained through CDI injection. However, you can also obtain the default validator with resource injection or a JNDI lookup. The ***Spacecraft*** JavaBean is injected so that the method-level constraints can be validated.
+
+The programmatic validation takes place in the ***validateSpacecraft()*** method. To validate the data, the ***validate()*** method is called on the ***Spacecraft*** bean. Because the ***Spacecraft*** bean contains the ***@Valid*** constraint on the ***Astronaut*** bean, both JavaBeans are validated. Any constraint violations found during the call to the ***validate()*** method are returned as a set of ***ConstraintViolation*** objects.
+
+The method level validation occurs in the ***launchSpacecraft()*** method. A call is then made to the ***launchSpacecraft()*** method on the ***Spacecraft*** bean, which throws a ***ConstraintViolationException*** exception if either of the method-level constraints is violated.
+
+::page{title="Enabling the Bean Validation feature"}
+
+Finally, add the Bean Validation feature in the application by updating the ***server.xml*** configuration file.
+
+Replace the ***server*** configuration file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-bean-validation/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-bean-validation/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Liberty Server for Bean Validation Guide">
+
+    <featureManager>
+        <feature>beanValidation-3.0</feature>
+        <feature>cdi-3.0</feature>
+        <feature>restfulWS-3.0</feature>
+        <feature>jsonb-2.0</feature>
+        <feature>mpOpenAPI-3.0</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080"/>
+    <variable name="default.https.port" defaultValue="9443"/>
+    <variable name="app.context.root" defaultValue="Spacecraft"/>
+
+    <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
+        id="defaultHttpEndpoint" host="*" />
+
+   <webApplication location="guide-bean-validation.war" contextRoot="${app.context.root}"/>
+</server>
+```
+
+
+You can now use the ***beanValidation-2.0*** feature to validate that the supplied JavaBeans meet the defined constraints.
+
+
+
+::page{title="Running the application"}
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+Use the following command to get the URL. Open your browser and check out your service by going to the URL that the command returns.
+```
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/openapi/ui
+```
+
+Expand the ***/beanvalidation/validatespacecraft POST request to validate your spacecraft bean*** section and click ***Try it out***. Copy the following example input into the text box:
+
+```bash
+{
+  "astronaut": {
+    "name": "Libby",
+    "age": 25,
+    "emailAddress": "libbybot@openliberty.io"
+  },
+  "destinations": {
+    "Mars": 500
+  },
+  "serialNumber": "Liberty0001"
+}
+```
+
+Click ***Execute*** and you receive the response ***No Constraint Violations*** because the values specified pass previously defined constraints.
+
+Next, modify the following values, all of which break the previously defined constraints:
+
+```
+Age = 10
+Email = libbybot
+SerialNumber = Liberty1
+```
+
+After you click ***Execute***, the response contains the following constraint violations:
+
+```
+Constraint Violation Found: serial number is not valid.
+Constraint Violation Found: must be greater than or equal to 18
+Constraint Violation Found: must be a well-formed email address
+```
+
+To try the method-level validation, expand the ***/beanvalidation/launchspacecraft POST request to specify a launch code*** section. Enter ***OpenLiberty*** in the text box. Note that ***launched*** is returned because the launch code passes the defined constraints. Replace ***OpenLiberty*** with anything else to note that a constraint violation is returned.
+
+
+::page{title="Testing the constraints"}
+
+Now, write automated tests to drive the previously created service. 
+
+Create ***BeanValidationIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-bean-validation/start/src/test/java/it/io/openliberty/guides/beanvalidation/BeanValidationIT.java
+```
+
+
+> Then, to open the BeanValidationIT.java file in your IDE, select
+> **File** > **Open** > guide-bean-validation/start/src/test/java/it/io/openliberty/guides/beanvalidation/BeanValidationIT.java, or click the following button
+
+::openFile{path="/home/project/guide-bean-validation/start/src/test/java/it/io/openliberty/guides/beanvalidation/BeanValidationIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.beanvalidation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
+import io.openliberty.guides.beanvalidation.Astronaut;
+import io.openliberty.guides.beanvalidation.Spacecraft;
+
+import java.util.HashMap;
+
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class SystemEndpointIT {
-
-    private static String clusterUrl;
+public class BeanValidationIT {
 
     private Client client;
-
-    @BeforeAll
-    public static void oneTimeSetup() {
-        String nodePort = System.getProperty("system.http.port");
-        clusterUrl = "http://localhost:" + nodePort + "/system/properties/";
-    }
+    private static String port;
 
     @BeforeEach
     public void setup() {
-        client = ClientBuilder.newBuilder()
-                    .hostnameVerifier(new HostnameVerifier() {
-                        public boolean verify(String hostname, SSLSession session) {
-                            return true;
-                        }
-                    })
-                    .build();
+        client = ClientBuilder.newClient();
+        port = System.getProperty("http.port");
     }
 
     @AfterEach
@@ -440,265 +659,142 @@ public class SystemEndpointIT {
     }
 
     @Test
-    public void testGetProperties() {
-        Client client = ClientBuilder.newClient();
+    public void testNoFieldLevelConstraintViolations() throws Exception {
+        Astronaut astronaut = new Astronaut();
+        astronaut.setAge(25);
+        astronaut.setEmailAddress("libby@openliberty.io");
+        astronaut.setName("Libby");
+        Spacecraft spacecraft = new Spacecraft();
+        spacecraft.setAstronaut(astronaut);
+        spacecraft.setSerialNumber("Liberty1001");
+        HashMap<String, Integer> destinations = new HashMap<String, Integer>();
+        destinations.put("Mars", 1500);
+        destinations.put("Pluto", 10000);
+        spacecraft.setDestinations(destinations);
 
-        WebTarget target = client.target(clusterUrl);
-        Response response = target.request().get();
+        Jsonb jsonb = JsonbBuilder.create();
+        String spacecraftJSON = jsonb.toJson(spacecraft);
+        Response response = postResponse(getURL(port, "validatespacecraft"),
+                spacecraftJSON, false);
+        String actualResponse = response.readEntity(String.class);
+        String expectedResponse = "No Constraint Violations";
 
-        assertEquals(200, response.getStatus(),
-            "Incorrect response code from " + clusterUrl);
-        response.close();
-    }
-
-}
-```
-
-
-
-The ***testGetProperties()*** method checks for a ***200*** response code from the ***system*** service endpoint.
-
-Create the ***InventoryEndpointIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
-```
-
-
-> Then, to open the InventoryEndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
-
-::openFile{path="/home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.inventory;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import jakarta.json.JsonObject;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-
-@TestMethodOrder(OrderAnnotation.class)
-public class InventoryEndpointIT {
-
-    private static String invUrl;
-    private static String sysUrl;
-    private static String systemServiceIp;
-
-    private static Client client;
-
-    @BeforeAll
-    public static void oneTimeSetup() {
-
-        String invServPort = System.getProperty("inventory.http.port");
-        String sysServPort = System.getProperty("system.http.port");
-
-        systemServiceIp = System.getProperty("system.ip");
-
-        invUrl = "http://localhost" + ":" + invServPort + "/inventory/systems/";
-        sysUrl = "http://localhost" + ":" + sysServPort + "/system/properties/";
-
-        client = ClientBuilder.newBuilder().hostnameVerifier(new HostnameVerifier() {
-            public boolean verify(String hostname, SSLSession session) {
-                return true;
-            }
-        }).build();
-
-        client.target(invUrl + "reset").request().post(null);
-    }
-
-    @AfterAll
-    public static void teardown() {
-        client.close();
+        assertEquals(expectedResponse, actualResponse,
+                "Unexpected response when validating beans.");
     }
 
     @Test
-    @Order(1)
-    public void testEmptyInventory() {
-        Response response = this.getResponse(invUrl);
-        this.assertResponse(invUrl, response);
+    public void testFieldLevelConstraintViolation() throws Exception {
+        Astronaut astronaut = new Astronaut();
+        astronaut.setAge(25);
+        astronaut.setEmailAddress("libby");
+        astronaut.setName("Libby");
 
-        JsonObject obj = response.readEntity(JsonObject.class);
+        Spacecraft spacecraft = new Spacecraft();
+        spacecraft.setAstronaut(astronaut);
+        spacecraft.setSerialNumber("Liberty123");
 
-        int expected = 0;
-        int actual = obj.getInt("total");
-        assertEquals(expected, actual,
-                    "The inventory should be empty on application start but it wasn't");
+        HashMap<String, Integer> destinations = new HashMap<String, Integer>();
+        destinations.put("Mars", -100);
+        spacecraft.setDestinations(destinations);
 
-        response.close();
+        Jsonb jsonb = JsonbBuilder.create();
+        String spacecraftJSON = jsonb.toJson(spacecraft);
+        Response response = postResponse(getURL(port, "validatespacecraft"),
+                spacecraftJSON, false);
+        String actualResponse = response.readEntity(String.class);
+        String expectedDestinationResponse = "must be greater than 0";
+        assertTrue(actualResponse.contains(expectedDestinationResponse),
+                "Expected response to contain: " + expectedDestinationResponse);
+        String expectedEmailResponse = "must be a well-formed email address";
+        assertTrue(actualResponse.contains(expectedEmailResponse),
+                "Expected response to contain: " + expectedEmailResponse);
+        String expectedSerialNumberResponse = "serial number is not valid";
+        assertTrue(actualResponse.contains(expectedSerialNumberResponse),
+                "Expected response to contain: " + expectedSerialNumberResponse);
     }
 
     @Test
-    @Order(2)
-    public void testHostRegistration() {
-        this.visitSystemService();
+    public void testNoMethodLevelConstraintViolations() throws Exception {
+        String launchCode = "OpenLiberty";
+        Response response = postResponse(getURL(port, "launchspacecraft"),
+                launchCode, true);
 
-        Response response = this.getResponse(invUrl);
-        this.assertResponse(invUrl, response);
+        String actualResponse = response.readEntity(String.class);
+        String expectedResponse = "launched";
 
-        JsonObject obj = response.readEntity(JsonObject.class);
+        assertEquals(expectedResponse, actualResponse,
+                "Unexpected response from call to launchSpacecraft");
 
-        int expected = 1;
-        int actual = obj.getInt("total");
-        assertEquals(expected, actual,
-                        "The inventory should have one entry for " + systemServiceIp);
-
-        boolean serviceExists = obj.getJsonArray("systems").getJsonObject(0)
-                        .get("hostname").toString().contains(systemServiceIp);
-        assertTrue(serviceExists,
-                        "A host was registered, but it was not " + systemServiceIp);
-
-        response.close();
     }
 
     @Test
-    @Order(3)
-    public void testSystemPropertiesMatch() {
-        Response invResponse = this.getResponse(invUrl);
-        Response sysResponse = this.getResponse(sysUrl);
+    public void testMethodLevelConstraintViolation() throws Exception {
+        String launchCode = "incorrectCode";
+        Response response = postResponse(getURL(port, "launchspacecraft"),
+                launchCode, true);
 
-        this.assertResponse(invUrl, invResponse);
-        this.assertResponse(sysUrl, sysResponse);
-
-        JsonObject jsonFromInventory = (JsonObject) invResponse
-                        .readEntity(JsonObject.class).getJsonArray("systems")
-                        .getJsonObject(0).get("properties");
-
-        JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
-
-        String osNameFromInventory = jsonFromInventory.getString("os.name");
-        String osNameFromSystem = jsonFromSystem.getString("os.name");
-        this.assertProperty("os.name", systemServiceIp, osNameFromSystem,
-                        osNameFromInventory);
-
-        String userNameFromInventory = jsonFromInventory.getString("user.name");
-        String userNameFromSystem = jsonFromSystem.getString("user.name");
-        this.assertProperty("user.name", systemServiceIp, userNameFromSystem,
-                        userNameFromInventory);
-
-        invResponse.close();
-        sysResponse.close();
+        String actualResponse = response.readEntity(String.class);
+        assertTrue(
+                actualResponse.contains("must be true"),
+                "Unexpected response from call to launchSpacecraft");
     }
 
-    @Test
-    @Order(4)
-    public void testUnknownHost() {
-        Response response = this.getResponse(invUrl);
-        this.assertResponse(invUrl, response);
-
-        Response badResponse = client.target(invUrl + "badhostname")
-                        .request(MediaType.APPLICATION_JSON).get();
-
-        String obj = badResponse.readEntity(String.class);
-
-        boolean isError = obj.contains("error");
-        assertTrue(isError,
-                        "badhostname is not a valid host but it didn't raise an error");
-
-        response.close();
-        badResponse.close();
+    private Response postResponse(String url, String value,
+                                  boolean isMethodLevel) {
+        if (isMethodLevel) {
+                return client.target(url).request().post(Entity.text(value));
+        } else {
+                return client.target(url).request().post(Entity.entity(value,
+                MediaType.APPLICATION_JSON));
+        }
     }
 
-    private Response getResponse(String url) {
-        return client.target(url).request().get();
-    }
-
-
-    private void assertResponse(String url, Response response) {
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-    }
-
-    private void assertProperty(String propertyName, String hostname, String expected,
-                    String actual) {
-        assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
-                        + "in the system service does not match the one stored in "
-                        + "the inventory service for " + hostname);
-    }
-
-    private void visitSystemService() {
-        Response response = this.getResponse(sysUrl);
-        this.assertResponse(sysUrl, response);
-        response.close();
-
-        Response targetResponse = client.target(invUrl + systemServiceIp).request()
-                        .get();
-
-        targetResponse.close();
+    private String getURL(String port, String function) {
+        return "http://localhost:" + port + "/Spacecraft/beanvalidation/"
+                + function;
     }
 }
 ```
 
 
 
-* The ***testEmptyInventory()*** method checks that the ***inventory*** service has a total of 0 systems before anything is added to it.
-* The ***testHostRegistration()*** method checks that the ***system*** service was added to ***inventory*** properly.
-* The ***testSystemPropertiesMatch()*** checks that the ***system*** properties match what was added into the ***inventory*** service.
-* The ***testUnknownHost()*** method checks that an error is raised if an unknown host name is being added into the ***inventory*** service.
-* The ***systemServiceIp*** variable has the same value as the IP address that you retrieved in the previous section when you manually added the ***system*** service into the ***inventory*** service. This value of the IP address is passed in when you run the tests.
+
+The ***@BeforeEach*** annotation causes the ***setup()*** method to execute before the test cases. The ***setup()*** method retrieves the port number for the Open Liberty server and creates a ***Client*** that is used throughout the tests, which are described as follows:
+
+* The ***testNoFieldLevelConstraintViolations()*** test case verifies that constraint violations do not occur when valid data is supplied to the ***Astronaut*** and ***Spacecraft*** bean attributes.
+
+* The ***testFieldLevelConstraintViolation()*** test case verifies that the appropriate constraint violations occur when data that is supplied to the ***Astronaut*** and ***Spacecraft*** attributes violates the defined constraints. Because 3 constraint violations are defined, 3 ***ConstraintViolation*** objects are returned as a set from the ***validate*** call. The 3 expected messages are ***"must be greater than 0"*** for the negative distance specified in the destination map, ***"must be a well-formed email address"*** for the incorrect email address, and the custom ***"serial number is not valid"*** message for the serial number.
+
+* The ***testNoMethodLevelConstraintViolations()*** test case verifies that the method-level constraints that are specified on the ***launchSpacecraft()*** method of the ***Spacecraft*** bean are validated when the method is called with no violations. In this test, the call to the ***launchSpacecraft()*** method is made with the ***OpenLiberty*** argument. A value of ***true*** is returned, which passes the specified constraints.
+
+* The ***testMethodLevelConstraintViolation()*** test case verifies that a ***ConstraintViolationException*** exception is thrown when one of the method-level constraints is violated. A call with an incorrect parameter, ***incorrectCode***, is made to the ***launchSpacecraft()*** method of the ***Spacecraft*** bean. The method returns ***false***, which violates the defined constraint, and a ***ConstraintViolationException*** exception is thrown. The exception includes the constraint violation message, which in this example is ***must be true***.
+
 
 ### Running the tests
 
-Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by setting **-Dsystem.ip** to the IP address that you determined previously.
-
-```bash
-SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
-mvn package
-mvn failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9091 -Dsystem.http.port=9080
-```
-
-If the tests pass, you see output similar to the following example:
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.653 s - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.beanvalidation.BeanValidationIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.493 sec - in
+it.io.openliberty.guides.beanvalidation.BeanValidationIT
 
-Results:
-
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.935 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
-
-Results:
+Results :
 
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are finished with the services, run the following commands to stop and remove your containers:
-
-```bash
-docker stop inventory system 
-docker rm inventory system
-```
-
+When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have just built Docker images and run two microservices on Open Liberty in containers. 
+You developed and tested a Java microservice by using bean validation and Open Liberty.
 
 
 
@@ -707,33 +803,32 @@ You have just built Docker images and run two microservices on Open Liberty in c
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-containerize*** project by running the following commands:
+Delete the ***guide-bean-validation*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-containerize
+rm -fr guide-bean-validation
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Containerizing%20microservices&guide-id=cloud-hosted-guide-containerize)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Validating%20constraints%20with%20microservices&guide-id=cloud-hosted-guide-bean-validation)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-containerize/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-containerize/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-bean-validation/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-bean-validation/pulls)
 
 
 
 ### Where to next?
 
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 ### Log out of the session
