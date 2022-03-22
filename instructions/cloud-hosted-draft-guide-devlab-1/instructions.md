@@ -677,10 +677,72 @@ The test from the ***system*** microservice fails because the ***inventory*** mi
 Correct the value of the ***system.properties.version*** property to a decimal.
 Replace the SystemResource class file.
 
-> To open the unknown file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/unknown, or click the following button
+> To open the SystemResource.java file in your IDE, select
+> **File** > **Open** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
 
-::openFile{path="/home/project/guide-contract-testing/start/unknown"}
+::openFile{path="/home/project/guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java"}
+
+
+
+```java
+package io.openliberty.guides.system;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.core.Response;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.metrics.annotation.Counted;
+import org.eclipse.microprofile.metrics.annotation.Timed;
+
+@RequestScoped
+@Path("/properties")
+public class SystemResource {
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Timed(name = "getPropertiesTime",
+    description = "Time needed to get the JVM system properties")
+  @Counted(absolute = true,
+    description = "Number of times the JVM system properties are requested")
+
+  public Response getProperties() {
+    return Response.ok(System.getProperties()).build();
+  }
+
+  @GET
+  @Path("/key/{key}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getPropertiesByKey(@PathParam("key") String key) {
+    try {
+      JsonArray response = Json.createArrayBuilder()
+        .add(Json.createObjectBuilder()
+          .add(key, System.getProperties().get(key).toString()))
+        .build();
+      return Response.ok(response, MediaType.APPLICATION_JSON).build();
+    } catch (java.lang.NullPointerException exception) {
+        return Response.status(Response.Status.NOT_FOUND).build();
+    }
+  }
+
+  @GET
+  @Path("/version")
+  @Produces(MediaType.APPLICATION_JSON)
+  public JsonObject getVersion() {
+    JsonObject response = Json.createObjectBuilder()
+                          .add("system.properties.version", 1.1)
+                          .build();
+    return response;
+  }
+}
+```
 
 
 
