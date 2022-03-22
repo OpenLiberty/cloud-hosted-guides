@@ -4,9 +4,9 @@ title: instructions
 branch: lab-204-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 ---
-::page{title="Welcome to the Using Docker containers to develop microservices guide!"}
+::page{title="Welcome to the Testing microservices with the Arquillian managed container guide!"}
 
-Learn how to use Docker containers for iterative development.
+Learn how to develop tests for your microservices with the Arquillian managed container and run the tests on Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,35 +16,13 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
-
 ::page{title="What you'll learn"}
 
-You will learn how to set up, run, and iteratively develop a simple REST application in a container with Open Liberty and Docker.
+You will learn how to develop tests for your microservices by using the [Arquillian Liberty Managed container](https://github.com/OpenLiberty/liberty-arquillian/tree/master/liberty-managed) and JUnit with Maven on Open Liberty. [Arquillian](http://arquillian.org/) is a testing framework to develop automated functional, integration and acceptance tests for your Java applications. Arquillian sets up the test environment and handles the application server lifecycle for you so you can focus on writing tests.
 
-Open Liberty is an application server designed for the cloud. It’s small, lightweight, and designed with modern cloud-native application development in mind. Open Liberty simplifies the development process for these applications by automating the repetitive actions associated with running applications inside containers, like rebuilding the image and stopping and starting the container. 
+You will develop Arquillian tests that use JUnit as the runner and build your tests with Maven using the Liberty Maven plug-in. This technique simplifies the process of managing Arquillian dependencies and the setup of your Arquillian managed container.
 
-You'll also learn how to create and run automated tests for your application and container.
-
-The implementation of the REST application can be found in the ***start/src*** directory. To learn more about this application and how to build it, check out the [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
-
-### What is Docker?
-
-Docker is a tool that you can use to deploy and run applications with containers. You can think of Docker like a virtual machine that runs various applications. However, unlike a typical virtual machine, you can run these applications simultaneously on a single system and independent of one another.
-
-Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
-
-### What is a container?
-
-A container is a lightweight, stand-alone package that contains a piece of software that is bundled together with the entire environment that it needs to run. Containers are small compared to regular images and can run on any environment where Docker is set up. Moreover, you can run multiple containers on a single machine at the same time in isolation from each other.
-
-Learn more about containers on the [official Docker website](https://www.docker.com/what-container).
-
-### Why use a container to develop?
-
-Consider a scenario where you need to deploy your application on another environment. Your application works on your local machine, but when you try to run it on your cloud production environment, it breaks. You do some debugging and discover that you built your application with Java 8, but this cloud production environment has only Java 11 installed. Although this issue is generally easy to fix, you don't want your application to be missing dozens of version-specific dependencies. You can develop your application in this cloud environment, but that requires you to rebuild and repackage your application every time you update your code and wish to test it.
-
-To avoid this kind of problem, you can instead choose to develop your application in a container locally, bundled together with the entire environment that it needs to run. By doing this, you know that at any point in your iterative development process, the application can run inside that container. This helps avoid any unpleasant surprises when you go to test or deploy your application down the road. Containers run quickly and do not have a major impact on the speed of your iterative development.
+You will work with an ***inventory*** microservice, which stores information about various systems. The ***inventory*** service communicates with the ***system*** service on a particular host to retrieve its system properties and store them. You will develop functional and integration tests for the microservices. You will also learn about the Maven and server configurations so that you can run your tests on Open Liberty with the Arquillian Liberty Managed container.
 
 ::page{title="Getting started"}
 
@@ -57,11 +35,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-docker.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-arquillian-managed.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-docker.git
-cd guide-docker
+git clone https://github.com/openliberty/guide-arquillian-managed.git
+cd guide-arquillian-managed
 ```
 
 
@@ -70,287 +48,276 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-::page{title="Creating the Dockerfile"}
-
-The first step to running your application inside of a Docker container is creating a Dockerfile. A Dockerfile is a collection of instructions for building a Docker image that can then be run as a container. Every Dockerfile begins with a parent or base image on top of which various commands are run. For example, you can start your image from scratch and run commands that download and install Java, or you can start from an image that already contains a Java installation.
+::page{title="Developing Arquillian tests"}
 
 Navigate to the ***start*** directory to begin.
 ```
-cd /home/project/guide-docker/start
+cd /home/project/guide-arquillian-managed/start
 ```
 
-Create the ***Dockerfile*** in the ***start*** directory.
+You'll develop tests that use Arquillian and JUnit to verify the ***inventory*** microservice as an endpoint and the functions of the ***InventoryResource*** class. The code for the microservices is in the ***src/main/java/io/openliberty/guides*** directory.
+
+Create the ***InventoryArquillianIT*** test class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-docker/start/Dockerfile
+touch /home/project/guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java
 ```
 
 
-> Then, to open the Dockerfile file in your IDE, select
-> **File** > **Open** > guide-docker/start/Dockerfile, or click the following button
+> Then, to open the InventoryArquillianIT.java file in your IDE, select
+> **File** > **Open** > guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java, or click the following button
 
-::openFile{path="/home/project/guide-docker/start/Dockerfile"}
-
-
-
-```
-FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
-
-LABEL \
-  org.opencontainers.image.authors="Your Name" \
-  org.opencontainers.image.vendor="IBM" \
-  org.opencontainers.image.url="local" \
-  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-docker" \
-  org.opencontainers.image.version="$VERSION" \
-  org.opencontainers.image.revision="$REVISION" \
-  vendor="Open Liberty" \
-  name="system" \
-  version="$VERSION-$REVISION" \
-  summary="The system microservice from the Docker Guide" \
-  description="This image contains the system microservice running with the Open Liberty runtime."
-
-USER root
-
-COPY --chown=1001:0 src/main/liberty/config/server.xml /config/
-COPY --chown=1001:0 target/*.war /config/apps/
-USER 1001
-```
-
-
-
-The ***FROM*** instruction initializes a new build stage and indicates the parent image from which your image is built. If you don't need a parent image, then use ***FROM scratch***, which makes your image a base image. 
-
-In this case, you’re using the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image as your parent image, which comes with the latest Open Liberty runtime.
-
-The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the server configuration file that is located at ***src/main/liberty/config/server.xml*** is copied to the ***/config/*** destination directory.
-
-### Writing a .dockerignore file
-
-
-When Docker runs a build, it sends all of the files and directories that are located in the same directory as the Dockerfile to its build context, making them available for use in instructions like ***ADD*** and ***COPY***. If there are files or directories you wish to exclude from the build context, you can add them to a ***.dockerignore*** file. By adding files that aren't nessecary for building your image to the ***.dockerignore*** file, you can decrease the image's size and speed up the building process. You may also want to exclude files that contain sensitive information, such as a ***.git*** folder or private keys, from the build context. 
-
-A ***.dockerignore*** file is available to you in the ***start*** directory. This file includes the ***pom.xml*** file and some system files.
-
-
-::page{title="Launching Open Liberty in dev mode"}
-
-The Open Liberty Maven plug-in includes a ***devc*** goal that builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. This development mode, known as dev mode, also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
-
-Build and run the container by running the ***devc*** goal from the ***start*** directory:
-
-```bash
-mvn liberty:devc
-```
-
-After you see the following message, your application server in dev mode is ready:
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Open another command-line session and run the following command to make sure that your container is running and didn’t crash:
-
-```bash
-docker ps 
-```
-
-You should see something similar to the following output:
-
-```
-CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS              PORTS                                                                    NAMES
-ee2daf0b33e1        guide-docker-dev-mode   "/opt/ol/helpers/run…"   2 minutes ago       Up 2 minutes        0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
-```
-
-
-To view a full list of all available containers, you can run the ***docker ps -a*** command.
-
-
-If your container runs without problems, run the following **curl** command to get a JSON response that contains the system properties of the JVM in your container.
-
-```
-curl -s http://localhost:9080/system/properties | jq
-```
-
-
-::page{title="Updating the application while the container is running"}
-
-With your container running, make the following update to the source code:
-
-Update the ***PropertiesResource*** class.
-
-> To open the PropertiesResource.java file in your IDE, select
-> **File** > **Open** > guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
-
-::openFile{path="/home/project/guide-docker/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java"}
+::openFile{path="/home/project/guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java"}
 
 
 
 ```java
-package io.openliberty.guides.rest;
+package it.io.openliberty.guides.inventory;
 
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Produces;
+import java.net.URL;
+import java.util.List;
 
+import jakarta.inject.Inject;
 import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.json.Json;
-
-@Path("properties-new")
-public class PropertiesResource {
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject getProperties() {
-
-        JsonObjectBuilder builder = Json.createObjectBuilder();
-
-        System.getProperties()
-              .entrySet()
-              .stream()
-              .forEach(entry -> builder.add((String) entry.getKey(),
-                                            (String) entry.getValue()));
-
-       return builder.build();
-    }
-}
-```
-
-
-
-Change the endpoint of your application from ***properties*** to ***properties-new*** by changing the ***@Path*** annotation to ***"properties-new"***.
-
-
-After you make the file changes, Open Liberty automatically updates the application. To see the changes reflected in the application, run the following command in a terminal:
-
-```
-curl -s http://localhost:9080/system/properties-new | jq
-```
-
-
-::page{title="Testing the container"}
-
-
-You can test this service manually by starting a server and going to the **http://localhost:9080/system/properties-new** URL.
-However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS Client API provide a simple environment to test the application. You can write tests for the individual units of code outside of a running application server, or you can write them to call the application server directly. In this example, you will create a test that calls the application server directly.
-
-Create the ***EndpointIT*** test class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
-```
-
-
-> Then, to open the EndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
-
-::openFile{path="/home/project/guide-docker/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.rest;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import org.junit.jupiter.api.Test;
-
-import jakarta.json.JsonObject;
-
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
 
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.junit.InSequence;
+import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class EndpointIT {
+import io.openliberty.guides.inventory.InventoryResource;
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+
+@RunWith(Arquillian.class)
+public class InventoryArquillianIT {
+
+    private static final String WARNAME = System.getProperty("arquillian.war.name");
+    private final String INVENTORY_SYSTEMS = "inventory/systems";
+    private Client client = ClientBuilder.newClient();
+
+    @Deployment(testable = true)
+    public static WebArchive createDeployment() {
+        WebArchive archive = ShrinkWrap.create(WebArchive.class, WARNAME)
+                                       .addPackages(true, "io.openliberty.guides");
+        return archive;
+    }
+
+    @ArquillianResource
+    private URL baseURL;
+
+    @Inject
+    InventoryResource invSrv;
 
     @Test
-    public void testGetProperties() {
-        String port = System.getProperty("liberty.test.port");
-        String url = "http://localhost:" + port + "/";
+    @RunAsClient
+    @InSequence(1)
+    public void testInventoryEndpoints() throws Exception {
+        String localhosturl = baseURL + INVENTORY_SYSTEMS + "/localhost";
 
-        Client client = ClientBuilder.newClient();
+        WebTarget localhosttarget = client.target(localhosturl);
+        Response localhostresponse = localhosttarget.request().get();
 
-        WebTarget target = client.target(url + "system/properties-new");
-        Response response = target.request().get();
-        JsonObject obj = response.readEntity(JsonObject.class);
+        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
+                            localhostresponse.getStatus());
 
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+        JsonObject localhostobj = localhostresponse.readEntity(JsonObject.class);
+        Assert.assertEquals("The system property for the local and remote JVM "
+                        + "should match", System.getProperty("os.name"),
+                            localhostobj.getString("os.name"));
 
-        assertEquals("/opt/ol/wlp/output/defaultServer/",
-                     obj.getString("server.output.dir"),
-                     "The system property for the server output directory should match "
-                     + "the Open Liberty container image.");
+        String invsystemsurl = baseURL + INVENTORY_SYSTEMS;
 
-        response.close();
+        WebTarget invsystemstarget = client.target(invsystemsurl);
+        Response invsystemsresponse = invsystemstarget.request().get();
+
+        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
+                            invsystemsresponse.getStatus());
+
+        JsonObject invsystemsobj = invsystemsresponse.readEntity(JsonObject.class);
+
+        int expected = 1;
+        int actual = invsystemsobj.getInt("total");
+        Assert.assertEquals("The inventory should have one entry for localhost",
+                            expected, actual);
+        localhostresponse.close();
+    }
+
+    @Test
+    @InSequence(2)
+    public void testInventoryResourceFunctions() {
+        InventoryList invList = invSrv.listContents();
+        Assert.assertEquals(1, invList.getTotal());
+
+        List<SystemData> systemDataList = invList.getSystems();
+        Assert.assertTrue(systemDataList.get(0).getHostname().equals("localhost"));
+
+        Assert.assertTrue(systemDataList.get(0).getProperties().get("os.name")
+                                        .equals(System.getProperty("os.name")));
     }
 }
 ```
 
 
 
-This test makes a request to the ***/system/properties-new*** endpoint and checks to make sure that the response has a valid status code, and that the information in the response is correct. 
+Notice that the JUnit Arquillian runner runs the tests instead of the standard JUnit runner. The ***@RunWith*** annotation preceding the class tells JUnit to run the tests by using Arquillian.
 
-### Running the tests
+The method annotated by ***@Deployment*** defines the content of the web archive, which is going to be deployed onto the Open Liberty server. The tests are either run on or against the server. The ***testable = true*** attribute enables the deployment to run the tests "in container", that is the tests are run on the server.
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
-You will see the following output:
+The ***WARNAME*** variable is used to name the web archive and is defined in the ***pom.xml*** file. This name is necessary if you don't want a randomly generated web archive name.
+
+The ShrinkWrap API is used to create the web archive. All of the packages in the ***inventory*** service must be added to the web archive; otherwise, the code compiles successfully but fails at runtime when the injection of the ***InventoryResource*** class takes place. You can learn about the ShrinkWrap archive configuration in this [Arquillian guide](http://arquillian.org/guides/shrinkwrap_introduction/).
+
+The ***@ArquillianResource*** annotation is used to retrieve the ***http://localhost:9080/arquillian-managed/*** base URL for this web service. The annotation provides the host name, port number and web archive information for this service, so you don't need to hardcode these values in the test case. The ***arquillian-managed*** path in the URL comes from the WAR name you specified when you created the web archive in the ***@Deployment*** annotated method. It's needed when the ***inventory*** service communicates with the ***system*** service to get the system properties.
+
+The ***testInventoryEndpoints*** method is an integration test to test the ***inventory*** service endpoints. The ***@RunAsClient*** annotation added in this test case indicates that this test case is to be run on the client side. By running the tests on the client side, the tests are run against the managed container. The endpoint test case first calls the ***http://localhost:9080/{WARNAME}/inventory/systems/{hostname}*** endpoint with the ***localhost*** host name to add its system properties to the inventory. The test verifies that the system property for the local and service JVM match. Then, the test method calls the ***http://localhost:9080/{WARNAME}/inventory/systems*** endpoint. The test checks that the inventory has one host and that the host is ***localhost***. The test also verifies that the system property stored in the inventory for the local and service JVM match.
+
+Contexts and Dependency Injection (CDI) is used to inject an instance of the ***InventoryResource*** class into this test class. You can learn more about CDI in the [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
+
+The injected ***InventoryResource*** instance is then tested by the ***testInventoryResourceFunctions*** method. This test case calls the ***listContents()*** method to get all systems that are stored in this inventory and verifies that ***localhost*** is the only system being found. Notice the functional test case doesn't store any system in the inventory, the ***localhost*** system is from the endpoint test case that ran before this test case. The ***@InSequence*** Arquillian annotation guarantees the test sequence. The sequence is important for the two tests, as the results in the first test impact the second one.
+
+The test cases are ready to run. You will configure the Maven build and the Liberty application server to run them.
+
+::page{title="Configuring Arquillian with Liberty"}
+
+Configure your build to use the Arquillian Liberty Managed container and set up your Open Liberty server to run your test cases by configuring the ***server.xml*** file.
+
+### Configuring your test build
+
+First, configure your test build with Maven. All of the Maven configuration takes place in the ***pom.xml*** file, which is provided for you.
+
+
+> From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/pom.xml
+
+Let's look into each of the required elements for this configuration.
+
+You need the ***arquillian-bom*** Bill of Materials. It's a Maven artifact that defines the versions of Arquillian dependencies to make dependency management easier.
+
+The ***arquillian-liberty-managed-junit*** dependency bundle, which includes all the core dependencies, is required to run the Arquillian tests on a managed Liberty container that uses JUnit. You can learn more about the [Arquillian Liberty dependency bundles](https://github.com/OpenLiberty/arquillian-liberty-dependencies). The ***shrinkwrap-api*** dependency allows you to create your test archive, which is packaged into a WAR file and deployed to the Open Liberty server.
+
+The ***maven-failsafe-plugin*** artifact runs your Arquillian integration tests by using JUnit.
+
+Lastly, specify the ***liberty-maven-plugin*** configuration that defines your Open Liberty runtime configuration. When the application runs in an Arquillian Liberty managed container, the name of the war file is used as the context root of the application. You can pass context root information to the application and customize the container by using the ***arquillianProperties*** configuration. To learn more about the ***arquillianProperties*** configuration, see the [Arquillian Liberty Managed documentation](https://github.com/OpenLiberty/liberty-arquillian/blob/main/liberty-managed/README.md#configuration).
+
+
+### Configuring the server.xml file
+
+Now that you're done configuring your Maven build, set up your Open Liberty server to run your test cases by configuring the ***server.xml*** file.
+
+Take a look at the ***server.xml*** file.
+
+
+> From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/src/main/liberty/config/server.xml
+
+The ***localConnector*** feature is required by the Arquillian Liberty Managed container to connect to and communicate with the Open Liberty runtime. The ***servlet*** feature is required during the deployment of the Arquillian tests in which servlets are created to perform the in-container testing.
+
+
+::page{title="Running the tests"}
+
+It's now time to build and run your Arquillian tests. Navigate to the ***start*** directory. First, run the Maven command to package the application. Then, run the ***liberty-maven-plugin*** goals to create the application server, install the features, and deploy the application to the server. The ***configure-arquillian*** goal configures your Arquillian container. You can learn more about this goal in the [configure-arquillian goal documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/configure-arquillian.md).
 
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.rest.EndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
-
-Results :
-
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+cd /home/project/guide-arquillian-managed/start
+mvn clean package
+mvn liberty:create liberty:install-feature
+mvn liberty:configure-arquillian
 ```
 
-When you are finished, press ***CTRL+C*** in the session that the dev mode was
-started from to stop and remove the container.
+Now, you can run your Arquillian tests with the Maven ***integration-test*** goal:
 
-
-::page{title="Starting dev mode with run options"}
-
-Another useful feature of dev mode with a container is the ability to pass additional options to the ***docker run*** command. You can do this by adding the ***dockerRunOpts*** tag to the ***pom.xml*** file under the ***configuration*** tag of the Liberty Maven Plugin. Here is an example of an environment variable being passed in:
-
-```
-<groupId>io.openliberty.tools</groupId>
-<artifactId>liberty-maven-plugin</artifactId>
-<version>3.3.4</version>
-<configuration>
-    <dockerRunOpts>-e ENV_VAR=exampleValue</dockerRunOpts>
-</configuration>
+```bash
+mvn failsafe:integration-test
 ```
 
-If the Dockerfile isn't located in the directory that the ***devc*** goal is being run from, you can add the ***dockerfile*** tag to specify the location. Using this parameter sets the context for building the Docker image to the directory that contains this file.
+In the test output, you can see that the application server launched, and that the web archive, ***arquillian-managed***, started as an application in the server. You can also see that the tests are running and that the results are reported.
 
-Additionally, both of these options can be passed from the command line when running the ***devc*** goal by adding ***-D*** as such:
+After the tests stop running, the test application is automatically undeployed and the server shuts down. You should then get a message indicating that the build and tests are successful.
 
 ```
-mvn liberty:devc \
--DdockerRunOpts="-e ENV_VAR=exampleValue" \
--Ddockerfile="./path/to/file"
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
+...
+[AUDIT   ] CWWKE0001I: The server defaultServer has been launched.
+[AUDIT   ] CWWKG0093A: Processing configuration drop-ins resource: guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/configDropins/overrides/liberty-plugin-variable-config.xml
+[INFO    ] CWWKE0002I: The kernel started after 0.854 seconds
+[INFO    ] CWWKF0007I: Feature update started.
+[AUDIT   ] CWWKZ0058I: Monitoring dropins for applications.
+[INFO    ] Aries Blueprint packages not available. So namespaces will not be registered
+[INFO    ] CWWKZ0018I: Starting application guide-arquillian-managed.
+...
+[INFO    ] SRVE0169I: Loading Web Module: guide-arquillian-managed.
+[INFO    ] SRVE0250I: Web Module guide-arquillian-managed has been bound to default_host.
+[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/
+[INFO    ] SESN0176I: A new session context will be created for application key default_host/
+[INFO    ] SESN0172I: The session manager is using the Java default SecureRandom implementation for session ID generation.
+[AUDIT   ] CWWKZ0001I: Application guide-arquillian-managed started in 1.126 seconds.
+[INFO    ] CWWKO0219I: TCP Channel defaultHttpEndpoint has been started and is now listening for requests on host localhost  (IPv4: 127.0.0.1) port 9080.
+[AUDIT   ] CWWKF0012I: The server installed the following features: [cdi-2.0, jaxrs-2.1, jaxrsClient-2.1, jndi-1.0, jsonp-1.1, localConnector-1.0, mpConfig-1.3, servlet-4.0].
+[INFO    ] CWWKF0008I: Feature update completed in 2.321 seconds.
+[AUDIT   ] CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 3.175 seconds.
+[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
+...
+[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
+[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
+[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/arquillian-managed/
+...
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
+[INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
+[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
+[INFO    ] CWWKZ0136I: The arquillian-managed application is using the archive file at the guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/dropins/arquillian-managed.war location.
+[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
+[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
+...
+[INFO    ] Setting the server's publish address to be /inventory/
+[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Initialization successful.
+[INFO    ] Setting the server's publish address to be /system/
+[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.system.SystemApplication]: Initialization successful.
+[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Initialization successful.
+[AUDIT   ] CWWKT0017I: Web application removed (default_host): http://localhost:9080/arquillian-managed/
+[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Destroy successful.
+[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Destroy successful.
+[AUDIT   ] CWWKZ0009I: The application arquillian-managed has stopped successfully.
+[INFO    ] SRVE9103I: A configuration file for a web server plugin was automatically generated for this server at guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/logs/state/plugin-cfg.xml.
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.inventory.InventoryArquillianIT
+...
+Stopping server defaultServer.
+...
+Server defaultServer stopped.
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  12.018 s
+[INFO] Finished at: 2020-06-23T12:40:32-04:00
+[INFO] ------------------------------------------------------------------------
 ```
-
-To learn more about dev mode with a container and its different features, check out the [Documentation](http://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#devc-container-mode).
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just iteratively developed a simple REST application in a container with Open Liberty and Docker.
+You just built some functional and integration tests with the Arquillian managed container and ran the tests for your microservices on Open Liberty.
 
+
+Try one of the related guides to learn more about the technologies that you come across in this guide.
 
 
 ### Clean up your environment
@@ -358,33 +325,33 @@ You just iteratively developed a simple REST application in a container with Ope
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-docker*** project by running the following commands:
+Delete the ***guide-arquillian-managed*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-docker
+rm -fr guide-arquillian-managed
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Using%20Docker%20containers%20to%20develop%20microservices&guide-id=cloud-hosted-guide-docker)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20the%20Arquillian%20managed%20container&guide-id=cloud-hosted-guide-arquillian-managed)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-docker/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-docker/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-arquillian-managed/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-arquillian-managed/pulls)
 
 
 
 ### Where to next?
 
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
 
 
 ### Log out of the session
