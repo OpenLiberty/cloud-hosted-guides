@@ -103,8 +103,6 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-
-
 Create the InventoryPactIT class file.
 
 > Run the following touch command in your terminal
@@ -113,10 +111,138 @@ touch /home/project/guide-contract-testing/start/inventory/src/test/java/io/open
 ```
 
 
-> Then, to open the unknown file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/unknown, or click the following button
+> Then, to open the InventoryPactIT.java file in your IDE, select
+> **File** > **Open** > guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java, or click the following button
 
-::openFile{path="/home/project/guide-contract-testing/start/unknown"}
+::openFile{path="/home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java"}
+
+
+
+```java
+
+package io.openliberty.guides.inventory;
+
+import au.com.dius.pact.consumer.dsl.PactDslJsonArray;
+import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
+import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
+import au.com.dius.pact.consumer.junit.PactProviderRule;
+import au.com.dius.pact.consumer.junit.PactVerification;
+import au.com.dius.pact.core.model.RequestResponsePact;
+import au.com.dius.pact.core.model.annotations.Pact;
+
+import org.junit.Rule;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class InventoryPactIT {
+  @Rule
+  public PactProviderRule mockProvider = new PactProviderRule("System", this);
+
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactServer(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
+
+    return builder
+      .given("wlp.server.name is defaultServer")
+      .uponReceiving("a request for server name")
+      .path("/system/properties/key/wlp.server.name")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonArray().object()
+        .stringValue("wlp.server.name", "defaultServer"))
+      .toPact();
+  }
+
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactEdition(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
+
+    return builder
+      .given("Default directory is true")
+      .uponReceiving("a request to check for the default directory")
+      .path("/system/properties/key/wlp.user.dir.isDefault")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonArray().object()
+        .stringValue("wlp.user.dir.isDefault", "true"))
+      .toPact();
+  }
+
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactVersion(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
+
+    return builder
+      .given("version is 1.1")
+      .uponReceiving("a request for the version")
+      .path("/system/properties/version")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonBody()
+        .decimalType("system.properties.version", 1.1))
+      .toPact();
+  }
+
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactInvalid(PactDslWithProvider builder) {
+
+    return builder
+      .given("invalid property")
+      .uponReceiving("a request with an invalid property")
+      .path("/system/properties/invalidProperty")
+      .method("GET")
+      .willRespondWith()
+      .status(404)
+      .toPact();
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactServer")
+  public void runServerTest() {
+    String serverName = new Inventory(mockProvider.getUrl()).getServerName();
+    assertEquals("Expected server name does not match",
+      "[{\"wlp.server.name\":\"defaultServer\"}]", serverName);
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactEdition")
+  public void runEditionTest() {
+    String edition = new Inventory(mockProvider.getUrl()).getEdition();
+    assertEquals("Expected edition does not match",
+      "[{\"wlp.user.dir.isDefault\":\"true\"}]", edition);
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactVersion")
+  public void runVersionTest() {
+    String version = new Inventory(mockProvider.getUrl()).getVersion();
+    assertEquals("Expected version does not match",
+      "{\"system.properties.version\":1.1}", version);
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactInvalid")
+  public void runInvalidTest() {
+    String invalid = new Inventory(mockProvider.getUrl()).getInvalidProperty();
+    assertEquals("Expected invalid property response does not match",
+      "", invalid);
+  }
+}
+```
+
 
 
 The ***InventoryPactIT*** class contains a ***PactProviderRule*** mock provider that mimics the HTTP responses from the ***system*** microservice. The ***@Pact*** annotation takes the name of the microservice as a parameter, which makes it easier to differentiate microservices from each other when you have multiple applications.
@@ -127,10 +253,117 @@ The test sends a real request with the ***getUrl()*** method of the mock provide
 
 Replace the inventory Maven project file.
 
-> To open the unknown file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/unknown, or click the following button
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-contract-testing/start/inventory/pom.xml, or click the following button
 
-::openFile{path="/home/project/guide-contract-testing/start/unknown"}
+::openFile{path="/home/project/guide-contract-testing/start/inventory/pom.xml"}
+
+
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-contract-testing-inventory</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <liberty.var.default.http.port>9081</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>5.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>9.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- tag::pactJunit[] -->
+        <dependency>
+            <groupId>au.com.dius</groupId>
+            <artifactId>pact-jvm-consumer-junit</artifactId>
+            <version>4.0.10</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.33</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.0.0.Final</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>au.com.dius.pact.provider</groupId>
+                <artifactId>maven</artifactId>
+                <version>4.3.4</version>
+                <configuration>
+                    <serviceProviders>
+                        <serviceProvider>
+                            <name>System</name>
+                            <protocol>http</protocol>
+                            <host>localhost</host>
+                            <port>9080</port>
+                            <path>/</path>
+                            <pactFileDirectory>target/pacts</pactFileDirectory>
+                        </serviceProvider>
+                    </serviceProviders>
+                    <projectVersion>${project.version}</projectVersion>
+                    <skipPactPublish>false</skipPactPublish>
+                    <pactBrokerUrl>http://localhost:9292</pactBrokerUrl>
+                    <tags>
+                        <tag>open-liberty-pact</tag>
+                    </tags>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.default.http.port}</http.port>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.5.1</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
 
 
 The Pact framework provides a ***Maven*** plugin that can be added to the build section of the ***pom.xml*** file. The ***serviceProvider*** element defines the endpoint URL for the ***system*** microservice and the ***pactFileDirectory*** directory where you want to store the pact file. The ***pact-jvm-consumer-junit*** dependency provides the base test class that you can use with JUnit to build unit tests.
@@ -221,8 +454,6 @@ You can see detailed insights about each interaction by going to the **`https://
 ::page{title="Implementing pact testing in the system service"}
 
 
-
-
 Navigate to the ***start/system*** directory.
 
 Open another command-line session to start Open Liberty in dev mode for the ***system*** microservice:
@@ -246,10 +477,73 @@ touch /home/project/guide-contract-testing/start/system/src/test/java/it/io/open
 ```
 
 
-> Then, to open the unknown file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/unknown, or click the following button
+> Then, to open the SystemBrokerIT.java file in your IDE, select
+> **File** > **Open** > guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java, or click the following button
 
-::openFile{path="/home/project/guide-contract-testing/start/unknown"}
+::openFile{path="/home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.system;
+
+import au.com.dius.pact.provider.junit5.HttpTestTarget;
+import au.com.dius.pact.provider.junit5.PactVerificationContext;
+import au.com.dius.pact.provider.junit5.PactVerificationInvocationContextProvider;
+import au.com.dius.pact.provider.junitsupport.Consumer;
+import au.com.dius.pact.provider.junitsupport.Provider;
+import au.com.dius.pact.provider.junitsupport.State;
+import au.com.dius.pact.provider.junitsupport.loader.PactBroker;
+import au.com.dius.pact.provider.junitsupport.loader.VersionSelector;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestTemplate;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+@Provider("System")
+@Consumer("Inventory")
+@PactBroker(
+  host = "localhost",
+  port = "9292",
+  consumerVersionSelectors = {
+    @VersionSelector(tag = "open-liberty-pact")
+  })
+public class SystemBrokerIT {
+  @TestTemplate
+  @ExtendWith(PactVerificationInvocationContextProvider.class)
+  void pactVerificationTestTemplate(PactVerificationContext context) {
+    context.verifyInteraction();
+  }
+
+  @BeforeAll
+  static void enablePublishingPact() {
+    System.setProperty("pact.verifier.publishResults", "true");
+  }
+
+  @BeforeEach
+  void before(PactVerificationContext context) {
+    int port = Integer.parseInt(System.getProperty("http.port"));
+    context.setTarget(new HttpTestTarget("localhost", port));
+  }
+
+  @State("wlp.server.name is defaultServer")
+  public void validServerName() {
+  }
+
+  @State("Default directory is true")
+  public void validEdition() {
+  }
+
+  @State("version is 1.1")
+  public void validVersion() {
+  }
+
+  @State("invalid property")
+  public void invalidProperty() {
+  }
+}
+```
+
 
 
 The connection information for the Pact Broker is provided with the ***@PactBroker*** annotation. The dependency also provides a JUnit5 Invocation Context Provider with the ***pactVerificationTestTemplate()*** method to generate a test for each of the interactions.
@@ -262,10 +556,97 @@ The ***@State*** annotation must match the ***given()*** parameter that was prov
 
 Replace the system Maven project file.
 
-> To open the unknown file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/unknown, or click the following button
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-contract-testing/start/system/pom.xml, or click the following button
 
-::openFile{path="/home/project/guide-contract-testing/start/unknown"}
+::openFile{path="/home/project/guide-contract-testing/start/system/pom.xml"}
+
+
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-contract-testing-system</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <debugPort>8787</debugPort>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>5.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>9.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>au.com.dius.pact.provider</groupId>
+            <artifactId>junit5</artifactId>
+            <version>4.3.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.33</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.0.0.Final</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <!-- tag::libertyMavenPlugin[] -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.5.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.0.0-M5</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.default.http.port}</http.port>
+                        <pact.provider.version>${project.version}</pact.provider.version>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
 
 
 The ***system*** microservice uses the ***junit5*** pact provider dependency to connect to the Pact Broker and verify the pact file. Ideally, in a CI/CD build pipeline, the ***pact.provider.version*** element is dynamically set to the build number so that you can identify where a breaking change is introduced.
