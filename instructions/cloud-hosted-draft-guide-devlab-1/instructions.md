@@ -74,6 +74,7 @@ Creating pact-broker_pact-broker_1 ... done
 
 
 Confirm that the Pact Broker is working. Select **Launch Application** from the menu of the IDE and type **9292** to specify the port number for the Pact Broker service. Click the **OK** button. The Pact Broker can also be found at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, where **accountname** is your account name.
+::startApplication{port="9292" display="internal" name="Launch Application" route="/"}
 
 Confirm that you can access the user interface of the Pact Broker. The Pact Broker interface is similar to the following image:
 
