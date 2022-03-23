@@ -4,9 +4,9 @@ title: instructions
 branch: lab-204-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 ---
-::page{title="Welcome to the Testing microservices with consumer-driven contracts guide!"}
+::page{title="Welcome to the Persisting data with MongoDB guide!"}
 
-Learn how to test Java microservices with consumer-driven contracts in Open Liberty.
+Learn how to persist data in your microservices to MongoDB, a document-oriented NoSQL database.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -18,23 +18,25 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-With a microservices-based architecture, you need robust testing to ensure that microservices that depend on one another are able to communicate effectively.  Typically, to prevent multiple points of failure at different integration points, a combination of unit, integration, and end-to-end tests are used. While unit tests are fast, they are less trustworthy because they run in isolation and usually rely on mock data.
+You will learn how to use MongoDB to build and test a simple microservice that manages the members of a crew. The microservice will respond to ***POST***, ***GET***, ***PUT***, and ***DELETE*** requests that manipulate the database.
 
-Integration tests address this issue by testing against real running services. However, they tend to be slow as the tests depend on other microservices and are less reliable because they are prone to external changes.
+The crew members will be stored in MongoDB as documents in the following JSON format:
 
-Usually, end-to-end tests are more trustworthy because they verify functionality from the perspective of a user. However, a graphical user interface (GUI) component is often required to perform end-to-end tests, and GUI components rely on third-party software, such as Selenium, which requires heavy computation time and resources.
+```
+{
+  "_id": {
+    "$oid": "5dee6b079503234323db2ebc"
+  },
+  "Name": "Member1",
+  "Rank": "Captain",
+  "CrewID": "000001"
+}
+```
 
-*What is contract testing?*
+This microservice connects to MongoDB by using Transport Layer Security (TLS) and injects a ***MongoDatabase*** instance into the service with a Contexts and Dependency Injection (CDI) producer. Additionally, MicroProfile Config is used to easily configure the MongoDB driver.
 
-Contract testing bridges the gaps among the shortcomings of these different testing methodologies. Contract testing is a technique for testing an integration point by isolating each microservice and checking whether the HTTP requests and responses that the microservice transmits conform to a shared understanding that is documented in a contract. This way, contract testing ensures that microservices can communicate with each other.
+For more information about CDI and MicroProfile Config, see the guides on [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) and [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html).
 
-[Pact](https://docs.pact.io/) is an open source contract testing tool for testing HTTP requests, responses, and message integrations by using contract tests.
-
-The [Pact Broker](https://docs.pact.io/pact_broker/docker_images) is an application for sharing Pact contracts and verification results. The Pact Broker is also an important piece for integrating Pact into continuous integration and continuous delivery (CI/CD) pipelines.
-
-The two microservices you will interact with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of its host. The ***inventory*** microservice retrieves specific properties from the ***system*** microservice.
-
-You will learn how to use the Pact framework to write contract tests for the ***inventory*** microservice that will then be verified by the ***system*** microservice.
 
 ::page{title="Getting started"}
 
@@ -47,11 +49,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-contract-testing.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-mongodb-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-contract-testing.git
-cd guide-contract-testing
+git clone https://github.com/openliberty/guide-mongodb-intro.git
+cd guide-mongodb-intro
 ```
 
 
@@ -59,36 +61,81 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-### Starting the Pact Broker
 
-Run the following command to start the Pact Broker:
+### Setting up MongoDB
+
+This guide uses Docker to run an instance of MongoDB. A multi-stage Dockerfile is provided for you. This Dockerfile uses the ***mongo*** image as the base image of the final stage and gathers the required configuration files. The resulting ***mongo*** image runs in a Docker container, and you must set up a new database for the microservice. Lastly, the truststore that's generated in the Docker image is copied from the container and placed into the Open Liberty server.
+
+You can find more details and configuration options on the [MongoDB website](https://docs.mongodb.com/manual/reference/configuration-options/). For more information about the ***mongo*** image, see [mongo](https://hub.docker.com/_/mongo) in Docker Hub.
+
+**Running MongoDB in a Docker container**
+
+Run the following commands to use the Dockerfile to build the image, run the image in a Docker container, and map port ***27017*** from the container to your host machine:
+
 ```bash
-docker-compose -f "pact-broker/docker-compose.yml" up -d --build
+docker build -t mongo-sample -f assets/Dockerfile .
+docker run --name mongo-guide -p 27017:27017 -d mongo-sample
 ```
 
-When the Pact Broker is running, you'll see the following output:
+**Adding the truststore to the Open Liberty server**
+
+The truststore that's created in the container needs to be added to the Open Liberty server so that the server can trust the certificate that MongoDB presents when they connect. Run the following command to copy the ***truststore.p12*** file from the container to the ***start*** and ***finish*** directories:
+
+
+```bash
+docker cp \
+  mongo-guide:/home/mongodb/certs/truststore.p12 \
+  start/src/main/liberty/config/resources/security
+docker cp \
+  mongo-guide:/home/mongodb/certs/truststore.p12 \
+  finish/src/main/liberty/config/resources/security
 ```
-Creating pact-broker_postgres_1 ... done
-Creating pact-broker_pact-broker_1 ... done
+
+
+### Try what you'll build
+
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+
+```bash
+cd finish
+mvn liberty:run
+```
+
+After you see the following message, your application server is ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
 ```
 
 
-Confirm that the Pact Broker is working. Select **Launch Application** from the menu of the IDE and type **9292** to specify the port number for the Pact Broker service. Click the **OK** button. The Pact Broker can also be found at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, where **accountname** is your account name.
-::startApplication{port="9292" display="internal" name="Launch Application" route="/"}
 
-Confirm that you can access the user interface of the Pact Broker. The Pact Broker interface is similar to the following image:
-
-![Pact Broker webpage](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage.png)
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
+You can now check out the service by going to the http://localhost:9080/mongo/ URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl http://localhost:9080/mongo/
+```
 
 
 
-You can refer to the [official Pact Broker documentation](https://docs.pact.io/pact_broker/docker_images/pactfoundation) for more information about the components of the Docker Compose file.
+After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
-::page{title="Implementing pact testing in the inventory service"}
+```bash
+mvn liberty:stop
+```
 
-Navigate to the ***start/inventory*** directory to begin.
+
+::page{title="Providing a MongoDatabase"}
+
+Navigate to the ***start*** directory to begin.
+
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
@@ -104,707 +151,888 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Create the InventoryPactIT class file.
+With a CDI producer, you can easily provide a ***MongoDatabase*** to your microservice.
+
+Create the ***MongoProducer*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java
+touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java
 ```
 
 
-> Then, to open the InventoryPactIT.java file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java, or click the following button
+> Then, to open the MongoProducer.java file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java, or click the following button
 
-::openFile{path="/home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java"}
+::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java"}
 
 
 
 ```java
+package io.openliberty.guides.mongo;
 
-package io.openliberty.guides.inventory;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Disposes;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import javax.net.ssl.SSLContext;
 
-import au.com.dius.pact.consumer.dsl.PactDslJsonArray;
-import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
-import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
-import au.com.dius.pact.consumer.junit.PactProviderRule;
-import au.com.dius.pact.consumer.junit.PactVerification;
-import au.com.dius.pact.core.model.RequestResponsePact;
-import au.com.dius.pact.core.model.annotations.Pact;
+import com.ibm.websphere.ssl.JSSEHelper;
+import com.ibm.websphere.ssl.SSLException;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import org.junit.Rule;
-import org.junit.Test;
+import com.ibm.websphere.crypto.PasswordUtil;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoDatabase;
 
-import static org.junit.Assert.assertEquals;
+import java.util.Collections;
 
-import java.util.HashMap;
-import java.util.Map;
+@ApplicationScoped
+public class MongoProducer {
 
-public class InventoryPactIT {
-  @Rule
-  public PactProviderRule mockProvider = new PactProviderRule("System", this);
+    @Inject
+    @ConfigProperty(name = "mongo.hostname", defaultValue = "localhost")
+    String hostname;
 
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactServer(PactDslWithProvider builder) {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("Content-Type", "application/json");
+    @Inject
+    @ConfigProperty(name = "mongo.port", defaultValue = "27017")
+    int port;
 
-    return builder
-      .given("wlp.server.name is defaultServer")
-      .uponReceiving("a request for server name")
-      .path("/system/properties/key/wlp.server.name")
-      .method("GET")
-      .willRespondWith()
-      .headers(headers)
-      .status(200)
-      .body(new PactDslJsonArray().object()
-        .stringValue("wlp.server.name", "defaultServer"))
-      .toPact();
-  }
+    @Inject
+    @ConfigProperty(name = "mongo.dbname", defaultValue = "testdb")
+    String dbName;
 
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactEdition(PactDslWithProvider builder) {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("Content-Type", "application/json");
+    @Inject
+    @ConfigProperty(name = "mongo.user")
+    String user;
 
-    return builder
-      .given("Default directory is true")
-      .uponReceiving("a request to check for the default directory")
-      .path("/system/properties/key/wlp.user.dir.isDefault")
-      .method("GET")
-      .willRespondWith()
-      .headers(headers)
-      .status(200)
-      .body(new PactDslJsonArray().object()
-        .stringValue("wlp.user.dir.isDefault", "true"))
-      .toPact();
-  }
+    @Inject
+    @ConfigProperty(name = "mongo.pass.encoded")
+    String encodedPass;
 
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactVersion(PactDslWithProvider builder) {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("Content-Type", "application/json");
+    @Produces
+    public MongoClient createMongo() throws SSLException {
+        String password = PasswordUtil.passwordDecode(encodedPass);
+        MongoCredential creds = MongoCredential.createCredential(
+                user,
+                dbName,
+                password.toCharArray()
+        );
 
-    return builder
-      .given("version is 1.1")
-      .uponReceiving("a request for the version")
-      .path("/system/properties/version")
-      .method("GET")
-      .willRespondWith()
-      .headers(headers)
-      .status(200)
-      .body(new PactDslJsonBody()
-        .decimalType("system.properties.version", 1.1))
-      .toPact();
-  }
+        SSLContext sslContext = JSSEHelper.getInstance().getSSLContext(
+                "outboundSSLContext",
+                Collections.emptyMap(),
+                null
+        );
 
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactInvalid(PactDslWithProvider builder) {
-
-    return builder
-      .given("invalid property")
-      .uponReceiving("a request with an invalid property")
-      .path("/system/properties/invalidProperty")
-      .method("GET")
-      .willRespondWith()
-      .status(404)
-      .toPact();
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactServer")
-  public void runServerTest() {
-    String serverName = new Inventory(mockProvider.getUrl()).getServerName();
-    assertEquals("Expected server name does not match",
-      "[{\"wlp.server.name\":\"defaultServer\"}]", serverName);
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactEdition")
-  public void runEditionTest() {
-    String edition = new Inventory(mockProvider.getUrl()).getEdition();
-    assertEquals("Expected edition does not match",
-      "[{\"wlp.user.dir.isDefault\":\"true\"}]", edition);
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactVersion")
-  public void runVersionTest() {
-    String version = new Inventory(mockProvider.getUrl()).getVersion();
-    assertEquals("Expected version does not match",
-      "{\"system.properties.version\":1.1}", version);
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactInvalid")
-  public void runInvalidTest() {
-    String invalid = new Inventory(mockProvider.getUrl()).getInvalidProperty();
-    assertEquals("Expected invalid property response does not match",
-      "", invalid);
-  }
-}
-```
-
-
-
-The ***InventoryPactIT*** class contains a ***PactProviderRule*** mock provider that mimics the HTTP responses from the ***system*** microservice. The ***@Pact*** annotation takes the name of the microservice as a parameter, which makes it easier to differentiate microservices from each other when you have multiple applications.
-
-The ***createPactServer()*** method defines the minimal expected responsezfor a specific endpoint, which is known as an interaction. For each interaction, the expected request and the response are registered with the mock service by using the ***@PactVerification*** annotation.
-
-The test sends a real request with the ***getUrl()*** method of the mock provider. The mock provider compares the actual request with the expected request and confirms whether the comparison is successful. Finally, the ***assertEquals()*** method confirms that the response is correct.
-
-Replace the inventory Maven project file.
-
-> To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/inventory/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-contract-testing/start/inventory/pom.xml"}
-
-
-
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-contract-testing-inventory</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <liberty.var.default.http.port>9081</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>5.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- tag::pactJunit[] -->
-        <dependency>
-            <groupId>au.com.dius</groupId>
-            <artifactId>pact-jvm-consumer-junit</artifactId>
-            <version>4.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.33</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>6.0.0.Final</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>au.com.dius.pact.provider</groupId>
-                <artifactId>maven</artifactId>
-                <version>4.3.4</version>
-                <configuration>
-                    <serviceProviders>
-                        <serviceProvider>
-                            <name>System</name>
-                            <protocol>http</protocol>
-                            <host>localhost</host>
-                            <port>9080</port>
-                            <path>/</path>
-                            <pactFileDirectory>target/pacts</pactFileDirectory>
-                        </serviceProvider>
-                    </serviceProviders>
-                    <projectVersion>${project.version}</projectVersion>
-                    <skipPactPublish>false</skipPactPublish>
-                    <pactBrokerUrl>http://localhost:9292</pactBrokerUrl>
-                    <tags>
-                        <tag>open-liberty-pact</tag>
-                    </tags>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5.1</version>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-
-
-The Pact framework provides a ***Maven*** plugin that can be added to the build section of the ***pom.xml*** file. The ***serviceProvider*** element defines the endpoint URL for the ***system*** microservice and the ***pactFileDirectory*** directory where you want to store the pact file. The ***pact-jvm-consumer-junit*** dependency provides the base test class that you can use with JUnit to build unit tests.
-
-After you create the ***InventoryPactIT.java*** class and replace the ***pom.xml*** file, Open Liberty automatically reloads its configuration.
-
-The contract between the ***inventory*** and ***system*** microservices is known as a pact. Each pact is a collection of interactions. In this guide, those interactions are defined in the ***InventoryPactIT*** class.
-
-Press the ***enter/return*** key to run the tests and generate the pact file.
-
-When completed, you'll see a similar output to the following example:
-```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running io.openliberty.guides.inventory.InventoryPactIT
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.631 s - in io.openliberty.guides.inventory.InventoryPactIT
-[INFO]
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-```
-
-When you integrate the Pact framework in a CI/CD build pipeline, you can use the ***mvn failsafe:integration-test*** goal to generate the pact file. The Maven failsafe plug-in provides a lifecycle phase for running integration tests that run after unit tests. By default, it looks for classes that are suffixed with ***IT***, which stands for Integration Test. You can refer to the [Maven failsafe plug-in documentation](https://maven.apache.org/surefire/maven-failsafe-plugin/) for more information.
-
-The generated pact file is named ***Inventory-System.json*** and is located in the ***inventory/target/pacts*** directory. The pact file contains the defined interactions in JSON format:
-
-```
-{
-...
-"interactions": [
-{
-      "description": "a request for server name",
-      "request": {
-        "method": "GET",
-        "path": "/system/properties/key/wlp.server.name"
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "body": [
-          {
-            "wlp.server.name": "defaultServer"
-          }
-        ]
-      },
-      "providerStates": [
-        {
-          "name": "wlp.server.name is defaultServer"
-        }
-      ]
+        return new MongoClient(
+                new ServerAddress(hostname, port),
+                creds,
+                new MongoClientOptions.Builder()
+                        .sslEnabled(true)
+                        .sslContext(sslContext)
+                        .build()
+        );
     }
-...
-  ]
+
+    @Produces
+    public MongoDatabase createDB(
+            MongoClient client) {
+        return client.getDatabase(dbName);
+    }
+
+    public void close(
+            @Disposes MongoClient toClose) {
+        toClose.close();
+    }
 }
 ```
 
-Open a new command-line session and navigate to the ***start/inventory*** directory. Publish the generated pact file to the Pact Broker by running the following command:
-```bash
-mvn pact:publish
-```
-
-After the file is published, you'll see a similar output to the following example:
-```
---- maven:4.1.21:publish (default-cli) @ inventory ---
-Publishing 'Inventory-System.json' with tags 'open-liberty-pact' ... OK
-```
-
-::page{title="Verifying the pact in the Pact Broker"}
-
-
-Refresh the Pact Broker at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, where **accountname** is your account name.
-::startApplication{port="9292" display="internal" name="Launch Application" route="/"}
-
-The last verified column doesn't show a timestamp because the `system` microservice hasn't verified the pact yet.
-
-![Pact Broker webpage for new entry](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage-refresh.png)
 
 
 
 
 
+The values from the ***microprofile-config.properties*** file are injected into the ***MongoProducer*** class. The ***MongoProducer*** class requires the following methods for the ***MongoClient***:
 
-You can see detailed insights about each interaction by going to the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai/pacts/provider/System/consumer/Inventory/latest`** URL, where **accountname** is your account name.
-::startApplication{port="9292" display="internal" name="Launch Application" route="/"}
+* The ***createMongo()*** producer method returns an instance of ***MongoClient***. In this method, the username, database name, and decoded password are passed into the ***MongoCredential.createCredential()*** method to get an instance of ***MongoCredential***. The ***JSSEHelper*** gets the ***SSLContext*** from the ***outboundSSLContext*** in the ***server.xml*** file. Then, a ***MongoClient*** instance is created.
 
-The insights look similar to the following image:
+* The ***createDB()*** producer method returns an instance of ***MongoDatabase*** that depends on the ***MongoClient***. This method injects the ***MongoClient*** in its parameters and passes the database name into the ***MongoClient.getDatabase()*** method to get a ***MongoDatabase*** instance.
 
-![Pact Broker webpage for Interactions](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-interactions.png)
-
-
-::page{title="Implementing pact testing in the system service"}
+* The ***close()*** method is a clean-up function for the ***MongoClient*** that closes the connection to the ***MongoDatabase*** instance.
 
 
-Navigate to the ***start/system*** directory.
 
-Open another command-line session to start Open Liberty in dev mode for the ***system*** microservice:
-```bash
-mvn liberty:dev
-```
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
+::page{title="Implementing the Create, Retrieve, Update, and Delete operations"}
 
 
-Create the SystemBrokerIT class file.
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+You are going to implement the basic create, retrieve, update, and delete (CRUD) operations in the ***CrewService*** class. The ***com.mongodb.client*** and ***com.mongodb.client.result*** packages are used to help implement these operations for the microservice. For more information about these packages, see the [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html) and [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html) Javadoc. For more information about creating a RESTful service with JAX-RS, JSON-B, and Open Liberty, see the guide on [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html).
+
+Create the ***CrewService*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java
+touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java
 ```
 
 
-> Then, to open the SystemBrokerIT.java file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java, or click the following button
+> Then, to open the CrewService.java file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java, or click the following button
 
-::openFile{path="/home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java"}
+::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.system;
+package io.openliberty.guides.application;
 
-import au.com.dius.pact.provider.junit5.HttpTestTarget;
-import au.com.dius.pact.provider.junit5.PactVerificationContext;
-import au.com.dius.pact.provider.junit5.PactVerificationInvocationContextProvider;
-import au.com.dius.pact.provider.junitsupport.Consumer;
-import au.com.dius.pact.provider.junitsupport.Provider;
-import au.com.dius.pact.provider.junitsupport.State;
-import au.com.dius.pact.provider.junitsupport.loader.PactBroker;
-import au.com.dius.pact.provider.junitsupport.loader.VersionSelector;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestTemplate;
-import org.junit.jupiter.api.extension.ExtendWith;
+import java.util.Set;
 
-@Provider("System")
-@Consumer("Inventory")
-@PactBroker(
-  host = "localhost",
-  port = "9292",
-  consumerVersionSelectors = {
-    @VersionSelector(tag = "open-liberty-pact")
-  })
-public class SystemBrokerIT {
-  @TestTemplate
-  @ExtendWith(PactVerificationInvocationContextProvider.class)
-  void pactVerificationTestTemplate(PactVerificationContext context) {
-    context.verifyInteraction();
-  }
+import java.io.StringWriter;
 
-  @BeforeAll
-  static void enablePublishingPact() {
-    System.setProperty("pact.verifier.publishResults", "true");
-  }
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.Json;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
-  @BeforeEach
-  void before(PactVerificationContext context) {
-    int port = Integer.parseInt(System.getProperty("http.port"));
-    context.setTarget(new HttpTestTarget("localhost", port));
-  }
+import jakarta.validation.Validator;
+import jakarta.validation.ConstraintViolation;
 
-  @State("wlp.server.name is defaultServer")
-  public void validServerName() {
-  }
+import com.mongodb.client.FindIterable;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
-  @State("Default directory is true")
-  public void validEdition() {
-  }
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 
-  @State("version is 1.1")
-  public void validVersion() {
-  }
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
-  @State("invalid property")
-  public void invalidProperty() {
-  }
+@Path("/crew")
+@ApplicationScoped
+public class CrewService {
+
+    @Inject
+    MongoDatabase db;
+
+    @Inject
+    Validator validator;
+
+    private JsonArray getViolations(CrewMember crewMember) {
+        Set<ConstraintViolation<CrewMember>> violations = validator.validate(
+                crewMember);
+
+        JsonArrayBuilder messages = Json.createArrayBuilder();
+
+        for (ConstraintViolation<CrewMember> v : violations) {
+            messages.add(v.getMessage());
+        }
+
+        return messages.build();
+    }
+
+    @POST
+    @Path("/")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Successfully added crew member."),
+        @APIResponse(
+            responseCode = "400",
+            description = "Invalid crew member configuration.") })
+    @Operation(summary = "Add a new crew member to the database.")
+    public Response add(CrewMember crewMember) {
+        JsonArray violations = getViolations(crewMember);
+
+        if (!violations.isEmpty()) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(violations.toString())
+                    .build();
+        }
+
+        MongoCollection<Document> crew = db.getCollection("Crew");
+
+        Document newCrewMember = new Document();
+        newCrewMember.put("Name", crewMember.getName());
+        newCrewMember.put("Rank", crewMember.getRank());
+        newCrewMember.put("CrewID", crewMember.getCrewID());
+
+        crew.insertOne(newCrewMember);
+
+        return Response
+            .status(Response.Status.OK)
+            .entity(newCrewMember.toJson())
+            .build();
+    }
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Successfully listed the crew members."),
+        @APIResponse(
+            responseCode = "500",
+            description = "Failed to list the crew members.") })
+    @Operation(summary = "List the crew members from the database.")
+    public Response retrieve() {
+        StringWriter sb = new StringWriter();
+
+        try {
+            MongoCollection<Document> crew = db.getCollection("Crew");
+            sb.append("[");
+            boolean first = true;
+            FindIterable<Document> docs = crew.find();
+            for (Document d : docs) {
+                if (!first) {
+                    sb.append(",");
+                } else {
+                    first = false;
+                }
+                sb.append(d.toJson());
+            }
+            sb.append("]");
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
+            return Response
+                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("[\"Unable to list crew members!\"]")
+                .build();
+        }
+
+        return Response
+            .status(Response.Status.OK)
+            .entity(sb.toString())
+            .build();
+    }
+
+    @PUT
+    @Path("/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Successfully updated crew member."),
+        @APIResponse(
+            responseCode = "400",
+            description = "Invalid object id or crew member configuration."),
+        @APIResponse(
+            responseCode = "404",
+            description = "Crew member object id was not found.") })
+    @Operation(summary = "Update a crew member in the database.")
+    public Response update(CrewMember crewMember,
+        @Parameter(
+            description = "Object id of the crew member to update.",
+            required = true
+        )
+        @PathParam("id") String id) {
+
+        JsonArray violations = getViolations(crewMember);
+
+        if (!violations.isEmpty()) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(violations.toString())
+                    .build();
+        }
+
+        ObjectId oid;
+
+        try {
+            oid = new ObjectId(id);
+        } catch (Exception e) {
+            return Response
+                .status(Response.Status.BAD_REQUEST)
+                .entity("[\"Invalid object id!\"]")
+                .build();
+        }
+
+        MongoCollection<Document> crew = db.getCollection("Crew");
+
+        Document query = new Document("_id", oid);
+
+        Document newCrewMember = new Document();
+        newCrewMember.put("Name", crewMember.getName());
+        newCrewMember.put("Rank", crewMember.getRank());
+        newCrewMember.put("CrewID", crewMember.getCrewID());
+
+        UpdateResult updateResult = crew.replaceOne(query, newCrewMember);
+
+        if (updateResult.getMatchedCount() == 0) {
+            return Response
+                .status(Response.Status.NOT_FOUND)
+                .entity("[\"_id was not found!\"]")
+                .build();
+        }
+
+        newCrewMember.put("_id", oid);
+
+        return Response
+            .status(Response.Status.OK)
+            .entity(newCrewMember.toJson())
+            .build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Successfully deleted crew member."),
+        @APIResponse(
+            responseCode = "400",
+            description = "Invalid object id."),
+        @APIResponse(
+            responseCode = "404",
+            description = "Crew member object id was not found.") })
+    @Operation(summary = "Delete a crew member from the database.")
+    public Response remove(
+        @Parameter(
+            description = "Object id of the crew member to delete.",
+            required = true
+        )
+        @PathParam("id") String id) {
+
+        ObjectId oid;
+
+        try {
+            oid = new ObjectId(id);
+        } catch (Exception e) {
+            return Response
+                .status(Response.Status.BAD_REQUEST)
+                .entity("[\"Invalid object id!\"]")
+                .build();
+        }
+
+        MongoCollection<Document> crew = db.getCollection("Crew");
+
+        Document query = new Document("_id", oid);
+
+        DeleteResult deleteResult = crew.deleteOne(query);
+
+        if (deleteResult.getDeletedCount() == 0) {
+            return Response
+                .status(Response.Status.NOT_FOUND)
+                .entity("[\"_id was not found!\"]")
+                .build();
+        }
+
+        return Response
+            .status(Response.Status.OK)
+            .entity(query.toJson())
+            .build();
+    }
 }
 ```
 
 
 
-The connection information for the Pact Broker is provided with the ***@PactBroker*** annotation. The dependency also provides a JUnit5 Invocation Context Provider with the ***pactVerificationTestTemplate()*** method to generate a test for each of the interactions.
 
-The ***pact.verifier.publishResults*** property is set to ***true*** so that the results are sent to the Pact Broker after the tests are completed.
+In this class, a ***Validator*** is used to validate a ***CrewMember*** before the database is updated. The CDI producer is used to inject a ***MongoDatabase*** into the CrewService class.
 
-The test target is defined in the ***PactVerificationContext*** context to point to the running endpoint of the ***system*** microservice.
 
-The ***@State*** annotation must match the ***given()*** parameter that was provided in the ***inventory*** test class so that Pact can identify which test case to run against which endpoint.
+**Implementing the Create operation**
 
-Replace the system Maven project file.
+The ***add()*** method handles the implementation of the create operation. An instance of ***MongoCollection*** is retrieved with the ***MongoDatabase.getCollection()*** method. The ***Document*** type parameter specifies that the ***Document*** type is used to store data in the ***MongoCollection***. Each crew member is converted into a ***Document***, and the ***MongoCollection.insertOne()*** method inserts a new crew member document.
 
-> To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/system/pom.xml, or click the following button
 
-::openFile{path="/home/project/guide-contract-testing/start/system/pom.xml"}
+**Implementing the Retrieve operation**
+
+The ***retrieve()*** method handles the implementation of the retrieve operation. The ***Crew*** collection is retrieved with the ***MongoDatabase.getCollection()*** method. Then, the ***MongoCollection.find()*** method retrieves a ***FindIterable*** object. This object is iterable for all the crew members documents in the collection, so each crew member document is concatenated into a String array and returned.
+
+
+**Implementing the Update operation**
+
+The ***update()*** method handles the implementation of the update operation. After the ***Crew*** collection is retrieved, a document is created with the specified object ***id*** and is used to query the collection. Next, a new crew member ***Document*** is created with the updated configuration. The ***MongoCollection.replaceOne()*** method is called with the query and new crew member document. This method updates all of the matching queries with the new document. Because the object ***id*** is unique in the ***Crew*** collection, only one document is updated. The ***MongoCollection.replaceOne()*** method also returns an ***UpdateResult*** instance, which determines how many documents matched the query. If there are zero matches, then the object ***id*** doesn't exist.
+
+
+**Implementing the Delete operation**
+
+The ***remove()*** method handles the implementation of the delete operation. After the ***Crew*** collection is retrieved, a ***Document*** is created with the specified object ***id*** and is used to query the collection. Because the object ***id*** is unique in the ***Crew*** collection, only one document is deleted. After the document is deleted, the ***MongoCollection.deleteOne()*** method returns a ***DeleteResult*** instance, which determines how many documents were deleted. If zero documents were deleted, then the object ***id*** doesn't exist.
+
+
+
+::page{title="Configuring the MongoDB driver and the server"}
+
+MicroProfile Config makes configuring the MongoDB driver simple because all of the configuration can be set in one place and injected into the CDI producer.
+
+Create the configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-mongodb-intro/start/src/main/webapp/META-INF/microprofile-config.properties
+```
+
+
+> Then, to open the microprofile-config.properties file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/main/webapp/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-mongodb-intro/start/src/main/webapp/META-INF/microprofile-config.properties"}
+
+
+
+```
+mongo.hostname=localhost
+mongo.port=27017
+mongo.dbname=testdb
+mongo.user=sampleUser
+mongo.pass.encoded={aes}APtt+/vYxxPa0jE1rhmZue9wBm3JGqFK3JR4oJdSDGWM1wLr1ckvqkqKjSB2Voty8g==
+```
+
+
+
+Values such as the hostname, port, and database name for the running MongoDB instance are set in this file. The user’s username and password are also set here. For added security, the password was encoded by using the https://openliberty.io/docs/latest/reference/command/securityUtility-encode.html[securityUtility encode command].
+
+To create a CDI producer for MongoDB and connect over TLS, the Open Liberty server needs to be correctly configured.
+
+Replace the server configuration file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-mongodb-intro/start/src/main/liberty/config/server.xml"}
 
 
 
 ```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<server description="Sample Liberty server">
+    <featureManager>
+        <feature>cdi-3.0</feature>
+        <!-- tag::sslFeature[] -->
+        <feature>ssl-1.0</feature>
+        <!-- tag::mpConfigFeature[] -->
+        <feature>mpConfig-3.0</feature>
+        <!-- tag::passwordUtilFeature[] -->
+        <feature>passwordUtilities-1.0</feature>
+        <feature>beanValidation-3.0</feature>	   
+        <feature>restfulWS-3.0</feature>
+        <feature>jsonb-2.0</feature>
+        <feature>mpOpenAPI-3.0</feature>
+    </featureManager>
 
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-contract-testing-system</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
+    <variable name="default.http.port" defaultValue="9080"/>
+    <variable name="default.https.port" defaultValue="9443"/>
+    <variable name="app.context.root" defaultValue="/mongo"/>
 
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-        <debugPort>8787</debugPort>
-    </properties>
+    <httpEndpoint
+        host="*" 
+        httpPort="${default.http.port}" 
+        httpsPort="${default.https.port}" 
+        id="defaultHttpEndpoint"
+    />
 
-    <dependencies>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>5.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>au.com.dius.pact.provider</groupId>
-            <artifactId>junit5</artifactId>
-            <version>4.3.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.33</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>6.0.0.Final</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <!-- tag::libertyMavenPlugin[] -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5.1</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M5</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
-                        <pact.provider.version>${project.version}</pact.provider.version>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+    <webApplication 
+        location="guide-mongodb-intro.war" 
+        contextRoot="${app.context.root}"
+    />
+    <!-- tag::sslContext[] -->
+    <keyStore
+        id="outboundTrustStore" 
+        location="${server.output.dir}/resources/security/truststore.p12"
+        password="mongodb"
+        type="PKCS12" 
+    />
+    <!-- tag::ssl[] -->
+    <ssl 
+        id="outboundSSLContext" 
+        keyStoreRef="defaultKeyStore" 
+        trustStoreRef="outboundTrustStore" 
+        sslProtocol="TLS" 
+    />
+    <!-- end::sslContext[] -->
+</server>
 ```
 
 
 
-The ***system*** microservice uses the ***junit5*** pact provider dependency to connect to the Pact Broker and verify the pact file. Ideally, in a CI/CD build pipeline, the ***pact.provider.version*** element is dynamically set to the build number so that you can identify where a breaking change is introduced.
+The features that are required to create the CDI producer for MongoDB are https://openliberty.io/docs/latest/reference/feature/cdi-2.0.html[Contexts and Dependency Injection] (***cdi-2.0***), https://openliberty.io/docs/latest/reference/feature/ssl-1.0.html[Secure Socket Layer] (***ssl-1.0***), https://openliberty.io/docs/latest/reference/feature/mpConfig-1.4.html[MicroProfile Config] (***mpConfig-1.4***), and https://openliberty.io/docs/latest/reference/feature/passwordUtilities-1.0.html[Password Utilities] (***passwordUtilities-1.0***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
 
-After you create the ***SystemBrokerIT.java*** class and replace the ***pom.xml*** file, Open Liberty automatically reloads its configuration.
-
-::page{title="Verifying the contract"}
-
-In the command-line session where you started the ***system*** microservice, press the ***enter/return*** key to run the tests to verify the pact file. When you integrate the Pact framework into a CI/CD build pipeline, you can use the ***mvn failsafe:integration-test*** goal to verify the pact file from the Pact Broker.
-
-The tests fail with the following errors:
-```
-[ERROR] Failures: 
-[ERROR]   SystemBrokerIT.pactVerificationTestTemplate:28 Pact between Inventory (1.0-SNAPSHOT) and System - Upon a request for the version 
-Failures:
-
-1) Verifying a pact between Inventory and System - a request for the version has a matching body
-
-    1.1) body: $.system.properties.version Expected "1.1" (String) to be a decimal number
+After you replace the ***server.xml*** file, the Open Liberty configuration is automatically reloaded.
 
 
-[INFO] 
-[ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0
+::page{title="Running the application"}
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+Go to the http://localhost:9080/openapi/ui/ URL to see the OpenAPI user interface (UI) that provides API documentation and a client to test the API endpoints that you create after you see a message similar to the following example:
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl http://localhost:9080/openapi/ui/
 ```
 
-The test from the ***system*** microservice fails because the ***inventory*** microservice was expecting a decimal, ***1.1***, for the value of the ***system.properties.version*** property, but it received a string, ***"1.1"***.
 
-Correct the value of the ***system.properties.version*** property to a decimal.
-Replace the SystemResource class file.
+```
+CWWKZ0001I: Application guide-mongodb-intro started in 5.715 seconds.
+```
 
-> To open the SystemResource.java file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
 
-::openFile{path="/home/project/guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java"}
+**Try the Create operation**
+
+From the OpenAPI UI, test the create operation at the ***POST /api/crew*** endpoint by using the following code as the request body:
+
+```bash
+{
+  "name": "Member1",
+  "rank": "Officer",
+  "crewID": "000001"
+}
+```
+
+This request creates a new document in the ***Crew*** collection with a name of ***Member1***, rank of ***Officer***, and crew ID of ***000001***.
+
+You'll receive a response that contains the JSON object of the new crew member, as shown in the following example:
+```
+{
+  "Name": "Member1",
+  "Rank": "Officer",
+  "CrewID": "000001",
+  "_id": {
+    "$oid": "<<ID>>"
+  }
+}
+```
+
+The ***\\<\<ID\>\>*** that you receive is a unique identifier in the collection. Save this value for future commands.
+
+
+**Try the Retrieve operation**
+
+From the OpenAPI UI, test the read operation at the ***GET /api/crew*** endpoint. This request gets all crew member documents from the collection.
+
+You'll receive a response that contains an array of all the members in your crew. The response might include crew members that were created in the **Try what you’ll build** section of this guide:
+```
+[
+  {
+    "_id": {
+      "$oid": "<<ID>>"
+    },
+    "Name": "Member1",
+    "Rank": "Officer",
+    "CrewID": "000001"
+  }
+]
+```
+
+
+**Try the Update operation**
+
+From the OpenAPI UI, test the update operation at the ***PUT /api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\\<\<ID\>\>*** that you saved from the create operation. Use the following code as the request body:
+```bash
+{
+  "name": "Member1",
+  "rank": "Captain",
+  "crewID": "000001"
+}
+```
+
+This request updates the rank of the crew member that you created from ***Officer*** to ***Captain***.
+
+You'll receive a response that contains the JSON object of the updated crew member, as shown in the following example:
+
+```
+{
+  "Name": "Member1",
+  "Rank": "Captain",
+  "CrewID": "000001",
+  "_id": {
+    "$oid": "<<ID>>"
+  }
+}
+```
+
+
+**Try the Delete operation**
+
+From the OpenAPI UI, test the delete operation at the ***DELETE/api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\\<\<ID\>\>*** that you saved from the create operation. This request removes the document that contains the specified crew member object ***id*** from the collection.
+
+You'll receive a response that contains the object ***id*** of the deleted crew member, as shown in the following example:
+
+```
+{
+  "_id": {
+    "$oid": "<<ID>>"
+  }
+}
+```
+
+
+Now, you can check out the microservice that you created by going to the http://localhost:9080/mongo/ URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl http://localhost:9080/mongo/
+```
+
+
+
+
+::page{title="Testing the application"}
+
+Next, you'll create integration tests to ensure that the basic operations you implemented function correctly.
+
+Create the ***CrewServiceIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java
+```
+
+
+> Then, to open the CrewServiceIT.java file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java"}
 
 
 
 ```java
-package io.openliberty.guides.system;
+package it.io.openliberty.guides.application;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.StringReader;
+import java.util.ArrayList;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
-import jakarta.ws.rs.PathParam;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonReader;
+import jakarta.json.JsonValue;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.client.Entity;
 
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class CrewServiceIT {
 
-import org.eclipse.microprofile.metrics.annotation.Counted;
-import org.eclipse.microprofile.metrics.annotation.Timed;
+    private static Client client;
+    private static JsonArray testData;
+    private static String rootURL;
+    private static ArrayList<String> testIDs = new ArrayList<>(2);
 
-@RequestScoped
-@Path("/properties")
-public class SystemResource {
+    @BeforeAll
+    public static void setup() {
+        client = ClientBuilder.newClient();
 
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  @Timed(name = "getPropertiesTime",
-    description = "Time needed to get the JVM system properties")
-  @Counted(absolute = true,
-    description = "Number of times the JVM system properties are requested")
+        String port = System.getProperty("app.http.port");
+        String context = System.getProperty("app.context.root");
+        rootURL = "http://localhost:" + port + context;
 
-  public Response getProperties() {
-    return Response.ok(System.getProperties()).build();
-  }
-
-  @GET
-  @Path("/key/{key}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response getPropertiesByKey(@PathParam("key") String key) {
-    try {
-      JsonArray response = Json.createArrayBuilder()
-        .add(Json.createObjectBuilder()
-          .add(key, System.getProperties().get(key).toString()))
-        .build();
-      return Response.ok(response, MediaType.APPLICATION_JSON).build();
-    } catch (java.lang.NullPointerException exception) {
-        return Response.status(Response.Status.NOT_FOUND).build();
+        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+        JsonObjectBuilder jsonBuilder = Json.createObjectBuilder();
+        jsonBuilder.add("name", "Member1");
+        jsonBuilder.add("crewID", "000001");
+        jsonBuilder.add("rank", "Captain");
+        arrayBuilder.add(jsonBuilder.build());
+        jsonBuilder = Json.createObjectBuilder();
+        jsonBuilder.add("name", "Member2");
+        jsonBuilder.add("crewID", "000002");
+        jsonBuilder.add("rank", "Engineer");
+        arrayBuilder.add(jsonBuilder.build());
+        testData = arrayBuilder.build();
     }
-  }
 
-  @GET
-  @Path("/version")
-  @Produces(MediaType.APPLICATION_JSON)
-  public JsonObject getVersion() {
-    JsonObject response = Json.createObjectBuilder()
-                          .add("system.properties.version", 1.1)
-                          .build();
-    return response;
-  }
+    @AfterAll
+    public static void teardown() {
+        client.close();
+    }
+
+    @Test
+    @Order(1)
+    public void testAddCrewMember() {
+        System.out.println("   === Adding " + testData.size()
+                + " crew members to the database. ===");
+
+        for (int i = 0; i < testData.size(); i++) {
+            JsonObject member = (JsonObject) testData.get(i);
+            String url = rootURL + "/api/crew";
+            Response response = client.target(url).request().post(Entity.json(member));
+            this.assertResponse(url, response);
+
+            JsonObject newMember = response.readEntity(JsonObject.class);
+            testIDs.add(newMember.getJsonObject("_id").getString("$oid"));
+
+            response.close();
+        }
+        System.out.println("      === Done. ===");
+    }
+
+    @Test
+    @Order(2)
+    public void testUpdateCrewMember() {
+        System.out.println("   === Updating crew member with id " + testIDs.get(0)
+                + ". ===");
+
+        JsonObject oldMember = (JsonObject) testData.get(0);
+
+        JsonObjectBuilder newMember = Json.createObjectBuilder();
+        newMember.add("name", oldMember.get("name"));
+        newMember.add("crewID", oldMember.get("crewID"));
+        newMember.add("rank", "Officer");
+
+        String url = rootURL + "/api/crew/" + testIDs.get(0);
+        Response response = client.target(url).request()
+                .put(Entity.json(newMember.build()));
+
+        this.assertResponse(url, response);
+
+        System.out.println("      === Done. ===");
+    }
+
+    @Test
+    @Order(3)
+    public void testGetCrewMembers() {
+        System.out.println("   === Listing crew members from the database. ===");
+
+        String url = rootURL + "/api/crew";
+        Response response = client.target(url).request().get();
+
+        this.assertResponse(url, response);
+
+        String responseText = response.readEntity(String.class);
+        JsonReader reader = Json.createReader(new StringReader(responseText));
+        JsonArray crew = reader.readArray();
+        reader.close();
+
+        int testMemberCount = 0;
+        for (JsonValue value : crew) {
+            JsonObject member = (JsonObject) value;
+            String id = member.getJsonObject("_id").getString("$oid");
+            if (testIDs.contains(id)) {
+                testMemberCount++;
+            }
+        }
+
+        assertEquals(testIDs.size(), testMemberCount,
+                "Incorrect number of testing members.");
+
+        System.out.println("      === Done. There are " + crew.size()
+                + " crew members. ===");
+
+        response.close();
+    }
+
+    @Test
+    @Order(4)
+    public void testDeleteCrewMember() {
+        System.out.println("   === Removing " + testIDs.size()
+                + " crew members from the database. ===");
+
+        for (String id : testIDs) {
+            String url = rootURL + "/api/crew/" + id;
+            Response response = client.target(url).request().delete();
+            this.assertResponse(url, response);
+            response.close();
+        }
+
+        System.out.println("      === Done. ===");
+    }
+
+    private void assertResponse(String url, Response response) {
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
 }
 ```
 
 
 
-Press the ***enter/return*** key to rerun the tests from the command-line session where you started the ***system*** microservice.
+The test methods are annotated with the ***@Test*** annotation.
 
-If the tests are successful, you'll see a similar output to the following example:
+The following test cases are included in this class:
+
+* ***testAddCrewMember()*** verifies that new members are correctly added to the database.
+
+* ***testUpdateCrewMember()*** verifies that a crew member's information is correctly updated.
+
+* ***testGetCrewMembers()*** verifies that a list of crew members is returned by the microservice API.
+
+* ***testDeleteCrewMember()*** verifies that the crew members are correctly removed from the database.
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+You'll see the following output:
+
 ```
-...
-Verifying a pact between pact between Inventory (1.0-SNAPSHOT) and System
-
-  Notices:
-    1) The pact at http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX is being verified because it matches the following configured selection criterion: latest pact for a consumer version tagged 'open-liberty-pact'
-
-  [from Pact Broker http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX]
-  Given version is 1.1
-  a request for the version
-    returns a response which
-      has status code 200 (OK)
-      has a matching body (OK)
-[main] INFO au.com.dius.pact.provider.DefaultVerificationReporter - Published verification result of 'au.com.dius.pact.core.pactbroker.TestResult$Ok@4d84dfe7' for consumer 'Consumer(name=Inventory)'
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.835 s - in it.io.openliberty.guides.system.SystemBrokerIT
-...
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.application.CrewServiceIT
+   === Adding 2 crew members to the database. ===
+      === Done. ===
+   === Updating crew member with id 5df8e0a004ccc019976c7d0a. ===
+      === Done. ===
+   === Listing crew members from the database. ===
+      === Done. There are 2 crew members. ===
+   === Removing 2 crew members from the database. ===
+      === Done. ===
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.411 s - in it.io.openliberty.guides.application.CrewServiceIT
+Results:
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
-
-
-After the tests are complete, refresh the Pact Broker at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, where **accountname** is your account name.
-::startApplication{port="9292" display="internal" name="Launch Application" route="/"}
-
-Confirm that the last verified column now shows a timestamp:
-
-![Pact Broker webpage for verified](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage-verified.png)
-
-
-
-
-
-The pact file that's created by the ***inventory*** microservice was successfully verified by the ***system*** microservice through the Pact Broker. This ensures that responses from the ***system*** microservice meet the expectations of the ***inventory*** microservice.
 
 ::page{title="Tearing down the environment"}
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line sessions where you ran the servers for the ***system*** and ***inventory*** microservices, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
-Navigate back to the ***/guide-contract-testing*** directory and run the following commands to remove the Pact Broker:
+Then, run the following commands to stop and remove the ***mongo-guide*** container and to remove the ***mongo-sample*** and ***mongo*** images.
+
 ```bash
-docker-compose -f "pact-broker/docker-compose.yml" down
-docker rmi postgres:12
-docker rmi pactfoundation/pact-broker:2.62.0.0
-docker volume rm pact-broker_postgres-volume
+docker stop mongo-guide
+docker rm mongo-guide
+docker rmi mongo-sample
+docker rmi mongo
 ```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You implemented contract testing in Java microservices by using Pact and verified the contract with the Pact Broker.
+You've successfully accessed and persisted data to a MongoDB database from a Java microservice using Contexts and Dependency Injection (CDI) and MicroProfile Config with Open Liberty.
 
 
 
@@ -813,37 +1041,38 @@ You implemented contract testing in Java microservices by using Pact and verifie
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-contract-testing*** project by running the following commands:
+Delete the ***guide-mongodb-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-contract-testing
+rm -fr guide-mongodb-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20consumer-driven%20contracts&guide-id=cloud-hosted-guide-contract-testing)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Persisting%20data%20with%20MongoDB&guide-id=cloud-hosted-guide-mongodb-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-contract-testing/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-contract-testing/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-mongodb-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-mongodb-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-* [Testing microservices with the Arquillian managed container](https://openliberty.io/guides/arquillian-managed.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 
-**Learn more about the Pact framework**
-* [Go to the Pact website.](https://pact.io/)
+**Learn more about MicroProfile**
+* [See the MicroProfile specs](https://microprofile.io/)
+* [View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
 
 
 ### Log out of the session
