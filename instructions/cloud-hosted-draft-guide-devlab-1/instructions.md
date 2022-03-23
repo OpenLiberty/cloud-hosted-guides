@@ -78,7 +78,10 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-Select **Launch Application** from the menu of the IDE,  type **9080** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, where **accountname** is your account name. You will see the following output:
+Select **Launch Application** from the menu of the IDE,  type **9080** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, where **accountname** is your account name.
+::startApplication{port="9080" display="internal" name="Launch Application" route="/"}
+
+ You will see the following output:
 
 
 
@@ -150,7 +153,6 @@ Angular applications consist of modules, which are groups of classes that perfor
 
 You will create the module that organizes your application, which is called the root module. The root module includes the Angular HTTP Client module.
 
-
 Create the ***app.module.ts*** file.
 
 > Run the following touch command in your terminal
@@ -159,10 +161,33 @@ touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/ap
 ```
 
 
-> Then, to open the unknown file in your IDE, select
-> **File** > **Open** > guide-rest-client-angular/start/unknown, or click the following button
+> Then, to open the app.module.ts file in your IDE, select
+> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts, or click the following button
 
-::openFile{path="/home/project/guide-rest-client-angular/start/unknown"}
+::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts"}
+
+
+
+```
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import { HttpClientModule } from '@angular/common/http';
+import { AppComponent } from './app.component';
+
+@NgModule({
+  declarations: [
+    AppComponent
+  ],
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+```
+
 
 
 The ***HttpClientModule*** imports the class into the file. By using the ***@NgModule*** tag, you can declare a module and organize  your dependencies within the Angular framework. The ***imports*** array is a declaration array that imports the ***HttpClientModule*** so that you can use the HTTP Client module in your application.
@@ -174,7 +199,6 @@ You need to create the component that is used in the application to acquire and 
 
 Services are classes in Angular that are designed to share their functionality across entire applications. A good service performs only one function, and it performs this function well. In this case, the ***ArtistsService*** class requests artists data from the REST service.
 
-
 Create the ***app.component.ts*** file.
 
 > Run the following touch command in your terminal
@@ -183,10 +207,51 @@ touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/ap
 ```
 
 
-> Then, to open the unknown file in your IDE, select
-> **File** > **Open** > guide-rest-client-angular/start/unknown, or click the following button
+> Then, to open the app.component.ts file in your IDE, select
+> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts, or click the following button
 
-::openFile{path="/home/project/guide-rest-client-angular/start/unknown"}
+::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts"}
+
+
+
+```
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+
+@Injectable()
+export class ArtistsService {
+  constructor(private http: HttpClient) { }
+
+  private static ARTISTS_URL = '/artists';
+
+  async fetchArtists() {
+    try {
+      const data: any = await this.http.get(ArtistsService.ARTISTS_URL).toPromise();
+      return data;
+    } catch (error) {
+      console.error('Error occurred: ' + error);
+    }
+  }
+}
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent implements OnInit {
+  artists: any[] = [];
+
+  constructor(private artistsService: ArtistsService) { }
+
+  ngOnInit() {
+    this.artistsService.fetchArtists().then(data => {
+      this.artists = data;
+    });
+  }
+}
+```
+
 
 
 The file imports the ***HttpClient*** class and the ***Injectable*** decorator.
@@ -206,13 +271,55 @@ Components are the basic building blocks of Angular application user interfaces.
 
 Update the ***AppComponent*** class to use the artists service to fetch the artists data and save it so the component can display it.
 
-
 Update the ***app.component.ts*** file.
 
-> To open the unknown file in your IDE, select
-> **File** > **Open** > guide-rest-client-angular/start/unknown, or click the following button
+> To open the app.component.ts file in your IDE, select
+> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts, or click the following button
 
-::openFile{path="/home/project/guide-rest-client-angular/start/unknown"}
+::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts"}
+
+
+
+```
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+
+@Injectable()
+export class ArtistsService {
+  constructor(private http: HttpClient) { }
+
+  private static ARTISTS_URL = '/artists';
+
+  async fetchArtists() {
+    try {
+      const data: any = await this.http.get(ArtistsService.ARTISTS_URL).toPromise();
+      return data;
+    } catch (error) {
+      console.error('Error occurred: ' + error);
+    }
+  }
+}
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  providers: [ ArtistsService ],
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent implements OnInit {
+  artists: any[] = [];
+
+  constructor(private artistsService: ArtistsService) { }
+
+  ngOnInit() {
+    this.artistsService.fetchArtists().then(data => {
+      this.artists = data;
+    });
+  }
+}
+```
+
 
 
 Replace the entire ***AppComponent*** class along with the ***@Component*** annotation. Add ***OnInit*** to the list of imported classes at the top.
@@ -276,7 +383,10 @@ mvn generate-resources
 The build might take a few minutes to complete. You can rebuild the front end at any time with the ***generate-resources*** Maven goal. Any local changes to your TypeScript or HTML are picked up when you build the front end.
 
 
-Select **Launch Application** from the menu of the IDE, type **9080** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, where **accountname** is your account name. You will see the following output:
+Select **Launch Application** from the menu of the IDE, type **9080** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, where **accountname** is your account name.
+::startApplication{port="9080" display="internal" name="Launch Application" route="/"}
+
+You will see the following output:
 
 ```
 foo wrote 2 albums:
