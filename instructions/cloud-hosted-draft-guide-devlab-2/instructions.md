@@ -4,9 +4,9 @@ title: instructions
 branch: lab-207-instruction
 version-history-start-date: 2022-02-11T18:24:15Z
 ---
-::page{title="Welcome to the Enabling Cross-Origin Resource Sharing (CORS) guide!"}
+::page{title="Welcome to the Consuming a RESTful web service with AngularJS guide!"}
 
-Learn how to enable Cross-Origin Resource Sharing (CORS) in Open Liberty without writing Java code.
+Explore how to access a simple RESTful web service and consume its resources with AngularJS in Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -19,37 +19,17 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to add two server configurations to enable CORS. Next, you will write and run tests to validate that the CORS configurations work. These tests send two different CORS requests to a REST service that has two different endpoints.
+You will learn how to access a REST service and deserialize the returned JSON that contains a list of artists and their albums by using the high-level ***$resource*** service of AngularJS.
 
-### CORS and its purpose
+The REST service that provides the artists and albums resource was written for you in advance and responds with the ***artists.json***.
 
-Cross-Origin Resource Sharing (CORS) is a W3C specification and mechanism that you can use to request restricted resources from a domain outside the current domain. In other words, CORS is a technique for consuming an API served from an origin different than yours.
 
-CORS is useful for requesting different kinds of data from websites that aren't your own. These types of data might include images, videos, scripts, stylesheets, iFrames, or web fonts.
 
-However, you cannot request resources from another website domain without proper permission. In JavaScript, cross-origin requests with an ***XMLHttpRequest*** API and Ajax cannot happen unless CORS is enabled on the server that receives the request. Otherwise, same-origin security policy prevents the requests. For example, a web page that is served from the ***http://aboutcors.com*** server sends a request to get data to the ***http://openliberty.io*** server. Because of security concerns, browsers block the server response unless the server adds HTTP response headers to allow the web page to consume the data.
+You will implement an AngularJS client that consumes this JSON and displays its contents at a URL.
 
-Different ports and different protocols also trigger CORS. For example, the ***http://abc.xyz:1234*** domain is considered to be different from the ***https://abc.xyz:4321*** domain.
 
-Open Liberty has built-in support for CORS that gives you an easy and powerful way to configure the runtime to handle CORS requests without the need to write Java code.
-
-### Types of CORS requests
-
-Familiarize yourself with two kinds of CORS requests to understand the attributes that you will add in the two CORS configurations.
-
-#### Simple CORS request
-
-According to the CORS specification, an HTTP request is a simple CORS request if the request method is ***GET***, ***HEAD***, or ***POST***. The header fields are any one of the ***Accept***, ***Accept-Language***, ***Content-Language***, or ***Content-Type*** headers. The ***Content-Type*** header has a value of ***application/x-www-form-urlencoded***, ***multipart/form-data***, or ***text/plain***.
-
-When clients, such as browsers, send simple CORS requests to servers on different domains, the clients include an ***Origin*** header with the client host name as the value. If the server allows the origin, the server includes an ***Access-Control-Allow-Origin*** header with a list of allowed origins or an asterisk (*) in the response back to the client. The asterisk indicates that all origins are allowed to access the endpoint on the server.
-
-#### Preflight CORS request
-
-A CORS request is not a simple CORS request if a client first sends a preflight CORS request before it sends the actual request. For example, the client sends a preflight request before it sends a ***DELETE*** HTTP request. To determine whether the request is safe to send, the client sends a preflight request, which is an ***OPTIONS*** HTTP request, to gather more information about the server. This preflight request has the ***Origin*** header and other headers to indicate the HTTP method and headers of the actual request to be sent after the preflight request.
-
-Once the server receives the preflight request, if the origin is allowed, the server responds with headers that indicate the HTTP methods and headers that are allowed in the actual requests. The response might include more CORS-related headers.
-
-Next, the client sends the actual request, and the server responds.
+To learn more about REST services and how you can write them, see
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
 
 
 ::page{title="Getting started"}
@@ -63,11 +43,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cors.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-angularjs.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-cors.git
-cd guide-cors
+git clone https://github.com/openliberty/guide-rest-client-angularjs.git
+cd guide-rest-client-angularjs
 ```
 
 
@@ -75,12 +55,59 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+### Try what you'll build
+
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
 
-::page{title="Enabling CORS"}
+In this IBM cloud environment, you need to update the URL to access the **artists.json** in the **consume-rest.js** file. Run the following commands to go to the **finish** directory and update the **consume-rest.js** file:
+```
+cd finish
+sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/js/consume-rest.js
+```
+
+To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
+```
+mvn liberty:run
+```
+
+After you see the following message, your application server is ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+
+When the server is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Open your browser and check out the application by going to the URL that the following command returns:
+```
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
+
+See the following output:
+
+```
+foo wrote 2 albums:
+    Album titled *album_one* by *foo* contains *12* tracks
+    Album tilted *album_two* by *foo* contains *15* tracks
+bar wrote 1 albums:
+    Album titled *foo walks into a bar* by *bar* contains *12* tracks
+dj wrote 0 albums:
+```
+
+After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+```bash
+mvn liberty:stop
+```
+
+
+::page{title="Starting the service"}
+
+Before you begin the implementation, start the provided REST service so that the artist JSON is available to you.
+
 Navigate to the ***start*** directory to begin.
 ```
-cd /home/project/guide-cors/start
+cd /home/project/guide-rest-client-angularjs/start
 ```
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -98,258 +125,173 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-You will use a REST service that is already provided for you to test your CORS configurations. You can find this service in the ***src/main/java/io/openliberty/guides/cors/*** directory.
 
-You will send a simple request to the ***/configurations/simple*** endpoint and the preflight request to the ***/configurations/preflight*** endpoint.
+After the server is started, run the following curl command to view your artist JSON.
+```
+curl -s http://localhost:9080/artists | jq
+```
 
-
-### Enabling a simple CORS configuration
-Configure the server to allow the ***/configurations/simple*** endpoint to accept a ***simple*** CORS request. Add a simple CORS configuration to the ***server.xml*** file:
-
-Replace the server configuration file.
-
-> To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-cors/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-cors/start/src/main/liberty/config/server.xml"}
+Any local changes to your JavaScript and HTML are picked up automatically, so you don't need to restart the server.
 
 
+::page{title="Creating the AngularJS controller"}
 
-```xml
-<server description="Sample Liberty server">
+Begin by registering your application module. Every application must contain at least one module, the application module, which will be bootstrapped to launch the application.
 
-<featureManager>
-    <feature>restfulWS-3.0</feature>
-    <feature>jsonb-2.0</feature>
-</featureManager>
 
-<variable name="default.http.port" defaultValue="9080"/>
-<variable name="default.https.port" defaultValue="9443"/>
+Create the ***consume-rest*** file.
 
-<httpEndpoint host="*" httpPort="${default.http.port}" httpsPort="${default.https.port}"
-    id="defaultHttpEndpoint"/>
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js
+```
 
-<webApplication location="guide-cors.war" contextRoot="/"/>
 
-<cors domain="/configurations/simple"
-    allowedOrigins="openliberty.io"
-    allowedMethods="GET"
-    allowCredentials="true"
-    exposeHeaders="MyHeader"/>
+> Then, to open the consume-rest.js file in your IDE, select
+> **File** > **Open** > guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js, or click the following button
 
-</server>
+::openFile{path="/home/project/guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js"}
+
+
+
+```javascript
+var app = angular.module('consumeRestApp', ['ngResource']);
+
+app.factory("artists", function($resource) {
+    return $resource("http://localhost:9080/artists");
+});
+
+app.controller("ArtistsCtrl", function($scope, artists) {
+    artists.query(function(data) {
+        $scope.artists = data;
+    }, function(err) {
+        console.error("Error occured: ", err);
+    });
+});
 ```
 
 
 
-The CORS configuration contains the following attributes:
+Run the following command to update the URL to access the **artists.json** in the **consume-rest.js** file:
+```
+sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js
+```
 
-| *Configuration Attribute* | *Value*
-| ---| ---
-|***domain*** | The endpoint to be configured for CORS requests. The value is set to ***/configurations/simple***.
-|***allowedOrigins*** | Origins that are allowed to access the endpoint. The value is set to ***openliberty.io***.
-|***allowedMethods*** | HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to ***GET***.
-|***allowCredentials*** | A boolean that indicates whether the user credentials can be included in the request. The value is set to ***true***.
-|***exposeHeaders*** | Headers that are safe to expose to clients. The value is set to ***MyHeader***.
+The application module is defined by ***consumeRestApp***.
 
-Save the changes to the ***server.xml*** file. The ***/configurations/simple*** endpoint is now ready to be tested with a simple CORS request.
+Your application will need some way of communicating with RESTful web services in order to retrieve their resources. In the case of this guide, your application will need to communicate with the artists service to retrieve the artists JSON. While there exists a variety of ways of doing this, you can use the fairly straightforward AngularJS ***$resource*** service.
 
-The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
+The ***ngResource*** module is registered as it is appended after ***consumeRestApp***. By registering another module, you are performing a dependency injection, exposing all functionalities of that module to your main application module.
 
-Now, test the simple CORS configuration that you added. Add the ***testSimpleCorsRequest*** method to the ***CorsIT*** class.
+Next, the ***Artists*** AngularJS service is defined by using the Factory recipe. The Factory recipe constructs a new service instance with the return value of a passed in function. In this case, the ***$resource*** module that you imported earlier is the passed in function. Target the artist JSON URL in the ***$resource()*** call.
 
-Replace the ***CorsIT*** class.
+The ***controller*** controls the flow of data in your application.Each controller is instantiated with its own isolated scope, accessible through the ***$scope*** parameter. All data that is bound to this parameter is available in the view to which the controller is attached.
 
-> To open the CorsIT.java file in your IDE, select
-> **File** > **Open** > guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java, or click the following button
-
-::openFile{path="/home/project/guide-cors/start/src/test/java/it/io/openliberty/guides/cors/CorsIT.java"}
+You can now access the ***artists*** property from the template at the point in the Document Object Model (DOM) where the controller is registered.
 
 
+::page{title="Creating the AngularJS template"}
 
-```java
-package it.io.openliberty.guides.cors;
+You will create the starting point of your application. This file will contain all elements and attributes specific to AngularJS.
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+Create the starting point of your application.
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-public class CorsIT {
-
-    String port = System.getProperty("default.http.port");
-    String pathToHost = "http://localhost:" + port + "/";
-
-    @BeforeEach
-    public void setUp() {
-        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-    }
-
-    @Test
-    public void testSimpleCorsRequest() throws IOException {
-        HttpURLConnection connection = HttpUtils.sendRequest(
-                        pathToHost + "configurations/simple", "GET",
-                        TestData.simpleRequestHeaders);
-        checkCorsResponse(connection, TestData.simpleResponseHeaders);
-
-        printResponseHeaders(connection, "Simple CORS Request");
-    }
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-rest-client-angularjs/start/src/main/webapp/index.html
+```
 
 
-    public void checkCorsResponse(HttpURLConnection connection,
-                    Map<String, String> expectedHeaders) throws IOException {
-        assertEquals(200, connection.getResponseCode(), "Invalid HTTP response code");
-        expectedHeaders.forEach((responseHeader, value) -> {
-            assertEquals(value, connection.getHeaderField(responseHeader),
-                            "Unexpected value for " + responseHeader + " header");
-        });
-    }
+> Then, to open the index.html file in your IDE, select
+> **File** > **Open** > guide-rest-client-angularjs/start/src/main/webapp/index.html, or click the following button
 
-    public static void printResponseHeaders(HttpURLConnection connection,
-                    String label) {
-        System.out.println("--- " + label + " ---");
-        Map<String, java.util.List<String>> map = connection.getHeaderFields();
-        for (Entry<String, java.util.List<String>> entry : map.entrySet()) {
-            System.out.println("Header " + entry.getKey() + " = " + entry.getValue());
-        }
-        System.out.println();
-    }
+::openFile{path="/home/project/guide-rest-client-angularjs/start/src/main/webapp/index.html"}
 
-}
+
+
+```
+<!-- tag::html[] -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- tag::angular-script[] -->
+        <script 
+            src='http://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.js'/>
+        </script>
+        <!-- tag::angular-resource-script[] -->
+        <script 
+           src='http://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-resource.js'>
+        </script>
+        <!-- end::AngularJS[] -->
+        <script src='./js/consume-rest.js'></script>
+    </head>
+    <!-- tag::body[] -->
+    <body ng-app='consumeRestApp'>
+        <!-- tag::controller[] -->
+        <div ng-controller='ArtistsCtrl'>
+            <!-- tag::repeat[] -->
+            <div ng-repeat='artist in artists'>
+                <!-- tag::artist-info[] -->
+                <p>{{ artist.name }} wrote {{ artist.albums.length }} albums:</p>
+                <div ng-repeat='album in artist.albums'>
+                    <p style='text-indent: 20px'>
+                        Album titled <b>{{ album.title }}</b> by 
+                                     <b>{{ album.artist }}</b> contains 
+                                     <b>{{ album.ntracks }}</b> tracks
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
 ```
 
 
 
-The ***testSimpleCorsRequest*** test simulates a client. It first sends a simple CORS request to the ***/configurations/simple*** endpoint, and then it checks for a valid response and expected headers. Lastly, it prints the response headers for you to inspect.
 
-The request is a ***GET*** HTTP request with the following header:
+Before your application is bootstrapped, you must pull in two ***AngularJS*** libraries and import ***consume-rest.js***.
 
-| *Request Header* | *Request Value*
-| ---| ---
-| Origin | The value is set to ***openliberty.io***. Indicates that the request originates from ***openliberty.io***.
+The first import is the base AngularJS library, which defines the ***angular.js*** script in your HTML. The second import is the library responsible for providing the APIs for the ***$resource*** service, which also defines the ***angular-resource.js*** script in your HTML. The application is bootstrapped because the ***consumeRestApp*** application module is attached to the ***body*** of the template.
 
-Expect the following response headers and values if the simple CORS request is successful, and the server is correctly configured:
+Next, the ***ArtistCtrl*** controller is attached to the DOM to create a new child scope. The controller will make the ***artists*** property of the ***$scope*** object available to access at the point in the DOM where the controller is attached.
 
-| *Response Header* | *Response Value*
-| ---| ---
-| Access-Control-Allow-Origin | The expected value is ***openliberty.io***. Indicates whether a resource can be shared based on the returning value of the Origin request header ***openliberty.io***.
-| Access-Control-Allow-Credentials | The expected value is ***true***. Indicates that the user credentials can be included in the request.
-| Access-Control-Expose-Headers |  The expected value is ***MyHeader***. Indicates that the header ***MyHeader*** is safe to expose.
+Once the controller is attached, the ***artists*** property can be data-bounded to the template and accessed using the ***{{ artists }}*** expression. You can use the ***ng-repeat*** directive to iterate over the contents of the ***artists*** property.
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
-If the ***testSimpleCorsRequest*** test passes, the response headers with their values from the endpoint are printed. The ***/configurations/simple*** endpoint now accepts simple CORS requests.
-
-Response headers with their values from the endpoint:
+After everything is set up, open your browser and check out the application by going to the URL that the following command returns:
 ```
---- Simple CORS Request ---
-Header null = [HTTP/1.1 200 OK]
-Header Access-Control-Expose-Headers = [MyHeader]
-Header Access-Control-Allow-Origin = [openliberty.io]
-Header Access-Control-Allow-Credentials = [true]
-Header Content-Length = [22]
-Header Content-Language = [en-CA]
-Header Date = [Thu, 21 Mar 2019 17:50:09 GMT]
-Header Content-Type = [text/plain]
-Header X-Powered-By = [Servlet/4.0]
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
 
-### Enabling a preflight CORS configuration
+See the following output:
 
-
-Configure the server to allow the ***/configurations/preflight*** endpoint to accept a ***preflight*** CORS request. Add another CORS configuration in the ***server.xml*** file:
-
-Replace the server configuration file.
-
-> To open the unknown file in your IDE, select
-> **File** > **Open** > guide-cors/start/unknown, or click the following button
-
-::openFile{path="/home/project/guide-cors/start/unknown"}
-
-
-The preflight CORS configuration has different values than the simple CORS configuration.
-
-| *Configuration Attribute* | *Value*
-| ---| ---
-| ***domain***|The value is set to ***/configurations/preflight*** because the ***domain*** is a different endpoint.
-| ***allowedOrigins***| Origins that are allowed to access the endpoint. The value is set to an asterisk (*) to allow requests from all origins.
-| ***allowedMethods***| HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to ***OPTIONS, DELETE***.
-| ***allowCredentials***| A boolean that indicates whether the user credentials can be included in the request. The value is set to ***true***.
-
-The following attributes were added:
-
-* ***allowedHeaders***: Headers that a client can use in requests. Set the value to ***MyOwnHeader1, MyOwnHeader2***.
-* ***maxAge***: The number of seconds that a client can cache a response to a preflight request. Set the value to ***10***.
-
-Save the changes to the ***server.xml*** file. The ***/configurations/preflight*** endpoint is now ready to be tested with a preflight CORS request.
-
-Add another test to the ***CorsIT.java*** file to test the preflight CORS configuration that you just added:
-
-Replace the ***CorsIT*** class.
-
-> To open the unknown file in your IDE, select
-> **File** > **Open** > guide-cors/start/unknown, or click the following button
-
-::openFile{path="/home/project/guide-cors/start/unknown"}
-
-
-The ***testPreflightCorsRequest*** test simulates a client sending a preflight CORS request. It first sends the request to the ***/configurations/preflight*** endpoint, and then it checks for a valid response and expected headers. Lastly, it prints the response headers for you to inspect.
-
-The request is an ***OPTIONS*** HTTP request with the following headers:
-
-| *Request Header* | *Request Value*
-| ---| ---
-| Origin | The value is set to ***anywebsiteyoulike.com***. Indicates that the request originates from ***anywebsiteyoulike.com***.
-| Access-Control-Request-Method | The value is set to ***DELETE***. Indicates that the HTTP DELETE method will be used in the actual request.
-| Access-Control-Request-Headers | The value is set to ***MyOwnHeader2***. Indicates the header ***MyOwnHeader2*** will be used in the actual request.
-
-Expect the following response headers and values if the preflight CORS request is successful, and the server is correctly configured:
-
-| *Response Header* | *Response Value*
-| ---| ---
-| Access-Control-Max-Age | The expected value is ***10***. Indicates that the preflight request can be cached within ***10*** seconds.
-| Access-Control-Allow-Origin | The expected value is ***anywebsiteyoulike.com***. Indicates whether a resource can be shared based on the returning value of the Origin request header ***anywebsiteyoulike.com***.
-| Access-Control-Allow-Methods | The expected value is ***OPTIONS, DELETE***. Indicates that HTTP OPTIONS and DELETE methods can be used in the actual request.
-| Access-Control-Allow-Credentials | The expected value is ***true***. Indicates that the user credentials can be included in the request.
-| Access-Control-Allow-Headers | The expected value is ***MyOwnHeader1, MyOwnHeader2***. Indicates that the header ***MyOwnHeader1*** and ***MyOwnHeader2*** are safe to expose.
-
-The ***Access-Control-Allow-Origin*** header has a value of ***anywebsiteyoulike.com*** because the server is configured to allow all origins, and the request came with an origin of ***anywebsiteyoulike.com***.
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-If the ***testPreflightCorsRequest*** test passes, the response headers with their values from the endpoint are printed. The ***/configurations/preflight*** endpoint now allows preflight CORS requests.
-
-Response headers with their values from the endpoint:
 ```
---- Preflight CORS Request ---
-Header null = [HTTP/1.1 200 OK]
-Header Access-Control-Allow-Origin = [anywebsiteyoulike.com]
-Header Access-Control-Allow-Methods = [OPTIONS, DELETE]
-Header Access-Control-Allow-Credentials = [true]
-Header Content-Length = [0]
-Header Access-Control-Max-Age = [10]
-Header Date = [Thu, 21 Mar 2019 18:21:13 GMT]
-Header Content-Language = [en-CA]
-Header Access-Control-Allow-Headers = [MyOwnHeader1, MyOwnHeader2]
-Header X-Powered-By = [Servlet/4.0]
+foo wrote 2 albums:
+    Album titled *album_one* by *foo* contains *12* tracks
+    Album tilted *album_two* by *foo* contains *15* tracks
+bar wrote 1 albums:
+    Album titled *foo walks into a bar* by *bar* contains *12* tracks
+dj wrote 0 albums:
 ```
 
-You can modify the server configuration and the test code to experiment with the various CORS configuration attributes.
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+::page{title="Testing the AngularJS client"}
+
+No explicit code directly uses the consumed artist JSON, so you do not need to write any test cases for this guide.
+
+
+Whenever you change your AngularJS implementation, the application root at `http://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai` will reflect the changes automatically. You can visit the root to manually check whether the artist JSON was consumed correctly.
+
+When you are done checking the application root, exit development mode by pressing CTRL+C in the command-line session where you ran the server, or by typing q and then pressing the ***enter/return*** key.
+
+When you develop your own applications, testing becomes a crucial part of your development lifecycle. If you need to write test cases, follow the official unit testing and end-to-end testing documentation on the [official AngularJS website](https://docs.angularjs.org/guide/unit-testing).
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You enabled CORS support in Open Liberty. You added two different CORS configurations to allow two kinds of CORS requests in the **server.xml** file.
-
+You have just accessed a simple RESTful web service and consumed its resources by using AngularJS in Open Liberty.
 
 
 
@@ -358,26 +300,26 @@ You enabled CORS support in Open Liberty. You added two different CORS configura
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-cors*** project by running the following commands:
+Delete the ***guide-rest-client-angularjs*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-cors
+rm -fr guide-rest-client-angularjs
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20Cross-Origin%20Resource%20Sharing%20(CORS)&guide-id=cloud-hosted-guide-cors)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20AngularJS&guide-id=cloud-hosted-guide-rest-client-angularjs)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-cors/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-cors/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-angularjs/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-angularjs/pulls)
 
 
 
