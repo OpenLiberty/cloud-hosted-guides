@@ -181,15 +181,57 @@ As mentioned before, your starting point is an existing simple inventory REST se
 
 Look at the request handlers in the ***InventoryResource.java*** file.
 
-
 The ***.../inventory/hosts/*** URL will no longer respond with a JSON representation of your inventory contents, so you can discard the ***listContents*** method and integrate it into the ***getPropertiesForHost*** method.
 
 Replace the ***InventoryResource*** class.
 
-> To open the unknown file in your IDE, select
-> **File** > **Open** > guide-rest-hateoas/start/unknown, or click the following button
+> To open the InventoryResource.java file in your IDE, select
+> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java, or click the following button
 
-::openFile{path="/home/project/guide-rest-hateoas/start/unknown"}
+::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java"}
+
+
+
+```java
+package io.openliberty.guides.microprofile;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriInfo;
+
+@ApplicationScoped
+@Path("hosts")
+public class InventoryResource {
+
+    @Inject
+    InventoryManager manager;
+
+    @Context
+    UriInfo uriInfo;
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject handler() {
+        return manager.getSystems(uriInfo.getAbsolutePath().toString());
+    }
+
+    @GET
+    @Path("{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject getPropertiesForHost(@PathParam("hostname") String hostname) {
+        return (hostname.equals("*")) ? manager.list() : manager.get(hostname);
+    }
+}
+```
+
 
 
 
@@ -408,7 +450,6 @@ Nevertheless, you should rely on automated tests because they are more reliable 
 
 ### Setting up your tests
 
-
 Create the ***EndpointIT*** class.
 
 > Run the following touch command in your terminal
@@ -417,10 +458,165 @@ touch /home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/gui
 ```
 
 
-> Then, to open the unknown file in your IDE, select
-> **File** > **Open** > guide-rest-hateoas/start/unknown, or click the following button
+> Then, to open the EndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-rest-hateoas/start/unknown"}
+::openFile{path="/home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.hateoas;
+
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestMethodOrder(OrderAnnotation.class)
+public class EndpointIT {
+    private String port;
+    private String baseUrl;
+
+    private Client client;
+
+    private final String SYSTEM_PROPERTIES = "system/properties";
+    private final String INVENTORY_HOSTS = "inventory/hosts";
+
+    @BeforeEach
+    public void setup() {
+        port = System.getProperty("http.port");
+        baseUrl = "http://localhost:" + port + "/";
+
+        client = ClientBuilder.newClient();
+    }
+
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
+
+    /**
+     * Checks if the HATEOAS link for the inventory contents (hostname=*)
+     * is as expected.
+     */
+    @Test
+    @Order(1)
+    public void testLinkForInventoryContents() {
+        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
+        assertEquals(200, response.getStatus(),
+                    "Incorrect response code from " + baseUrl);
+
+        JsonObject systems = response.readEntity(JsonObject.class);
+
+        String expected;
+        String actual;
+        boolean isFound = false;
+
+
+        if (!systems.isNull("*")) {
+            isFound = true;
+            JsonArray links = systems.getJsonArray("*");
+
+            expected = baseUrl + INVENTORY_HOSTS + "/*";
+            actual = links.getJsonObject(0).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "self";
+            actual = links.getJsonObject(0).getString("rel");
+            assertEquals(expected, actual, "Incorrect rel");
+        }
+
+
+        assertTrue(isFound, "Could not find system with hostname *");
+
+        response.close();
+    }
+
+    /**
+     * Checks that the HATEOAS links, with relationships 'self' and 'properties' for
+     * a simple localhost system is as expected.
+     */
+    @Test
+    @Order(2)
+    public void testLinksForSystem() {
+        this.visitLocalhost();
+
+        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
+        assertEquals(200, response.getStatus(),
+                     "Incorrect response code from " + baseUrl);
+
+        JsonObject systems = response.readEntity(JsonObject.class);
+
+        String expected;
+        String actual;
+        boolean isHostnameFound = false;
+
+
+        if (!systems.isNull("localhost")) {
+            isHostnameFound = true;
+            JsonArray links = systems.getJsonArray("localhost");
+
+            expected = baseUrl + INVENTORY_HOSTS + "/localhost";
+            actual = links.getJsonObject(0).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "self";
+            actual = links.getJsonObject(0).getString("rel");
+            assertEquals(expected, actual, "Incorrect rel");
+
+            expected = baseUrl + SYSTEM_PROPERTIES;
+            actual = links.getJsonObject(1).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "properties";
+            actual = links.getJsonObject(1).getString("rel");
+
+            assertEquals(expected, actual, "Incorrect rel");
+        }
+
+
+        assertTrue(isHostnameFound, "Could not find system with hostname *");
+        response.close();
+
+    }
+
+    /**
+     * Returns a Response object for the specified URL.
+     */
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+
+    /**
+     * Makes a GET request to localhost at the Inventory service.
+     */
+    private void visitLocalhost() {
+        Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
+        assertEquals(200, response.getStatus(),
+                     "Incorrect response code from " + baseUrl);
+        response.close();
+        Response targetResponse =
+        client.target(baseUrl + INVENTORY_HOSTS + "/localhost")
+                                        .request()
+                                        .get();
+        targetResponse.close();
+    }
+}
+```
+
 
 
 The ***@BeforeEach*** and ***@AfterEach*** annotations are placed on setup and teardown tasks that are run for each individual test.
