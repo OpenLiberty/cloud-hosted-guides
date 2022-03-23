@@ -4,9 +4,9 @@ title: instructions
 branch: lab-204-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 ---
-::page{title="Welcome to the Creating a hypermedia-driven RESTful web service guide!"}
+::page{title="Welcome to the Consuming a RESTful web service with Angular guide!"}
 
-You'll explore how to use Hypermedia As The Engine Of Application State (HATEOAS) to drive your RESTful web service on Open Liberty.
+Explore how to access a simple RESTful web service and consume its resources with Angular in OpenLiberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,86 +16,26 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You will learn how to use hypermedia to create a specific style of a response JSON, which has contents that you can use to navigate your REST service. You'll build on top of a simple inventory REST service that you can develop with MicroProfile technologies. You can find the service at the following URL:
+[Angular](https://angular.io) is a framework for creating interactive web applications. Angular applications are written in HTML, CSS, and [TypeScript](https://www.typescriptlang.org), a variant of JavaScript. Angular helps you create responsive and intuitive applications that download once and run as a single web page. Consuming REST services with your Angular application allows you to request only the data and operations that you need, minimizing loading times.
 
-```
-http://localhost:9080/inventory/hosts
-```
+You will learn how to access a REST service and deserialize the returned JSON that contains a list of artists and their albums by using an Angular service and the Angular HTTP Client. You will then present this data using an Angular component.
 
-The service responds with a JSON file that contains all of the registered hosts. Each host has a collection of HATEOAS links:
+The REST service that provides the artists and albums resource was written for you in advance and responds with the ***artists.json***.
 
-```
-{
-  "foo": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/foo",
-      "rel": "self"
-    }
-  ],
-  "bar": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/bar",
-      "rel": "self"
-    }
-  ],
-  "*": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/*",
-      "rel": "self"
-    }
-  ]
-}
-```
+The Angular application was created and configured for you in the ***frontend*** directory. It contains the default starter application. There are many files that make up an Angular application, but you only need to edit a few to consume the REST service and display its data.
 
-### What is HATEOAS?
+Angular applications must be compiled before they can be used. The Angular compilation step was configured as part of the Maven build. You can use the ***start*** folder of this guide as a template for getting started with your own applications built on Angular and Open Liberty.
 
-HATEOAS is a constraint of REST application architectures. With HATEOAS, the client receives information about the available resources from the REST application. The client does not need to be hardcoded to a fixed set of resources, and the application and client can evolve independently. In other words, the application tells the client where it can go and what it can access by providing it with a simple collection of links to other available resources.
 
-### Response JSON
 
-In the context of HATEOAS, each resource must contain a link reference to itself, which is commonly referred to as ***self***. In this guide, the JSON structure features a mapping between the hostname and its corresponding list of HATEOAS links:
+You will implement an Angular client that consumes this JSON and displays its contents.
 
-```
-  "*": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/*",
-      "rel": "self"
-    }
-  ]
-```
+To learn more about REST services and how you can write them, see
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
 
-#### Link types
-
-The following example shows two different links. The first link has a ***self*** relationship with the resource object and is generated whenever you register a host. The link points to that host entry in the inventory:
-
-```
-  {
-    "href": "http://localhost:9080/inventory/hosts/<hostname>",
-    "rel": "self"
-  }
-```
-
-The second link has a ***properties*** relationship with the resource object and is generated if the host ***system*** service is running. The link points to the properties resource on the host:
-
-```
-  {
-    "href": "http://<hostname>:9080/system/properties",
-    "rel": "properties"
-  }
-```
-
-#### Other formats
-
-Although you should stick to the previous format for the purpose of this guide, another common convention has the link as the value of the relationship:
-
-```
-  "_links": {
-      "self": "http://localhost:9080/inventory/hosts/<hostname>",
-      "properties": "http://<hostname>:9080/system/properties"
-  }
-```
 
 ::page{title="Getting started"}
 
@@ -108,11 +48,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-hateoas.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-angular.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-rest-hateoas.git
-cd guide-rest-hateoas
+git clone https://github.com/openliberty/guide-rest-client-angular.git
+cd guide-rest-client-angular
 ```
 
 
@@ -138,9 +78,17 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-After the server runs, you can find your hypermedia-driven **inventory** service at the **/inventory/hosts** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command:
+Select **Launch Application** from the menu of the IDE,  type **9080** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, where **accountname** is your account name. You will see the following output:
+
+
+
 ```
-curl -s http://localhost:9080/inventory/hosts | jq
+foo wrote 2 albums:
+    Album titled *album_one* by *foo* contains *12* tracks
+    Album tilted *album_two* by *foo* contains *15* tracks
+bar wrote 1 albums:
+    Album titled *foo walks into a bar* by *bar* contains *12* tracks
+dj wrote 0 albums:
 ```
 
 After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
@@ -150,12 +98,14 @@ mvn liberty:stop
 ```
 
 
+::page{title="Starting the service"}
 
-::page{title="Creating the response JSON"}
+Before you begin the implementation, start the provided REST service so that the artist JSON is available to you.
 
-Navigate to the ***start*** directory.
+Navigate to the ***start*** directory to begin.
+
 ```
-cd /home/project/guide-rest-hateoas/start
+cd /home/project/guide-rest-client-angular/start
 ```
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -173,489 +123,189 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Begin by building your response JSON, which is composed of the name of the host machine and its list of HATEOAS links.
 
-### Linking to inventory contents
-
-As mentioned before, your starting point is an existing simple inventory REST service. 
-
-Look at the request handlers in the ***InventoryResource.java*** file.
-
-The ***.../inventory/hosts/*** URL will no longer respond with a JSON representation of your inventory contents, so you can discard the ***listContents*** method and integrate it into the ***getPropertiesForHost*** method.
-
-Replace the ***InventoryResource*** class.
-
-> To open the InventoryResource.java file in your IDE, select
-> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java, or click the following button
-
-::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java"}
-
-
-
-```java
-package io.openliberty.guides.microprofile;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.UriInfo;
-
-@ApplicationScoped
-@Path("hosts")
-public class InventoryResource {
-
-    @Inject
-    InventoryManager manager;
-
-    @Context
-    UriInfo uriInfo;
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject handler() {
-        return manager.getSystems(uriInfo.getAbsolutePath().toString());
-    }
-
-    @GET
-    @Path("{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject getPropertiesForHost(@PathParam("hostname") String hostname) {
-        return (hostname.equals("*")) ? manager.list() : manager.get(hostname);
-    }
-}
+You can find your artist JSON by running the following command at a terminal:
+```
+curl -s http://localhost:9080/artists | jq
 ```
 
 
+::page{title="Project configuration"}
 
+The front end of your application uses Node.js to execute your Angular code. The Maven project is configured for you to install Node.js and produce the production files, which are copied to the web content of your application.
 
-The contents of your inventory are now under the asterisk (`*`) wildcard and reside at the `http://localhost:9080/inventory/hosts/*` URL.
+Node.js is server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to execute the Angular scripts found in the ***package.json*** file. To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
 
-The ***GET*** request handler is responsible for handling all ***GET*** requests that are made to the target URL. This method responds with a JSON that contains HATEOAS links.
+The ***frontend-maven-plugin*** is used to ***install*** the dependencies listed in your ***package.json*** file from the npm registry into a folder called ***node_modules***. The ***node_modules*** folder is found in your ***working*** directory. Then, the configuration ***produces*** the production files to the ***src/main/frontend/src/app*** directory. 
 
-The ***UriInfo*** object is what will be used to build your HATEOAS links.
+The ***src/main/frontend/src/angular.json*** file is defined so that the production build is copied into the web content of your application.
 
-The ***@Context*** annotation is a part of CDI and indicates that the ***UriInfo*** will be injected when the resource is instantiated.
 
-Your new ***InventoryResource*** class is now replaced. Next, you will implement the ***getSystems*** method and build the response JSON object.
 
+::page{title="Creating the root Angular module"}
 
-### Linking to each available resource
+Your application needs a way to communicate with and retrieve resources from RESTful web services. In this case, the provided Angular application needs to communicate with the artists service to retrieve the artists JSON. While there are various ways to perform this task, Angular contains a built-in ***HttpClientModule*** that you can use.
 
-Take a look at your ***InventoryManager*** and ***InventoryUtil*** files.
+Angular applications consist of modules, which are groups of classes that perform specific functions. The Angular framework provides its own modules for applications to use. One of these modules, the HTTP Client module, includes convenience classes that make it easier and quicker for you to consume a RESTful API from your application.
 
-Replace the ***InventoryManager*** class.
+You will create the module that organizes your application, which is called the root module. The root module includes the Angular HTTP Client module.
 
-> To open the InventoryManager.java file in your IDE, select
-> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java, or click the following button
 
-::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java"}
-
-
-
-```java
-package io.openliberty.guides.microprofile;
-
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-
-import io.openliberty.guides.microprofile.util.ReadyJson;
-import io.openliberty.guides.microprofile.util.InventoryUtil;
-
-@ApplicationScoped
-public class InventoryManager {
-
-    private ConcurrentMap<String, JsonObject> inv = new ConcurrentHashMap<>();
-
-    public JsonObject get(String hostname) {
-        JsonObject properties = inv.get(hostname);
-        if (properties == null) {
-            if (InventoryUtil.responseOk(hostname)) {
-                properties = InventoryUtil.getProperties(hostname);
-                this.add(hostname, properties);
-            } else {
-                return ReadyJson.SERVICE_UNREACHABLE.getJson();
-            }
-        }
-        return properties;
-    }
-
-    public void add(String hostname, JsonObject systemProps) {
-        inv.putIfAbsent(hostname, systemProps);
-    }
-
-    public JsonObject list() {
-        JsonObjectBuilder systems = Json.createObjectBuilder();
-        inv.forEach((host, props) -> {
-            JsonObject systemProps = Json.createObjectBuilder()
-                                         .add("os.name", props.getString("os.name"))
-                                         .add("user.name", props.getString("user.name"))
-                                         .build();
-            systems.add(host, systemProps);
-        });
-        systems.add("hosts", systems);
-        systems.add("total", inv.size());
-        return systems.build();
-    }
-
-    public JsonObject getSystems(String url) {
-        JsonObjectBuilder systems = Json.createObjectBuilder();
-        systems.add("*", InventoryUtil.buildLinksForHost("*", url));
-
-        for (String host : inv.keySet()) {
-            systems.add(host, InventoryUtil.buildLinksForHost(host, url));
-        }
-
-        return systems.build();
-    }
-
-}
-```
-
-
-
-The ***getSystems*** method accepts a target URL as an argument and returns a JSON object that contains HATEOAS links.
-
-Replace the ***InventoryUtil*** class.
-
-> To open the InventoryUtil.java file in your IDE, select
-> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java, or click the following button
-
-::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java"}
-
-
-
-```java
-package io.openliberty.guides.microprofile.util;
-
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
-
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.UriBuilder;
-
-import org.apache.commons.lang3.StringUtils;
-
-public class InventoryUtil {
-
-    private static final int PORT = 9080;
-    private static final String PROTOCOL = "http";
-    private static final String SYSTEM_PROPERTIES = "/system/properties";
-
-    public static JsonObject getProperties(String hostname) {
-        Client client = ClientBuilder.newClient();
-        URI propURI = InventoryUtil.buildUri(hostname);
-        return client.target(propURI)
-                     .request(MediaType.APPLICATION_JSON)
-                     .get(JsonObject.class);
-    }
-
-    public static JsonArray buildLinksForHost(String hostname, String invUri) {
-
-        JsonArrayBuilder links = Json.createArrayBuilder();
-
-        links.add(Json.createObjectBuilder()
-                      .add("href", StringUtils.appendIfMissing(invUri, "/") + hostname)
-                      .add("rel", "self"));
-
-        if (!hostname.equals("*")) {
-            links.add(Json.createObjectBuilder()
-                 .add("href", InventoryUtil.buildUri(hostname).toString())
-                 .add("rel", "properties"));
-        }
-
-        return links.build();
-    }
-
-    public static boolean responseOk(String hostname) {
-        try {
-            URL target = new URL(buildUri(hostname).toString());
-            HttpURLConnection http = (HttpURLConnection) target.openConnection();
-            http.setConnectTimeout(50);
-            int response = http.getResponseCode();
-            return (response != 200) ? false : true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private static URI buildUri(String hostname) {
-        return UriBuilder.fromUri(SYSTEM_PROPERTIES)
-                .host(hostname)
-                .port(PORT)
-                .scheme(PROTOCOL)
-                .build();
-    }
-
-}
-```
-
-
-
-The helper builds a link that points to the inventory entry with a ***self*** relationship. The helper also builds a link that points to the ***system*** service with a ***properties*** relationship:
-
-
-* `http://localhost:9080/inventory/hosts/<hostname>`
-* `http://<hostname>:9080/system/properties`
-
-### Linking to inactive services or unavailable resources
-
-Consider what happens when one of the return links does not work or when a link should be available for one object but not for another. In other words, it is important that a resource or service is available and running before it is added in the HATEOAS links array of the hostname.
-
-Although this guide does not cover this case, always make sure that you receive a good response code from a service before you link that service. Similarly, make sure that it makes sense for a particular object to access a resource it is linked to. For instance, it doesn't make sense for an account holder to be able to withdraw money from their account when their balance is 0. Hence, the account holder should not be linked to a resource that provides money withdrawal.
-
-::page{title="Running the application"}
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-After the server updates, you can find your new hypermedia-driven **inventory** service at the **/inventory/hosts** endpoint. Run the following curl command by another command-line session:
-```
-curl -s http://localhost:9080/inventory/hosts | jq
-```
-
-
-::page{title="Testing the hypermedia-driven RESTful web service"}
-
-If the servers are running, you can test the application manually by running the following curl commands to access the **inventory** service that is now driven by hypermedia: 
-```
-curl -s http://localhost:9080/inventory/hosts | jq
-```
-
-```
-curl -s http://localhost:9080/inventory/hosts/localhost| jq
-```
-
-Nevertheless, you should rely on automated tests because they are more reliable and trigger a failure if a change introduces a defect.
-
-### Setting up your tests
-
-Create the ***EndpointIT*** class.
+Create the ***app.module.ts*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java
+touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts
 ```
 
 
-> Then, to open the EndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java, or click the following button
+> Then, to open the unknown file in your IDE, select
+> **File** > **Open** > guide-rest-client-angular/start/unknown, or click the following button
 
-::openFile{path="/home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.hateoas;
-
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonValue;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-@TestMethodOrder(OrderAnnotation.class)
-public class EndpointIT {
-    private String port;
-    private String baseUrl;
-
-    private Client client;
-
-    private final String SYSTEM_PROPERTIES = "system/properties";
-    private final String INVENTORY_HOSTS = "inventory/hosts";
-
-    @BeforeEach
-    public void setup() {
-        port = System.getProperty("http.port");
-        baseUrl = "http://localhost:" + port + "/";
-
-        client = ClientBuilder.newClient();
-    }
-
-    @AfterEach
-    public void teardown() {
-        client.close();
-    }
-
-    /**
-     * Checks if the HATEOAS link for the inventory contents (hostname=*)
-     * is as expected.
-     */
-    @Test
-    @Order(1)
-    public void testLinkForInventoryContents() {
-        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
-        assertEquals(200, response.getStatus(),
-                    "Incorrect response code from " + baseUrl);
-
-        JsonObject systems = response.readEntity(JsonObject.class);
-
-        String expected;
-        String actual;
-        boolean isFound = false;
+::openFile{path="/home/project/guide-rest-client-angular/start/unknown"}
 
 
-        if (!systems.isNull("*")) {
-            isFound = true;
-            JsonArray links = systems.getJsonArray("*");
-
-            expected = baseUrl + INVENTORY_HOSTS + "/*";
-            actual = links.getJsonObject(0).getString("href");
-            assertEquals(expected, actual, "Incorrect href");
-
-            expected = "self";
-            actual = links.getJsonObject(0).getString("rel");
-            assertEquals(expected, actual, "Incorrect rel");
-        }
+The ***HttpClientModule*** imports the class into the file. By using the ***@NgModule*** tag, you can declare a module and organize  your dependencies within the Angular framework. The ***imports*** array is a declaration array that imports the ***HttpClientModule*** so that you can use the HTTP Client module in your application.
 
 
-        assertTrue(isFound, "Could not find system with hostname *");
+::page{title="Creating the Angular service to fetch data"}
 
-        response.close();
-    }
+You need to create the component that is used in the application to acquire and display data from the REST API. The component file contains two classes: the service, which handles data access, and the component itself, which handles the presentation of the data.
 
-    /**
-     * Checks that the HATEOAS links, with relationships 'self' and 'properties' for
-     * a simple localhost system is as expected.
-     */
-    @Test
-    @Order(2)
-    public void testLinksForSystem() {
-        this.visitLocalhost();
-
-        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
-        assertEquals(200, response.getStatus(),
-                     "Incorrect response code from " + baseUrl);
-
-        JsonObject systems = response.readEntity(JsonObject.class);
-
-        String expected;
-        String actual;
-        boolean isHostnameFound = false;
+Services are classes in Angular that are designed to share their functionality across entire applications. A good service performs only one function, and it performs this function well. In this case, the ***ArtistsService*** class requests artists data from the REST service.
 
 
-        if (!systems.isNull("localhost")) {
-            isHostnameFound = true;
-            JsonArray links = systems.getJsonArray("localhost");
+Create the ***app.component.ts*** file.
 
-            expected = baseUrl + INVENTORY_HOSTS + "/localhost";
-            actual = links.getJsonObject(0).getString("href");
-            assertEquals(expected, actual, "Incorrect href");
-
-            expected = "self";
-            actual = links.getJsonObject(0).getString("rel");
-            assertEquals(expected, actual, "Incorrect rel");
-
-            expected = baseUrl + SYSTEM_PROPERTIES;
-            actual = links.getJsonObject(1).getString("href");
-            assertEquals(expected, actual, "Incorrect href");
-
-            expected = "properties";
-            actual = links.getJsonObject(1).getString("rel");
-
-            assertEquals(expected, actual, "Incorrect rel");
-        }
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts
+```
 
 
-        assertTrue(isHostnameFound, "Could not find system with hostname *");
-        response.close();
+> Then, to open the unknown file in your IDE, select
+> **File** > **Open** > guide-rest-client-angular/start/unknown, or click the following button
 
-    }
+::openFile{path="/home/project/guide-rest-client-angular/start/unknown"}
 
-    /**
-     * Returns a Response object for the specified URL.
-     */
-    private Response getResponse(String url) {
-        return client.target(url).request().get();
-    }
 
-    /**
-     * Makes a GET request to localhost at the Inventory service.
-     */
-    private void visitLocalhost() {
-        Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
-        assertEquals(200, response.getStatus(),
-                     "Incorrect response code from " + baseUrl);
-        response.close();
-        Response targetResponse =
-        client.target(baseUrl + INVENTORY_HOSTS + "/localhost")
-                                        .request()
-                                        .get();
-        targetResponse.close();
-    }
-}
+The file imports the ***HttpClient*** class and the ***Injectable*** decorator.
+
+The ***ArtistsService*** class is defined. While it shares the file of the component class ***AppComponent***, it can also be defined in its own file. The class is annotated by ***@Injectable*** so instances of it can be provided to other classes anywhere in the application.
+
+The class injects an instance of the ***HttpClient*** class, which it uses to request data from the REST API. It contains the ***ARTISTS_URL*** constant, which points to the API endpoint it requests data from. The URL does not contain a host name because the artists API endpoint is accessible from the same host as the Angular application. You can send requests to external APIs by specifying the full URL. Finally, it implements a ***fetchArtists()*** method that makes the request and returns the result.
+
+To obtain the data for display on the page, the ***fetchArtists()*** method tries to use the injected ***http*** instance to perform a ***GET*** HTTP request to the ***ARTISTS_URL*** constant. If successful, it returns the result. If an error occurs, it prints the error message to the console.
+
+The ***fetchArtists()*** method uses a feature of JavaScript called ***async***, ***await*** to make requests and receive responses without preventing the application from working while it waits. For the result of the ***HttpClient.get()*** method to be compatible with this feature, it must be converted to a Promise by invoking its ***toPromise()*** method. APromise is how JavaScript represents the state of an asynchronous operation. If you want to learn more, check out [promisejs.org](https://promisejs.org) for an introduction.
+
+
+::page{title="Defining the component to consume the service"}
+
+Components are the basic building blocks of Angular application user interfaces. Components are made up of a TypeScript class annotated with the ***@Component*** annotation and the HTML template file (specified by ***templateUrl***) and CSS style files (specified by ***styleUrls***.)
+
+Update the ***AppComponent*** class to use the artists service to fetch the artists data and save it so the component can display it.
+
+
+Update the ***app.component.ts*** file.
+
+> To open the unknown file in your IDE, select
+> **File** > **Open** > guide-rest-client-angular/start/unknown, or click the following button
+
+::openFile{path="/home/project/guide-rest-client-angular/start/unknown"}
+
+
+Replace the entire ***AppComponent*** class along with the ***@Component*** annotation. Add ***OnInit*** to the list of imported classes at the top.
+
+The ***providers*** property on the ***@Component*** annotation indicates that this component provides the ***ArtistsService*** to other classes in the application.
+
+***AppComponent*** implements ***OnInit***, which is a special interface called a lifecycle hook. When Angular displays, updates, or removes a component, it calls a specific function, the lifecycle hook, on the component so the component can run code in response to this event. This component responds to the ***OnInit*** event via the ***ngOnInit*** method, which fetches and populates the component's template with data when it is initialized for display. The file imports the ***OnInit*** interface from the ***@angular/core*** package.
+
+***artists*** is a class member of type ***any[]*** that starts out as an empty array. It holds the artists retrieved from the service so the template can display them.
+
+An instance of the ***ArtistsService*** class is injected into the constructor and is accessible by any function that is defined in the class. The ***ngOnInit*** function uses the ***artistsService*** instance to request the artists data. The ***fetchArtists()*** method is an ***async*** function so it returns a Promise. To retrieve the data from the request, ***ngOnInit*** calls the ***then()*** method on the Promise which takes in the data and stores it to the ***artists*** class member.
+
+
+::page{title="Creating the Angular component template"}
+
+Now that you have a service to fetch the data and a component to store it in, you will create a template to specify how the data will be displayed on the page. When you visit the page in the browser, the component populates the template to display the artists data with formatting.
+
+Create the ***app.component.html*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html
+```
+
+
+> Then, to open the app.component.html file in your IDE, select
+> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html, or click the following button
+
+::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html"}
+
+
+
+```
+<div *ngFor="let artist of artists">
+  <p>{{ artist.name }} wrote {{ artist.albums.length }} albums: </p>
+  <!-- tag::albumDiv[] -->
+  <div *ngFor="let album of artist.albums">
+    <p style="text-indent: 20px">
+      Album titled <b>{{ album.title }}</b> by
+                   <b>{{ album.artist }}</b> contains
+                   <b>{{ album.ntracks }}</b> tracks
+    </p>
+  </div>
+</div>
 ```
 
 
 
-The ***@BeforeEach*** and ***@AfterEach*** annotations are placed on setup and teardown tasks that are run for each individual test.
+The template contains a ***div*** element that is enumerated by using the ***ngFor*** directive. The ***artist*** variable is bound to the ***artists*** member of the component. The ***div*** element itself and all elements contained within it are repeated for each artist, and the ***{{ artist.name }}*** and ***{{ artist.albums.length }}*** placeholders are populated with the information from each artist. The same strategy is used to display each ***album*** by each artist.
 
-### Writing the tests
 
-Each test method must be marked with the ***@Test*** annotation. The execution order of test methods is controlled by marking them with the ***@Order*** annotation. The value that is passed into the annotation denotes the order in which the methods are run.
+::page{title="Building the front end"}
 
-The ***testLinkForInventoryContents*** test is responsible for asserting that the correct HATEOAS link is created for the inventory contents.
-
-Finally, the ***testLinksForSystem*** test is responsible for asserting that the correct HATEOAS links are created for the ***localhost*** system. This method checks for both the ***self*** link that points to the ***inventory*** service and the ***properties*** link that points to the ***system*** service, which is running on the ***localhost*** system.
-
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-You will see the following output:
+The Open Liberty server is already started, and the REST service is running. In a new command-line session, build the front end by running the following command in the ***start*** directory:
 
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.hateoas.EndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.951 s - in it.io.openliberty.guides.hateoas.EndpointIT
-
-Results:
-
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-
-Integration tests finished.
+cd /home/project/guide-rest-client-angular/start
+mvn generate-resources
 ```
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+The build might take a few minutes to complete. You can rebuild the front end at any time with the ***generate-resources*** Maven goal. Any local changes to your TypeScript or HTML are picked up when you build the front end.
+
+
+Select **Launch Application** from the menu of the IDE, type **9080** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, where **accountname** is your account name. You will see the following output:
+
+```
+foo wrote 2 albums:
+    Album titled *album_one* by *foo* contains *12* tracks
+    Album tilted *album_two* by *foo* contains *15* tracks
+bar wrote 1 albums:
+    Album titled *foo walks into a bar* by *bar* contains *12* tracks
+dj wrote 0 albums:
+```
+
+If you use the ***curl*** command to access the web application root URL, you see only the application root page in HTML. The Angular framework uses JavaScript to render the HTML to display the application data. A web browser runs JavaScript, and the ***curl*** command doesn't.
+
+
+::page{title="Testing the Angular client"}
+
+No explicit code directly uses the consumed artist JSON, so you don't need to write any test cases.
+
+
+Whenever you change and build your Angular implementation, the changes are automatically reflected at the URL for the launched application.
+
+When you are done checking the application root, exit development mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+
+Although the Angular application that this guide shows you how to build is simple, when you build more complex Angular applications, testing becomes a crucial part of your development lifecycle. If you need to write test cases, follow the official unit testing and end-to-end testing documentation on the [official Angular page](https://angular.io/guide/testing).
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You've just built and tested a hypermedia-driven RESTful web service on top of Open Liberty.
-
+You just accessed a simple RESTful web service and consumed its resources by using Angular in Open Liberty.
 
 
 
@@ -664,33 +314,34 @@ You've just built and tested a hypermedia-driven RESTful web service on top of O
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-rest-hateoas*** project by running the following commands:
+Delete the ***guide-rest-client-angular*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-rest-hateoas
+rm -fr guide-rest-client-angular
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20hypermedia-driven%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-hateoas)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20Angular&guide-id=cloud-hosted-guide-rest-client-angular)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-hateoas/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-hateoas/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-angular/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-angular/pulls)
 
 
 
 ### Where to next?
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Creating a MicroProfile application](https://openliberty.io/guides/microprofile-intro.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
 ### Log out of the session
