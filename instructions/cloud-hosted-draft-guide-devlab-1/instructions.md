@@ -4,9 +4,9 @@ title: instructions
 branch: lab-204-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 ---
-::page{title="Welcome to the Testing microservices with consumer-driven contracts guide!"}
+::page{title="Welcome to the Creating a hypermedia-driven RESTful web service guide!"}
 
-Learn how to test Java microservices with consumer-driven contracts in Open Liberty.
+You'll explore how to use Hypermedia As The Engine Of Application State (HATEOAS) to drive your RESTful web service on Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -18,23 +18,84 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-With a microservices-based architecture, you need robust testing to ensure that microservices that depend on one another are able to communicate effectively.  Typically, to prevent multiple points of failure at different integration points, a combination of unit, integration, and end-to-end tests are used. While unit tests are fast, they are less trustworthy because they run in isolation and usually rely on mock data.
+You will learn how to use hypermedia to create a specific style of a response JSON, which has contents that you can use to navigate your REST service. You'll build on top of a simple inventory REST service that you can develop with MicroProfile technologies. You can find the service at the following URL:
 
-Integration tests address this issue by testing against real running services. However, they tend to be slow as the tests depend on other microservices and are less reliable because they are prone to external changes.
+```
+http://localhost:9080/inventory/hosts
+```
 
-Usually, end-to-end tests are more trustworthy because they verify functionality from the perspective of a user. However, a graphical user interface (GUI) component is often required to perform end-to-end tests, and GUI components rely on third-party software, such as Selenium, which requires heavy computation time and resources.
+The service responds with a JSON file that contains all of the registered hosts. Each host has a collection of HATEOAS links:
 
-*What is contract testing?*
+```
+{
+  "foo": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/foo",
+      "rel": "self"
+    }
+  ],
+  "bar": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/bar",
+      "rel": "self"
+    }
+  ],
+  "*": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/*",
+      "rel": "self"
+    }
+  ]
+}
+```
 
-Contract testing bridges the gaps among the shortcomings of these different testing methodologies. Contract testing is a technique for testing an integration point by isolating each microservice and checking whether the HTTP requests and responses that the microservice transmits conform to a shared understanding that is documented in a contract. This way, contract testing ensures that microservices can communicate with each other.
+### What is HATEOAS?
 
-[Pact](https://docs.pact.io/) is an open source contract testing tool for testing HTTP requests, responses, and message integrations by using contract tests.
+HATEOAS is a constraint of REST application architectures. With HATEOAS, the client receives information about the available resources from the REST application. The client does not need to be hardcoded to a fixed set of resources, and the application and client can evolve independently. In other words, the application tells the client where it can go and what it can access by providing it with a simple collection of links to other available resources.
 
-The [Pact Broker](https://docs.pact.io/pact_broker/docker_images) is an application for sharing Pact contracts and verification results. The Pact Broker is also an important piece for integrating Pact into continuous integration and continuous delivery (CI/CD) pipelines.
+### Response JSON
 
-The two microservices you will interact with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of its host. The ***inventory*** microservice retrieves specific properties from the ***system*** microservice.
+In the context of HATEOAS, each resource must contain a link reference to itself, which is commonly referred to as ***self***. In this guide, the JSON structure features a mapping between the hostname and its corresponding list of HATEOAS links:
 
-You will learn how to use the Pact framework to write contract tests for the ***inventory*** microservice that will then be verified by the ***system*** microservice.
+```
+  "*": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/*",
+      "rel": "self"
+    }
+  ]
+```
+
+#### Link types
+
+The following example shows two different links. The first link has a ***self*** relationship with the resource object and is generated whenever you register a host. The link points to that host entry in the inventory:
+
+```
+  {
+    "href": "http://localhost:9080/inventory/hosts/<hostname>",
+    "rel": "self"
+  }
+```
+
+The second link has a ***properties*** relationship with the resource object and is generated if the host ***system*** service is running. The link points to the properties resource on the host:
+
+```
+  {
+    "href": "http://<hostname>:9080/system/properties",
+    "rel": "properties"
+  }
+```
+
+#### Other formats
+
+Although you should stick to the previous format for the purpose of this guide, another common convention has the link as the value of the relationship:
+
+```
+  "_links": {
+      "self": "http://localhost:9080/inventory/hosts/<hostname>",
+      "properties": "http://<hostname>:9080/system/properties"
+  }
+```
 
 ::page{title="Getting started"}
 
@@ -47,11 +108,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-contract-testing.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-hateoas.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-contract-testing.git
-cd guide-contract-testing
+git clone https://github.com/openliberty/guide-rest-hateoas.git
+cd guide-rest-hateoas
 ```
 
 
@@ -59,36 +120,44 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-### Starting the Pact Broker
+### Try what you'll build
 
-Run the following command to start the Pact Broker:
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+
 ```bash
-docker-compose -f "pact-broker/docker-compose.yml" up -d --build
+cd finish
+mvn liberty:run
 ```
 
-When the Pact Broker is running, you'll see the following output:
+After you see the following message, your application server is ready:
+
 ```
-Creating pact-broker_postgres_1 ... done
-Creating pact-broker_pact-broker_1 ... done
+The defaultServer server is ready to run a smarter planet.
 ```
 
 
-Confirm that the Pact Broker is working. Select **Launch Application** from the menu of the IDE and type **9292** to specify the port number for the Pact Broker service. Click the **OK** button. The Pact Broker can also be found at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, where **accountname** is your account name.
-::startApplication{port="9292" display="internal" name="Launch Application" route="/"}
+After the server runs, you can find your hypermedia-driven **inventory** service at the **/inventory/hosts** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command:
+```
+curl -s http://localhost:9080/inventory/hosts | jq
+```
 
-Confirm that you can access the user interface of the Pact Broker. The Pact Broker interface is similar to the following image:
+After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
-![Pact Broker webpage](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage.png)
+```bash
+mvn liberty:stop
+```
 
 
 
+::page{title="Creating the response JSON"}
 
+Navigate to the ***start*** directory.
+```
+cd /home/project/guide-rest-hateoas/start
+```
 
-You can refer to the [official Pact Broker documentation](https://docs.pact.io/pact_broker/docker_images/pactfoundation) for more information about the components of the Docker Compose file.
-
-::page{title="Implementing pact testing in the inventory service"}
-
-Navigate to the ***start/inventory*** directory to begin.
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
@@ -104,707 +173,293 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Create the InventoryPactIT class file.
+Begin by building your response JSON, which is composed of the name of the host machine and its list of HATEOAS links.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java
-```
+### Linking to inventory contents
+
+As mentioned before, your starting point is an existing simple inventory REST service. 
+
+Look at the request handlers in the ***InventoryResource.java*** file.
 
 
-> Then, to open the InventoryPactIT.java file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java, or click the following button
+The ***.../inventory/hosts/*** URL will no longer respond with a JSON representation of your inventory contents, so you can discard the ***listContents*** method and integrate it into the ***getPropertiesForHost*** method.
 
-::openFile{path="/home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java"}
+Replace the ***InventoryResource*** class.
+
+> To open the unknown file in your IDE, select
+> **File** > **Open** > guide-rest-hateoas/start/unknown, or click the following button
+
+::openFile{path="/home/project/guide-rest-hateoas/start/unknown"}
+
+
+
+The contents of your inventory are now under the asterisk (`*`) wildcard and reside at the `http://localhost:9080/inventory/hosts/*` URL.
+
+The ***GET*** request handler is responsible for handling all ***GET*** requests that are made to the target URL. This method responds with a JSON that contains HATEOAS links.
+
+The ***UriInfo*** object is what will be used to build your HATEOAS links.
+
+The ***@Context*** annotation is a part of CDI and indicates that the ***UriInfo*** will be injected when the resource is instantiated.
+
+Your new ***InventoryResource*** class is now replaced. Next, you will implement the ***getSystems*** method and build the response JSON object.
+
+
+### Linking to each available resource
+
+Take a look at your ***InventoryManager*** and ***InventoryUtil*** files.
+
+Replace the ***InventoryManager*** class.
+
+> To open the InventoryManager.java file in your IDE, select
+> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java, or click the following button
+
+::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java"}
 
 
 
 ```java
+package io.openliberty.guides.microprofile;
 
-package io.openliberty.guides.inventory;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-import au.com.dius.pact.consumer.dsl.PactDslJsonArray;
-import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
-import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
-import au.com.dius.pact.consumer.junit.PactProviderRule;
-import au.com.dius.pact.consumer.junit.PactVerification;
-import au.com.dius.pact.core.model.RequestResponsePact;
-import au.com.dius.pact.core.model.annotations.Pact;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 
-import org.junit.Rule;
-import org.junit.Test;
+import io.openliberty.guides.microprofile.util.ReadyJson;
+import io.openliberty.guides.microprofile.util.InventoryUtil;
 
-import static org.junit.Assert.assertEquals;
+@ApplicationScoped
+public class InventoryManager {
 
-import java.util.HashMap;
-import java.util.Map;
+    private ConcurrentMap<String, JsonObject> inv = new ConcurrentHashMap<>();
 
-public class InventoryPactIT {
-  @Rule
-  public PactProviderRule mockProvider = new PactProviderRule("System", this);
-
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactServer(PactDslWithProvider builder) {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("Content-Type", "application/json");
-
-    return builder
-      .given("wlp.server.name is defaultServer")
-      .uponReceiving("a request for server name")
-      .path("/system/properties/key/wlp.server.name")
-      .method("GET")
-      .willRespondWith()
-      .headers(headers)
-      .status(200)
-      .body(new PactDslJsonArray().object()
-        .stringValue("wlp.server.name", "defaultServer"))
-      .toPact();
-  }
-
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactEdition(PactDslWithProvider builder) {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("Content-Type", "application/json");
-
-    return builder
-      .given("Default directory is true")
-      .uponReceiving("a request to check for the default directory")
-      .path("/system/properties/key/wlp.user.dir.isDefault")
-      .method("GET")
-      .willRespondWith()
-      .headers(headers)
-      .status(200)
-      .body(new PactDslJsonArray().object()
-        .stringValue("wlp.user.dir.isDefault", "true"))
-      .toPact();
-  }
-
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactVersion(PactDslWithProvider builder) {
-    Map<String, String> headers = new HashMap<String, String>();
-    headers.put("Content-Type", "application/json");
-
-    return builder
-      .given("version is 1.1")
-      .uponReceiving("a request for the version")
-      .path("/system/properties/version")
-      .method("GET")
-      .willRespondWith()
-      .headers(headers)
-      .status(200)
-      .body(new PactDslJsonBody()
-        .decimalType("system.properties.version", 1.1))
-      .toPact();
-  }
-
-  @Pact(consumer = "Inventory")
-  public RequestResponsePact createPactInvalid(PactDslWithProvider builder) {
-
-    return builder
-      .given("invalid property")
-      .uponReceiving("a request with an invalid property")
-      .path("/system/properties/invalidProperty")
-      .method("GET")
-      .willRespondWith()
-      .status(404)
-      .toPact();
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactServer")
-  public void runServerTest() {
-    String serverName = new Inventory(mockProvider.getUrl()).getServerName();
-    assertEquals("Expected server name does not match",
-      "[{\"wlp.server.name\":\"defaultServer\"}]", serverName);
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactEdition")
-  public void runEditionTest() {
-    String edition = new Inventory(mockProvider.getUrl()).getEdition();
-    assertEquals("Expected edition does not match",
-      "[{\"wlp.user.dir.isDefault\":\"true\"}]", edition);
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactVersion")
-  public void runVersionTest() {
-    String version = new Inventory(mockProvider.getUrl()).getVersion();
-    assertEquals("Expected version does not match",
-      "{\"system.properties.version\":1.1}", version);
-  }
-
-  @Test
-  @PactVerification(value = "System", fragment = "createPactInvalid")
-  public void runInvalidTest() {
-    String invalid = new Inventory(mockProvider.getUrl()).getInvalidProperty();
-    assertEquals("Expected invalid property response does not match",
-      "", invalid);
-  }
-}
-```
-
-
-
-The ***InventoryPactIT*** class contains a ***PactProviderRule*** mock provider that mimics the HTTP responses from the ***system*** microservice. The ***@Pact*** annotation takes the name of the microservice as a parameter, which makes it easier to differentiate microservices from each other when you have multiple applications.
-
-The ***createPactServer()*** method defines the minimal expected responsezfor a specific endpoint, which is known as an interaction. For each interaction, the expected request and the response are registered with the mock service by using the ***@PactVerification*** annotation.
-
-The test sends a real request with the ***getUrl()*** method of the mock provider. The mock provider compares the actual request with the expected request and confirms whether the comparison is successful. Finally, the ***assertEquals()*** method confirms that the response is correct.
-
-Replace the inventory Maven project file.
-
-> To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/inventory/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-contract-testing/start/inventory/pom.xml"}
-
-
-
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-contract-testing-inventory</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <liberty.var.default.http.port>9081</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>5.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- tag::pactJunit[] -->
-        <dependency>
-            <groupId>au.com.dius</groupId>
-            <artifactId>pact-jvm-consumer-junit</artifactId>
-            <version>4.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.33</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>6.0.0.Final</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>au.com.dius.pact.provider</groupId>
-                <artifactId>maven</artifactId>
-                <version>4.3.4</version>
-                <configuration>
-                    <serviceProviders>
-                        <serviceProvider>
-                            <name>System</name>
-                            <protocol>http</protocol>
-                            <host>localhost</host>
-                            <port>9080</port>
-                            <path>/</path>
-                            <pactFileDirectory>target/pacts</pactFileDirectory>
-                        </serviceProvider>
-                    </serviceProviders>
-                    <projectVersion>${project.version}</projectVersion>
-                    <skipPactPublish>false</skipPactPublish>
-                    <pactBrokerUrl>http://localhost:9292</pactBrokerUrl>
-                    <tags>
-                        <tag>open-liberty-pact</tag>
-                    </tags>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5.1</version>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-
-
-The Pact framework provides a ***Maven*** plugin that can be added to the build section of the ***pom.xml*** file. The ***serviceProvider*** element defines the endpoint URL for the ***system*** microservice and the ***pactFileDirectory*** directory where you want to store the pact file. The ***pact-jvm-consumer-junit*** dependency provides the base test class that you can use with JUnit to build unit tests.
-
-After you create the ***InventoryPactIT.java*** class and replace the ***pom.xml*** file, Open Liberty automatically reloads its configuration.
-
-The contract between the ***inventory*** and ***system*** microservices is known as a pact. Each pact is a collection of interactions. In this guide, those interactions are defined in the ***InventoryPactIT*** class.
-
-Press the ***enter/return*** key to run the tests and generate the pact file.
-
-When completed, you'll see a similar output to the following example:
-```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running io.openliberty.guides.inventory.InventoryPactIT
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.631 s - in io.openliberty.guides.inventory.InventoryPactIT
-[INFO]
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-```
-
-When you integrate the Pact framework in a CI/CD build pipeline, you can use the ***mvn failsafe:integration-test*** goal to generate the pact file. The Maven failsafe plug-in provides a lifecycle phase for running integration tests that run after unit tests. By default, it looks for classes that are suffixed with ***IT***, which stands for Integration Test. You can refer to the [Maven failsafe plug-in documentation](https://maven.apache.org/surefire/maven-failsafe-plugin/) for more information.
-
-The generated pact file is named ***Inventory-System.json*** and is located in the ***inventory/target/pacts*** directory. The pact file contains the defined interactions in JSON format:
-
-```
-{
-...
-"interactions": [
-{
-      "description": "a request for server name",
-      "request": {
-        "method": "GET",
-        "path": "/system/properties/key/wlp.server.name"
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "body": [
-          {
-            "wlp.server.name": "defaultServer"
-          }
-        ]
-      },
-      "providerStates": [
-        {
-          "name": "wlp.server.name is defaultServer"
+    public JsonObject get(String hostname) {
+        JsonObject properties = inv.get(hostname);
+        if (properties == null) {
+            if (InventoryUtil.responseOk(hostname)) {
+                properties = InventoryUtil.getProperties(hostname);
+                this.add(hostname, properties);
+            } else {
+                return ReadyJson.SERVICE_UNREACHABLE.getJson();
+            }
         }
-      ]
+        return properties;
     }
-...
-  ]
-}
-```
 
-Open a new command-line session and navigate to the ***start/inventory*** directory. Publish the generated pact file to the Pact Broker by running the following command:
-```bash
-mvn pact:publish
-```
+    public void add(String hostname, JsonObject systemProps) {
+        inv.putIfAbsent(hostname, systemProps);
+    }
 
-After the file is published, you'll see a similar output to the following example:
-```
---- maven:4.1.21:publish (default-cli) @ inventory ---
-Publishing 'Inventory-System.json' with tags 'open-liberty-pact' ... OK
-```
+    public JsonObject list() {
+        JsonObjectBuilder systems = Json.createObjectBuilder();
+        inv.forEach((host, props) -> {
+            JsonObject systemProps = Json.createObjectBuilder()
+                                         .add("os.name", props.getString("os.name"))
+                                         .add("user.name", props.getString("user.name"))
+                                         .build();
+            systems.add(host, systemProps);
+        });
+        systems.add("hosts", systems);
+        systems.add("total", inv.size());
+        return systems.build();
+    }
 
-::page{title="Verifying the pact in the Pact Broker"}
+    public JsonObject getSystems(String url) {
+        JsonObjectBuilder systems = Json.createObjectBuilder();
+        systems.add("*", InventoryUtil.buildLinksForHost("*", url));
 
+        for (String host : inv.keySet()) {
+            systems.add(host, InventoryUtil.buildLinksForHost(host, url));
+        }
 
-Refresh the Pact Broker at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, where **accountname** is your account name.
-::startApplication{port="9292" display="internal" name="Launch Application" route="/"}
+        return systems.build();
+    }
 
-The last verified column doesn't show a timestamp because the `system` microservice hasn't verified the pact yet.
-
-![Pact Broker webpage for new entry](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage-refresh.png)
-
-
-
-
-
-
-You can see detailed insights about each interaction by going to the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai/pacts/provider/System/consumer/Inventory/latest`** URL, where **accountname** is your account name.
-::startApplication{port="9292" display="internal" name="Launch Application" route="/"}
-
-The insights look similar to the following image:
-
-![Pact Broker webpage for Interactions](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-interactions.png)
-
-
-::page{title="Implementing pact testing in the system service"}
-
-
-Navigate to the ***start/system*** directory.
-
-Open another command-line session to start Open Liberty in dev mode for the ***system*** microservice:
-```bash
-mvn liberty:dev
-```
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-
-Create the SystemBrokerIT class file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java
-```
-
-
-> Then, to open the SystemBrokerIT.java file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java, or click the following button
-
-::openFile{path="/home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.system;
-
-import au.com.dius.pact.provider.junit5.HttpTestTarget;
-import au.com.dius.pact.provider.junit5.PactVerificationContext;
-import au.com.dius.pact.provider.junit5.PactVerificationInvocationContextProvider;
-import au.com.dius.pact.provider.junitsupport.Consumer;
-import au.com.dius.pact.provider.junitsupport.Provider;
-import au.com.dius.pact.provider.junitsupport.State;
-import au.com.dius.pact.provider.junitsupport.loader.PactBroker;
-import au.com.dius.pact.provider.junitsupport.loader.VersionSelector;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestTemplate;
-import org.junit.jupiter.api.extension.ExtendWith;
-
-@Provider("System")
-@Consumer("Inventory")
-@PactBroker(
-  host = "localhost",
-  port = "9292",
-  consumerVersionSelectors = {
-    @VersionSelector(tag = "open-liberty-pact")
-  })
-public class SystemBrokerIT {
-  @TestTemplate
-  @ExtendWith(PactVerificationInvocationContextProvider.class)
-  void pactVerificationTestTemplate(PactVerificationContext context) {
-    context.verifyInteraction();
-  }
-
-  @BeforeAll
-  static void enablePublishingPact() {
-    System.setProperty("pact.verifier.publishResults", "true");
-  }
-
-  @BeforeEach
-  void before(PactVerificationContext context) {
-    int port = Integer.parseInt(System.getProperty("http.port"));
-    context.setTarget(new HttpTestTarget("localhost", port));
-  }
-
-  @State("wlp.server.name is defaultServer")
-  public void validServerName() {
-  }
-
-  @State("Default directory is true")
-  public void validEdition() {
-  }
-
-  @State("version is 1.1")
-  public void validVersion() {
-  }
-
-  @State("invalid property")
-  public void invalidProperty() {
-  }
 }
 ```
 
 
 
-The connection information for the Pact Broker is provided with the ***@PactBroker*** annotation. The dependency also provides a JUnit5 Invocation Context Provider with the ***pactVerificationTestTemplate()*** method to generate a test for each of the interactions.
+The ***getSystems*** method accepts a target URL as an argument and returns a JSON object that contains HATEOAS links.
 
-The ***pact.verifier.publishResults*** property is set to ***true*** so that the results are sent to the Pact Broker after the tests are completed.
+Replace the ***InventoryUtil*** class.
 
-The test target is defined in the ***PactVerificationContext*** context to point to the running endpoint of the ***system*** microservice.
+> To open the InventoryUtil.java file in your IDE, select
+> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java, or click the following button
 
-The ***@State*** annotation must match the ***given()*** parameter that was provided in the ***inventory*** test class so that Pact can identify which test case to run against which endpoint.
-
-Replace the system Maven project file.
-
-> To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/system/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-contract-testing/start/system/pom.xml"}
-
-
-
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-contract-testing-system</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-        <debugPort>8787</debugPort>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>5.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>au.com.dius.pact.provider</groupId>
-            <artifactId>junit5</artifactId>
-            <version>4.3.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.33</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>6.0.0.Final</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <!-- tag::libertyMavenPlugin[] -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5.1</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M5</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
-                        <pact.provider.version>${project.version}</pact.provider.version>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-
-
-The ***system*** microservice uses the ***junit5*** pact provider dependency to connect to the Pact Broker and verify the pact file. Ideally, in a CI/CD build pipeline, the ***pact.provider.version*** element is dynamically set to the build number so that you can identify where a breaking change is introduced.
-
-After you create the ***SystemBrokerIT.java*** class and replace the ***pom.xml*** file, Open Liberty automatically reloads its configuration.
-
-::page{title="Verifying the contract"}
-
-In the command-line session where you started the ***system*** microservice, press the ***enter/return*** key to run the tests to verify the pact file. When you integrate the Pact framework into a CI/CD build pipeline, you can use the ***mvn failsafe:integration-test*** goal to verify the pact file from the Pact Broker.
-
-The tests fail with the following errors:
-```
-[ERROR] Failures: 
-[ERROR]   SystemBrokerIT.pactVerificationTestTemplate:28 Pact between Inventory (1.0-SNAPSHOT) and System - Upon a request for the version 
-Failures:
-
-1) Verifying a pact between Inventory and System - a request for the version has a matching body
-
-    1.1) body: $.system.properties.version Expected "1.1" (String) to be a decimal number
-
-
-[INFO] 
-[ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0
-```
-
-The test from the ***system*** microservice fails because the ***inventory*** microservice was expecting a decimal, ***1.1***, for the value of the ***system.properties.version*** property, but it received a string, ***"1.1"***.
-
-Correct the value of the ***system.properties.version*** property to a decimal.
-Replace the SystemResource class file.
-
-> To open the SystemResource.java file in your IDE, select
-> **File** > **Open** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
-
-::openFile{path="/home/project/guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java"}
+::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java"}
 
 
 
 ```java
-package io.openliberty.guides.system;
+package io.openliberty.guides.microprofile.util;
+
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.core.Response;
-
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriBuilder;
 
-import org.eclipse.microprofile.metrics.annotation.Counted;
-import org.eclipse.microprofile.metrics.annotation.Timed;
+import org.apache.commons.lang3.StringUtils;
 
-@RequestScoped
-@Path("/properties")
-public class SystemResource {
+public class InventoryUtil {
 
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  @Timed(name = "getPropertiesTime",
-    description = "Time needed to get the JVM system properties")
-  @Counted(absolute = true,
-    description = "Number of times the JVM system properties are requested")
+    private static final int PORT = 9080;
+    private static final String PROTOCOL = "http";
+    private static final String SYSTEM_PROPERTIES = "/system/properties";
 
-  public Response getProperties() {
-    return Response.ok(System.getProperties()).build();
-  }
-
-  @GET
-  @Path("/key/{key}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response getPropertiesByKey(@PathParam("key") String key) {
-    try {
-      JsonArray response = Json.createArrayBuilder()
-        .add(Json.createObjectBuilder()
-          .add(key, System.getProperties().get(key).toString()))
-        .build();
-      return Response.ok(response, MediaType.APPLICATION_JSON).build();
-    } catch (java.lang.NullPointerException exception) {
-        return Response.status(Response.Status.NOT_FOUND).build();
+    public static JsonObject getProperties(String hostname) {
+        Client client = ClientBuilder.newClient();
+        URI propURI = InventoryUtil.buildUri(hostname);
+        return client.target(propURI)
+                     .request(MediaType.APPLICATION_JSON)
+                     .get(JsonObject.class);
     }
-  }
 
-  @GET
-  @Path("/version")
-  @Produces(MediaType.APPLICATION_JSON)
-  public JsonObject getVersion() {
-    JsonObject response = Json.createObjectBuilder()
-                          .add("system.properties.version", 1.1)
-                          .build();
-    return response;
-  }
+    public static JsonArray buildLinksForHost(String hostname, String invUri) {
+
+        JsonArrayBuilder links = Json.createArrayBuilder();
+
+        links.add(Json.createObjectBuilder()
+                      .add("href", StringUtils.appendIfMissing(invUri, "/") + hostname)
+                      .add("rel", "self"));
+
+        if (!hostname.equals("*")) {
+            links.add(Json.createObjectBuilder()
+                 .add("href", InventoryUtil.buildUri(hostname).toString())
+                 .add("rel", "properties"));
+        }
+
+        return links.build();
+    }
+
+    public static boolean responseOk(String hostname) {
+        try {
+            URL target = new URL(buildUri(hostname).toString());
+            HttpURLConnection http = (HttpURLConnection) target.openConnection();
+            http.setConnectTimeout(50);
+            int response = http.getResponseCode();
+            return (response != 200) ? false : true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static URI buildUri(String hostname) {
+        return UriBuilder.fromUri(SYSTEM_PROPERTIES)
+                .host(hostname)
+                .port(PORT)
+                .scheme(PROTOCOL)
+                .build();
+    }
+
 }
 ```
 
 
 
-Press the ***enter/return*** key to rerun the tests from the command-line session where you started the ***system*** microservice.
+The helper builds a link that points to the inventory entry with a ***self*** relationship. The helper also builds a link that points to the ***system*** service with a ***properties*** relationship:
 
-If the tests are successful, you'll see a similar output to the following example:
+
+* `http://localhost:9080/inventory/hosts/<hostname>`
+* `http://<hostname>:9080/system/properties`
+
+### Linking to inactive services or unavailable resources
+
+Consider what happens when one of the return links does not work or when a link should be available for one object but not for another. In other words, it is important that a resource or service is available and running before it is added in the HATEOAS links array of the hostname.
+
+Although this guide does not cover this case, always make sure that you receive a good response code from a service before you link that service. Similarly, make sure that it makes sense for a particular object to access a resource it is linked to. For instance, it doesn't make sense for an account holder to be able to withdraw money from their account when their balance is 0. Hence, the account holder should not be linked to a resource that provides money withdrawal.
+
+::page{title="Running the application"}
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+After the server updates, you can find your new hypermedia-driven **inventory** service at the **/inventory/hosts** endpoint. Run the following curl command by another command-line session:
 ```
-...
-Verifying a pact between pact between Inventory (1.0-SNAPSHOT) and System
-
-  Notices:
-    1) The pact at http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX is being verified because it matches the following configured selection criterion: latest pact for a consumer version tagged 'open-liberty-pact'
-
-  [from Pact Broker http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX]
-  Given version is 1.1
-  a request for the version
-    returns a response which
-      has status code 200 (OK)
-      has a matching body (OK)
-[main] INFO au.com.dius.pact.provider.DefaultVerificationReporter - Published verification result of 'au.com.dius.pact.core.pactbroker.TestResult$Ok@4d84dfe7' for consumer 'Consumer(name=Inventory)'
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.835 s - in it.io.openliberty.guides.system.SystemBrokerIT
-...
+curl -s http://localhost:9080/inventory/hosts | jq
 ```
 
 
-After the tests are complete, refresh the Pact Broker at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, where **accountname** is your account name.
-::startApplication{port="9292" display="internal" name="Launch Application" route="/"}
+::page{title="Testing the hypermedia-driven RESTful web service"}
 
-Confirm that the last verified column now shows a timestamp:
+If the servers are running, you can test the application manually by running the following curl commands to access the **inventory** service that is now driven by hypermedia: 
+```
+curl -s http://localhost:9080/inventory/hosts | jq
+```
 
-![Pact Broker webpage for verified](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage-verified.png)
+```
+curl -s http://localhost:9080/inventory/hosts/localhost| jq
+```
+
+Nevertheless, you should rely on automated tests because they are more reliable and trigger a failure if a change introduces a defect.
+
+### Setting up your tests
 
 
+Create the ***EndpointIT*** class.
 
-
-
-The pact file that's created by the ***inventory*** microservice was successfully verified by the ***system*** microservice through the Pact Broker. This ensures that responses from the ***system*** microservice meet the expectations of the ***inventory*** microservice.
-
-::page{title="Tearing down the environment"}
-
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line sessions where you ran the servers for the ***system*** and ***inventory*** microservices, or by typing ***q*** and then pressing the ***enter/return*** key.
-
-Navigate back to the ***/guide-contract-testing*** directory and run the following commands to remove the Pact Broker:
+> Run the following touch command in your terminal
 ```bash
-docker-compose -f "pact-broker/docker-compose.yml" down
-docker rmi postgres:12
-docker rmi pactfoundation/pact-broker:2.62.0.0
-docker volume rm pact-broker_postgres-volume
+touch /home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java
 ```
+
+
+> Then, to open the unknown file in your IDE, select
+> **File** > **Open** > guide-rest-hateoas/start/unknown, or click the following button
+
+::openFile{path="/home/project/guide-rest-hateoas/start/unknown"}
+
+
+The ***@BeforeEach*** and ***@AfterEach*** annotations are placed on setup and teardown tasks that are run for each individual test.
+
+### Writing the tests
+
+Each test method must be marked with the ***@Test*** annotation. The execution order of test methods is controlled by marking them with the ***@Order*** annotation. The value that is passed into the annotation denotes the order in which the methods are run.
+
+The ***testLinkForInventoryContents*** test is responsible for asserting that the correct HATEOAS link is created for the inventory contents.
+
+Finally, the ***testLinksForSystem*** test is responsible for asserting that the correct HATEOAS links are created for the ***localhost*** system. This method checks for both the ***self*** link that points to the ***inventory*** service and the ***properties*** link that points to the ***system*** service, which is running on the ***localhost*** system.
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+You will see the following output:
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.hateoas.EndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.951 s - in it.io.openliberty.guides.hateoas.EndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+
+Integration tests finished.
+```
+
+When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You implemented contract testing in Java microservices by using Pact and verified the contract with the Pact Broker.
+You've just built and tested a hypermedia-driven RESTful web service on top of Open Liberty.
+
 
 
 
@@ -813,37 +468,33 @@ You implemented contract testing in Java microservices by using Pact and verifie
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-contract-testing*** project by running the following commands:
+Delete the ***guide-rest-hateoas*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-contract-testing
+rm -fr guide-rest-hateoas
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20consumer-driven%20contracts&guide-id=cloud-hosted-guide-contract-testing)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20hypermedia-driven%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-hateoas)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-contract-testing/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-contract-testing/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-hateoas/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-hateoas/pulls)
 
 
 
 ### Where to next?
 
-* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-* [Testing microservices with the Arquillian managed container](https://openliberty.io/guides/arquillian-managed.html)
-
-**Learn more about the Pact framework**
-* [Go to the Pact website.](https://pact.io/)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Creating a MicroProfile application](https://openliberty.io/guides/microprofile-intro.html)
 
 
 ### Log out of the session
