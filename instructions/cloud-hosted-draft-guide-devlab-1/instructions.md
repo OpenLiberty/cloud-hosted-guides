@@ -4,9 +4,9 @@ title: instructions
 branch: lab-204-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 ---
-::page{title="Welcome to the Consuming a RESTful web service with Angular guide!"}
+::page{title="Welcome to the Building a web application with Maven guide!"}
 
-Explore how to access a simple RESTful web service and consume its resources with Angular in OpenLiberty.
+Learn how to build and test a simple web application using Maven and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -19,23 +19,33 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-[Angular](https://angular.io) is a framework for creating interactive web applications. Angular applications are written in HTML, CSS, and [TypeScript](https://www.typescriptlang.org), a variant of JavaScript. Angular helps you create responsive and intuitive applications that download once and run as a single web page. Consuming REST services with your Angular application allows you to request only the data and operations that you need, minimizing loading times.
+You will learn how to configure a simple web servlet application using Maven and the Liberty Maven plugin. When you compile and build the application code, Maven downloads and installs Open Liberty. If you run the application, Maven creates an Open Liberty server and runs the application on it. The application displays a simple web page with a link that, when clicked, calls the servlet to return a simple response of ***Hello! How are you today?***.
 
-You will learn how to access a REST service and deserialize the returned JSON that contains a list of artists and their albums by using an Angular service and the Angular HTTP Client. You will then present this data using an Angular component.
+One benefit of using a build tool like Maven is that you can define the details of the project and any dependencies it has, and Maven automatically downloads and installs the dependencies. Another benefit of using Maven is that it can run repeatable, automated tests on the application. You can, of course, test your application manually by starting a server and pointing a web browser at the application URL. However, automated tests are a much better approach because you can easily rerun the same tests each time the application is built. If the tests don't pass after you change the application, the build fails, and you know that you introduced a regression that requires a fix to your code. 
 
-The REST service that provides the artists and albums resource was written for you in advance and responds with the ***artists.json***.
+Choosing a build tool often comes down to personal or organizational preference, but you might choose to use Maven for several reasons. Maven defines its builds by using XML, which is probably familiar to you already. As a mature, commonly used build tool, Maven probably integrates with whichever IDE you prefer to use. Maven also has an extensive plug-in library that offers various ways to quickly customize your build. Maven can be a good choice if your team is already familiar with it. 
 
-The Angular application was created and configured for you in the ***frontend*** directory. It contains the default starter application. There are many files that make up an Angular application, but you only need to edit a few to consume the REST service and display its data.
-
-Angular applications must be compiled before they can be used. The Angular compilation step was configured as part of the Maven build. You can use the ***start*** folder of this guide as a template for getting started with your own applications built on Angular and Open Liberty.
+You will create a Maven build definition file that's called a ***pom.xml*** file, which stands for Project Object Model, and use it to build your web application. You will then create a simple, automated test and configure Maven to automatically run the test.
 
 
+::page{title="Installing Maven"}
 
-You will implement an Angular client that consumes this JSON and displays its contents.
 
-To learn more about REST services and how you can write them, see
-[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
+Run the following command to test that Maven is installed:
 
+```bash
+mvn -v
+```
+
+If Maven is installed properly, you see information about the Maven installation similar to the following example:
+
+```
+Apache Maven 3.8.1 (05c21c65bdfed0f71a2f2ada8b84da59348c4c5d)
+Maven home: /Applications/Maven/apache-maven-3.8.1
+Java version: 11.0.12, vendor: International Business Machines Corporation, runtime: /Library/Java/JavaVirtualMachines/ibm-semeru-open-11.jdk/Contents/Home
+Default locale: en_US, platform encoding: UTF-8
+OS name: "mac os x", version: "11.6", arch: "x86_64", family: "mac"
+```
 
 ::page{title="Getting started"}
 
@@ -48,11 +58,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-angular.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-rest-client-angular.git
-cd guide-rest-client-angular
+git clone https://github.com/openliberty/guide-maven-intro.git
+cd guide-maven-intro
 ```
 
 
@@ -60,39 +70,31 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+
 ### Try what you'll build
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
 
 ```bash
 cd finish
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your application server is ready.
 
 ```
-The defaultServer server is ready to run a smarter planet.
+The guideServer server is ready to run a smarter planet.
 ```
 
 
-Select **Launch Application** from the menu of the IDE,  type **9080** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, where **accountname** is your account name.
-::startApplication{port="9080" display="internal" name="Launch Application" route="/"}
-
- You will see the following output:
-
-
-
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following curl command to view the output of the application: 
 ```
-foo wrote 2 albums:
-    Album titled *album_one* by *foo* contains *12* tracks
-    Album tilted *album_two* by *foo* contains *15* tracks
-bar wrote 1 albums:
-    Album titled *foo walks into a bar* by *bar* contains *12* tracks
-dj wrote 0 albums:
+curl -s http://localhost:9080/ServletSample/servlet
 ```
+
+The servlet returns a simple response of **Hello! How are you today?**.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -101,15 +103,164 @@ mvn liberty:stop
 ```
 
 
-::page{title="Starting the service"}
+::page{title="Creating a simple application"}
 
-Before you begin the implementation, start the provided REST service so that the artist JSON is available to you.
+The simple web application that you will build using Maven and Open Liberty is provided for you in the ***start*** directory so that you can focus on learning about Maven. This application uses a standard Maven directory structure, eliminating the need to customize the ***pom.xml*** file so that Maven understands your project layout.
 
+All the application source code, including the Open Liberty server configuration (***server.xml***), is in the ***src/main/liberty/config*** directory:
+
+```
+    └── src
+        └── main
+           └── java
+           └── resources
+           └── webapp
+           └── liberty
+                  └── config
+```
+
+
+::page{title="Creating the project POM file"}
 Navigate to the ***start*** directory to begin.
+```
+cd /home/project/guide-maven-intro/start
+```
 
+Before you can build the project, define the Maven Project Object Model (POM) file, the ***pom.xml***. 
+
+Create the pom.xml file in the ***start*** directory.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-maven-intro/start/pom.xml
 ```
-cd /home/project/guide-rest-client-angular/start
+
+
+> Then, to open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-maven-intro/start/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-maven-intro/start/pom.xml"}
+
+
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <!-- tag::modelVersion[] -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>ServletSample</artifactId>
+    <!-- tag::packaging[] -->
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- tag::java-version[] -->
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- Liberty configuration -->
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.app.context.root>${project.artifactId}</liberty.var.app.context.root>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>9.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>5.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <!-- tag::commons-httpclient[] -->
+        <dependency>
+            <groupId>commons-httpclient</groupId>
+            <artifactId>commons-httpclient</artifactId>
+            <version>3.1</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- tag::junit[] -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.8.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.2</version>
+            </plugin>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <serverName>guideServer</serverName>
+                </configuration>
+            </plugin>
+            <!-- tag::maven-failsafe-plugin[] -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.default.http.port}</http.port>
+                        <!-- tag::war-name[] -->
+                        <war.name>${liberty.var.app.context.root}</war.name>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
 ```
+
+
+
+The ***pom.xml*** file starts with a root ***project*** element and a ***modelversion*** element, which is always set to ***4.0.0***. 
+
+A typical POM for a Liberty application contains the following sections:
+
+* **Project coordinates**: The identifiers for this application.
+* **Properties** (***properties***): Any properties for the project go here, including compilation details and any values that are referenced during compilation of the Java source code and generating the application.
+* **Dependencies** (***dependencies***): Any Java dependencies that are required for compiling, testing, and running the application are listed here.
+* **Build plugins** (***build***): Maven is modular and each of its capabilities is provided by a separate plugin. This is where you specify which Maven plugins should be used to build this project and any configuration information needed by those plugins.
+
+The project coordinates describe the name and version of the application. The ***artifactId*** gives a name to the web application project, which is used to name the output files that are generated by the build (e.g. the WAR file) and the Open Liberty server that is created. You'll notice that other fields in the ***pom.xml*** file use variables that are resolved by the ***artifactId*** field. This is so that you can update the name of the sample application, including files generated by Maven, in a single place in the ***pom.xml*** file. The value of the ***packaging*** field is ***war*** so that the project output artifact is a WAR file.
+
+The first four properties in the properties section of the project, just define the encoding (***UTF-8***) and version of Java (***Java 8***) that Maven uses to compile the application source code.
+
+Open Liberty configuration properties provide you with a single place to specify values that are used in multiple places throughout the application. For example, the ***default.http.port*** value is used in both the server configuration (***server.xml***) file and will be used in the test class that you will add (***EndpointIT.java***) to the application. Because the ***default.http.port*** value is specified in the ***pom.xml*** file, you can easily change the port number that the server runs on without updating the application code in multiple places.
+
+
+The ***HelloServlet.java*** class depends on ***javax.servlet-api*** to compile. Maven will download this dependency from the Maven Central repository using the ***groupId***, ***artifactId***, and ***version*** details that you provide here. The dependency is set to ***provided***, which means that the API is in the server runtime and doesn't need to be packaged by the application.
+
+The ***build*** section gives details of the two plugins that Maven uses to build this project.
+
+* The Maven plugin for generating a WAR file as one of the output files.
+* The Liberty Maven plug-in, which allows you to install applications into Open Liberty and manage the server instances.
+
+In the ***liberty-maven-plugin*** plug-in section, you can add a ***configuration*** element to specify Open Liberty configuration details. For example, the ***serverName*** field defines the name of the Open Liberty server that Maven creates. You specified ***guideServer*** as the value for ***serverName***. If the ***serverName*** field is not included, the default value is ***defaultServer***.
+
+
+
+::page{title="Running the application"}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -127,295 +278,138 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 
-You can find your artist JSON by running the following command at a terminal:
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following curl command to view the output of the application: 
 ```
-curl -s http://localhost:9080/artists | jq
+curl -s http://localhost:9080/ServletSample/servlet
 ```
 
+The servlet returns a simple response of **Hello! How are you today?**.
 
-::page{title="Project configuration"}
+::page{title="Testing the web application"}
 
-The front end of your application uses Node.js to execute your Angular code. The Maven project is configured for you to install Node.js and produce the production files, which are copied to the web content of your application.
+One of the benefits of building an application with Maven is that Maven can be configured to run a set of tests. You can write tests for the individual units of code outside of a running application server (unit tests), or you can write them to call the application server directly (integration tests). In this example you will create a simple integration test that checks that the web page opens and that the correct response is returned when the link is clicked.
 
-Node.js is server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to execute the Angular scripts found in the ***package.json*** file. To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
-
-The ***frontend-maven-plugin*** is used to ***install*** the dependencies listed in your ***package.json*** file from the npm registry into a folder called ***node_modules***. The ***node_modules*** folder is found in your ***working*** directory. Then, the configuration ***produces*** the production files to the ***src/main/frontend/src/app*** directory. 
-
-The ***src/main/frontend/src/angular.json*** file is defined so that the production build is copied into the web content of your application.
-
-
-
-::page{title="Creating the root Angular module"}
-
-Your application needs a way to communicate with and retrieve resources from RESTful web services. In this case, the provided Angular application needs to communicate with the artists service to retrieve the artists JSON. While there are various ways to perform this task, Angular contains a built-in ***HttpClientModule*** that you can use.
-
-Angular applications consist of modules, which are groups of classes that perform specific functions. The Angular framework provides its own modules for applications to use. One of these modules, the HTTP Client module, includes convenience classes that make it easier and quicker for you to consume a RESTful API from your application.
-
-You will create the module that organizes your application, which is called the root module. The root module includes the Angular HTTP Client module.
-
-Create the ***app.module.ts*** file.
+Create the ***EndpointIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts
+touch /home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java  
 ```
 
 
-> Then, to open the app.module.ts file in your IDE, select
-> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts, or click the following button
+> Then, to open the EndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts"}
-
-
-
-```
-import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
-import { HttpClientModule } from '@angular/common/http';
-import { AppComponent } from './app.component';
-
-@NgModule({
-  declarations: [
-    AppComponent
-  ],
-  imports: [
-    BrowserModule,
-    HttpClientModule,
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
-})
-export class AppModule { }
-```
+::openFile{path="/home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java"}
 
 
 
-The ***HttpClientModule*** imports the class into the file. By using the ***@NgModule*** tag, you can declare a module and organize  your dependencies within the Angular framework. The ***imports*** array is a declaration array that imports the ***HttpClientModule*** so that you can use the HTTP Client module in your application.
+```java
+package io.openliberty.guides.hello.it;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-::page{title="Creating the Angular service to fetch data"}
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-You need to create the component that is used in the application to acquire and display data from the REST API. The component file contains two classes: the service, which handles data access, and the component itself, which handles the presentation of the data.
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.methods.GetMethod;
 
-Services are classes in Angular that are designed to share their functionality across entire applications. A good service performs only one function, and it performs this function well. In this case, the ***ArtistsService*** class requests artists data from the REST service.
+public class EndpointIT {
+    private static String siteURL;
 
-Create the ***app.component.ts*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts
-```
-
-
-> Then, to open the app.component.ts file in your IDE, select
-> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts"}
-
-
-
-```
-import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-
-@Injectable()
-export class ArtistsService {
-  constructor(private http: HttpClient) { }
-
-  private static ARTISTS_URL = '/artists';
-
-  async fetchArtists() {
-    try {
-      const data: any = await this.http.get(ArtistsService.ARTISTS_URL).toPromise();
-      return data;
-    } catch (error) {
-      console.error('Error occurred: ' + error);
+    @BeforeAll
+    public static void init() {
+        String port = System.getProperty("http.port");
+        String war = System.getProperty("war.name");
+        siteURL = "http://localhost:" + port + "/" + war + "/" + "servlet";
     }
-  }
-}
 
-@Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
-})
-export class AppComponent implements OnInit {
-  artists: any[] = [];
+    @Test
+    public void testServlet() throws Exception {
+        HttpClient client = new HttpClient();
 
-  constructor(private artistsService: ArtistsService) { }
+        GetMethod method = new GetMethod(siteURL);
+        try {
+            int statusCode = client.executeMethod(method);
 
-  ngOnInit() {
-    this.artistsService.fetchArtists().then(data => {
-      this.artists = data;
-    });
-  }
-}
-```
+            assertEquals(HttpStatus.SC_OK, statusCode, "HTTP GET failed");
 
+            String response = method.getResponseBodyAsString(1000);
 
-
-The file imports the ***HttpClient*** class and the ***Injectable*** decorator.
-
-The ***ArtistsService*** class is defined. While it shares the file of the component class ***AppComponent***, it can also be defined in its own file. The class is annotated by ***@Injectable*** so instances of it can be provided to other classes anywhere in the application.
-
-The class injects an instance of the ***HttpClient*** class, which it uses to request data from the REST API. It contains the ***ARTISTS_URL*** constant, which points to the API endpoint it requests data from. The URL does not contain a host name because the artists API endpoint is accessible from the same host as the Angular application. You can send requests to external APIs by specifying the full URL. Finally, it implements a ***fetchArtists()*** method that makes the request and returns the result.
-
-To obtain the data for display on the page, the ***fetchArtists()*** method tries to use the injected ***http*** instance to perform a ***GET*** HTTP request to the ***ARTISTS_URL*** constant. If successful, it returns the result. If an error occurs, it prints the error message to the console.
-
-The ***fetchArtists()*** method uses a feature of JavaScript called ***async***, ***await*** to make requests and receive responses without preventing the application from working while it waits. For the result of the ***HttpClient.get()*** method to be compatible with this feature, it must be converted to a Promise by invoking its ***toPromise()*** method. APromise is how JavaScript represents the state of an asynchronous operation. If you want to learn more, check out [promisejs.org](https://promisejs.org) for an introduction.
-
-
-::page{title="Defining the component to consume the service"}
-
-Components are the basic building blocks of Angular application user interfaces. Components are made up of a TypeScript class annotated with the ***@Component*** annotation and the HTML template file (specified by ***templateUrl***) and CSS style files (specified by ***styleUrls***.)
-
-Update the ***AppComponent*** class to use the artists service to fetch the artists data and save it so the component can display it.
-
-Update the ***app.component.ts*** file.
-
-> To open the app.component.ts file in your IDE, select
-> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts"}
-
-
-
-```
-import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-
-@Injectable()
-export class ArtistsService {
-  constructor(private http: HttpClient) { }
-
-  private static ARTISTS_URL = '/artists';
-
-  async fetchArtists() {
-    try {
-      const data: any = await this.http.get(ArtistsService.ARTISTS_URL).toPromise();
-      return data;
-    } catch (error) {
-      console.error('Error occurred: ' + error);
+            assertTrue(response.contains("Hello! How are you today?"),
+                "Unexpected response body");
+        } finally {
+            method.releaseConnection();
+        }
     }
-  }
-}
-
-@Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  providers: [ ArtistsService ],
-  styleUrls: ['./app.component.css']
-})
-export class AppComponent implements OnInit {
-  artists: any[] = [];
-
-  constructor(private artistsService: ArtistsService) { }
-
-  ngOnInit() {
-    this.artistsService.fetchArtists().then(data => {
-      this.artists = data;
-    });
-  }
 }
 ```
 
 
 
-Replace the entire ***AppComponent*** class along with the ***@Component*** annotation. Add ***OnInit*** to the list of imported classes at the top.
+The test class name ends in ***IT*** to indicate that it contains an integration test. 
 
-The ***providers*** property on the ***@Component*** annotation indicates that this component provides the ***ArtistsService*** to other classes in the application.
-
-***AppComponent*** implements ***OnInit***, which is a special interface called a lifecycle hook. When Angular displays, updates, or removes a component, it calls a specific function, the lifecycle hook, on the component so the component can run code in response to this event. This component responds to the ***OnInit*** event via the ***ngOnInit*** method, which fetches and populates the component's template with data when it is initialized for display. The file imports the ***OnInit*** interface from the ***@angular/core*** package.
-
-***artists*** is a class member of type ***any[]*** that starts out as an empty array. It holds the artists retrieved from the service so the template can display them.
-
-An instance of the ***ArtistsService*** class is injected into the constructor and is accessible by any function that is defined in the class. The ***ngOnInit*** function uses the ***artistsService*** instance to request the artists data. The ***fetchArtists()*** method is an ***async*** function so it returns a Promise. To retrieve the data from the request, ***ngOnInit*** calls the ***then()*** method on the Promise which takes in the data and stores it to the ***artists*** class member.
+Maven is configured to run the integration test using the ***maven-failsafe-plugin***. The ***systemPropertyVariables*** section defines some variables that the test class uses. The test code needs to know where to find the application that it is testing. While the port number and context root information can be hardcoded in the test class, it is better to specify it in a single place like the Maven ***pom.xml*** file because this information is also used by other files in the project. The ***systemPropertyVariables*** section passes these details to the Java test program as a series of system properties, resolving the ***http.port*** and ***war.name*** variables.
 
 
-::page{title="Creating the Angular component template"}
+The following lines in the ***EndpointIT*** test class uses these system variables to build up the URL of the application.
 
-Now that you have a service to fetch the data and a component to store it in, you will create a template to specify how the data will be displayed on the page. When you visit the page in the browser, the component populates the template to display the artists data with formatting.
+In the test class, after defining how to build the application URL, the ***@Test*** annotation indicates the start of the test method.
 
-Create the ***app.component.html*** file.
+In the ***try block*** of the test method, an HTTP ***GET*** request to the URL of the application returns a status code. If the response to the request includes the string ***Hello! How are you today?***, the test passes. If that string is not in the response, the test fails.  The HTTP client then disconnects from the application.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html
+In the ***import*** statements of this test class, you'll notice that the test has some new dependencies. Before the test can be compiled by Maven, you need to update the ***pom.xml*** to include these dependencies.
+
+The Apache ***commons-httpclient*** and ***junit-jupiter-engine*** dependencies are needed to compile and run the integration test ***EndpointIT*** class. The scope for each of the dependencies is set to ***test*** because the libraries are needed only during the Maven build and do not needed to be packaged with the application.
+
+Now, the created WAR file contains the web application, and development mode can run any integration test classes that it finds. Integration test classes are classes with names that end in ***IT***.
+
+The directory structure of the project should now look like this:
+
+```
+    └── src
+        ├── main
+        │  └── java
+        │  └── resources
+        │  └── webapp
+        │  └── liberty
+        │         └── config
+        └── test
+            └── java
 ```
 
 
-> Then, to open the app.component.html file in your IDE, select
-> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html, or click the following button
+### Running the tests
 
-::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html"}
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
-
-
-```
-<div *ngFor="let artist of artists">
-  <p>{{ artist.name }} wrote {{ artist.albums.length }} albums: </p>
-  <!-- tag::albumDiv[] -->
-  <div *ngFor="let album of artist.albums">
-    <p style="text-indent: 20px">
-      Album titled <b>{{ album.title }}</b> by
-                   <b>{{ album.artist }}</b> contains
-                   <b>{{ album.ntracks }}</b> tracks
-    </p>
-  </div>
-</div>
-```
-
-
-
-The template contains a ***div*** element that is enumerated by using the ***ngFor*** directive. The ***artist*** variable is bound to the ***artists*** member of the component. The ***div*** element itself and all elements contained within it are repeated for each artist, and the ***{{ artist.name }}*** and ***{{ artist.albums.length }}*** placeholders are populated with the information from each artist. The same strategy is used to display each ***album*** by each artist.
-
-
-::page{title="Building the front end"}
-
-The Open Liberty server is already started, and the REST service is running. In a new command-line session, build the front end by running the following command in the ***start*** directory:
+You see the following output:
 
 ```
-cd /home/project/guide-rest-client-angular/start
-mvn generate-resources
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running io.openliberty.guides.hello.it.EndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.255 sec - in io.openliberty.guides.hello.it.EndpointIT
+
+Results :
+
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-The build might take a few minutes to complete. You can rebuild the front end at any time with the ***generate-resources*** Maven goal. Any local changes to your TypeScript or HTML are picked up when you build the front end.
+To see whether the test detects a failure, change the ***response string*** in the servlet ***src/main/java/io/openliberty/guides/hello/HelloServlet.java*** so that it doesn't match the string that the test is looking for. Then re-run the tests and check that the test fails.
 
 
-Select **Launch Application** from the menu of the IDE, type **9080** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to **`https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai/app/`**, where **accountname** is your account name.
-::startApplication{port="9080" display="internal" name="Launch Application" route="/"}
-
-You will see the following output:
-
-```
-foo wrote 2 albums:
-    Album titled *album_one* by *foo* contains *12* tracks
-    Album tilted *album_two* by *foo* contains *15* tracks
-bar wrote 1 albums:
-    Album titled *foo walks into a bar* by *bar* contains *12* tracks
-dj wrote 0 albums:
-```
-
-If you use the ***curl*** command to access the web application root URL, you see only the application root page in HTML. The Angular framework uses JavaScript to render the HTML to display the application data. A web browser runs JavaScript, and the ***curl*** command doesn't.
-
-
-::page{title="Testing the Angular client"}
-
-No explicit code directly uses the consumed artist JSON, so you don't need to write any test cases.
-
-
-Whenever you change and build your Angular implementation, the changes are automatically reflected at the URL for the launched application.
-
-When you are done checking the application root, exit development mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
-
-Although the Angular application that this guide shows you how to build is simple, when you build more complex Angular applications, testing becomes a crucial part of your development lifecycle. If you need to write test cases, follow the official unit testing and end-to-end testing documentation on the [official Angular page](https://angular.io/guide/testing).
+When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just accessed a simple RESTful web service and consumed its resources by using Angular in Open Liberty.
+You built and tested a web application project with an Open Liberty server using Maven.
 
 
 
@@ -424,34 +418,33 @@ You just accessed a simple RESTful web service and consumed its resources by usi
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-rest-client-angular*** project by running the following commands:
+Delete the ***guide-maven-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-rest-client-angular
+rm -fr guide-maven-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20Angular&guide-id=cloud-hosted-guide-rest-client-angular)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20web%20application%20with%20Maven&guide-id=cloud-hosted-guide-maven-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-angular/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-angular/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
-* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
+* [Creating a multi-module application](https://openliberty.io/guides/maven-multimodules.html)
+* [Building a web application with Gradle](https://openliberty.io/guides/gradle-intro.html)
 
 
 ### Log out of the session
