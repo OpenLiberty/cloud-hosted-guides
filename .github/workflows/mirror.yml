@@ -59,6 +59,7 @@ jobs:
           - {"github":"cloud-hosted-guide-rest-hateoas","gitlab":"cloud-hosted-guide-rest-hateoas"}
           - {"github":"cloud-hosted-guide-openliberty-operator-intro","gitlab":"cloud-hosted-guide-openliberty-operator-intro"}
           - {"github":"cloud-hosted-guide-maven-multimodules","gitlab":"cloud-hosted-guide-maven-multimodules"}
+          - {"github":"cloud-hosted-liberty-deepdive","gitlab":"cloud-hosted-liberty-deepdive"}
 
     steps:
 
