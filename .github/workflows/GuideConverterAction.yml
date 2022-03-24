@@ -30,6 +30,7 @@ jobs:
           echo "branch: ${{ github.event.inputs.branch }}"
           echo "guide_name: ${{ github.event.inputs.guide_name }}"
           echo "converter_branch: ${{ github.event.inputs.converter_branch }}"
+          echo "common_branch: ${{ github.event.inputs.common_branch }}"
           
   convertMaster:
     name: Make PR to Master
@@ -127,7 +128,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.common_branch }}
           repository: OpenLiberty/guides-common
-          path: GuideConverter/Guides-common
+          path: GuideConverter/guides-common
 
       - uses: actions/setup-java@v1
         with:
