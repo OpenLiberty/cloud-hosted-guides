@@ -4,6 +4,17 @@ title: instructions
 branch: lab-371-instruction
 version-history-start-date: 2022-03-22T21:26:09Z
 ---
+::page{title="Welcome to the Injecting dependencies into microservices guide!"}
+
+Learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies into microservices.
+
+In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
+
+This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
+
+The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+
+
 
 ::page{title="What you'll learn"}
 
@@ -20,6 +31,7 @@ The implementation of the application and its services are provided for you in t
 Contexts and Dependency Injection (CDI) defines a rich set of complementary services that improve the application structure. The most fundamental services that are provided by CDI are contexts that bind the lifecycle of stateful components to well-defined contexts, and dependency injection that is the ability to inject components into an application in a typesafe way. With CDI, the container does all the daunting work of instantiating dependencies, and controlling exactly when and how these components are instantiated and destroyed.
 
 
+
 ::page{title="Getting started"}
 
 To open a new command-line session,
@@ -31,6 +43,38 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cdi-intro.git) and use the projects that are provided inside:
+
+```bash
+git clone https://github.com/openliberty/guide-cdi-intro.git
+cd guide-cdi-intro
+```
+
+
+The ***start*** directory contains the starting project that you will build upon.
+
+The ***finish*** directory contains the finished project that you will build.
+
+### Try what you'll build
+
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+
+```bash
+cd finish
+mvn liberty:run
+```
+
+After you see the following message, your application server is ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
 Point your browser to the http://localhost:9080/inventory/systems URL.
@@ -67,6 +111,11 @@ curl -s http://localhost:9080/inventory/systems | jq
 
 and you see a new entry for ***localhost***. For simplicity, only the OS name and username are shown here for each host. You can repeat this process for your own hostname or any other machine that is running the ***system*** service.
 
+After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+```bash
+mvn liberty:stop
+```
 
 ::page{title="Handling dependencies in the application"}
 
@@ -79,6 +128,20 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-cdi-intro/start
 ```
 
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```bash
+mvn liberty:dev
+```
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 Create the ***InventoryManager*** class.
 
@@ -135,6 +198,9 @@ Your inventory application is now completed.
 
 
 
+::page{title="Running the application"}
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 You can find the ***inventory*** and ***system*** services at the following URLs:
 
@@ -197,6 +263,9 @@ Finally, the ***src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.j
 
 
 
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
 If the tests pass, you see a similar output to the following example:
 
@@ -222,6 +291,7 @@ The warning and error messages are expected and result from a request to a bad o
 To see whether the tests detect a failure, change the ***endpoint*** for the ***inventory*** service in the ***src/main/java/io/openliberty/guides/inventory/InventoryResource.java*** file to something else. Then, run the tests again to see that a test failure occurs.
 
 
+When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 ::page{title="Summary"}
 
