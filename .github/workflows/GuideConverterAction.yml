@@ -14,6 +14,11 @@ on:
         description: 'Converter branch'
         required: true
         default: 'main'
+      common_branch:
+        description: 'guides-common branch for staging only'
+        required: true
+        default: 'prod'
+      
         
 jobs:
   printBranch:
@@ -121,6 +126,7 @@ jobs:
       - name: Checkout guides-common repo
         uses: actions/checkout@v2
         with:
+          ref: ${{ github.event.inputs.common_branch }}
           repository: OpenLiberty/guides-common
           path: GuideConverter/Guides-common
 
