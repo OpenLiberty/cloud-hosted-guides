@@ -1,3 +1,9 @@
+---
+title: instructions
+branch: lab-371-instruction
+version-history-start-date: 2022-03-22T21:26:09Z
+---
+
 # **Welcome to the Injecting dependencies into microservices guide!**
 
 Learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies into microservices.
