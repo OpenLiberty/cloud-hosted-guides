@@ -1,8 +1,8 @@
 ---
 markdown-version: v1
 title: instructions
-branch: lab-204-instruction
-version-history-start-date: 2022-02-09T14:19:17.000Z
+branch: lab-371-instruction
+version-history-start-date: 2022-03-22T21:26:09Z
 ---
 
 ::page{title="What you'll learn"}
@@ -163,10 +163,11 @@ touch /home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides
 ```
 
 
-> Then, to open the unknown file in your IDE, select
-> **File** > **Open** > guide-cdi-intro/start/unknown, or click the following button
+> Then, to open the InventoryEndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-cdi-intro/start/unknown"}
+::openFile{path="/home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
+
 
 
 The ***@BeforeAll*** annotation is placed on a method that runs before any of the test cases. In this case, the ***oneTimeSetup()*** method retrieves the port number for the Open Liberty server and builds a base URL string that is used throughout the tests.
@@ -184,7 +185,6 @@ See the following descriptions of the test cases:
 To force these test cases to run in a particular order, annotate your ***InventoryEndpointIT*** test class with the ***@TestMethodOrder(OrderAnnotation.class)*** annotation. ***OrderAnnotation.class*** runs test methods in numerical order, according to the values specified in the ***@Order*** annotation. You can also create a custom ***MethodOrderer*** class or use built-in ***MethodOrderer*** implementations, such as ***OrderAnnotation.class***, ***Alphanumeric.class***, or ***Random.class***. Label your test cases with the ***@Test*** annotation so that they automatically run when your test class runs.
 
 Finally, the ***src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java*** file is included for you to test the basic functionality of the ***system*** service. If a test failure occurs, then you might have introduced a bug into the code.
-
 
 
 
