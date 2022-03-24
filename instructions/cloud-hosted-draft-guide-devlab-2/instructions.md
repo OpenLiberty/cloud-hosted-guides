@@ -4,9 +4,9 @@ title: instructions
 branch: lab-207-instruction
 version-history-start-date: 2022-02-11T18:24:15Z
 ---
-::page{title="Welcome to the Creating a multi-module application guide!"}
+::page{title="Welcome to the Caching HTTP session data using JCache and Hazelcast guide!"}
 
-You will learn how to build an application with multiple modules with Maven and Open Liberty.
+ WINDOWS
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,18 +16,20 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-A Jakarta Platform, Enterprise Edition (Jakarta EE) application consists of modules that work together as one entity. An enterprise archive (EAR) is a wrapper for a Jakarta EE application, which consists of web archive (WAR) and Java archive (JAR) files. To deploy or distribute the Jakarta EE application into new environments, all the modules and resources must first be packaged into an EAR file.
+### What is a session?
+On the internet, a web server doesn't know who you are or what you do because it's processing stateless HTTP requests. An HTTP session provides a way to store information to be used across multiple requests. Session variables store user information like user name or items in a shopping cart. By default, session variables will timeout after 30 minutes of being unused. Cookies, which also store user information, are maintained on a client's computer, whereas session variables are maintained on a web server. For security reasons, an HTTP session is preferred over cookies when used with sensitive data. A session hides data from users. Cookies can be manipulated by a savvy user to make fake requests to your site.
 
-In this guide, you will learn how to:
+### What is session persistence?
+High traffic websites must support thousands of users in a fast and reliable way. Load balancing requires running several instances of the same application in parallel so that traffic can be routed to different instances to maximize speed and reliability. Unless a user is tied to a particular instance, running multiple instances of the same application can pose an out-of-sync problem when each instance keeps an isolated copy of its session data. HTTP session data caching can solve this problem by allowing all instances of the application to share caches among each other. Sharing caches among instances eliminates the need to route a user to the same instance and helps in failover situations by distributing the cache.
 
-* establish a dependency between a web module and a Java library module,
-* use Maven to package the WAR file and the JAR file into an EAR file so that you can run and test the application on Open Liberty, and
-* use Liberty Maven plug-in to develop a multi-module application in development mode without having to prebuild the JAR and WAR files. In development mode, your changes are automatically picked up by the running server.
+![Session Cache](https://raw.githubusercontent.com/OpenLiberty/guide-sessions/prod/assets/sessionCache.png)
 
-You will build a unit converter application that converts heights from centimeters into feet and inches. The application will request the user to enter a height value in centimeters. Then, the application processes the input by using functions that are found in the JAR file to return the height value in imperial units.
+
+You will learn how to build an application that creates and uses HTTP session data. You will also learn how to use Open Liberty's ***sessionCache*** feature to persist HTTP sessions by using Java Caching (JCache), the standard caching API for Java.
+
+You will containerize and deploy the application to a local Kubernetes cluster. You will then replicate the application in multiple pods and see that the session data is cached and shared among all instances of the application. Even if an instance is unavailable, the other instances are able to take over and handle requests from the same user by using the cached session data.
 
 
 
@@ -42,11 +44,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-multimodules.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-sessions.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-maven-multimodules.git
-cd guide-maven-multimodules
+git clone https://github.com/openliberty/guide-sessions.git
+cd guide-sessions
 ```
 
 
@@ -54,380 +56,260 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-Access partial implementation of the application from the ***start*** folder. This folder includes a web module in the ***war*** folder, a Java library in the ***jar*** folder, and template files in the ***ear*** folder. However, the Java library and the web module are independent projects, and you will need to complete the following steps to implement the application:
 
-1. Add a dependency relationship between the two modules.
+::page{title="Creating the application"}
 
-2. Assemble the entire application into an EAR file.
-
-3. Aggregate the entire build.
-
-4. Test the multi-module application.
-
-### Try what you'll build
-
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application:
-
-```bash
-cd finish
-mvn install
-```
-
-To deploy your EAR application on an Open Liberty server, run the Maven ***liberty:run*** goal from the finish directory using the ***-pl*** flag to specify the ***ear*** project. The ***-pl*** flag specifies the project where the Maven goal runs.
-
-```bash
-mvn -pl ear liberty:run
-```
-
-After the server is running, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Then use the following command to get the URL to access the service. Open your browser and check out your service by going to the URL that the command returns.
-```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/converter
-```
-
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal using the ***-pl ear*** flag from the ***finish*** directory in another command-line session:
-
-```bash
-mvn -pl ear liberty:stop
-```
-
-
-::page{title="Adding dependencies between WAR and JAR modules"}
-
-To use a Java library in your web module, you must add a dependency relationship between the two modules.
-
-As you might have noticed, each module has its own ***pom.xml*** file. Each module has its own ***pom.xml*** file because each module is treated as an independent project. You can rebuild, reuse, and reassemble every module on its own.
+The application that you are working with is a shopping cart web service that uses JAX-RS, which is a Java API for building RESTful web services. You'll learn how to persist a user's shopping cart data between servers by using the ***sessionCache*** feature in Open Liberty. The ***sessionCache*** feature persists HTTP sessions using JCache. You can have high-performance HTTP session persistence without using a relational database.
 
 Navigate to the ***start*** directory to begin.
-```
-cd /home/project/guide-maven-multimodules/start
-```
 
-Replace the war/POM file.
-
-> To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-maven-multimodules/start/war/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-maven-multimodules/start/war/pom.xml"}
-
-
-
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-    http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <parent>
-        <groupId>io.openliberty.guides</groupId>
-        <artifactId>guide-maven-multimodules</artifactId>
-        <version>1.0-SNAPSHOT</version>
-    </parent>
-
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-maven-multimodules-war</artifactId>
-    <packaging>war</packaging>
-    <version>1.0-SNAPSHOT</version>
-    <name>guide-maven-multimodules-war</name>
-    <url>http://maven.apache.org</url>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>5.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.openliberty.guides</groupId>
-            <artifactId>guide-maven-multimodules-jar</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-
-    </dependencies>
-
-</project>
-```
-
-
-The added ***dependency*** element is the Java library module that implements the functions that you need for the unit converter.
-
-Although the ***parent/child*** structure is not normally needed for multi-module applications, adding it helps us to better organize all of the projects. This structure allows all of the child projects to make use of the plugins that are defined in the parent ***pom.xml*** file, without having to define them again in the child ***pom.xml*** files.
-
-
-::page{title="Assembling multiple modules into an EAR file"}
-
-To deploy the entire application on the Open Liberty server, first package the application. Use the EAR project to assemble multiple modules into an EAR file.
-
-Navigate to the ***ear*** folder and find a template ***pom.xml*** file.
-Replace the ear/POM file.
-
-> To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-maven-multimodules/start/ear/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-maven-multimodules/start/ear/pom.xml"}
-
-
-
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-    http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <parent>
-        <groupId>io.openliberty.guides</groupId>
-        <artifactId>guide-maven-multimodules</artifactId>
-        <version>1.0-SNAPSHOT</version>
-    </parent>
-
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-maven-multimodules-ear</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>ear</packaging>
-    <!-- end::packaging[] -->
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-    </properties>
-
-    <dependencies>
-        <!-- tag::dependencies[] -->
-        <dependency>
-            <groupId>io.openliberty.guides</groupId>
-            <artifactId>guide-maven-multimodules-jar</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <type>jar</type>
-        </dependency>
-        <!-- tag::dependency-war[] -->
-        <dependency>
-            <groupId>io.openliberty.guides</groupId>
-            <artifactId>guide-maven-multimodules-war</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <type>war</type>
-        </dependency>
-        <!-- end::dependencies[] -->
-
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.8.2</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-ear-plugin</artifactId>
-                <version>3.2.0</version>
-                <configuration>
-                    <modules>
-                        <jarModule>
-                            <groupId>io.openliberty.guides</groupId>
-                            <artifactId>guide-maven-multimodules-jar</artifactId>
-                            <uri>/guide-maven-multimodules-jar-1.0-SNAPSHOT.jar</uri>
-                        </jarModule>
-                        <!-- tag::webModule[] -->
-                        <webModule>
-                            <groupId>io.openliberty.guides</groupId>
-                            <artifactId>guide-maven-multimodules-war</artifactId>
-                            <uri>/guide-maven-multimodules-war-1.0-SNAPSHOT.war</uri>
-                            <!-- tag::contextRoot[] -->
-                            <contextRoot>/converter</contextRoot>
-                        </webModule>
-                    </modules>
-                </configuration>
-            </plugin>
-
-            <!-- Since the package type is ear,
-            need to run testCompile to compile the tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.9.0</version>
-                <executions>
-                    <execution>
-                        <phase>test-compile</phase>
-                        <goals>
-                            <goal>testCompile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <default.http.port>
-                            ${liberty.var.default.http.port}
-                        </default.http.port>
-                        <default.https.port>
-                            ${liberty.var.default.https.port}
-                        </default.https.port>
-                        <cf.context.root>/converter</cf.context.root>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
-</project>
-```
-
-
-
-Set the ***basic configuration*** for the project and set the ***packaging*** element to ***ear***.
-
-The ***Java library module*** and the ***web module*** were added as dependencies. Specify a type of ***war*** for the web module. If you don’t specify this type for the web module, Maven looks for a JAR file.
-
-The definition and configuration of the ***maven-ear-plugin*** plug-in were added to create an EAR file. Define the ***jarModule*** and ***webModule*** modules to be packaged into the EAR file. To customize the context root of the application, set the ***contextRoot*** element to ***/converter*** in the ***webModule***. Otherwise, Maven automatically uses the WAR file ***artifactId*** ID as the context root for the application while generating the ***application.xml*** file.
-
-To deploy and run an EAR application on an Open Liberty server, you need to provide a server configuration file.
-
-Create the server configuration file.
+Create the ***CartApplication*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml
+touch /home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java
+```
+
+
+> Then, to open the CartApplication.java file in your IDE, select
+> **File** > **Open** > guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java, or click the following button
+
+::openFile{path="/home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java"}
+
+
+
+```java
+package io.openliberty.guides.cart;
+
+import jakarta.ws.rs.ApplicationPath;
+import jakarta.ws.rs.core.Application;
+
+@ApplicationPath("/")
+public class CartApplication extends Application {
+
+}
+```
+
+
+
+The ***CartApplication*** class extends the generic JAX-RS application class that is needed to run the
+application.
+
+Create the ***CartResource*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java
+```
+
+
+> Then, to open the CartResource.java file in your IDE, select
+> **File** > **Open** > guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java, or click the following button
+
+::openFile{path="/home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java"}
+
+
+
+```java
+package io.openliberty.guides.cart;
+
+import java.util.Enumeration;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+
+@Path("/")
+public class CartResource {
+
+    @POST
+    @Path("cart/{item}&{price}")
+    @Produces(MediaType.TEXT_PLAIN)
+    @APIResponse(responseCode = "200", description = "Item successfully added to cart.")
+    @Operation(summary = "Add a new item to cart.")
+    public String addToCart(@Context HttpServletRequest request,
+                    @Parameter(description = "Item you need for intergalatic travel.",
+                               required = true)
+                    @PathParam("item") String item,
+                    @Parameter(description = "Price for this item.",
+                               required = true)
+                    @PathParam("price") double price) {
+        HttpSession session = request.getSession();
+        session.setAttribute(item, price);
+        return item + " added to your cart and costs $" + price;
+    }
+
+    @GET
+    @Path("cart")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponse(responseCode = "200",
+        description = "Items successfully retrieved from your cart.")
+    @Operation(summary = "Return an JsonObject instance which contains "
+                         + "the items in your cart and the subtotal.")
+    public JsonObject getCart(@Context HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        Enumeration<String> names = session.getAttributeNames();
+        JsonObjectBuilder builder = Json.createObjectBuilder();
+        builder.add("pod-name", getHostname());
+        builder.add("session-id", session.getId());
+        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+        Double subtotal = 0.0;
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+            String price = session.getAttribute(name).toString();
+            arrayBuilder.add(name + " | $" + price);
+            subtotal += Double.valueOf(price).doubleValue();
+        }
+        builder.add("cart", arrayBuilder);
+        builder.add("subtotal", subtotal);
+        return builder.build();
+    }
+
+    private String getHostname() {
+        String hostname = System.getenv("HOSTNAME");
+        if (hostname == null) {
+            hostname = "localhost";
+        }
+            return hostname;
+    }
+}
+```
+
+
+
+The ***CartResource*** class defines the REST endpoints at which a user can make an HTTP request.
+
+The ***addToCart*** and ***getCart*** methods have a number of annotations. Most of these annotations are used by the MicroProfile OpenAPI and JAX-RS features to document the REST endpoints and map Java objects to web resources. More information about these annotations can be found in the [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html#augmenting-the-existing-jax-rs-annotations-with-openapi-annotations) and [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html#creating-a-jax-rs-application) guides.
+
+The ***cart/{item}&{price}*** endpoint demonstrates how to set session data. The ***@PathParam*** annotation injects a custom ***item*** and ***price*** from the POST request into the method parameter. The ***addToCart*** method gets the current ***session*** and binds the ***{item}:{price}*** key-value pair into the session by the ***setAttribute()*** method. A response is then built and returned to confirm that an item was added to your cart and session.
+
+The ***cart*** endpoint demonstrates how to get session data. The ***getCart*** method gets the current session, iterates through all key-value pairs that are stored in the current session, and creates a ***JsonObject*** response. The ***JsonObject*** response is returned to confirm the server instance by ***pod-name***, the session by ***session-id***, and the items in your cart by ***cart***.
+
+
+::page{title="Configuring session persistence"}
+
+### Using client-server vs peer-to-peer model
+
+Session caching is only valuable when a server is connected to at least one other member. There are two different ways session caching can behave in a cluster environment:
+
+* Client-server model: A Liberty server can act as the JCache client and connect to a dedicated JCache server.
+* Peer-to-peer model: A Liberty server can connect with other Liberty servers that are also running with the session cache and configured to be part of the same cluster.
+
+You'll use the peer-to-peer model in a Kubernetes environment for this guide.
+
+### Configuring session persistence with JCache in Open Liberty
+
+JCache, which stands for Java Caching, is an interface to standardize distributed caching on the Java platform. The ***sessionCache*** feature uses JCache, which allows for session persistence by providing a common cache of session data between servers. This feature doesn't include a JCache implementation. For this guide, you'll use Hazelcast as an open source JCache provider.
+
+Hazelcast is a JCache provider. Open Liberty needs to be configured to use Hazelcast after the ***sessionCache*** feature is enabled.
+
+Create the ***server.xml*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-sessions/start/src/main/liberty/config/server.xml
 ```
 
 
 > Then, to open the server.xml file in your IDE, select
-> **File** > **Open** > guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml, or click the following button
+> **File** > **Open** > guide-sessions/start/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/server.xml"}
 
 
 
 ```xml
-<server description="Sample Liberty server">
+<server description="Liberty Server for Sessions Management">
 
     <featureManager>
-        <feature>pages-3.0</feature>
+        <feature>servlet-5.0</feature>
+        <feature>sessionCache-1.0</feature>
+        <feature>restfulWS-3.0</feature>
+        <feature>jsonb-2.0</feature>
+        <feature>jsonp-2.0</feature>
+        <feature>mpOpenAPI-3.0</feature>
     </featureManager>
 
-    <variable name="default.http.port" defaultValue="9080" />
-    <variable name="default.https.port" defaultValue="9443" />
+    <variable name="default.http.port" defaultValue="9080"/>
+    <variable name="default.https.port" defaultValue="9443"/>
+    <variable name="app.context.root" defaultValue="guide-sessions"/>
+    <variable name="hazelcast.lib" defaultValue="${shared.resource.dir}/hazelcast.jar"/>
 
-    <httpEndpoint host="*" httpPort="${default.http.port}"
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint" />
+    <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
+        id="defaultHttpEndpoint" host="*" />
+    <httpSessionCache libraryRef="jCacheVendorLib"
+        uri="file:${server.config.dir}/hazelcast-config.xml" />
+    <!-- tag::library[] -->
+    <library id="jCacheVendorLib">
+        <file name="${hazelcast.lib}" />
+    </library>
 
-    <enterpriseApplication id="guide-maven-multimodules-ear"
-        location="guide-maven-multimodules-ear.ear"
-        name="guide-maven-multimodules-ear" />
-    <!-- end::server[] -->
+    <webApplication location="guide-sessions.war" contextRoot="${app.context.root}" />
+
 </server>
 ```
 
 
 
-You must configure the ***server.xml*** file with the ***enterpriseApplication*** element to specify the location of your EAR application.
+The ***library*** element includes the library reference that indicates to the server where the Hazelcast implementation of JCache is located. Your Hazelcast implementation of JCache is a JAR file that resides in the location that is defined by the ***${hazelcast.lib}*** variable. The ***hazelcast.jar*** file is downloaded as a dependency and copied to the predefined ***target*** directory when the Maven build runs. This goal is defined in the provided Maven POM file.
+
+### Configuring Hazelcast
 
 
-::page{title="Aggregating the entire build"}
+By default, all Open Liberty servers that run the ***sessionCache*** feature and Hazelcast are connected using a peer-to-peer model.
 
-Because you have multiple modules, aggregate the Maven projects to simplify the build process.
+You can share the session cache only among certain Hazelcast instances by using the ***group*** configuration element in the Hazelcast configuration file.
 
-Create a parent ***pom.xml*** file under the ***start*** directory to link all of the child modules together. A template is provided for you.
+Create the ***hazelcast-config.xml*** configuration file.
 
-Replace the start/POM file.
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-sessions/start/src/main/liberty/config/hazelcast-config.xml
+```
 
-> To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-maven-multimodules/start/pom.xml, or click the following button
 
-::openFile{path="/home/project/guide-maven-multimodules/start/pom.xml"}
+> Then, to open the hazelcast-config.xml file in your IDE, select
+> **File** > **Open** > guide-sessions/start/src/main/liberty/config/hazelcast-config.xml, or click the following button
+
+::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/hazelcast-config.xml"}
 
 
 
 ```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
+<hazelcast xmlns="http://www.hazelcast.com/schema/config"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-    http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <modelVersion>4.0.0</modelVersion>
-
-    <!-- tag::groupId[] -->
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-maven-multimodules</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <!-- end::packaging[] -->
-
-    <modules>
-        <module>jar</module>
-        <module>war</module>
-        <module>ear</module>
-    </modules>
-
-    <build>
-        <plugins>
-            <!-- tag::liberty-maven-plugin[] -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5.1</version>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+    xsi:schemaLocation="http://www.hazelcast.com/schema/config
+       https://hazelcast.com/schema/config/hazelcast-config-3.12.xsd">
+    <group>
+        <name>CartCluster</name>
+    </group>
+</hazelcast>
 ```
 
 
 
-Set the ***basic configuration*** for the project. Set ***pom*** as the value for the ***packaging*** element of the parent ***pom.xml*** file.
+The cluster group ***CartCluster*** is defined in the ***hazelcast-config.xml***.
 
-In the parent ***pom.xml*** file, list all of the ***modules*** that you want to aggregate for the application.
+In the ***server.xml*** file, a reference to the Hazelcast configuration file is made by using the ***httpSessionCache*** tag.
 
-Adding the ***liberty-maven-plugin*** plug-in allows each child module to inherit the plug-in, so that you can use the Liberty Maven plug-in to develop the modules.
+There are more configuration settings that you can explore in the [Hazelcast documentation](https://docs.hazelcast.org/docs/latest/manual/html-single/#understanding-configuration).
 
 
-::page{title="Developing the application"}
-
-You can now develop the application and the different modules together in dev mode by using the Liberty Maven plug-in. To learn more about how to use development mode with multiple modules, check out the [Documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#multiple-modules).
-
-Navigate to the ***start*** directory to begin.
-```
-cd /home/project/guide-maven-multimodules/start
-```
+::page{title="Running the application"}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -444,264 +326,166 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-### Updating the Java classes in different modules
-
-Update the ***HeightsBean*** class to use the Java library module that implements the functions that you need for the unit converter.
-
-Navigate to the ***start*** directory.
-
-Replace the ***HeightsBean*** class in the ***war*** directory.
-
-> To open the HeightsBean.java file in your IDE, select
-> **File** > **Open** > guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java, or click the following button
-
-::openFile{path="/home/project/guide-maven-multimodules/start/war/src/main/java/io/openliberty/guides/multimodules/web/HeightsBean.java"}
 
 
-
-```java
-package io.openliberty.guides.multimodules.web;
-
-public class HeightsBean implements java.io.Serializable {
-    private String heightCm = null;
-    private String heightFeet = null;
-    private String heightInches = null;
-    private int cm = 0;
-    private int feet = 0;
-    private int inches = 0;
-
-    public HeightsBean() {
-    }
-
-    public String getHeightCm() {
-        return heightCm;
-    }
-
-    public String getHeightFeet() {
-        return heightFeet;
-    }
-
-    public String getHeightInches() {
-        return heightInches;
-    }
-
-    public void setHeightCm(String heightcm) {
-        this.heightCm = heightcm;
-    }
-
-    public void setHeightFeet(String heightfeet) {
-        this.cm = Integer.valueOf(heightCm);
-        this.feet = io.openliberty.guides.multimodules.lib.Converter.getFeet(cm);
-        String result = String.valueOf(feet);
-        this.heightFeet = result;
-    }
-
-    public void setHeightInches(String heightinches) {
-        this.cm = Integer.valueOf(heightCm);
-        this.inches = io.openliberty.guides.multimodules.lib.Converter.getInches(cm);
-        String result = String.valueOf(inches);
-        this.heightInches = result;
-    }
-
-}
-```
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-
-The ***getFeet(cm)*** invocation was added to the ***setHeightFeet*** method to convert a measurement into feet.
-
-The ***getInches(cm)*** invocation was added to the ***setHeightInches*** method to convert a measurement into inches.
-
-To check out the running application, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Then use the following command to get the URL. Open your browser and check out your service by going to the URL that the command returns.
-```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/converter
-```
-
-Now try updating the converter so that it converts heights correctly, rather than returning 0.
-
-Replace the ***Converter*** class in the ***jar*** directory.
-
-> To open the Converter.java file in your IDE, select
-> **File** > **Open** > guide-maven-multimodules/start/jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java, or click the following button
-
-::openFile{path="/home/project/guide-maven-multimodules/start/jar/src/main/java/io/openliberty/guides/multimodules/lib/Converter.java"}
+Point your browser to the link:http://localhost:9080/openapi/ui/ URL. This URL displays the available REST endpoints.
 
 
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
-```java
-package io.openliberty.guides.multimodules.lib;
-
-public class Converter {
-
-    public static int getFeet(int cm) {
-        int feet = (int) (cm / 30.48);
-        return feet;
-    }
-
-    public static int getInches(int cm) {
-        double feet = cm / 30.48;
-        int inches = (int) (cm / 2.54) - ((int) feet * 12);
-        return inches;
-    }
-
-    public static int sum(int a, int b) {
-        return a + b;
-    }
-
-    public static int diff(int a, int b) {
-        return a - b;
-    }
-
-    public static int product(int a, int b) {
-        return a * b;
-    }
-
-    public static int quotient(int a, int b) {
-        return a / b;
-    }
-
-}
-```
-
-
-
-Change the ***getFeet*** method so that it converts from centimetres to feet, and the ***getInches*** method so that it converts from centimetres to inches. Update the ***sum***, ***diff***, ***product*** and ***quotient*** functions so that they add, subtract, multiply, and divide 2 numbers respectively.
-
-Now revisit the application at the URL you previously found by running the following command:
-```
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/converter
-```
-
-Try entering a height in centimetres and see if it converts correctly.
-
-
-### Testing the multi-module application
-
-To test the multi-module application, add integration tests to the EAR project.
-
-Create the integration test class in the ***ear*** directory.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java
+curl link:http://localhost:9080/openapi/ui/
 ```
 
 
-> Then, to open the IT.java file in your IDE, select
-> **File** > **Open** > guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java, or click the following button
 
-::openFile{path="/home/project/guide-maven-multimodules/start/ear/src/test/java/it/io/openliberty/guides/multimodules/IT.java"}
+First, make a POST request to the ***/cart/{item}&{price}*** endpoint. To make this request, expand the POST endpoint on the UI, click the ***Try it out*** button, provide an item and a price, and then click the ***Execute*** button. The POST request adds a user-specified item and price to a session that represents data in a user's cart.
+
+Next, make a GET request to the ***/cart*** endpoint. To make this request, expand the GET endpoint on the UI, click the ***Try it out*** button, and then click the ***Execute*** button. The GET request returns a pod name, a session ID, and all the items from your session.
+
+When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 
-```java
-package it.io.openliberty.guides.multimodules;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+::page{title="Containerizing the application"}
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+Before you can deploy the application to Kubernetes, you need to containerize it with Docker.
 
-import org.junit.jupiter.api.Test;
+Make sure to start your Docker daemon before you proceed.
 
-public class IT {
-    String port = System.getProperty("default.http.port");
-    String war = "converter";
-    String urlBase = "http://localhost:" + port + "/" + war + "/";
 
-    @Test
-    public void testIndexPage() throws Exception {
-        String url = this.urlBase;
-        HttpURLConnection con = testRequestHelper(url, "GET");
-        assertEquals(200, con.getResponseCode(), "Incorrect response code from " + url);
-        assertTrue(testBufferHelper(con).contains("Enter the height in centimeters"),
-                        "Incorrect response from " + url);
-    }
 
-    @Test
-    public void testHeightsPage() throws Exception {
-        String url = this.urlBase + "heights.jsp?heightCm=10";
-        HttpURLConnection con = testRequestHelper(url, "POST");
-        assertTrue(testBufferHelper(con).contains("3        inches"),
-                        "Incorrect response from " + url);
-    }
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-    private HttpURLConnection testRequestHelper(String url, String method)
-                    throws Exception {
-        URL obj = new URL(url);
-        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-        con.setRequestMethod(method);
-        return con;
-    }
+The Dockerfile is provided at the ***start*** directory. If you're unfamiliar with Dockerfile, check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide, which covers Dockerfile in depth.
 
-    private String testBufferHelper(HttpURLConnection con) throws Exception {
-        BufferedReader in = new BufferedReader(
-                        new InputStreamReader(con.getInputStream()));
-        String inputLine;
-        StringBuffer response = new StringBuffer();
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-        }
-        in.close();
-        return response.toString();
-    }
+Run the ***mvn package*** command from the ***start*** directory so that the ***.war*** file resides in the ***target*** directory.
 
+```bash
+mvn package
+```
+
+Run the following command to download or update to the latest Open Liberty Docker image:
+
+```bash
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+```
+
+To build and containerize the application, run the following Docker build command in the ***start*** directory:
+
+```bash
+docker build -t cart-app:1.0-SNAPSHOT .
+```
+
+When the build finishes, run the following command to list all local Docker images:
+```bash
+docker images
+```
+
+Verify that the ***cart-app:1.0-SNAPSHOT*** image is listed among the Docker images, for example:
+```
+REPOSITORY                      TAG
+cart-app                        1.0-SNAPSHOT
+openliberty/open-liberty        full-java11-openj9-ubi
+```
+
+
+::page{title="Deploying and running the application in Kubernetes"}
+
+
+Now that the containerized application is built, deploy it to a local Kubernetes cluster by using a Kubernetes resource definition, which is provided in the ***kubernetes.yaml*** file at the ***start*** directory.
+
+Run the following command to deploy the application into ***3*** replicated pods as defined in the ***kubernetes.yaml*** file:
+```bash
+kubectl apply -f kubernetes.yaml
+```
+
+When the application is deployed, run the following command to check the status of your pods:
+```bash
+kubectl get pods
+```
+
+You see an output similar to the following if all the pods are working correctly:
+
+```
+NAME                             READY  STATUS   RESTARTS  AGE
+cart-deployment-98f4ff789-2xlhs  1/1    Running  0         17s
+cart-deployment-98f4ff789-6rvfj  1/1    Running  0         17s
+cart-deployment-98f4ff789-qrh45  1/1    Running  0         17s
+```
+
+
+
+Run the ***minikube ip*** command to get the hostname for minikube. Then, go to the ***http://[hostname]:31000/openapi/ui/*** URL in your browser.  This URL displays the available REST endpoints.
+
+Make a POST request to the ***/cart/{item}&{price}*** endpoint. To make this request, expand the POST endpoint on the UI, click the ***Try it out*** button, provide an item and a price, and then click the ***Execute*** button. The POST request adds a user-specified item and price to a session that represents data in a user's cart.
+
+Next, make a GET request to the ***/cart*** endpoint. To make this request, expand the GET endpoint on the UI, click the ***Try it out*** button, and then click the ***Execute*** button. The GET request returns a pod name, a session ID, and all the items from your session.
+
+```
+{
+  "pod-name": "cart-deployment-98f4ff789-2xlhs",
+  "session-id": "RyJKzmka6Yc-ZCMzEA8-uPq",
+  "cart": [
+    "eggs | $2.89"
+  ],
+  "subtotal": 2.89
 }
 ```
 
+Replace the ***[pod-name]*** in the following command, and then run the command to pause the pod for the GET request that you just ran:
 
-
-The ***testIndexPage*** tests to check that you can access the landing page.
-
-The ***testHeightsPage*** tests to check that the application can process the input value and calculate the result correctly.
-
-
-### Running the tests
-
-Because you started Open Liberty in development mode, press the *enter/return* key to run the tests.
-
-You will see the following output:
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.multimodules.IT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.712 sec - in it.io.openliberty.guides.multimodules.IT
-
-Results :
-
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-
+```bash
+kubectl exec -it [pod-name] -- /opt/ol/wlp/bin/server pause
 ```
 
+Repeat the GET request. You see the same ***session-id*** but a different ***pod-name*** because the session data is cached but the request is served by a different pod (server).
 
-When you are done checking out the service, exit development mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing *q* and then pressing the *enter/return* key.
+Verify that the Hazelcast cluster is running by checking the Open Liberty log. To check the log, run the following command:
 
-
-::page{title="Building the multi-module application"}
-
-You aggregated and developed the application. Now, you can run ***mvn install*** once from the ***start*** directory and it will automatically build all your modules. This command creates a JAR file in the ***jar/target*** directory, a WAR file in the ***war/target*** directory, and an EAR file that contains the JAR and WAR files in the ***ear/target*** directory.
-
-Run the following commands to navigate to the start directory and build the entire application:
-```
-cd /home/project/guide-maven-multimodules/start
-mvn install
+```bash
+kubectl exec -it [pod-name] -- cat /logs/messages.log
 ```
 
-Since the modules are independent, you can re-build them individually by running ***mvn install*** from the corresponding ***start*** directory for each module.
+You see a message similar to the following:
 
-Or, run `mvn -pl <child project> install` from the start directory.
+```
+... [10.1.0.46]:5701 [CartCluster] [3.11.2]
+
+Members {size:3, ver:3} [
+	Member [10.1.0.40]:5701 - 01227d80-501e-4789-ae9d-6fb348d794ea
+	Member [10.1.0.41]:5701 - a68d0ed1-f50e-4a4c-82b0-389f356b8c73 this
+	Member [10.1.0.42]:5701 - b0dfa05a-c110-45ed-9424-adb1b2896a3d
+]
+```
+
+You can resume the paused pod by running the following command:
+
+```bash
+kubectl exec -it [pod-name] -- /opt/ol/wlp/bin/server resume
+```
+
+
+
+::page{title="Tearing down the environment"}
+
+When you no longer need your deployed application, you can delete all Kubernetes resources by running the ***kubectl delete*** command:
+
+```bash
+kubectl delete -f kubernetes.yaml
+```
+
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You built and tested a multi-module Java application for unit conversion with Maven on Open Liberty.
+You have created, used, and cached HTTP session data for an application that was running on Open Liberty server and deployed in a Kubernetes cluster.
 
 
 
@@ -711,32 +495,34 @@ You built and tested a multi-module Java application for unit conversion with Ma
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-maven-multimodules*** project by running the following commands:
+Delete the ***guide-sessions*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-maven-multimodules
+rm -fr guide-sessions
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20multi-module%20application&guide-id=cloud-hosted-guide-maven-multimodules)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Caching%20HTTP%20session%20data%20using%20JCache%20and%20Hazelcast&guide-id=cloud-hosted-guide-sessions)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-multimodules/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-multimodules/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-sessions/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-sessions/pulls)
 
 
 
 ### Where to next?
 
-* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
 ### Log out of the session
