@@ -20,16 +20,7 @@ The implementation of the application and its services are provided for you in t
 Contexts and Dependency Injection (CDI) defines a rich set of complementary services that improve the application structure. The most fundamental services that are provided by CDI are contexts that bind the lifecycle of stateful components to well-defined contexts, and dependency injection that is the ability to inject components into an application in a typesafe way. With CDI, the container does all the daunting work of instantiating dependencies, and controlling exactly when and how these components are instantiated and destroyed.
 
 
-::page{title="Getting started"}
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
 
 
 
