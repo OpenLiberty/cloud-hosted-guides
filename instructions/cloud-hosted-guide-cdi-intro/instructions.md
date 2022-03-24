@@ -124,7 +124,7 @@ You will use CDI to inject dependencies into the inventory manager application a
 ### Managing scopes and contexts
 
 Navigate to the ***start*** directory to begin.
-```
+```bash
 cd /home/project/guide-cdi-intro/start
 ```
 
