@@ -22,6 +22,7 @@ jobs:
           - {"github":"cloud-hosted-guide-getting-started","gitlab":"cloud-hosted-guide-getting-started","gitlab-branch":"lab-138-instruction"}
           - {"github":"cloud-hosted-guide-kubernetes-microprofile-config","gitlab":"cloud-hosted-guide-kubernetes-microprofile-config","gitlab-branch":"lab-143-instruction"}
           - {"github":"cloud-hosted-guide-containerize","gitlab":"cloud-hosted-guide-containerize","gitlab-branch":"lab-155-instruction"}
+          - {"github":"cloud-hosted-guide-contract-testing","gitlab":"cloud-hosted-guide-contract-testing","gitlab-branch":"lab-154-instruction"}
           - {"github":"cloud-hosted-draft-guide-openliberty-operator-intro","gitlab":"cloud-hosted-guide-openliberty-operator-intro","gitlab-branch":"lab-85-instruction"}
           - {"github":"cloud-hosted-draft-guide-openliberty-operator-openshift","gitlab":"cloud-hosted-guide-openliberty-operator-openshift","gitlab-branch":"lab-21-instruction"}
 
