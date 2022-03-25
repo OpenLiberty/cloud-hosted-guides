@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch pushed to'     
+        description: 'Guide branch pushed to'     
         required: true
         default: 'prod'
       guide_name:
