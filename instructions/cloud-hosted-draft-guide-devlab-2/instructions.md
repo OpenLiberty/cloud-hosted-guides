@@ -4,9 +4,9 @@ title: instructions
 branch: lab-207-instruction
 version-history-start-date: 2022-02-11T18:24:15Z
 ---
-::page{title="Welcome to the Caching HTTP session data using JCache and Hazelcast guide!"}
+::page{title="Welcome to the Providing metrics from a microservice guide!"}
 
- WINDOWS
+You'll explore how to provide system and application metrics from a microservice with MicroProfile Metrics.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,22 +16,16 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-### What is a session?
-On the internet, a web server doesn't know who you are or what you do because it's processing stateless HTTP requests. An HTTP session provides a way to store information to be used across multiple requests. Session variables store user information like user name or items in a shopping cart. By default, session variables will timeout after 30 minutes of being unused. Cookies, which also store user information, are maintained on a client's computer, whereas session variables are maintained on a web server. For security reasons, an HTTP session is preferred over cookies when used with sensitive data. A session hides data from users. Cookies can be manipulated by a savvy user to make fake requests to your site.
+You will learn how to use MicroProfile Metrics to provide metrics from a microservice. You can monitor metrics to determine the performance and health of a service. You can also use them to pinpoint issues, collect data for capacity planning, or to decide when to scale a service to run with more or fewer resources.
 
-### What is session persistence?
-High traffic websites must support thousands of users in a fast and reliable way. Load balancing requires running several instances of the same application in parallel so that traffic can be routed to different instances to maximize speed and reliability. Unless a user is tied to a particular instance, running multiple instances of the same application can pose an out-of-sync problem when each instance keeps an isolated copy of its session data. HTTP session data caching can solve this problem by allowing all instances of the application to share caches among each other. Sharing caches among instances eliminates the need to route a user to the same instance and helps in failover situations by distributing the cache.
+The application that you will work with is an ***inventory*** service that stores information about various systems. The ***inventory*** service communicates with the ***system*** service on a particular host to retrieve its system properties when necessary.
 
-![Session Cache](https://raw.githubusercontent.com/OpenLiberty/guide-sessions/prod/assets/sessionCache.png)
+You will use annotations provided by MicroProfile Metrics to instrument the ***inventory*** service to provide application-level metrics data. You will add counter, gauge, and timer metrics to the service.
 
-
-You will learn how to build an application that creates and uses HTTP session data. You will also learn how to use Open Liberty's ***sessionCache*** feature to persist HTTP sessions by using Java Caching (JCache), the standard caching API for Java.
-
-You will containerize and deploy the application to a local Kubernetes cluster. You will then replicate the application in multiple pods and see that the session data is cached and shared among all instances of the application. Even if an instance is unavailable, the other instances are able to take over and handle requests from the same user by using the cached session data.
-
-
+You will also check well-known REST endpoints that are defined by MicroProfile Metrics to review the metrics data collected. Monitoring agents can access these endpoints to collect metrics.
 
 ::page{title="Getting started"}
 
@@ -44,11 +38,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-sessions.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-metrics.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-sessions.git
-cd guide-sessions
+git clone https://github.com/openliberty/guide-microprofile-metrics.git
+cd guide-microprofile-metrics
 ```
 
 
@@ -57,259 +51,132 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-::page{title="Creating the application"}
+### Try what you'll build
 
-The application that you are working with is a shopping cart web service that uses JAX-RS, which is a Java API for building RESTful web services. You'll learn how to persist a user's shopping cart data between servers by using the ***sessionCache*** feature in Open Liberty. The ***sessionCache*** feature persists HTTP sessions using JCache. You can have high-performance HTTP session persistence without using a relational database.
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-Navigate to the ***start*** directory to begin.
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
-Create the ***CartApplication*** class.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java
+cd finish
+mvn liberty:run
+```
+
+After you see the following message, your application server is ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
 ```
 
 
-> Then, to open the CartApplication.java file in your IDE, select
-> **File** > **Open** > guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java, or click the following button
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-::openFile{path="/home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java"}
+Run the following curl command to access the **inventory** service. Because you just started the application, the inventory is empty. 
+```
+curl -s http://localhost:9080/inventory/systems | jq
+```
 
+Run the following curl command to add the **localhost** into the inventory.
+```
+curl -s http://localhost:9080/inventory/systems/localhost | jq
+```
 
+Access the **inventory** service at the **http://localhost:9080/inventory/systems** URL at least once so that application metrics are collected. Otherwise, the metrics do not appear.
 
-```java
-package io.openliberty.guides.cart;
+Next, run the following curl command to visit the MicroProfile Metrics endpoint by the **admin** user with **adminpwd** as the password.  You can see both the system and application metrics in a text format.
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics
+```
 
-import jakarta.ws.rs.ApplicationPath;
-import jakarta.ws.rs.core.Application;
+To see only the application metrics, run the following curl command:
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics/application
+```
 
-@ApplicationPath("/")
-public class CartApplication extends Application {
+See the following sample outputs for the ***@Timed***, ***@Gauge***, and ***@Counted*** metrics:
 
-}
+```
+::page{title="TYPE application_inventoryProcessingTime_rate_per_second gauge"}
+application_inventoryProcessingTime_rate_per_second{method="get"} 0.0019189661542898407
+...
+::page{title="TYPE application_inventoryProcessingTime_seconds summary"}
+::page{title="HELP application_inventoryProcessingTime_seconds Time needed to process the inventory"}
+application_inventoryProcessingTime_seconds_count{method="get"} 1
+application_inventoryProcessingTime_seconds{method="get",quantile="0.5"} 0.127965469
+...
+::page{title="TYPE application_inventoryProcessingTime_rate_per_second gauge"}
+application_inventoryProcessingTime_rate_per_second{method="list"} 0.0038379320982686884
+...
+::page{title="TYPE application_inventoryProcessingTime_seconds summary"}
+::page{title="HELP application_inventoryProcessingTime_seconds Time needed to process the inventory"}
+application_inventoryProcessingTime_seconds_count{method="list"} 2
+application_inventoryProcessingTime_seconds{method="list",quantile="0.5"} 2.2185000000000002E-5
+...
+```
+```
+::page{title="TYPE application_inventorySizeGauge gauge"}
+::page{title="HELP application_inventorySizeGauge Number of systems in the inventory"}
+application_inventorySizeGauge 1
+```
+```
+::page{title="TYPE application_inventoryAccessCount_total counter"}
+::page{title="HELP application_inventoryAccessCount_total Number of times the list of systems method is requested"}
+application_inventoryAccessCount_total 1
 ```
 
 
+To see only the system metrics, run the following curl command:
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics/base
+```
 
-The ***CartApplication*** class extends the generic JAX-RS application class that is needed to run the
-application.
+See the following sample output:
 
-Create the ***CartResource*** class.
+```
+::page{title="TYPE base_jvm_uptime_seconds gauge"}
+::page{title="HELP base_jvm_uptime_seconds Displays the start time of the Java virtual machine in milliseconds. This attribute displays the approximate time when the Java virtual machine started."}
+base_jvm_uptime_seconds 30.342000000000002
+```
+```
+::page{title="TYPE base_classloader_loadedClasses_count gauge"}
+::page{title="HELP base_classloader_loadedClasses_count Displays the number of classes that are currently loaded in the Java virtual machine."}
+base_classloader_loadedClasses_count 11231
+```
 
-> Run the following touch command in your terminal
+
+To see only the vendor metrics, run the following curl command:
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
+```
+
+See the following sample output:
+
+```
+::page{title="TYPE vendor_threadpool_size gauge"}
+::page{title="HELP vendor_threadpool_size The size of the thread pool."}
+vendor_threadpool_size{pool="Default_Executor"} 32
+```
+```
+::page{title="TYPE vendor_servlet_request_total counter"}
+::page{title="HELP vendor_servlet_request_total The number of visits to this servlet from the start of the server."}
+vendor_servlet_request_total{servlet="microprofile_metrics_io_openliberty_guides_inventory_InventoryApplication"} 1
+```
+
+After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
 ```bash
-touch /home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java
+mvn liberty:stop
 ```
 
 
-> Then, to open the CartResource.java file in your IDE, select
-> **File** > **Open** > guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java, or click the following button
-
-::openFile{path="/home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java"}
+::page{title="Adding MicroProfile Metrics to the inventory service"}
 
 
 
-```java
-package io.openliberty.guides.cart;
-
-import java.util.Enumeration;
-
-import jakarta.json.Json;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-
-@Path("/")
-public class CartResource {
-
-    @POST
-    @Path("cart/{item}&{price}")
-    @Produces(MediaType.TEXT_PLAIN)
-    @APIResponse(responseCode = "200", description = "Item successfully added to cart.")
-    @Operation(summary = "Add a new item to cart.")
-    public String addToCart(@Context HttpServletRequest request,
-                    @Parameter(description = "Item you need for intergalatic travel.",
-                               required = true)
-                    @PathParam("item") String item,
-                    @Parameter(description = "Price for this item.",
-                               required = true)
-                    @PathParam("price") double price) {
-        HttpSession session = request.getSession();
-        session.setAttribute(item, price);
-        return item + " added to your cart and costs $" + price;
-    }
-
-    @GET
-    @Path("cart")
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponse(responseCode = "200",
-        description = "Items successfully retrieved from your cart.")
-    @Operation(summary = "Return an JsonObject instance which contains "
-                         + "the items in your cart and the subtotal.")
-    public JsonObject getCart(@Context HttpServletRequest request) {
-        HttpSession session = request.getSession();
-        Enumeration<String> names = session.getAttributeNames();
-        JsonObjectBuilder builder = Json.createObjectBuilder();
-        builder.add("pod-name", getHostname());
-        builder.add("session-id", session.getId());
-        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-        Double subtotal = 0.0;
-        while (names.hasMoreElements()) {
-            String name = names.nextElement();
-            String price = session.getAttribute(name).toString();
-            arrayBuilder.add(name + " | $" + price);
-            subtotal += Double.valueOf(price).doubleValue();
-        }
-        builder.add("cart", arrayBuilder);
-        builder.add("subtotal", subtotal);
-        return builder.build();
-    }
-
-    private String getHostname() {
-        String hostname = System.getenv("HOSTNAME");
-        if (hostname == null) {
-            hostname = "localhost";
-        }
-            return hostname;
-    }
-}
+To begin, run the following command to navigate to the **start** directory:
 ```
-
-
-
-The ***CartResource*** class defines the REST endpoints at which a user can make an HTTP request.
-
-The ***addToCart*** and ***getCart*** methods have a number of annotations. Most of these annotations are used by the MicroProfile OpenAPI and JAX-RS features to document the REST endpoints and map Java objects to web resources. More information about these annotations can be found in the [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html#augmenting-the-existing-jax-rs-annotations-with-openapi-annotations) and [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html#creating-a-jax-rs-application) guides.
-
-The ***cart/{item}&{price}*** endpoint demonstrates how to set session data. The ***@PathParam*** annotation injects a custom ***item*** and ***price*** from the POST request into the method parameter. The ***addToCart*** method gets the current ***session*** and binds the ***{item}:{price}*** key-value pair into the session by the ***setAttribute()*** method. A response is then built and returned to confirm that an item was added to your cart and session.
-
-The ***cart*** endpoint demonstrates how to get session data. The ***getCart*** method gets the current session, iterates through all key-value pairs that are stored in the current session, and creates a ***JsonObject*** response. The ***JsonObject*** response is returned to confirm the server instance by ***pod-name***, the session by ***session-id***, and the items in your cart by ***cart***.
-
-
-::page{title="Configuring session persistence"}
-
-### Using client-server vs peer-to-peer model
-
-Session caching is only valuable when a server is connected to at least one other member. There are two different ways session caching can behave in a cluster environment:
-
-* Client-server model: A Liberty server can act as the JCache client and connect to a dedicated JCache server.
-* Peer-to-peer model: A Liberty server can connect with other Liberty servers that are also running with the session cache and configured to be part of the same cluster.
-
-You'll use the peer-to-peer model in a Kubernetes environment for this guide.
-
-### Configuring session persistence with JCache in Open Liberty
-
-JCache, which stands for Java Caching, is an interface to standardize distributed caching on the Java platform. The ***sessionCache*** feature uses JCache, which allows for session persistence by providing a common cache of session data between servers. This feature doesn't include a JCache implementation. For this guide, you'll use Hazelcast as an open source JCache provider.
-
-Hazelcast is a JCache provider. Open Liberty needs to be configured to use Hazelcast after the ***sessionCache*** feature is enabled.
-
-Create the ***server.xml*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-sessions/start/src/main/liberty/config/server.xml
+cd /home/project/guide-microprofile-metrics/start
 ```
-
-
-> Then, to open the server.xml file in your IDE, select
-> **File** > **Open** > guide-sessions/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Liberty Server for Sessions Management">
-
-    <featureManager>
-        <feature>servlet-5.0</feature>
-        <feature>sessionCache-1.0</feature>
-        <feature>restfulWS-3.0</feature>
-        <feature>jsonb-2.0</feature>
-        <feature>jsonp-2.0</feature>
-        <feature>mpOpenAPI-3.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-    <variable name="app.context.root" defaultValue="guide-sessions"/>
-    <variable name="hazelcast.lib" defaultValue="${shared.resource.dir}/hazelcast.jar"/>
-
-    <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
-        id="defaultHttpEndpoint" host="*" />
-    <httpSessionCache libraryRef="jCacheVendorLib"
-        uri="file:${server.config.dir}/hazelcast-config.xml" />
-    <!-- tag::library[] -->
-    <library id="jCacheVendorLib">
-        <file name="${hazelcast.lib}" />
-    </library>
-
-    <webApplication location="guide-sessions.war" contextRoot="${app.context.root}" />
-
-</server>
-```
-
-
-
-The ***library*** element includes the library reference that indicates to the server where the Hazelcast implementation of JCache is located. Your Hazelcast implementation of JCache is a JAR file that resides in the location that is defined by the ***${hazelcast.lib}*** variable. The ***hazelcast.jar*** file is downloaded as a dependency and copied to the predefined ***target*** directory when the Maven build runs. This goal is defined in the provided Maven POM file.
-
-### Configuring Hazelcast
-
-
-By default, all Open Liberty servers that run the ***sessionCache*** feature and Hazelcast are connected using a peer-to-peer model.
-
-You can share the session cache only among certain Hazelcast instances by using the ***group*** configuration element in the Hazelcast configuration file.
-
-Create the ***hazelcast-config.xml*** configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-sessions/start/src/main/liberty/config/hazelcast-config.xml
-```
-
-
-> Then, to open the hazelcast-config.xml file in your IDE, select
-> **File** > **Open** > guide-sessions/start/src/main/liberty/config/hazelcast-config.xml, or click the following button
-
-::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/hazelcast-config.xml"}
-
-
-
-```xml
-<hazelcast xmlns="http://www.hazelcast.com/schema/config"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.hazelcast.com/schema/config
-       https://hazelcast.com/schema/config/hazelcast-config-3.12.xsd">
-    <group>
-        <name>CartCluster</name>
-    </group>
-</hazelcast>
-```
-
-
-
-The cluster group ***CartCluster*** is defined in the ***hazelcast-config.xml***.
-
-In the ***server.xml*** file, a reference to the Hazelcast configuration file is made by using the ***httpSessionCache*** tag.
-
-There are more configuration settings that you can explore in the [Hazelcast documentation](https://docs.hazelcast.org/docs/latest/manual/html-single/#understanding-configuration).
-
-
-::page{title="Running the application"}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -326,168 +193,478 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
+The MicroProfile Metrics API is included in the MicroProfile dependency specified by your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows you to use the MicroProfile Metrics API in your code to provide metrics from your microservices.
+
+Replace the server configuration file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-microprofile-metrics/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-metrics/start/src/main/liberty/config/server.xml"}
 
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
+```xml
+<server description="Sample Liberty server">
 
-Point your browser to the link:http://localhost:9080/openapi/ui/ URL. This URL displays the available REST endpoints.
+  <featureManager>
+     <feature>restfulWS-3.0</feature>
+     <feature>jsonp-2.0</feature>
+     <feature>jsonb-2.0</feature>
+     <feature>cdi-3.0</feature>
+     <feature>mpConfig-3.0</feature>
+    <feature>mpMetrics-4.0</feature>
+    <feature>mpRestClient-3.0</feature>
+  </featureManager>
 
+  <variable name="default.http.port" defaultValue="9080"/>
+  <variable name="default.https.port" defaultValue="9443"/>
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl link:http://localhost:9080/openapi/ui/
+  <applicationManager autoExpand="true" />
+  <quickStartSecurity userName="admin" userPassword="adminpwd"/>
+  <httpEndpoint host="*" httpPort="${default.http.port}"
+      httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+  <webApplication location="guide-microprofile-metrics.war" contextRoot="/"/>
+</server>
 ```
 
 
 
-First, make a POST request to the ***/cart/{item}&{price}*** endpoint. To make this request, expand the POST endpoint on the UI, click the ***Try it out*** button, provide an item and a price, and then click the ***Execute*** button. The POST request adds a user-specified item and price to a session that represents data in a user's cart.
+The ***mpMetrics*** feature enables MicroProfile Metrics support in Open Liberty. Note that this feature requires SSL and the configuration has been provided for you.
 
-Next, make a GET request to the ***/cart*** endpoint. To make this request, expand the GET endpoint on the UI, click the ***Try it out*** button, and then click the ***Execute*** button. The GET request returns a pod name, a session ID, and all the items from your session.
-
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+The ***quickStartSecurity*** configuration element provides basic security to secure the server. When you visit the ***/metrics*** endpoint, use the credentials defined in the server configuration to log in and view the data.
 
 
+### Adding the annotations
 
+Replace the ***InventoryManager*** class.
 
-::page{title="Containerizing the application"}
+> To open the InventoryManager.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
 
-Before you can deploy the application to Kubernetes, you need to containerize it with Docker.
-
-Make sure to start your Docker daemon before you proceed.
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-The Dockerfile is provided at the ***start*** directory. If you're unfamiliar with Dockerfile, check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide, which covers Dockerfile in depth.
-
-Run the ***mvn package*** command from the ***start*** directory so that the ***.war*** file resides in the ***target*** directory.
-
-```bash
-mvn package
-```
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-
-To build and containerize the application, run the following Docker build command in the ***start*** directory:
-
-```bash
-docker build -t cart-app:1.0-SNAPSHOT .
-```
-
-When the build finishes, run the following command to list all local Docker images:
-```bash
-docker images
-```
-
-Verify that the ***cart-app:1.0-SNAPSHOT*** image is listed among the Docker images, for example:
-```
-REPOSITORY                      TAG
-cart-app                        1.0-SNAPSHOT
-openliberty/open-liberty        full-java11-openj9-ubi
-```
-
-
-::page{title="Deploying and running the application in Kubernetes"}
-
-
-Now that the containerized application is built, deploy it to a local Kubernetes cluster by using a Kubernetes resource definition, which is provided in the ***kubernetes.yaml*** file at the ***start*** directory.
-
-Run the following command to deploy the application into ***3*** replicated pods as defined in the ***kubernetes.yaml*** file:
-```bash
-kubectl apply -f kubernetes.yaml
-```
-
-When the application is deployed, run the following command to check the status of your pods:
-```bash
-kubectl get pods
-```
-
-You see an output similar to the following if all the pods are working correctly:
-
-```
-NAME                             READY  STATUS   RESTARTS  AGE
-cart-deployment-98f4ff789-2xlhs  1/1    Running  0         17s
-cart-deployment-98f4ff789-6rvfj  1/1    Running  0         17s
-cart-deployment-98f4ff789-qrh45  1/1    Running  0         17s
-```
+::openFile{path="/home/project/guide-microprofile-metrics/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
 
 
-Run the ***minikube ip*** command to get the hostname for minikube. Then, go to the ***http://[hostname]:31000/openapi/ui/*** URL in your browser.  This URL displays the available REST endpoints.
+```java
+package io.openliberty.guides.inventory;
 
-Make a POST request to the ***/cart/{item}&{price}*** endpoint. To make this request, expand the POST endpoint on the UI, click the ***Try it out*** button, provide an item and a price, and then click the ***Execute*** button. The POST request adds a user-specified item and price to a session that represents data in a user's cart.
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
 
-Next, make a GET request to the ***/cart*** endpoint. To make this request, expand the GET endpoint on the UI, click the ***Try it out*** button, and then click the ***Execute*** button. The GET request returns a pod name, a session ID, and all the items from your session.
+import jakarta.enterprise.context.ApplicationScoped;
 
-```
-{
-  "pod-name": "cart-deployment-98f4ff789-2xlhs",
-  "session-id": "RyJKzmka6Yc-ZCMzEA8-uPq",
-  "cart": [
-    "eggs | $2.89"
-  ],
-  "subtotal": 2.89
+import org.eclipse.microprofile.metrics.MetricUnits;
+import org.eclipse.microprofile.metrics.annotation.Counted;
+import org.eclipse.microprofile.metrics.annotation.Gauge;
+import org.eclipse.microprofile.metrics.annotation.Timed;
+import org.eclipse.microprofile.metrics.annotation.SimplyTimed;
+
+import io.openliberty.guides.inventory.model.InventoryList;
+import io.openliberty.guides.inventory.model.SystemData;
+
+@ApplicationScoped
+public class InventoryManager {
+
+  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+  private InventoryUtils invUtils = new InventoryUtils();
+
+  @Timed(name = "inventoryProcessingTime",
+         tags = {"method=get"},
+         absolute = true,
+         description = "Time needed to process the inventory")
+  public Properties get(String hostname) {
+    return invUtils.getProperties(hostname);
+  }
+
+  @SimplyTimed(name = "inventoryAddingTime",
+    absolute = true,
+    description = "Time needed to add system properties to the inventory")
+  public void add(String hostname, Properties systemProps) {
+    Properties props = new Properties();
+    props.setProperty("os.name", systemProps.getProperty("os.name"));
+    props.setProperty("user.name", systemProps.getProperty("user.name"));
+
+    SystemData host = new SystemData(hostname, props);
+    if (!systems.contains(host)) {
+      systems.add(host);
+    }
+  }
+
+  @Timed(name = "inventoryProcessingTime",
+         tags = {"method=list"},
+         absolute = true,
+         description = "Time needed to process the inventory")
+  @Counted(name = "inventoryAccessCount",
+           absolute = true,
+           description = "Number of times the list of systems method is requested")
+  public InventoryList list() {
+    return new InventoryList(systems);
+  }
+
+  @Gauge(unit = MetricUnits.NONE,
+         name = "inventorySizeGauge",
+         absolute = true,
+         description = "Number of systems in the inventory")
+  public int getTotal() {
+    return systems.size();
+  }
 }
 ```
 
-Replace the ***[pod-name]*** in the following command, and then run the command to pause the pod for the GET request that you just ran:
 
+
+Apply the ***@Timed*** annotation to the ***get()*** method,
+and apply the ***@Timed*** annotation to the ***list()*** method.
+
+This annotation has these metadata fields:
+
+|***name*** | Optional. Use this field to name the metric.
+| ---| ---
+|***tags*** | Optional. Use this field to add tags to the metric with the same ***name***.
+|***absolute*** | Optional. Use this field to determine whether the metric name is the exact name that is specified in the ***name*** field or that is specified with the package prefix.
+|***description*** | Optional. Use this field to describe the purpose of the metric.
+
+The ***@Timed*** annotation tracks how frequently the method is invoked and how long it takes for each invocation of the method to complete. Both the ***get()*** and ***list()*** methods are annotated with the ***@Timed*** metric and have the same ***inventoryProcessingTime*** name. The ***method=get*** and ***method=list*** tags add a dimension that uniquely identifies the collected metric data from the inventory processing time in getting the system properties.
+
+* The ***method=get*** tag identifies the ***inventoryProcessingTime*** metric that measures the elapsed time to get the system properties when you call the ***system*** service.
+* The ***method=list*** tag identifies the ***inventoryProcessingTime*** metric that measures the elapsed time for the ***inventory*** service to list all of the system properties in the inventory.
+
+The tags allow you to query the metrics together or separately based on the functionality of the monitoring tool of your choice. The ***inventoryProcessingTime*** metrics for example could be queried to display an aggregate time of both tagged metrics or individual times.
+
+Apply the ***@SimplyTimed*** annotation to the ***add()*** method to track how frequently the method is invoked and how long it takes for each invocation of the method to complete. ***@SimplyTimed*** supports the same fields as ***@Timed*** in the previous table.
+
+Apply the ***@Counted*** annotation to the ***list()*** method to count how many times the ***http://localhost:9080/inventory/systems*** URL is accessed monotonically, which is counting up sequentially.
+
+Apply the ***@Gauge*** annotation to the ***getTotal()*** method to track the number of systems that are stored in the inventory. When the value of the gauge is retrieved, the underlying ***getTotal()*** method is called to return the size of the inventory. Note the additional metadata field:
+
+| ***unit*** | Set the unit of the metric. If it is ***MetricUnits.NONE***, the metric name is used without appending the unit name, no scaling is applied.
+| ---| ---
+
+Additional information about these annotations, relevant metadata fields, and more are available at
+the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-4.0-javadoc.html#package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=org/eclipse/microprofile/metrics/annotation/package-summary.html).
+
+
+::page{title="Enabling vendor metrics for the microservices"}
+
+
+MicroProfile Metrics API implementers can provide vendor metrics in the same forms as the base and application metrics do. Open Liberty as a vendor supplies server component metrics when the ***mpMetrics*** feature is enabled in the ***server.xml*** configuration file.
+
+You can see the vendor-only metrics in the ***metrics/vendor*** endpoint. You see metrics from the runtime components, such as Web Application, ThreadPool and Session Management. Note that these metrics are specific to the Liberty application server. Different vendors may provide other metrics. Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metrics-list.html) for more information.
+
+
+::page{title="Building and running the application"}
+
+The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
+
+
+Run the following curl command to review all the metrics that are enabled through MicroProfile Metrics. You see only the system and vendor metrics because the server just started, and the **inventory** service has not been accessed.
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics
+```
+
+Next, run the following curl command to access the **inventory** service:
+```
+curl -s http://localhost:9080/inventory/systems | jq
+```
+
+Rerun the following curl command to access the all metrics:
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics
+```
+
+or access only the application metrics by running following curl command:
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics/application
+```
+
+You can see the system metrics by running following curl command:
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics/base
+```
+
+as well as see the vendor metrics by running following curl command:
+```
+curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
+```
+
+
+
+::page{title="Testing the metrics"}
+
+You can test your application manually, but automated tests ensure code quality because they trigger a failure whenever a code change introduces a defect. JUnit and the restfulWS Client API provide a simple environment for you to write tests.
+
+Create the ***MetricsIT*** class.
+
+> Run the following touch command in your terminal
 ```bash
-kubectl exec -it [pod-name] -- /opt/ol/wlp/bin/server pause
-```
-
-Repeat the GET request. You see the same ***session-id*** but a different ***pod-name*** because the session data is cached but the request is served by a different pod (server).
-
-Verify that the Hazelcast cluster is running by checking the Open Liberty log. To check the log, run the following command:
-
-```bash
-kubectl exec -it [pod-name] -- cat /logs/messages.log
-```
-
-You see a message similar to the following:
-
-```
-... [10.1.0.46]:5701 [CartCluster] [3.11.2]
-
-Members {size:3, ver:3} [
-	Member [10.1.0.40]:5701 - 01227d80-501e-4789-ae9d-6fb348d794ea
-	Member [10.1.0.41]:5701 - a68d0ed1-f50e-4a4c-82b0-389f356b8c73 this
-	Member [10.1.0.42]:5701 - b0dfa05a-c110-45ed-9424-adb1b2896a3d
-]
-```
-
-You can resume the paused pod by running the following command:
-
-```bash
-kubectl exec -it [pod-name] -- /opt/ol/wlp/bin/server resume
+touch /home/project/guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java
 ```
 
 
+> Then, to open the MetricsIT.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java, or click the following button
 
-::page{title="Tearing down the environment"}
+::openFile{path="/home/project/guide-microprofile-metrics/start/src/test/java/it/io/openliberty/guides/metrics/MetricsIT.java"}
 
-When you no longer need your deployed application, you can delete all Kubernetes resources by running the ***kubectl delete*** command:
 
-```bash
-kubectl delete -f kubernetes.yaml
+
+```java
+package it.io.openliberty.guides.metrics;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+
+@TestMethodOrder(OrderAnnotation.class)
+public class MetricsIT {
+
+  private static final String KEYSTORE_PATH = System.getProperty("user.dir")
+                              + "/target/liberty/wlp/usr/servers/"
+                              + "defaultServer/resources/security/key.p12";
+  private static final String SYSTEM_ENV_PATH =  System.getProperty("user.dir")
+                              + "/target/liberty/wlp/usr/servers/"
+                              + "defaultServer/server.env";
+
+  private static String httpPort;
+  private static String httpsPort;
+  private static String baseHttpUrl;
+  private static String baseHttpsUrl;
+  private static KeyStore keystore;
+
+  private List<String> metrics;
+  private Client client;
+
+  private final String INVENTORY_HOSTS = "inventory/systems";
+  private final String INVENTORY_HOSTNAME = "inventory/systems/localhost";
+  private final String METRICS_APPLICATION = "metrics/application";
+
+  @BeforeAll
+  public static void oneTimeSetup() throws Exception {
+    httpPort = System.getProperty("http.port");
+    httpsPort = System.getProperty("https.port");
+    baseHttpUrl = "http://localhost:" + httpPort + "/";
+    baseHttpsUrl = "https://localhost:" + httpsPort + "/";
+    loadKeystore();
+  }
+
+  private static void loadKeystore() throws Exception {
+    Properties sysEnv = new Properties();
+    sysEnv.load(new FileInputStream(SYSTEM_ENV_PATH));
+    char[] password = sysEnv.getProperty("keystore_password").toCharArray();
+    keystore = KeyStore.getInstance("PKCS12");
+    keystore.load(new FileInputStream(KEYSTORE_PATH), password);
+  }
+
+  @BeforeEach
+  public void setup() {
+    client = ClientBuilder.newBuilder().trustStore(keystore).build();
+  }
+
+  @AfterEach
+  public void teardown() {
+    client.close();
+  }
+
+  @Test
+  @Order(1)
+  public void testPropertiesRequestTimeMetric() {
+    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
+    metrics = getMetrics();
+    for (String metric : metrics) {
+      if (metric.startsWith(
+          "application_inventoryProcessingTime_rate_per_second")) {
+        float seconds = Float.parseFloat(metric.split(" ")[1]);
+        assertTrue(4 > seconds);
+      }
+    }
+  }
+
+  @Test
+  @Order(2)
+  public void testInventoryAccessCountMetric() {
+    metrics = getMetrics();
+    Map<String, Integer> accessCountsBefore = getIntMetrics(metrics,
+            "application_inventoryAccessCount_total");
+    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTS);
+    metrics = getMetrics();
+    Map<String, Integer> accessCountsAfter = getIntMetrics(metrics,
+            "application_inventoryAccessCount_total");
+    for (String key : accessCountsBefore.keySet()) {
+      Integer accessCountBefore = accessCountsBefore.get(key);
+      Integer accessCountAfter = accessCountsAfter.get(key);
+      assertTrue(accessCountAfter > accessCountBefore);
+    }
+  }
+
+  @Test
+  @Order(3)
+  public void testInventorySizeGaugeMetric() {
+    metrics = getMetrics();
+    Map<String, Integer> inventorySizeGauges = getIntMetrics(metrics,
+            "application_inventorySizeGauge");
+    for (Integer value : inventorySizeGauges.values()) {
+      assertTrue(1 <= value);
+    }
+  }
+
+  @Test
+  @Order(4)
+  public void testPropertiesAddSimplyTimeMetric() {
+    connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
+    metrics = getMetrics();
+    boolean checkMetric = false;
+    for (String metric : metrics) {
+      if (metric.startsWith(
+          "application_inventoryAddingTime_total")) {
+            checkMetric = true;
+      }
+    }
+    assertTrue(checkMetric);
+  }
+
+  public void connectToEndpoint(String url) {
+    Response response = this.getResponse(url);
+    this.assertResponse(url, response);
+    response.close();
+  }
+
+  private List<String> getMetrics() {
+    String usernameAndPassword = "admin" + ":" + "adminpwd";
+    String authorizationHeaderValue = "Basic "
+        + java.util.Base64.getEncoder()
+                          .encodeToString(usernameAndPassword.getBytes());
+    Response metricsResponse = client.target(baseHttpsUrl + METRICS_APPLICATION)
+                                     .request(MediaType.TEXT_PLAIN)
+                                     .header("Authorization",
+                                         authorizationHeaderValue)
+                                     .get();
+
+    BufferedReader br = new BufferedReader(new InputStreamReader((InputStream)
+    metricsResponse.getEntity()));
+    List<String> result = new ArrayList<String>();
+    try {
+      String input;
+      while ((input = br.readLine()) != null) {
+        result.add(input);
+      }
+      br.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+      fail();
+    }
+
+    metricsResponse.close();
+    return result;
+  }
+
+  private Response getResponse(String url) {
+    return client.target(url).request().get();
+  }
+
+  private void assertResponse(String url, Response response) {
+    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+  }
+
+  private Map<String, Integer> getIntMetrics(List<String> metrics, String metricName) {
+    Map<String, Integer> output = new HashMap<String, Integer>();
+    for (String metric : metrics) {
+      if (metric.startsWith(metricName)) {
+        String[] mSplit = metric.split(" ");
+        String key = mSplit[0];
+        Integer value = Integer.parseInt(mSplit[mSplit.length - 1]);
+        output.put(key, value);
+      }
+    }
+    return output;
+  }
+}
 ```
 
+
+
+
+* The ***testPropertiesRequestTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics/application*** URL to retrieve application metrics as plain text. Then, it asserts whether the time that is needed to retrieve the system properties for localhost is less than 4 seconds.
+
+* The ***testInventoryAccessCountMetric()*** test case validates the ***@Counted*** metric. The test case obtains metric data before and after a request to the ***http://localhost:9080/inventory/systems*** URL. It then asserts that the metric was increased after the URL was accessed.
+
+* The ***testInventorySizeGaugeMetric()*** test case validates the ***@Gauge*** metric. The test case first ensures that the localhost is in the inventory, then looks for the ***@Gauge*** metric and asserts that the inventory size is greater or equal to 1.
+
+* The ***testPropertiesAddSimplyTimeMetric()*** test case validates the ***@SimplyTimed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics/application*** URL to retrieve application metrics as plain text. Then, it looks for the ***@SimplyTimed*** metric and asserts true if the metric exists.
+
+The ***oneTimeSetup()*** method retrieves the port number for the server and builds a base URL string to set up the tests. Apply the ***@BeforeAll*** annotation to this method to run it before any of the test cases.
+
+The ***setup()*** method creates a restfulWS client that makes HTTP requests to the ***inventory*** service. The ***teardown()*** method destroys this client instance. Apply the ***@BeforeEach*** annotation so that a method runs before a test case and apply the ***@AfterEach*** annotation so that a method runs after a test case. Apply these annotations to methods that are generally used to perform any setup and teardown tasks before and after a test.
+
+To force these test cases to run in a particular order, annotate your ***MetricsIT*** test class with the ***@TestMethodOrder(OrderAnnotation.class)*** annotation. ***OrderAnnotation.class*** runs test methods in numerical order, according to the values specified in the ***@Order*** annotation. You can also create a custom ***MethodOrderer*** class or use built-in ***MethodOrderer*** implementations, such as ***OrderAnnotation.class***, ***Alphanumeric.class***, or ***Random.class***. Label your test cases with the ***@Test*** annotation so that they automatically run when your test class runs.
+
+In addition, the endpoint tests ***src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java*** and ***src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java*** are provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, then you might have introduced a bug into the code.
+
+
+### Running the tests
+
+Because you started Open Liberty in development mode at the start of the guide, press the ***enter/return*** key to run the tests and see the following output:
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.4 sec - in it.io.openliberty.guides.system.SystemEndpointIT
+Running it.io.openliberty.guides.metrics.MetricsIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.476 sec - in it.io.openliberty.guides.metrics.MetricsIT
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
+Could not send Message.
+[err] The specified host is unknown.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.264 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results :
+
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
+```
+
+The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
+
+To determine whether the tests detect a failure, go to the ***MetricsIT.java*** file and change any of the assertions in the test methods. Then re-run the tests to see a test failure occur.
+
+When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have created, used, and cached HTTP session data for an application that was running on Open Liberty server and deployed in a Kubernetes cluster.
+You learned how to enable system, application and vendor metrics for microservices by using MicroProfile Metrics
 
-
+and wrote tests to validate them in Open Liberty.
 
 
 ### Clean up your environment
@@ -495,34 +672,34 @@ You have created, used, and cached HTTP session data for an application that was
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-sessions*** project by running the following commands:
+Delete the ***guide-microprofile-metrics*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-sessions
+rm -fr guide-microprofile-metrics
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Caching%20HTTP%20session%20data%20using%20JCache%20and%20Hazelcast&guide-id=cloud-hosted-guide-sessions)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Providing%20metrics%20from%20a%20microservice&guide-id=cloud-hosted-guide-microprofile-metrics)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-sessions/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-sessions/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-metrics/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-metrics/pulls)
 
 
 
 ### Where to next?
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html)
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 ### Log out of the session
