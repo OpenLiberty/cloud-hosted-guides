@@ -5,7 +5,7 @@ on:
       branch:
         description: 'Branch pushed to'     
         required: true
-        default: 'refs/heads/master'
+        default: 'prod'
       guide_name:
         description: 'Guide changed'
         required: true
@@ -145,7 +145,7 @@ jobs:
           rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
           mvn compiler:compile
-          mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11} cloud-hosted-${{ github.event.inputs.guide_name }}"
+          mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName} cloud-hosted-${{ github.event.inputs.guide_name }}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
