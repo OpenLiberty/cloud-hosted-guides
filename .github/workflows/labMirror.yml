@@ -18,6 +18,7 @@ jobs:
         repo: 
           - {"github":"cloud-hosted-draft-guide-devlab-1","gitlab":"cloud-hosted-draft-guide-devlab-1","gitlab-branch":"lab-204-instruction"}
           - {"github":"cloud-hosted-draft-guide-devlab-2","gitlab":"cloud-hosted-draft-guide-devlab-2","gitlab-branch":"lab-207-instruction"}
+          - {"github":"cloud-hosted-guide-arquillian-managed","gitlab":"cloud-hosted-guide-arquillian-managed","gitlab-branch":"lab-103-instruction"}
           - {"github":"cloud-hosted-guide-cdi-intro","gitlab":"cloud-hosted-guide-cdi-intro","gitlab-branch":"lab-371-instruction"}
           - {"github":"cloud-hosted-guide-containerize","gitlab":"cloud-hosted-guide-containerize","gitlab-branch":"lab-155-instruction"}
           - {"github":"cloud-hosted-guide-contract-testing","gitlab":"cloud-hosted-guide-contract-testing","gitlab-branch":"lab-154-instruction"}
