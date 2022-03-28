@@ -77,7 +77,7 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 Click the following button or select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to ***https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai***, where **accountname** is your account name.
-::startApplication{port="9090" display="external" name="View the Event Manager application" route="/"}
+::startApplication{port="9090" display="external" name="Visit Event Manager application" route="/"}
 The event application does not display any events because no events are stored in the database. Go ahead and click ***Create Event***, located in the left navigation bar. After entering an event name, location and time, click ***Submit*** to persist your event entity to the database. The event is now stored in the database and is visible in the list of current events.
 
 Notice that if you stop the Open Liberty server and then restart it, the events created are still displayed in the list of current events. Ensure you are in the ***finish/backendServices*** directory and run the following Maven goals to stop and then restart the server:
@@ -431,7 +431,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 
 
 When the server is running, click the following button or select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to ***https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai***, where **accountname** is your account name.
-::startApplication{port="9090" display="external" name="View the Event Manager application" route="/"}
+::startApplication{port="9090" display="external" name="Visit Event Manager application" route="/"}
 
 Click ***Create Event*** in the left navigation bar to create events that are persisted to the database. After you create an event, it is available to view, update, and delete in the ***Current Events*** section.
 
