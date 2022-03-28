@@ -73,11 +73,14 @@ The defaultServer server is ready to run a smarter planet.
 To open a new command-line session, select **Terminal** > **New Terminal** from the menu of the IDE.
 
 Next, run the following curl command to see the RESTful APIs of the ***inventory*** service:
-```
+```bash
 curl http://localhost:9080/openapi
 ```
 
-A UI is also available for a more interactive view of the deployed APIs. To visit the UI, select **Launch Application** from the menu of the IDE, type in **9080** to specify the port number and click the **OK** button. You’re redirected to a URL similar to ***https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai***, where **accountname** is your account name. Click the **interactive UI** link on the welcome page. This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swagger-ui), which renders the generated **/openapi** document into a very user friendly page.
+A UI is also available for a more interactive view of the deployed APIs. Click the following button to visit the UI by the ***/openapi/ui*** endpoint. 
+::startApplication{port="9080" display="internal" name="Launch Application" route="/openapi/ui"}
+
+Or, select **Launch Application** from the menu of the IDE, type in **9080** to specify the port number and click the **OK** button. You’re redirected to a URL similar to ***https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai***, where **accountname** is your account name. Click the **interactive UI** link on the welcome page. This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swagger-ui), which renders the generated **/openapi** document into a very user friendly page.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -91,7 +94,7 @@ mvn liberty:stop
 You can generate an OpenAPI document in various ways. First, because all restfulWS annotations are processed by default, you can augment your existing restfulWS annotations with OpenAPI annotations to enrich your APIs with a minimal amount of work. Second, you can use a set of predefined models to manually create all elements of the OpenAPI tree. Finally, you can filter various elements of the OpenAPI tree, changing them to your liking or removing them entirely.
 
 Navigate to the ***start*** directory to begin.
-```
+```bash
 cd /home/project/guide-microprofile-openapi/start
 ```
 
@@ -115,7 +118,7 @@ Because the restfulWS framework handles basic API generation for restfulWS annot
 
 
 Now, run the following curl command to see the generated OpenAPI tree:
-```
+```bash
 curl http://localhost:9080/openapi
 ```
 
@@ -232,7 +235,7 @@ Clearly, there are many more OpenAPI annotations now, so let’s break them down
 
 
 Since the Open Liberty server was started in development mode at the beginning of the guide, your changes were automatically picked up. Run the following curl command to see the updated OpenAPI tree:
-```
+```bash
 curl http://localhost:9080/openapi
 ```
 
@@ -377,7 +380,7 @@ Add OpenAPI ***@Schema*** annotations to the ***SystemData*** class, the ***host
 
 
 Run the following curl command to see the updated OpenAPI tree:
-```
+```bash
 curl http://localhost:9080/openapi
 ```
 
@@ -515,7 +518,7 @@ This configuration file is picked up automatically by MicroProfile Config and re
 
 
 Run the following curl command to see the updated OpenAPI tree:
-```
+```bash
 curl http://localhost:9080/openapi
 ```
 
@@ -684,7 +687,7 @@ Add and set the ***mp.openapi.scan.disable*** property to ***true***.
 
 
 Run the following curl command to see the updated OpenAPI tree:
-```
+```bash
 curl http://localhost:9080/openapi
 ```
 
@@ -708,7 +711,7 @@ curl http://localhost:9080/openapi
 ::page{title="Testing the service"}
 
 
-No automated tests are provided to verify the correctness of the generated OpenAPI document. Manually verify the document by visiting the **http://localhost:9080/openapi** or the **http://localhost:9080/openapi/ui** URL.
+No automated tests are provided to verify the correctness of the generated OpenAPI document. Manually verify the document by visiting the ***http://localhost:9080/openapi*** or the ***http://localhost:9080/openapi/ui*** URL.
 
 A few tests are included for you to test the basic functionality of the ***inventory*** service. If a test failure occurs, then you might have introduced a bug into the code. These tests will run automatically as a part of the integration test suite.
 
