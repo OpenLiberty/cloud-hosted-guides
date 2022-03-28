@@ -24,6 +24,7 @@ jobs:
           - {"github":"cloud-hosted-guide-getting-started","gitlab":"cloud-hosted-guide-getting-started","gitlab-branch":"lab-138-instruction"}
           - {"github":"cloud-hosted-guide-kubernetes-microprofile-config","gitlab":"cloud-hosted-guide-kubernetes-microprofile-config","gitlab-branch":"lab-143-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-config","gitlab":"cloud-hosted-guide-microprofile-config","gitlab-branch":"lab-166-instruction"}
+          - {"github":"cloud-hosted-guide-microprofile-health","gitlab":"cloud-hosted-guide-microprofile-health","gitlab-branch":"lab-168-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-metrics","gitlab":"cloud-hosted-guide-microprofile-metrics","gitlab-branch":"lab-152-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-openapi","gitlab":"cloud-hosted-guide-microprofile-openapi","gitlab-branch":"lab-150-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-rest-client","gitlab":"cloud-hosted-guide-microprofile-rest-client","gitlab-branch":"lab-139-instruction"}
