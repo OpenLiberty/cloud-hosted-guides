@@ -25,6 +25,7 @@ jobs:
           - {"github":"cloud-hosted-guide-jpa-intro","gitlab":"cloud-hosted-guide-jpa-intro","gitlab-branch":"lab-101-instruction"}
           - {"github":"cloud-hosted-guide-kubernetes-intro","gitlab":"cloud-hosted-guide-kubernetes-intro","gitlab-branch":"lab-137-instruction"}
           - {"github":"cloud-hosted-guide-kubernetes-microprofile-config","gitlab":"cloud-hosted-guide-kubernetes-microprofile-config","gitlab-branch":"lab-143-instruction"}
+          - {"github":"cloud-hosted-guide-kubernetes-microprofile-health","gitlab":"cloud-hosted-guide-kubernetes-microprofile-health","gitlab-branch":"lab-144-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-config","gitlab":"cloud-hosted-guide-microprofile-config","gitlab-branch":"lab-166-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-fallback","gitlab":"cloud-hosted-guide-microprofile-fallback","gitlab-branch":"lab-140-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-health","gitlab":"cloud-hosted-guide-microprofile-health","gitlab-branch":"lab-168-instruction"}
