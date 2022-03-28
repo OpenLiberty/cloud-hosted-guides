@@ -73,8 +73,8 @@ Creating pact-broker_pact-broker_1 ... done
 ```
 
 
-Confirm that the Pact Broker is working. Select ***Launch Application*** from the menu of the IDE and type ***9292*** to specify the port number for the Pact Broker service. Click the ***OK*** button. The Pact Broker can also be found at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, where ***accountname*** is your account name.
-::startApplication{port="9292" display="internal" name="Launch Application" route="/"}
+Confirm that the Pact Broker is working. Click the following button, or select ***Launch Application*** from the menu of the IDE and type ***9292*** to specify the port number for the Pact Broker service. Click the ***OK*** button. The Pact Broker can also be found at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, where ***accountname*** is your account name.
+::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
 
 Confirm that you can access the user interface of the Pact Broker. The Pact Broker interface is similar to the following image:
 
@@ -439,7 +439,7 @@ Publishing 'Inventory-System.json' with tags 'open-liberty-pact' ... OK
 
 
 Refresh the Pact Broker at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, where ***accountname*** is your account name.
-::startApplication{port="9292" display="internal" name="Launch Application" route="/"}
+::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
 
 The last verified column doesn't show a timestamp because the ***system*** microservice hasn't verified the pact yet.
 
@@ -450,8 +450,8 @@ The last verified column doesn't show a timestamp because the ***system*** micro
 
 
 
-You can see detailed insights about each interaction by going to the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai/pacts/provider/System/consumer/Inventory/latest`** URL, where ***accountname*** is your account name.
-::startApplication{port="9292" display="internal" name="Launch Application" route="/"}
+You can see detailed insights about each interaction by clicking the following button or going to the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai/pacts/provider/System/consumer/Inventory/latest`** URL, where ***accountname*** is your account name.
+::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/pacts/provider/System/consumer/Inventory/latest"}
 
 The insights look similar to the following image:
 
@@ -776,7 +776,7 @@ Verifying a pact between pact between Inventory (1.0-SNAPSHOT) and System
 
 
 After the tests are complete, refresh the Pact Broker at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, where ***accountname*** is your account name.
-::startApplication{port="9292" display="internal" name="Launch Application" route="/"}
+::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
 
 Confirm that the last verified column now shows a timestamp:
 
