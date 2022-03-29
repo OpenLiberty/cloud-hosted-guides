@@ -22,11 +22,11 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 You will learn how to use the Java Persistence API (JPA) to map Java objects to relational database tables and perform create, read, update and delete (CRUD) operations on the data in your microservices. 
 
-JPA is a Java EE specification for representing relational database table data as Plain Old Java Objects (POJO). JPA simplifies object-relational mapping (ORM) by using annotations to map Java objects to tables in a relational database. In addition to providing an efficient API for performing CRUD operations, JPA also reduces the burden of having to write JDBC and SQL code when performing database operations and takes care of database vendor-specific differences. This capability allows you to focus on the business logic of your application instead of wasting time implementing repetitive CRUD logic.
+JPA is a Jakarta EE specification for representing relational database table data as Plain Old Java Objects (POJO). JPA simplifies object-relational mapping (ORM) by using annotations to map Java objects to tables in a relational database. In addition to providing an efficient API for performing CRUD operations, JPA also reduces the burden of having to write JDBC and SQL code when performing database operations and takes care of database vendor-specific differences. This capability allows you to focus on the business logic of your application instead of wasting time implementing repetitive CRUD logic.
 
 The application that you will be working with is an event manager, which is composed of a UI and an event microservice for creating, retrieving, updating, and deleting events. In this guide, you will be focused on the event microservice. The event microservice consists of a JPA entity class whose fields will be persisted to a database. The database logic is implemented in a Data Access Object (DAO) to isolate the database operations from the rest of the service. This DAO accesses and persists JPA entities to the database and can be injected and consumed by other components in the microservice. An Embedded Derby database is used as a data store for all the events.
 
-You will use JPA annotations to define an entity class whose fields are persisted to the database. The interaction between your service and the database is mediated by the persistence context that is managed by an entity manager. In a Java EE environment, you can use an application-managed entity manager or a container-managed entity manager. In this guide, you will use a container-managed entity manager that is injected into the DAO so the application server manages the opening and closing of the entity manager for you. 
+You will use JPA annotations to define an entity class whose fields are persisted to the database. The interaction between your service and the database is mediated by the persistence context that is managed by an entity manager. In a Jakarta EE environment, you can use an application-managed entity manager or a container-managed entity manager. In this guide, you will use a container-managed entity manager that is injected into the DAO so the application server manages the opening and closing of the entity manager for you. 
 
 
 ::page{title="Getting started"}
@@ -76,7 +76,7 @@ After you see the following message in both command-line sessions, both your ser
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Click the following button or select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to ***https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai***, where **accountname** is your account name.
+Click the following button to view the Event Manager application:
 ::startApplication{port="9090" display="external" name="Visit Event Manager application" route="/"}
 The event application does not display any events because no events are stored in the database. Go ahead and click ***Create Event***, located in the left navigation bar. After entering an event name, location and time, click ***Submit*** to persist your event entity to the database. The event is now stored in the database and is visible in the list of current events.
 
@@ -430,7 +430,7 @@ The DAO is injected into the ***backendServices/src/main/java/io/openliberty/gui
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-When the server is running, click the following button or select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the microservice, and click the **OK** button. You're redirected to a URL similar to ***https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai***, where **accountname** is your account name.
+When the server is running, click the following button to view the Event Manager application:
 ::startApplication{port="9090" display="external" name="Visit Event Manager application" route="/"}
 
 Click ***Create Event*** in the left navigation bar to create events that are persisted to the database. After you create an event, it is available to view, update, and delete in the ***Current Events*** section.
