@@ -68,11 +68,8 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Once your application is up and running, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Then use the following command to get the URL. Open your browser and check out your service by going to the URL that the command returns.
-```bash
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/openapi/ui
-```
-
+Once your application is up and running, click the following button to check out your service by visiting the ***/openapi/ui*** endpoint.
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 You see the OpenAPI user interface documenting the REST endpoints used in this guide. If you are interested in learning more about OpenAPI, read [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html). Expand the ***/beanvalidation/validatespacecraft POST request to validate your spacecraft bean*** section and click ***Try it out***. Copy the following example input into the text box:
 
 ```bash
@@ -558,11 +555,8 @@ You can now use the ***beanValidation-2.0*** feature to validate that the suppli
 
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
-Use the following command to get the URL. Open your browser and check out your service by going to the URL that the command returns.
-```bash
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/openapi/ui
-```
-
+Click the following button to check out your service by visiting the ***/openapi/ui*** endpoint:
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 Expand the ***/beanvalidation/validatespacecraft POST request to validate your spacecraft bean*** section and click ***Try it out***. Copy the following example input into the text box:
 
 ```bash
