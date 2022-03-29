@@ -80,7 +80,7 @@ curl http://localhost:9080/openapi
 A UI is also available for a more interactive view of the deployed APIs. Click the following button to visit the UI by the ***/openapi/ui*** endpoint. 
 ::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
-Or, select **Launch Application** from the menu of the IDE, type in **9080** to specify the port number and click the **OK** button. You’re redirected to a URL similar to ***https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai***, where **accountname** is your account name. Click the **interactive UI** link on the welcome page. This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swagger-ui), which renders the generated **/openapi** document into a very user friendly page.
+This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swagger-ui), which renders the generated **/openapi** document into a very user friendly page.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -122,10 +122,8 @@ Now, run the following curl command to see the generated OpenAPI tree:
 curl http://localhost:9080/openapi
 ```
 
-Click the following button to visit the UI by the ***/openapi/ui*** endpoint. 
+Click the following button to visit the UI by the ***/openapi/ui*** endpoint for a more interactive view of the APIs.
 ::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
-
-Or, select **Launch Application** from the menu of the IDE, type in **9080** to specify the port number and click the **OK** button. You’re redirected to the ***https://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai*** URL. Click the **interactive UI** link on the welcome page. 
 
 ### Augmenting the existing restfulWS annotations with OpenAPI annotations
 
