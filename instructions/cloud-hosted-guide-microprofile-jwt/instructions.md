@@ -86,8 +86,7 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-To launch the front-end web application, click the following button, or select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, and click the **OK** button. You’re redirected to a URL similar to ***https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai***, where **accountname** is your account name. Click the **Log in** link on the welcome page. From here, you can log in to the application with the form-based login.
-
+To launch the front-end web application, click the following button. From here, you can log in to the application with the form-based login.
 ::startApplication{port="9090" display="external" name="Launch Application" route="/"}
 
 Log in with one of the following usernames and its corresponding password:
@@ -454,8 +453,7 @@ The ***mpJwt*** feature adds the libraries that are required for MicroProfile JW
 Because you are running the ***frontend*** and ***system*** services in dev mode, the changes that you made were automatically picked up. You're now ready to check out your application in your browser.
 
 
-To launch the front-end web application, click the following button, or select **Launch Application** from the menu of the IDE, type in **9090** to specify the port number for the front-end web application, and click the **OK** button. You’re redirected to the ***https://accountname-9090.theiadocker-4.proxy.cognitiveclass.ai*** URL, where **accountname** is your account name. Click the **Log in** link on the welcome page. 
-
+To launch the front-end web application, click the following button:
 ::startApplication{port="9090" display="external" name="Launch Application" route="/"}
 
 Log in with one of the following usernames and its corresponding password:
