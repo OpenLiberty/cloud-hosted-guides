@@ -23,6 +23,7 @@ jobs:
           - {"github":"cloud-hosted-guide-cdi-intro","gitlab":"cloud-hosted-guide-cdi-intro","gitlab-branch":"lab-371-instruction"}
           - {"github":"cloud-hosted-guide-containerize","gitlab":"cloud-hosted-guide-containerize","gitlab-branch":"lab-155-instruction"}
           - {"github":"cloud-hosted-guide-contract-testing","gitlab":"cloud-hosted-guide-contract-testing","gitlab-branch":"lab-154-instruction"}
+          - {"github":"cloud-hosted-guide-cors","gitlab":"cloud-hosted-guide-cors","gitlab-branch":"lab-102-instruction"}
           - {"github":"cloud-hosted-guide-docker","gitlab":"cloud-hosted-guide-docker","gitlab-branch":"lab-169-instruction"}
           - {"github":"cloud-hosted-guide-getting-started","gitlab":"cloud-hosted-guide-getting-started","gitlab-branch":"lab-138-instruction"}
           - {"github":"cloud-hosted-guide-jpa-intro","gitlab":"cloud-hosted-guide-jpa-intro","gitlab-branch":"lab-101-instruction"}
