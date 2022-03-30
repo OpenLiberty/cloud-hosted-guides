@@ -208,40 +208,7 @@ touch /home/project/guide-rest-client-angularjs/start/src/main/webapp/index.html
 
 
 ```html
-<!-- tag::html[] -->
-<!DOCTYPE html>
-<html>
-    <head>
-        <!-- tag::angular-script[] -->
-        <script 
-            src='http://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.js'/>
-        </script>
-        <!-- tag::angular-resource-script[] -->
-        <script 
-           src='http://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-resource.js'>
-        </script>
-        <!-- end::AngularJS[] -->
-        <script src='./js/consume-rest.js'></script>
-    </head>
-    <!-- tag::body[] -->
-    <body ng-app='consumeRestApp'>
-        <!-- tag::controller[] -->
-        <div ng-controller='ArtistsCtrl'>
-            <!-- tag::repeat[] -->
-            <div ng-repeat='artist in artists'>
-                <!-- tag::artist-info[] -->
-                <p>{{ artist.name }} wrote {{ artist.albums.length }} albums:</p>
-                <div ng-repeat='album in artist.albums'>
-                    <p style='text-indent: 20px'>
-                        Album titled <b>{{ album.title }}</b> by 
-                                     <b>{{ album.artist }}</b> contains 
-                                     <b>{{ album.ntracks }}</b> tracks
-                    </p>
-                </div>
-            </div>
-        </div>
-    </body>
-</html>
+SHOW HTML
 ```
 
 
