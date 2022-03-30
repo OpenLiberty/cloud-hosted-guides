@@ -813,6 +813,11 @@ The pact file that's created by the ***inventory*** microservice was successfull
 When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line sessions where you ran the servers for the ***system*** and ***inventory*** microservices, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 Navigate back to the ***/guide-contract-testing*** directory and run the following commands to remove the Pact Broker:
+
+```bash
+cd /home/project/guide-contract-testing
+```
+
 ```bash
 docker-compose -f "pact-broker/docker-compose.yml" down
 docker rmi postgres:12
