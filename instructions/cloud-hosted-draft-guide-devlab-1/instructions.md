@@ -208,7 +208,27 @@ touch /home/project/guide-rest-client-angularjs/start/src/main/webapp/index.html
 
 
 ```html
-SHOW HTML
+<!-- tag::html[] -->
+<!DOCTYPE html>
+<html>
+    <head>
+    </head>
+    <!-- tag::body[] -->
+    <body ng-app='consumeRestApp'>
+        <!-- tag::controller[] -->
+        <div ng-controller='ArtistsCtrl'>
+            <!-- tag::repeat[] -->
+            <div ng-repeat='artist in artists'>
+                <!-- tag::artist-info[] -->
+                <p>{{ artist.name }} wrote {{ artist.albums.length }} albums:</p>
+                <div ng-repeat='album in artist.albums'>
+                    <p style='text-indent: 20px'>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
 ```
 
 
