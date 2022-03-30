@@ -212,6 +212,16 @@ touch /home/project/guide-rest-client-angularjs/start/src/main/webapp/index.html
 <!DOCTYPE html>
 <html>
     <head>
+        <!-- tag::angular-script[] -->
+        <script 
+            src='http://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.js'/>
+        </script>
+        <!-- tag::angular-resource-script[] -->
+        <script 
+           src='http://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-resource.js'>
+        </script>
+        <!-- end::AngularJS[] -->
+        <script src='./js/consume-rest.js'></script>
     </head>
     <!-- tag::body[] -->
     <body ng-app='consumeRestApp'>
