@@ -4,17 +4,6 @@ title: instructions
 branch: lab-155-instruction
 version-history-start-date: 2021-04-16 14:06:18 UTC
 ---
-::page{title="Welcome to the Containerizing microservices guide!"}
-
-Learn how to containerize and run your microservices with Open Liberty using Docker.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
 
 
 ::page{title="What you'll learn"}
@@ -22,32 +11,14 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 You can easily deploy your microservices in different environments in a lightweight and portable manner by using containers. From development to production and across your DevOps environments, you can deploy your microservices consistently and efficiently with containers. You can run a container from a container image. Each container image is a package of what you need to run your microservice or application, from the code to its dependencies and configuration.
 
-You'll learn how to build container images and run containers using Docker for your microservices. You'll construct ***Dockerfile*** files, create Docker images by using the ***docker build*** command, and run the image as Docker containers by using ***docker run*** command.
+You'll learn how to build container images and run containers using Docker for your microservices.
+You'll construct ***Dockerfile*** files, create Docker images by using the ***docker build*** command, and run the image as Docker containers 
+by using ***docker run*** command.
 
-The two microservices that you'll be working with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This guide demonstrates how both microservices can run and communicate with each other in different Docker containers. 
+The two microservices that you'll be working with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties 
+of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This guide demonstrates how both microservices can run and communicate
+with each other in different Docker containers. 
 
-::page{title="Getting started"}
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-containerize.git) and use the projects that are provided inside:
-
-```bash
-git clone https://github.com/openliberty/guide-containerize.git
-cd guide-containerize
-```
-
-
-The ***start*** directory contains the starting project that you will build upon.
-
-The ***finish*** directory contains the finished project that you will build.
 
 
 ::page{title="Packaging your microservices"}
@@ -58,7 +29,8 @@ To begin, run the following command to navigate to the **start** directory:
 cd start
 ```
 
-You can find the starting Java project in the ***start*** directory. This project is a multi-module Maven project that is made up of the ***system*** and ***inventory*** microservices. Each microservice is located in its own corresponding directory, ***system*** and ***inventory***.
+You can find the starting Java project in the ***start*** directory. 
+This project is a multi-module Maven project that is made up of the ***system*** and ***inventory*** microservices. Each microservice is located in its own corresponding directory, ***system*** and ***inventory***.
 
 To try out the microservices by using Maven, run the following Maven goal to build the ***system*** microservice and run it inside Open Liberty:
 ```bash
@@ -107,14 +79,18 @@ To package your microservices, run the Maven package goal to build the applicati
 mvn package
 ```
 
-To learn more about RESTful web services and how to build them, see [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the ***system*** service. The ***inventory*** service is built in a similar way.
-
+To learn more about RESTful web services and how to build them, see
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the ***system*** service.
+The ***inventory*** service is built in a similar way.
 
 ::page{title="Building your Docker images"}
 
-A Docker image is a binary file. It is made up of multiple layers and is used to run code in a Docker container. Images are built from instructions in Dockerfiles to create a containerized version of the application.
+::page{title="Building your Docker images"}
 
 A ***Dockerfile*** is a collection of instructions for building a Docker image that can then be run as a container. As each instruction is run in a ***Dockerfile***, a new Docker layer is created. These layers, which are known as intermediate images, are created when a change is made to your Docker image.
+
+A ***Dockerfile*** is a collection of instructions for building a Docker image that can then be run as a container.
+As each instruction is run in a ***Dockerfile***, a new Docker layer is created. These layers, which are known as intermediate images, are created when a change is made to your Docker image.
 
 Every ***Dockerfile*** begins with a parent or base image over which various commands are run. For example, you can start your image from scratch and run commands that download and install a Java runtime, or you can start from an image that already contains a Java installation.
 
@@ -123,9 +99,13 @@ Learn more about Docker on the [official Docker page](https://www.docker.com/wha
 ### Creating your Dockerfiles
 You will be creating two Docker images to run the ***inventory*** service and ***system*** service. The first step is to create Dockerfiles for both services.
 
-In this guide, you're using an official image from the IBM Container Registry (ICR), ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi***, as your parent image. This image is tagged with the word ***full***, meaning it includes all Liberty features. ***full*** images are recommended for development only because they significantly expand the image size with features that are not required by the application.
+In this guide, you're using an official image from the IBM Container Registry (ICR), ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi***, as your parent image. This image is tagged with the word ***full***, meaning it includes all Liberty features.
+***full*** images are recommended for development only because they significantly expand the image size with features that are not required by the application.
 
-To minimize your image footprint in production, you can use one of the ***kernel-slim*** images, such as ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi***.  This image installs the basic server. You can then add all the necessary features for your application with the usage pattern that is detailed in the Open Liberty [container image documentation](https://github.com/OpenLiberty/ci.docker#building-an-application-image). To use the default image that comes with the Open Liberty runtime, define the ***FROM*** instruction as ***FROM icr.io/appcafe/open-liberty***. You can find all official images on the Open Liberty [container image repository](https://github.com/OpenLiberty/ci.docker#container-images).
+To minimize your image footprint in production, you can use one of the ***kernel-slim*** images, such as ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi***. 
+This image installs the basic server. You can then add all the necessary features for your application with the usage pattern that is detailed in the Open Liberty [container image documentation](https://github.com/OpenLiberty/ci.docker#building-an-application-image).
+To use the default image that comes with the Open Liberty runtime, define the ***FROM*** instruction as ***FROM icr.io/appcafe/open-liberty***. 
+You can find all official images on the Open Liberty [container image repository](https://github.com/OpenLiberty/ci.docker#container-images).
 
 Create the ***Dockerfile*** for the inventory service.
 
@@ -178,7 +158,10 @@ The ***FROM*** instruction initializes a new build stage, which indicates the pa
 
 It is also recommended to label your Docker images with the ***LABEL*** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
 
-The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the ***inventory*** server configuration files that are located at ***src/main/liberty/config*** are copied to the ***/config/*** destination directory. The ***inventory*** application WAR file ***inventory.war***, which was created from running ***mvn package***, is copied to the ***/config/apps*** destination directory.
+The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. 
+They copy local files into the specified destination within your Docker image.
+In this case, the ***inventory*** server configuration files that are located at ***src/main/liberty/config*** are copied to the ***/config/*** destination directory.
+The ***inventory*** application WAR file ***inventory.war***, which was created from running ***mvn package***, is copied to the ***/config/apps*** destination directory.
 
 The ***COPY*** instructions use the ***1001*** user ID  and ***0*** group because the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image runs by default with the ***USER 1001*** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user.
 
@@ -234,11 +217,6 @@ RUN configure.sh
 
 Now that your microservices are packaged and you have written your Dockerfiles, you will build your Docker images by using the ***docker build*** command.
 
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
 
 Run the following commands to build container images for your application:
 
@@ -247,7 +225,8 @@ docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. 
+The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
 
 To verify that the images are built, run the ***docker images*** command to list all local Docker images:
 
@@ -299,7 +278,12 @@ CONTAINER ID    IMAGE                   COMMAND                  CREATED        
 99a98313705f    system:1.0-SNAPSHOT     "/opt/ol/helpers/run…"   3 seconds ago    Up 2 seconds    0.0.0.0:9080->9080/tcp, 9443/tcp             system
 ```
 
-If a problem occurs and your containers exit prematurely, the containers don't appear in the container list that the ***docker ps*** command displays. Instead, your containers appear with an ***Exited*** status when they run the ***docker ps -a*** command. Run the ***docker logs system*** and ***docker logs inventory*** commands to view the container logs for any potential problems. Run the ***docker stats system*** and ***docker stats inventory*** commands to display a live stream of usage statistics for your containers. You can also double-check that your Dockerfiles are correct. When you find the cause of the issues, remove the faulty containers with the ***docker rm system*** and ***docker rm inventory*** commands. Rebuild your images, and start the containers again.
+If a problem occurs and your containers exit prematurely, the containers don't appear in the container
+list that the ***docker ps*** command displays. Instead, your containers appear with an ***Exited***
+status when they run the ***docker ps -a*** command. Run the ***docker logs system*** and ***docker logs inventory*** commands to view the
+container logs for any potential problems. Run the ***docker stats system*** and ***docker stats inventory*** commands to display a live stream of usage statistics for your containers. You can also double-check that your Dockerfiles are correct. When you
+find the cause of the issues, remove the faulty containers with the ***docker rm system*** and ***docker rm inventory*** commands. Rebuild
+your images, and start the containers again.
 
 
 To access the application, run the following curl command. An empty list is expected because no system properties are stored in the inventory yet:
@@ -319,7 +303,8 @@ The command returns the system container IP address:
 172.17.0.2
 ```
 
-In this case, the IP address for the ***system*** service is ***172.17.0.2***. Take note of this IP address to construct the URL to view the system properties. 
+In this case, the IP address for the ***system*** service is ***172.17.0.2***. 
+Take note of this IP address to construct the URL to view the system properties. 
 
 
 Run the following commands to go to the **http://localhost:9081/inventory/systems/[system-ip-address]** by replacing **[system-ip-address]** URL with the IP address that you obtained earlier:
@@ -338,11 +323,23 @@ curl -s http://localhost:9081/inventory/systems | jq
 
 As mentioned at the beginning of this guide, one of the advantages of using containers is that they are portable and can be moved and deployed efficiently across all of your DevOps environments. Configuration often changes across different environments, and by externalizing your server configuration, you can simplify the development process.
 
-Imagine a scenario where you are developing an Open Liberty application on port ***9081*** but to deploy it to production, it must be available on port ***9091***. To manage this scenario, you can keep two different versions of the ***server.xml*** file; one for production and one for development. However, trying to maintain two different versions of a file might lead to mistakes. A better solution would be to externalize the configuration of the port number and use the value of an environment variable that is stored in each environment. 
+Imagine a scenario where you are developing an Open Liberty application on
+port ***9081*** but to deploy it to production, it must be available
+on port ***9091***. To manage this scenario, you can keep two different versions of the
+***server.xml*** file; one for production and one for development. However, trying to
+maintain two different versions of a file might lead to mistakes. A better
+solution would be to externalize the configuration of the port number and use the
+value of an environment variable that is stored in each environment. 
 
-In this example, you will use an environment variable to externally configure the HTTP port number of the ***inventory*** service. 
+In this example, you will use an environment variable to externally configure the
+HTTP port number of the ***inventory*** service. 
 
-In the ***inventory/server.xml*** file, the ***default.http.port*** variable is declared and is used in the ***httpEndpoint*** element to define the service endpoint. The default value of the ***default.http.port*** variable is ***9081***. However, this value is only used if no other value is specified. You can replace this value in the container by using the -e flag for the podman run command. 
+In the ***inventory/server.xml*** file, 
+the ***default.http.port*** variable is declared and is used in the
+***httpEndpoint*** element to define the service
+endpoint. The default value of the ***default.http.port***
+variable is ***9081***. However, this value is only used if no other value is specified. 
+You can replace this value in the container by using the -e flag for the podman run command. 
 
 Run the following commands to stop and remove the ***inventory*** container and rerun it with the ***default.http.port*** environment variable set:
 
@@ -352,10 +349,14 @@ docker rm inventory
 docker run -d --name inventory -e default.http.port=9091 -p 9091:9091 inventory:1.0-SNAPSHOT
 ```
 
-The ***-e*** flag can be used to create and set the values of environment variables in a Docker container. In this case, you are setting the ***default.http.port*** environment variable to ***9091*** for the ***inventory*** container.
+The `-e` flag can be used to create and set the values of environment variables
+in a Docker container. In this case, you are setting the ***default.http.port*** environment
+variable to ***9091*** for the ***inventory*** container.
 
-Now, when the service is starting up, Open Liberty finds the ***default.http.port*** environment variable and uses it to set the value of the ***default.http.port*** variable to be used in the HTTP endpoint.
-
+Now, when the service is starting up, Open Liberty finds the
+***default.http.port*** environment variable and uses it to set the value of the
+***default.http.port*** variable to be used in the HTTP
+endpoint.
 
 The **inventory** service is now available on the new port number that you specified. You can see the contents of the inventory at the **http://localhost:9091/inventory/systems** URL. Run the following curl command:
 ```bash
@@ -693,6 +694,7 @@ docker stop inventory system
 docker rm inventory system
 ```
 
+::page{title="Summary"}
 
 ::page{title="Summary"}
 

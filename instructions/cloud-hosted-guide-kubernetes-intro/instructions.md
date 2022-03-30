@@ -4,17 +4,6 @@ title: instructions
 branch: lab-137-instruction
 version-history-start-date: 2020-04-22 13:19:07 UTC
 ---
-::page{title="Welcome to the Deploying microservices to Kubernetes guide!"}
-
-Deploy microservices in Open Liberty Docker containers to Kubernetes and manage them with the Kubernetes CLI, kubectl.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
 
 
 
@@ -43,35 +32,20 @@ To learn about the various Kubernetes resources that you can configure, see the 
 
 ::page{title="What you'll learn"}
 
-You will learn how to deploy two microservices in Open Liberty containers to a local Kubernetes cluster. You will then manage your deployed microservices using the ***kubectl*** command line interface for Kubernetes. The ***kubectl*** CLI is your primary tool for communicating with and managing your Kubernetes cluster.
+You will learn how to deploy two microservices in Open Liberty containers to a local Kubernetes cluster.
+You will then manage your deployed microservices using the ***kubectl*** command line interface for Kubernetes. 
+The ***kubectl*** CLI is your primary tool for communicating with and managing your Kubernetes cluster.
 
-The two microservices you will deploy are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This process demonstrates how communication can be established between pods inside a cluster.
+The two microservices you will deploy are called ***system*** and ***inventory***. The ***system*** microservice
+returns the JVM system properties of the running container and it returns the pod's name in the HTTP header
+making replicas easy to distinguish from each other. The ***inventory*** microservice
+adds the properties from the ***system*** microservice to the inventory. 
+This process demonstrates how communication can be established between pods inside a cluster.
 
 You will use a local single-node Kubernetes cluster.
 
 
-::page{title="Getting started"}
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-intro.git) and use the projects that are provided inside:
-
-```bash
-git clone https://github.com/openliberty/guide-kubernetes-intro.git
-cd guide-kubernetes-intro
-```
-
-
-The ***start*** directory contains the starting project that you will build upon.
-
-The ***finish*** directory contains the finished project that you will build.
 
 
 
@@ -80,7 +54,13 @@ The ***finish*** directory contains the finished project that you will build.
 
 The first step of deploying to Kubernetes is to build your microservices and containerize them with Docker.
 
-The starting Java project, which you can find in the ***start*** directory, is a multi-module Maven project that's made up of the ***system*** and ***inventory*** microservices. Each microservice resides in its own directory, ***start/system*** and ***start/inventory***. Each of these directories also contains a Dockerfile, which is necessary for building Docker images. If you're unfamiliar with Dockerfiles, check out the [Containerizing Microservices](https://openliberty.io/guides/containerize.html) guide, which covers Dockerfiles in depth.
+The starting Java project, which you can find in the ***start*** directory, is a multi-module Maven
+project that's made up of the ***system*** and ***inventory*** microservices. 
+Each microservice resides in its own directory, ***start/system*** and ***start/inventory***. 
+Each of these directories also contains a Dockerfile, which is necessary for building Docker images. 
+If you're unfamiliar with Dockerfiles, check out the
+[Containerizing Microservices](https://openliberty.io/guides/containerize.html) guide,
+which covers Dockerfiles in depth.
 
 Navigate to the ***start*** directory and build the applications by running the following commands:
 ```bash
@@ -88,11 +68,6 @@ cd start
 mvn clean package
 ```
 
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
 
 Next, run the ***docker build*** commands to build container images for your application:
 ```bash
@@ -100,13 +75,15 @@ docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format.
+The tag for an image describes the specific image version. 
+If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
 
-During the build, you'll see various Docker messages describing what images are being downloaded and built. When the build finishes, run the following command to list all local Docker images:
+During the build, you'll see various Docker messages describing what images are being downloaded and built. 
+When the build finishes, run the following command to list all local Docker images:
 ```bash
 docker images
 ```
-
 
 Verify that the ***system:1.0-SNAPSHOT*** and ***inventory:1.0-SNAPSHOT*** images are listed among them, for example:
 
@@ -124,6 +101,11 @@ docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAP
 docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
 docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+```
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$NAMESPACE_NAME/system:1.0-SNAPSHOT
 ```
 
 
@@ -223,7 +205,21 @@ spec:
 
 
 
-This file defines four Kubernetes resources. It defines two deployments and two services. A Kubernetes deployment is a resource that controls the creation and management of pods. A service exposes your deployment so that you can make requests to your containers. Three key items to look at when creating the deployments are the ***labels***, ***image***, and ***containerPort*** fields. The ***labels*** is a way for a Kubernetes service to reference specific deployments. The ***image*** is the name and tag of the Docker image that you want to use for this container. Finally, the ***containerPort*** is the port that your container exposes to access your application. For the services, the key point to understand is that they expose your deployments. The binding between deployments and services is specified by labels -- in this case the ***app*** label. You will also notice the service has a type of ***NodePort***. This means you can access these services from outside of your cluster via a specific port. In this case, the ports are ***31000*** and ***32000***, but port numbers can also be randomized if the ***nodePort*** field is not used.
+This file defines four Kubernetes resources. It defines two deployments and two services. 
+A Kubernetes deployment is a resource that controls the creation and management of pods. 
+A service exposes your deployment so that you can make requests to your containers. 
+Three key items to look at when creating the deployments are the ***labels***, 
+***image***, and ***containerPort*** fields. 
+The ***labels*** is a way for a Kubernetes service to reference specific deployments. 
+The ***image*** is the name and tag of the Docker image that you want to use for this container. 
+Finally, the ***containerPort*** is the port that your container exposes to access your application.
+For the services, the key point to understand is that they expose your deployments.
+The binding between deployments and services is specified by labels -- in this case the 
+***app*** label.
+You will also notice the service has a type of ***NodePort***.
+This means you can access these services from outside of your cluster via a specific port.
+In this case, the ports are ***31000*** and ***32000***, but port numbers can also be randomized if the
+***nodePort*** field is not used.
 
 Update the image names so that the images in your IBM Cloud container registry are used, and remove the ***nodePort*** fields so that the ports can be generated automatically:
 
@@ -257,7 +253,8 @@ You can also inspect individual pods in more detail by running the following com
 kubectl describe pods
 ```
 
-You can also issue the ***kubectl get*** and ***kubectl describe*** commands on other Kubernetes resources, so feel free to inspect all other resources.
+You can also issue the ***kubectl get*** and ***kubectl describe*** commands on other Kubernetes resources, so feel
+free to inspect all other resources.
 
 
 In this execise, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
@@ -277,6 +274,7 @@ Run the following echo commands to verify the variables:
 ```bash
 echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
 ```
+
 
 The output appears as shown in the following example:
 
@@ -335,7 +333,9 @@ Wait for your two new pods to be in the ready state, then make the following ***
 curl -I http://$SYSTEM_PROXY/system/properties
 ```
 
-Notice that the ***X-Pod-Name*** header has a different value when you call it multiple times. The value changes because three pods that all serve the ***system*** application are now running. Similarly, to descale your deployments you can use the same scale command with fewer replicas.
+Notice that the ***X-Pod-Name*** header has a different value when you call it multiple times.
+The value changes because three pods that all serve the ***system*** application are now running.
+Similarly, to descale your deployments you can use the same scale command with fewer replicas.
 
 ```bash
 kubectl scale deployment/system-deployment --replicas=1
@@ -343,7 +343,9 @@ kubectl scale deployment/system-deployment --replicas=1
 
 ::page{title="Redeploy microservices"}
 
-When you're building your application, you might want to quickly test a change. To run a quick test, you can rebuild your Docker images then delete and re-create your Kubernetes resources. Note that there is only one ***system*** pod after you redeploy because you're deleting all of the existing pods.
+When you're building your application, you might want to quickly test a change. 
+To run a quick test, you can rebuild your Docker images then delete and re-create your Kubernetes resources. 
+Note that there is only one ***system*** pod after you redeploy because you're deleting all of the existing pods.
 
 
 ```bash
@@ -366,7 +368,10 @@ Updating your applications in this way is fine for development environments, but
 
 ::page{title="Testing microservices that are running on Kubernetes"}
 
-A few tests are included for you to test the basic functionality of the microservices. If a test failure occurs, then you might have introduced a bug into the code.  To run the tests, wait for all pods to be in the ready state before proceeding further. The default properties defined in the ***pom.xml*** are:
+A few tests are included for you to test the basic functionality of the microservices. 
+If a test failure occurs, then you might have introduced a bug into the code. 
+To run the tests, wait for all pods to be in the ready state before proceeding further. 
+The default properties defined in the ***pom.xml*** are:
 
 | *Property*                        | *Description*
 | ---| ---
@@ -420,9 +425,8 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 
 ::page{title="Tearing down the environment"}
 
-Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
-
-When you no longer need your deployed microservices, you can delete all Kubernetes resources by running the ***kubectl delete*** command:
+When you no longer need your deployed microservices, 
+you can delete all Kubernetes resources by running the ***kubectl delete*** command:
 ```bash
 kubectl delete -f kubernetes.yaml
 ```
@@ -431,9 +435,10 @@ kubectl delete -f kubernetes.yaml
 
 ::page{title="Summary"}
 
+::page{title="Summary"}
+
 ### Nice Work!
 
-You have just deployed two microservices that are running in Open Liberty to Kubernetes. You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
 
 
 

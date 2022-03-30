@@ -4,24 +4,16 @@ title: instructions
 branch: lab-149-instruction
 version-history-start-date: 2021-03-04 19:50:19 UTC
 ---
-::page{title="Welcome to the Consuming a RESTful web service guide!"}
-
-Explore how to access a simple RESTful web service and consume its resources in Java using JSON-B and JSON-P.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
+using JSON-B and JSON-P.
 
 
 ::page{title="What you'll learn"}
 
 You will learn how to access a REST service, serialize a Java object that contains a list of artists and their albums, and use two different approaches to deserialize the returned JSON resources. The first approach consists of using the Java API for JSON Binding (JSON-B) to directly convert JSON messages into Java objects. The second approach consists of using the Java API for JSON Processing (JSON-P) to process the JSON.
 
-The REST service that provides the artists and albums resources is already written for you. When the server is running, this service is accessible at the ***http://localhost:9080/artists*** endpoint, which responds with the ***artists.json*** file.
+The REST service that provides the artists and albums resources is already written
+for you. When the server is running, this service is accessible at the ***http://localhost:9080/artists*** endpoint,
+which responds with the ***artists.json*** file.
 
 You will implement the following two endpoints using the two deserialization approaches:
 
@@ -32,46 +24,8 @@ for the particular artist
 If you are interested in learning more about REST services and how you can write them, read [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
 
 
-::page{title="Getting started"}
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-java.git) and use the projects that are provided inside:
-
-```bash
-git clone https://github.com/openliberty/guide-rest-client-java.git
-cd guide-rest-client-java
-```
 
 
-The ***start*** directory contains the starting project that you will build upon.
-
-The ***finish*** directory contains the finished project that you will build.
-
-
-### Try what you'll build
-
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
-
-```bash
-cd finish
-mvn liberty:run
-```
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
 
 
 Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
@@ -91,11 +45,6 @@ You can access the endpoint at ***http://localhost:9080/artists/total/<artist>**
 curl http://localhost:9080/artists/total/bar
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
-
-```bash
-mvn liberty:stop
-```
 
 
 ::page{title="Starting the service"}
@@ -106,20 +55,6 @@ To begin, run the following command to navigate to the ***start*** directory:
 cd /home/project/guide-rest-client-java/start
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```bash
-mvn liberty:dev
-```
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 
 The application that you'll build upon was created for you. After your server is ready, run the following curl command to access the service:
@@ -133,7 +68,10 @@ curl -s http://localhost:9080/artists | jq
 
 To deserialize a JSON message, start with creating Plain Old Java Objects (POJOs) that represent what is in the JSON and whose instance members map to the keys in the JSON.
 
-For the purpose of this guide, you are given two POJOs. The ***Artist*** object has two instance members ***name*** and ***albums***, which map to the artist name and the collection of the albums they have written. The ***Album*** object represents a single object within the album collection, and contains three instance members ***title***, ***artistName***, and ***totalTracks***, which map to the album title, the artist who wrote the album, and the number of tracks the album contains.
+For the purpose of this guide, you are given two POJOs.
+The ***Artist*** object has two instance members ***name*** and ***albums***, 
+which map to the artist name and the collection of the albums they have written. The ***Album*** object represents a 
+single object within the album collection, and contains three instance members ***title***, ***artistName***, and ***totalTracks***, which map to the album title, the artist who wrote the album, and the number of tracks the album contains.
 
 ::page{title="Introducing JSON-B and JSON-P"}
 
@@ -149,16 +87,29 @@ JSON-B requires a POJO to have a public default no-argument constructor for dese
 
 The JSON-B engine includes a set of default mapping rules, which can be run without any customization annotations or custom configuration. In some instances, you might find it useful to deserialize a JSON message with only certain fields, specific field names, or classes with custom constructors. In these cases, annotations are necessary and recommended:
 
-* The ***@JsonbProperty*** annotation to map JSON keys to class instance members and vice versa. Without the use of this annotation, JSON-B will attempt to do POJO mapping, matching the keys in the JSON to the class instance members by name. JSON-B will attempt to match the JSON key with a Java field or method annotated with ***@JsonbProperty*** where the value in the annotation exactly matches the JSON key. If no annotation exists with the given JSON key, JSON-B will attempt to find a matching field with the same name. If no match is found, JSON-B attempts to find a matching getter method for serialization or a matching setter method for de-serialization. A match occurs when the property name of the method matches the JSON key. If no matching getter or setter method is found, serialization or de-serialization, respectively, fails with an exception. The Artist POJO does not require this annotation because all instance members match the JSON keys by name.
+* The ***@JsonbProperty*** annotation to map JSON keys to class instance members and vice versa.
+Without the use of this annotation, JSON-B will attempt to do POJO mapping, matching the keys in
+the JSON to the class instance members by name. JSON-B will attempt to match the JSON key 
+with a Java field or method annotated with ***@JsonbProperty*** where the value in the
+annotation exactly matches the JSON key. If no annotation exists with the given JSON key, 
+JSON-B will attempt to find a matching field with the same name. If no match is found, 
+JSON-B attempts to find a matching getter method for serialization or a matching setter 
+method for de-serialization. A match occurs when the property name of the method matches 
+the JSON key. If no matching getter or setter method is found, serialization or 
+de-serialization, respectively, fails with an exception. The Artist POJO does not require 
+this annotation because all instance members match the JSON keys by name.
 
-* The ***@JsonbCreator*** and ***@JsonbProperty*** annotations to annotate a custom constructor. These annotations are required for proper parameter substitution when a custom constructor is used.
+* The ***@JsonbCreator*** and ***@JsonbProperty*** annotations to annotate a custom constructor.
+These annotations are required for proper parameter substitution when a custom constructor is used.
 
-* The ***@JsonbTransient*** annotation to define an object property that does not map to a JSON property. While the use of this annotation is good practice, it is only necessary for serialization.
+* The ***@JsonbTransient*** annotation to define an object property that does not map to a JSON
+property. While the use of this annotation is good practice, it is only necessary for serialization.
 
 For more information on customization with JSON-B, see the [official JSON-B site](https://javaee.github.io/jsonb-spec).
 
 
 ::page{title="Consuming the REST resource"}
+
 
 
 
@@ -245,19 +196,28 @@ public class Consumer {
 ```
 
 
+### Processing JSON using JSON-B
 
 ### Processing JSON using JSON-B
 
 
-JSON-B is a Java API that is used to serialize Java objects to JSON messages and vice versa.
+Open Liberty's JSON-B feature on Maven Central includes the JSON-B provider through transitive dependencies.
+The JSON-B APIs are provided by the MicroProfile dependency in your ***pom.xml*** file. 
+Look for the dependency with the ***microprofile*** artifact ID. 
 
-Open Liberty's JSON-B feature on Maven Central includes the JSON-B provider through transitive dependencies. The JSON-B APIs are provided by the MicroProfile dependency in your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. 
-
-The ***consumeWithJsonb()*** method in the ***Consumer*** class makes a ***GET*** request to the running artist service and retrieves the JSON. To bind the JSON into an ***Artist*** array, use the ***Artist[]*** entity type in the ***readEntity*** call.
+The ***consumeWithJsonb()*** method in the ***Consumer*** class makes a ***GET*** request to the
+running artist service and retrieves the JSON. To bind the JSON into an ***Artist***
+array, use the ***Artist[]*** entity type in the ***readEntity*** call.
 
 ### Processing JSON using JSON-P
 
-The ***consumeWithJsonp()*** method in the ***Consumer*** class makes a ***GET*** request to the running artist service and retrieves the JSON. This method then uses the ***collectArtists*** and ***collectAlbums*** helper methods. These helper methods will parse the JSON and collect its objects into individual POJOs. Notice that you can use the custom constructors to create instances of ***Artist*** and ***Album***.
+The ***consumeWithJsonp()*** method in the ***Consumer*** class makes a ***GET*** request
+to the running artist service and retrieves the JSON. This method then uses the
+***collectArtists*** and ***collectAlbums*** helper methods. These helper methods will
+parse the JSON and collect its objects into individual POJOs. Notice that you can
+use the custom constructors to create instances of ***Artist*** and ***Album***.
+
+::page{title="Creating additional REST resources"}
 
 ::page{title="Creating additional REST resources"}
 
@@ -265,92 +225,29 @@ Now that you can consume a JSON resource you can put that data to use.
 
 Replace the ***ArtistResource*** class.
 
-> To open the ArtistResource.java file in your IDE, select
-> **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java, or click the following button
+> To open the unknown file in your IDE, select
+> **File** > **Open** > guide-rest-client-java/start/unknown, or click the following button
 
-::openFile{path="/home/project/guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java"}
-
-
-
-```java
-package io.openliberty.guides.consumingrest.service;
-
-import jakarta.json.JsonArray;
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.UriInfo;
-
-import io.openliberty.guides.consumingrest.model.Artist;
-import io.openliberty.guides.consumingrest.Consumer;
-
-@Path("artists")
-public class ArtistResource {
-
-    @Context
-    UriInfo uriInfo;
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray getArtists() {
-      return Reader.getArtists();
-    }
-
-    @GET
-    @Path("jsonString")
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getJsonString() {
-      Jsonb jsonb = JsonbBuilder.create();
-
-      Artist[] artists = Consumer.consumeWithJsonb(uriInfo.getBaseUri().toString()
-                                                   + "artists");
-      String result = jsonb.toJson(artists);
-
-      return result;
-    }
-
-    @GET
-    @Path("total/{artist}")
-    @Produces(MediaType.TEXT_PLAIN)
-    public int getTotalAlbums(@PathParam("artist") String artist) {
-      Artist[] artists = Consumer.consumeWithJsonb(uriInfo.getBaseUri().toString()
-        + "artists");
-
-      for (int i = 0; i < artists.length; i++) {
-        if (artists[i].name.equals(artist)) {
-          return artists[i].albums.length;
-        }
-      }
-      return -1;
-    }
-
-    @GET
-    @Path("total")
-    @Produces(MediaType.TEXT_PLAIN)
-    public int getTotalArtists() {
-      return Consumer.consumeWithJsonp(uriInfo.getBaseUri().toString()
-                                       + "artists").length;
-    }
-}
-```
+::openFile{path="/home/project/guide-rest-client-java/start/unknown"}
 
 
+* The ***getArtists()*** method provides the raw JSON data service that you accessed at the
+beginning of this guide.
 
-* The ***getArtists()*** method provides the raw JSON data service that you accessed at the beginning of this guide.
+* The ***getJsonString()*** method uses JSON-B to return the JSON as a string that will
+be used later for testing.
 
-* The ***getJsonString()*** method uses JSON-B to return the JSON as a string that will be used later for testing.
+* The ***getTotalAlbums()*** method uses JSON-B to return the total number of albums present
+in the JSON for a particular artist. The method returns -1 if this artist does not exist.
 
-* The ***getTotalAlbums()*** method uses JSON-B to return the total number of albums present in the JSON for a particular artist. The method returns -1 if this artist does not exist.
+* The ***getTotalArtists()*** method uses JSON-P to return the total number of artists
+present in the JSON.
 
-* The ***getTotalArtists()*** method uses JSON-P to return the total number of artists present in the JSON.
+The methods that you wrote in the ***Consumer*** class could be written directly in the
+***ArtistResource*** class. However, if you are consuming a REST resource from a third
+party service, you should separate your ***GET***/***POST*** requests from your data consumption.
 
 The methods that you wrote in the ***Consumer*** class could be written directly in the ***ArtistResource*** class. However, if you are consuming a REST resource from a third party service, you should separate your ***GET***/***POST*** requests from your data consumption.
-
 
 ::page{title="Running the application"}
 
@@ -384,156 +281,51 @@ touch /home/project/guide-rest-client-java/start/src/test/java/it/io/openliberty
 ```
 
 
-> Then, to open the ConsumingRestIT.java file in your IDE, select
-> **File** > **Open** > guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java, or click the following button
+> Then, to open the unknown file in your IDE, select
+> **File** > **Open** > guide-rest-client-java/start/unknown, or click the following button
 
-::openFile{path="/home/project/guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.consumingrest;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import io.openliberty.guides.consumingrest.model.Artist;
-
-public class ConsumingRestIT {
-
-    private static String port;
-    private static String baseUrl;
-    private static String targetUrl;
-
-    private Client client;
-    private Response response;
-
-    @BeforeAll
-    public static void oneTimeSetup() {
-      port = System.getProperty("http.port");
-      baseUrl = "http://localhost:" + port + "/artists/";
-      targetUrl = baseUrl + "total/";
-    }
-
-    @BeforeEach
-    public void setup() {
-      client = ClientBuilder.newClient();
-    }
-
-    @AfterEach
-    public void teardown() {
-      client.close();
-    }
-
-    @Test
-    public void testArtistDeserialization() {
-      response = client.target(baseUrl + "jsonString").request().get();
-      this.assertResponse(baseUrl + "jsonString", response);
-
-      Jsonb jsonb = JsonbBuilder.create();
-
-      String expectedString = "{\"name\":\"foo\",\"albums\":"
-        + "[{\"title\":\"album_one\",\"artist\":\"foo\",\"ntracks\":12}]}";
-      Artist expected = jsonb.fromJson(expectedString, Artist.class);
-
-      String actualString = response.readEntity(String.class);
-      Artist[] actual = jsonb.fromJson(actualString, Artist[].class);
-
-      assertEquals(expected.name, actual[0].name,
-        "Expected names of artists does not match");
-
-      response.close();
-    }
-
-    @Test
-    public void testJsonBAlbumCount() {
-      String[] artists = {"dj", "bar", "foo"};
-      for (int i = 0; i < artists.length; i++) {
-        response = client.target(targetUrl + artists[i]).request().get();
-        this.assertResponse(targetUrl + artists[i], response);
-
-        int expected = i;
-        int actual = response.readEntity(int.class);
-        assertEquals(expected, actual, "Album count for "
-                      + artists[i] + " does not match");
-
-        response.close();
-      }
-    }
-
-    @Test
-    public void testJsonBAlbumCountForUnknownArtist() {
-      response = client.target(targetUrl + "unknown-artist").request().get();
-
-      int expected = -1;
-      int actual = response.readEntity(int.class);
-      assertEquals(expected, actual, "Unknown artist must have -1 albums");
-
-      response.close();
-    }
-
-    @Test
-    public void testJsonPArtistCount() {
-      response = client.target(targetUrl).request().get();
-      this.assertResponse(targetUrl, response);
-
-      int expected = 3;
-      int actual = response.readEntity(int.class);
-      assertEquals(expected, actual, "Expected number of artists does not match");
-
-      response.close();
-    }
-
-    /**
-     * Asserts that the given URL has the correct (200) response code.
-     */
-    private void assertResponse(String url, Response response) {
-      assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-    }
-}
-```
+::openFile{path="/home/project/guide-rest-client-java/start/unknown"}
 
 
+Maven finds and executes all tests under the ***src/test/java/it/*** directory, 
+and each test method must be marked with the ***@Test*** annotation.
 
-Maven finds and executes all tests under the ***src/test/java/it/*** directory, and each test method must be marked with the ***@Test*** annotation.
-
-You can use the ***@BeforeAll*** and ***@AfterAll*** annotations to perform any one-time setup and teardown tasks before and after all of your tests run. You can also use the ***@BeforeEach*** and ***@AfterEach*** annotations to perform setup and teardown tasks for individual test cases.
+You can use the ***@BeforeAll*** and ***@AfterAll*** annotations to perform any one-time setup and teardown
+tasks before and after all of your tests run. You can also use the ***@BeforeEach*** and ***@AfterEach*** annotations
+to perform setup and teardown tasks for individual test cases.
 
 ### Testing the binding process
 
 
 The ***yasson*** dependency was added in your ***pom.xml*** file so that your test classes have access to JSON-B.
 
-The ***testArtistDeserialization*** test case checks that ***Artist*** instances created from the REST data and those that are hardcoded perform the same.
+The ***testArtistDeserialization*** test case checks that ***Artist*** instances created from
+the REST data and those that are hardcoded perform the same.
 
 The ***assertResponse*** helper method ensures that the response code you receive is valid (200).
 
 ### Processing with JSON-B test
 
-The ***testJsonBAlbumCount*** and ***testJsonBAlbumCountForUnknownArtist*** tests both use the ***total/{artist}*** endpoint which invokes JSON-B.
+The ***testJsonBAlbumCount*** and ***testJsonBAlbumCountForUnknownArtist*** tests both use the ***total/{artist}***
+endpoint which invokes JSON-B.
 
-The ***testJsonBAlbumCount*** test case checks that deserialization with JSON-B was done correctly and that the correct number of albums is returned for each artist in the JSON.
+The ***testJsonBAlbumCount*** test case checks that deserialization with JSON-B was done correctly
+and that the correct number of albums is returned for each artist in the JSON.
 
-The ***testJsonBAlbumCountForUnknownArtist*** test case is similar to ***testJsonBAlbumCount*** but instead checks an artist that does not exist in the JSON and ensures that a value of ***-1*** is returned.
+The ***testJsonBAlbumCountForUnknownArtist*** test case is similar to ***testJsonBAlbumCount***
+but instead checks an artist that does not exist in the JSON and ensures that a
+value of `-1` is returned.
 
 ### Processing with JSON-P test
 
-The ***testJsonPArtistCount*** test uses the ***total*** endpoint which invokes JSON-P. This test checks that deserialization with JSON-P was done correctly and that the correct number of artists is returned.
+The ***testJsonPArtistCount*** test uses the ***total*** endpoint which invokes JSON-P. This test
+checks that deserialization with JSON-P was done correctly and that the correct number
+of artists is returned.
 
 
 ### Running the tests
 
-Becayse you started Open Liberty in development mode at the start of the guide, press the ***enter/return*** key to run the tests.
+Since you started Open Liberty in development mode at the start of the guide, press the ***enter/return*** key to run the tests.
 
 If the tests pass, you see a similar output to the following example:
 
@@ -550,7 +342,8 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 
 ```
 
-When you are done checking out the service, exit development mode by typing ***q*** in the command-line session where you ran the server, and then press the ***enter/return*** key.
+When you are done checking out the service, exit development mode by typing `q` in the command-line session where you ran the server, 
+and then press the ***enter/return*** key.
 
 ::page{title="Building the application"}
 
