@@ -207,7 +207,7 @@ touch /home/project/guide-rest-client-angularjs/start/src/main/webapp/index.html
 
 
 
-```
+```html
 <!-- tag::html[] -->
 <!DOCTYPE html>
 <html>
