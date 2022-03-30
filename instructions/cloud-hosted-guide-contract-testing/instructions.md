@@ -109,6 +109,8 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
+Open a new command-line session.
+
 Create the InventoryPactIT class file.
 
 > Run the following touch command in your terminal
@@ -378,7 +380,7 @@ After you create the ***InventoryPactIT.java*** class and replace the ***pom.xml
 
 The contract between the ***inventory*** and ***system*** microservices is known as a pact. Each pact is a collection of interactions. In this guide, those interactions are defined in the ***InventoryPactIT*** class.
 
-Press the ***enter/return*** key to run the tests and generate the pact file.
+Press the ***enter/return*** key to run the tests and generate the pact file from the command-line session where you started the ***inventory*** microservice.
 
 When completed, you'll see a similar output to the following example:
 ```
@@ -429,7 +431,13 @@ The generated pact file is named ***Inventory-System.json*** and is located in t
 }
 ```
 
-Open a new command-line session and navigate to the ***start/inventory*** directory. Publish the generated pact file to the Pact Broker by running the following command:
+Open a new command-line session and navigate to the ***start/inventory*** directory.
+
+```bash
+cd /home/project/guide-contract-testing/start/inventory
+```
+
+Publish the generated pact file to the Pact Broker by running the following command:
 ```bash
 mvn pact:publish
 ```
@@ -484,6 +492,9 @@ After you see the following message, your application server in dev mode is read
 *    Liberty is running in dev mode.
 ```
 
+
+
+Open a new command-line session.
 
 Create the SystemBrokerIT class file.
 
