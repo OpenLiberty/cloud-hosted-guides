@@ -89,6 +89,11 @@ You can refer to the [official Pact Broker documentation](https://docs.pact.io/p
 ::page{title="Implementing pact testing in the inventory service"}
 
 Navigate to the ***start/inventory*** directory to begin.
+
+```bash
+cd /home/project/guide-contract-testing/start/inventory
+```
+
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
@@ -461,9 +466,13 @@ The insights look similar to the following image:
 ::page{title="Implementing pact testing in the system service"}
 
 
-Navigate to the ***start/system*** directory.
+Open another command-line session and navigate to the ***start/system*** directory.
 
-Open another command-line session to start Open Liberty in dev mode for the ***system*** microservice:
+```bash
+cd /home/project/guide-contract-testing/start/system
+```
+
+Start Open Liberty in dev mode for the ***system*** microservice:
 ```bash
 mvn liberty:dev
 ```
