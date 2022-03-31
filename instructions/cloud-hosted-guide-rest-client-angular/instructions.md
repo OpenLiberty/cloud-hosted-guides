@@ -352,10 +352,9 @@ touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/ap
 
 
 
-```
+```html
 <div *ngFor="let artist of artists">
   <p>{{ artist.name }} wrote {{ artist.albums.length }} albums: </p>
-  <!-- tag::albumDiv[] -->
   <div *ngFor="let album of artist.albums">
     <p style="text-indent: 20px">
       Album titled <b>{{ album.title }}</b> by
