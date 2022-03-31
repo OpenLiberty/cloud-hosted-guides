@@ -209,7 +209,6 @@ Replace the ear/POM file.
     <artifactId>guide-maven-multimodules-ear</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>ear</packaging>
-    <!-- end::packaging[] -->
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -221,21 +220,18 @@ Replace the ear/POM file.
     </properties>
 
     <dependencies>
-        <!-- tag::dependencies[] -->
         <dependency>
             <groupId>io.openliberty.guides</groupId>
             <artifactId>guide-maven-multimodules-jar</artifactId>
             <version>1.0-SNAPSHOT</version>
             <type>jar</type>
         </dependency>
-        <!-- tag::dependency-war[] -->
         <dependency>
             <groupId>io.openliberty.guides</groupId>
             <artifactId>guide-maven-multimodules-war</artifactId>
             <version>1.0-SNAPSHOT</version>
             <type>war</type>
         </dependency>
-        <!-- end::dependencies[] -->
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -259,12 +255,10 @@ Replace the ear/POM file.
                             <artifactId>guide-maven-multimodules-jar</artifactId>
                             <uri>/guide-maven-multimodules-jar-1.0-SNAPSHOT.jar</uri>
                         </jarModule>
-                        <!-- tag::webModule[] -->
                         <webModule>
                             <groupId>io.openliberty.guides</groupId>
                             <artifactId>guide-maven-multimodules-war</artifactId>
                             <uri>/guide-maven-multimodules-war-1.0-SNAPSHOT.war</uri>
-                            <!-- tag::contextRoot[] -->
                             <contextRoot>/converter</contextRoot>
                         </webModule>
                     </modules>
@@ -350,7 +344,6 @@ touch /home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/s
     <enterpriseApplication id="guide-maven-multimodules-ear"
         location="guide-maven-multimodules-ear.ear"
         name="guide-maven-multimodules-ear" />
-    <!-- end::server[] -->
 </server>
 ```
 
@@ -383,12 +376,10 @@ Replace the start/POM file.
 
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- tag::groupId[] -->
     <groupId>io.openliberty.guides</groupId>
     <artifactId>guide-maven-multimodules</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <!-- end::packaging[] -->
 
     <modules>
         <module>jar</module>
@@ -398,7 +389,6 @@ Replace the start/POM file.
 
     <build>
         <plugins>
-            <!-- tag::liberty-maven-plugin[] -->
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
