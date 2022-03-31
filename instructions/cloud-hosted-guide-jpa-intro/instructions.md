@@ -317,9 +317,7 @@ touch /home/project/guide-jpa-intro/start/backendServices/src/main/resources/MET
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
                         http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
-    <!-- tag::transaction-type[] -->
     <persistence-unit name="jpa-unit" transaction-type="JTA">
-        <!-- tag::jta-data[] -->
         <jta-data-source>jdbc/eventjpadatasource</jta-data-source>
         <properties>
             <property name="eclipselink.ddl-generation" value="create-tables"/>
