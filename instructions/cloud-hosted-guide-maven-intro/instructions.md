@@ -146,22 +146,18 @@ touch /home/project/guide-maven-intro/start/pom.xml
 ```xml
 <?xml version='1.0' encoding='utf-8'?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <!-- tag::modelVersion[] -->
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.openliberty.guides</groupId>
     <artifactId>ServletSample</artifactId>
-    <!-- tag::packaging[] -->
     <packaging>war</packaging>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- tag::java-version[] -->
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <!-- Liberty configuration -->
         <liberty.var.default.http.port>9080</liberty.var.default.http.port>
         <liberty.var.default.https.port>9443</liberty.var.default.https.port>
         <liberty.var.app.context.root>${project.artifactId}</liberty.var.app.context.root>
@@ -181,14 +177,12 @@ touch /home/project/guide-maven-intro/start/pom.xml
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
-        <!-- tag::commons-httpclient[] -->
         <dependency>
             <groupId>commons-httpclient</groupId>
             <artifactId>commons-httpclient</artifactId>
             <version>3.1</version>
             <scope>test</scope>
         </dependency>
-        <!-- tag::junit[] -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -213,7 +207,6 @@ touch /home/project/guide-maven-intro/start/pom.xml
                     <serverName>guideServer</serverName>
                 </configuration>
             </plugin>
-            <!-- tag::maven-failsafe-plugin[] -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -221,7 +214,6 @@ touch /home/project/guide-maven-intro/start/pom.xml
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.default.http.port}</http.port>
-                        <!-- tag::war-name[] -->
                         <war.name>${liberty.var.app.context.root}</war.name>
                     </systemPropertyVariables>
                 </configuration>
