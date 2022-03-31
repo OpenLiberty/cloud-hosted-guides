@@ -394,7 +394,7 @@ curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
 
 ::page{title="Testing the metrics"}
 
-You can test your application manually, but automated tests ensure code quality because they trigger a failure whenever a code change introduces a defect. JUnit and the restfulWS Client API provide a simple environment for you to write tests.
+You can test your application manually, but automated tests ensure code quality because they trigger a failure whenever a code change introduces a defect. JUnit and the Jakarta Restful Web Services Client API provide a simple environment for you to write tests.
 
 Create the ***MetricsIT*** class.
 
@@ -621,7 +621,7 @@ public class MetricsIT {
 
 The ***oneTimeSetup()*** method retrieves the port number for the server and builds a base URL string to set up the tests. Apply the ***@BeforeAll*** annotation to this method to run it before any of the test cases.
 
-The ***setup()*** method creates a restfulWS client that makes HTTP requests to the ***inventory*** service. The ***teardown()*** method destroys this client instance. Apply the ***@BeforeEach*** annotation so that a method runs before a test case and apply the ***@AfterEach*** annotation so that a method runs after a test case. Apply these annotations to methods that are generally used to perform any setup and teardown tasks before and after a test.
+The ***setup()*** method creates a JAX-RS client that makes HTTP requests to the ***inventory*** service. The ***teardown()*** method destroys this client instance. Apply the ***@BeforeEach*** annotation so that a method runs before a test case and apply the ***@AfterEach*** annotation so that a method runs after a test case. Apply these annotations to methods that are generally used to perform any setup and teardown tasks before and after a test.
 
 To force these test cases to run in a particular order, annotate your ***MetricsIT*** test class with the ***@TestMethodOrder(OrderAnnotation.class)*** annotation. ***OrderAnnotation.class*** runs test methods in numerical order, according to the values specified in the ***@Order*** annotation. You can also create a custom ***MethodOrderer*** class or use built-in ***MethodOrderer*** implementations, such as ***OrderAnnotation.class***, ***Alphanumeric.class***, or ***Random.class***. Label your test cases with the ***@Test*** annotation so that they automatically run when your test class runs.
 
