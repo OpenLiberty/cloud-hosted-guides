@@ -21,11 +21,11 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 You will learn how to document and filter RESTful APIs from annotations, POJOs, and static OpenAPI files by using MicroProfile OpenAPI.
 
-The OpenAPI specification, previously known as the Swagger specification, defines a standard interface for documenting and exposing RESTful APIs. This specification allows both humans and computers to understand or process the functionalities of services without requiring direct access to underlying source code or documentation. The MicroProfile OpenAPI specification provides a set of Java interfaces and programming models that allow Java developers to natively produce OpenAPI v3 documents from their restfulWS applications.
+The OpenAPI specification, previously known as the Swagger specification, defines a standard interface for documenting and exposing RESTful APIs. This specification allows both humans and computers to understand or process the functionalities of services without requiring direct access to underlying source code or documentation. The MicroProfile OpenAPI specification provides a set of Java interfaces and programming models that allow Java developers to natively produce OpenAPI v3 documents from their JAX-RS applications.
 
 You will document the RESTful APIs of the provided ***inventory*** service, which serves two endpoints, ***inventory/systems*** and ***inventory/properties***. These two endpoints function the same way as in the other MicroProfile guides.
 
-Before you proceed, note that the 1.0 version of the MicroProfile OpenAPI specification does not define how the ***/openapi*** endpoint may be partitioned in the event of multiple restfulWS applications running on the same server. In other words, you must stick to one restfulWS application per server instance as the behaviour for handling multiple applications is currently undefined.
+Before you proceed, note that the 1.0 version of the MicroProfile OpenAPI specification does not define how the ***/openapi*** endpoint may be partitioned in the event of multiple JAX-RS applications running on the same server. In other words, you must stick to one JAX-RS application per server instance as the behaviour for handling multiple applications is currently undefined.
 
 
 ::page{title="Getting started"}
@@ -91,7 +91,7 @@ mvn liberty:stop
 
 ::page{title="Generating the OpenAPI document for the inventory service"}
 
-You can generate an OpenAPI document in various ways. First, because all restfulWS annotations are processed by default, you can augment your existing restfulWS annotations with OpenAPI annotations to enrich your APIs with a minimal amount of work. Second, you can use a set of predefined models to manually create all elements of the OpenAPI tree. Finally, you can filter various elements of the OpenAPI tree, changing them to your liking or removing them entirely.
+You can generate an OpenAPI document in various ways. First, because all Jakarta Restful Web Services annotations are processed by default, you can augment your existing Jakarta Restful Web Services annotations with OpenAPI annotations to enrich your APIs with a minimal amount of work. Second, you can use a set of predefined models to manually create all elements of the OpenAPI tree. Finally, you can filter various elements of the OpenAPI tree, changing them to your liking or removing them entirely.
 
 Navigate to the ***start*** directory to begin.
 ```bash
@@ -113,7 +113,7 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Because the restfulWS framework handles basic API generation for restfulWS annotations, a skeleton OpenAPI tree will be generated from the ***inventory*** service. You can use this tree as a starting point and augment it with annotations and code to produce a complete OpenAPI document.
+Because the Jakarta Restful Web Services framework handles basic API generation for Jakarta Restful Web Services annotations, a skeleton OpenAPI tree will be generated from the ***inventory*** service. You can use this tree as a starting point and augment it with annotations and code to produce a complete OpenAPI document.
 
 
 
@@ -125,9 +125,9 @@ curl http://localhost:9080/openapi
 Click the following button to visit the UI by the ***/openapi/ui*** endpoint for a more interactive view of the APIs.
 ::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
-### Augmenting the existing restfulWS annotations with OpenAPI annotations
+### Augmenting the existing Jakarta Restful Web Services annotations with OpenAPI annotations
 
-Because all restfulWS annotations are processed by default, you can augment the existing code with OpenAPI annotations without needing to rewrite portions of the OpenAPI document that are already covered by the restfulWS framework.
+Because all Jakarta Restful Web Services annotations are processed by default, you can augment the existing code with OpenAPI annotations without needing to rewrite portions of the OpenAPI document that are already covered by the Jakarta Restful Web Services framework.
 
 Update the ***InventoryResource*** class.
 
@@ -221,7 +221,7 @@ public class InventoryResource {
 
 
 
-Add OpenAPI ***@APIResponse***, ***@APIResponseSchema***, ***@Operation***, and ***@Parameter*** annotations to the two restfulWS methods, ***getPropertiesForHost()*** and ***listContents()***.
+Add OpenAPI ***@APIResponse***, ***@APIResponseSchema***, ***@Operation***, and ***@Parameter*** annotations to the two JAX-RS endpoint methods, ***getPropertiesForHost()*** and ***listContents()***.
 
 
 
@@ -240,7 +240,7 @@ Since the Open Liberty server was started in development mode at the beginning o
 curl http://localhost:9080/openapi
 ```
 
-The two endpoints at which your restfulWS methods are served are now more meaningful:
+The two endpoints at which your JAX-RS endpoint methods are served are now more meaningful:
 
 ```
 /inventory/systems:
