@@ -490,7 +490,7 @@ public class InventoryEndpointIT {
 
 The ***@BeforeAll*** annotation is placed on a method that runs before any of the test cases. In this case, the ***oneTimeSetup()*** method retrieves the port number for the Open Liberty server and builds a base URL string that is used throughout the tests.
 
-The ***@BeforeEach*** and ***@AfterEach*** annotations are placed on methods that run before and after every test case. These methods are generally used to perform any setup and teardown tasks. In this case, the ***setup()*** method creates a restfulWS client, which makes HTTP requests to the ***inventory*** service. The ***teardown()*** method simply destroys this client instance.
+The ***@BeforeEach*** and ***@AfterEach*** annotations are placed on methods that run before and after every test case. These methods are generally used to perform any setup and teardown tasks. In this case, the ***setup()*** method creates a JAX-RS client, which makes HTTP requests to the ***inventory*** service. The ***teardown()*** method simply destroys this client instance.
 
 See the following descriptions of the test cases:
 
