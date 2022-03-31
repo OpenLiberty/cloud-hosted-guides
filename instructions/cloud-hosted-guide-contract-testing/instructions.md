@@ -302,7 +302,6 @@ Replace the inventory Maven project file.
             <version>9.1.0</version>
             <scope>provided</scope>
         </dependency>
-        <!-- tag::pactJunit[] -->
         <dependency>
             <groupId>au.com.dius</groupId>
             <artifactId>pact-jvm-consumer-junit</artifactId>
@@ -647,7 +646,6 @@ Replace the system Maven project file.
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
-            <!-- tag::libertyMavenPlugin[] -->
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
