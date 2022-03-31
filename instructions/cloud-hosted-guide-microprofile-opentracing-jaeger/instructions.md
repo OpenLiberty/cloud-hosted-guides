@@ -6,7 +6,7 @@ version-history-start-date: 2021-04-16 13:57:46 UTC
 ---
 ::page{title="Welcome to the Enabling distributed tracing in microservices with Jaeger guide!"}
 
-Explore how to enable and customize tracing of restfulWS and non-restfulWS methods by using MicroProfile OpenTracing and Jaeger.
+Explore how to enable and customize tracing of JAX-RS and non-JAX-RS endpoint methods by using MicroProfile OpenTracing and Jaeger.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -21,7 +21,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to enable automatic tracing for restfulWS methods and create custom tracers for non-restfulWS methods by using MicroProfile OpenTracing.
+You will learn how to enable automatic tracing for JAX-RS endpoint methods and create custom tracers for non-JAX-RS endpoint methods by using MicroProfile OpenTracing.
 
 OpenTracing is a standard API for instrumenting microservices for distributed tracing. Distributed tracing helps troubleshoot microservices by examining and logging requests as they propagate through a distributed system, allowing developers to tackle the otherwise difficult task of debugging these requests. Without a distributed tracing system in place, analyzing the workflows of operations becomes difficult, particularly in regard to pinpointing when and by whom a request is received or when a response is sent back.
 
@@ -207,13 +207,13 @@ You can view the configuration environment variables at the [Jaeger Java client 
 
 ::page{title="Enabling and disabling distributed tracing"}
 
-The [MicroProfile OpenTracing feature](https://github.com/eclipse/microprofile-opentracing) enables tracing of all restfulWS methods by default. To further control and customize these traces, use the ***@Traced*** annotation to enable and disable tracing of particular methods. You can also inject a custom ***Tracer*** object to create and customize spans.
+The [MicroProfile OpenTracing feature](https://github.com/eclipse/microprofile-opentracing) enables tracing of all JAX-RS endpoint methods by default. To further control and customize these traces, use the ***@Traced*** annotation to enable and disable tracing of particular methods. You can also inject a custom ***Tracer*** object to create and customize spans.
 
 This feature is already enabled in the ***inventory*** and ***system*** configuration files.
 
 ### Enabling distributed tracing without code instrumentation
 
-Because tracing of all restfulWS methods is enabled by default, you only need to enable the ***MicroProfile OpenTracing*** feature in the ***server.xml*** file to see some basic traces in Jaeger.
+Because tracing of all JAX-RS endpoint methods is enabled by default, you only need to enable the ***MicroProfile OpenTracing*** feature in the ***server.xml*** file to see some basic traces in Jaeger.
 
 The OpenTracing API is exposed as a third-party API in Open Liberty. To add the visibility of OpenTracing APIs to the application, add ***third-party*** to the types of API packages that this class loader supports. Instead of explicitly configuring a list of API packages that includes ***third-party***, set the ***+third-party*** value to the ***apiTypeVisibility*** attribute in the ***classLoader*** configuration. This configuration adds ***third-party*** to the default list of API package types that are supported.
 
@@ -226,7 +226,7 @@ Use the ***@Traced*** annotation to define explicit span creation for specific c
 
 The ***@Traced*** annotation can be configured with the following two parameters:
 
-* The ***value=[true|false]*** parameter indicates whether a particular class or method is traced. For example, while all restfulWS methods are traced by default, you can disable their tracing by using the ***@Traced(false)*** annotation. This parameter is set to ***true*** by default.
+* The ***value=[true|false]*** parameter indicates whether a particular class or method is traced. For example, while all JAX-RS endpoint methods are traced by default, you can disable their tracing by using the ***@Traced(false)*** annotation. This parameter is set to ***true*** by default.
 * The ***operationName=\<Span name\>*** parameter indicates the name of the span that is assigned to the method that is traced. If you omit this parameter, the span is named with the ***\<package name\>.\<class name\>.\<method name\>*** format. If you use this parameter at a class level, then all methods within that class have the same span name unless they are explicitly overridden by another ***@Traced*** annotation.
 
 Update the ***InventoryManager*** class.
@@ -297,7 +297,7 @@ public class InventoryManager {
 
 
 
-Enable tracing of the ***list()*** non-restfulWS method by updating ***@Traced*** as shown.
+Enable tracing of the ***list()*** non-JAX-RS endpoint method by updating ***@Traced*** as shown.
 
 
 Run the following curl command:
@@ -308,7 +308,7 @@ curl -s http://localhost:9081/inventory/systems | jq
 Check your Jaeger server. If you have the Jaeger UI open from a previous step, refresh the page. Select the ***inventory*** traces and click the **Find Traces** button.
 ::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
-You see a new trace record that is two spans long. One span is for the ***listContents()*** restfulWS method in the ***InventoryResource*** class, and the other span is for the ***list()*** method in the ***InventoryManager*** class.
+You see a new trace record that is two spans long. One span is for the ***listContents()*** JAX-RS endpoint method in the ***InventoryResource*** class, and the other span is for the ***list()*** method in the ***InventoryManager*** class.
 
 Verify that you see the following spans:
 
@@ -318,7 +318,7 @@ Verify that you see the following spans:
 
 ### Disable automatic distributed tracing
 
-You can use the ***@Traced*** annotation with a value of ***false*** to disable automatic distributed tracing of restfulWS methods.
+You can use the ***@Traced*** annotation with a value of ***false*** to disable automatic distributed tracing of JAX-RS endpoint methods.
 
 Update the ***InventoryResource*** class.
 
@@ -392,7 +392,7 @@ public class InventoryResource {
 
 
 
-Disable tracing of the ***listContents()*** restfulWS method by setting ***@Traced(false)***.
+Disable tracing of the ***listContents()*** JAX-RS endpoint method by setting ***@Traced(false)***.
 
 
 Run the following curl command:
