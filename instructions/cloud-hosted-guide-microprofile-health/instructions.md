@@ -177,7 +177,6 @@ public class SystemStartupCheck implements HealthCheck {
         String cpuUsage = String.valueOf(cpuUsed);
         return HealthCheckResponse.named(SystemResource.class
                                             .getSimpleName() + " Startup Check")
-                                            .withData("cpu used", cpuUsage)
                                             .status(cpuUsed < 0.95).build();
     }
 }
@@ -226,8 +225,6 @@ public class SystemLivenessCheck implements HealthCheck {
 
     return HealthCheckResponse.named(
       SystemResource.class.getSimpleName() + " Liveness Check")
-                              .withData("memory used", memUsed)
-                              .withData("memory max", memMax)
                               .status(memUsed < memMax * 0.9).build();
   }
 }
@@ -324,7 +321,6 @@ public class InventoryStartupCheck implements HealthCheck {
         String cpuUsage = String.valueOf(cpuUsed);
         return HealthCheckResponse.named(InventoryResource.class
                                             .getSimpleName() + " Startup Check")
-                                            .withData("cpu used", cpuUsage)
                                             .status(cpuUsed < 0.95).build();
     }
 }
@@ -375,8 +371,6 @@ public class InventoryLivenessCheck implements HealthCheck {
 
       return HealthCheckResponse.named(
         InventoryResource.class.getSimpleName() + " Liveness Check")
-                                .withData("memory used", memUsed)
-                                .withData("memory max", memMax)
                                 .status(memUsed < memMax * 0.9).build();
   }
 }
