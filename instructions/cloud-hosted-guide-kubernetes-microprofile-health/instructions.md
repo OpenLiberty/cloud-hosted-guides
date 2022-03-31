@@ -313,12 +313,10 @@ spec:
         env:
         - name: SYS_APP_HOSTNAME
           value: system-service
-        # inventory probe
+        # inventory probes
         startupProbe:
           httpGet:
-            #tag::start2[]
             path: /health/started
-            #end::start2[]
             port: 9080
         livenessProbe:
           httpGet:
