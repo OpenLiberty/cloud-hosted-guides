@@ -6,7 +6,7 @@ version-history-start-date: 2020-04-22 13:17:27 UTC
 ---
 ::page{title="Welcome to the Creating a RESTful web service guide!"}
 
-Learn how to create a RESTful service with restfulWS, JSON-B, and Open Liberty.
+Learn how to create a RESTful service with Jakarta Restful Web Services, JSON-B, and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -20,9 +20,9 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to build and test a simple RESTful service with Jakarta EE RESTful Web Services (restfulWS) and JSON-B, which will expose the JVM's system properties. The RESTful service will respond to ***GET*** requests made to the ***http://localhost:9080/LibertyProject/system/properties*** URL.
+You will learn how to build and test a simple RESTful service with Jakarta Restful Web Services and JSON-B, which will expose the JVM's system properties. The RESTful service responds to ***GET*** requests made to the ***http://localhost:9080/LibertyProject/system/properties*** URL.
 
-The service responds to a ***GET*** request with a JSON representation of the system properties, where each property is a field in a JSON object like this:
+The service responds to a ***GET*** request with a JSON representation of the system properties, where each property is a field in a JSON object, like this:
 
 ```
 {
@@ -31,7 +31,7 @@ The service responds to a ***GET*** request with a JSON representation of the sy
 }
 ```
 
-The design of an HTTP API is essential when creating a web application. The REST API has become the go-to architectural style for building an HTTP API. The restfulWS API offers functionality for creating, reading, updating, and deleting exposed resources. The restfulWS API supports the creation of RESTful web services that come with desirable properties, such as performance, scalability, and modifiability.
+The design of an HTTP API is an essential part of creating a web application. The REST API is the go-to architectural style for building an HTTP API. The Jakarta Restful Web Services API offers functions to create, read, update, and delete exposed resources. The Jakarta Restful Web Services API supports the creation of RESTful web services that are performant, scalable, and modifiable.
 
 ::page{title="Getting started"}
 
@@ -96,7 +96,7 @@ mvn liberty:stop
 ```
 
 
-::page{title="Creating a restfulWS application"}
+::page{title="Creating a RESTful application"}
 
 Navigate to the ***start*** directory to begin.
 ```bash
@@ -118,7 +118,7 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-RestfulWS has two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modelled as a class. The second is a restfulWS application, which groups all exposed resources under a common path. You can think of the restfulWS application as a wrapper for all of your resources.
+Jakarta Restful Web Services defines two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modelled as a class. The second is a RESTful application, which groups all exposed resources under a common path. You can think of the RESTful application as a wrapper for all of your resources.
 
 
 Replace the ***SystemApplication*** class.
@@ -144,12 +144,12 @@ public class SystemApplication extends Application {
 
 
 
-The ***SystemApplication*** class extends the ***Application*** class, which associates all restfulWS resource classes in the WAR file with this restfulWS application. These resources become available under the common path that's specified with the ***@ApplicationPath*** annotation. The ***@ApplicationPath*** annotation has a value that indicates the path in the WAR file that the restfulWS application accepts requests from.
+The ***SystemApplication*** class extends the ***Application*** class, which associates all RESTful resource classes in the WAR file with this RESTful application. These resources become available under the common path that's specified with the ***@ApplicationPath*** annotation. The ***@ApplicationPath*** annotation has a value that indicates the path in the WAR file that the RESTful application accepts requests from.
 
 
-::page{title="Creating the restfulWS resource"}
+::page{title="Creating the RESTful resource"}
 
-In restfulWS, a single class should represent a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. It is easy to have a single class handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability in the long run.
+In a RESTful application, a single class represents a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. A single class can easily handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability in the long run.
 
 Create the ***PropertiesResource*** class.
 
@@ -191,13 +191,13 @@ public class PropertiesResource {
 
 
 
-The ***@Path*** annotation on the class indicates that this resource responds to the ***properties*** path in the restfulWS application. The ***@ApplicationPath*** annotation in the ***SystemApplication*** class together with the ***@Path*** annotation in this class indicates that the resource is available at the ***system/properties*** path.
+The ***@Path*** annotation on the class indicates that this resource responds to the ***properties*** path in the RESTful Web Services application. The ***@ApplicationPath*** annotation in the ***SystemApplication*** class together with the ***@Path*** annotation in this class indicates that the resource is available at the ***system/properties*** path.
 
-RestfulWS maps the HTTP methods on the URL to the methods of the class by using annotations. Your application uses the ***GET*** annotation to map an HTTP ***GET*** request to the ***system/properties*** path.
+Jakarta Restful Web Services maps the HTTP methods on the URL to the methods of the class by using annotations. Your application uses the ***GET*** annotation to map an HTTP ***GET*** request to the ***system/properties*** path.
 
-The ***@GET*** annotation on the method indicates that this method is to be called for the HTTP ***GET*** method. The ***@Produces*** annotation indicates the format of the content that will be returned. The value of the ***@Produces*** annotation will be specified in the HTTP ***Content-Type*** response header. For this application, a JSON structure is to be returned. The desired ***Content-Type*** for a JSON response is ***application/json*** with ***MediaType.APPLICATION_JSON*** instead of the ***String*** content type. Using a constant such as ***MediaType.APPLICATION_JSON*** is better because if there's a spelling error, a compile failure occurs.
+The ***@GET*** annotation on the method indicates that this method is called for the HTTP ***GET*** method. The ***@Produces*** annotation indicates the format of the content that is returned. The value of the ***@Produces*** annotation is specified in the HTTP ***Content-Type*** response header. This application returns a JSON structured. The desired ***Content-Type*** for a JSON response is ***application/json***, with ***MediaType.APPLICATION_JSON*** instead of the ***String*** content type. Using a constant such as ***MediaType.APPLICATION_JSON*** is better because a spelling error results in a compile failure.
 
-RestfulWS supports a number of ways to marshal JSON. The restfulWS 2.1 specification mandates JSON-Binding (JSON-B). The method body returns the result of ***System.getProperties()***, which is of type ***java.util.Properties***. The method is annotated with ***@Produces(MediaType.APPLICATION_JSON)*** so restfulWS uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
+Jakarta Restful Web Services supports a number of ways to marshal JSON. The Jakarta Restful Web Services specification mandates JSON-Binding (JSON-B). The method body returns the result of ***System.getProperties()***, which is of type ***java.util.Properties***. The method is annotated with ***@Produces(MediaType.APPLICATION_JSON)*** so Jakarta Restful Web Services uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
 
 
 ::page{title="Configuring the server"}
@@ -231,7 +231,7 @@ Replace the server configuration file.
 
 The configuration does the following actions:
 
-* Configures the server to enable restfulWS. This is specified in the ***featureManager*** element.
+* Configures the server to enable Jakarta Restful Web Services. This is specified in the ***featureManager*** element.
 * Configures the server to resolve the HTTP port numbers from variables, which are then specified in the Maven ***pom.xml*** file. This is specified in the ***httpEndpoint*** element. Variables use the ***${variableName}*** syntax.
 * Configures the server to run the produced web application on a context root specified in the ***pom.xml*** file. This is specified in the ***webApplication*** element.
 
@@ -259,7 +259,7 @@ curl -s http://localhost:9080/LibertyProject/system/properties | jq
 ::page{title="Testing the service"}
 
 
-You can test this service manually by starting a server and visiting the http://localhost:9080/LibertyProject/system/properties URL. However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the restfulWS Client API provide a simple environment to test the application.
+You can test this service manually by starting a server and visiting the http://localhost:9080/LibertyProject/system/properties URL. However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the Jakarta Restful Web Services Client API provide a simple environment to test the application.
 
 You can write tests for the individual units of code outside of a running application server, or they can be written to call the application server directly. In this example, you will create a test that does the latter.
 
@@ -333,7 +333,7 @@ These Maven properties are then passed to the Java test program as the ***system
 
 Getting the values to create a representation of the URL is simple. The test class uses the ***getProperty*** method to get the application details.
 
-To call the restfulWS service using the restfulWS client, first create a ***WebTarget*** object by calling the ***target*** method that provides the URL. To cause the HTTP request to occur, the ***request().get()*** method is called on the ***WebTarget*** object. The ***get*** method call is a synchronous call that blocks until a response is received. This call returns a ***Response*** object, which can be inspected to determine whether the request was successful.
+To call the RESTful service using the Jakarta Restful Web Services client, first create a ***WebTarget*** object by calling the ***target*** method that provides the URL. To cause the HTTP request to occur, the ***request().get()*** method is called on the ***WebTarget*** object. The ***get*** method call is a synchronous call that blocks until a response is received. This call returns a ***Response*** object, which can be inspected to determine whether the request was successful.
 
 The first thing to check is that a ***200*** response was received. The JUnit ***assertEquals*** method can be used for this check.
 
@@ -366,7 +366,7 @@ When you are done checking out the service, exit dev mode by pressing ***CTRL+C*
 
 ### Nice Work!
 
-You just developed a RESTful service in Open Liberty by using restfulWS and JSON-B.
+You just developed a RESTful service in Open Liberty by using Jakarta Restful Web Services and JSON-B.
 
 
 
