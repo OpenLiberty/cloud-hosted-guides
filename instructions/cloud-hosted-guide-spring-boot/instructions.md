@@ -289,7 +289,7 @@ Update the **Maven POM** file in the **start** directory.
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.6.2</version>
+    <version>2.6.6</version>
   </parent>
 
   <dependencies>
@@ -500,7 +500,7 @@ Update the Maven POM file in the **start** directory.
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.6.2</version>
+    <version>2.6.6</version>
   </parent>
 
   <dependencies>
@@ -560,6 +560,9 @@ Update the Maven POM file in the **start** directory.
         <artifactId>liberty-maven-plugin</artifactId>
         <version>3.5.1</version>
         <configuration>
+          <install>
+            <version>22.0.0.2</version>
+          </install>
           <appsDirectory>apps</appsDirectory>
           <!-- tag::installAppPackages[] -->
           <installAppPackages>spring-boot-project</installAppPackages>
