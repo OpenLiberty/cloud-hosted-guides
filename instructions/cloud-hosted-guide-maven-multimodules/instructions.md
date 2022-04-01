@@ -4,6 +4,17 @@ title: instructions
 branch: lab-70-instruction
 version-history-start-date: 2021-12-03 21:25:57 UTC
 ---
+::page{title="Welcome to the Creating a multi-module application guide!"}
+
+You will learn how to build an application with multiple modules with Maven and Open Liberty.
+
+In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
+
+This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
+
+The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
+
+
 
 
 ::page{title="What you'll learn"}
@@ -20,6 +31,28 @@ You will build a unit converter application that converts heights from centimete
 
 
 
+::page{title="Getting started"}
+
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
+
+Run the following command to navigate to the **/home/project** directory:
+
+```bash
+cd /home/project
+```
+
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-multimodules.git) and use the projects that are provided inside:
+
+```bash
+git clone https://github.com/openliberty/guide-maven-multimodules.git
+cd guide-maven-multimodules
+```
+
+
+The ***start*** directory contains the starting project that you will build upon.
+
+The ***finish*** directory contains the finished project that you will build.
 
 Access partial implementation of the application from the ***start*** folder. This folder includes a web module in the ***war*** folder, a Java library in the ***jar*** folder, and template files in the ***ear*** folder. However, the Java library and the web module are independent projects, and you will need to complete the following steps to implement the application:
 
@@ -384,6 +417,20 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-maven-multimodules/start
 ```
 
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```bash
+mvn liberty:dev
+```
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 ### Updating the Java classes in different modules
 
