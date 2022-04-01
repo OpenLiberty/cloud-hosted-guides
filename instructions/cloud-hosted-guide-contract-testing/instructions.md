@@ -572,6 +572,7 @@ public class SystemBrokerIT {
 
 
 
+
 The connection information for the Pact Broker is provided with the ***@PactBroker*** annotation. The dependency also provides a JUnit5 Invocation Context Provider with the ***pactVerificationTestTemplate()*** method to generate a test for each of the interactions.
 
 The ***pact.verifier.publishResults*** property is set to ***true*** so that the results are sent to the Pact Broker after the tests are completed.
