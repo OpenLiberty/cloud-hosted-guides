@@ -1,5 +1,10 @@
-
-# **Welcome to the Containerizing, packaging, and running a Spring Boot application guide!**
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
+::page{title="Welcome to the Containerizing, packaging, and running a Spring Boot application guide!"}
 
 Learn how to containerize, package, and run a Spring Boot application on an Open Liberty server without modification.
 
@@ -11,69 +16,62 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 The starting point of this guide is the finished application from the
 [Building an Application with Spring Boot](https://spring.io/guides/gs/spring-boot/) guide.
 If you are not familiar with Spring Boot, complete that guide first.
 Java 8 is required to run this project.
 
-You will learn how to use the **springBootUtility** command to deploy a Spring Boot application in Docker on an Open Liberty server without modification.
+You will learn how to use the ***springBootUtility*** command to deploy a Spring Boot application in Docker on an Open Liberty server without modification.
 This command stores the dependent library JAR files of the application to the target library cache,
 and packages the remaining application artifacts into a thin application JAR file.
 
 You will also learn how to run the Spring Boot application locally with an Open Liberty server,
 and how to package it so that it is embedded with an Open Liberty server.
 
-# **Getting started**
+::page{title="Getting started"}
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
 
 Run the following command to navigate to the **/home/project** directory:
 
-```
+```bash
 cd /home/project
 ```
-{: codeblock}
 
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-spring-boot.git) and use the projects that are provided inside:
 
-```
+```bash
 git clone https://github.com/openliberty/guide-spring-boot.git
 cd guide-spring-boot
 ```
-{: codeblock}
 
 
-The **start** directory contains the starting project that you will build upon.
+The ***start*** directory contains the starting project that you will build upon.
 
-The **finish** directory contains the finished project that you will build.
+The ***finish*** directory contains the finished project that you will build.
 
 
-# **Building and running the application**
+::page{title="Building and running the application"}
 
 First, build the initial Spring Boot application into an executable JAR file. 
-Navigate to the **start** directory and run the Maven package command:
+Navigate to the ***start*** directory and run the Maven package command:
 
 
-```
+```bash
 cd start
 ./mvnw package
 ```
-{: codeblock}
-
-
 
 You can now run the application in the embedded Tomcat web container by executing the JAR file that you built:
 
-```
+```bash
 java -jar target/guide-spring-boot-0.1.0.jar
 ```
-{: codeblock}
 
-
-Notice that the console output displays a message about the application running in Tomcat on port **8080**. 
+Notice that the console output displays a message about the application running in Tomcat on port ***8080***. 
 ```
 ... INFO ... [ main] o.s.b.w.embedded.tomcat.TomcatWebServer : Tomcat started on port(s): 8080 (http) with context path ''
 ```
@@ -84,16 +82,15 @@ Run the following command to access the application:
 ```
 curl http://localhost:8080/hello
 ```
-{: codeblock}
 
 The following output is returned:
 ```
 Greetings from Spring Boot!
 ```
 
-When you need to stop the application, press **CTRL+C** in the command-line session where you ran the application.
+When you need to stop the application, press ***CTRL+C*** in the command-line session where you ran the application.
 
-# **Building and running the application in a Docker container**
+::page{title="Building and running the application in a Docker container"}
 
 You will build an Open Liberty Docker image to run the Spring Boot application.
 Using Docker, you can run your thinned application with a few simple commands.
@@ -105,19 +102,20 @@ Learn more about Docker on the [official Docker website](https://www.docker.com/
 Install Docker by following the instructions in the
 [official Docker documentation](https://docs.docker.com/engine/install).
 
-Navigate to the **start** directory. 
+Navigate to the ***start*** directory. 
 
-Create the **Dockerfile** in the **start** directory.
+Create the ***Dockerfile*** in the ***start*** directory.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/guide-spring-boot/start/Dockerfile
 ```
-{: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-spring-boot/start/Dockerfile
+> Then, to open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-spring-boot/start/Dockerfile, or click the following button
 
+::openFile{path="/home/project/guide-spring-boot/start/Dockerfile"}
 
 
 
@@ -158,7 +156,6 @@ COPY --chown=1001:0 --from=staging /staging/thin-guide-spring-boot-0.1.0.jar \
 
 RUN configure.sh 
 ```
-{: codeblock}
 
 
 
@@ -166,64 +163,53 @@ This Dockerfile is written in two main stages.
 For more information about multi-stage Dockerfiles, see the documentation on the
 [official Docker website](https://docs.docker.com/develop/develop-images/multistage-build/).
 
-The first stage copies the **guide-spring-boot-0.1.0.jar**
-Spring Boot application to the **/staging** temporary directory, 
-and then uses the Open Liberty **springBootUtility** command to thin the application. 
-For more information about the **springBootUtility** command, 
+The first stage copies the ***guide-spring-boot-0.1.0.jar***
+Spring Boot application to the ***/staging*** temporary directory, 
+and then uses the Open Liberty ***springBootUtility*** command to thin the application. 
+For more information about the ***springBootUtility*** command, 
 see the [springBootUtility documentation](https://openliberty.io/docs/latest/reference/command/springbootUtility-thin.html).
 
-The second stage begins with the **Open Liberty Docker image**. 
-The Dockerfile copies the **server.xml** file from the **/opt/ol/wlp/templates** directory, 
+The second stage begins with the ***Open Liberty Docker image***. 
+The Dockerfile copies the ***server.xml*** file from the ***/opt/ol/wlp/templates*** directory, 
 which enables Spring Boot and TLS support. 
-Then, the Dockerfile copies the Spring Boot dependent library JAR files that are at the **lib.index.cache** directory 
-and the **thin-guide-spring-boot-0.1.0.jar** file. 
-The **lib.index.cache** directory and the **thin-guide-spring-boot-0.1.0.jar** file were both generated in the first stage.
+Then, the Dockerfile copies the Spring Boot dependent library JAR files that are at the ***lib.index.cache*** directory 
+and the ***thin-guide-spring-boot-0.1.0.jar*** file. 
+The ***lib.index.cache*** directory and the ***thin-guide-spring-boot-0.1.0.jar*** file were both generated in the first stage.
 
 Run the following command to download or update to the latest Open Liberty Docker image:
 
-```
+```bash
 docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
-{: codeblock}
-
 
 Use the following command to build the Docker image:
-```
+```bash
 docker build -t springboot .
 ```
-{: codeblock}
 
+To verify that the images are built, run the ***docker images*** command to list all local Docker images:
 
-To verify that the images are built, run the **docker images** command to list all local Docker images:
-
-```
+```bash
 docker images
 ```
-{: codeblock}
 
-
-Your **springboot** image appears in the list of Docker images:
+Your ***springboot*** image appears in the list of Docker images:
 ```
 REPOSITORY    TAG       IMAGE ID         CREATED           SIZE
 springboot    latest    d3ffdaa81854     27 seconds ago    486MB
 ```
 
 Now, you can run the Spring Boot application in a Docker container:
-```
+```bash
 docker run -d --name springBootContainer -p 9080:9080 -p 9443:9443 springboot
 ```
-{: codeblock}
-
 
 Before you access your application from the browser,
-run the **docker ps** command to make sure that your container is running:
+run the ***docker ps*** command to make sure that your container is running:
 
-```
+```bash
 docker ps
 ```
-{: codeblock}
-
-
 
 You see an entry similar to the following example:
 ```
@@ -232,11 +218,9 @@ e33532aa07d6        springboot          "/opt/ibm/docker/doc…"   7 seconds ago
 ```
 
 You can watch the application start by monitoring the logs:
-```
+```bash
 docker logs springBootContainer
 ```
-{: codeblock}
-
 
 
 After the application starts, run the following command to access the application:
@@ -244,35 +228,32 @@ After the application starts, run the following command to access the applicatio
 ```
 curl http://localhost:9080/hello
 ```
-{: codeblock}
 
-<br/>
-### **Tearing down the Docker container**
+### Tearing down the Docker container
 
 To stop and remove your container, run the following commands:
 
-```
+```bash
 docker stop springBootContainer
 docker rm springBootContainer
 ```
-{: codeblock}
+
+::page{title="Running the application on Open Liberty"}
+
+Next, you will run the Spring Boot application locally on Open Liberty by updating the ***pom.xml*** file.
+
+The ***pom.xml*** was created for you in this directory. 
+
+Update the ***Maven POM*** file in the ***start*** directory.
+
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-spring-boot/start/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-spring-boot/start/pom.xml"}
 
 
-# **Running the application on Open Liberty**
 
-Next, you will run the Spring Boot application locally on Open Liberty by updating the **pom.xml** file.
-
-The **pom.xml** was created for you in this directory. 
-
-Update the **Maven POM** file in the **start** directory.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-spring-boot/start/pom.xml
-
-
-
-
-```
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
@@ -284,7 +265,7 @@ Update the **Maven POM** file in the **start** directory.
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.6.2</version>
+    <version>2.6.6</version>
   </parent>
 
   <dependencies>
@@ -296,7 +277,6 @@ Update the **Maven POM** file in the **start** directory.
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
-    <!-- tag::tests[] -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
@@ -338,16 +318,16 @@ Update the **Maven POM** file in the **start** directory.
         </executions>
       </plugin>
 
-      <!-- tag::libertyMavenPlugin[] -->
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
         <version>3.5.1</version>
         <configuration>
+          <install>
+            <version>22.0.0.2</version>
+          </install>
           <appsDirectory>apps</appsDirectory>
-          <!-- tag::installAppPackages[] -->
           <installAppPackages>spring-boot-project</installAppPackages>
-          <!-- tag::include[] -->
         </configuration>
         <executions>
           <execution>
@@ -362,93 +342,61 @@ Update the **Maven POM** file in the **start** directory.
           </execution>
         </executions>
       </plugin>
-      <!-- End of Liberty Maven plugin -->
 
     </plugins>
   </build>
 </project>
 ```
-{: codeblock}
 
 
 
 
-The **liberty-maven-plugin** downloads and installs Open Liberty to the **target/liberty** directory.
-The **installAppPackages** configuration element in the
-**pom.xml** file typically takes in the following parameters: **dependencies**, **project**, or **all**.
-The default value is **dependencies**, but to install the Spring Boot application to Open Liberty,
-the value must be **spring-boot-project**.
-This value allows Maven to package, thin, and copy the **guide-spring-boot-0.1.0.jar** application
-to the Open Liberty runtime **applications** directory and shared library directory.
+The ***liberty-maven-plugin*** downloads and installs Open Liberty to the ***target/liberty*** directory.
+The ***installAppPackages*** configuration element in the
+***pom.xml*** file typically takes in the following parameters: ***dependencies***, ***project***, or ***all***.
+The default value is ***dependencies***, but to install the Spring Boot application to Open Liberty,
+the value must be ***spring-boot-project***.
+This value allows Maven to package, thin, and copy the ***guide-spring-boot-0.1.0.jar*** application
+to the Open Liberty runtime ***applications*** directory and shared library directory.
 
 To run the Spring Boot application, the Open Liberty server needs to be correctly configured.
-By default, the **liberty-maven-plugin** picks up the server configuration file from the **src/main/liberty/config** directory.
+By default, the ***liberty-maven-plugin*** picks up the server configuration file from the ***src/main/liberty/config*** directory.
 
-Create the **server.xml**.
+Create the ***server.xml***.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/guide-spring-boot/start/src/main/liberty/config/server.xml
 ```
-{: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-spring-boot/start/src/main/liberty/config/server.xml
+> Then, to open the unknown file in your IDE, select
+> **File** > **Open** > guide-spring-boot/start/unknown, or click the following button
+
+::openFile{path="/home/project/guide-spring-boot/start/unknown"}
 
 
-
-
-```
-<?xml version="1.0" encoding="UTF-8"?>
-<server description="new server">
-
-    <featureManager>
-        <feature>servlet-4.0</feature>
-    <!-- tag::springboot[] -->
-        <feature>springBoot-2.0</feature>
-    </featureManager>
-
-    <httpEndpoint id="defaultHttpEndpoint"
-                  host="*"
-                  httpPort="9080"
-                  httpsPort="9443" />
-
-    <springBootApplication id="guide-spring-boot" 
-                           location="thin-guide-spring-boot-0.1.0.jar"
-                           name="guide-spring-boot" />
-
-</server>
-```
-{: codeblock}
-
-
-The **servlet** and **springBoot** features
+The ***servlet*** and ***springBoot*** features
 are required for the Liberty server to run the Spring Boot application.
-The application port is specified as **9080** and
-the application is configured as a **springBootApplication** element.
+The application port is specified as ***9080*** and
+the application is configured as a ***springBootApplication*** element.
 
 
-If you didn't build the Spring Boot application, run the **package** goal:
+If you didn't build the Spring Boot application, run the ***package*** goal:
 
 
-```
+```bash
 ./mvnw package
 ```
-{: codeblock}
 
-
-
-Next, run the **liberty:run** goal.
+Next, run the ***liberty:run*** goal.
 This goal creates the Open Liberty server, installs required features,
 deploys the Spring Boot application to the Open Liberty server, and starts the application.
 
 
-```
+```bash
 ./mvnw liberty:run
 ```
-{: codeblock}
-
-
 
 
 In another command-line sesssion, run the following command to access the application:
@@ -456,198 +404,83 @@ In another command-line sesssion, run the following command to access the applic
 ```
 curl http://localhost:9080/hello
 ```
-{: codeblock}
 
-After you finish exploring the application, press **CTRL+C** to stop the Open Liberty server.
-Alternatively, you can run the **liberty:stop** goal from the **start** directory in a separate command-line session:
+After you finish exploring the application, press ***CTRL+C*** to stop the Open Liberty server.
+Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in a separate command-line session:
 
 
-```
+```bash
 ./mvnw liberty:stop
 ```
-{: codeblock}
+
+::page{title="Packaging the application embedded with Open Liberty"}
+
+You can update the ***pom.xml*** file to bind more Open Liberty Maven goals to the package phase.
+Binding these goals to the package phase allows the Maven ***package*** goal to build a Spring Boot application that is embedded with Open Liberty.
+
+
+Update the Maven POM file in the ***start*** directory.
+
+> To open the unknown file in your IDE, select
+> **File** > **Open** > guide-spring-boot/start/unknown, or click the following button
+
+::openFile{path="/home/project/guide-spring-boot/start/unknown"}
 
 
 
-# **Packaging the application embedded with Open Liberty**
+The ***include*** configuration element specifies the ***minify, runnable*** values.
+The ***runnable*** value allows the application to be generated as a runnable JAR file.
+The ***minify*** value packages only what you need from your configuration files without bundling the entire Open Liberty install.
 
-You can update the **pom.xml** file to bind more Open Liberty Maven goals to the package phase.
-Binding these goals to the package phase allows the Maven **package** goal to build a Spring Boot application that is embedded with Open Liberty.
+The ***packageName*** configuration element specifies
+that the application is generated as a ***GSSpringBootApp.jar*** file.
 
-
-Update the Maven POM file in the **start** directory.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-spring-boot/start/pom.xml
-
-
-
-
-```
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-
-  <groupId>org.springframework</groupId>
-  <artifactId>guide-spring-boot</artifactId>
-  <version>0.1.0</version>
-
-  <parent>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.6.2</version>
-  </parent>
-
-  <dependencies>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-actuator</artifactId>
-    </dependency>
-    <!-- tag::tests[] -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
-      <scope>test</scope>
-      <exclusions>
-          <exclusion>
-              <groupId>org.hamcrest</groupId>
-              <artifactId>hamcrest-core</artifactId>
-          </exclusion>
-      </exclusions>
-    </dependency>
-  </dependencies>
-
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.22.2</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <!-- tag::libertyMavenPlugin[] -->
-      <plugin>
-        <groupId>io.openliberty.tools</groupId>
-        <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.5.1</version>
-        <configuration>
-          <appsDirectory>apps</appsDirectory>
-          <!-- tag::installAppPackages[] -->
-          <installAppPackages>spring-boot-project</installAppPackages>
-          <!-- tag::include[] -->
-          <include>minify,runnable</include>
-          <!-- tag::packageFile[] -->
-          <packageName>GSSpringBootApp</packageName>
-        </configuration>
-        <executions>
-          <execution>
-            <id>package-server</id>
-            <phase>package</phase>
-            <goals>
-              <goal>create</goal>
-              <goal>install-feature</goal>
-              <goal>deploy</goal>
-              <goal>package</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <!-- End of Liberty Maven plugin -->
-
-    </plugins>
-  </build>
-</project>
-```
-{: codeblock}
-
-
-
-The **include** configuration element specifies the **minify, runnable** values.
-The **runnable** value allows the application to be generated as a runnable JAR file.
-The **minify** value packages only what you need from your configuration files without bundling the entire Open Liberty install.
-
-The **packageName** configuration element specifies
-that the application is generated as a **GSSpringBootApp.jar** file.
-
-The **executions** element specifies the required
+The ***executions*** element specifies the required
 Open Liberty Maven goals to generate the application that is embedded with Open Liberty. 
 
-Next, run the Maven **package** goal:
+Next, run the Maven ***package*** goal:
 
 
-```
+```bash
 ./mvnw package
 ```
-{: codeblock}
 
+Run the repackaged Spring Boot application. This JAR file was defined previously in the ***pom.xml*** file.
 
-
-Run the repackaged Spring Boot application. This JAR file was defined previously in the **pom.xml** file.
-
-```
+```bash
 java -jar target/GSSpringBootApp.jar
 ```
-{: codeblock}
-
 
 
 In another command-line sesssion, run the following command to access the application:
 ```
 curl http://localhost:9080/hello
 ```
-{: codeblock}
 
-When you need to stop the application, press **CTRL+C**.
+When you need to stop the application, press ***CTRL+C***.
 
 
-# **Summary**
+::page{title="Summary"}
 
-## **Nice Work!**
+### Nice Work!
 
 You just ran a basic Spring Boot application with Open Liberty.
 
 
 
-<br/>
-## **Clean up your environment**
+### Clean up your environment
 
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-spring-boot** project by running the following commands:
+Delete the ***guide-spring-boot*** project by running the following commands:
 
-```
+```bash
 cd /home/project
 rm -fr guide-spring-boot
 ```
-{: codeblock}
 
-<br/>
-## **What did you think of this guide?**
+### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
@@ -655,8 +488,7 @@ We want to hear from you. To provide feedback, click the following link.
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
-<br/>
-## **What could make this guide better?**
+### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-spring-boot/issues)
@@ -664,14 +496,12 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/>
-## **Where to next?**
+### Where to next?
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Containerizing microservices](https://openliberty.io/guides/containerize.html)
 
 
-<br/>
-## **Log out of the session**
+### Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
