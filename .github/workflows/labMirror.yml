@@ -46,6 +46,7 @@ jobs:
           - {"github":"cloud-hosted-guide-rest-client-reactjs","gitlab":"cloud-hosted-guide-rest-client-reactjs","gitlab-branch":"lab-88-instruction"}
           - {"github":"cloud-hosted-guide-rest-hateoas","gitlab":"cloud-hosted-guide-rest-hateoas","gitlab-branch":"lab-86-instruction"}
           - {"github":"cloud-hosted-guide-rest-intro","gitlab":"cloud-hosted-guide-rest-intro","gitlab-branch":"lab-141-instruction"}
+          - {"github":"cloud-hosted-guide-spring-boot","gitlab":"cloud-hosted-guide-spring-boot","gitlab-branch":"lab-110-instruction"}
           - {"github":"cloud-hosted-draft-guide-openliberty-operator-intro","gitlab":"cloud-hosted-guide-openliberty-operator-intro","gitlab-branch":"lab-85-instruction"}
           - {"github":"cloud-hosted-draft-guide-openliberty-operator-openshift","gitlab":"cloud-hosted-guide-openliberty-operator-openshift","gitlab-branch":"lab-21-instruction"}
 
