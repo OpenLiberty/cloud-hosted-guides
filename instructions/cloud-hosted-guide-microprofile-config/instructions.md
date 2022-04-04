@@ -4,17 +4,6 @@ title: instructions
 branch: lab-166-instruction
 version-history-start-date: 2020-06-11 12:06:15 UTC
 ---
-::page{title="Welcome to the Configuring microservices guide!"}
-
-Learn how to provide external configuration to microservices using MicroProfile Config.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
 
 
 ::page{title="What you'll learn"}
@@ -25,45 +14,7 @@ You will learn to aggregate multiple configuration sources, assign prioritizatio
 The application that you will be working with is an ***inventory*** service which stores the information about various JVMs running on different hosts. Whenever a request is made to the ***inventory*** service to retrieve the JVM system properties of a particular host, the ***inventory*** service will communicate with the ***system*** service on that host to get these system properties. You will add configuration properties to simulate if a service is down for maintenance.
 
 
-::page{title="Getting started"}
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-config.git) and use the projects that are provided inside:
-
-```bash
-git clone https://github.com/openliberty/guide-microprofile-config.git
-cd guide-microprofile-config
-```
-
-
-The ***start*** directory contains the starting project that you will build upon.
-
-The ***finish*** directory contains the finished project that you will build.
-
-### Try what you'll build
-
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
-
-```bash
-cd finish
-mvn liberty:run
-```
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command to test the availability of the ***system*** microservice and retrieve the system information:
@@ -81,11 +32,6 @@ In addition, you can run the following curl command to access a third microservi
 curl -s http://localhost:9080/config | jq
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
-
-```bash
-mvn liberty:stop
-```
 
 ::page{title="Ordering multiple configuration sources"}
 
@@ -96,20 +42,6 @@ cd /home/project/guide-microprofile-config/start
 ```
 
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```bash
-mvn liberty:dev
-```
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 MicroProfile Config combines configuration properties from multiple sources, each known as a ConfigSource. Each ConfigSource has a specified priority, defined by its ***config_ordinal*** value.
 
@@ -641,9 +573,6 @@ To determine whether the inventory service is in maintenance or not (according t
 
 
 
-::page{title="Running the application"}
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
 While the server is running, run the following curl command to access the ***system*** microservice:
@@ -821,9 +750,6 @@ The ***testChangeEmail()*** test case first puts the ***inventory*** service in 
 In addition, a few endpoint tests have been provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, then you must have introduced a bug into the code. Remember that you must register the custom configuration source and custom converter in the ***src/main/resources/META-INF/services/*** directory. If you don't complete these steps, the tests will fail. These tests run automatically as a part of the integration test suite.
 
 
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
 You see the following output:
 
@@ -850,7 +776,6 @@ The warning and error messages are expected and result from a request to a bad o
 
 To see whether the tests detect a failure, remove the configuration resetting line in the ***setup()*** method of the ***ConfigurationIT.java*** file. Then, manually change some configuration values in the ***resources/CustomConfigSource.json*** file. Rerun the tests. You will see a test failure occur.
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}

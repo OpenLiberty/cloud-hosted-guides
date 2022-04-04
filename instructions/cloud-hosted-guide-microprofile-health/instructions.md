@@ -4,17 +4,6 @@ title: instructions
 branch: lab-168-instruction
 version-history-start-date: 2020-06-11 12:05:38 UTC
 ---
-::page{title="Welcome to the Adding health reports to microservices guide!"}
-
-Explore how to report and check the health of a microservice with MicroProfile Health.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
 
 
 ::page{title="What you'll learn"}
@@ -28,46 +17,8 @@ A service checks its own health by performing necessary self-checks and then rep
 You will add startup, liveness, and readiness checks to the ***system*** and ***inventory*** services, that are provided for you, and implement what is necessary to report health status by using MicroProfile Health.
 
 
-::page{title="Getting started"}
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-health.git) and use the projects that are provided inside:
-
-```bash
-git clone https://github.com/openliberty/guide-microprofile-health.git
-cd guide-microprofile-health
-```
 
 
-The ***start*** directory contains the starting project that you will build upon.
-
-The ***finish*** directory contains the finished project that you will build.
-
-
-### Try what you'll build
-
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
-
-```bash
-cd finish
-mvn liberty:run
-```
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. To access the **system** service, run the following curl command:
@@ -102,11 +53,6 @@ Similarly, access the ***/health/ready*** endpoint by visiting the http://localh
 curl -s http://localhost:9080/health/ready | jq
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
-
-```bash
-mvn liberty:stop
-```
 
 
 ::page{title="Adding health checks to microservices"}
@@ -117,20 +63,6 @@ To begin, run the following command to navigate to the ***start*** directory:
 cd /home/project/guide-microprofile-health/start
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```bash
-mvn liberty:dev
-```
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 A health report will be generated automatically for all services that enable MicroProfile Health. The ***mpHealth*** feature has already been enabled for you in the ***src/main/liberty/config/server.xml*** file.
 
@@ -460,9 +392,6 @@ If you are curious about the injected ***inventoryConfig*** object or if you wan
 
 
 
-::page{title="Running the application"}
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
 While the server is running, run the following curl command to find the aggregated startup ,liveness, and readiness health reports on the two services:
@@ -651,9 +580,6 @@ A few more tests were included to verify the basic functionality of the ***syste
 
 
 
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
 You see the following output:
 
@@ -683,7 +609,6 @@ The tests might fail if your system CPU or memory use is high. The status of the
 
 To see whether the tests detect a failure, manually change the configuration of ***io_openliberty_guides_inventory_inMaintenance*** from ***false*** to ***true*** in the ***resources/CustomConfigSource.json*** file. Rerun the tests to see a test failure occur. The test failure occurs because the initial status of the ***inventory*** service is ***DOWN***.
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
