@@ -95,7 +95,7 @@ Ensure that you are in the ***start*** directory and run the following command t
 
 
 ```bash
-cd /home/project/draft-guide-openliberty-operator-openshift/start
+cd /home/project/guide-openliberty-operator-openshift/start
 mvn clean package
 ```
 
