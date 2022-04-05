@@ -1,4 +1,4 @@
 include:
   - project: "ibm/skills-network/courses/shared-ci"
-    ref: master
+    ref: main
     file: "shared-ci.yml"
