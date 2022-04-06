@@ -4,17 +4,6 @@ title: instructions
 branch: lab-149-instruction
 version-history-start-date: 2021-03-04 19:50:19 UTC
 ---
-::page{title="Welcome to the Consuming a RESTful web service guide!"}
-
-Explore how to access a simple RESTful web service and consume its resources in Java using JSON-B and JSON-P.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
 
 
 ::page{title="What you'll learn"}
@@ -32,46 +21,8 @@ for the particular artist
 If you are interested in learning more about REST services and how you can write them, read [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
 
 
-::page{title="Getting started"}
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-java.git) and use the projects that are provided inside:
-
-```bash
-git clone https://github.com/openliberty/guide-rest-client-java.git
-cd guide-rest-client-java
-```
 
 
-The ***start*** directory contains the starting project that you will build upon.
-
-The ***finish*** directory contains the finished project that you will build.
-
-
-### Try what you'll build
-
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
-
-```bash
-cd finish
-mvn liberty:run
-```
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
 
 
 Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
@@ -91,11 +42,6 @@ You can access the endpoint at ***http://localhost:9080/artists/total/<artist>**
 curl http://localhost:9080/artists/total/bar
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
-
-```bash
-mvn liberty:stop
-```
 
 
 ::page{title="Starting the service"}
@@ -106,20 +52,6 @@ To begin, run the following command to navigate to the ***start*** directory:
 cd /home/project/guide-rest-client-java/start
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```bash
-mvn liberty:dev
-```
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 
 The application that you'll build upon was created for you. After your server is ready, run the following curl command to access the service:

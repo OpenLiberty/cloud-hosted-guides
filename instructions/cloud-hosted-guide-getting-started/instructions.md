@@ -4,17 +4,6 @@ title: instructions
 branch: lab-138-instruction
 version-history-start-date: 2020-04-22 12:57:16 UTC
 ---
-::page{title="Welcome to the Getting started with Open Liberty guide!"}
-
-Learn how to develop a Java application on Open Liberty with Maven and Docker.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
 
 ::page{title="What you'll learn"}
 
@@ -29,28 +18,6 @@ You'll also explore how to package your application with Open Liberty so that it
 Finally, you will package the application along with the server configuration into a Docker image and run that image as a container.
 
 
-::page{title="Getting started"}
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-getting-started.git) and use the projects that are provided inside:
-
-```bash
-git clone https://github.com/openliberty/guide-getting-started.git
-cd guide-getting-started
-```
-
-
-The ***start*** directory contains the starting project that you will build upon.
-
-The ***finish*** directory contains the finished project that you will build.
 
 
 
@@ -80,10 +47,6 @@ When the server begins starting up, various messages display in your command-lin
 ```
 [INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
 ```
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
 To access the ***system*** microservice, see the http://localhost:9080/system/properties URL, and you see a list of the various system properties of your JVM:
@@ -480,7 +443,6 @@ After you change the file, Open Liberty automatically reloads its configuration.
 
 Now, when you visit the ***/health*** endpoint, additional traces are logged in the ***trace.log*** file.
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Running the application in a Docker container"}
@@ -497,11 +459,6 @@ Run the ***mvn package*** command from the ***start*** directory so that the ***
 mvn package
 ```
 
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
 
 To build and containerize the application, run the following Docker build command in the ***start*** directory:
 

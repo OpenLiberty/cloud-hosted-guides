@@ -4,17 +4,6 @@ title: instructions
 branch: lab-165-instruction
 version-history-start-date: 2020-06-11 12:10:36 UTC
 ---
-::page{title="Welcome to the Securing microservices with JSON Web Tokens guide!"}
-
-You'll explore how to control user and role access to microservices with MicroProfile JSON Web Token (MicroProfile JWT).
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
 
 
 ::page{title="What you'll learn"}
@@ -38,28 +27,6 @@ The user signs in to the ***frontend*** service with a username and a password, 
 
 To learn more about JSON Web Tokens, check out the [jwt.io website](https://jwt.io/introduction/). If you want to learn more about how JWTs can be used for user authentication and authorization, check out the Open Liberty [Single Sign-on documentation](https://openliberty.io/docs/latest/single-sign-on.html).
 
-::page{title="Getting started"}
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-jwt.git) and use the projects that are provided inside:
-
-```bash
-git clone https://github.com/openliberty/guide-microprofile-jwt.git
-cd guide-microprofile-jwt
-```
-
-
-The ***start*** directory contains the starting project that you will build upon.
-
-The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 

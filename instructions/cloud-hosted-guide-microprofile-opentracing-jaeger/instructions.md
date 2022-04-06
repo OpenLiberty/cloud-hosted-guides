@@ -4,17 +4,6 @@ title: instructions
 branch: lab-153-instruction
 version-history-start-date: 2021-04-16 13:57:46 UTC
 ---
-::page{title="Welcome to the Enabling distributed tracing in microservices with Jaeger guide!"}
-
-Explore how to enable and customize tracing of JAX-RS and non-JAX-RS endpoint methods by using MicroProfile OpenTracing and Jaeger.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
 
 
 
@@ -35,28 +24,6 @@ You’ll configure the provided ***inventory*** and ***system*** services to use
 You’ll run these services in two separate JVMs made of two server instances to demonstrate tracing in a distributed environment.
 If all the components were run on a single server, then any logging software would be sufficient.
 
-::page{title="Getting started"}
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-opentracing-jaeger.git) and use the projects that are provided inside:
-
-```bash
-git clone https://github.com/openliberty/guide-microprofile-opentracing-jaeger.git
-cd guide-microprofile-opentracing-jaeger
-```
-
-
-The ***start*** directory contains the starting project that you will build upon.
-
-The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 

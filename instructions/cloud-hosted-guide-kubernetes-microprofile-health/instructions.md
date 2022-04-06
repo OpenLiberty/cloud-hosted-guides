@@ -4,17 +4,6 @@ title: instructions
 branch: lab-144-instruction
 version-history-start-date: 2021-08-19 19:37:00 UTC
 ---
-::page{title="Welcome to the Checking the health of microservices on Kubernetes guide!"}
-
-Learn how to check the health of microservices on Kubernetes by setting up startup, liveness, and readiness probes to inspect MicroProfile Health Check endpoints.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
 
 
 
@@ -32,28 +21,6 @@ The two microservices you will work with are called ***system*** and ***inventor
 
 
 
-::page{title="Getting started"}
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-health.git) and use the projects that are provided inside:
-
-```bash
-git clone https://github.com/openliberty/guide-kubernetes-microprofile-health.git
-cd guide-kubernetes-microprofile-health
-```
-
-
-The ***start*** directory contains the starting project that you will build upon.
-
-The ***finish*** directory contains the finished project that you will build.
 
 
 ::page{title="Adding health checks to the inventory microservice"}
@@ -382,11 +349,6 @@ To build these microservices, navigate to the ***start*** directory and run the 
 mvn package
 ```
 
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
 
 Next, run the ***docker build*** commands to build container images for your application:
 ```bash

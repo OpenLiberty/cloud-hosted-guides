@@ -4,17 +4,6 @@ title: instructions
 branch: lab-169-instruction
 version-history-start-date: 2020-06-11 12:03:57 UTC
 ---
-::page{title="Welcome to the Using Docker containers to develop microservices guide!"}
-
-Learn how to use Docker containers for iterative development.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
 
 
 
@@ -46,28 +35,6 @@ Consider a scenario where you need to deploy your application on another environ
 
 To avoid this kind of problem, you can instead choose to develop your application in a container locally, bundled together with the entire environment that it needs to run. By doing this, you know that at any point in your iterative development process, the application can run inside that container. This helps avoid any unpleasant surprises when you go to test or deploy your application down the road. Containers run quickly and do not have a major impact on the speed of your iterative development.
 
-::page{title="Getting started"}
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-docker.git) and use the projects that are provided inside:
-
-```bash
-git clone https://github.com/openliberty/guide-docker.git
-cd guide-docker
-```
-
-
-The ***start*** directory contains the starting project that you will build upon.
-
-The ***finish*** directory contains the finished project that you will build.
 
 
 ::page{title="Creating the Dockerfile"}
@@ -298,9 +265,6 @@ public class EndpointIT {
 
 This test makes a request to the ***/system/properties-new*** endpoint and checks to make sure that the response has a valid status code, and that the information in the response is correct. 
 
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
 You will see the following output:
 

@@ -4,17 +4,6 @@ title: instructions
 branch: lab-139-instruction
 version-history-start-date: 2020-05-26 12:06:13 UTC
 ---
-::page{title="Welcome to the Consuming RESTful services with template interfaces guide!"}
-
-Learn how to use MicroProfile Rest Client to invoke RESTful microservices over HTTP in a type-safe way.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
 
 
 ::page{title="What you'll learn"}
@@ -30,49 +19,7 @@ You will instantiate the client and use it in the ***inventory*** service. You c
  * When the base URL is not yet known and needs to be determined during the run time, set the base URL as a variable. Build the client with the more verbose ***RestClientBuilder*** method.
 
 
-::page{title="Getting started"}
 
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-rest-client.git) and use the projects that are provided inside:
-
-```bash
-git clone https://github.com/openliberty/guide-microprofile-rest-client.git
-cd guide-microprofile-rest-client
-```
-
-
-The ***start*** directory contains the starting project that you will build upon.
-
-The ***finish*** directory contains the finished project that you will build.
-
-### Try what you'll build
-
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
-
-```bash
-cd finish
-mvn liberty:run
-```
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
 The ***system*** microservice simulates a service that returns the system property information for the host. The ***system*** service is accessible at the http://localhost:9080/system/properties URL. In this case, ***localhost*** is the host name.
@@ -102,30 +49,11 @@ curl -s http://localhost:9080/inventory/systems/localhost | jq
 You can also use the ***http://localhost:9080/inventory/systems/{your-hostname}*** URL. In Windows, MacOS, and Linux, get your fully qualified domain name (FQDN) by entering **hostname** into your command-line. Visit the URL by replacing ***{your-hostname}*** with your FQDN.
 
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
-
-```bash
-mvn liberty:stop
-```
 
 ::page{title="Writing the RESTful client interface"}
 
 Now, navigate to the ***start*** directory to begin.
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```bash
-mvn liberty:dev
-```
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 The MicroProfile Rest Client API is included in the MicroProfile dependency specified by your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID.
 
@@ -465,9 +393,6 @@ The host name is provided as a parameter. This method first assembles the base U
 Similarly, call the ***customRestClient.getProperties()*** method to invoke the ***system*** service.
 
 
-::page{title="Running the application"}
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 When the server is running, select either approach to fetch your system properties:
 
@@ -601,9 +526,6 @@ The ***testRestClientBuilder()*** test gets your IP address. Then, use your IP a
 In addition, a few endpoint tests are provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, you might have introduced a bug into the code.
 
 
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
 ```
 -------------------------------------------------------
@@ -628,7 +550,6 @@ The warning and error messages are expected and result from a request to a bad o
 
 To see whether the tests detect a failure, change the base URL in the configuration file so that when the ***inventory*** service tries to access the invalid URL, an ***UnknownUriException*** is thrown. Rerun the tests to see a test failure occur.
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 ::page{title="Summary"}
 
