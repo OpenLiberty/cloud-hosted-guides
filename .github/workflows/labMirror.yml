@@ -49,6 +49,7 @@ jobs:
           - {"github":"cloud-hosted-guide-rest-hateoas","gitlab":"cloud-hosted-guide-rest-hateoas","gitlab-branch":"lab-86-instruction"}
           - {"github":"cloud-hosted-guide-rest-intro","gitlab":"cloud-hosted-guide-rest-intro","gitlab-branch":"lab-141-instruction"}
           - {"github":"cloud-hosted-guide-spring-boot","gitlab":"cloud-hosted-guide-spring-boot","gitlab-branch":"lab-110-instruction"}
+          - {"github":"cloud-hosted-liberty-deepdive","gitlab":"cloud-hosted-liberty-deepdive","gitlab-branch":"lab-372-instruction"}
 
     steps:
 
