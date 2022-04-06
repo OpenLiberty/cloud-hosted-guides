@@ -22,16 +22,16 @@ You will learn how to build a REST microservice with Jakarta EE and MicroProfile
 
 The microservice that you’ll be working with is called ***inventory***. The ***inventory*** microservice persists data into a PostgreSQL database. You will also learn how to secure the REST endpoints and use JSON Web Token to communicate the provided ***system*** secured microservice.
 
-![Inventory microservice](https://raw.githubusercontent.com/OpenLiberty/draft-guide-liberty-deepdive/prod/assets/inventory.png)
+![Inventory microservice](https://raw.githubusercontent.com/OpenLiberty/draft-guide-liberty-deepdive/draft/assets/inventory.png)
 
 
 ::page{title="Getting started"}
 
-Clone the [Git repository](https://github.com/openliberty/guide-projectid.git):
+Clone the [Git repository](https://github.com/openliberty/guide-liberty-deepdive.git):
 
 ```
-git clone https://github.com/openliberty/guide-{projectid}.git
-cd guide-{projectid}
+git clone https://github.com/openliberty/guide-liberty-deepdive.git
+cd guide-liberty-deepdive
 ```
 
 The ***start*** directory is an empty directory that you will build the ***inventory*** service.
