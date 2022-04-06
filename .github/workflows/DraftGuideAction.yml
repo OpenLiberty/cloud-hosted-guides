@@ -27,6 +27,7 @@ jobs:
           echo "guide_name: ${{ github.event.inputs.guide_name }}"
           echo "branch: ${{ github.event.inputs.branch }}"
           echo "converter_branch: ${{ github.event.inputs.converter_branch }}"
+          echo "cloud_hosted_name: ${{ github.event.inputs.cloud_hosted_name }}"
 
   convertStaging:
     name: Make PR to Staging
