@@ -4,17 +4,6 @@ title: instructions
 branch: lab-143-instruction
 version-history-start-date: 2021-08-23 16:28:42 UTC
 ---
-::page{title="Welcome to the Configuring microservices running in Kubernetes guide!"}
-
-Explore how to externalize configuration using MicroProfile Config and configure your microservices using Kubernetes ConfigMaps and Secrets.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
 
 
 
@@ -26,28 +15,6 @@ MicroProfile Config provides useful annotations that you can use to inject confi
 Furthermore, you'll learn how to set these environment variables with ConfigMaps and Secrets. These resources are provided by Kubernetes and act as a data source for your environment variables. You can use a ConfigMap or Secret to set environment variables for any number of containers.
 
 
-::page{title="Getting started"}
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-config.git) and use the projects that are provided inside:
-
-```bash
-git clone https://github.com/openliberty/guide-kubernetes-microprofile-config.git
-cd guide-kubernetes-microprofile-config
-```
-
-
-The ***start*** directory contains the starting project that you will build upon.
-
-The ***finish*** directory contains the finished project that you will build.
 
 
 ::page{title="Deploying the microservices"}
@@ -59,11 +26,6 @@ cd start
 mvn clean package
 ```
 
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
 
 Next, run the ***docker build*** commands to build container images for your application:
 ```bash

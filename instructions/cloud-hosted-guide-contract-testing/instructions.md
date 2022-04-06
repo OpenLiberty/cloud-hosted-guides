@@ -4,17 +4,6 @@ title: instructions
 branch: lab-154-instruction
 version-history-start-date: 2021-03-04 19:50:13 UTC
 ---
-::page{title="Welcome to the Testing microservices with consumer-driven contracts guide!"}
-
-Learn how to test Java microservices with consumer-driven contracts in Open Liberty.
-
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
 
 ::page{title="What you'll learn"}
 
@@ -36,28 +25,6 @@ The two microservices you will interact with are called ***system*** and ***inve
 
 You will learn how to use the Pact framework to write contract tests for the ***inventory*** microservice that will then be verified by the ***system*** microservice.
 
-::page{title="Getting started"}
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```bash
-cd /home/project
-```
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-contract-testing.git) and use the projects that are provided inside:
-
-```bash
-git clone https://github.com/openliberty/guide-contract-testing.git
-cd guide-contract-testing
-```
-
-
-The ***start*** directory contains the starting project that you will build upon.
-
-The ***finish*** directory contains the finished project that you will build.
 
 ### Starting the Pact Broker
 
@@ -94,20 +61,6 @@ Navigate to the ***start/inventory*** directory to begin.
 cd /home/project/guide-contract-testing/start/inventory
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
-
-```bash
-mvn liberty:dev
-```
-
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 Open a new command-line session.
 
