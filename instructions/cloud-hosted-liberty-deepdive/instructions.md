@@ -25,6 +25,52 @@ The microservice that you’ll be working with is called ***inventory***. The **
 ![Inventory microservice](https://raw.githubusercontent.com/OpenLiberty/draft-guide-liberty-deepdive/prod/assets/inventory.png)
 
 
+::page{title="Getting started"}
+
+Clone the [Git repository](https://github.com/openliberty/guide-projectid.git):
+
+```
+git clone https://github.com/openliberty/guide-{projectid}.git
+cd guide-{projectid}
+```
+
+The ***start*** directory is an empty directory that you will build the ***inventory*** service.
+
+The ***finish*** directory contains the finished projects of different modules that you will build.
+
+Before you begin, make sure you have all the necessary [.prerequisites]#prerequisites#.
+
+::page{title="Getting started with Liberty and REST"}
+
+To start developing your application, Liberty now has an easier way to get started by using the Open Liberty Starter. This tool provides a simple and quick way to get the necessary files to start building an application on Liberty. Through this tool, you can specify your application and project name. You can also choose a build tool from either Maven or Gradle, and pick the version of Java SE, Jakarta EE, and MicroProfile for your application.
+
+In this workshop, the Open Liberty Starter is used to create the starting point of the application. Maven is used as the selected build tool and the application uses of Jakarta EE 9.1 and MicroProfile 5.
+
+To get started with this tool, see the Getting Started page: [https://openliberty.io/start/](https://openliberty.io/start/)
+
+When there, enter the properties that are needed for the application.
+
+* Under Group specify: ***io.openliberty.deepdive***
+* Under Artifact specify: ***inventory***
+* Under Build Tool select: ***Maven***
+* Under Java SE Version select: ***your version***
+* Under Java EE/Jakarta EE Version select: ***9.1***
+* Under MicroProfile Version select: `5`
+
+Then, click ***Generate Project***. This downloads the starter project as ***inventory.zip*** file. 
+
+Next, unpackage the ***inventory.zip*** file on your system. Move the contents of this extracted ***inventory*** directory to the start directory of this project as following path: ***guide-liberty-deepdive/start/inventory***
+
+
+### Building the application
+
+This application is configured to be built with Maven. Every Maven-configured project contains a ***pom.xml*** file, which defines the project configuration, dependencies, and plug-ins.
+
+
+Your ***pom.xml*** file is located in the ***start/inventory*** directory and is configured to include the ***liberty-maven-plugin***. Using the plug-in, you can install applications into Liberty and manage the server instances.
+
+To begin, open a command-line session and navigate to your application directory. 
+
 ```bash
 cd start/inventory
 ```
