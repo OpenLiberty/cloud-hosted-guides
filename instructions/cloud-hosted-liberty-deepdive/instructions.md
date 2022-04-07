@@ -2195,7 +2195,7 @@ Replace the ***server.xml*** file.
 
 
 
-The ***basicRegistry*** contains a list of all users for the application and their passwords, as well as all of the user groups. The ***admin*** group tells the application which of the users are in the administrator group. The ***user*** group tells the application which users are in the user group.
+The ***basicRegistry*** contains a list of all users for the application and their passwords, as well as all of the user groups. Note that this ***basicRegistry*** is a very simple case for learning purposes. For more information about the different user registries refer to the link:https://openliberty.io/docs/latest/user-registries-application-security.html[User registries documentation]. The ***admin*** group tells the application which of the users are in the administrator group. The ***user*** group tells the application which users are in the user group.
 
 The ***security-role*** maps the ***admin*** role to the ***admin*** group, meaning that all users in the ***admin*** group have the administrator role. Similarly, the ***user*** role is mapped to the ***user*** group, meaning all users in the ***user*** group have the user role.
 
@@ -3137,9 +3137,9 @@ The ***jwtSso*** feature adds the libraries that are required for JWT SSO implem
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-The ***keyStore*** element is used to define the repository of security certificates used for SSL encryption. The ***id*** attribute is an unique configuration id, which is set to ***defaultKeyStore***. The ***password*** attribute is used to load the keystore file, and its value can be stored in clear text or encoded form. To learn more about other attributes, visit the [keyStore reference](https://openliberty.io/docs/latest/reference/config/keyStore.html#keyStore.html). Because the keyStore file is not provided at the ***src*** directory, Liberty create a Public Key Cryptography Standards #12 (PKCS12) keystore file for you by default.
+The ***keyStore*** element is used to define the repository of security certificates used for SSL encryption. The ***id*** attribute is an unique configuration id, which is set to ***defaultKeyStore***. The ***password*** attribute is used to load the keystore file, and its value can be stored in clear text or encoded form. To learn more about other attributes, visit the [keyStore reference](https://openliberty.io/docs/latest/reference/config/keyStore.html#keyStore.html). 
 
-The ***keyStore*** must be the same in both ***system*** and ***inventory*** microservices. As the configured ***system*** microservice is already provided for you, copy the ***key.p12*** key store file from the ***system*** microservice to your ***inventory*** service.
+Because the keyStore file is not provided at the ***src*** directory, Liberty creates a Public Key Cryptography Standards #12 (PKCS12) keyStore file for you by default. This needs to be replaced, as the ***keyStore*** must be the same in both ***system*** and ***inventory*** microservices. As the configured ***system*** microservice is already provided for you, copy the ***key.p12*** key store file from the ***system*** microservice to your ***inventory*** service.
 
 ****WINDOWS****
 ****MAC****
@@ -3147,7 +3147,7 @@ The ***keyStore*** must be the same in both ***system*** and ***inventory*** mic
 
 ```bash
 mkdir -p src/main/liberty/config/resources/security
-cp ../finish/system/src/main/liberty/config/resources/security/key.p12 src/main/liberty/config/resources/security/key.p12
+cp ../../finish/system/src/main/liberty/config/resources/security/key.p12 src/main/liberty/config/resources/security/key.p12
 ```
 
 Now configure the client https port in the ***pom.xml*** configuration file.
