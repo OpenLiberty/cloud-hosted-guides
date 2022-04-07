@@ -30,8 +30,8 @@ The microservice that you’ll be working with is called ***inventory***. The **
 Clone the [Git repository](https://github.com/openliberty/guide-liberty-deepdive.git):
 
 ```
-git clone https://github.com/openliberty/guide-liberty-deepdive.git
-cd guide-liberty-deepdive
+git clone https://github.com/openliberty/draft-guide-liberty-deepdive.git
+cd draft-guide-liberty-deepdive
 ```
 
 The ***start*** directory is an empty directory that you will build the ***inventory*** service.
@@ -59,8 +59,15 @@ When there, enter the properties that are needed for the application.
 
 Then, click ***Generate Project***. This downloads the starter project as ***inventory.zip*** file. 
 
+
 Next, unpackage the ***inventory.zip*** file on your system. Move the contents of this extracted ***inventory*** directory to the start directory of this project as following path: ***guide-liberty-deepdive/start/inventory***
 
+In this Skills Network environment, instead, run the following commands to download and unpackage the project:
+```bash
+cd /home/project/draft-guide-liberty-deepdive/start
+curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=9.1&g=io.openliberty.deepdive&j=11&m=5.0'
+unzip inventory.zip -d inventory
+```
 
 ### Building the application
 
@@ -3678,14 +3685,6 @@ Custom Resources extend the Kubernetes API and enhance its functionality.
 
 Set environment variables for namespaces for the Operator by running the following commands:
 
-****WINDOWS****
-****MAC****
-****LINUX****
-
-```bash
-OPERATOR_NAMESPACE=default
-WATCH_NAMESPACE='""'
-```
 
 ```bash
 OPERATOR_NAMESPACE=default
@@ -3694,15 +3693,6 @@ WATCH_NAMESPACE='""'
 
 Next, run the following commands to install cluster-level role-based access:
 
-****WINDOWS****
-****MAC****
-****LINUX****
-
-```bash
-curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-rbac-watch-all.yaml \
-  | sed -e "s/OPEN_LIBERTY_OPERATOR_NAMESPACE/${OPERATOR_NAMESPACE}/" \
-  | kubectl apply -f -
-```
 
 ```bash
 curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-rbac-watch-all.yaml \
@@ -3712,15 +3702,6 @@ curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main
 
 Finally, run the following commands to install the Operator:
 
-****WINDOWS****
-****MAC****
-****LINUX****
-
-```bash
-curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-operator.yaml \
-  | sed -e "s/OPEN_LIBERTY_WATCH_NAMESPACE/${WATCH_NAMESPACE}/" \
-  | kubectl apply -n ${OPERATOR_NAMESPACE} -f -
-```
 
 ```bash
 curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-operator.yaml \
@@ -3955,24 +3936,6 @@ kubectl delete secret post-app-credentials
 
 To uninstall the Open Liberty Operator, run the following commands:
 
-****WINDOWS****
-****MAC****
-****LINUX****
-
-```bash
-OPERATOR_NAMESPACE=default
-WATCH_NAMESPACE='""'
-
-curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-operator.yaml \
-  | sed -e "s/OPEN_LIBERTY_WATCH_NAMESPACE/${WATCH_NAMESPACE}/" \
-  | kubectl delete -n ${OPERATOR_NAMESPACE} -f -
-
-curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-rbac-watch-all.yaml \
-  | sed -e "s/OPEN_LIBERTY_OPERATOR_NAMESPACE/${OPERATOR_NAMESPACE}/" \
-  | kubectl delete -f -
-
-kubectl delete -f https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-crd.yaml
-```
 
 ```bash
 OPERATOR_NAMESPACE=default
