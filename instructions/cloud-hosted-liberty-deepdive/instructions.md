@@ -38,7 +38,7 @@ The ***start*** directory is an empty directory that you will build the ***inven
 
 The ***finish*** directory contains the finished projects of different modules that you will build.
 
-Before you begin, make sure you have all the necessary [.prerequisites]#prerequisites#.
+Before you begin, make sure you have all the necessary prerequisites.
 
 ::page{title="Getting started with Liberty and REST"}
 
@@ -55,7 +55,7 @@ When there, enter the properties that are needed for the application.
 * Under Build Tool select: ***Maven***
 * Under Java SE Version select: ***your version***
 * Under Java EE/Jakarta EE Version select: ***9.1***
-* Under MicroProfile Version select: `5`
+* Under MicroProfile Version select: `5` 
 
 Then, click ***Generate Project***. This downloads the starter project as ***inventory.zip*** file. 
 
@@ -71,8 +71,9 @@ Your ***pom.xml*** file is located in the ***start/inventory*** directory and is
 
 To begin, open a command-line session and navigate to your application directory. 
 
+
 ```bash
-cd start/inventory
+cd /home/project/draft-guide-liberty-deepdive/start/inventory
 ```
 
 Build the system microservice that is provided and deploy it to Liberty by running the Maven ***liberty:run*** goal:
@@ -122,11 +123,11 @@ mvn liberty:dev
 
 Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the ***enter/return*** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the ***enter/return*** key to verify your change.
 
-
-
 ### Developing a RESTful microservice
 
 Now that a basic Liberty application is running, the next step is to create the additional application and resource classes that are needed for this application. Within these classes, you use Jakarta REST, and other MicroProfile and Jakarta APIs.
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 Create the ***Inventory*** class.
 
@@ -198,14 +199,10 @@ This Inventory class stores a record of all systems and their system properties.
 
 Create the ***model*** subdirectory, then create the ***SystemData*** class. The ***SystemData*** class is a Plain Old Java Object (POJO) that represents a single inventory entry. 
 
-****WINDOWS****
-****MAC****
-****LINUX****
 
 ```bash
-mkdir src/main/java/io/openliberty/deepdive/rest/model
+mkdir /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/java/io/openliberty/deepdive/rest/model
 ```
-
 
 Create the ***SystemData*** class.
 
@@ -444,6 +441,9 @@ Because you started the Liberty server in dev mode at the beginning of this exer
 
 Check out the service that you created at the http://localhost:9080/inventory/api/systems URL. If successful, it returns `[]` to you.
 
+```bash
+curl 'http://localhost:9080/inventory/api/systems'
+```
 
 ::page{title="Documenting APIs"}
 
@@ -731,6 +731,10 @@ There are many OpenAPI annotations that can be used depending on what's best for
 
 Because the Liberty server was started in dev mode at the beginning of this exercise, your changes were automatically picked up. Go to the http://localhost:9080/openapi/ URL to see the updated endpoint descriptions. The endpoints at which your restfulWS methods are served now more meaningful:
 
+```bash
+curl http://localhost:9080/openapi
+```
+
 ```
 ---
 openapi: 3.0.3
@@ -856,6 +860,10 @@ Add OpenAPI ***@Schema*** annotations to the ***SystemData*** class and the ***h
 
 Refresh the http://localhost:9080/openapi/ URL to see the updated OpenAPI tree. You should see much more meaningful data for the Schema:
 
+```bash
+curl http://localhost:9080/openapi
+```
+
 ```
 components:
   schemas:
@@ -873,6 +881,8 @@ components:
 ```
 
 Again, you can also view this in the http://localhost:9080/openapi/ui. Scroll down in the UI to the schemas section and open up the SystemData schema icon.
+
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
 You can also use this UI to try out the various endpoints. In the UI, head to the POST request ***/api/systems***. This endpoint enables you to create a system. Once you've opened this icon up, select the ***Try it out*** button on the right side. Now enter appropriate values for each of the required parameters and select the ***Execute*** button.
 
@@ -1025,7 +1035,15 @@ You can try changing the value of these variables in the ***pom.xml*** file:
 
 Because you are using dev mode, these changes are automatically picked up by the server.
 
-Now, you can access the application by the http://localhost:9081/trial/api/systems URL. Alternatively, for the updated OpenAPI UI, use the following URL http://localhost:9081/openapi/ui/.
+
+
+Now, you can access the application by running the following command:
+```bash
+curl http://localhost:9081/trial/api/systems
+```
+
+Alternatively, for the updated OpenAPI UI, click the following button to visit ***/openapi/ui*** endpoint:
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
 When you are finished trying out changing this configuration, change the variables back to their original values.
 
@@ -1318,12 +1336,9 @@ Update the ***POST*** request so that the ***/client/{hostname}*** endpoint prin
 
 Define the configurable variables in the ***microprofile-config.properties*** configuration file for the MicroProfile Config at the ***src/main/resources/META-INF***
 
-****WINDOWS****
-****MAC****
-****LINUX****
 
 ```bash
-mkdir -p src/main/resources/META-INF
+mkdir -p /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/resources/META-INF
 ```
 
 Create the ***microprofile-config.properties*** file.
@@ -1355,6 +1370,8 @@ The ***client.https.port*** variable enables the client port to be overwritten.
 
 Revisit the OpenAPI UI ***http://localhost:9080/openapi/ui/*** to view these changes. Open the ***/api/systems/client/{hostname}*** endpoint and run it within the UI to view the ***CLIENT_PORT*** value.
 
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+
 You can learn more about MicroProfile Config from the [Configuring microservices guide](https://openliberty.io/guides/microprofile-config.html).
 
 ::page{title="Persisting data"}
@@ -1363,8 +1380,9 @@ Next, you’ll persist the system data into the PostgresSQL database by using [J
 
 Navigate to your application directory. 
 
+
 ```bash
-cd start/inventory
+cd /home/project/draft-guide-liberty-deepdive/start/inventory
 ```
 
 ### Defining a JPA entity class
@@ -1564,11 +1582,7 @@ public class Inventory {
 
 
 
-To use the entity manager at run time, inject it into your CDI bean through the
-***@PersistenceContext*** annotation. The entity manager interacts with the persistence context. 
-Every ***EntityManager*** instance is associated with a persistence context. The persistence context 
-manages a set of entities and is aware of the different states that an entity can have.
-The persistence context synchronizes with the database when a transaction commits.
+To use the entity manager at run time, inject it into your CDI bean through the ***@PersistenceContext*** annotation. The entity manager interacts with the persistence context. Every ***EntityManager*** instance is associated with a persistence context. The persistence context manages a set of entities and is aware of the different states that an entity can have. The persistence context synchronizes with the database when a transaction commits.
 
 
 The ***Inventory*** class has a method for each CRUD operation, so let's break them down:
@@ -2074,8 +2088,9 @@ Use Docker to run an instance of PostgreSQL database for a fast installation and
 
 A container file is provided for you. Navigate to the ***finish/postgres*** directory, run the following commands to use the ***Dockerfile*** to build the image, run the image in a Docker container, and map ***5432*** port from the container to your machine:
 
+
 ```bash
-cd ../../finish/postgres
+cd /home/project/draft-guide-liberty-deepdive/finish/postgres
 docker build -t postgres-sample .
 docker run --name postgres-container -p 5432:5432 -d postgres-sample
 ```
@@ -2085,21 +2100,8 @@ docker run --name postgres-container -p 5432:5432 -d postgres-sample
 In your dev mode console for the ***inventory*** microservice, type ***r*** and press ***enter/return*** key to restart the server.
 
 
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-Point your browser to the link:http://localhost:9080/openapi/ui/ URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl link:http://localhost:9080/openapi/ui/
-```
-
-
-This URL displays the available REST endpoints.
+Click the following button to visit the OpenAPI UI that displays the available REST endpoints.
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
 First, make a POST request to the ***/api/systems/*** endpoint. To make this request, expand the first POST endpoint on the UI, click the ***Try it out*** button, provide values to the ***heapSize***, ***hostname***, ***javaVersion***, and ***osName*** parameters, and then click the ***Execute*** button. The POST request adds a system with the specified values to the database.
 
@@ -2115,8 +2117,9 @@ Next, make a DELETE request to the ***/api/systems/{hostname}***. To make this r
 
 Now you can secure your RESTful APIs. Navigate to your application directory. 
 
+
 ```bash
-cd start/inventory
+cd /home/project/draft-guide-liberty-deepdive/start/inventory
 ```
 
 Begin by adding some users and user groups to your ***server.xml*** Liberty configuration file.
@@ -2195,7 +2198,7 @@ Replace the ***server.xml*** file.
 
 
 
-The ***basicRegistry*** contains a list of all users for the application and their passwords, as well as all of the user groups. Note that this ***basicRegistry*** is a very simple case for learning purposes. For more information about the different user registries refer to the link:https://openliberty.io/docs/latest/user-registries-application-security.html[User registries documentation]. The ***admin*** group tells the application which of the users are in the administrator group. The ***user*** group tells the application which users are in the user group.
+The ***basicRegistry*** contains a list of all users for the application and their passwords, as well as all of the user groups. Note that this ***basicRegistry*** is a very simple case for learning purposes. For more information about the different user registries refer to the [User registries documentation](https://openliberty.io/docs/latest/user-registries-application-security.html). The ***admin*** group tells the application which of the users are in the administrator group. The ***user*** group tells the application which users are in the user group.
 
 The ***security-role*** maps the ***admin*** role to the ***admin*** group, meaning that all users in the ***admin*** group have the administrator role. Similarly, the ***user*** role is mapped to the ***user*** group, meaning all users in the ***user*** group have the user role.
 
@@ -2581,14 +2584,11 @@ The ***system*** microservice is provided for you.
 ### Writing the RESTful client interface
 Create the ***client*** subdirectory. Then, create a RESTful client interface for the ***system*** microservice in the ***inventory*** microservice.
 
-****WINDOWS****
-****MAC****
-****LINUX****
 
+[.tab_content.linux_section]
 ```bash
-mkdir src/main/java/io/openliberty/deepdive/rest/client
+mkdir /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/java/io/openliberty/deepdive/rest/client
 ```
-
 
 Create the ***SystemClient*** interface.
 
@@ -3133,21 +3133,14 @@ Replace the ***server.xml*** file.
 
 The ***jwtSso*** feature adds the libraries that are required for JWT SSO implementation. Configure the ***jwtSso*** feature by adding the ***jwtBuilder*** configuration to your ***server.xml***. Also, configure the MicroProfile ***JWT*** with the ***audiences*** and ***issuer*** properties that match the ***microprofile-config.properties***  defined at the ***system/src/main/webapp/META-INF*** directory under the ***system*** project.
 
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
 The ***keyStore*** element is used to define the repository of security certificates used for SSL encryption. The ***id*** attribute is an unique configuration id, which is set to ***defaultKeyStore***. The ***password*** attribute is used to load the keystore file, and its value can be stored in clear text or encoded form. To learn more about other attributes, visit the [keyStore reference](https://openliberty.io/docs/latest/reference/config/keyStore.html#keyStore.html). 
 
 Because the keyStore file is not provided at the ***src*** directory, Liberty creates a Public Key Cryptography Standards #12 (PKCS12) keyStore file for you by default. This needs to be replaced, as the ***keyStore*** must be the same in both ***system*** and ***inventory*** microservices. As the configured ***system*** microservice is already provided for you, copy the ***key.p12*** key store file from the ***system*** microservice to your ***inventory*** service.
 
-****WINDOWS****
-****MAC****
-****LINUX****
 
 ```bash
-mkdir -p src/main/liberty/config/resources/security
-cp ../../finish/system/src/main/liberty/config/resources/security/key.p12 src/main/liberty/config/resources/security/key.p12
+mkdir -p /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/liberty/config/resources/security
+cp /home/project/draft-guide-liberty-deepdive/finish/system/src/main/liberty/config/resources/security/key.p12 /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/liberty/config/resources/security/key.p12
 ```
 
 Now configure the client https port in the ***pom.xml*** configuration file.
@@ -3259,9 +3252,9 @@ In your dev mode console for the ***inventory*** microservice, type ***r*** and 
 
 Open another command-line session and run the ***system*** microservice from the ***finish*** directory.
 
+
 ```bash
-cd finish/system
-mvn liberty:run
+cd /home/project/draft-guide-liberty-deepdive/finish/system
 ```
 
 You can check that the system service is secured against unauthenticated requests at https://localhost:9444/system/api/heapsize. You can expect to see the following error at the console of running the ***system*** microservice:
@@ -3309,8 +3302,9 @@ Next, you'll use MicroProfile Health to report the health status of the microser
 
 Navigate to your application directory
 
-```
-cd start/inventory
+
+```bash
+cd /home/project/draft-guide-liberty-deepdive/start/inventory
 ```
 
 A health report will be generated automatically for all health services that enable MicroProfile Health.
@@ -3325,12 +3319,9 @@ A readiness check allows third-party services, such as Kubernetes, to determine 
 
 Create the ***health*** subdirectory before creating the health check classes.
 
-****WINDOWS****
-****MAC****
-****LINUX****
 
 ```bash
-mkdir src/main/java/io/openliberty/deepdive/rest/health
+mkdir /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/java/io/openliberty/deepdive/rest/health
 ```
 
 Create the ***StartupCheck*** class.
@@ -3376,9 +3367,10 @@ public class StartupCheck implements HealthCheck {
 
 
 
-The ***@Startup*** annotation indicates that this class is a startup health check procedure. Navigate to http://localhost:9080/health/started to check the status of the startup health check.
-In this case, you are checking the cpu usage. If more than 95% of the cpu
-is being used, a status of ***DOWN*** is returned.
+The ***@Startup*** annotation indicates that this class is a startup health check procedure. Navigate to http://localhost:9080/health/started to check the status of the startup health check. In this case, you are checking the cpu usage. If more than 95% of the cpu is being used, a status of ***DOWN*** is returned.
+```bash
+curl http://localhost:9080/health/started
+```
 
 Create the ***LivenessCheck*** class.
 
@@ -3425,9 +3417,11 @@ public class LivenessCheck implements HealthCheck {
 
 
 
-The ***@Liveness*** annotation indicates that this class is a liveness health check procedure. Navigate to http://localhost:9080/health/live to check the status of the liveness health check.
-In this case, you are checking the heap memory usage. If more than 90% of the maximum memory
-is being used, a status of ***DOWN*** is returned.
+The ***@Liveness*** annotation indicates that this class is a liveness health check procedure. Navigate to http://localhost:9080/health/live to check the status of the liveness health check. In this case, you are checking the heap memory usage. If more than 90% of the maximum memory is being used, a status of ***DOWN*** is returned.
+
+```bash
+curl http://localhost:9080/health/live
+```
 
 Create the ***ReadinessCheck*** class.
 
@@ -3491,7 +3485,15 @@ public class ReadinessCheck implements HealthCheck {
 
 The ***@Readiness*** annotation indicates that this class is a readiness health check procedure. Navigate to http://localhost:9080/health/ready to check the status of the liveness health check. This tests the connection to the PostgreSQL container created earlier in the guide. If the connection is refused, a status of ***DOWN*** is returned.
 
+```bash
+curl http://localhost:9080/health/ready
+```
+
 Or, you can visit the http://localhost:9080/health URL to see the overall health status of the application.
+
+```bash
+curl http://localhost:9080/health
+```
 
 ::page{title="Providing metrics"}
 
@@ -3505,8 +3507,9 @@ use test containger to test the microservice
 
 Press ***CTRL+C*** in the command-line session to stop the dev mode ***mvn liberty:dev*** that was started in the previous section. Navigate to your application directory if you are not:
 
-```
-cd start/inventory
+
+```bash
+cd /home/project/draft-guide-liberty-deepdive/start/inventory
 ```
 
 The first step to containerizing your application inside of a Docker container is creating a Dockerfile. A Dockerfile is a collection of instructions for building a Docker image that can then be run as a container. 
@@ -3684,11 +3687,22 @@ OPERATOR_NAMESPACE=default
 WATCH_NAMESPACE='""'
 ```
 
+```bash
+OPERATOR_NAMESPACE=default
+WATCH_NAMESPACE='""'
+```
+
 Next, run the following commands to install cluster-level role-based access:
 
 ****WINDOWS****
 ****MAC****
 ****LINUX****
+
+```bash
+curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-rbac-watch-all.yaml \
+  | sed -e "s/OPEN_LIBERTY_OPERATOR_NAMESPACE/${OPERATOR_NAMESPACE}/" \
+  | kubectl apply -f -
+```
 
 ```bash
 curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-rbac-watch-all.yaml \
@@ -3708,14 +3722,16 @@ curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main
   | kubectl apply -n ${OPERATOR_NAMESPACE} -f -
 ```
 
+```bash
+curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-operator.yaml \
+  | sed -e "s/OPEN_LIBERTY_WATCH_NAMESPACE/${WATCH_NAMESPACE}/" \
+  | kubectl apply -n ${OPERATOR_NAMESPACE} -f -
+```
+
 To check that the Open Liberty Operator is installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 ```bash
 kubectl api-resources --api-group=apps.openliberty.io
 ```
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
 
@@ -3812,6 +3828,10 @@ inventory-deployment-75f9dc56d9-g9lzl   1/1     Running   0          35s
 postgres-58bd9b55c7-6vzz8               1/1     Running   0          13s
 olo-controller-manager-6fc6b456dc-s29wl 1/1     Running   0          10m
 ```
+
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
 You can check out the service at the https://localhost:31000/openapi/ui/ URL.  The servers dropdown list shows the ***https://localhost:31000/inventory*** URL. Or, you can run the following command to access the inventory microservice:
@@ -3938,6 +3958,21 @@ To uninstall the Open Liberty Operator, run the following commands:
 ****WINDOWS****
 ****MAC****
 ****LINUX****
+
+```bash
+OPERATOR_NAMESPACE=default
+WATCH_NAMESPACE='""'
+
+curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-operator.yaml \
+  | sed -e "s/OPEN_LIBERTY_WATCH_NAMESPACE/${WATCH_NAMESPACE}/" \
+  | kubectl delete -n ${OPERATOR_NAMESPACE} -f -
+
+curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-rbac-watch-all.yaml \
+  | sed -e "s/OPEN_LIBERTY_OPERATOR_NAMESPACE/${OPERATOR_NAMESPACE}/" \
+  | kubectl delete -f -
+
+kubectl delete -f https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-crd.yaml
+```
 
 ```bash
 OPERATOR_NAMESPACE=default
