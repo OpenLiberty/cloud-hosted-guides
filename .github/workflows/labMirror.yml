@@ -38,6 +38,7 @@ jobs:
           - {"github":"cloud-hosted-guide-microprofile-jwt","gitlab":"cloud-hosted-guide-microprofile-jwt","gitlab-branch":"lab-165-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-metrics","gitlab":"cloud-hosted-guide-microprofile-metrics","gitlab-branch":"lab-152-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-openapi","gitlab":"cloud-hosted-guide-microprofile-openapi","gitlab-branch":"lab-150-instruction"}
+          - {"github":"cloud-hosted-guide-microprofile-opentracing","gitlab":"cloud-hosted-guide-microprofile-opentracing","gitlab-branch":"lab-156-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-opentracing-jaeger","gitlab":"cloud-hosted-guide-microprofile-opentracing-jaeger","gitlab-branch":"lab-153-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-rest-client","gitlab":"cloud-hosted-guide-microprofile-rest-client","gitlab-branch":"lab-139-instruction"}
           - {"github":"cloud-hosted-guide-openliberty-operator-intro","gitlab":"cloud-hosted-guide-openliberty-operator-intro","gitlab-branch":"lab-85-instruction"}
