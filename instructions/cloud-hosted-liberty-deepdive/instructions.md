@@ -47,7 +47,6 @@ The ***start*** directory is an empty directory that you will build the ***inven
 
 The ***finish*** directory contains the finished projects of different modules that you will build.
 
-Before you begin, make sure you have all the necessary prerequisites.
 
 ::page{title="Getting started with Liberty and REST"}
 
@@ -143,7 +142,7 @@ Dev mode automatically picks up changes that you make to your application and al
 
 Now that a basic Liberty application is running, the next step is to create the additional application and resource classes that are needed for this application. Within these classes, you use Jakarta REST, and other MicroProfile and Jakarta APIs.
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Go to the `start/inventory` directory.
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Go to the ***start/inventory*** directory.
 ```bash
 cd /home/project/draft-guide-liberty-deepdive/start/inventory
 ```
@@ -779,7 +778,9 @@ paths:
 ...
 ```
 
-You can also visit the http://localhost:9080/openapi/ui to see each endpoint's updated description - click each of the icons within the UI to see the updated descriptions for each of the endpoints.
+You can also visit the http://localhost:9080/openapi/ui to see each endpoint's updated description. Click each of the icons within the UI to see the updated descriptions for each of the endpoints.
+In this Skills Network environment, simply click the following button:
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
 ### Augmenting POJOs with OpenAPI annotations
 
@@ -1062,7 +1063,7 @@ curl http://localhost:9081/trial/api/systems
 ```
 
 Alternatively, for the updated OpenAPI UI, click the following button to visit ***/openapi/ui*** endpoint:
-::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+::startApplication{port="9081" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
 When you are finished trying out changing this configuration, change the variables back to their original values.
 
@@ -2116,8 +2117,8 @@ docker run --name postgres-container -p 5432:5432 -d postgres-sample
 
 ### Running the application ###
 
-In your dev mode console for the ***inventory*** microservice, type ***r*** and press ***enter/return*** key to restart the server.
 
+In your dev mode console for the ***inventory*** microservice, type `r` and press ***enter/return*** key to restart the server.
 
 Click the following button to visit the OpenAPI UI that displays the available REST endpoints.
 ::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
