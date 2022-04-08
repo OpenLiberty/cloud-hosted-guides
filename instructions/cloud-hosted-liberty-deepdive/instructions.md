@@ -1988,8 +1988,8 @@ Replace the ***server.xml*** configuration file.
         <properties.postgresql serverName="${postgres/hostname}"
                                portNumber="${postgres/portnum}"
                                databaseName="admin"
-                               user="${postgres/username}"
-                               password="${postgres/password}"/>
+                               user="admin"
+                               password="adminpwd"/>
     </dataSource>
 </server>
 ```
@@ -2119,18 +2119,40 @@ docker run --name postgres-container -p 5432:5432 -d postgres-sample
 
 In your dev mode console for the ***inventory*** microservice, type `r` and press ***enter/return*** key to restart the server.
 
-Click the following button to visit the OpenAPI UI that displays the available REST endpoints.
-::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+First, make a POST request to the `/api/systems/` endpoint by the following command. The POST request adds a system with the specified values to the database.
 
-First, make a POST request to the ***/api/systems/*** endpoint. To make this request, expand the first POST endpoint on the UI, click the ***Try it out*** button, provide values to the ***heapSize***, ***hostname***, ***javaVersion***, and ***osName*** parameters, and then click the ***Execute*** button. The POST request adds a system with the specified values to the database.
+```bash
+curl -X POST 'http://localhost:9080/inventory/api/systems?heapSize=1048576&hostname=localhost&javaVersion=9&osName=linux'
+```
 
-Next, make a GET request to the ***/api/systems*** endpoint. To make this request, expand the GET endpoint on the UI, click the ***Try it out*** button, and then click the ***Execute*** button. The GET request returns all systems from the database.
+Next, make a GET request to the `/api/systems` endpoint by the following command. The GET request returns all systems from the database.
 
-Next, make a PUT request to the ***/api/systems/{hostname}***. To make this request, expand the PUT endpoint on the IO, click the ***Try it out*** button, provide the same value to the ***hostname*** parameter as the previous step, provide different values to the ***heapSize***, ***javaVersion***, and ***osName*** parameters, and then click the ***Execute*** button. The PUT request updates the system with the specified values. 
+```bash
+curl -s 'http://localhost:9080/inventory/api/systems' | jq
+```
 
-To see the updated system, make a GET request to the ***/api/systems/{hostname}*** endpoint. To make this request, expand the GET endpoint on the UI, click the ***Try it out*** button, provide the same value to the ***hostname*** parameter as the previous step, and then click the ***Execute*** button. The GET request returns the system from the database.
+Next, make a PUT request to the `/api/systems/{hostname}` with the same value to the `hostname` path as the previous step, and different values to the `heapSize`, `javaVersion`, and `osName` parameters. The PUT request updates the system with the specified values. 
 
-Next, make a DELETE request to the ***/api/systems/{hostname}***. To make this request, expand the DELETE endpoint on the IO, click the ***Try it out*** button, and then click ***Execute***. The DELETE request removes the system from the database. Run the GET request again to see that the system does not exist from the database. 
+```bash
+curl -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+```
+
+To see the updated system, make a GET request to the `/api/systems/{hostname}` endpoint with the same value to the `hostname` path as the previous step. The GET request returns the system from the database.
+
+```bash
+curl -s 'http://localhost:9080/inventory/api/systems/localhost' | jq
+```
+
+Next, make a DELETE request to the `/api/systems/{hostname}`. The DELETE request removes the system from the database.
+
+```bash
+curl -X DELETE 'http://localhost:9080/inventory/api/systems/localhost'
+```
+
+Run the GET request again to see that the system does not exist from the database. 
+```bash
+curl 'http://localhost:9080/inventory/api/systems'
+```
 
 ::page{title="Securing RESTful APIs"}
 
@@ -2210,8 +2232,8 @@ Replace the ***server.xml*** file.
         <properties.postgresql serverName="${postgres/hostname}"
                                portNumber="${postgres/portnum}"
                                databaseName="admin"
-                               user="${postgres/username}"
-                               password="${postgres/password}"/>
+                               user="admin"
+                               password="adminpwd"/>
     </dataSource>
 </server>
 ```
@@ -2572,7 +2594,7 @@ jakarta.ws.rs.ForbiddenException: Unauthorized
 Now attempt to call this endpoint with an authenticated ***admin*** user that can work correctly. Run the following curl command:
 
 ```bash
-curl -k --user bob:bobpwd -X DELETE  'https://localhost:9443/inventory/api/systems/localhost'
+curl -k --user bob:bobpwd -X DELETE 'https://localhost:9443/inventory/api/systems/localhost'
 ```
 
 You can expect to see the following response:
@@ -3142,8 +3164,8 @@ Replace the ***server.xml*** file.
         <properties.postgresql serverName="${postgres/hostname}"
                                portNumber="${postgres/portnum}"
                                databaseName="admin"
-                               user="${postgres/username}"
-                               password="${postgres/password}"/>
+                               user="admin"
+                               password="adminpwd"/>
     </dataSource>
 </server>
 ```
@@ -3281,7 +3303,12 @@ cd /home/project/draft-guide-liberty-deepdive/finish/system
 mvn liberty:run
 ```
 
-You can check that the system service is secured against unauthenticated requests at https://localhost:9444/system/api/heapsize. You can expect to see the following error at the console of running the ***system*** microservice:
+Wait until the following message displays on the ***system*** microservice console.
+```
+CWWKF0011I: The defaultServer server is ready to run a smarter planet. ...
+```
+
+You can check that the ***system*** microservice is secured against unauthenticated requests at https://localhost:9444/system/api/heapsize. You can expect to see the following error at the console of running the ***system*** microservice:
 
 Open another command-line session and run the following command:
 ```bash
@@ -3318,10 +3345,11 @@ You can expect to see your system listed in the output.
 ```
 [
   {
-    "heapSize": 8589934592,
+    "heapSize": 2999975936,
     "hostname": "localhost",
-    "javaVersion": "16.0.1",
-    "osName": "Mac OS X"
+    "id": 11,
+    "javaVersion": "11.0.11",
+    "osName": "Linux"
   }
 ]
 ```
@@ -3398,7 +3426,7 @@ public class StartupCheck implements HealthCheck {
 
 The ***@Startup*** annotation indicates that this class is a startup health check procedure. Navigate to http://localhost:9080/health/started to check the status of the startup health check. In this case, you are checking the cpu usage. If more than 95% of the cpu is being used, a status of ***DOWN*** is returned.
 ```bash
-curl http://localhost:9080/health/started
+curl -s http://localhost:9080/health/started | jq
 ```
 
 Create the ***LivenessCheck*** class.
@@ -3449,7 +3477,7 @@ public class LivenessCheck implements HealthCheck {
 The ***@Liveness*** annotation indicates that this class is a liveness health check procedure. Navigate to http://localhost:9080/health/live to check the status of the liveness health check. In this case, you are checking the heap memory usage. If more than 90% of the maximum memory is being used, a status of ***DOWN*** is returned.
 
 ```bash
-curl http://localhost:9080/health/live
+curl -s http://localhost:9080/health/live | jq
 ```
 
 Create the ***ReadinessCheck*** class.
@@ -3496,8 +3524,8 @@ public class ReadinessCheck implements HealthCheck {
 
     @Override
     public HealthCheckResponse call() {
-        HealthCheckResponseBuilder responseBuilder = 
-            HealthCheckResponse.named("Health Check");
+        HealthCheckResponseBuilder responseBuilder =
+            HealthCheckResponse.named("Readiness Check");
 
         try {
             Socket socket = new Socket(host, port);
@@ -3515,13 +3543,13 @@ public class ReadinessCheck implements HealthCheck {
 The ***@Readiness*** annotation indicates that this class is a readiness health check procedure. Navigate to http://localhost:9080/health/ready to check the status of the liveness health check. This tests the connection to the PostgreSQL container created earlier in the guide. If the connection is refused, a status of ***DOWN*** is returned.
 
 ```bash
-curl http://localhost:9080/health/ready
+curl -s http://localhost:9080/health/ready | jq
 ```
 
 Or, you can visit the http://localhost:9080/health URL to see the overall health status of the application.
 
 ```bash
-curl http://localhost:9080/health
+curl -s http://localhost:9080/health | jq
 ```
 
 ::page{title="Providing metrics"}
@@ -3534,7 +3562,9 @@ use test containger to test the microservice
 
 ::page{title="Building the container "}
 
-Press ***CTRL+C*** in the command-line session to stop the dev mode ***mvn liberty:dev*** that was started in the previous section. Navigate to your application directory if you are not:
+Press ***CTRL+C*** in the command-line session to stop the dev mode ***mvn liberty:dev*** that was started in the previous section.
+
+Navigate to your application directory if you are not:
 
 
 ```bash
@@ -3626,7 +3656,7 @@ The command returns the PostgreSQL container IP address:
 Build and run the container by running the ***devc*** goal with the PostgreSQL container IP address from the ***start/inventory*** directory. If your PostgreSQL container IP address is not ***172.17.0.2***, replace the command with the right IP address.
 
 ```bash
-mvn liberty:devc -DdockerRunOpts="-e POSTGRES_HOSTNAME=172.17.0.2" -DserverStartTimeout=120
+mvn liberty:devc -DdockerRunOpts="-e POSTGRES_HOSTNAME=172.17.0.2" -DserverStartTimeout=240
 ```
 
 After you see the following message, your application server in dev mode is ready:
@@ -3654,7 +3684,16 @@ CONTAINER ID  IMAGE               COMMAND                 CREATED        STATUS 
 ee2daf0b33e1  inventory-dev-mode  "/opt/ol/helpers/run…"  2 minutes ago  Up 2 minutes  0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp  liberty-dev
 ```
 
-Point your browser to the http://localhost:9080/openapi/ui URL to try out your application. 
+
+Try out your application by the following commands:
+
+```bash
+curl -s http://localhost:9080/health | jq
+```
+
+```bash
+curl 'http://localhost:9080/inventory/api/systems'
+```
 
 When you're finished trying out the microservice, press ***CTRL+C*** in the command-line session that the dev mode was started from to stop and remove the container.
 
@@ -3667,6 +3706,101 @@ docker rm postgres-container
 
 ### Building the container image
 
+Before package the ***inventory*** microservice to a war file, make the PostgreSQL credentials be configurable on the Liberty server configuraton file.
+
+Replace the ***server.xml*** file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > draft-guide-liberty-deepdive/start/inventory/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/draft-guide-liberty-deepdive/start/inventory/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="inventory">
+
+    <featureManager>
+        <feature>jakartaee-9.1</feature>
+        <feature>microProfile-5.0</feature>
+        <feature>jwtSso-1.0</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080" />
+    <variable name="default.https.port" defaultValue="9443" />
+    <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="postgres/hostname" defaultValue="localhost" />
+    <variable name="postgres/portnum" defaultValue="5432" />
+    <variable name="postgres/username" defaultValue="admin" />
+    <variable name="postgres/password" defaultValue="adminpwd" />
+
+    <httpEndpoint id="defaultHttpEndpoint"
+                  httpPort="${default.http.port}" 
+                  httpsPort="${default.https.port}" />
+
+    <applicationManager autoExpand="true"/>
+
+    <keyStore id="defaultKeyStore" password="secret" />
+    
+    <basicRegistry id="basic" realm="WebRealm">
+        <user name="bob" password="{xor}PTA9Lyg7" />
+        <user name="alice" password="{xor}PjM2PDovKDs=" />
+
+        <group name="admin">
+            <member name="bob" />
+        </group>
+
+        <group name="user">
+            <member name="bob" />
+            <member name="alice" />
+        </group>
+    </basicRegistry>
+
+    <webApplication contextRoot="${default.context.root}"
+                    location="inventory.war">
+        <application-bnd>
+            <security-role name="admin">
+                <group name="admin" />
+            </security-role>
+            <security-role name="user">
+                <group name="user" />
+            </security-role>
+        </application-bnd>
+    </webApplication>
+
+    <jwtSso jwtBuilderRef="jwtInventoryBuilder"/> 
+    <jwtBuilder id="jwtInventoryBuilder" 
+                issuer="http://openliberty.io" 
+                audiences="systemService"
+                expiry="24h"/>
+    <mpJwt audiences="systemService" 
+           groupNameAttribute="groups" 
+           id="myMpJwt" 
+           issuer="http://openliberty.io"/>
+
+    <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
+
+    <library id="postgresql-library">
+        <fileset dir="${shared.resource.dir}/" includes="*.jar" />
+    </library>
+
+    <dataSource id="DefaultDataSource" jndiName="jdbc/postgresql">
+        <jdbcDriver libraryRef="postgresql-library" />
+        <properties.postgresql serverName="${postgres/hostname}"
+                               portNumber="${postgres/portnum}"
+                               databaseName="admin"
+                               user="${postgres/username}"
+                               password="${postgres/password}"/>
+    </dataSource>
+</server>
+```
+
+
+
+
+Instead of hard-coded the ***user*** and ***password*** values in the ***properties.postgresql*** properties, use the ***${postgres/username}*** and ***${postgres/password}*** variables that are defined by ***\<variable\>*** elements.
+                              
 Run the ***mvn package*** command from the ***start/inventory*** directory so that the ***.war*** file resides in the ***target*** directory.
 
 ```bash
@@ -3697,41 +3831,11 @@ Now that the containerized application is built, deploy it to a local Kubernetes
 
 ### Installing the Open Liberty Operator 
 
-To do so, first, install the Open Liberty Operator to deploy the microservice to Kubernetes.
 
-First, install Custom Resource Definitions (CRDs) for the Open Liberty Operator by running the following command:
-```bash
-kubectl apply -f https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-crd.yaml
-```
-Custom Resources extend the Kubernetes API and enhance its functionality.
-
-Set environment variables for namespaces for the Operator by running the following commands:
-
-
-```bash
-OPERATOR_NAMESPACE=default
-WATCH_NAMESPACE='""'
-```
-
-Next, run the following commands to install cluster-level role-based access:
-
-
-```bash
-curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-rbac-watch-all.yaml \
-  | sed -e "s/OPEN_LIBERTY_OPERATOR_NAMESPACE/${OPERATOR_NAMESPACE}/" \
-  | kubectl apply -f -
-```
-
-Finally, run the following commands to install the Operator:
-
-
-```bash
-curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-operator.yaml \
-  | sed -e "s/OPEN_LIBERTY_WATCH_NAMESPACE/${WATCH_NAMESPACE}/" \
-  | kubectl apply -n ${OPERATOR_NAMESPACE} -f -
-```
+In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying a microservice to Kubernetes by using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/tree/main/deploy/releases/0.8.0#readme).
 
 To check that the Open Liberty Operator is installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
+
 ```bash
 kubectl api-resources --api-group=apps.openliberty.io
 ```
@@ -3956,23 +4060,6 @@ kubectl delete configmap inv-app-root
 kubectl delete secret post-app-credentials
 ```
 
-To uninstall the Open Liberty Operator, run the following commands:
-
-
-```bash
-OPERATOR_NAMESPACE=default
-WATCH_NAMESPACE='""'
-
-curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-operator.yaml \
-  | sed -e "s/OPEN_LIBERTY_WATCH_NAMESPACE/${WATCH_NAMESPACE}/" \
-  | kubectl delete -n ${OPERATOR_NAMESPACE} -f -
-
-curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-rbac-watch-all.yaml \
-  | sed -e "s/OPEN_LIBERTY_OPERATOR_NAMESPACE/${OPERATOR_NAMESPACE}/" \
-  | kubectl delete -f -
-
-kubectl delete -f https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kubectl/openliberty-app-crd.yaml
-```
 
 ::page{title="Support Licensing"}
 
