@@ -1396,7 +1396,7 @@ You can learn more about MicroProfile Config from the [Configuring microservices
 
 ::page{title="Persisting data"}
 
-Next, you’ll persist the system data into the PostgresSQL database by using [Jakarta Persistence API](https://jakarta.ee/specifications/persistence) (JPA).
+Next, you’ll persist the system data into the PostgreSQL database by using [Jakarta Persistence API](https://jakarta.ee/specifications/persistence) (JPA).
 
 Navigate to your application directory. 
 
@@ -1996,7 +1996,7 @@ Replace the ***server.xml*** configuration file.
 
 
 
-The ***library*** element points the Liberty server where to find the postgresql library. The ***dataSource*** element points where the Java Database Connectivity (JDBC) should connect along with some database vendor-specific properties.
+The ***library*** element points the Liberty server where to find the PostgreSQL library. The ***dataSource*** element points where the Java Database Connectivity (JDBC) should connect along with some database vendor-specific properties.
 
 To use PostgreSQL database, you need to download its library and store to the Liberty shared resources directory. Configure the Liberty Maven plug-in in the ***pom.xml*** file.
 
@@ -2119,31 +2119,31 @@ docker run --name postgres-container -p 5432:5432 -d postgres-sample
 
 In your dev mode console for the ***inventory*** microservice, type `r` and press ***enter/return*** key to restart the server.
 
-First, make a POST request to the `/api/systems/` endpoint by the following command. The POST request adds a system with the specified values to the database.
+First, make a POST request to the ***/api/systems/*** endpoint by the following command. The POST request adds a system with the specified values to the database.
 
 ```bash
 curl -X POST 'http://localhost:9080/inventory/api/systems?heapSize=1048576&hostname=localhost&javaVersion=9&osName=linux'
 ```
 
-Next, make a GET request to the `/api/systems` endpoint by the following command. The GET request returns all systems from the database.
+Next, make a GET request to the ***/api/systems*** endpoint by the following command. The GET request returns all systems from the database.
 
 ```bash
 curl -s 'http://localhost:9080/inventory/api/systems' | jq
 ```
 
-Next, make a PUT request to the `/api/systems/{hostname}` with the same value to the `hostname` path as the previous step, and different values to the `heapSize`, `javaVersion`, and `osName` parameters. The PUT request updates the system with the specified values. 
+Next, make a PUT request to the ***/api/systems/{hostname}*** with the same value to the ***hostname*** path as the previous step, and different values to the ***heapSize***, ***javaVersion***, and ***osName*** parameters. The PUT request updates the system with the specified values. 
 
 ```bash
 curl -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
 ```
 
-To see the updated system, make a GET request to the `/api/systems/{hostname}` endpoint with the same value to the `hostname` path as the previous step. The GET request returns the system from the database.
+To see the updated system, make a GET request to the ***/api/systems/{hostname}*** endpoint with the same value to the ***hostname*** path as the previous step. The GET request returns the system from the database.
 
 ```bash
 curl -s 'http://localhost:9080/inventory/api/systems/localhost' | jq
 ```
 
-Next, make a DELETE request to the `/api/systems/{hostname}`. The DELETE request removes the system from the database.
+Next, make a DELETE request to the ***/api/systems/{hostname}***. The DELETE request removes the system from the database.
 
 ```bash
 curl -X DELETE 'http://localhost:9080/inventory/api/systems/localhost'
@@ -3799,7 +3799,7 @@ Replace the ***server.xml*** file.
 
 
 
-Instead of hard-coded the ***user*** and ***password*** values in the ***properties.postgresql*** properties, use the ***${postgres/username}*** and ***${postgres/password}*** variables that are defined by ***\<variable\>*** elements.
+Instead of hard-coded the ***user*** and ***password*** values in the ***properties.postgresql*** properties, use ***${postgres/username}*** and ***${postgres/password}*** that are defined by the ***postgres/username*** and ***postgres/password*** variable elements.
                               
 Run the ***mvn package*** command from the ***start/inventory*** directory so that the ***.war*** file resides in the ***target*** directory.
 
@@ -3906,7 +3906,7 @@ spec:
 In the ***inventory.yaml*** file, the custom resource (CR) is specified to be ***OpenLibertyApplication***. The CR triggers the Open Liberty Operator to create, update, or delete Kubernetes resources that are needed by the application to run on your cluster. Additionally, the ***applicationImage*** field must be specified, and is set to the image created in the previous module. 
 
 
-Similarly, a Kubernetes resource definition is provided in the ***postgres.yaml*** file at the ***finish/postgres*** directory. In the ***postgres.yaml*** file, the deployment for the PostgresSQL database is defined. 
+Similarly, a Kubernetes resource definition is provided in the ***postgres.yaml*** file at the ***finish/postgres*** directory. In the ***postgres.yaml*** file, the deployment for the PostgreSQL database is defined. 
 
 
 Create a Kubernetes Secret to configure the credentials for accessing the database by the user ***admin***.
