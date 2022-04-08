@@ -2605,7 +2605,6 @@ The ***system*** microservice is provided for you.
 Create the ***client*** subdirectory. Then, create a RESTful client interface for the ***system*** microservice in the ***inventory*** microservice.
 
 
-[.tab_content.linux_section]
 ```bash
 mkdir /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/java/io/openliberty/deepdive/rest/client
 ```
@@ -3266,7 +3265,10 @@ Replace the ***pom.xml*** file.
 
 Configure the client https port by setting the ***\<liberty.var.client.https.port\>*** to ***9444***.
 
-In your dev mode console for the ***inventory*** microservice, type ***r*** and press ***enter/return*** key to restart the server.
+In your dev mode console for the ***inventory*** microservice, press ***CTRL+C*** to stop the server. Then, restart the dev mode of the ***inventory*** microservice.
+```bash
+mvn liberty:dev
+```
 
 ### Running the ***/client/{hostname}*** endpoint
 
