@@ -27,9 +27,18 @@ The microservice that you’ll be working with is called ***inventory***. The **
 
 ::page{title="Getting started"}
 
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
+
+Run the following command to navigate to the **/home/project** directory:
+
+```bash
+cd /home/project
+```
+
 Clone the [Git repository](https://github.com/openliberty/guide-liberty-deepdive.git):
 
-```
+```bash
 git clone https://github.com/openliberty/draft-guide-liberty-deepdive.git
 cd draft-guide-liberty-deepdive
 ```
@@ -83,7 +92,7 @@ To begin, open a command-line session and navigate to your application directory
 cd /home/project/draft-guide-liberty-deepdive/start/inventory
 ```
 
-Build the system microservice that is provided and deploy it to Liberty by running the Maven ***liberty:run*** goal:
+Build and deploy the ***inventory*** microservice to Liberty by running the Maven ***liberty:run*** goal:
 
 ```bash
 mvn liberty:run
@@ -134,7 +143,10 @@ Dev mode automatically picks up changes that you make to your application and al
 
 Now that a basic Liberty application is running, the next step is to create the additional application and resource classes that are needed for this application. Within these classes, you use Jakarta REST, and other MicroProfile and Jakarta APIs.
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Go to the `start/inventory` directory.
+```bash
+cd /home/project/draft-guide-liberty-deepdive/start/inventory
+```
 
 Create the ***Inventory*** class.
 
