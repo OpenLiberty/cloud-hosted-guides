@@ -1923,7 +1923,6 @@ touch /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/resour
       <properties>
         <property name="eclipselink.target-database" value="PostgreSQL"/>
         <property name="eclipselink.ddl-generation" value="create-or-extend-tables" /> 
-        <!-- <property name="eclipselink.ddl-generation.output-mode" value="both" /> -->
         <property name="eclipselink.logging.level" value="FINE"/>
         <property name="eclipselink.jdbc.url" value="jdbc/postgresql:/admin"/>         
         <property name="eclipselink.persistence.jdbc.driver" value="org.postgresql.Driver"/>  
@@ -2177,7 +2176,8 @@ Replace the ***server.xml*** file.
     <applicationManager autoExpand="true"/>
 
     <basicRegistry id="basic" realm="WebRealm">
-        <user name="alice" password="{xor}PjM2PDovKDs=" />  <!-- alicepwd -->
+        <user name="bob" password="{xor}PTA9Lyg7" />
+        <user name="alice" password="{xor}PjM2PDovKDs=" />
         <group name="admin">
             <member name="bob" />
         </group>
@@ -2530,7 +2530,7 @@ You can expect the following response:
 This command calls the ***/systems*** endpoint and adds a system ***localhost*** to the inventory. You can validate that the command worked by calling the ***/systems*** endpoint with a ***GET*** request to retrieve all the systems in the inventory, with the following curl command:
 
 ```bash
-curl 'http://localhost:9080/inventory/api/systems'
+curl -s 'http://localhost:9080/inventory/api/systems' | jq
 ```
 
 You can now expect the following response:
@@ -2584,7 +2584,7 @@ You can expect to see the following response:
 This response means that your endpoint is secure. Validate that it works correctly by calling the ***/systems*** endpoint with the following curl command:
 
 ```bash
-curl 'http://localhost:9080/inventory/api/systems'
+curl -s 'http://localhost:9080/inventory/api/systems' | jq
 ```
 
 You can expect to see the following output:
@@ -3096,7 +3096,8 @@ Replace the ***server.xml*** file.
     <keyStore id="defaultKeyStore" password="secret" />
     
     <basicRegistry id="basic" realm="WebRealm">
-        <user name="alice" password="{xor}PjM2PDovKDs=" />  <!-- alicepwd -->
+        <user name="bob" password="{xor}PTA9Lyg7" />
+        <user name="alice" password="{xor}PjM2PDovKDs=" />
 
         <group name="admin">
             <member name="bob" />
@@ -3277,9 +3278,15 @@ Open another command-line session and run the ***system*** microservice from the
 
 ```bash
 cd /home/project/draft-guide-liberty-deepdive/finish/system
+mvn liberty:run
 ```
 
 You can check that the system service is secured against unauthenticated requests at https://localhost:9444/system/api/heapsize. You can expect to see the following error at the console of running the ***system*** microservice:
+
+Open another command-line session and run the following command:
+```bash
+curl -k 'https://localhost:9444/system/api/heapsize'
+```
 
 ```
 CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
@@ -3303,7 +3310,7 @@ You can expect the following output:
 You can verify that this endpoint works as expected by running the following command:
 
 ```bash
-curl 'http://localhost:9080/inventory/api/systems'
+curl -s 'http://localhost:9080/inventory/api/systems' | jq
 ```
 
 You can expect to see your system listed in the output.
