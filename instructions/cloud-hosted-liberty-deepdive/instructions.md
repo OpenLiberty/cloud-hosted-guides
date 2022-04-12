@@ -1963,10 +1963,6 @@ Replace the ***server.xml*** configuration file.
     <variable name="default.http.port" defaultValue="9080" />
     <variable name="default.https.port" defaultValue="9443" />
     <variable name="default.context.root" defaultValue="/inventory" />
-    <variable name="postgres/hostname" defaultValue="localhost" />
-    <variable name="postgres/portnum" defaultValue="5432" />
-    <variable name="postgres/username" defaultValue="admin" />
-    <variable name="postgres/password" defaultValue="adminpwd" />
 
     <httpEndpoint id="defaultHttpEndpoint"
                   httpPort="${default.http.port}" 
@@ -1985,9 +1981,9 @@ Replace the ***server.xml*** configuration file.
 
     <dataSource id="DefaultDataSource" jndiName="jdbc/postgresql">
         <jdbcDriver libraryRef="postgresql-library" />
-        <properties.postgresql serverName="${postgres/hostname}"
-                               portNumber="${postgres/portnum}"
-                               databaseName="admin"
+        <properties.postgresql databaseName="admin"
+                               serverName="localhost"
+                               portNumber="5432"
                                user="admin"
                                password="adminpwd"/>
     </dataSource>
@@ -2186,10 +2182,6 @@ Replace the ***server.xml*** file.
     <variable name="default.http.port" defaultValue="9080" />
     <variable name="default.https.port" defaultValue="9443" />
     <variable name="default.context.root" defaultValue="/inventory" />
-    <variable name="postgres/hostname" defaultValue="localhost" />
-    <variable name="postgres/portnum" defaultValue="5432" />
-    <variable name="postgres/username" defaultValue="admin" />
-    <variable name="postgres/password" defaultValue="adminpwd" />
 
     <httpEndpoint id="defaultHttpEndpoint"
                   httpPort="${default.http.port}" 
@@ -2229,9 +2221,9 @@ Replace the ***server.xml*** file.
 
     <dataSource id="DefaultDataSource" jndiName="jdbc/postgresql">
         <jdbcDriver libraryRef="postgresql-library" />
-        <properties.postgresql serverName="${postgres/hostname}"
-                               portNumber="${postgres/portnum}"
-                               databaseName="admin"
+        <properties.postgresql databaseName="admin"
+                               serverName="localhost"
+                               portNumber="5432"
                                user="admin"
                                password="adminpwd"/>
     </dataSource>
@@ -3104,10 +3096,6 @@ Replace the ***server.xml*** file.
     <variable name="default.http.port" defaultValue="9080" />
     <variable name="default.https.port" defaultValue="9443" />
     <variable name="default.context.root" defaultValue="/inventory" />
-    <variable name="postgres/hostname" defaultValue="localhost" />
-    <variable name="postgres/portnum" defaultValue="5432" />
-    <variable name="postgres/username" defaultValue="admin" />
-    <variable name="postgres/password" defaultValue="adminpwd" />
 
     <httpEndpoint id="defaultHttpEndpoint"
                   httpPort="${default.http.port}" 
@@ -3161,9 +3149,9 @@ Replace the ***server.xml*** file.
 
     <dataSource id="DefaultDataSource" jndiName="jdbc/postgresql">
         <jdbcDriver libraryRef="postgresql-library" />
-        <properties.postgresql serverName="${postgres/hostname}"
-                               portNumber="${postgres/portnum}"
-                               databaseName="admin"
+        <properties.postgresql databaseName="admin"
+                               serverName="localhost"
+                               portNumber="5432"
                                user="admin"
                                password="adminpwd"/>
     </dataSource>
@@ -3637,76 +3625,7 @@ The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<
 
 ### Developing the application in a container
 
-Using the Dockerfile, you can try out your application with it by using the ***devc*** goal.
-
-The Open Liberty Maven plug-in includes a ***devc*** goal that simplifies developing your application in a container by starting dev mode with container support. This goal builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. Dev mode also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
-
-Retrieve the PostgreSQL container IP address by running the following command:
-
-```bash
-docker inspect -f "{{.NetworkSettings.IPAddress }}"  postgres-container
-```
-
-The command returns the PostgreSQL container IP address:
-
-```
-172.17.0.2
-```
-
-Build and run the container by running the ***devc*** goal with the PostgreSQL container IP address from the ***start/inventory*** directory. If your PostgreSQL container IP address is not ***172.17.0.2***, replace the command with the right IP address.
-
-```bash
-mvn liberty:devc -DdockerRunOpts="-e POSTGRES_HOSTNAME=172.17.0.2" -DserverStartTimeout=240
-```
-
-After you see the following message, your application server in dev mode is ready:
-```
-**************************************************************
-*    Liberty is running in dev mode.
-*    ...
-*    Docker network information:
-*        Container name: [ liberty-dev ]
-*        IP address [ 172.17.0.2 ] on Docker network [ bridge ]
-*    ...
-```
-
-Open another command-line session and run the following command to make sure that your
-container is running and didn’t crash:
-
-```bash
-docker ps 
-```
-
-You can see something similar to the following output:
-
-```
-CONTAINER ID  IMAGE               COMMAND                 CREATED        STATUS        PORTS                                                                   NAMES
-ee2daf0b33e1  inventory-dev-mode  "/opt/ol/helpers/run…"  2 minutes ago  Up 2 minutes  0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp  liberty-dev
-```
-
-
-Try out your application by the following commands:
-
-```bash
-curl -s http://localhost:9080/health | jq
-```
-
-```bash
-curl 'http://localhost:9080/inventory/api/systems'
-```
-
-When you're finished trying out the microservice, press ***CTRL+C*** in the command-line session that the dev mode was started from to stop and remove the container.
-
-Also, run the following commands to stop the PostgreSQL container that was started in the previous section.
-
-```bash
-docker stop postgres-container
-docker rm postgres-container
-```
-
-### Building the container image
-
-Before package the ***inventory*** microservice to a war file, make the PostgreSQL credentials be configurable on the Liberty server configuraton file.
+Make the PostgreSQL be configurable on the Liberty server configuraton file.
 
 Replace the ***server.xml*** file.
 
@@ -3787,9 +3706,9 @@ Replace the ***server.xml*** file.
 
     <dataSource id="DefaultDataSource" jndiName="jdbc/postgresql">
         <jdbcDriver libraryRef="postgresql-library" />
-        <properties.postgresql serverName="${postgres/hostname}"
+        <properties.postgresql databaseName="admin"
+                               serverName="${postgres/hostname}"
                                portNumber="${postgres/portnum}"
-                               databaseName="admin"
                                user="${postgres/username}"
                                password="${postgres/password}"/>
     </dataSource>
@@ -3799,7 +3718,78 @@ Replace the ***server.xml*** file.
 
 
 
-Instead of hard-coded the ***user*** and ***password*** values in the ***properties.postgresql*** properties, use ***${postgres/username}*** and ***${postgres/password}*** that are defined by the ***postgres/username*** and ***postgres/password*** variable elements.
+Instead of hard-coded the ***serverName***, ***portNumber***, ***user*** and ***password*** values in the ***properties.postgresql*** properties, use ***${postgres/hostname}***, ***${postgres/portnum}***, ***${postgres/username}***, and ***${postgres/password}*** that are defined by the ***variable*** elements.
+
+Using the Dockerfile, you can try out your application with it by using the ***devc*** goal.
+
+The Open Liberty Maven plug-in includes a ***devc*** goal that simplifies developing your application in a container by starting dev mode with container support. This goal builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. Dev mode also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
+
+Retrieve the PostgreSQL container IP address by running the following command:
+
+```bash
+docker inspect -f "{{.NetworkSettings.IPAddress }}"  postgres-container
+```
+
+The command returns the PostgreSQL container IP address:
+
+```
+172.17.0.2
+```
+
+Build and run the container by running the ***devc*** goal with the PostgreSQL container IP address from the ***start/inventory*** directory. If your PostgreSQL container IP address is not ***172.17.0.2***, replace the command with the right IP address.
+
+
+```bash
+POSTGRES_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}"  postgres-container`
+mvn liberty:devc -DdockerRunOpts="-e POSTGRES_HOSTNAME=$POSTGRES_IP" -DserverStartTimeout=240
+```
+
+You need to wait a while to let the dev mode start. After you see the following message, your application server in dev mode is ready:
+```
+**************************************************************
+*    Liberty is running in dev mode.
+*    ...
+*    Docker network information:
+*        Container name: [ liberty-dev ]
+*        IP address [ 172.17.0.2 ] on Docker network [ bridge ]
+*    ...
+```
+
+Open another command-line session and run the following command to make sure that your
+container is running and didn’t crash:
+
+```bash
+docker ps 
+```
+
+You can see something similar to the following output:
+
+```
+CONTAINER ID  IMAGE               COMMAND                 CREATED        STATUS        PORTS                                                                   NAMES
+ee2daf0b33e1  inventory-dev-mode  "/opt/ol/helpers/run…"  2 minutes ago  Up 2 minutes  0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp  liberty-dev
+```
+
+
+Try out your application by the following commands:
+
+```bash
+curl -s http://localhost:9080/health | jq
+```
+
+```bash
+curl 'http://localhost:9080/inventory/api/systems'
+```
+
+When you're finished trying out the microservice, press ***CTRL+C*** in the command-line session that the dev mode was started from to stop and remove the container.
+
+Also, run the following commands to stop the PostgreSQL container that was started in the previous section.
+
+```bash
+docker stop postgres-container
+docker rm postgres-container
+```
+
+### Building the container image
                               
 Run the ***mvn package*** command from the ***start/inventory*** directory so that the ***.war*** file resides in the ***target*** directory.
 
