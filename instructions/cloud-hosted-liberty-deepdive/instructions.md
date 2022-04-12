@@ -79,7 +79,7 @@ unzip inventory.zip -d inventory
 
 ### Building the application
 
-This application is configured to be built with Maven. Every Maven-configured project contains a ***pom.xml*** file, which defines the project configuration, dependencies, and plug-ins.
+This application is configured to be built with Maven. Every Maven-configured project contains a ***pom.xml*** file, that defines the project configuration, dependencies, and plug-ins.
 
 
 Your ***pom.xml*** file is located in the ***start/inventory*** directory and is configured to include the ***liberty-maven-plugin***. Using the plug-in, you can install applications into Liberty and manage the server instances.
@@ -97,13 +97,13 @@ Build and deploy the ***inventory*** microservice to Liberty by running the Mave
 mvn liberty:run
 ```
 
-The ***mvn*** command initiates a Maven build, during which the target directory is created to store all build-related files.
+The ***mvn*** command initiates a Maven build, during that the target directory is created to store all build-related files.
 
-The ***liberty:run*** argument specifies the Liberty ***run*** goal, which starts a Liberty server instance in the foreground. As part of this phase, a Liberty server runtime is downloaded and installed into the ***target/liberty/wlp*** directory. Additionally, a server instance is created and configured in the ***target/liberty/wlp/usr/servers/defaultServer*** directory, and the application is installed into that server by using [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
+The ***liberty:run*** argument specifies the Liberty ***run*** goal, that starts a Liberty server instance in the foreground. As part of this phase, a Liberty server runtime is downloaded and installed into the ***target/liberty/wlp*** directory. Additionally, a server instance is created and configured in the ***target/liberty/wlp/usr/servers/defaultServer*** directory, and the application is installed into that server by using [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
 
 For more information about the Liberty Maven plug-in, see its [GitHub repository](https://github.com/WASdev/ci.maven).
 
-When the server begins starting up, various messages display in your command-line session. Wait for the following message, which indicates that the server startup is complete:
+When the server begins starting up, various messages display in your command-line session. Wait for the following message, that indicates that the server startup is complete:
 
 ```
 [INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
@@ -1023,11 +1023,6 @@ Replace the ***pom.xml*** file.
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
                     <version>3.5.1</version>
-                    <configuration>
-                    <install>
-                        <version>22.0.0.2</version>
-                    </install>
-                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -1888,7 +1883,7 @@ public class SystemResource {
 
 
 
-The ***@Transactional*** annotation is used in the ***POST***, ***PUT***, and ***DELETE*** endpoints of the ***SystemResource*** class to declaratively control the transaction boundaries on the ***inventory*** CDI bean. This ensures that the methods run within the boundaries of an active global transaction, which is why it is not necessary to explicitly begin, commit or rollback transactions. At the end of the transactional method invocation, the transaction commits and the persistence context flushes any changes to Event entity instances it is managing to the database.
+The ***@Transactional*** annotation is used in the ***POST***, ***PUT***, and ***DELETE*** endpoints of the ***SystemResource*** class to declaratively control the transaction boundaries on the ***inventory*** CDI bean. This ensures that the methods run within the boundaries of an active global transaction, that is why it is not necessary to explicitly begin, commit or rollback transactions. At the end of the transactional method invocation, the transaction commits and the persistence context flushes any changes to Event entity instances it is managing to the database.
 
 ### Configuring JPA
 
@@ -1963,6 +1958,8 @@ Replace the ***server.xml*** configuration file.
     <variable name="default.http.port" defaultValue="9080" />
     <variable name="default.https.port" defaultValue="9443" />
     <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="postgres/hostname" defaultValue="localhost" />
+    <variable name="postgres/portnum" defaultValue="5432" />
 
     <httpEndpoint id="defaultHttpEndpoint"
                   httpPort="${default.http.port}" 
@@ -2061,11 +2058,6 @@ Replace the ***pom.xml*** configuration file.
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
                     <version>3.5.1</version>
-                    <configuration>
-                    <install>
-                        <version>22.0.0.2</version>
-                    </install>
-                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -2182,6 +2174,8 @@ Replace the ***server.xml*** file.
     <variable name="default.http.port" defaultValue="9080" />
     <variable name="default.https.port" defaultValue="9443" />
     <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="postgres/hostname" defaultValue="localhost" />
+    <variable name="postgres/portnum" defaultValue="5432" />
 
     <httpEndpoint id="defaultHttpEndpoint"
                   httpPort="${default.http.port}" 
@@ -2232,7 +2226,7 @@ Replace the ***server.xml*** file.
 
 
 
-The ***basicRegistry*** contains a list of all users for the application and their passwords, as well as all of the user groups. Note that this ***basicRegistry*** is a very simple case for learning purposes. For more information about the different user registries refer to the [User registries documentation](https://openliberty.io/docs/latest/user-registries-application-security.html). The ***admin*** group tells the application which of the users are in the administrator group. The ***user*** group tells the application which users are in the user group.
+The ***basicRegistry*** contains a list of all users for the application and their passwords, as well as all of the user groups. Note that this ***basicRegistry*** is a very simple case for learning purposes. For more information about the different user registries refer to the [User registries documentation](https://openliberty.io/docs/latest/user-registries-application-security.html). The ***admin*** group tells the application which of the users are in the administrator group. The ***user*** group tells the application that users are in the user group.
 
 The ***security-role*** maps the ***admin*** role to the ***admin*** group, meaning that all users in the ***admin*** group have the administrator role. Similarly, the ***user*** role is mapped to the ***user*** group, meaning all users in the ***user*** group have the user role.
 
@@ -2598,7 +2592,7 @@ You can expect to see the following response:
 This response means that your endpoint is secure. Validate that it works correctly by calling the ***/systems*** endpoint with the following curl command:
 
 ```bash
-curl -s 'http://localhost:9080/inventory/api/systems' | jq
+curl 'http://localhost:9080/inventory/api/systems'
 ```
 
 You can expect to see the following output:
@@ -3096,6 +3090,8 @@ Replace the ***server.xml*** file.
     <variable name="default.http.port" defaultValue="9080" />
     <variable name="default.https.port" defaultValue="9443" />
     <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="postgres/hostname" defaultValue="localhost" />
+    <variable name="postgres/portnum" defaultValue="5432" />
 
     <httpEndpoint id="defaultHttpEndpoint"
                   httpPort="${default.http.port}" 
@@ -3163,7 +3159,7 @@ Replace the ***server.xml*** file.
 
 The ***jwtSso*** feature adds the libraries that are required for JWT SSO implementation. Configure the ***jwtSso*** feature by adding the ***jwtBuilder*** configuration to your ***server.xml***. Also, configure the MicroProfile ***JWT*** with the ***audiences*** and ***issuer*** properties that match the ***microprofile-config.properties***  defined at the ***system/src/main/webapp/META-INF*** directory under the ***system*** project.
 
-The ***keyStore*** element is used to define the repository of security certificates used for SSL encryption. The ***id*** attribute is an unique configuration id, which is set to ***defaultKeyStore***. The ***password*** attribute is used to load the keystore file, and its value can be stored in clear text or encoded form. To learn more about other attributes, visit the [keyStore reference](https://openliberty.io/docs/latest/reference/config/keyStore.html#keyStore.html). 
+The ***keyStore*** element is used to define the repository of security certificates used for SSL encryption. The ***id*** attribute is an unique configuration id, that is set to ***defaultKeyStore***. The ***password*** attribute is used to load the keystore file, and its value can be stored in clear text or encoded form. To learn more about other attributes, visit the [keyStore reference](https://openliberty.io/docs/latest/reference/config/keyStore.html#keyStore.html). 
 
 Because the keyStore file is not provided at the ***src*** directory, Liberty creates a Public Key Cryptography Standards #12 (PKCS12) keyStore file for you by default. This needs to be replaced, as the ***keyStore*** must be the same in both ***system*** and ***inventory*** microservices. As the configured ***system*** microservice is already provided for you, copy the ***key.p12*** key store file from the ***system*** microservice to your ***inventory*** service.
 
@@ -3242,11 +3238,6 @@ Replace the ***pom.xml*** file.
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
                     <version>3.5.1</version>
-                    <configuration>
-                    <install>
-                        <version>22.0.0.2</version>
-                    </install>
-                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -3324,6 +3315,7 @@ You can expect the following output:
 
 You can verify that this endpoint works as expected by running the following command:
 
+
 ```bash
 curl -s 'http://localhost:9080/inventory/api/systems' | jq
 ```
@@ -3343,7 +3335,7 @@ You can expect to see your system listed in the output.
 ```
 
 ::page{title="Adding health checks"}
-Next, you'll use MicroProfile Health to report the health status of the microservice and PostgreSQL database connection.
+Next, you'll use [MicroProfile Health](https://download.eclipse.org/microprofile/microprofile-health-4.0/microprofile-health-spec-4.0.html) to report the health status of the microservice and PostgreSQL database connection.
 
 Navigate to your application directory
 
@@ -3354,7 +3346,7 @@ cd /home/project/draft-guide-liberty-deepdive/start/inventory
 
 A health report will be generated automatically for all health services that enable MicroProfile Health.
 
-All health services must provide an implementation of the ***HealthCheck*** interface, which is used to verify their health. MicroProfile Health offers health checks for startup, liveness, and readiness.
+All health services must provide an implementation of the ***HealthCheck*** interface, that is used to verify their health. MicroProfile Health offers health checks for startup, liveness, and readiness.
 
 A startup check allows applications to define startup probes that are used for initial verification of the application before the liveness probe takes over. For example, a startup check might check which applications require additional startup time on their first initialization.
 
@@ -3542,7 +3534,108 @@ curl -s http://localhost:9080/health | jq
 
 ::page{title="Providing metrics"}
 
-use MicroProfile Metrics to provide metrics from the microservice
+Next, you will learn how to use [MicroProfile Metrics](https://download.eclipse.org/microprofile/microprofile-metrics-4.0/microprofile-metrics-spec-4.0.html) to provide metrics from the ***inventory*** microservice.
+
+Navigate to your application directory
+
+
+```bash
+cd /home/project/draft-guide-liberty-deepdive/start/inventory
+```
+
+Enable ***bob*** user to access the ***/metrics*** endpoints.
+
+
+Replace the ***server.xml*** file.
+
+> To open the unknown file in your IDE, select
+> **File** > **Open** > draft-guide-liberty-deepdive/start/inventory/unknown, or click the following button
+
+::openFile{path="/home/project/draft-guide-liberty-deepdive/start/inventory/unknown"}
+
+
+The ***administrator-role*** configuration authorizes ***bob*** user as an administrator.
+
+Use annotations provided by MicroProfile Metrics to instrument the ***inventory*** microservice to provide application-level metrics data.
+
+
+Replace the ***SystemResource*** class.
+
+> To open the unknown file in your IDE, select
+> **File** > **Open** > draft-guide-liberty-deepdive/start/inventory/unknown, or click the following button
+
+::openFile{path="/home/project/draft-guide-liberty-deepdive/start/inventory/unknown"}
+
+
+Import the ***Counted*** annotation, and apply the ***@Counted*** annotation to the ***POST /api/systems***, ***PUT /api/systems/{hostname}***, ***DELETE /api/systems/{hostname}***, and ***POST /api/systems/client/{hostname}*** endpoints
+ to count how many times the endpoints are accessed monotonically, that are counting up sequentially. 
+
+Additional information about the annotations MicroProfile metrics provide, relevant metadata fields, and more are available at the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/22.0.0.4/reference/javadoc/microprofile-5.0-javadoc.html?package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=overview-summary.html).
+
+
+Run the following commands to call some of the endpoints that you have annotated:
+
+```bash
+curl -X DELETE 'http://localhost:9080/inventory/api/systems/localhost'
+```
+
+```bash
+curl -X POST 'http://localhost:9080/inventory/api/systems?heapSize=1048576&hostname=localhost&javaVersion=9&osName=linux'
+```
+
+```bash
+curl -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+```
+
+```bash
+curl -s 'http://localhost:9080/inventory/api/systems' | jq
+```
+
+There are 4 different REST enpoints that MicroProfile Metrics provides.
+
+* The ***/metrics*** endpoint provides you with all the metrics in text format. 
+* The ***/metrics/application*** endpoint provides you with application specific metrics.
+* The ***/metrics/base*** endpoint provides you with metrics that are defined in MicroProfile specifications. Metrics in the base scope are intended to be portable between different MicroProfile-compatible runtimes.
+* The ***/metrics/vendor*** endpoint provides you with metrics specific to the runtime.
+
+
+Run the following curl command to review all the metrics that are enabled through MicroProfile Metrics. You can see the metrics in a text format.
+```bash
+curl -k --user bob:bobpwd https://localhost:9443/metrics
+```
+
+To see only the application metrics, run the following curl command:
+```bash
+curl -k --user bob:bobpwd https://localhost:9443/metrics/application
+```
+
+You can expect to see your application metrics as the following output.
+
+```
+# TYPE application_addSystemClient_total counter
+# HELP application_addSystemClient_total Number of times adding a system by client is called
+application_addSystemClient_total 0
+# TYPE application_addSystem_total counter
+# HELP application_addSystem_total Number of times adding system endpoint is called
+application_addSystem_total 1
+# TYPE application_updateSystem_total counter
+# HELP application_updateSystem_total Number of times updating a system endpoint is called
+application_updateSystem_total 1
+# TYPE application_removeSystem_total counter
+# HELP application_removeSystem_total Number of times removing a system endpoint is called
+application_removeSystem_total 1
+```
+
+You can see the system metrics, run the following curl command:
+```bash
+curl -k --user bob:bobpwd https://localhost:9443/metrics/base
+```
+
+as well as to see the vendor metrics, run the following curl command:
+```bash
+curl -k --user bob:bobpwd https://localhost:9443/metrics/vendor
+```
+
 
 ::page{title="Testing the microservice"}
 
@@ -3616,7 +3709,7 @@ RUN configure.sh
 
 
 
-The ***FROM*** instruction initializes a new build stage and indicates the parent image from which your image is built. In this case, you’re using the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image as your parent image, which comes with the latest Open Liberty runtime.
+The ***FROM*** instruction initializes a new build stage and indicates the parent image from that your image is built. In this case, you’re using the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image as your parent image, that comes with the latest Open Liberty runtime.
 
 To help you manage your images, you can label your container images with the ***LABEL*** command. 
 
@@ -3830,7 +3923,7 @@ To check that the Open Liberty Operator is installed successfully, run the follo
 kubectl api-resources --api-group=apps.openliberty.io
 ```
 
-Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
+Look for the following output, that shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
 
 ```
 NAME                      SHORTNAMES         APIGROUP              NAMESPACED   KIND
