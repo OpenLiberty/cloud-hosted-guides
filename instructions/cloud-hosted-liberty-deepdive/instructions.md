@@ -2550,7 +2550,7 @@ You can now expect the following response:
 Now try calling your secure ***PUT*** endpoint to update the system that you just added by the following curl command:
 
 ```bash
-curl -k --user alice:alicepwd -X PUT 'https://localhost:9443/inventory/api/systems/localhost?osName=mac&javaVersion=17&heapSize=2'
+curl -k --user alice:alicepwd -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
 ```
 
 As this endpoint is accessible to the groups ***user*** and ***admin***, you log in with ***user*** credentials and updated the system.
@@ -3548,9 +3548,9 @@ Enable ***bob*** user to access the ***/metrics*** endpoints.
 Replace the ***server.xml*** file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > draft-guide-liberty-deepdive/start/inventory/module-metrics/src/main/liberty/config/server.xml, or click the following button
+> **File** > **Open** > draft-guide-liberty-deepdive/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/draft-guide-liberty-deepdive/start/inventory/module-metrics/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/draft-guide-liberty-deepdive/start/inventory/src/main/liberty/config/server.xml"}
 
 
 
@@ -3975,7 +3975,7 @@ Additional information about the annotations MicroProfile metrics provide, relev
 Run the following commands to call some of the endpoints that you have annotated:
 
 ```bash
-curl -X DELETE 'http://localhost:9080/inventory/api/systems/localhost'
+curl -k --user bob:bobpwd -X DELETE 'https://localhost:9443/inventory/api/systems/localhost'
 ```
 
 ```bash
@@ -3983,7 +3983,7 @@ curl -X POST 'http://localhost:9080/inventory/api/systems?heapSize=1048576&hostn
 ```
 
 ```bash
-curl -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+curl -k --user alice:alicepwd -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
 ```
 
 ```bash
@@ -3998,17 +3998,12 @@ There are 4 different REST enpoints that MicroProfile Metrics provides.
 * The ***/metrics/vendor*** endpoint provides you with metrics specific to the runtime.
 
 
-Run the following curl command to review all the metrics that are enabled through MicroProfile Metrics. You can see the metrics in a text format.
-```bash
-curl -k --user bob:bobpwd https://localhost:9443/metrics
-```
-
-To see only the application metrics, run the following curl command:
+Run the following curl command to see the application metrics that are enabled through MicroProfile Metrics:
 ```bash
 curl -k --user bob:bobpwd https://localhost:9443/metrics/application
 ```
 
-You can expect to see your application metrics as the following output.
+You can expect to see your application metrics in a text format as the following output:
 
 ```
 # TYPE application_addSystemClient_total counter
@@ -4033,6 +4028,11 @@ curl -k --user bob:bobpwd https://localhost:9443/metrics/base
 as well as to see the vendor metrics, run the following curl command:
 ```bash
 curl -k --user bob:bobpwd https://localhost:9443/metrics/vendor
+```
+
+To review all the metrics, run the following curl command:
+```bash
+curl -k --user bob:bobpwd https://localhost:9443/metrics
 ```
 
 
