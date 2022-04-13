@@ -3534,9 +3534,9 @@ curl -s http://localhost:9080/health | jq
 
 ::page{title="Providing metrics"}
 
-Next, you will learn how to use [MicroProfile Metrics](https://download.eclipse.org/microprofile/microprofile-metrics-4.0/microprofile-metrics-spec-4.0.html) to provide metrics from the ***inventory*** microservice.
+Next, you can learn how to use [MicroProfile Metrics](https://download.eclipse.org/microprofile/microprofile-metrics-4.0/microprofile-metrics-spec-4.0.html) to provide metrics from the ***inventory*** microservice.
 
-Navigate to your application directory
+Go to your application directory.
 
 
 ```bash
@@ -3640,7 +3640,7 @@ Replace the ***server.xml*** file.
 
 The ***administrator-role*** configuration authorizes ***bob*** user as an administrator.
 
-Use annotations provided by MicroProfile Metrics to instrument the ***inventory*** microservice to provide application-level metrics data.
+Use annotations that are provided by MicroProfile Metrics to instrument the ***inventory*** microservice to provide application-level metrics data.
 
 Replace the ***SystemResource*** class.
 
@@ -3966,13 +3966,12 @@ public class SystemResource {
 
 
 
-Import the ***Counted*** annotation, and apply the ***@Counted*** annotation to the ***POST /api/systems***, ***PUT /api/systems/{hostname}***, ***DELETE /api/systems/{hostname}***, and ***POST /api/systems/client/{hostname}*** endpoints
- to count how many times the endpoints are accessed monotonically, that are counting up sequentially. 
+Import the ***Counted*** annotation, and apply the ***@Counted*** annotation to the ***POST /api/systems***, ***PUT /api/systems/{hostname}***, ***DELETE /api/systems/{hostname}***, and ***POST /api/systems/client/{hostname}*** endpoints to count how many times that the endpoints are accessed monotonically that are counting up sequentially. 
 
-Additional information about the annotations MicroProfile metrics provide, relevant metadata fields, and more are available at the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/22.0.0.4/reference/javadoc/microprofile-5.0-javadoc.html?package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=overview-summary.html).
+Additional information about the annotations MicroProfile metrics provides, relevant metadata fields, and more are available at the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/22.0.0.4/reference/javadoc/microprofile-5.0-javadoc.html?package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=overview-summary.html).
 
 
-Run the following commands to call some of the endpoints that you have annotated:
+Run the following commands to call some of the endpoints that you annotated:
 
 ```bash
 curl -k --user bob:bobpwd -X DELETE 'https://localhost:9443/inventory/api/systems/localhost'
@@ -3990,10 +3989,10 @@ curl -k --user alice:alicepwd -X PUT 'http://localhost:9080/inventory/api/system
 curl -s 'http://localhost:9080/inventory/api/systems' | jq
 ```
 
-There are 4 different REST enpoints that MicroProfile Metrics provides.
+MicroProfile Metrics provides 4 different REST endpoints.
 
 * The ***/metrics*** endpoint provides you with all the metrics in text format. 
-* The ***/metrics/application*** endpoint provides you with application specific metrics.
+* The ***/metrics/application*** endpoint provides you with application-specific metrics.
 * The ***/metrics/base*** endpoint provides you with metrics that are defined in MicroProfile specifications. Metrics in the base scope are intended to be portable between different MicroProfile-compatible runtimes.
 * The ***/metrics/vendor*** endpoint provides you with metrics specific to the runtime.
 
@@ -4025,7 +4024,7 @@ You can see the system metrics, run the following curl command:
 curl -k --user bob:bobpwd https://localhost:9443/metrics/base
 ```
 
-as well as to see the vendor metrics, run the following curl command:
+To see the vendor metrics, run the following curl command:
 ```bash
 curl -k --user bob:bobpwd https://localhost:9443/metrics/vendor
 ```
