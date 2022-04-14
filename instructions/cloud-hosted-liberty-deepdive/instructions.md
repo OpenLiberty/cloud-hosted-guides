@@ -4035,10 +4035,6 @@ curl -k --user bob:bobpwd https://localhost:9443/metrics
 ```
 
 
-::page{title="Testing the microservice"}
-
-use test containger to test the microservice
-
 ::page{title="Building the container "}
 
 Press ***CTRL+C*** in the command-line session to stop the dev mode ***mvn liberty:dev*** that was started in the previous section.
@@ -4098,7 +4094,9 @@ COPY --chown=1001:0 \
     target/inventory.war \
     /config/apps
 
-COPY --chown=1001:0 target/liberty/wlp/usr/shared/resources/*.jar /opt/ol/wlp/usr/shared/resources/
+COPY --chown=1001:0 \
+    target/liberty/wlp/usr/shared/resources/*.jar \
+    /opt/ol/wlp/usr/shared/resources/
 
 USER 1001
 
@@ -4294,6 +4292,12 @@ Build your Docker image with the following commands:
 docker build -t liberty-deepdive-inventory:1.0-SNAPSHOT .
 ```
 
+In this Skills Network environment, you need to push the image to your container registry on IBM Cloud by the following commands:
+```bash
+docker tag liberty-deepdive-inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/liberty-deepdive-inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/liberty-deepdive-inventory:1.0-SNAPSHOT
+```
+
 When the build finishes, run the following command to list all local Docker images:
 ```bash
 docker images
@@ -4301,9 +4305,9 @@ docker images
 
 Verify that the ***liberty-deepdive-inventory:1.0-SNAPSHOT*** image is listed among the Docker images, for example:
 ```
-REPOSITORY                      TAG
-liberty-deepdive-inventory      1.0-SNAPSHOT
-openliberty/open-liberty        full-java11-openj9-ubi
+REPOSITORY                    TAG
+liberty-deepdive-inventory    1.0-SNAPSHOT
+icr.io/appcafe/open-liberty   full-java11-openj9-ubi
 ```
 
 ::page{title="Deploying the microservice to Kubernetes"}
@@ -4366,20 +4370,6 @@ spec:
   env:
     - name: POSTGRES_HOSTNAME
       value: "postgres"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    name: inventory-deployment
-  ports:
-  - protocol: TCP
-    port: 9443
-    targetPort: 9443
-    nodePort: 31000
 ```
 
 
@@ -4397,10 +4387,14 @@ kubectl create secret generic post-app-credentials --from-literal username=admin
 
 The credentials are passed to the PostgreSQL database service as environment variables in the ***env*** field.
 
-Run the following command to deploy the application and database:
+
+To deploy the **inventory** microservice and ***Postgres*** database in this Skill Network environment, you need to update the image name so that the image in your IBM Cloud container registry is used, and add the **pullSecret** and ***pullPolicy*** settings. Run the following commands:
+
 ```bash
-kubectl apply -f inventory.yaml
-kubectl apply -f ../../finish/postgres/postgres.yaml
+sed -i 's=liberty-deepdive-inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/liberty-deepdive-inventory:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' /home/project/draft-guide-liberty-deepdive/start/inventory/inventory.yaml
+kubectl apply -f /home/project/draft-guide-liberty-deepdive/start/inventory/inventory.yaml
+sed -i 's=namespace: default=namespace: '"$SN_ICR_NAMESPACE"'=g' /home/project/draft-guide-liberty-deepdive/finish/postgres/postgres.yaml
+kubectl apply -f /home/project/draft-guide-liberty-deepdive/finish/postgres/postgres.yaml
 ```
 
 When deployed, run the following command to check the status of your pods:
@@ -4417,27 +4411,35 @@ postgres-58bd9b55c7-6vzz8               1/1     Running   0          13s
 olo-controller-manager-6fc6b456dc-s29wl 1/1     Running   0          10m
 ```
 
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-You can check out the service at the https://localhost:31000/openapi/ui/ URL.  The servers dropdown list shows the ***https://localhost:31000/inventory*** URL. Or, you can run the following command to access the inventory microservice:
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+Run the following command to set up port forwarding to access the ***inventory*** microservice:
 
 ```bash
-curl https://localhost:31000/openapi/ui/
+kubectl port-forward svc/inventory-deployment 9443
 ```
 
 
+On another command-line session, access the microservice by running the following commands:
+
 ```bash
-curl -k https://localhost:31000/inventory/api/systems
+curl -k --user bob:bobpwd -X DELETE 'https://localhost:9443/inventory/api/systems/localhost'
 ```
+
+```bash
+curl -k -X POST 'https://localhost:9443/inventory/api/systems?heapSize=1048576&hostname=localhost&javaVersion=9&osName=linux'
+```
+
+```bash
+curl -k --user alice:alicepwd -X PUT 'https://localhost:9443/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+```
+
+```bash
+curl -k -s 'https://localhost:9443/inventory/api/systems' | jq
+```
+
+
+When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
 
 ### Customizing deployments
-
 
 
 You can modify the inventory deployment to customize the service. Customizations for a service include changing the port number, changing the context root, and passing confidential information by using Secrets. 
@@ -4487,60 +4489,53 @@ spec:
         configMapKeyRef:
           name: inv-app-root
           key: contextRoot
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    name: inventory-deployment
-  ports:
-  - protocol: TCP
-    port: 9443
-    targetPort: 9443
-    nodePort: 30000
-
 ```
 
 
 
 During deployment, ***post-app-credentials*** secret can be mounted to the ***/config/variables/postgres*** in the pod to create Liberty config variables. Liberty creates variables from the files in the ***/config/variables/postgres*** directory. Instead of including confidential information in the ***server.xml***, users can access it using normal Liberty variable syntax, ***${postgres/username}*** and ***${postgres/password}***.
 
-Finally, the ***port*** number is updated to ***30000***, so the service is now available at port ***30000***.
-
 Run the following command to deploy your changes.
 ```bash
 kubectl apply -f inventory.yaml
 ```
 
-
-You can now check out the service at the https://localhost:30000/openapi/ui/ URL. The servers dropdown list shows the ***https://localhost:30000/dev*** URL. Or, you can run the following command to access the inventory microservice:
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+Run the following command to set up port forwarding to access the ***inventory*** microservice:
 
 ```bash
-curl https://localhost:30000/openapi/ui/
+kubectl port-forward svc/inventory-deployment 9443
 ```
 
 
+On another command-line session, access the microservice by running the following commands:
+
 ```bash
-curl -k https://localhost:30000/dev/api/systems
+curl -k --user bob:bobpwd -X DELETE 'https://localhost:9443/dev/api/systems/localhost'
+```
+
+```bash
+curl -k -X POST 'https://localhost:9443/dev/api/systems?heapSize=1048576&hostname=localhost&javaVersion=9&osName=linux'
+```
+
+```bash
+curl -k --user alice:alicepwd -X PUT 'https://localhost:9443/dev/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+```
+
+```bash
+curl -k -s 'https://localhost:9443/dev/api/systems' | jq
 ```
 
 ### Tearing down the environment 
 
-When you're finished trying out the microservice, you can delete all Kubernetes resources by running the ***kubectl delete*** commands:
+When you're finished trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding. You can delete all Kubernetes resources by running the ***kubectl delete*** commands:
+
 
 ```bash
-kubectl delete -f inventory.yaml
-kubectl delete -f ../../finish/postgres/postgres.yaml
+kubectl delete -f /home/project/draft-guide-liberty-deepdive/start/inventory/inventory.yaml
+kubectl delete -f /home/project/draft-guide-liberty-deepdive/finish/postgres/postgres.yaml
 kubectl delete configmap inv-app-root
 kubectl delete secret post-app-credentials
 ```
-
 
 ::page{title="Support Licensing"}
 
