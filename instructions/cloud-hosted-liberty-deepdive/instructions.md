@@ -18,7 +18,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to build a REST microservice with Jakarta EE and MicroProfile on Liberty. You will use Maven throughout this exercise to build the microservice as well as to interact with the running Liberty instance. Then, you’ll build a container image for the microservice and deploy it in Liberty Docker container to Kubernetes.
+You will learn how to build a RESTful microservice with Jakarta EE and MicroProfile on Liberty. You will use Maven throughout this exercise to build the microservice as well as to interact with the running Liberty instance. Then, you’ll build a container image for the microservice and deploy it in Liberty Docker container to Kubernetes.
 
 The microservice that you’ll be working with is called ***inventory***. The ***inventory*** microservice persists data into a PostgreSQL database. You will also learn how to secure the REST endpoints and use JSON Web Token to communicate the provided ***system*** secured microservice.
 
@@ -68,7 +68,7 @@ When there, enter the properties that are needed for the application.
 Then, click ***Generate Project***. This downloads the starter project as ***inventory.zip*** file. 
 
 
-Next, unpackage the ***inventory.zip*** file on your system. Move the contents of this extracted ***inventory*** directory to the start directory of this project as following path: ***guide-liberty-deepdive/start/inventory***
+Next, unpackage the ***inventory.zip*** file on your system. Move the contents of this extracted ***inventory*** directory to the ***start*** directory of this project as following path: ***guide-liberty-deepdive/start/inventory***
 
 In this Skills Network environment, instead, run the following commands to download and unpackage the project:
 ```bash
@@ -442,15 +442,15 @@ public class SystemResource {
 
 
 
-In Jakarta RESTful Web Service (restfulWS), a single class (like the ***SystemResource.java*** class) must represent a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. It is efficient to have a single class handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability.
+In Jakarta RESTful Web Services, a single class (like the ***SystemResource.java*** class) must represent a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. It is efficient to have a single class handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability.
 
-The ***@Path*** annotation on this class indicates that this resource responds to the ***/systems*** path in the restfulWS application. The ***@ApplicationPath*** annotation in the ***RestApplication*** class together with the ***@Path*** annotation in the ***SystemResource*** class indicates that this resource is available at the ***/api/systems*** path.
+The ***@Path*** annotation on this class indicates that this resource responds to the ***/systems*** path in the RESTful application. The ***@ApplicationPath*** annotation in the ***RestApplication*** class together with the ***@Path*** annotation in the ***SystemResource*** class indicates that this resource is available at the ***/api/systems*** path.
 
-The restfulWS maps the HTTP methods on the URL to the methods of the class by using annotations. This application uses the ***GET*** annotation to map an HTTP ***GET*** request to the ***/api/systems*** path.
+The Jakarta RESTful Web Services maps the HTTP methods on the URL to the methods of the class by using annotations. This application uses the ***GET*** annotation to map an HTTP ***GET*** request to the ***/api/systems*** path.
 
 The ***@GET*** annotation on the ***listContents*** method indicates that the method is to be called for the HTTP ***GET*** method. The ***@Produces*** annotation indicates the format of the content that is returned. The value of the ***@Produces*** annotation is specified in the HTTP ***Content-Type*** response header. For this application, a JSON structure is returned for these ***Get*** methods. The wanted ***Content-Type*** for a JSON response is ***application/json*** with ***MediaType.APPLICATION_JSON*** instead of the ***String*** content type. Using a constant such as ***MediaType.APPLICATION_JSON*** is better as in case of a spelling error, a compile failure occurs.
 
-The restfulWS supports a number of ways to marshal JSON. The restfulWS specification mandates JSON-Binding (JSON-B). The method body returns the result of ***inventory.getSystems()***. Because the method is annotated with ***@Produces(MediaType.APPLICATION_JSON)***, the restfulWS uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
+The Jakarta RESTful Web Services supports a number of ways to marshal JSON. The Jakarta RESTful Web Services specification mandates JSON-Binding (JSON-B). The method body returns the result of ***inventory.getSystems()***. Because the method is annotated with ***@Produces(MediaType.APPLICATION_JSON)***, the Jakarta RESTful Web Services uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
 
 
 ### Running the application
@@ -467,7 +467,7 @@ curl 'http://localhost:9080/inventory/api/systems'
 
 Next, you will investigate how to document and filter RESTful APIs from annotations, POJOs (Plain old Java objects), and static OpenAPI files by using MicroProfile OpenAPI.
 
-The OpenAPI specification, previously known as the Swagger specification, defines a standard interface for documenting and exposing RESTful APIs. This specification allows both humans and computers to understand or process the functionalities of services without requiring direct access to underlying source code or documentation. The MicroProfile OpenAPI specification provides a set of Java interfaces and programming models that allow Java developers to natively produce OpenAPI v3 documents from their restfulWS applications.
+The OpenAPI specification, previously known as the Swagger specification, defines a standard interface for documenting and exposing RESTful APIs. This specification allows both humans and computers to understand or process the functionalities of services without requiring direct access to underlying source code or documentation. The MicroProfile OpenAPI specification provides a set of Java interfaces and programming models that allow Java developers to natively produce OpenAPI v3 documents from their RESTful applications.
 
 
 
@@ -475,14 +475,14 @@ The MicroProfile OpenAPI API is included in the ***microProfile*** dependency th
 
 ### Generating the OpenAPI document
 
-Because the restfulWS framework handles basic API generation for restfulWS annotations, a skeleton OpenAPI tree can be generated from the existing inventory service. You can use this tree as a starting point and augment it with annotations and code to produce a complete OpenAPI document.
+Because the Jakarta RESTful Web Services framework handles basic API generation for Jakarta RESTful Web Services annotations, a skeleton OpenAPI tree can be generated from the existing inventory service. You can use this tree as a starting point and augment it with annotations and code to produce a complete OpenAPI document.
 
 To see the generated OpenAPI tree, you can either visit the http://localhost:9080/openapi URL or visit the http://localhost:9080/openapi/ui URL for a more interactive view of the APIs. Click the ***interactive UI*** link on the welcome page. Within this UI, you can view each of the endpoints available in your application and any schemas. Each endpoint is colour coordinated to easily identify the type of request each is (for example GET, POST, PUT, DELETE, etc.). Clicking each endpoint within this UI enables you to view further details of each endpoint's parameters and responses. This UI is used for the remainder of this workshop to view and test the application endpoints.
 
 
-### Augmenting the existing restfulWS annotations with OpenAPI annotations
+### Augmenting the existing Jakarta RESTful Web Services annotations with OpenAPI annotations
 
-Because all restfulWS annotations are processed by default, you can augment the existing code with OpenAPI annotations without needing to rewrite portions of the OpenAPI document that are already covered by the restfulWS framework.
+Because all Jakarta RESTful Web Services annotations are processed by default, you can augment the existing code with OpenAPI annotations without needing to rewrite portions of the OpenAPI document that are already covered by the Jakarta RESTful Web Services framework.
 
 Replace the ***SystemResources*** class.
 
@@ -741,13 +741,13 @@ public class SystemResource {
 
 
 
-Add OpenAPI ***@APIResponseSchema***, ***@APIResponses***, ***@APIResponse***, ***@Parameters***, ***@Parameter***, and ***@Operation*** annotations to the restfulWS methods, ***listContents()***, ***getSystem()***, ***addSystem()***, ***updateSystem()***, ***removeSystem()***, and ***addSystemClient()***.
+Add OpenAPI ***@APIResponseSchema***, ***@APIResponses***, ***@APIResponse***, ***@Parameters***, ***@Parameter***, and ***@Operation*** annotations to the REST methods, ***listContents()***, ***getSystem()***, ***addSystem()***, ***updateSystem()***, ***removeSystem()***, and ***addSystemClient()***.
 
 Note, the ***@Parameter*** annotation can be placed either ***inline*** or ***outline***. Examples of both have been provided within this class.
 
 There are many OpenAPI annotations that can be used depending on what's best for your application and its classes. You can found all the annotations from the [MicroProfile OpenAPI specification](https://download.eclipse.org/microprofile/microprofile-open-api-3.0/microprofile-openapi-spec-3.0.html#_annotations).
 
-Because the Liberty server was started in dev mode at the beginning of this exercise, your changes were automatically picked up. Go to the http://localhost:9080/openapi/ URL to see the updated endpoint descriptions. The endpoints at which your restfulWS methods are served now more meaningful:
+Because the Liberty server was started in dev mode at the beginning of this exercise, your changes were automatically picked up. Go to the http://localhost:9080/openapi/ URL to see the updated endpoint descriptions. The endpoints at which your REST methods are served now more meaningful:
 
 ```bash
 curl http://localhost:9080/openapi
@@ -2517,13 +2517,13 @@ public class SystemResource {
 
 This class now has role-based access control. The role names that are used in the ***@RolesAllowed*** annotations are mapped to group names in the groups claim of the JSON Web Token (JWT). This mapping results in an authorization decision wherever the security constraint is applied.
 
-The ***/{hostname}*** endpoint that is annotated with the ***@PUT*** annotation updates a system in the inventory. This ***PUT*** endpoint is annotated with the ***@RolesAllowed({ "admin", "user" })*** annotation. Only authenticated users with the role of ***admin*** or ***user*** can access this endpoint.
+The ***/{hostname}*** endpoint that is annotated with the ***@PUT*** annotation updates a system in the inventory. This PUT endpoint is annotated with the ***@RolesAllowed({ "admin", "user" })*** annotation. Only authenticated users with the role of ***admin*** or ***user*** can access this endpoint.
 
-The ***/{hostname}*** endpoint that is annotated with the ***@DELETE*** annotation removes a system from the inventory. This ***DELETE*** endpoint is annotated with the ***@RolesAllowed({ "admin" })*** annotation. Here, only authenticated users with the role of ***admin*** can access this endpoint.
+The ***/{hostname}*** endpoint that is annotated with the ***@DELETE*** annotation removes a system from the inventory. This DELETE endpoint is annotated with the ***@RolesAllowed({ "admin" })*** annotation. Here, only authenticated users with the role of ***admin*** can access this endpoint.
 
-You can manually check that the ***inventory*** microservice is secured by making requests to the ***PUT*** and ***DELETE*** endpoints.
+You can manually check that the ***inventory*** microservice is secured by making requests to the PUT and DELETE endpoints.
 
-Before making requests, you must add a system to the inventory. Try adding a system by using the ***POST*** endpoint ***/systems*** by running the following command:
+Before making requests, you must add a system to the inventory. Try adding a system by using the POST endpoint ***/systems*** by running the following command:
 
 ```bash
 curl -X POST 'http://localhost:9080/inventory/api/systems?hostname=localhost&osName=mac&javaVersion=11&heapSize=1'
@@ -2547,7 +2547,7 @@ You can now expect the following response:
 [{"heapSize":1,"hostname":"localhost","javaVersion":"11","osName":"mac","id":23}]
 ```
 
-Now try calling your secure ***PUT*** endpoint to update the system that you just added by the following curl command:
+Now try calling your secure PUT endpoint to update the system that you just added by the following curl command:
 
 ```bash
 curl -k --user alice:alicepwd -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
@@ -2563,7 +2563,7 @@ You should see the following response:
 
 This response means that you logged in successfully as an authenticated ***user***, and that the endpoint works as expected.
 
-Now try calling the ***DELETE*** endpoint. As this endpoint is only accessible to ***admin*** users, you can expect this command to fail if you attempt to access it with a user in the ***user*** group.
+Now try calling the DELETE endpoint. As this endpoint is only accessible to ***admin*** users, you can expect this command to fail if you attempt to access it with a user in the ***user*** group.
 
 You can check that your application is secured against these requests with the following command:
 
@@ -2747,7 +2747,7 @@ This class links the ***UnknownUriException*** class with the corresponding resp
 
 ### Implementing the ***/client/{hostname}*** endpoint
 
-Now implement the ***/client/{hostname}*** ***POST*** endpoint of the ***SystemResource*** class to consume the secured ***system*** microservice.
+Now implement the ***/client/{hostname}*** POST endpoint of the ***SystemResource*** class to consume the secured ***system*** microservice.
 
 Replace the ***SystemResource*** class.
 
@@ -3060,7 +3060,7 @@ public class SystemResource {
 
 
 
-The ***getSystemClient()*** method builds and returns a new instance of the ***SystemClient*** class for the hostname provided. The ***/client/{hostname}*** ***POST*** endpoint uses this method to create a rest client that is called ***customRestClient*** to consume the ***system*** microservice.  
+The ***getSystemClient()*** method builds and returns a new instance of the ***SystemClient*** class for the hostname provided. The ***/client/{hostname}*** POST endpoint uses this method to create a REST client that is called ***customRestClient*** to consume the ***system*** microservice.
 
 A JWT instance is injected to the ***jwt*** field variable by the ***jwtSso*** feature. It is used to create the ***authHeader*** authentication header. It is then passed as a parameter to the endpoints of the ***customRestClient*** to get the properties from the ***system*** microservice. A ***system*** is then added to the inventory.
 
@@ -5186,6 +5186,14 @@ mvn clean
 mvn liberty:dev
 ```
 
+In the ***Dockerfile***, replace the Liberty image to be ***websphere-liberty*** at the ***FROM*** statement as the following:
+```
+FROM icr.io/appcafe/websphere-liberty:full-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+...
+```
 
 ::page{title="Summary"}
 
