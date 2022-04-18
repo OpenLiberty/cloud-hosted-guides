@@ -4542,10 +4542,6 @@ public class LibertyContainer extends GenericContainer<LibertyContainer> {
         return target.proxy(clazz);
     }
 
-    public <T> T createRestClient(Class<T> clazz) {
-        return createRestClient(clazz, null);
-    }
-
     public String getBaseURL() throws IllegalStateException {
         if (baseURL != null) {
             return baseURL;
