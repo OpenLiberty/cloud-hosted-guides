@@ -4310,9 +4310,625 @@ liberty-deepdive-inventory    1.0-SNAPSHOT
 icr.io/appcafe/open-liberty   full-java11-openj9-ubi
 ```
 
+::page{title="Testing the microservice with Testcontainers"}
+
+While you can test your microservice manually, you should rely on automated tests. In this section, you can learn how to use Testcontainers to verify your microservice in the same Docker container that you’ll use in production.
+
+First of all, create the ***test*** directory at the ***src*** directory of your Maven project.
+
+
+```bash
+mkdir -p /home/project/draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest
+mkdir /home/project/draft-guide-liberty-deepdive/start/inventory/src/test/resources
+```
+
+Create a RESTful client interface for the ***inventory*** microservice.
+
+Create the ***SystemResourceClient.java*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceClient.java
+```
+
+
+> Then, to open the SystemResourceClient.java file in your IDE, select
+> **File** > **Open** > draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceClient.java, or click the following button
+
+::openFile{path="/home/project/draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceClient.java"}
+
+
+
+```java
+package it.io.openliberty.deepdive.rest;
+
+import java.util.List;
+
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+
+@ApplicationScoped
+@Path("/systems")
+public interface SystemResourceClient {
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    List<SystemData> listContents();
+
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    SystemData getSystem(
+        @PathParam("hostname") String hostname);
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    Response addSystem(
+        @QueryParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize);
+
+    @PUT
+    @Path("/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin", "user" })
+    Response updateSystem(
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize);
+
+    @DELETE
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin" })
+    Response removeSystem(
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("hostname") String hostname);
+}
+
+```
+
+
+
+This interface declares ***listContents()***, ***getSystem()***, ***addSystem()***, ***updateSystem()***, and ***removeSystem()*** methods for accessing each of the endpoints that are set up to access the ***inventory*** microservice. 
+
+
+Create the ***SystemData*** data model for each system in the inventory.
+
+Create the ***SystemData.java*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemData.java
+```
+
+
+> Then, to open the SystemData.java file in your IDE, select
+> **File** > **Open** > draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemData.java, or click the following button
+
+::openFile{path="/home/project/draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemData.java"}
+
+
+
+```java
+package it.io.openliberty.deepdive.rest;
+
+public class SystemData {
+
+    private int id;
+    private String hostname;
+    private String osName;
+    private String javaVersion;
+    private Long heapSize;
+
+    public SystemData() {
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    public String getOsName() {
+        return osName;
+    }
+
+    public String getJavaVersion() {
+        return javaVersion;
+    }
+
+    public Long getHeapSize() {
+        return heapSize;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
+
+    public void setOsName(String osName) {
+        this.osName = osName;
+    }
+
+    public void setJavaVersion(String javaVersion) {
+        this.javaVersion = javaVersion;
+    }
+
+    public void setHeapSize(Long heapSize) {
+        this.heapSize = heapSize;
+    }
+}
+```
+
+
+
+The ***SystemData*** class contains the ID, hostname, operating system name, Java version, and heap size properties. The various ***get*** and ***set*** methods within this class allow the viewing and editing the properties of each system in the inventory.
+
+Create the test container class that access the ***inventory*** docker image that you built in previous section.
+
+Create the ***LibertyContainer.java*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/LibertyContainer.java
+```
+
+
+> Then, to open the LibertyContainer.java file in your IDE, select
+> **File** > **Open** > draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/LibertyContainer.java, or click the following button
+
+::openFile{path="/home/project/draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/LibertyContainer.java"}
+
+
+
+```java
+package it.io.openliberty.deepdive.rest;
+
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+
+import jakarta.ws.rs.core.UriBuilder;
+
+public class LibertyContainer extends GenericContainer<LibertyContainer> {
+
+    static final Logger LOGGER = LoggerFactory.getLogger(LibertyContainer.class);
+
+    private String baseURL;
+
+    public LibertyContainer(final String dockerImageName) {
+        super(dockerImageName);
+        waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
+    }
+
+    public <T> T createRestClient(Class<T> clazz, String applicationPath) {
+        String urlPath = getBaseURL();
+        if (applicationPath != null) {
+            urlPath += applicationPath;
+        }
+        ResteasyClient client =  (ResteasyClient) ResteasyClientBuilder.newClient();
+        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
+        return target.proxy(clazz);
+    }
+
+    public <T> T createRestClient(Class<T> clazz) {
+        return createRestClient(clazz, null);
+    }
+
+    public String getBaseURL() throws IllegalStateException {
+        if (baseURL != null) {
+            return baseURL;
+        }
+        if (!this.isRunning()) {
+            throw new IllegalStateException(
+                "Container must be running to determine hostname and port");
+        }
+        baseURL = "http://" + this.getContainerIpAddress()
+            + ":" + this.getFirstMappedPort();
+        return baseURL;
+    }
+}
+```
+
+
+
+The ***createRestClient()*** method creates a REST client instance with the ***SystemResourceClient*** interface. The ***getBaseURL()*** method constructs the URL that can access the ***inventory*** docker image.
+
+Now, you can create your integration test cases.
+
+Create the ***SystemResourceIT.java*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceIT.java
+```
+
+
+> Then, to open the SystemResourceIT.java file in your IDE, select
+> **File** > **Open** > draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceIT.java, or click the following button
+
+::openFile{path="/home/project/draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceIT.java"}
+
+
+
+```java
+package it.io.openliberty.deepdive.rest;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.Base64;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+@Testcontainers
+@TestMethodOrder(OrderAnnotation.class)
+public class SystemResourceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(SystemResourceIT.class);
+    private static String appPath = "/inventory/api";
+    private static String postgresHost = "postgres";
+    private static String postgresImageName = "postgres-sample:latest";
+    private static String appImageName = "liberty-deepdive-inventory:1.0-SNAPSHOT";
+
+    public static SystemResourceClient client;
+    public static Network network = Network.newNetwork();
+    private static String authHeader;
+
+    @Container
+    public static GenericContainer<?> postgresContainer
+        = new GenericContainer<>(postgresImageName)
+              .withNetwork(network)
+              .withExposedPorts(5432)
+              .withNetworkAliases(postgresHost)
+              .withLogConsumer(new Slf4jLogConsumer(logger));
+
+    @Container
+    public static LibertyContainer libertyContainer
+        = new LibertyContainer(appImageName)
+              .withEnv("POSTGRES_HOSTNAME", postgresHost)
+              .withExposedPorts(9080)
+              .withNetwork(network)
+              .waitingFor(Wait.forHttp("/health/ready"))
+              .withLogConsumer(new Slf4jLogConsumer(logger));
+
+    @BeforeAll
+    public static void setupTestClass() throws Exception {
+        System.out.println("INFO: Starting Liberty Container setup");
+        client = libertyContainer.createRestClient(
+            SystemResourceClient.class, appPath);
+        String userPassword = "bob" + ":" + "bobpwd";
+        authHeader = "Basic "
+            + Base64.getEncoder().encodeToString(userPassword.getBytes());
+    }
+
+    private void showSystemData(SystemData system) {
+        System.out.println("TEST: SystemData > "
+            + system.getId() + ", "
+            +  system.getHostname() + ", "
+            + system.getOsName() + ", "
+            + system.getJavaVersion() + ", "
+            + system.getHeapSize());
+    }
+
+    @Test
+    @Order(1)
+    public void testAddSystem() {
+        System.out.println("TEST: Testing add a system");
+        client.addSystem("localhost", "linux", "11", Long.valueOf(2048));
+        List<SystemData> systems = client.listContents();
+        assertEquals(1, systems.size());
+        showSystemData(systems.get(0));
+        assertEquals("11", systems.get(0).getJavaVersion());
+        assertEquals(Long.valueOf(2048), systems.get(0).getHeapSize());
+    }
+
+    @Test
+    @Order(2)
+    public void testUpdateSystem() {
+        System.out.println("TEST: Testing update a system");
+        client.updateSystem(authHeader, "localhost", "linux", "8", Long.valueOf(1024));
+        SystemData system = client.getSystem("localhost");
+        showSystemData(system);
+        assertEquals("8", system.getJavaVersion());
+        assertEquals(Long.valueOf(1024), system.getHeapSize());
+    }
+
+    @Test
+    @Order(3)
+    public void testRemoveSystem() {
+        System.out.println("TEST: Testing remove a system");
+        client.removeSystem(authHeader, "localhost");
+        List<SystemData> systems = client.listContents();
+        assertEquals(0, systems.size());
+    }
+}
+```
+
+
+
+Define the ***postgresContainer*** test container to start up the PostgreSQL docker image, and define the ***libertyContainer*** test container to start up the ***inventory*** docker image. Make sure that both containers use the same ***network***. The ***/health/ready*** endpoint can tell that the container is ready to start testing.
+
+The ***testAddSystem()*** verifies the ***addSystem*** and ***listContents*** endpoints.
+
+The ***testUpdateSystem()*** verifies the ***updateSystem*** and ***getSystem*** endpoints.
+
+The ***testRemoveSystem()*** verifies the ***removeSystem*** endpoint.
+
+
+Create the log4j properites file required by the Testcontainers.
+
+Create the ***log4j.properties*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/draft-guide-liberty-deepdive/start/inventory/src/test/resources/log4j.properties
+```
+
+
+> Then, to open the log4j.properties file in your IDE, select
+> **File** > **Open** > draft-guide-liberty-deepdive/start/inventory/src/test/resources/log4j.properties, or click the following button
+
+::openFile{path="/home/project/draft-guide-liberty-deepdive/start/inventory/src/test/resources/log4j.properties"}
+
+
+
+```
+log4j.rootLogger=INFO, stdout
+
+log4j.appender=org.apache.log4j.ConsoleAppender
+log4j.appender.layout=org.apache.log4j.PatternLayout
+
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.stdout.layout.ConversionPattern=%r %p %c %x - %m%n
+
+log4j.logger.io.openliberty.guides.testing=DEBUG
+```
+
+
+
+Update the Maven configuration file with required dependencies.
+
+Replace the ***pom.xml*** file.
+
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > draft-guide-liberty-deepdive/start/inventory/pom.xml, or click the following button
+
+::openFile{path="/home/project/draft-guide-liberty-deepdive/start/inventory/pom.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.deepdive</groupId>
+    <artifactId>inventory</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.default.context.root>/inventory</liberty.var.default.context.root>
+        <liberty.var.client.https.port>9444</liberty.var.client.https.port>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>9.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>5.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.3.1</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.8.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.16.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.16.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.36</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.0.0.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-json-binding-provider</artifactId>
+            <version>6.0.0.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.json</artifactId>
+            <version>2.0.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+            <version>2.0.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib-nodep</artifactId>
+            <version>3.3.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-auth-jwt</artifactId>
+            <version>4.0.3</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>inventory</finalName>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>3.3.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>io.openliberty.tools</groupId>
+                    <artifactId>liberty-maven-plugin</artifactId>
+                    <version>3.5.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <configuration>
+                    <copyDependencies>
+                        <dependencyGroup>
+                            <location>${project.build.directory}/liberty/wlp/usr/shared/resources</location>
+                            <dependency>
+                                <groupId>org.postgresql</groupId>
+                                <artifactId>postgresql</artifactId>
+                                <version>42.3.1</version>
+                            </dependency>
+                        </dependencyGroup>
+                    </copyDependencies>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
+Add all required ***dependency*** with ***test*** scope, including JUnit5, Testcontainers, Log4J, JBoss RESTEasy client, Glassfish JSON, and Vert.x libraries. Also, add the ***maven-failsafe-plugin*** plugin, so that the integration test can be run by the Maven ***verify*** goal.
+
+### Running the tests
+
+You can run the Maven ***verify*** goal that compiles the java files, starts the containers, runs the tests, and then stops the containers.
+
+```bash
+mvn verify
+```
+
+You will see the following output:
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.deepdive.rest.SystemResourceIT
+...
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 17.413 s - in it.io.openliberty.deepdive.rest.SystemResourceIT
+
+Results :
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
+
 ::page{title="Deploying the microservice to Kubernetes"}
 
-Now that the containerized application is built, deploy it to a local Kubernetes cluster. 
+Now that the containerized application is built and tested, deploy it to a local Kubernetes cluster. 
 
 ### Installing the Open Liberty Operator 
 
