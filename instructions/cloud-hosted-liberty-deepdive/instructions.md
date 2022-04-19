@@ -4540,6 +4540,14 @@ public class LibertyContainer extends GenericContainer<LibertyContainer> {
     private KeyStore keystore;
     private SSLContext sslContext;
 
+    public static String getProtocol() {
+        return System.getProperty("test.protocol", "https");
+    }
+
+    public static boolean testHttps() {
+        return getProtocol().equalsIgnoreCase("https");
+    }
+
     public LibertyContainer(final String dockerImageName) {
         super(dockerImageName);
         waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
@@ -4552,10 +4560,11 @@ public class LibertyContainer extends GenericContainer<LibertyContainer> {
             urlPath += applicationPath;
         }
         ClientBuilder builder = ResteasyClientBuilder.newBuilder();
-        ResteasyClient client = (ResteasyClient) builder
-                .sslContext(sslContext)
-                .trustStore(keystore)
-                .build();
+        if (testHttps()) {
+            builder.sslContext(sslContext);
+            builder.trustStore(keystore);
+        }
+        ResteasyClient client = (ResteasyClient) builder.build();
         ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
         return target.proxy(clazz);
     }
@@ -4568,12 +4577,20 @@ public class LibertyContainer extends GenericContainer<LibertyContainer> {
             throw new IllegalStateException(
                 "Container must be running to determine hostname and port");
         }
-        baseURL = "https://" + this.getContainerIpAddress()
+        baseURL =  getProtocol() + "://" + this.getContainerIpAddress()
             + ":" + this.getFirstMappedPort();
+        System.out.println("TEST: " + baseURL);
         return baseURL;
     }
 
     private void init() {
+
+        if (!testHttps()) {
+            this.addExposedPorts(9080);
+            return;
+        }
+
+        this.addExposedPorts(9443, 9080);
         try {
             String keystoreFile = System.getProperty("user.dir")
                     + "/../../finish/system/src/main"
@@ -4611,7 +4628,7 @@ public class LibertyContainer extends GenericContainer<LibertyContainer> {
 
 
 
-The ***createRestClient()*** method creates a REST client instance with the ***SystemResourceClient*** interface. The ***getBaseURL()*** method constructs the URL that can access the ***inventory*** docker image by using SSL/TLS protocol.
+The ***createRestClient()*** method creates a REST client instance with the ***SystemResourceClient*** interface. The ***getBaseURL()*** method constructs the URL that can access the ***inventory*** docker image.
 
 Now, you can create your integration test cases.
 
@@ -4678,7 +4695,6 @@ public class SystemResourceIT {
     public static LibertyContainer libertyContainer
         = new LibertyContainer(appImageName)
               .withEnv("POSTGRES_HOSTNAME", postgresHost)
-              .withExposedPorts(9443, 9080)
               .withNetwork(network)
               .waitingFor(Wait.forHttp("/health/ready"))
               .withLogConsumer(new Slf4jLogConsumer(logger));
@@ -4955,9 +4971,12 @@ Add all required ***dependency*** with ***test*** scope, including JUnit5, Testc
 
 You can run the Maven ***verify*** goal that compiles the java files, starts the containers, runs the tests, and then stops the containers.
 
+
+In this Skills Network environment, you can test the HTTP protcol only.
 ```bash
-mvn verify
+mvn verify -Dtest.protocol=http
 ```
+
 
 You will see the following output:
 
