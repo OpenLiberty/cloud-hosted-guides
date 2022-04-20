@@ -2639,18 +2639,22 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 @Path("/api")
 public interface SystemClient extends AutoCloseable {
 
     @GET
     @Path("/property/{property}")
-    public String getProperty(@HeaderParam("Authorization") String authHeader,
-                              @PathParam("property") String property);
+    @Produces(MediaType.TEXT_PLAIN)
+    String getProperty(@HeaderParam("Authorization") String authHeader,
+                       @PathParam("property") String property);
 
     @GET
     @Path("/heapsize")
-    public Long getHeapSize(@HeaderParam("Authorization") String authHeader);
+    @Produces(MediaType.TEXT_PLAIN)
+    Long getHeapSize(@HeaderParam("Authorization") String authHeader);
 
 }
 ```
@@ -3166,7 +3170,8 @@ Because the keyStore file is not provided at the ***src*** directory, Liberty cr
 
 ```bash
 mkdir -p /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/liberty/config/resources/security
-cp /home/project/draft-guide-liberty-deepdive/finish/system/src/main/liberty/config/resources/security/key.p12 /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/liberty/config/resources/security/key.p12
+cp /home/project/draft-guide-liberty-deepdive/finish/system/src/main/liberty/config/resources/security/key.p12 \
+   /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/liberty/config/resources/security/key.p12
 ```
 
 Now configure the client https port in the ***pom.xml*** configuration file.
@@ -3974,7 +3979,8 @@ Additional information about the annotations MicroProfile metrics provides, rele
 Run the following commands to call some of the endpoints that you annotated:
 
 ```bash
-curl -k --user bob:bobpwd -X DELETE 'https://localhost:9443/inventory/api/systems/localhost'
+curl -k --user bob:bobpwd -X DELETE \
+  'https://localhost:9443/inventory/api/systems/localhost'
 ```
 
 ```bash
@@ -3982,7 +3988,8 @@ curl -X POST 'http://localhost:9080/inventory/api/systems?heapSize=1048576&hostn
 ```
 
 ```bash
-curl -k --user alice:alicepwd -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+curl -k --user alice:alicepwd -X PUT \
+  'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
 ```
 
 ```bash
@@ -4230,7 +4237,9 @@ Build and run the container by running the ***devc*** goal with the PostgreSQL c
 
 ```bash
 POSTGRES_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}"  postgres-container`
-mvn liberty:devc -DdockerRunOpts="-e POSTGRES_HOSTNAME=$POSTGRES_IP" -DserverStartTimeout=240
+mvn liberty:devc \
+  -DdockerRunOpts="-e POSTGRES_HOSTNAME=$POSTGRES_IP" \
+  -DserverStartTimeout=240
 ```
 
 You need to wait a while to let the dev mode start. After you see the following message, your application server in dev mode is ready:
@@ -5104,7 +5113,8 @@ kubectl port-forward svc/inventory-deployment 9443
 On another command-line session, access the microservice by running the following commands:
 
 ```bash
-curl -k --user bob:bobpwd -X DELETE 'https://localhost:9443/inventory/api/systems/localhost'
+curl -k --user bob:bobpwd -X DELETE \
+  'https://localhost:9443/inventory/api/systems/localhost'
 ```
 
 ```bash
@@ -5112,7 +5122,8 @@ curl -k -X POST 'https://localhost:9443/inventory/api/systems?heapSize=1048576&h
 ```
 
 ```bash
-curl -k --user alice:alicepwd -X PUT 'https://localhost:9443/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+curl -k --user alice:alicepwd -X PUT \
+  'https://localhost:9443/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
 ```
 
 ```bash
@@ -5193,7 +5204,8 @@ kubectl port-forward svc/inventory-deployment 9443
 On another command-line session, access the microservice by running the following commands:
 
 ```bash
-curl -k --user bob:bobpwd -X DELETE 'https://localhost:9443/dev/api/systems/localhost'
+curl -k --user bob:bobpwd -X DELETE \
+  'https://localhost:9443/dev/api/systems/localhost'
 ```
 
 ```bash
@@ -5201,7 +5213,8 @@ curl -k -X POST 'https://localhost:9443/dev/api/systems?heapSize=1048576&hostnam
 ```
 
 ```bash
-curl -k --user alice:alicepwd -X PUT 'https://localhost:9443/dev/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+curl -k --user alice:alicepwd -X PUT \
+  'https://localhost:9443/dev/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
 ```
 
 ```bash
