@@ -6,7 +6,7 @@ version-history-start-date: 2022-03-23T11:59:55Z
 ---
 ::page{title="Welcome to the A Technical Deep on Liberty guide!"}
 
-Liberty is a cloud-optimized Java runtime that is fast to start up with a low memory footprint and a development mode, known as dev mode, for quick iteration. Adding and removing features to adopt the latest open cloud-native Java API like MicroProfile and Jakarta EE are easy with Liberty. Liberty's zero migration lets you focus on what's important and not the APIs changing under you.
+Liberty is a cloud-optimized Java runtime that is fast to start up with a low memory footprint and a development mode, known as dev mode, for quick iteration. With Liberty, adopting the latest open cloud-native Java APIs, like MicroProfile and Jakarta EE, is as simple as adding features to your server configuration. The Liberty zero migration architecture lets you focus on what's important and not the APIs changing under you.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -18,9 +18,9 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to build a RESTful microservice with Jakarta EE and MicroProfile on Liberty. You will use Maven throughout this exercise to build the microservice as well as to interact with the running Liberty instance. Then, you’ll build a container image for the microservice and deploy it in Liberty Docker container to Kubernetes.
+You will learn how to build a RESTful microservice on Liberty with Jakarta EE and MicroProfile. You will use Maven throughout this exercise to build the microservice and to interact with the running Liberty instance. Then, you’ll build a container image for the microservice and deploy it to Kubernetes in a Liberty Docker container. You will also learn how to secure the REST endpoints and use JSON Web Tokens to communicate with the provided ***system*** secured microservice.
 
-The microservice that you’ll be working with is called ***inventory***. The ***inventory*** microservice persists data into a PostgreSQL database. You will also learn how to secure the REST endpoints and use JSON Web Token to communicate the provided ***system*** secured microservice.
+The microservice that you’ll work with is called ***inventory***. The ***inventory*** microservice persists data into a PostgreSQL database. 
 
 ![Inventory microservice](https://raw.githubusercontent.com/OpenLiberty/draft-guide-liberty-deepdive/draft/assets/inventory.png)
 
@@ -43,20 +43,20 @@ git clone https://github.com/openliberty/draft-guide-liberty-deepdive.git
 cd draft-guide-liberty-deepdive
 ```
 
-The ***start*** directory is an empty directory that you will build the ***inventory*** service.
+The ***start*** directory is an empty directory where you will build the ***inventory*** service.
 
 The ***finish*** directory contains the finished projects of different modules that you will build.
 
 
 ::page{title="Getting started with Liberty and REST"}
 
-To start developing your application, Liberty now has an easier way to get started by using the Open Liberty Starter. This tool provides a simple and quick way to get the necessary files to start building an application on Liberty. Through this tool, you can specify your application and project name. You can also choose a build tool from either Maven or Gradle, and pick the version of Java SE, Jakarta EE, and MicroProfile for your application.
+Liberty now offers an easier way to get started with developing your application: the Open Liberty Starter. This tool provides a simple and quick way to get the necessary files to start building an application on Liberty. Through this tool, you can specify your application and project name. You can also choose a build tool from either Maven or Gradle, and pick the Java SE, Jakarta EE, and MicroProfile versions for your application.
 
 In this workshop, the Open Liberty Starter is used to create the starting point of the application. Maven is used as the selected build tool and the application uses of Jakarta EE 9.1 and MicroProfile 5.
 
 To get started with this tool, see the Getting Started page: [https://openliberty.io/start/](https://openliberty.io/start/)
 
-When there, enter the properties that are needed for the application.
+On that page, enter the following properties in the **Create a starter application** wizard.
 
 * Under Group specify: ***io.openliberty.deepdive***
 * Under Artifact specify: ***inventory***
@@ -65,12 +65,12 @@ When there, enter the properties that are needed for the application.
 * Under Java EE/Jakarta EE Version select: ***9.1***
 * Under MicroProfile Version select: `5` 
 
-Then, click ***Generate Project***. This downloads the starter project as ***inventory.zip*** file. 
+Then, click ***Generate Project***, which downloads the starter project as ***inventory.zip*** file. 
 
 
-Next, unpackage the ***inventory.zip*** file on your system. Move the contents of this extracted ***inventory*** directory to the ***start*** directory of this project as following path: ***guide-liberty-deepdive/start/inventory***
+Next, extract the ***inventory.zip*** file on your system. Move the contents of this extracted ***inventory*** directory to the ***start*** directory of this project, which is located at the following path: ***guide-liberty-deepdive/start/inventory***
 
-In this Skills Network environment, instead, run the following commands to download and unpackage the project:
+In this Skills Network environment, instead of manually downloading and extracting the project, run the following commands:
 ```bash
 cd /home/project/draft-guide-liberty-deepdive/start
 curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=9.1&g=io.openliberty.deepdive&j=11&m=5.0'
@@ -79,7 +79,7 @@ unzip inventory.zip -d inventory
 
 ### Building the application
 
-This application is configured to be built with Maven. Every Maven-configured project contains a ***pom.xml*** file, that defines the project configuration, dependencies, and plug-ins.
+This application is configured to be built with Maven. Every Maven-configured project contains a ***pom.xml*** file that defines the project configuration, dependencies, and plug-ins.
 
 
 Your ***pom.xml*** file is located in the ***start/inventory*** directory and is configured to include the ***liberty-maven-plugin***. Using the plug-in, you can install applications into Liberty and manage the server instances.
@@ -97,13 +97,13 @@ Build and deploy the ***inventory*** microservice to Liberty by running the Mave
 mvn liberty:run
 ```
 
-The ***mvn*** command initiates a Maven build, during that the target directory is created to store all build-related files.
+The ***mvn*** command initiates a Maven build, during which the target directory is created to store all build-related files.
 
-The ***liberty:run*** argument specifies the Liberty ***run*** goal, that starts a Liberty server instance in the foreground. As part of this phase, a Liberty server runtime is downloaded and installed into the ***target/liberty/wlp*** directory. Additionally, a server instance is created and configured in the ***target/liberty/wlp/usr/servers/defaultServer*** directory, and the application is installed into that server by using [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
+The ***liberty:run*** argument specifies the Liberty ***run*** goal, which starts a Liberty server instance in the foreground. As part of this phase, a Liberty server runtime is downloaded and installed into the ***target/liberty/wlp*** directory. Additionally, a server instance is created and configured in the ***target/liberty/wlp/usr/servers/defaultServer*** directory, and the application is installed into that server by using [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
 
 For more information about the Liberty Maven plug-in, see its [GitHub repository](https://github.com/WASdev/ci.maven).
 
-When the server begins starting up, various messages display in your command-line session. Wait for the following message, that indicates that the server startup is complete:
+While the server starts up, various messages display in your command-line session. Wait for the following message, which indicates that the server startup is complete:
 
 ```
 [INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
@@ -130,7 +130,7 @@ mvn liberty:stop
 
 The Liberty Maven plug-in includes a ***dev*** goal that listens for any changes in the project, including application source code or configuration. The Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
 
-Stop the Liberty server if it is running, and start it in dev mode by running the ***liberty:dev*** goal in the ***start/inventory*** directory:
+If the Liberty server is running, stop it and restart it in dev mode by running the ***liberty:dev*** goal in the ***start/inventory*** directory:
 
 ```bash
 mvn liberty:dev
