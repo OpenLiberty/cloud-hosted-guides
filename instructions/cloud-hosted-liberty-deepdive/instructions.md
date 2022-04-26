@@ -1536,14 +1536,14 @@ public class SystemData implements Serializable {
 
 The following table breaks down the new annotations:
 
-| *Annotation*    | *Description*
+| *Annotation* | *Description*
 | ---| ---
 | ***@Entity*** | Declares the class as an entity.
-| ***@Table***  | Specifies details of the table such as name. 
+| ***@Table*** | Specifies details of the table such as name. 
 | ***@NamedQuery*** | Specifies a predefined database query that is run by an ***EntityManager*** instance.
-| ***@Id***       |  Declares the primary key of the entity.
-| ***@GeneratedValue***    | Specifies the strategy that is used for generating the value of the primary key. The ***strategy = GenerationType.IDENTITY*** code indicates that the database automatically increments the ***inventoryid*** upon inserting it into the database.
-| ***@Column***    | Specifies that the field is mapped to a column in the database table. The ***name*** attribute is optional and indicates the name of the column in the table.
+| ***@Id*** | Declares the primary key of the entity.
+| ***@GeneratedValue*** | Specifies the strategy that is used for generating the value of the primary key. The ***strategy = GenerationType.IDENTITY*** code indicates that the database automatically increments the ***inventoryid*** upon inserting it into the database.
+| ***@Column*** | Specifies that the field is mapped to a column in the database table. The ***name*** attribute is optional and indicates the name of the column in the table.
 
 ### Performing CRUD operations using JPA
 
@@ -2100,7 +2100,7 @@ The ***postgresql*** dependency ensures that Maven downloads the PostgreSQL libr
 
 Use Docker to run an instance of the PostgreSQL database for a fast installation and setup.
 
-A container file is provided for you. First, navigate to the ***finish/postgres*** directory. Then,  run the following commands to use the ***Dockerfile*** to build the image, run the image in a Docker container, and map ***5432*** port from the container to your machine:
+A container file is provided for you. First, navigate to the ***finish/postgres*** directory. Then, run the following commands to use the ***Dockerfile*** to build the image, run the image in a Docker container, and map ***5432*** port from the container to your machine:
 
 
 ```bash
@@ -2126,25 +2126,25 @@ Next, make a GET request to the ***/api/systems*** endpoint by the following com
 curl -s 'http://localhost:9080/inventory/api/systems' | jq
 ```
 
-Next, make a PUT request to the ***/api/systems/{hostname}*** with the same value to the ***hostname*** path as the previous step, and different values to the ***heapSize***, ***javaVersion***, and ***osName*** parameters. The PUT request updates the system with the specified values. 
+Next, make a PUT request to the ***/api/systems/{hostname}*** endpoint with the same value for the ***hostname*** path as in the previous step, and different values to the ***heapSize***, ***javaVersion***, and ***osName*** parameters. The PUT request updates the system with the specified values. 
 
 ```bash
 curl -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
 ```
 
-To see the updated system, make a GET request to the ***/api/systems/{hostname}*** endpoint with the same value to the ***hostname*** path as the previous step. The GET request returns the system from the database.
+To see the updated system, make a GET request to the ***/api/systems/{hostname}*** endpoint with the same value for the ***hostname*** path as in the previous step. The GET request returns the system from the database.
 
 ```bash
 curl -s 'http://localhost:9080/inventory/api/systems/localhost' | jq
 ```
 
-Next, make a DELETE request to the ***/api/systems/{hostname}***. The DELETE request removes the system from the database.
+Next, make a DELETE request to the ***/api/systems/{hostname}*** endpoint. The DELETE request removes the system from the database.
 
 ```bash
 curl -X DELETE 'http://localhost:9080/inventory/api/systems/localhost'
 ```
 
-Run the GET request again to see that the system does not exist from the database. 
+Run the GET request again to see that the system no longer exists in the database. 
 ```bash
 curl 'http://localhost:9080/inventory/api/systems'
 ```
@@ -2233,7 +2233,7 @@ Replace the ***server.xml*** file.
 
 
 
-The ***basicRegistry*** contains a list of all users for the application and their passwords, as well as all of the user groups. Note that this ***basicRegistry*** is a very simple case for learning purposes. For more information about the different user registries refer to the [User registries documentation](https://openliberty.io/docs/latest/user-registries-application-security.html). The ***admin*** group tells the application which of the users are in the administrator group. The ***user*** group tells the application that users are in the user group.
+The ***basicRegistry*** element contains a list of all users for the application and their passwords, as well as all of the user groups. Note that this ***basicRegistry*** element is a very simple case for learning purposes. For more information about the different user registries, see the [User registries documentation](https://openliberty.io/docs/latest/user-registries-application-security.html). The ***admin*** group tells the application which of the users are in the administrator group. The ***user*** group tells the application that users are in the user group.
 
 The ***security-role*** maps the ***admin*** role to the ***admin*** group, meaning that all users in the ***admin*** group have the administrator role. Similarly, the ***user*** role is mapped to the ***user*** group, meaning all users in the ***user*** group have the user role.
 
@@ -2526,7 +2526,7 @@ This class now has role-based access control. The role names that are used in th
 
 The ***/{hostname}*** endpoint that is annotated with the ***@PUT*** annotation updates a system in the inventory. This PUT endpoint is annotated with the ***@RolesAllowed({ "admin", "user" })*** annotation. Only authenticated users with the role of ***admin*** or ***user*** can access this endpoint.
 
-The ***/{hostname}*** endpoint that is annotated with the ***@DELETE*** annotation removes a system from the inventory. This DELETE endpoint is annotated with the ***@RolesAllowed({ "admin" })*** annotation. Here, only authenticated users with the role of ***admin*** can access this endpoint.
+The ***/{hostname}*** endpoint that is annotated with the ***@DELETE*** annotation removes a system from the inventory. This DELETE endpoint is annotated with the ***@RolesAllowed({ "admin" })*** annotation. Only authenticated users with the role of ***admin*** can access this endpoint.
 
 You can manually check that the ***inventory*** microservice is secured by making requests to the PUT and DELETE endpoints.
 
@@ -2560,7 +2560,7 @@ Now try calling your secure PUT endpoint to update the system that you just adde
 curl -k --user alice:alicepwd -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
 ```
 
-As this endpoint is accessible to the groups ***user*** and ***admin***, you log in with ***user*** credentials and updated the system.
+As this endpoint is accessible to the groups ***user*** and ***admin***, you must log in with ***user*** credentials to update the system.
 
 You should see the following response:
 
@@ -2612,7 +2612,7 @@ This response shows that the endpoints work as expected and that the system you 
 
 ::page{title="Consuming the secured RESTful APIs by JWT"}
 
-You can now implement JSON Web Tokens (JWT) and configure them as Single Sign On (SSO) cookies to use the RESTful APIs. The JWT generated by Liberty is used to communicate securely between the ***inventory*** and ***system*** microservices. You can implement the ***/client/{hostname}*** POST endpoint to collect the properties from the ***system*** microservices and create a system in the inventory. 
+You can now implement JSON Web Tokens (JWT) and configure them as Single Sign On (SSO) cookies to use the RESTful APIs. The JWT that is generated by Liberty is used to communicate securely between the ***inventory*** and ***system*** microservices. You can implement the ***/client/{hostname}*** POST endpoint to collect the properties from the ***system*** microservices and create a system in the inventory. 
 
 The ***system*** microservice is provided for you.
 
@@ -3168,11 +3168,11 @@ Replace the ***server.xml*** file.
 
 
 
-The ***jwtSso*** feature adds the libraries that are required for JWT SSO implementation. Configure the ***jwtSso*** feature by adding the ***jwtBuilder*** configuration to your ***server.xml***. Also, configure the MicroProfile ***JWT*** with the ***audiences*** and ***issuer*** properties that match the ***microprofile-config.properties***  defined at the ***system/src/main/webapp/META-INF*** directory under the ***system*** project.
+The ***jwtSso*** feature adds the libraries that are required for JWT SSO implementation. Configure the ***jwtSso*** feature by adding the ***jwtBuilder*** configuration to your ***server.xml***. Also, configure the MicroProfile ***JWT*** with the ***audiences*** and ***issuer*** properties that match the ***microprofile-config.properties*** defined at the ***system/src/main/webapp/META-INF*** directory under the ***system*** project.
 
-The ***keyStore*** element is used to define the repository of security certificates used for SSL encryption. The ***id*** attribute is an unique configuration id, that is set to ***defaultKeyStore***. The ***password*** attribute is used to load the keystore file, and its value can be stored in clear text or encoded form. To learn more about other attributes, visit the [keyStore reference](https://openliberty.io/docs/latest/reference/config/keyStore.html#keyStore.html). 
+The ***keyStore*** element is used to define the repository of security certificates used for SSL encryption. The ***id*** attribute is a unique configuration ID that is set to ***defaultKeyStore***. The ***password*** attribute is used to load the keystore file, and its value can be stored in clear text or encoded form. To learn more about other attributes, see the [keyStore](https://openliberty.io/docs/latest/reference/config/keyStore.html#keyStore.html) attribute documentation. 
 
-Because the keyStore file is not provided at the ***src*** directory, Liberty creates a Public Key Cryptography Standards #12 (PKCS12) keyStore file for you by default. This needs to be replaced, as the ***keyStore*** must be the same in both ***system*** and ***inventory*** microservices. As the configured ***system*** microservice is already provided for you, copy the ***key.p12*** key store file from the ***system*** microservice to your ***inventory*** service.
+Because the keystore file is not provided at the ***src*** directory, Liberty creates a Public Key Cryptography Standards #12 (PKCS12) keystore file for you by default. This file needs to be replaced, as the ***keyStore*** configuration must be the same in both ***system*** and ***inventory*** microservices. As the configured ***system*** microservice is already provided for you, copy the ***key.p12*** keystore file from the ***system*** microservice to your ***inventory*** service.
 
 
 ```bash
@@ -3299,7 +3299,7 @@ Wait until the following message displays on the ***system*** microservice conso
 CWWKF0011I: The defaultServer server is ready to run a smarter planet. ...
 ```
 
-You can check that the ***system*** microservice is secured against unauthenticated requests at https://localhost:9444/system/api/heapsize. You can expect to see the following error at the console of running the ***system*** microservice:
+You can check that the ***system*** microservice is secured against unauthenticated requests at the https://localhost:9444/system/api/heapsize URL. You can expect to see the following error in the console of the ***system*** microservice:
 
 Open another command-line session and run the following command:
 ```bash
@@ -3313,7 +3313,7 @@ CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a
 You can check that the ***/client/{hostname}*** endpoint you updated can access the ***system*** microservice. 
 
 Make an authorized request to the new ***/client/{hostname}*** endpoint.
-As this endpoint is restricted to ***admin***, you can use the login credentials for ***bob*** as it is in the ***admin*** group.
+As this endpoint is restricted to ***admin***, you can use the login credentials for ***bob***, which is in the ***admin*** group.
 
 ```bash
 curl -k --user bob:bobpwd -X POST 'https://localhost:9443/inventory/api/systems/client/localhost'
@@ -3356,9 +3356,9 @@ Navigate to your application directory
 cd /home/project/draft-guide-liberty-deepdive/start/inventory
 ```
 
-A health report will be generated automatically for all health services that enable MicroProfile Health.
+A health report is generated automatically for all health services that enable MicroProfile Health.
 
-All health services must provide an implementation of the ***HealthCheck*** interface, that is used to verify their health. MicroProfile Health offers health checks for startup, liveness, and readiness.
+All health services must provide an implementation of the ***HealthCheck*** interface, which is used to verify their health. MicroProfile Health offers health checks for startup, liveness, and readiness.
 
 A startup check allows applications to define startup probes that are used for initial verification of the application before the liveness probe takes over. For example, a startup check might check which applications require additional startup time on their first initialization.
 
@@ -3416,7 +3416,7 @@ public class StartupCheck implements HealthCheck {
 
 
 
-The ***@Startup*** annotation indicates that this class is a startup health check procedure. Navigate to http://localhost:9080/health/started to check the status of the startup health check. In this case, you are checking the cpu usage. If more than 95% of the cpu is being used, a status of ***DOWN*** is returned.
+The ***@Startup*** annotation indicates that this class is a startup health check procedure. Navigate to the http://localhost:9080/health/started URL to check the status of the startup health check. In this case, you are checking the cpu usage. If more than 95% of the cpu is being used, a status of ***DOWN*** is returned.
 ```bash
 curl -s http://localhost:9080/health/started | jq
 ```
@@ -3466,7 +3466,7 @@ public class LivenessCheck implements HealthCheck {
 
 
 
-The ***@Liveness*** annotation indicates that this class is a liveness health check procedure. Navigate to http://localhost:9080/health/live to check the status of the liveness health check. In this case, you are checking the heap memory usage. If more than 90% of the maximum memory is being used, a status of ***DOWN*** is returned.
+The ***@Liveness*** annotation indicates that this class is a liveness health check procedure. Navigate to the http://localhost:9080/health/live URL to check the status of the liveness health check. In this case, you are checking the heap memory usage. If more than 90% of the maximum memory is being used, a status of ***DOWN*** is returned.
 
 ```bash
 curl -s http://localhost:9080/health/live | jq
@@ -3532,7 +3532,7 @@ public class ReadinessCheck implements HealthCheck {
 ```
 
 
-The ***@Readiness*** annotation indicates that this class is a readiness health check procedure. Navigate to http://localhost:9080/health/ready to check the status of the liveness health check. This tests the connection to the PostgreSQL container created earlier in the guide. If the connection is refused, a status of ***DOWN*** is returned.
+The ***@Readiness*** annotation indicates that this class is a readiness health check procedure. Navigate to the http://localhost:9080/health/ready URL to check the status of the liveness health check. This tests the connection to the PostgreSQL container that was created earlier in the guide. If the connection is refused, a status of ***DOWN*** is returned.
 
 ```bash
 curl -s http://localhost:9080/health/ready | jq
@@ -3555,7 +3555,7 @@ Go to your application directory.
 cd /home/project/draft-guide-liberty-deepdive/start/inventory
 ```
 
-Enable ***bob*** user to access the ***/metrics*** endpoints.
+Enable the ***bob*** user to access the ***/metrics*** endpoints.
 
 Replace the ***server.xml*** file.
 
@@ -3650,7 +3650,7 @@ Replace the ***server.xml*** file.
 
 
 
-The ***administrator-role*** configuration authorizes ***bob*** user as an administrator.
+The ***administrator-role*** configuration authorizes the ***bob*** user as an administrator.
 
 Use annotations that are provided by MicroProfile Metrics to instrument the ***inventory*** microservice to provide application-level metrics data.
 
@@ -3978,9 +3978,9 @@ public class SystemResource {
 
 
 
-Import the ***Counted*** annotation, and apply the ***@Counted*** annotation to the ***POST /api/systems***, ***PUT /api/systems/{hostname}***, ***DELETE /api/systems/{hostname}***, and ***POST /api/systems/client/{hostname}*** endpoints to count how many times that the endpoints are accessed monotonically that are counting up sequentially. 
+Import the ***Counted*** annotation and apply it to the ***POST /api/systems***, ***PUT /api/systems/{hostname}***, ***DELETE /api/systems/{hostname}***, and ***POST /api/systems/client/{hostname}*** endpoints to monotonically count how many times that the endpoints are accessed. 
 
-Additional information about the annotations MicroProfile metrics provides, relevant metadata fields, and more are available at the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/22.0.0.4/reference/javadoc/microprofile-5.0-javadoc.html?package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=overview-summary.html).
+Additional information about the annotations that MicroProfile metrics provides, relevant metadata fields, and more are available at the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/22.0.0.4/reference/javadoc/microprofile-5.0-javadoc.html?package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=overview-summary.html).
 
 
 Run the following commands to call some of the endpoints that you annotated:
@@ -4008,7 +4008,7 @@ MicroProfile Metrics provides 4 different REST endpoints.
 * The ***/metrics*** endpoint provides you with all the metrics in text format. 
 * The ***/metrics/application*** endpoint provides you with application-specific metrics.
 * The ***/metrics/base*** endpoint provides you with metrics that are defined in MicroProfile specifications. Metrics in the base scope are intended to be portable between different MicroProfile-compatible runtimes.
-* The ***/metrics/vendor*** endpoint provides you with metrics specific to the runtime.
+* The ***/metrics/vendor*** endpoint provides you with metrics that are specific to the runtime.
 
 
 Run the following curl command to see the application metrics that are enabled through MicroProfile Metrics:
@@ -4016,7 +4016,7 @@ Run the following curl command to see the application metrics that are enabled t
 curl -k --user bob:bobpwd https://localhost:9443/metrics/application
 ```
 
-You can expect to see your application metrics in a text format as the following output:
+You can expect to see your application metrics in text format as the following output:
 
 ```
 # TYPE application_addSystemClient_total counter
@@ -4033,7 +4033,7 @@ application_updateSystem_total 1
 application_removeSystem_total 1
 ```
 
-You can see the system metrics, run the following curl command:
+To see the system metrics, run the following curl command:
 ```bash
 curl -k --user bob:bobpwd https://localhost:9443/metrics/base
 ```
@@ -4051,9 +4051,9 @@ curl -k --user bob:bobpwd https://localhost:9443/metrics
 
 ::page{title="Building the container "}
 
-Press ***CTRL+C*** in the command-line session to stop the dev mode ***mvn liberty:dev*** that was started in the previous section.
+Press ***CTRL+C*** in the command-line session to stop the ***mvn liberty:dev*** dev mode that you started in the previous section.
 
-Navigate to your application directory if you are not:
+Navigate to your application directory:
 
 
 ```bash
@@ -4119,7 +4119,7 @@ RUN configure.sh
 
 
 
-The ***FROM*** instruction initializes a new build stage and indicates the parent image from that your image is built. In this case, you’re using the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image as your parent image, that comes with the latest Open Liberty runtime.
+The ***FROM*** instruction initializes a new build stage and indicates the parent image from which your image is built. In this case, you’re using the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image that comes with the latest Open Liberty runtime as your parent image.
 
 To help you manage your images, you can label your container images with the ***LABEL*** command. 
 
@@ -4128,7 +4128,7 @@ The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<
 
 ### Developing the application in a container
 
-Make the PostgreSQL be configurable on the Liberty server configuraton file.
+Make the PostgreSQL database configurable in the Liberty server configuraton file.
 
 Replace the ***server.xml*** file.
 
@@ -4221,16 +4221,16 @@ Replace the ***server.xml*** file.
 
 
 
-Instead of hard-coded the ***serverName***, ***portNumber***, ***user*** and ***password*** values in the ***properties.postgresql*** properties, use ***${postgres/hostname}***, ***${postgres/portnum}***, ***${postgres/username}***, and ***${postgres/password}*** that are defined by the ***variable*** elements.
+Instead of the hard-coded ***serverName***, ***portNumber***, ***user***, and ***password*** values in the ***properties.postgresql*** properties, use ***${postgres/hostname}***, ***${postgres/portnum}***, ***${postgres/username}***, and ***${postgres/password}***, which are defined by the ***variable*** elements.
 
-Using the Dockerfile, you can try out your application with it by using the ***devc*** goal.
+You can use the Dockerfile to try out your application with the PostGreSQL database by running the ***devc*** goal.
 
 The Open Liberty Maven plug-in includes a ***devc*** goal that simplifies developing your application in a container by starting dev mode with container support. This goal builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. Dev mode also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
 
 Retrieve the PostgreSQL container IP address by running the following command:
 
 ```bash
-docker inspect -f "{{.NetworkSettings.IPAddress }}"  postgres-container
+docker inspect -f "{{.NetworkSettings.IPAddress }}" postgres-container
 ```
 
 The command returns the PostgreSQL container IP address:
@@ -4243,13 +4243,13 @@ Build and run the container by running the ***devc*** goal with the PostgreSQL c
 
 
 ```bash
-POSTGRES_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}"  postgres-container`
+POSTGRES_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" postgres-container`
 mvn liberty:devc \
   -DdockerRunOpts="-e POSTGRES_HOSTNAME=$POSTGRES_IP" \
   -DserverStartTimeout=240
 ```
 
-You need to wait a while to let the dev mode start. After you see the following message, your application server in dev mode is ready:
+You need to wait a while to let dev mode start. After you see the following message, your application server in dev mode is ready:
 ```
 **************************************************************
 *    Liberty is running in dev mode.
@@ -4285,7 +4285,7 @@ curl -s http://localhost:9080/health | jq
 curl 'http://localhost:9080/inventory/api/systems'
 ```
 
-When you're finished trying out the microservice, press ***CTRL+C*** in the command-line session that the dev mode was started from to stop and remove the container.
+When you're finished trying out the microservice, press ***CTRL+C*** in the command-line session where you started dev mode to stop and remove the container.
 
 Also, run the following commands to stop the PostgreSQL container that was started in the previous section.
 
@@ -4295,7 +4295,7 @@ docker rm postgres-container
 ```
 
 ### Building the container image
-                              
+
 Run the ***mvn package*** command from the ***start/inventory*** directory so that the ***.war*** file resides in the ***target*** directory.
 
 ```bash
@@ -4308,7 +4308,7 @@ Build your Docker image with the following commands:
 docker build -t liberty-deepdive-inventory:1.0-SNAPSHOT .
 ```
 
-In this Skills Network environment, you need to push the image to your container registry on IBM Cloud by the following commands:
+In this Skills Network environment, you need to push the image to your container registry on IBM Cloud by running the following commands:
 ```bash
 docker tag liberty-deepdive-inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/liberty-deepdive-inventory:1.0-SNAPSHOT
 docker push us.icr.io/$SN_ICR_NAMESPACE/liberty-deepdive-inventory:1.0-SNAPSHOT
@@ -4328,9 +4328,9 @@ icr.io/appcafe/open-liberty   full-java11-openj9-ubi
 
 ::page{title="Testing the microservice with Testcontainers"}
 
-While you can test your microservice manually, you should rely on automated tests. In this section, you can learn how to use Testcontainers to verify your microservice in the same Docker container that you’ll use in production.
+Although you can test your microservice manually, you should rely on automated tests. In this section, you can learn how to use Testcontainers to verify your microservice in the same Docker container that you’ll use in production.
 
-First of all, create the ***test*** directory at the ***src*** directory of your Maven project.
+First, create the ***test*** directory at the ***src*** directory of your Maven project.
 
 
 ```bash
@@ -4503,7 +4503,7 @@ public class SystemData {
 
 
 
-The ***SystemData*** class contains the ID, hostname, operating system name, Java version, and heap size properties. The various ***get*** and ***set*** methods within this class allow the viewing and editing the properties of each system in the inventory.
+The ***SystemData*** class contains the ID, hostname, operating system name, Java version, and heap size properties. The various ***get*** and ***set*** methods within this class enable you to view and edit the properties of each system in the inventory.
 
 Create the test container class that access the ***inventory*** docker image that you built in previous section.
 
@@ -4770,7 +4770,7 @@ public class SystemResourceIT {
 
 
 
-Define the ***postgresContainer*** test container to start up the PostgreSQL docker image, and define the ***libertyContainer*** test container to start up the ***inventory*** docker image. Make sure that both containers use the same ***network***. The ***/health/ready*** endpoint can tell that the container is ready to start testing.
+Define the ***postgresContainer*** test container to start up the PostgreSQL docker image, and define the ***libertyContainer*** test container to start up the ***inventory*** docker image. Make sure that both containers use the same ***network***. The ***/health/ready*** endpoint can tell you whether the container is ready to start testing.
 
 The ***testAddSystem()*** verifies the ***addSystem*** and ***listContents*** endpoints.
 
@@ -4779,7 +4779,7 @@ The ***testUpdateSystem()*** verifies the ***updateSystem*** and ***getSystem***
 The ***testRemoveSystem()*** verifies the ***removeSystem*** endpoint.
 
 
-Create the log4j properites file required by the Testcontainers.
+Create the log4j properites that are required by the Testcontainers framework.
 
 Create the ***log4j.properties*** file.
 
@@ -4811,7 +4811,7 @@ log4j.logger.io.openliberty.guides.testing=DEBUG
 
 
 
-Update the Maven configuration file with required dependencies.
+Update the Maven configuration file with the required dependencies.
 
 Replace the ***pom.xml*** file.
 
@@ -4981,11 +4981,11 @@ Replace the ***pom.xml*** file.
 
 
 
-Add all required ***dependency*** with ***test*** scope, including JUnit5, Testcontainers, Log4J, JBoss RESTEasy client, Glassfish JSON, and Vert.x libraries. Also, add the ***maven-failsafe-plugin*** plugin, so that the integration test can be run by the Maven ***verify*** goal.
+Add each required ***dependency*** with ***test*** scope, including JUnit5, Testcontainers, Log4J, JBoss RESTEasy client, Glassfish JSON, and Vert.x libraries. Also, add the ***maven-failsafe-plugin*** plugin, so that the integration test can be run by the Maven ***verify*** goal.
 
 ### Running the tests
 
-You can run the Maven ***verify*** goal that compiles the java files, starts the containers, runs the tests, and then stops the containers.
+You can run the Maven ***verify*** goal, which compiles the java files, starts the containers, runs the tests, and then stops the containers.
 
 
 In this Skills Network environment, you can test the HTTP protcol only.
@@ -5016,7 +5016,7 @@ Now that the containerized application is built and tested, deploy it to a local
 ### Installing the Open Liberty Operator 
 
 
-In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying a microservice to Kubernetes by using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/tree/main/deploy/releases/0.8.0#readme).
+In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you would like to learn how to install the Open Liberty Operator, see the [Deploying a microservice to Kubernetes by using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html) guide or the Open Liberty Operator [documentation](https://github.com/OpenLiberty/open-liberty-operator/tree/main/deploy/releases/0.8.0#readme).
 
 To check that the Open Liberty Operator is installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 
@@ -5024,7 +5024,7 @@ To check that the Open Liberty Operator is installed successfully, run the follo
 kubectl api-resources --api-group=apps.openliberty.io
 ```
 
-Look for the following output, that shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
+Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
 
 ```
 NAME                      SHORTNAMES         APIGROUP              NAMESPACED   KIND
@@ -5073,13 +5073,13 @@ spec:
 
 
 
-In the ***inventory.yaml*** file, the custom resource (CR) is specified to be ***OpenLibertyApplication***. The CR triggers the Open Liberty Operator to create, update, or delete Kubernetes resources that are needed by the application to run on your cluster. Additionally, the ***applicationImage*** field must be specified, and is set to the image created in the previous module. 
+In the ***inventory.yaml*** file, the custom resource (CR) is specified to be ***OpenLibertyApplication***. The CR triggers the Open Liberty Operator to create, update, or delete Kubernetes resources that are needed by the application to run on your cluster. Additionally, the ***applicationImage*** field must be specified and set to the image that was created in the previous module. 
 
 
 Similarly, a Kubernetes resource definition is provided in the ***postgres.yaml*** file at the ***finish/postgres*** directory. In the ***postgres.yaml*** file, the deployment for the PostgreSQL database is defined. 
 
 
-Create a Kubernetes Secret to configure the credentials for accessing the database by the user ***admin***.
+Create a Kubernetes Secret to configure the credentials for the ***admin*** user to access the database.
 ```bash
 kubectl create secret generic post-app-credentials --from-literal username=admin --from-literal password=adminpwd
 ```
@@ -5087,7 +5087,7 @@ kubectl create secret generic post-app-credentials --from-literal username=admin
 The credentials are passed to the PostgreSQL database service as environment variables in the ***env*** field.
 
 
-To deploy the **inventory** microservice and ***Postgres*** database in this Skill Network environment, you need to update the image name so that the image in your IBM Cloud container registry is used, and add the **pullSecret** and ***pullPolicy*** settings. Run the following commands:
+To deploy the **inventory** microservice and ***Postgres*** database in this Skills Network environment, you need to update the image name so that the image in your IBM Cloud container registry is used, and add the **pullSecret** and ***pullPolicy*** settings. Run the following commands:
 
 ```bash
 sed -i 's=liberty-deepdive-inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/liberty-deepdive-inventory:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' /home/project/draft-guide-liberty-deepdive/start/inventory/inventory.yaml
@@ -5096,12 +5096,12 @@ sed -i 's=namespace: default=namespace: '"$SN_ICR_NAMESPACE"'=g' /home/project/d
 kubectl apply -f /home/project/draft-guide-liberty-deepdive/finish/postgres/postgres.yaml
 ```
 
-When deployed, run the following command to check the status of your pods:
+When your pods are deployed, run the following command to check their status:
 ```bash
 kubectl get pods
 ```
 
-You see an output similar to the following if all the pods are working correctly:
+If all the pods are working correctly, you see an output similar to the following example:
 
 ```
 NAME                                    READY   STATUS    RESTARTS   AGE
@@ -5117,7 +5117,7 @@ kubectl port-forward svc/inventory-deployment 9443
 ```
 
 
-On another command-line session, access the microservice by running the following commands:
+In another command-line session, access the microservice by running the following commands:
 
 ```bash
 curl -k --user bob:bobpwd -X DELETE \
@@ -5145,7 +5145,7 @@ When you're done trying out the microservice, press **CTRL+C** in the command li
 
 You can modify the inventory deployment to customize the service. Customizations for a service include changing the port number, changing the context root, and passing confidential information by using Secrets. 
 
-In the ***server.xml***, the ***default.context.root*** variable is defined. The context root for the inventory service can be changed by using this variable. The value for the ***default.context.root*** variable can be defined in a ConfigMap and accessed as an environment variable.
+The ***default.context.root*** variable is defined in the ***server.xml*** file. The context root for the inventory service can be changed by using this variable. The value for the ***default.context.root*** variable can be defined in a ConfigMap and accessed as an environment variable.
 
 Create a ConfigMap to configure the app name with the following ***kubectl*** command.
 ```bash
@@ -5194,7 +5194,7 @@ spec:
 
 
 
-During deployment, ***post-app-credentials*** secret can be mounted to the ***/config/variables/postgres*** in the pod to create Liberty config variables. Liberty creates variables from the files in the ***/config/variables/postgres*** directory. Instead of including confidential information in the ***server.xml***, users can access it using normal Liberty variable syntax, ***${postgres/username}*** and ***${postgres/password}***.
+During deployment, the ***post-app-credentials*** secret can be mounted to the ***/config/variables/postgres*** in the pod to create Liberty config variables. Liberty creates variables from the files in the ***/config/variables/postgres*** directory. Instead of including confidential information in the ***server.xml***, users can access it using normal Liberty variable syntax, ***${postgres/username}*** and ***${postgres/password}***.
 
 Run the following command to deploy your changes.
 
@@ -5210,7 +5210,7 @@ kubectl port-forward svc/inventory-deployment 9443
 ```
 
 
-On another command-line session, access the microservice by running the following commands:
+In another command-line session, access the microservice by running the following commands:
 
 ```bash
 curl -k --user bob:bobpwd -X DELETE \
@@ -5244,11 +5244,11 @@ kubectl delete secret post-app-credentials
 
 ::page{title="Support Licensing"}
 
-Open Liberty is Open Source under the Eclipse Public License v1, as a result there is no fee to use in production. Community support is available at StackOverflow, Gitter, or the mail list, and bugs can be raised in [GitHub](https://github.com/openliberty/open-liberty). Commercial support from IBM is available for Open Liberty, you can find out more on the [IBM Marketplace](https://www.ibm.com/uk-en/marketplace/elite-support-for-open-liberty). The WebSphere Liberty product is built on Open Liberty, there is no migration that is required to use WebSphere Liberty, you simply point to WebSphere Liberty in your build. Users of WebSphere Liberty get support for the packaged Open Liberty function.
+Open Liberty is open source under the Eclipse Public License v1 so there is no fee to use it in production. Community support is available at StackOverflow, Gitter, or the mail list, and bugs can be raised in [GitHub](https://github.com/openliberty/open-liberty). Commercial support is available for Open Liberty from IBM. For more information, see the [IBM Marketplace](https://www.ibm.com/uk-en/marketplace/elite-support-for-open-liberty). The WebSphere Liberty product is built on Open Liberty. No migration is required to use WebSphere Liberty, you simply point to WebSphere Liberty in your build. WebSphere Liberty users get support for the packaged Open Liberty function.
 
 WebSphere Liberty is also available in [Maven Central](https://search.maven.org/search?q=g:com.ibm.websphere.appserver.runtime).
 
-You can use WebSphere Liberty for development even if you haven't purchased it, but if you have production entitlement you can easily change to use it, as follows:
+You can use WebSphere Liberty for development even without purchasing it. However, if you have production entitlement, you can easily change to use it with the following steps.
 
 In the ***pom.xml***, add the ***\<configuration\>*** element as the following:
 
@@ -5275,7 +5275,7 @@ mvn clean
 mvn liberty:dev
 ```
 
-In the ***Dockerfile***, replace the Liberty image to be ***websphere-liberty*** at the ***FROM*** statement as the following:
+In the ***Dockerfile***, replace the Liberty image at the ***FROM*** statement with ***websphere-liberty*** as shown in the following example:
 ```
 FROM icr.io/appcafe/websphere-liberty:full-java11-openj9-ubi
 
@@ -5288,7 +5288,7 @@ ARG REVISION=SNAPSHOT
 
 ### Nice Work!
 
-You just learnt to build a microservice in Liberty!
+You just learned to build a microservice in Liberty!
 
 
 
