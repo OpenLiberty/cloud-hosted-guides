@@ -922,12 +922,12 @@ You can learn more about MicroProfile OpenAPI from the [Documenting RESTful APIs
 
 ::page{title=" Configuring the microservice"}
 
-Next, you can externalize Liberty server configuration and inject configuration for your microservice by using MicroProfile Config.
+Next, you can externalize your Liberty server configuration and inject configuration for your microservice by using MicroProfile Config.
 
 
 ### Enabling configurable ports and context root
 
-So far you used hardcoded values to set the HTTP and HTTPS ports, and the context root for the Liberty server. These configurations can be externalized to change these values when you want to deploy your microservice by different ports and context root.
+So far, you used hardcoded values to set the HTTP and HTTPS ports and the context root for the Liberty server. These configurations can be externalized so you can easily change their values when you want to deploy your microservice by different ports and context root.
 
 Replace the ***server.xml*** file.
 
@@ -969,7 +969,7 @@ Replace the ***server.xml*** file.
 
 
 
-Add variables for the ***HTTP*** port, ***HTTPS*** port and for the ***context root*** to the ***server.xml*** file. Change the ***httpEndpoint*** element to reflect the new ***default.http.port*** and ***default.http.port*** variables and change the ***contextRoot*** to use the new ***default.context.root*** variable too.
+Add variables for the ***HTTP*** port, ***HTTPS*** port, and the ***context root*** to the ***server.xml*** file. Change the ***httpEndpoint*** element to reflect the new ***default.http.port*** and ***default.http.port*** variables and change the ***contextRoot*** to use the new ***default.context.root*** variable too.
 
 Replace the ***pom.xml*** file.
 
@@ -1047,7 +1047,7 @@ Replace the ***pom.xml*** file.
 
 
 
-Add properties for the ***HTTP*** port, ***HTTPS*** port and the ***context root*** to the ***pom.xml*** file. 
+Add properties for the ***HTTP*** port, ***HTTPS*** port, and the ***context root*** to the ***pom.xml*** file. 
 
 You can try changing the value of these variables in the ***pom.xml*** file:
 
@@ -1354,9 +1354,9 @@ The ***@Inject*** annotation injects the value from other configuration sources 
 Update the ***POST*** request so that the ***/client/{hostname}*** endpoint prints the ***CLIENT_PORT*** value.
 
 
-### Adding microprofile-config.properties file
+### Adding the microprofile-config.properties file
 
-Define the configurable variables in the ***microprofile-config.properties*** configuration file for the MicroProfile Config at the ***src/main/resources/META-INF***
+Define the configurable variables in the ***microprofile-config.properties*** configuration file for MicroProfile Config at the ***src/main/resources/META-INF*** directory.
 
 
 ```bash
@@ -1398,7 +1398,7 @@ You can learn more about MicroProfile Config from the [Configuring microservices
 
 ::page{title="Persisting data"}
 
-Next, you’ll persist the system data into the PostgreSQL database by using [Jakarta Persistence API](https://jakarta.ee/specifications/persistence) (JPA).
+Next, you’ll persist the system data into the PostgreSQL database by using  the [Jakarta Persistence API](https://jakarta.ee/specifications/persistence) (JPA).
 
 Navigate to your application directory. 
 
@@ -1409,7 +1409,7 @@ cd /home/project/draft-guide-liberty-deepdive/start/inventory
 
 ### Defining a JPA entity class
 
-To store Java objects in a database, you must define a JPA entity class. A JPA entity is a Java object whose nontransient and nonstatic fields are persisted to the database. Any POJO class can be designated as a JPA entity. However, the class must be annotated with the ***@Entity*** annotation, must not be declared final and must have a public or protected nonargument constructor. JPA maps an entity type to a database table and persisted instances will be represented as rows in the table.
+To store Java objects in a database, you must define a JPA entity class. A JPA entity is a Java object whose nontransient and nonstatic fields are persisted to the database. Any POJO class can be designated as a JPA entity. However, the class must be annotated with the ***@Entity*** annotation, must not be declared final, and must have a public or protected nonargument constructor. JPA maps an entity type to a database table and persisted instances will be represented as rows in the table.
 
 The ***SystemData*** class is a data model that represents systems in the ***inventory*** microservice. Annotate it with JPA annotations.
 
@@ -1538,12 +1538,12 @@ The following table breaks down the new annotations:
 
 | *Annotation*    | *Description*
 | ---| ---
-| ***@Entity*** | Declares the class as an entity
-| ***@Table***  | Specifies details of the table such as name 
+| ***@Entity*** | Declares the class as an entity.
+| ***@Table***  | Specifies details of the table such as name. 
 | ***@NamedQuery*** | Specifies a predefined database query that is run by an ***EntityManager*** instance.
-| ***@Id***       |  Declares the primary key of the entity
-| ***@GeneratedValue***    | Specifies the strategy that is used for generating the value of the primary key. The ***strategy = GenerationType.IDENTITY*** code indicates that the database will automatically increment the ***inventoryid*** automatically upon inserting into the database
-| ***@Column***    | Specifies that the field is mapped to a column in the database table. The ***name*** attribute is optional and indicates the name of the column in the table
+| ***@Id***       |  Declares the primary key of the entity.
+| ***@GeneratedValue***    | Specifies the strategy that is used for generating the value of the primary key. The ***strategy = GenerationType.IDENTITY*** code indicates that the database automatically increments the ***inventoryid*** upon inserting it into the database.
+| ***@Column***    | Specifies that the field is mapped to a column in the database table. The ***name*** attribute is optional and indicates the name of the column in the table.
 
 ### Performing CRUD operations using JPA
 
@@ -1609,9 +1609,9 @@ To use the entity manager at run time, inject it into your CDI bean through the 
 
 The ***Inventory*** class has a method for each CRUD operation, so let's break them down:
 
-* The ***add()*** method persists an instance of the ***SystemData*** entity class to the data store by calling the ***persist()*** method on an ***EntityManager*** instance. The entity instance becomes managed and changes to it will be tracked by the entity manager.
+* The ***add()*** method persists an instance of the ***SystemData*** entity class to the data store by calling the ***persist()*** method on an ***EntityManager*** instance. The entity instance becomes managed and changes to it are tracked by the entity manager.
 
-* The ***getSystems()*** method demonstrates a way to retrieve system objects from the database. This method returns a list of instances of the ***SystemData*** entity class by using the ***SystemData.findAll*** query specified in the ***@NamedQuery*** annotation on the ***SystemData*** class. Similarly, the ***getSystem()*** method uses the ***SystemData.findSystem*** named query to find a system with the given hostname. 
+* The ***getSystems()*** method demonstrates a way to retrieve system objects from the database. This method returns a list of instances of the ***SystemData*** entity class by using the ***SystemData.findAll*** query that is specified in the ***@NamedQuery*** annotation on the ***SystemData*** class. Similarly, the ***getSystem()*** method uses the ***SystemData.findSystem*** named query to find a system with the given hostname. 
 
 * The ***update()*** method creates a managed instance of a detached entity instance. The entity manager automatically tracks all managed entity objects in its persistence context for changes and synchronizes them with the database. However, if an entity becomes detached, you must merge that entity into the persistence context by calling the ***merge()*** method so that changes to loaded fields of the detached entity are tracked.
 
@@ -1890,7 +1890,7 @@ public class SystemResource {
 
 
 
-The ***@Transactional*** annotation is used in the ***POST***, ***PUT***, and ***DELETE*** endpoints of the ***SystemResource*** class to declaratively control the transaction boundaries on the ***inventory*** CDI bean. This ensures that the methods run within the boundaries of an active global transaction, that is why it is not necessary to explicitly begin, commit or rollback transactions. At the end of the transactional method invocation, the transaction commits and the persistence context flushes any changes to Event entity instances it is managing to the database.
+The ***@Transactional*** annotation is used in the ***POST***, ***PUT***, and ***DELETE*** endpoints of the ***SystemResource*** class to declaratively control the transaction boundaries on the ***inventory*** CDI bean. This configuration ensures that the methods run within the boundaries of an active global transaction, and therefore you don't need to explicitly begin, commit, or rollback transactions. At the end of the transactional method invocation, the transaction commits and the persistence context flushes any changes to the Event entity instances that it is managing to the database.
 
 ### Configuring JPA
 
@@ -1937,7 +1937,7 @@ touch /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/resour
 
 
 
-The persistence unit is defined by the ***persistence-unit*** XML element. The ***name*** attribute is required and is used to identify the persistent unit when using the ***@PersistenceContext*** annotation to inject the entity manager later in this exercise. The ***transaction-type="JTA"*** attribute specifies to use Java Transaction API (JTA) transaction management. Because of using a container-managed entity manager, JTA transactions must be used. 
+The persistence unit is defined by the ***persistence-unit*** XML element. The ***name*** attribute is required. This attribute identifies the persistent unit when you use the ***@PersistenceContext*** annotation to inject the entity manager later in this exercise. The ***transaction-type="JTA"*** attribute specifies to use Java Transaction API (JTA) transaction management. When you use a container-managed entity manager, you must use JTA transactions. 
 
 A JTA transaction type requires a JTA data source to be provided. The ***jta-data-source*** element specifies the Java Naming and Directory Interface (JNDI) name of the data source that is used. 
 
@@ -1996,9 +1996,9 @@ Replace the ***server.xml*** configuration file.
 
 
 
-The ***library*** element points the Liberty server where to find the PostgreSQL library. The ***dataSource*** element points where the Java Database Connectivity (JDBC) should connect along with some database vendor-specific properties.
+The ***library*** element tells the Liberty server where to find the PostgreSQL library. The ***dataSource*** element points to where the Java Database Connectivity (JDBC) connects, along with some database vendor-specific properties.
 
-To use PostgreSQL database, you need to download its library and store to the Liberty shared resources directory. Configure the Liberty Maven plug-in in the ***pom.xml*** file.
+To use a PostgreSQL database, you need to download its library and store it to the Liberty shared resources directory. Configure the Liberty Maven plug-in in the ***pom.xml*** file.
 
 Replace the ***pom.xml*** configuration file.
 
@@ -2098,9 +2098,9 @@ The ***postgresql*** dependency ensures that Maven downloads the PostgreSQL libr
 
 ### Starting PostgreSQL database ###
 
-Use Docker to run an instance of PostgreSQL database for a fast installation and setup.
+Use Docker to run an instance of the PostgreSQL database for a fast installation and setup.
 
-A container file is provided for you. Navigate to the ***finish/postgres*** directory, run the following commands to use the ***Dockerfile*** to build the image, run the image in a Docker container, and map ***5432*** port from the container to your machine:
+A container file is provided for you. First, navigate to the ***finish/postgres*** directory. Then,  run the following commands to use the ***Dockerfile*** to build the image, run the image in a Docker container, and map ***5432*** port from the container to your machine:
 
 
 ```bash
