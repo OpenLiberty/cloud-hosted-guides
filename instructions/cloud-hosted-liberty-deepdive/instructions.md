@@ -140,7 +140,7 @@ Dev mode automatically picks up changes that you make to your application and al
 
 ### Developing a RESTful microservice
 
-Now that a basic Liberty application is running, the next step is to create the additional application and resource classes that are needed for this application. Within these classes, you use Jakarta REST, and other MicroProfile and Jakarta APIs.
+Now that a basic Liberty application is running, the next step is to create the additional application and resource classes that the application needs. Within these classes, you use Jakarta REST and other MicroProfile and Jakarta APIs.
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Go to the ***start/inventory*** directory.
 ```bash
@@ -212,7 +212,7 @@ public class Inventory {
 
 
 
-This Inventory class stores a record of all systems and their system properties. The ***getSystem()*** method within this class retrieves and returns the system data from the system. The ***add()*** method enables the addition of a system and its data to the inventory. The ***update()*** method enables a system and its data on the inventory to be updated. The ***removeSystem()*** method enables the deletion of a system from the inventory.
+This ***Inventory*** class stores a record of all systems and their system properties. The ***getSystem()*** method within this class retrieves and returns the system data from the system. The ***add()*** method enables the addition of a system and its data to the inventory. The ***update()*** method enables a system and its data on the inventory to be updated. The ***removeSystem()*** method enables the deletion of a system from the inventory.
 
 
 Create the ***model*** subdirectory, then create the ***SystemData*** class. The ***SystemData*** class is a Plain Old Java Object (POJO) that represents a single inventory entry. 
@@ -442,15 +442,15 @@ public class SystemResource {
 
 
 
-In Jakarta RESTful Web Services, a single class (like the ***SystemResource.java*** class) must represent a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. It is efficient to have a single class handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability.
+In Jakarta RESTful Web Services, a single class like the ***SystemResource.java*** class must represent a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. It is efficient to have a single class handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability.
 
-The ***@Path*** annotation on this class indicates that this resource responds to the ***/systems*** path in the RESTful application. The ***@ApplicationPath*** annotation in the ***RestApplication*** class together with the ***@Path*** annotation in the ***SystemResource*** class indicates that this resource is available at the ***/api/systems*** path.
+The ***@Path*** annotation on this class indicates that this resource responds to the ***/systems*** path in the RESTful application. The ***@ApplicationPath*** annotation in the ***RestApplication*** class, together with the ***@Path*** annotation in the ***SystemResource*** class, indicates that this resource is available at the ***/api/systems*** path.
 
-The Jakarta RESTful Web Services maps the HTTP methods on the URL to the methods of the class by using annotations. This application uses the ***GET*** annotation to map an HTTP ***GET*** request to the ***/api/systems*** path.
+The Jakarta RESTful Web Services API maps the HTTP methods on the URL to the methods of the class by using annotations. This application uses the ***GET*** annotation to map an HTTP ***GET*** request to the ***/api/systems*** path.
 
-The ***@GET*** annotation on the ***listContents*** method indicates that the method is to be called for the HTTP ***GET*** method. The ***@Produces*** annotation indicates the format of the content that is returned. The value of the ***@Produces*** annotation is specified in the HTTP ***Content-Type*** response header. For this application, a JSON structure is returned for these ***Get*** methods. The wanted ***Content-Type*** for a JSON response is ***application/json*** with ***MediaType.APPLICATION_JSON*** instead of the ***String*** content type. Using a constant such as ***MediaType.APPLICATION_JSON*** is better as in case of a spelling error, a compile failure occurs.
+The ***@GET*** annotation on the ***listContents*** method indicates that the method is to be called for the HTTP ***GET*** method. The ***@Produces*** annotation indicates the format of the content that is returned. The value of the ***@Produces*** annotation is specified in the HTTP ***Content-Type*** response header. For this application, a JSON structure is returned for these ***Get*** methods. The ***Content-Type*** for a JSON response is ***application/json*** with ***MediaType.APPLICATION_JSON*** instead of the ***String*** content type. Using a constant such as ***MediaType.APPLICATION_JSON*** is better as in case of a spelling error, a compile failure occurs.
 
-The Jakarta RESTful Web Services supports a number of ways to marshal JSON. The Jakarta RESTful Web Services specification mandates JSON-Binding (JSON-B). The method body returns the result of ***inventory.getSystems()***. Because the method is annotated with ***@Produces(MediaType.APPLICATION_JSON)***, the Jakarta RESTful Web Services uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
+The Jakarta RESTful Web Services API supports a number of ways to marshal JSON. The Jakarta RESTful Web Services specification mandates JSON-Binding (JSON-B). The method body returns the result of ***inventory.getSystems()***. Because the method is annotated with ***@Produces(MediaType.APPLICATION_JSON)***, the Jakarta RESTful Web Services API uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
 
 
 ### Running the application
@@ -465,7 +465,7 @@ curl 'http://localhost:9080/inventory/api/systems'
 
 ::page{title="Documenting APIs"}
 
-Next, you will investigate how to document and filter RESTful APIs from annotations, POJOs (Plain old Java objects), and static OpenAPI files by using MicroProfile OpenAPI.
+Next, you will investigate how to document and filter RESTful APIs from annotations, POJOs, and static OpenAPI files by using MicroProfile OpenAPI.
 
 The OpenAPI specification, previously known as the Swagger specification, defines a standard interface for documenting and exposing RESTful APIs. This specification allows both humans and computers to understand or process the functionalities of services without requiring direct access to underlying source code or documentation. The MicroProfile OpenAPI specification provides a set of Java interfaces and programming models that allow Java developers to natively produce OpenAPI v3 documents from their RESTful applications.
 
@@ -477,7 +477,7 @@ The MicroProfile OpenAPI API is included in the ***microProfile*** dependency th
 
 Because the Jakarta RESTful Web Services framework handles basic API generation for Jakarta RESTful Web Services annotations, a skeleton OpenAPI tree can be generated from the existing inventory service. You can use this tree as a starting point and augment it with annotations and code to produce a complete OpenAPI document.
 
-To see the generated OpenAPI tree, you can either visit the http://localhost:9080/openapi URL or visit the http://localhost:9080/openapi/ui URL for a more interactive view of the APIs. Click the ***interactive UI*** link on the welcome page. Within this UI, you can view each of the endpoints available in your application and any schemas. Each endpoint is colour coordinated to easily identify the type of request each is (for example GET, POST, PUT, DELETE, etc.). Clicking each endpoint within this UI enables you to view further details of each endpoint's parameters and responses. This UI is used for the remainder of this workshop to view and test the application endpoints.
+To see the generated OpenAPI tree, you can either visit the http://localhost:9080/openapi URL or visit the http://localhost:9080/openapi/ui URL for a more interactive view of the APIs. Click the ***interactive UI*** link on the welcome page. Within this UI, you can view each of the endpoints that are available in your application and any schemas. Each endpoint is color coordinated to easily identify the type of each request (for example GET, POST, PUT, DELETE, etc.). Clicking each endpoint within this UI enables you to view further details of each endpoint's parameters and responses. This UI is used for the remainder of this workshop to view and test the application endpoints.
 
 
 ### Augmenting the existing Jakarta RESTful Web Services annotations with OpenAPI annotations
@@ -743,9 +743,9 @@ public class SystemResource {
 
 Add OpenAPI ***@APIResponseSchema***, ***@APIResponses***, ***@APIResponse***, ***@Parameters***, ***@Parameter***, and ***@Operation*** annotations to the REST methods, ***listContents()***, ***getSystem()***, ***addSystem()***, ***updateSystem()***, ***removeSystem()***, and ***addSystemClient()***.
 
-Note, the ***@Parameter*** annotation can be placed either ***inline*** or ***outline***. Examples of both have been provided within this class.
+Note, the ***@Parameter*** annotation can be placed either ***inline*** or ***outline***. Examples of both are provided within this workshop.
 
-There are many OpenAPI annotations that can be used depending on what's best for your application and its classes. You can found all the annotations from the [MicroProfile OpenAPI specification](https://download.eclipse.org/microprofile/microprofile-open-api-3.0/microprofile-openapi-spec-3.0.html#_annotations).
+Many OpenAPI annotations are avaialble and can be used according to what's best for your application and its classes. You can find all the annotations in the [MicroProfile OpenAPI specification](https://download.eclipse.org/microprofile/microprofile-open-api-3.0/microprofile-openapi-spec-3.0.html#_annotations).
 
 Because the Liberty server was started in dev mode at the beginning of this exercise, your changes were automatically picked up. Go to the http://localhost:9080/openapi/ URL to see the updated endpoint descriptions. The endpoints at which your REST methods are served now more meaningful:
 
@@ -778,13 +778,13 @@ paths:
 ...
 ```
 
-You can also visit the http://localhost:9080/openapi/ui to see each endpoint's updated description. Click each of the icons within the UI to see the updated descriptions for each of the endpoints.
+You can also visit the http://localhost:9080/openapi/ui URL to see each endpoint's updated description. Click each of the icons within the UI to see the updated descriptions for each of the endpoints.
 In this Skills Network environment, simply click the following button:
 ::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
 ### Augmenting POJOs with OpenAPI annotations
 
-OpenAPI annotations can also be added to POJOs to describe what they represent. Currently, the OpenAPI document doesn't have a meaningful description of the ***SystemData*** POJO and hence it's difficult to tell exactly what this POJO is used for. To describe the ***SystemData*** POJO in more detail, augment the ***SystemData.java*** file with some OpenAPI annotations.
+OpenAPI annotations can also be added to POJOs to describe what they represent. Currently, the OpenAPI document doesn't have a meaningful description of the ***SystemData*** POJO so it's difficult to tell exactly what this POJO is used for. To describe the ***SystemData*** POJO in more detail, augment the ***SystemData.java*** file with some OpenAPI annotations.
 
 Replace the ***SystemData*** class.
 
@@ -900,15 +900,15 @@ components:
           type: object
 ```
 
-Again, you can also view this in the http://localhost:9080/openapi/ui. Scroll down in the UI to the schemas section and open up the SystemData schema icon.
+Again, you can also view this at the http://localhost:9080/openapi/ui URL. Scroll down in the UI to the schemas section and open up the SystemData schema icon.
 
 ::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
-You can also use this UI to try out the various endpoints. In the UI, head to the POST request ***/api/systems***. This endpoint enables you to create a system. Once you've opened this icon up, select the ***Try it out*** button on the right side. Now enter appropriate values for each of the required parameters and select the ***Execute*** button.
+You can also use this UI to try out the various endpoints. In the UI, head to the POST request ***/api/systems***. This endpoint enables you to create a system. Once you've opened this icon up, click the ***Try it out*** button. Now enter appropriate values for each of the required parameters and click the ***Execute*** button.
 
-You can verify that this system has been created by testing the ***/api/systems*** GET request that returns the currently stored system data in the inventory. Execute this in the UI, then in the response body you should see your system and it's data listed.
+You can verify that this system was created by testing the ***/api/systems*** GET request that returns the currently stored system data in the inventory. Execute this request in the UI, then in the response body you should see your system and its data listed.
 
-You can follow these same steps for updating and deleting systems - visiting the corresponding endpoint in the UI, executing the endpoint and then verifying the result by using the ***/api/systems*** GET request endpoint.
+You can follow these same steps for updating and deleting systems: visiting the corresponding endpoint in the UI, executing the endpoint, and then verifying the result by using the ***/api/systems*** GET request endpoint.
 
 You can learn more about MicroProfile OpenAPI from the [Documenting RESTful APIs guide](https://openliberty.io/guides/microprofile-openapi.html).
 
