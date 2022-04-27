@@ -10,6 +10,10 @@ on:
         description: 'Guide changed'
         required: true
         default: 'guide-rest-intro'
+      cloud_hosted_name:
+        description: 'Cloud hosted guide name'
+        required: true
+        default: 'cloud-hosted-draft-guide-rest-into'
       converter_branch:
         description: 'Converter branch'
         required: true
