@@ -39,8 +39,8 @@ cd /home/project
 Clone the [Git repository](https://github.com/openliberty/guide-liberty-deepdive.git):
 
 ```bash
-git clone https://github.com/openliberty/draft-guide-liberty-deepdive.git
-cd draft-guide-liberty-deepdive
+git clone https://github.com/openliberty/guide-liberty-deep-dive.git
+cd guide-liberty-deep-dive
 ```
 
 The ***start*** directory is an empty directory where you will build the ***inventory*** service.
@@ -72,7 +72,7 @@ Next, extract the ***inventory.zip*** file on your system. Move the contents of 
 
 In this Skills Network environment, instead of manually downloading and extracting the project, run the following commands:
 ```bash
-cd /home/project/draft-guide-liberty-deepdive/start
+cd /home/project/guide-liberty-deep-dive/start
 curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=9.1&g=io.openliberty.deepdive&j=11&m=5.0'
 unzip inventory.zip -d inventory
 ```
@@ -88,7 +88,7 @@ To begin, open a command-line session and navigate to your application directory
 
 
 ```bash
-cd /home/project/draft-guide-liberty-deepdive/start/inventory
+cd /home/project/guide-liberty-deep-dive/start/inventory
 ```
 
 Build and deploy the ***inventory*** microservice to Liberty by running the Maven ***liberty:run*** goal:
@@ -151,7 +151,7 @@ Now that a basic Liberty application is running, the next step is to create the 
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Go to the ***start/inventory*** directory.
 ```bash
-cd /home/project/draft-guide-liberty-deepdive/start/inventory
+cd /home/project/guide-liberty-deep-dive/start/inventory
 ```
 
 Create the ***Inventory*** class.
@@ -226,7 +226,7 @@ Create the ***model*** subdirectory, then create the ***SystemData*** class. The
 
 
 ```bash
-mkdir /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/java/io/openliberty/deepdive/rest/model
+mkdir /home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/model
 ```
 
 Create the ***SystemData*** class.
@@ -1360,7 +1360,7 @@ Define the configurable variables in the ***microprofile-config.properties*** co
 
 
 ```bash
-mkdir -p /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/resources/META-INF
+mkdir -p /home/project/guide-liberty-deep-dive/start/inventory/src/main/resources/META-INF
 ```
 
 Create the ***microprofile-config.properties*** file.
@@ -1404,7 +1404,7 @@ Navigate to your application directory.
 
 
 ```bash
-cd /home/project/draft-guide-liberty-deepdive/start/inventory
+cd /home/project/guide-liberty-deep-dive/start/inventory
 ```
 
 ### Defining a JPA entity class
@@ -2104,7 +2104,7 @@ A container file is provided for you. First, navigate to the ***finish/postgres*
 
 
 ```bash
-cd /home/project/draft-guide-liberty-deepdive/finish/postgres
+cd /home/project/guide-liberty-deep-dive/finish/postgres
 docker build -t postgres-sample .
 docker run --name postgres-container -p 5432:5432 -d postgres-sample
 ```
@@ -2155,7 +2155,7 @@ Now you can secure your RESTful APIs. Navigate to your application directory.
 
 
 ```bash
-cd /home/project/draft-guide-liberty-deepdive/start/inventory
+cd /home/project/guide-liberty-deep-dive/start/inventory
 ```
 
 Begin by adding some users and user groups to your ***server.xml*** Liberty configuration file.
@@ -2621,7 +2621,7 @@ Create the ***client*** subdirectory. Then, create a RESTful client interface fo
 
 
 ```bash
-mkdir /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/java/io/openliberty/deepdive/rest/client
+mkdir /home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/client
 ```
 
 Create the ***SystemClient*** interface.
@@ -3176,9 +3176,9 @@ Because the keystore file is not provided at the ***src*** directory, Liberty cr
 
 
 ```bash
-mkdir -p /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/liberty/config/resources/security
-cp /home/project/draft-guide-liberty-deepdive/finish/system/src/main/liberty/config/resources/security/key.p12 \
-   /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/liberty/config/resources/security/key.p12
+mkdir -p /home/project/guide-liberty-deep-dive/start/inventory/src/main/liberty/config/resources/security
+cp /home/project/guide-liberty-deep-dive/finish/system/src/main/liberty/config/resources/security/key.p12 \
+   /home/project/guide-liberty-deep-dive/start/inventory/src/main/liberty/config/resources/security/key.p12
 ```
 
 Now configure the client https port in the ***pom.xml*** configuration file.
@@ -3290,7 +3290,7 @@ Open another command-line session and run the ***system*** microservice from the
 
 
 ```bash
-cd /home/project/draft-guide-liberty-deepdive/finish/system
+cd /home/project/guide-liberty-deep-dive/finish/system
 mvn liberty:run
 ```
 
@@ -3353,7 +3353,7 @@ Navigate to your application directory
 
 
 ```bash
-cd /home/project/draft-guide-liberty-deepdive/start/inventory
+cd /home/project/guide-liberty-deep-dive/start/inventory
 ```
 
 A health report is generated automatically for all health services that enable MicroProfile Health.
@@ -3370,7 +3370,7 @@ Create the ***health*** subdirectory before creating the health check classes.
 
 
 ```bash
-mkdir /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/java/io/openliberty/deepdive/rest/health
+mkdir /home/project/guide-liberty-deep-dive/start/inventory/src/main/java/io/openliberty/deepdive/rest/health
 ```
 
 Create the ***StartupCheck*** class.
@@ -3552,7 +3552,7 @@ Go to your application directory.
 
 
 ```bash
-cd /home/project/draft-guide-liberty-deepdive/start/inventory
+cd /home/project/guide-liberty-deep-dive/start/inventory
 ```
 
 Enable the ***bob*** user to access the ***/metrics*** endpoints.
@@ -4057,7 +4057,7 @@ Navigate to your application directory:
 
 
 ```bash
-cd /home/project/draft-guide-liberty-deepdive/start/inventory
+cd /home/project/guide-liberty-deep-dive/start/inventory
 ```
 
 The first step to containerizing your application inside of a Docker container is creating a Dockerfile. A Dockerfile is a collection of instructions for building a Docker image that can then be run as a container. 
@@ -4334,8 +4334,8 @@ First, create the ***test*** directory at the ***src*** directory of your Maven 
 
 
 ```bash
-mkdir -p /home/project/draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest
-mkdir /home/project/draft-guide-liberty-deepdive/start/inventory/src/test/resources
+mkdir -p /home/project/guide-liberty-deep-dive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest
+mkdir /home/project/guide-liberty-deep-dive/start/inventory/src/test/resources
 ```
 
 Create a RESTful client interface for the ***inventory*** microservice.
@@ -5090,10 +5090,10 @@ The credentials are passed to the PostgreSQL database service as environment var
 To deploy the **inventory** microservice and ***Postgres*** database in this Skills Network environment, you need to update the image name so that the image in your IBM Cloud container registry is used, and add the **pullSecret** and ***pullPolicy*** settings. Run the following commands:
 
 ```bash
-sed -i 's=liberty-deepdive-inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/liberty-deepdive-inventory:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' /home/project/draft-guide-liberty-deepdive/start/inventory/inventory.yaml
-kubectl apply -f /home/project/draft-guide-liberty-deepdive/start/inventory/inventory.yaml
-sed -i 's=namespace: default=namespace: '"$SN_ICR_NAMESPACE"'=g' /home/project/draft-guide-liberty-deepdive/finish/postgres/postgres.yaml
-kubectl apply -f /home/project/draft-guide-liberty-deepdive/finish/postgres/postgres.yaml
+sed -i 's=liberty-deepdive-inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/liberty-deepdive-inventory:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' /home/project/guide-liberty-deep-dive/start/inventory/inventory.yaml
+kubectl apply -f /home/project/guide-liberty-deep-dive/start/inventory/inventory.yaml
+sed -i 's=namespace: default=namespace: '"$SN_ICR_NAMESPACE"'=g' /home/project/guide-liberty-deep-dive/finish/postgres/postgres.yaml
+kubectl apply -f /home/project/guide-liberty-deep-dive/finish/postgres/postgres.yaml
 ```
 
 When your pods are deployed, run the following command to check their status:
@@ -5199,8 +5199,8 @@ During deployment, the ***post-app-credentials*** secret can be mounted to the *
 Run the following command to deploy your changes.
 
 ```bash
-sed -i 's=liberty-deepdive-inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/liberty-deepdive-inventory:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' /home/project/draft-guide-liberty-deepdive/start/inventory/inventory.yaml
-kubectl apply -f /home/project/draft-guide-liberty-deepdive/start/inventory/inventory.yaml
+sed -i 's=liberty-deepdive-inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/liberty-deepdive-inventory:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' /home/project/guide-liberty-deep-dive/start/inventory/inventory.yaml
+kubectl apply -f /home/project/guide-liberty-deep-dive/start/inventory/inventory.yaml
 ```
 
 Run the following command to set up port forwarding to access the ***inventory*** microservice:
@@ -5236,8 +5236,8 @@ When you're finished trying out the microservice, press **CTRL+C** in the comman
 
 
 ```bash
-kubectl delete -f /home/project/draft-guide-liberty-deepdive/start/inventory/inventory.yaml
-kubectl delete -f /home/project/draft-guide-liberty-deepdive/finish/postgres/postgres.yaml
+kubectl delete -f /home/project/guide-liberty-deep-dive/start/inventory/inventory.yaml
+kubectl delete -f /home/project/guide-liberty-deep-dive/finish/postgres/postgres.yaml
 kubectl delete configmap inv-app-root
 kubectl delete secret post-app-credentials
 ```
