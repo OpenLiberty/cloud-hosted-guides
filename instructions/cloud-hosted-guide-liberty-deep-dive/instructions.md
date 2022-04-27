@@ -1,918 +1,4802 @@
-# Open Liberty deep dive class
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
+::page{title="Welcome to the A Technical Deep on Liberty guide!"}
 
-These instructions contain the hands-on lab modules for the Open Liberty deep dive class.  It is intended to be used in conjunction with taught materials, however, feel free to give it a try, even if you're not in this class.
+Liberty is a cloud-optimized Java runtime that is fast to start up with a low memory footprint and a development mode, known as dev mode, for quick iteration. With Liberty, adopting the latest open cloud-native Java APIs, like MicroProfile and Jakarta EE, is as simple as adding features to your server configuration. The Liberty zero migration architecture lets you focus on what's important and not the APIs changing under you.
 
-We strongly recommend using Google Chrome for the purpose of these labs.
+In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
-## The Application
+This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
 
-To open a new command-line session, select **Terminal** > **New Terminal** from the menu of the IDE.
+The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
-Clone the following repo:
+
+
+::page{title="What you'll learn"}
+
+You will learn how to build a RESTful microservice on Liberty with Jakarta EE and MicroProfile. You will use Maven throughout this exercise to build the microservice and to interact with the running Liberty instance. Then, you’ll build a container image for the microservice and deploy it to Kubernetes in a Liberty Docker container. You will also learn how to secure the REST endpoints and use JSON Web Tokens to communicate with the provided ***system*** secured microservice.
+
+The microservice that you’ll work with is called ***inventory***. The ***inventory*** microservice persists data into a PostgreSQL database. 
+
+![Inventory microservice](https://raw.githubusercontent.com/OpenLiberty/guide-liberty-deep-dive/prod/assets/inventory.png)
+
+
+::page{title="Getting started"}
+
+To open a new command-line session,
+select **Terminal** > **New Terminal** from the menu of the IDE.
+
+Run the following command to navigate to the **/home/project** directory:
+
+```bash
+cd /home/project
 ```
-git clone https://github.com/OpenLiberty/open-liberty-deep-dive.git
+
+Clone the [Git repository](https://github.com/openliberty/guide-liberty-deepdive.git):
+
+```bash
+git clone https://github.com/openliberty/draft-guide-liberty-deepdive.git
+cd draft-guide-liberty-deepdive
 ```
-{: codeblock}
+
+The ***start*** directory is an empty directory where you will build the ***inventory*** service.
+
+The ***finish*** directory contains the finished projects of different modules that you will build.
 
 
-Now navigate into the project folder:
+::page{title="Getting started with Liberty and REST"}
+
+Liberty now offers an easier way to get started with developing your application: the Open Liberty Starter. This tool provides a simple and quick way to get the necessary files to start building an application on Liberty. Through this tool, you can specify your application and project name. You can also choose a build tool from either Maven or Gradle, and pick the Java SE, Jakarta EE, and MicroProfile versions for your application.
+
+In this workshop, the Open Liberty Starter is used to create the starting point of the application. Maven is used as the selected build tool and the application uses of Jakarta EE 9.1 and MicroProfile 5.
+
+To get started with this tool, see the Getting Started page: [https://openliberty.io/start/](https://openliberty.io/start/)
+
+On that page, enter the following properties in the **Create a starter application** wizard.
+
+* Under Group specify: ***io.openliberty.deepdive***
+* Under Artifact specify: ***inventory***
+* Under Build Tool select: ***Maven***
+* Under Java SE Version select: ***your version***
+* Under Java EE/Jakarta EE Version select: ***9.1***
+* Under MicroProfile Version select: `5` 
+
+Then, click ***Generate Project***, which downloads the starter project as ***inventory.zip*** file. 
+
+
+Next, extract the ***inventory.zip*** file on your system. Move the contents of this extracted ***inventory*** directory to the ***start*** directory of this project, which is located at the following path: ***guide-liberty-deepdive/start/inventory***
+
+In this Skills Network environment, instead of manually downloading and extracting the project, run the following commands:
+```bash
+cd /home/project/draft-guide-liberty-deepdive/start
+curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=9.1&g=io.openliberty.deepdive&j=11&m=5.0'
+unzip inventory.zip -d inventory
+```
+
+### Building the application
+
+This application is configured to be built with Maven. Every Maven-configured project contains a ***pom.xml*** file that defines the project configuration, dependencies, and plug-ins.
+
+
+Your ***pom.xml*** file is located in the ***start/inventory*** directory and is configured to include the ***liberty-maven-plugin***. Using the plug-in, you can install applications into Liberty and manage the server instances.
+
+To begin, open a command-line session and navigate to your application directory. 
+
+
+```bash
+cd /home/project/draft-guide-liberty-deepdive/start/inventory
+```
+
+Build and deploy the ***inventory*** microservice to Liberty by running the Maven ***liberty:run*** goal:
+
+```bash
+mvn liberty:run
+```
+
+The ***mvn*** command initiates a Maven build, during which the target directory is created to store all build-related files.
+
+The ***liberty:run*** argument specifies the Liberty ***run*** goal, which starts a Liberty server instance in the foreground. As part of this phase, a Liberty server runtime is downloaded and installed into the ***target/liberty/wlp*** directory. Additionally, a server instance is created and configured in the ***target/liberty/wlp/usr/servers/defaultServer*** directory, and the application is installed into that server by using [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
+
+For more information about the Liberty Maven plug-in, see its [GitHub repository](https://github.com/WASdev/ci.maven).
+
+While the server starts up, various messages display in your command-line session. Wait for the following message, which indicates that the server startup is complete:
 
 ```
-cd open-liberty-deep-dive
+[INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
 ```
-{: codeblock}
 
-The application consists of two Microservices; **coffee-shop** and **barista**.  The **coffee-shop** service allows you to place an order and the **barista** service services the making of the coffee.
+When you need to stop the server, press ***CTRL+C*** in the command-line session where you ran the server, or run the ***liberty:stop*** goal from the ***start/inventory*** directory in another command-line session:
 
+```bash
+mvn liberty:stop
 ```
-    ^|
-    || orderCoffee()
-    || 
-    || 
-┌───|v────────┐   startCoffeeBrew()   ┌─────────────┐
-│ coffee-shop │---------------------->│   barista   │
-└─────────────┘<----------------------└─────────────┘
+
+
+### Starting and stopping the Liberty server in the background
+
+Although you can start and stop the server in the foreground by using the Maven ***liberty:run*** goal, you can also start and stop the server in the background with the Maven ***liberty:start*** and ***liberty:stop*** goals:
+
+```bash
+mvn liberty:start
+mvn liberty:stop
 ```
-The completed code for this class is provided in the `open-liberty-deep-dive/finish` directory.  To work through this class, you will develop in the `open-liberty-deep-dive/start` directory.
 
-# Module 1: Build
 
-Liberty has support for building and deploying applications using Maven and Gradle.  The source and documentation for these plugins can be found here:
-* https://github.com/OpenLiberty/ci.maven
-* https://github.com/OpenLiberty/ci.gradle
+### Updating the server configuration without restarting the server
 
-This class will make use of the `liberty-maven-plugin`.
+The Liberty Maven plug-in includes a ***dev*** goal that listens for any changes in the project, including application source code or configuration. The Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
 
-Take a look at the Maven build file for the coffee-shop project: `open-liberty-deep-dive/start/barista/pom.xml`
+If the Liberty server is running, stop it and restart it in dev mode by running the ***liberty:dev*** goal in the ***start/inventory*** directory:
 
-Go to the barista project:
-
-```
-cd start/barista
-```
-{: codeblock}
-
-Build and run the barista service:
-
-```
+```bash
 mvn liberty:dev
 ```
-{: codeblock}
 
-# Module 2: Dev Mode
-
-The Open Liberty Maven plug-in includes a dev goal that listens for any changes in the project, including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal -- dev mode -- allows for quicker turnarounds and an improved developer experience by providing hot deploy, hot testing and hot debug capabilities.
-
-Open a new terminal and navigate to the **coffee-shop** service.
-
-> [Terminal -> Split Terminal]
+After you see the following message, your application server in dev mode is ready:
 
 ```
-cd open-liberty-deep-dive/start/coffee-shop/
+**************************************************************
+*    Liberty is running in dev mode.
 ```
-{: codeblock}
 
-We are going to make changes to the coffee-shop project.
+Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the ***enter/return*** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the ***enter/return*** key to verify your change.
 
-Navigate to the coffee-shop project and start the server up in dev mode and make some changes to the configuration. 
-Dev mode can help to install features automatically if adding new features to the server configuration file server.xml when the server is still running:
+### Developing a RESTful microservice
+
+Now that a basic Liberty application is running, the next step is to create the additional application and resource classes that the application needs. Within these classes, you use Jakarta REST and other MicroProfile and Jakarta APIs.
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Go to the ***start/inventory*** directory.
+```bash
+cd /home/project/draft-guide-liberty-deepdive/start/inventory
 ```
-mvn liberty:dev
+
+Create the ***Inventory*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/Inventory.java
 ```
-{: codeblock}
 
-Take a look at the Maven build file for the coffee-shop project: **open-liberty-deep-dive/start/coffee-shop/pom.xml**
 
-The Open Liberty Maven plugin must be version 3.x or above to use dev mode. We define the latest versions of the plugins at the pom.xml:
+> Then, to open the Inventory.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/Inventory.java, or click the following button
 
-```XML
-    <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-war-plugin</artifactId>
-        <version>3.3.1</version>
-    </plugin>
-    <plugin>
-        <groupId>io.openliberty.tools</groupId>
-        <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.3.4</version>
-    </plugin>
-    <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.22.2</version>
-    </plugin>   
-    <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.2</version>
-    </plugin>
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/Inventory.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import io.openliberty.deepdive.rest.model.SystemData;
+import jakarta.enterprise.context.ApplicationScoped;
+
+@ApplicationScoped
+public class Inventory {
+
+    private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+
+    public List<SystemData> getSystems() {
+        return systems;
+    }
+
+    public SystemData getSystem(String hostname) {
+        for (SystemData s : systems) {
+            if (s.getHostname().equalsIgnoreCase(hostname)) {
+                return s;
+            }
+        }
+        return null;
+    }
+
+    public void add(String hostname, String osName, String javaVersion, Long heapSize) {
+        systems.add(new SystemData(hostname, osName, javaVersion, heapSize));
+    }
+
+    public void update(SystemData s) {
+        for (SystemData systemData : systems) {
+            if (systemData.getHostname().equalsIgnoreCase(s.getHostname())) {
+                systemData.setOsName(s.getOsName());
+                systemData.setJavaVersion(s.getJavaVersion());
+                systemData.setHeapSize(s.getHeapSize());
+            }
+        }
+    }
+
+    public boolean removeSystem(SystemData s) {
+        return systems.remove(s);
+    }
+}
 ```
- 
 
-In the same **coffee-shop/pom.xml** locate the **`<dependencies/>`** section.  All the features we are using in this class are part of Jakarta EE and MicroProfile. By having the two dependencies below means that at build time these are available for Maven to use and then it will install any of the features you request in your **server.xml,** but we will get to that shortly.
 
-``` XML
+
+This ***Inventory*** class stores a record of all systems and their system properties. The ***getSystem()*** method within this class retrieves and returns the system data from the system. The ***add()*** method enables the addition of a system and its data to the inventory. The ***update()*** method enables a system and its data on the inventory to be updated. The ***removeSystem()*** method enables the deletion of a system from the inventory.
+
+
+Create the ***model*** subdirectory, then create the ***SystemData*** class. The ***SystemData*** class is a Plain Old Java Object (POJO) that represents a single inventory entry. 
+
+
+```bash
+mkdir /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/java/io/openliberty/deepdive/rest/model
+```
+
+Create the ***SystemData*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java
+```
+
+
+> Then, to open the SystemData.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest.model;
+
+public class SystemData {
+
+    private int id;
+    private String hostname;
+    private String osName;
+    private String javaVersion;
+    private Long   heapSize;
+
+    public SystemData() {
+    }
+
+    public SystemData(String hostname, String osName, String javaVersion, Long heapSize) {
+        this.hostname = hostname;
+        this.osName = osName;
+        this.javaVersion = javaVersion;
+        this.heapSize = heapSize;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
+
+    public String getOsName() {
+        return osName;
+    }
+
+    public void setOsName(String osName) {
+        this.osName = osName;
+    }
+
+    public String getJavaVersion() {
+        return javaVersion;
+    }
+
+    public void setJavaVersion(String javaVersion) {
+        this.javaVersion = javaVersion;
+    }
+
+    public Long getHeapSize() {
+        return heapSize;
+    }
+
+    public void setHeapSize(Long heapSize) {
+        this.heapSize = heapSize;
+    }
+
+    @Override
+    public boolean equals(Object host) {
+      if (host instanceof SystemData) {
+        return hostname.equals(((SystemData) host).getHostname());
+      }
+      return false;
+    }
+}
+```
+
+
+
+The ***SystemData*** class contains the hostname, operating system name, Java version, and heap size properties. The various methods within this class allow the viewing or editing the properties of each system in the inventory.
+
+
+Create the ***SystemResource*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java
+```
+
+
+> Then, to open the SystemResource.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest;
+
+import java.util.List;
+
+import io.openliberty.deepdive.rest.model.SystemData;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+@ApplicationScoped
+@Path("/systems")
+public class SystemResource {
+
+    @Inject
+    Inventory inventory;
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<SystemData> listContents() {
+        return inventory.getSystems();
+    }
+
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public SystemData getSystem(@PathParam("hostname") String hostname) {
+        return inventory.getSystem(hostname);
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response addSystem(
+        @QueryParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            return fail(hostname + " already exists.");
+        }
+        inventory.add(hostname, osName, javaVersion, heapSize);
+        return success(hostname + " was added.");
+    }
+
+    @PUT
+    @Path("/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateSystem(
+        @PathParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s == null) {
+            return fail(hostname + " does not exists.");
+        }
+        s.setOsName(osName);
+        s.setJavaVersion(javaVersion);
+        s.setHeapSize(heapSize);
+        inventory.update(s);
+        return success(hostname + " was updated.");
+    }
+
+    @DELETE
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response removeSystem(@PathParam("hostname") String hostname) {
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            inventory.removeSystem(s);
+            return success(hostname + " was removed.");
+        } else {
+            return fail(hostname + " does not exists.");
+        }
+    }
+
+    @POST
+    @Path("/client/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response addSystemClient(@PathParam("hostname") String hostname) {
+        return fail("This api is not implemented yet.");
+    }
+
+    private Response success(String message) {
+        return Response.ok("{ \"ok\" : \"" + message + "\" }").build();
+    }
+
+    private Response fail(String message) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                       .entity("{ \"error\" : \"" + message + "\" }")
+                       .build();
+    }
+}
+```
+
+
+
+In Jakarta RESTful Web Services, a single class like the ***SystemResource.java*** class must represent a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. It is efficient to have a single class handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability.
+
+The ***@Path*** annotation on this class indicates that this resource responds to the ***/systems*** path in the RESTful application. The ***@ApplicationPath*** annotation in the ***RestApplication*** class, together with the ***@Path*** annotation in the ***SystemResource*** class, indicates that this resource is available at the ***/api/systems*** path.
+
+The Jakarta RESTful Web Services API maps the HTTP methods on the URL to the methods of the class by using annotations. This application uses the ***GET*** annotation to map an HTTP ***GET*** request to the ***/api/systems*** path.
+
+The ***@GET*** annotation on the ***listContents*** method indicates that the method is to be called for the HTTP ***GET*** method. The ***@Produces*** annotation indicates the format of the content that is returned. The value of the ***@Produces*** annotation is specified in the HTTP ***Content-Type*** response header. For this application, a JSON structure is returned for these ***Get*** methods. The ***Content-Type*** for a JSON response is ***application/json*** with ***MediaType.APPLICATION_JSON*** instead of the ***String*** content type. Using a constant such as ***MediaType.APPLICATION_JSON*** is better as in case of a spelling error, a compile failure occurs.
+
+The Jakarta RESTful Web Services API supports a number of ways to marshal JSON. The Jakarta RESTful Web Services specification mandates JSON-Binding (JSON-B). The method body returns the result of ***inventory.getSystems()***. Because the method is annotated with ***@Produces(MediaType.APPLICATION_JSON)***, the Jakarta RESTful Web Services API uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
+
+
+### Running the application
+
+Because you started the Liberty server in dev mode at the beginning of this exercise, all the changes were automatically picked up.
+
+Check out the service that you created at the http://localhost:9080/inventory/api/systems URL. If successful, it returns `[]` to you.
+
+```bash
+curl 'http://localhost:9080/inventory/api/systems'
+```
+
+::page{title="Documenting APIs"}
+
+Next, you will investigate how to document and filter RESTful APIs from annotations, POJOs, and static OpenAPI files by using MicroProfile OpenAPI.
+
+The OpenAPI specification, previously known as the Swagger specification, defines a standard interface for documenting and exposing RESTful APIs. This specification allows both humans and computers to understand or process the functionalities of services without requiring direct access to underlying source code or documentation. The MicroProfile OpenAPI specification provides a set of Java interfaces and programming models that allow Java developers to natively produce OpenAPI v3 documents from their RESTful applications.
+
+
+
+The MicroProfile OpenAPI API is included in the ***microProfile*** dependency that is specified in your ***pom.xml*** file. The ***microProfile*** feature that includes the ***mpOpenAPI*** feature is also enabled in the ***server.xml*** file.
+
+### Generating the OpenAPI document
+
+Because the Jakarta RESTful Web Services framework handles basic API generation for Jakarta RESTful Web Services annotations, a skeleton OpenAPI tree can be generated from the existing inventory service. You can use this tree as a starting point and augment it with annotations and code to produce a complete OpenAPI document.
+
+To see the generated OpenAPI tree, you can either visit the http://localhost:9080/openapi URL or visit the http://localhost:9080/openapi/ui URL for a more interactive view of the APIs. Click the ***interactive UI*** link on the welcome page. Within this UI, you can view each of the endpoints that are available in your application and any schemas. Each endpoint is color coordinated to easily identify the type of each request (for example GET, POST, PUT, DELETE, etc.). Clicking each endpoint within this UI enables you to view further details of each endpoint's parameters and responses. This UI is used for the remainder of this workshop to view and test the application endpoints.
+
+
+### Augmenting the existing Jakarta RESTful Web Services annotations with OpenAPI annotations
+
+Because all Jakarta RESTful Web Services annotations are processed by default, you can augment the existing code with OpenAPI annotations without needing to rewrite portions of the OpenAPI document that are already covered by the Jakarta RESTful Web Services framework.
+
+Replace the ***SystemResources*** class.
+
+> To open the SystemResource.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest;
+
+import java.util.List;
+
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameters;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+
+import io.openliberty.deepdive.rest.model.SystemData;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+@ApplicationScoped
+@Path("/systems")
+public class SystemResource {
+
+    @Inject
+    Inventory inventory;
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(value = SystemData.class,
+        responseDescription = "A list of system data stored within the inventory.",
+        responseCode = "200")
+    @Operation(
+        summary = "List contents.",
+        description = "Returns the currently stored system data in the inventory.",
+        operationId = "listContents")
+    public List<SystemData> listContents() {
+        return inventory.getSystems();
+    }
+
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(value = SystemData.class,
+        responseDescription = "System data of a particular host.",
+        responseCode = "200")
+    @Operation(
+        summary = "Get System",
+        description = "Retrieves and returns the system data from the system "
+                      + "service running on the particular host.",
+        operationId = "getSystem")
+    public SystemData getSystem(
+        @Parameter(
+            name = "hostname", in = ParameterIn.PATH,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING))
+        @PathParam("hostname") String hostname) {
+        return inventory.getSystem(hostname);
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully added system to inventory"),
+        @APIResponse(responseCode = "400",
+            description = "Unable to add system to inventory")
+    })
+    @Parameters(value = {
+        @Parameter(
+            name = "hostname", in = ParameterIn.QUERY,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "osName", in = ParameterIn.QUERY,
+            description = "The operating system of the system",
+            required = true, example = "linux",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "javaVersion", in = ParameterIn.QUERY,
+            description = "The Java version of the system",
+            required = true, example = "11",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "heapSize", in = ParameterIn.QUERY,
+            description = "The heap size of the system",
+            required = true, example = "1048576",
+            schema = @Schema(type = SchemaType.NUMBER)),
+    })
+    @Operation(
+        summary = "Add system",
+        description = "Add a system and its data to the inventory.",
+        operationId = "addSystem"
+    )
+    public Response addSystem(
+        @QueryParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            return fail(hostname + " already exists.");
+        }
+        inventory.add(hostname, osName, javaVersion, heapSize);
+        return success(hostname + " was added.");
+    }
+
+    @PUT
+    @Path("/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully updated system"),
+        @APIResponse(responseCode = "400",
+            description =
+                "Unable to update because the system does not exist in the inventory.")
+    })
+    @Parameters(value = {
+        @Parameter(
+            name = "hostname", in = ParameterIn.PATH,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "osName", in = ParameterIn.QUERY,
+            description = "The operating system of the system",
+            required = true, example = "linux",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "javaVersion", in = ParameterIn.QUERY,
+            description = "The Java version of the system",
+            required = true, example = "11",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "heapSize", in = ParameterIn.QUERY,
+            description = "The heap size of the system",
+            required = true, example = "1048576",
+            schema = @Schema(type = SchemaType.NUMBER)),
+    })
+    @Operation(
+        summary = "Update system",
+        description = "Update a system and its data on the inventory.",
+        operationId = "updateSystem"
+    )
+    public Response updateSystem(
+        @PathParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s == null) {
+            return fail(hostname + " does not exists.");
+        }
+        s.setOsName(osName);
+        s.setJavaVersion(javaVersion);
+        s.setHeapSize(heapSize);
+        inventory.update(s);
+        return success(hostname + " was updated.");
+    }
+
+    @DELETE
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully deleted the system from inventory"),
+        @APIResponse(responseCode = "400",
+            description =
+                "Unable to delete because the system does not exist in the inventory")
+    })
+    @Parameter(
+        name = "hostname", in = ParameterIn.PATH,
+        description = "The hostname of the system",
+        required = true, example = "localhost",
+        schema = @Schema(type = SchemaType.STRING)
+    )
+    @Operation(
+        summary = "Remove system",
+        description = "Removes a system from the inventory.",
+        operationId = "removeSystem"
+    )
+    public Response removeSystem(@PathParam("hostname") String hostname) {
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            inventory.removeSystem(s);
+            return success(hostname + " was removed.");
+        } else {
+            return fail(hostname + " does not exists.");
+        }
+    }
+
+    @POST
+    @Path("/client/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully added system client"),
+        @APIResponse(responseCode = "400",
+            description = "Unable to add system client")
+    })
+    @Parameter(
+        name = "hostname", in = ParameterIn.PATH,
+        description = "The hostname of the system",
+        required = true, example = "localhost",
+        schema = @Schema(type = SchemaType.STRING)
+    )
+    @Operation(
+        summary = "Add system client",
+        description = "This adds a system client.",
+        operationId = "addSystemClient"
+    )
+    public Response addSystemClient(@PathParam("hostname") String hostname) {
+        return fail("This api is not implemented yet.");
+    }
+
+    private Response success(String message) {
+        return Response.ok("{ \"ok\" : \"" + message + "\" }").build();
+    }
+
+    private Response fail(String message) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                       .entity("{ \"error\" : \"" + message + "\" }")
+                       .build();
+    }
+}
+```
+
+
+
+
+Add OpenAPI ***@APIResponseSchema***, ***@APIResponses***, ***@APIResponse***, ***@Parameters***, ***@Parameter***, and ***@Operation*** annotations to the REST methods, ***listContents()***, ***getSystem()***, ***addSystem()***, ***updateSystem()***, ***removeSystem()***, and ***addSystemClient()***.
+
+Note, the ***@Parameter*** annotation can be placed either ***inline*** or ***outline***. Examples of both are provided within this workshop.
+
+Many OpenAPI annotations are avaialble and can be used according to what's best for your application and its classes. You can find all the annotations in the [MicroProfile OpenAPI specification](https://download.eclipse.org/microprofile/microprofile-open-api-3.0/microprofile-openapi-spec-3.0.html#_annotations).
+
+Because the Liberty server was started in dev mode at the beginning of this exercise, your changes were automatically picked up. Go to the http://localhost:9080/openapi/ URL to see the updated endpoint descriptions. The endpoints at which your REST methods are served now more meaningful:
+
+```bash
+curl http://localhost:9080/openapi
+```
+
+```
+---
+openapi: 3.0.3
+info:
+  title: Generated API
+  version: "1.0"
+servers:
+- url: http://localhost:9080/inventory
+- url: https://localhost:9443/inventory
+paths:
+  /api/systems:
+    get:
+      summary: List contents.
+      description: Returns the currently stored host:properties pairs in the inventory.
+      operationId: listContents
+      responses:
+        "200":
+          description: Returns the currently stored host:properties pairs in the inventory.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemData'
+...
+```
+
+You can also visit the http://localhost:9080/openapi/ui URL to see each endpoint's updated description. Click each of the icons within the UI to see the updated descriptions for each of the endpoints.
+In this Skills Network environment, simply click the following button:
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+
+### Augmenting POJOs with OpenAPI annotations
+
+OpenAPI annotations can also be added to POJOs to describe what they represent. Currently, the OpenAPI document doesn't have a meaningful description of the ***SystemData*** POJO so it's difficult to tell exactly what this POJO is used for. To describe the ***SystemData*** POJO in more detail, augment the ***SystemData.java*** file with some OpenAPI annotations.
+
+Replace the ***SystemData*** class.
+
+> To open the SystemData.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest.model;
+
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+@Schema(name = "SystemData",
+        description = "POJO that represents a single inventory entry.")
+public class SystemData {
+
+    private int id;
+
+    @Schema(required = true)
+    private String hostname;
+
+    private String osName;
+    private String javaVersion;
+    private Long   heapSize;
+
+    public SystemData() {
+    }
+
+    public SystemData(String hostname, String osName, String javaVer, Long heapSize) {
+        this.hostname = hostname;
+        this.osName = osName;
+        this.javaVersion = javaVer;
+        this.heapSize = heapSize;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
+
+    public String getOsName() {
+        return osName;
+    }
+
+    public void setOsName(String osName) {
+        this.osName = osName;
+    }
+
+    public String getJavaVersion() {
+        return javaVersion;
+    }
+
+    public void setJavaVersion(String javaVersion) {
+        this.javaVersion = javaVersion;
+    }
+
+    public Long getHeapSize() {
+        return heapSize;
+    }
+
+    public void setHeapSize(Long heapSize) {
+        this.heapSize = heapSize;
+    }
+
+    @Override
+    public boolean equals(Object host) {
+      if (host instanceof SystemData) {
+        return hostname.equals(((SystemData) host).getHostname());
+      }
+      return false;
+    }
+}
+```
+
+
+
+
+Add OpenAPI ***@Schema*** annotations to the ***SystemData*** class and the ***hostname*** variable.
+
+
+Refresh the http://localhost:9080/openapi/ URL to see the updated OpenAPI tree. You should see much more meaningful data for the Schema:
+
+```bash
+curl http://localhost:9080/openapi
+```
+
+```
+components:
+  schemas:
+    SystemData:
+      description: POJO that represents a single inventory entry.
+      required:
+      - hostname
+      - properties
+      type: object
+      properties:
+        hostname:
+          type: string
+        properties:
+          type: object
+```
+
+Again, you can also view this at the http://localhost:9080/openapi/ui URL. Scroll down in the UI to the schemas section and open up the SystemData schema icon.
+
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+
+You can also use this UI to try out the various endpoints. In the UI, head to the POST request ***/api/systems***. This endpoint enables you to create a system. Once you've opened this icon up, click the ***Try it out*** button. Now enter appropriate values for each of the required parameters and click the ***Execute*** button.
+
+You can verify that this system was created by testing the ***/api/systems*** GET request that returns the currently stored system data in the inventory. Execute this request in the UI, then in the response body you should see your system and its data listed.
+
+You can follow these same steps for updating and deleting systems: visiting the corresponding endpoint in the UI, executing the endpoint, and then verifying the result by using the ***/api/systems*** GET request endpoint.
+
+You can learn more about MicroProfile OpenAPI from the [Documenting RESTful APIs guide](https://openliberty.io/guides/microprofile-openapi.html).
+
+
+::page{title=" Configuring the microservice"}
+
+Next, you can externalize your Liberty server configuration and inject configuration for your microservice by using MicroProfile Config.
+
+
+### Enabling configurable ports and context root
+
+So far, you used hardcoded values to set the HTTP and HTTPS ports and the context root for the Liberty server. These configurations can be externalized so you can easily change their values when you want to deploy your microservice by different ports and context root.
+
+Replace the ***server.xml*** file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="inventory">
+
+    <featureManager>
+        <feature>jakartaee-9.1</feature>
+        <feature>microProfile-5.0</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080" />
+    <variable name="default.https.port" defaultValue="9443" />
+    <variable name="default.context.root" defaultValue="/inventory" />
+
+    <!-- To access this server from a remote client,
+         add a host attribute to the following element, e.g. host="*" -->
+    <httpEndpoint id="defaultHttpEndpoint"
+                  httpPort="${default.http.port}" 
+                  httpsPort="${default.https.port}" />
+    
+    <applicationManager autoExpand="true"/>
+
+    <webApplication contextRoot="${default.context.root}" 
+                    location="inventory.war" /> 
+
+    <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
+</server>
+```
+
+
+
+
+Add variables for the ***HTTP*** port, ***HTTPS*** port, and the ***context root*** to the ***server.xml*** file. Change the ***httpEndpoint*** element to reflect the new ***default.http.port*** and ***default.http.port*** variables and change the ***contextRoot*** to use the new ***default.context.root*** variable too.
+
+Replace the ***pom.xml*** file.
+
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/pom.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.deepdive</groupId>
+    <artifactId>inventory</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.default.context.root>/inventory</liberty.var.default.context.root>
+    </properties>
+
     <dependencies>
-        <!--Open Liberty provided features -->
         <dependency>
             <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-web-api</artifactId>
-            <version>8.0.0</version>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>9.1.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>4.0.1</version>
+            <version>5.0</version>
             <type>pom</type>
             <scope>provided</scope>
-        </dependency> 
-        ...
+        </dependency>
     </dependencies>
-```
 
-Let's add the dependency for the **MicroProfile OpenAPI** feature so we can try the **coffee-shop** service out.
-
-We have already loaded the MicroProfile 4.0 feature in the **pom.xml** that will include the latest version of MicroProfile OpenAPI so we just need to configure the Open Liberty server.
-
-Open the **server.xml**
-
-> [File -> Open]open-liberty-deep-dive/start/coffee-shop/src/main/liberty/config/server.xml
-
-
-This file is the configuration for the **coffee-shop** server.
-
-Near the top of the file, you'll see the following `<featureManager/>` entry:
-
-```XML
-    <featureManager>
-        <feature>jaxrs-2.1</feature>
-        <feature>ejbLite-3.2</feature>
-        <feature>cdi-2.0</feature>
-        <feature>beanValidation-2.0</feature>
-        <feature>mpHealth-3.0</feature>
-        <feature>mpConfig-2.0</feature>
-        <feature>mpRestClient-2.0</feature>
-        <feature>jsonp-1.1</feature>
-    </featureManager>
-```
-This entry lists all the features to be loaded by the server.  Add the following entry inside the `<featureManager/>` element:
-
-```XML
-        <feature>mpOpenAPI-2.0</feature>
-```
-{: codeblock}
-
-If you now go back to your terminal you should notice Open Liberty installing the new features without shutting down. You can also re-run tests by simply pressing enter in the Terminal. 
+    <build>
+        <finalName>inventory</finalName>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>3.3.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>io.openliberty.tools</groupId>
+                    <artifactId>liberty-maven-plugin</artifactId>
+                    <version>3.5.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
 
 ```
-[INFO] [AUDIT   ] CWWKF0012I: The server installed the following features: [mpOpenAPI-2.0].
+
+
+
+
+Add properties for the ***HTTP*** port, ***HTTPS*** port, and the ***context root*** to the ***pom.xml*** file. 
+
+You can try changing the value of these variables in the ***pom.xml*** file:
+
+* update ***liberty.var.default.http.port*** to ***9081***
+* update ***liberty.var.default.https.port*** to ***9445***
+* update ***liberty.var.default.context.root*** to ***/trial***.
+
+Because you are using dev mode, these changes are automatically picked up by the server.
+
+
+
+Now, you can access the application by running the following command:
+```bash
+curl http://localhost:9081/trial/api/systems
 ```
 
-For a full list of all the features available, see https://openliberty.io/docs/ref/feature/.
+Alternatively, for the updated OpenAPI UI, click the following button to visit ***/openapi/ui*** endpoint:
+::startApplication{port="9081" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
-# Module 3: Application APIs
+When you are finished trying out changing this configuration, change the variables back to their original values.
 
-Open Liberty has support for many standard APIs out of the box, including Java EE 7 & 8, Jakarta EE 8 and the latest MicroProfile APIs.
+* update ***liberty.var.default.http.port*** to ***9080***
+* update ***liberty.var.default.https.port*** to ***9443***
+* update ***liberty.var.default.context.root*** to ***/inventory***.
 
-As you have seen in the previous section, the API dependencies that you need to use MicroProfile or Jakarta EE APIs have been added as dependencies to the POM file. You are all set to use these APIs as you need as you write your code.
 
-Then, we need to enable the corresponding features in Liberty's server configuration for Liberty to load and use what you have chosen for your application. With Liberty's modular and composable architecture, only the features specified in the server configuration will be loaded giving you a lightweight and performant runtime.
+### Injecting static configuration
 
-We're now going to add Metrics to the **coffee-shop.**  Edit **Coffee-Shop server.xml** file and add the following dependency in the featureManager section like we did above:
+You can now explore how to use MicroProfile's Config API to inject static configuration into your microservice.
 
-> [File->Open] **open-liberty-deep-dive/start/coffee-shop/src/main/liberty/config/server.xml**
+The MicroProfile Config API is included in the MicroProfile dependency that is specified in your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows the use of the MicroProfile Config API. The ***microProfile*** feature is also enabled in the ***server.xml*** file.
 
-```XML
-        <feature>mpMetrics-3.0</feature>
-```
-{: codeblock}
 
-You should see that the server has been automatically updates, the following features are installed, and include mpMetrics-3.0:
+First, you need to edit the ***SystemResource*** class to inject static configuration into the ***CLIENT_PORT*** variable.
 
-```
-[INFO] Installing features: [mpconfig-2.0, mpopenapi-2.0, mpmetrics-3.0, cdi-2.0, mprestclient-2.0, jsonp-1.1, beanvalidation-2.0, ejblite-3.2, mphealth-3.0, jaxrs-2.1]
-...
-[INFO] [AUDIT   ] CWWKF0012I: The server installed the following features: [distributedMap-1.0, monitor-1.0, mpMetrics-3.0, ssl-1.0].
-```
-Now we have the API available, we can update the application to include a metric which will count the number of times a coffee order is requested. 
+Replace the ***SystemResource*** class.
 
-Open the **OrderResource.java** and add the following **@Counted** annotation to the **orderCoffee** method:
-> [File->Open] **open-liberty-deep-dive/start/coffee-shop/src/main/java/com/sebastian_daschner/coffee_shop/boundary/OrdersResource.java**
+> To open the SystemResource.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java"}
+
+
 
 ```java
-@Counted(name="order", displayName="Order count", description="Number of times orders requested.")
-```
-{: codeblock}
+package io.openliberty.deepdive.rest;
 
- After you add the **@Counted** annotation, the mothod should look like:
+import java.util.List;
 
-```Java
-    @POST
-    @Counted(name="order", displayName="Order count", description="Number of times orders requested.")
-    public Response orderCoffee(@Valid @NotNull CoffeeOrder order) {
-        ...
-    }
-```
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameters;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
-You'll also need to add the following package import:
-```Java
-import org.eclipse.microprofile.metrics.annotation.Counted;
-```
-{: codeblock}
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-# Module 4: Server Configuration
+import io.openliberty.deepdive.rest.model.SystemData;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
-From your previous addition of the MicroProfile Metrics feature in the server.xml you should now see a message for a new metrics endpoint in the terminal that looks like:
+@ApplicationScoped
+@Path("/systems")
+public class SystemResource {
 
-```
-[INFO] [AUDIT   ] CWWKT0016I: Web application available (default_host): http://ACCOUNTNAME-9080.theiadocker-1.proxy.cognitiveclass.ai/metrics/
-```
-
-Open the metrics endpoint in your browser. To do this select **Launch Application**, a box will appear where the port number is required. The application is running on port **9080**. The Open Liberty homepage will load. To access the **metrics** endpoint at the end of the URL type **/metrics**. The URL should look like: 
-
-```
-http://ACCOUNTNAME-9080.theiadocker-1.proxy.cognitiveclass.ai/metrics
-```
-Skills Network Labs will automatically try to redirect you over to **localhost** because it can not reach the launched application. When you are redirected you should see a message like this:
-
-```
-This site can’t be reached
-```
-
-This message can vary depending on your browser.
-
-or a **Username** and **Password** will be required.
-
-If you take a look at the server output, you should see the following error:
-
-```
-[INFO] [ERROR   ] CWWKS9113E: The SSL port is not active. The incoming http request cannot be redirected to a secure port. Check the server.xml file for configuration errors. The https port may be disabled. The keyStore element may be missing or incorrectly specified. The SSL feature may not be enabled.
-```
-
-It's one thing to configure the server to load a feature, but many Liberty features require additional configuration. You can view the complete set of Liberty features and their configuration here: https://openliberty.io/docs/ref/config/.
-
-The error message suggests we need to add a `keyStore` and one route to solve this would be to add a `keyStore` and user registry (e.g. a `basicRegistry` for test purposes).  However, if we take a look at the configuration for [mpMetrics](https://openliberty.io/docs/ref/config/#mpMetrics.html) we can see that it has an option to turn the metrics endpoint authentication off.
-
-Add the following below the `</featureManager>` in the `open-liberty-deep-dive/start/coffee-shop/src/main/liberty/config/server.xml`.
-
-```XML
-    <mpMetrics authentication="false" />
-```
-{: codeblock}
-
-Revisit the metrics endpoint with the `http://ACCOUNTNAME-9080.theiadocker-1.proxy.cognitiveclass.ai/metrics` URL or run the following curl command by another terminal:
-
-```
-curl http://localhost:9080/metrics
-```
-{: codeblock}
-
-You should see a number of metrics automatically generated by the JVM:
-```
-# TYPE base_classloader_loadedClasses_count gauge
-# HELP base_classloader_loadedClasses_count Displays the number of classes that are currently loaded in the Java virtual machine.
-base_classloader_loadedClasses_count 14053
-...
-```
-
-This doesn't contain the metrics you added because the service hasn't been called and so no application metrics have been recorded. 
-
-Open a new terminal and use curl to `POST` some json to the application in order to generate some metrics by making a coffee order.
-
-```
-curl -X POST "http://localhost:9080/coffee-shop/resources/orders" \
-     -H  "accept: */*" -H  "Content-Type: application/json" \
-     -d "{\"status\":\"FINISHED\",\"type\":\"ESPRESSO\"}"
-```
-{: codeblock}
-
-Reload the metrics page or rerun the curl `/metrics` endpoint command. At the bottom of the metrics results, you should see:
-
-```
-...
-# TYPE application_com_sebastian_daschner_coffee_shop_boundary_OrdersResource_order_total counter
-# HELP application_com_sebastian_daschner_coffee_shop_boundary_OrdersResource_order_total Number of times orders requested.
-application_com_sebastian_daschner_coffee_shop_boundary_OrdersResource_order_total 1
-```
-
-# Module 5: Externalizing Configuration
-
-If you're familiar with the concept of 12-factor applications (see http://12factor.net) you'll know that factor III states that an application's configuration should be stored in the environment. Configuration here, is referring to variables which vary between development, staging and production. In doing so, you can build the deployment artefact once and deploy it in different environments unchanged.
-
-Liberty lets your application pick up configuration from a number of sources, such as environment variables, bootstrap.properties and Kubernetes configuration.
-
-Stop the **barista** service by pressing **CTRL+C** in the command-line session where you ran it at the module 1.
-
-We now need to change the server configuration to externalize the ports.  
-
-Open the **open-liberty-deep-dive/start/barista/src/main/liberty/config/server.xml** file, change this line:
-
-```XML
-    <httpEndpoint host="*" httpPort="9081" httpsPort="9444" id="defaultHttpEndpoint"/>
-```
-to 
-
-```XML
-    <variable name="default.http.port" defaultValue="9081"/>
-    <variable name="default.https.port" defaultValue="9444"/>
-
-    <httpEndpoint id="defaultHttpEndpoint" host="*" 
-        httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}"/>
-```
-{: codeblock}
-
-Restart the **barista** service by running the following curl commands:
-```
-export DEFAULT_HTTP_PORT=9082
-mvn liberty:dev
-````
-{: codeblock}
-
-If you take a look at the **barista** server output, you should find out that the **barista** service is running on the port `9082` now:
-```
-[INFO] [AUDIT   ] CWWKT0016I: Web application available (default_host): http://theiadocker-accountname:9082/health/
-[INFO] [AUDIT   ] CWWKT0016I: Web application available (default_host): http://theiadocker-accountname:9082/openapi/
-[INFO] [AUDIT   ] CWWKT0016I: Web application available (default_host): http://theiadocker-accountname:9082/openapi/ui/
-[INFO] [AUDIT   ] CWWKT0016I: Web application available (default_host): http://theiadocker-accountname:9082/barista/
-```
-
-Next we'll use the `default_barista_base_url` in the code to avoid hard-coding the location of the **barista** service for the **coffee-shop** service.
-
-Edit the file `open-liberty-deep-dive/start/coffee-shop/src/main/java/com/sebastian_daschner/coffee_shop/control/Barista.java`
-
-Change:
-
-```Java
-    String baristaBaseURL = "http://localhost:9081";
-```
-
-To:
-
-```Java
     @Inject
-    @ConfigProperty(name="default_barista_base_url")
-    String baristaBaseURL;
-```
-{: codeblock}
+    Inventory inventory;
 
-You'll also need to add the following imports:
+    @Inject
+    @ConfigProperty(name = "client.https.port")
+    String CLIENT_PORT;
 
-```Java
-import javax.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-```
-{: codeblock}
 
-This is using the MicroProfile Config specification to inject the configuration value. Configuration can come from a number of sources.
-
-Open the `coffee-shop/src/main/webapp/META-INF/microprofile-config.properties` MicroProfile configuration file. Add the following value:
-```
-default_barista_base_url=http://localhost:9081
-```
-{: codeblock}
-
-We also need to make the same changes to the CoffeeShopReadinessCheck of the **coffee-shop** service. 
-
-Edit the file: **open-liberty-deep-dive/start/coffee-shop/src/main/java/com/sebastian_daschner/coffee_shop/health/CoffeeShopReadinessCheck.java**
-
-Change:
-
-```Java
-    String baristaBaseURL = "http://localhost:9081";
-```
-
-To:
-
-```Java
-  @Inject
-  @ConfigProperty(name="default_barista_base_url")
-  String baristaBaseURL;
-```
-{: codeblock}
-
-Add the following imports:
-
-```Java
-import javax.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-```
-{: codeblock}
-
-For more information on MicroProfile Config see https://openliberty.io/guides/microprofile-config.html.
-
-Run the following curl command:
-```
-curl http://localhost:9080/health/ready
-```
-{: codeblock}
-
-You'll find out from the **coffee-shop** service is not ready because the **barista** is not running on the port `9081`:
-```
-{"checks":[{"data":{},"name":"CoffeeShopReadinessCheck Readiness Check","status":"DOWN"}],"status":"DOWN"}
-```
-
-Update the `coffee-shop/src/main/webapp/META-INF/microprofile-config.properties` MicroProfile configuration file. Change the port to 9082 as the following:
-```
-default_barista_base_url=http://localhost:9082
-```
-{: codeblock}
-
-Run the following curl command again:
-```
-curl http://localhost:9080/health/ready
-```
-{: codeblock}
-
-You'll find out from the **coffee-shop** service is ready now:
-```
-{"checks":[{"data":{},"name":"CoffeeShopReadinessCheck Readiness Check","status":"UP"}],"status":"UP"}
-```
-
-You can set the `default_barista_base_url` value through the `DEFAULT_BARISTA_BASE_URL` environment variable but you'll need to restart the **coffee-shop** service.
-
-# Module 6: Integration Testing
-
-Tests are essential for developing maintainable code. Developing your application using bean-based component models like CDI makes your code easily unit-testable. Integration Tests are a little more challenging. In this section you'll add a **barista** service integration test using the `maven-failsafe-plugin`. During the build, the Liberty server will be started along with the **barista** application deployed, the test will be run and then the server will be stopped.
-
-Because we're going to be testing a **REST POST** request, we need JAX-RS client support and also support for serializing **json** into the request.  We also need **junit** for writing the test.  Add these dependencies to the **open-liberty-deep-dive/start/barista/pom.xml**:
-
->[File->Open]open-liberty-deep-dive/start/barista/pom.xml
-
-```XML
-        <!-- Test dependencies -->  
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.7.1</version>
-            <scope>test</scope>
-        </dependency>     
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-rs-mp-client</artifactId>
-            <version>3.4.3</version>
-            <scope>test</scope>
-        </dependency>      
-        <dependency>
-            <groupId>com.fasterxml.jackson.jaxrs</groupId>
-            <artifactId>jackson-jaxrs-json-provider</artifactId>
-            <version>2.12.3</version>
-            <scope>test</scope>
-        </dependency>   
-```
-{: codeblock}
-
-Note: the **`<scope/>`** of the dependencies is set to **test** because we only want the dependencies to be used during testing.
-
-Add the following `<configuration>...</configuration>` to the `maven-failsafe-plugin` plugin:
-```
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <liberty.test.port>9082</liberty.test.port>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin> 
-```
-{: codeblock}
-
-Note: this configuration makes the port of the server available to the test as a system property called `liberty.test.port`.
-
-Finally, add the test code.  Create a file called **BaristaIT.java**.
-Open a new Terminal
-
-> Terminal -> New Terminal
-
-```
-touch open-liberty-deep-dive/start/barista/src/test/java/com/sebastian_daschner/barista/it/BaristaIT.java
-```
-{: codeblock}
-
-Open the **BaristaIT.java** and add the following:
-
-[File->Open]open-liberty-deep-dive/start/barista/src/test/java/com/sebastian_daschner/barista/it/BaristaIT.java
-
-```Java
-package com.sebastian_daschner.barista.it;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import javax.inject.Inject;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.MediaType;
-
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-
-import com.sebastian_daschner.barista.boundary.BrewsResource;
-import com.sebastian_daschner.barista.entity.CoffeeBrew;
-import com.sebastian_daschner.barista.entity.CoffeeType;
-
-public class BaristaIT {
-    private static String URL;
-
-    @BeforeAll
-    public static void init() {
-        String port = System.getProperty("liberty.test.port");
-        URL = "http://localhost:" + port + "/barista/resources/brews";
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(value = SystemData.class,
+        responseDescription = "A list of system data stored within the inventory.",
+        responseCode = "200")
+    @Operation(
+        summary = "List contents.",
+        description = "Returns the currently stored system data in the inventory.",
+        operationId = "listContents")
+    public List<SystemData> listContents() {
+        return inventory.getSystems();
     }
-    @Test
-    public void testService() throws Exception {
 
-        Client client = null;
-        WebTarget target = null;
-        try {
-            client = ClientBuilder.newClient().register(JacksonJsonProvider.class);
-            target = client.target(URL);
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(value = SystemData.class,
+        responseDescription = "System data of a particular host.",
+        responseCode = "200")
+    @Operation(
+        summary = "Get System",
+        description = "Retrieves and returns the system data from the system "
+        + "service running on the particular host.",
+        operationId = "getSystem"
+    )
+    public SystemData getSystem(
+        @Parameter(
+            name = "hostname", in = ParameterIn.PATH,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)
+        )
+        @PathParam("hostname") String hostname) {
+        return inventory.getSystem(hostname);
+    }
 
-        } catch (Exception e) {
-            client.close();
-            throw e;
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully added system to inventory"),
+        @APIResponse(responseCode = "400",
+            description = "Unable to add system to inventory")
+    })
+    @Parameters(value = {
+        @Parameter(
+            name = "hostname", in = ParameterIn.QUERY,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "osName", in = ParameterIn.QUERY,
+            description = "The operating system of the system",
+            required = true, example = "linux",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "javaVersion", in = ParameterIn.QUERY,
+            description = "The Java version of the system",
+            required = true, example = "11",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "heapSize", in = ParameterIn.QUERY,
+            description = "The heap size of the system",
+            required = true, example = "1048576",
+            schema = @Schema(type = SchemaType.NUMBER)),
+    })
+    @Operation(
+        summary = "Add system",
+        description = "Add a system and its data to the inventory.",
+        operationId = "addSystem"
+    )
+    public Response addSystem(
+        @QueryParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            return fail(hostname + " already exists.");
         }
+        inventory.add(hostname, osName, javaVersion, heapSize);
+        return success(hostname + " was added.");
+    }
 
-        CoffeeBrew brew = new CoffeeBrew();
-        brew.setType(CoffeeType.POUR_OVER);
+    @PUT
+    @Path("/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully updated system"),
+        @APIResponse(responseCode = "400",
+           description =
+               "Unable to update because the system does not exist in the inventory.")
+    })
+    @Parameters(value = {
+        @Parameter(
+            name = "hostname", in = ParameterIn.PATH,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "osName", in = ParameterIn.QUERY,
+            description = "The operating system of the system",
+            required = true, example = "linux",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "javaVersion", in = ParameterIn.QUERY,
+            description = "The Java version of the system",
+            required = true, example = "11",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "heapSize", in = ParameterIn.QUERY,
+            description = "The heap size of the system",
+            required = true, example = "1048576",
+            schema = @Schema(type = SchemaType.NUMBER)),
+    })
+    @Operation(
+        summary = "Update system",
+        description = "Update a system and its data on the inventory.",
+        operationId = "updateSystem"
+    )
+    public Response updateSystem(
+        @PathParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize) {
 
-        Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(brew));
-
-        try {
-            if (response == null) {
-                assertNotNull(response, "GreetingService response must not be NULL");
-            } else {
-                assertEquals( 200, response.getStatus(), "Response must be 200 OK");
-            }
-
-        } finally {
-            response.close();
+        SystemData s = inventory.getSystem(hostname);
+        if (s == null) {
+            return fail(hostname + " does not exists.");
         }
+        s.setOsName(osName);
+        s.setJavaVersion(javaVersion);
+        s.setHeapSize(heapSize);
+        inventory.update(s);
+        return success(hostname + " was updated.");
+    }
+
+    @DELETE
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully deleted the system from inventory"),
+        @APIResponse(responseCode = "400",
+            description =
+                "Unable to delete because the system does not exist in the inventory")
+    })
+    @Parameter(
+        name = "hostname", in = ParameterIn.PATH,
+        description = "The hostname of the system",
+        required = true, example = "localhost",
+        schema = @Schema(type = SchemaType.STRING)
+    )
+    @Operation(
+        summary = "Remove system",
+        description = "Removes a system from the inventory.",
+        operationId = "removeSystem"
+    )
+    public Response removeSystem(@PathParam("hostname") String hostname) {
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            inventory.removeSystem(s);
+            return success(hostname + " was removed.");
+        } else {
+            return fail(hostname + " does not exists.");
+        }
+    }
+
+    @POST
+    @Path("/client/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully added system client"),
+        @APIResponse(responseCode = "400",
+            description = "Unable to add system client")
+    })
+    @Parameter(
+        name = "hostname", in = ParameterIn.PATH,
+        description = "The hostname of the system",
+        required = true, example = "localhost",
+        schema = @Schema(type = SchemaType.STRING)
+    )
+    @Operation(
+        summary = "Add system client",
+        description = "This adds a system client.",
+        operationId = "addSystemClient"
+    )
+    public Response addSystemClient(@PathParam("hostname") String hostname) {
+        System.out.println(CLIENT_PORT);
+        return success("Client Port: " + CLIENT_PORT);
+    }
+
+    private Response success(String message) {
+        return Response.ok("{ \"ok\" : \"" + message + "\" }").build();
+    }
+
+    private Response fail(String message) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                       .entity("{ \"error\" : \"" + message + "\" }")
+                       .build();
+    }
+}
+```
+
+
+
+The ***@Inject*** annotation injects the value from other configuration sources to the ***CLIENT_PORT*** variable. The ***@ConfigProperty*** defines the external property name as ***client.https.port***.
+
+Update the ***POST*** request so that the ***/client/{hostname}*** endpoint prints the ***CLIENT_PORT*** value.
+
+
+### Adding the microprofile-config.properties file
+
+Define the configurable variables in the ***microprofile-config.properties*** configuration file for MicroProfile Config at the ***src/main/resources/META-INF*** directory.
+
+
+```bash
+mkdir -p /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/resources/META-INF
+```
+
+Create the ***microprofile-config.properties*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/main/resources/META-INF/microprofile-config.properties
+```
+
+
+> Then, to open the microprofile-config.properties file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+config_ordinal=100
+
+client.https.port=5555
+```
+
+
+
+Using the ***config_ordinal*** variable in this properties file, you can set the ordinal of this file and thus other configuration sources.
+
+The ***client.https.port*** variable enables the client port to be overwritten.
+
+Revisit the OpenAPI UI ***http://localhost:9080/openapi/ui/*** to view these changes. Open the ***/api/systems/client/{hostname}*** endpoint and run it within the UI to view the ***CLIENT_PORT*** value.
+
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+
+You can learn more about MicroProfile Config from the [Configuring microservices guide](https://openliberty.io/guides/microprofile-config.html).
+
+::page{title="Persisting data"}
+
+Next, you’ll persist the system data into the PostgreSQL database by using  the [Jakarta Persistence API](https://jakarta.ee/specifications/persistence) (JPA).
+
+Navigate to your application directory. 
+
+
+```bash
+cd /home/project/draft-guide-liberty-deepdive/start/inventory
+```
+
+### Defining a JPA entity class
+
+To store Java objects in a database, you must define a JPA entity class. A JPA entity is a Java object whose nontransient and nonstatic fields are persisted to the database. Any POJO class can be designated as a JPA entity. However, the class must be annotated with the ***@Entity*** annotation, must not be declared final, and must have a public or protected nonargument constructor. JPA maps an entity type to a database table and persisted instances will be represented as rows in the table.
+
+The ***SystemData*** class is a data model that represents systems in the ***inventory*** microservice. Annotate it with JPA annotations.
+
+Replace the ***SystemData*** class.
+
+> To open the SystemData.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/model/SystemData.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest.model;
+
+import java.io.Serializable;
+
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+
+@Schema(name = "SystemData",
+        description = "POJO that represents a single inventory entry.")
+@Entity
+@Table(name = "SystemData")
+@NamedQuery(name = "SystemData.findAll", query = "SELECT e FROM SystemData e")
+@NamedQuery(name = "SystemData.findSystem",
+            query = "SELECT e FROM SystemData e WHERE e.hostname = :hostname")
+public class SystemData implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    @SequenceGenerator(name = "SEQ",
+                       sequenceName = "systemData_id_seq",
+                       allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "SEQ")
+    @Id
+    @Column(name = "id")
+    private int id;
+
+    @Schema(required = true)
+    @Column(name = "hostname")
+    private String hostname;
+
+    @Column(name = "osName")
+    private String osName;
+    @Column(name = "javaVersion")
+    private String javaVersion;
+    @Column(name = "heapSize")
+    private Long heapSize;
+
+    public SystemData() {
+    }
+
+    public SystemData(String hostname, String osName, String javaVer, Long heapSize) {
+        this.hostname = hostname;
+        this.osName = osName;
+        this.javaVersion = javaVer;
+        this.heapSize = heapSize;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
+
+    public String getOsName() {
+        return osName;
+    }
+
+    public void setOsName(String osName) {
+        this.osName = osName;
+    }
+
+    public String getJavaVersion() {
+        return javaVersion;
+    }
+
+    public void setJavaVersion(String javaVersion) {
+        this.javaVersion = javaVersion;
+    }
+
+    public Long getHeapSize() {
+        return heapSize;
+    }
+
+    public void setHeapSize(Long heapSize) {
+        this.heapSize = heapSize;
+    }
+
+    @Override
+    public int hashCode() {
+        return hostname.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object host) {
+        if (host instanceof SystemData) {
+            return hostname.equals(((SystemData) host).getHostname());
+        }
+        return false;
+    }
+}
+```
+
+
+
+The following table breaks down the new annotations:
+
+| *Annotation* | *Description*
+| ---| ---
+| ***@Entity*** | Declares the class as an entity.
+| ***@Table*** | Specifies details of the table such as name. 
+| ***@NamedQuery*** | Specifies a predefined database query that is run by an ***EntityManager*** instance.
+| ***@Id*** | Declares the primary key of the entity.
+| ***@GeneratedValue*** | Specifies the strategy that is used for generating the value of the primary key. The ***strategy = GenerationType.IDENTITY*** code indicates that the database automatically increments the ***inventoryid*** upon inserting it into the database.
+| ***@Column*** | Specifies that the field is mapped to a column in the database table. The ***name*** attribute is optional and indicates the name of the column in the table.
+
+### Performing CRUD operations using JPA
+
+The create, retrieve, update, and delete (CRUD) operations are defined in the Inventory. To perform these operations by using JPA, you need to update the ***Inventory*** class. 
+
+Replace the ***Inventory*** class.
+
+> To open the Inventory.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/Inventory.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/Inventory.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest;
+
+import java.util.List;
+
+import io.openliberty.deepdive.rest.model.SystemData;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
+@ApplicationScoped
+public class Inventory {
+
+    @PersistenceContext(name = "jpa-unit")
+    private EntityManager em;
+
+    public List<SystemData> getSystems() {
+        return em.createNamedQuery("SystemData.findAll", SystemData.class)
+        		 .getResultList();
+    }
+
+    public SystemData getSystem(String hostname) {
+        List<SystemData> systems = 
+            em.createNamedQuery("SystemData.findSystem", SystemData.class)
+              .setParameter("hostname", hostname)
+              .getResultList();
+        return systems == null || systems.isEmpty() ? null : systems.get(0);
+    }
+
+    public void add(String hostname, String osName, String javaVersion, Long heapSize) {
+        em.persist(new SystemData(hostname, osName, javaVersion, heapSize));
+    }
+
+    public void update(SystemData s) {
+    	em.merge(s);
+    }
+
+    public void removeSystem(SystemData s) {
+    	em.remove(s);
+    }
+
+}
+```
+
+
+
+To use the entity manager at run time, inject it into your CDI bean through the ***@PersistenceContext*** annotation. The entity manager interacts with the persistence context. Every ***EntityManager*** instance is associated with a persistence context. The persistence context manages a set of entities and is aware of the different states that an entity can have. The persistence context synchronizes with the database when a transaction commits.
+
+
+The ***Inventory*** class has a method for each CRUD operation, so let's break them down:
+
+* The ***add()*** method persists an instance of the ***SystemData*** entity class to the data store by calling the ***persist()*** method on an ***EntityManager*** instance. The entity instance becomes managed and changes to it are tracked by the entity manager.
+
+* The ***getSystems()*** method demonstrates a way to retrieve system objects from the database. This method returns a list of instances of the ***SystemData*** entity class by using the ***SystemData.findAll*** query that is specified in the ***@NamedQuery*** annotation on the ***SystemData*** class. Similarly, the ***getSystem()*** method uses the ***SystemData.findSystem*** named query to find a system with the given hostname. 
+
+* The ***update()*** method creates a managed instance of a detached entity instance. The entity manager automatically tracks all managed entity objects in its persistence context for changes and synchronizes them with the database. However, if an entity becomes detached, you must merge that entity into the persistence context by calling the ***merge()*** method so that changes to loaded fields of the detached entity are tracked.
+
+* The ***removeSystem()*** method removes an instance of the ***SystemData*** entity class from the database by calling the ***remove()*** method on an ***EntityManager*** instance. The state of the entity is changed to removed and is removed from the database upon transaction commit. 
+
+Declare the endpoints with transaction management. 
+
+Replace the ***SystemResource*** class.
+
+> To open the SystemResource.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest;
+
+import java.util.List;
+
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameters;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import io.openliberty.deepdive.rest.model.SystemData;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+@ApplicationScoped
+@Path("/systems")
+public class SystemResource {
+
+    @Inject
+    Inventory inventory;
+
+    @Inject
+    @ConfigProperty(name = "client.https.port")
+    String CLIENT_PORT;
+
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(value = SystemData.class,
+        responseDescription = "A list of system data stored within the inventory.",
+        responseCode = "200")
+    @Operation(
+        summary = "List contents.",
+        description = "Returns the currently stored system data in the inventory.",
+        operationId = "listContents")
+    public List<SystemData> listContents() {
+        return inventory.getSystems();
+    }
+
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(value = SystemData.class,
+        responseDescription = "System data of a particular host.",
+        responseCode = "200")
+    @Operation(
+        summary = "Get System",
+        description = "Retrieves and returns the system data from the system "
+                      + "service running on the particular host.",
+        operationId = "getSystem"
+    )
+    public SystemData getSystem(
+        @Parameter(
+            name = "hostname", in = ParameterIn.PATH,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)
+        )
+        @PathParam("hostname") String hostname) {
+        return inventory.getSystem(hostname);
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully added system to inventory"),
+        @APIResponse(responseCode = "400",
+            description = "Unable to add system to inventory")
+    })
+    @Parameters(value = {
+        @Parameter(
+            name = "hostname", in = ParameterIn.QUERY,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "osName", in = ParameterIn.QUERY,
+            description = "The operating system of the system",
+            required = true, example = "linux",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "javaVersion", in = ParameterIn.QUERY,
+            description = "The Java version of the system",
+            required = true, example = "11",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "heapSize", in = ParameterIn.QUERY,
+            description = "The heap size of the system",
+            required = true, example = "1048576",
+            schema = @Schema(type = SchemaType.NUMBER)),
+    })
+    @Operation(
+        summary = "Add system",
+        description = "Add a system and its data to the inventory.",
+        operationId = "addSystem"
+    )
+    public Response addSystem(
+        @QueryParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            return fail(hostname + " already exists.");
+        }
+        inventory.add(hostname, osName, javaVersion, heapSize);
+        return success(hostname + " was added.");
+    }
+
+    @PUT
+    @Path("/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully updated system"),
+        @APIResponse(responseCode = "400",
+           description =
+               "Unable to update because the system does not exist in the inventory.")
+    })
+    @Parameters(value = {
+        @Parameter(
+            name = "hostname", in = ParameterIn.PATH,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "osName", in = ParameterIn.QUERY,
+            description = "The operating system of the system",
+            required = true, example = "linux",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "javaVersion", in = ParameterIn.QUERY,
+            description = "The Java version of the system",
+            required = true, example = "11",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "heapSize", in = ParameterIn.QUERY,
+            description = "The heap size of the system",
+            required = true, example = "1048576",
+            schema = @Schema(type = SchemaType.NUMBER)),
+    })
+    @Operation(
+        summary = "Update system",
+        description = "Update a system and its data on the inventory.",
+        operationId = "updateSystem"
+    )
+    public Response updateSystem(
+        @PathParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s == null) {
+            return fail(hostname + " does not exists.");
+        }
+        s.setOsName(osName);
+        s.setJavaVersion(javaVersion);
+        s.setHeapSize(heapSize);
+        inventory.update(s);
+        return success(hostname + " was updated.");
+    }
+
+    @DELETE
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully deleted the system from inventory"),
+        @APIResponse(responseCode = "400",
+            description =
+                "Unable to delete because the system does not exist in the inventory")
+    })
+    @Parameter(
+        name = "hostname", in = ParameterIn.PATH,
+        description = "The hostname of the system",
+        required = true, example = "localhost",
+        schema = @Schema(type = SchemaType.STRING)
+    )
+    @Operation(
+        summary = "Remove system",
+        description = "Removes a system from the inventory.",
+        operationId = "removeSystem"
+    )
+    public Response removeSystem(@PathParam("hostname") String hostname) {
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            inventory.removeSystem(s);
+            return success(hostname + " was removed.");
+        } else {
+            return fail(hostname + " does not exists.");
+        }
+    }
+
+    @POST
+    @Path("/client/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully added system client"),
+        @APIResponse(responseCode = "400",
+            description = "Unable to add system client")
+    })
+    @Parameter(
+        name = "hostname", in = ParameterIn.PATH,
+        description = "The hostname of the system",
+        required = true, example = "localhost",
+        schema = @Schema(type = SchemaType.STRING)
+    )
+    @Operation(
+        summary = "Add system client",
+        description = "This adds a system client.",
+        operationId = "addSystemClient"
+    )
+    public Response addSystemClient(@PathParam("hostname") String hostname) {
+        System.out.println(CLIENT_PORT);
+        return success("Client Port: " + CLIENT_PORT);
+    }
+
+    private Response success(String message) {
+        return Response.ok("{ \"ok\" : \"" + message + "\" }").build();
+    }
+
+    private Response fail(String message) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                       .entity("{ \"error\" : \"" + message + "\" }")
+                       .build();
+    }
+}
+```
+
+
+
+The ***@Transactional*** annotation is used in the ***POST***, ***PUT***, and ***DELETE*** endpoints of the ***SystemResource*** class to declaratively control the transaction boundaries on the ***inventory*** CDI bean. This configuration ensures that the methods run within the boundaries of an active global transaction, and therefore you don't need to explicitly begin, commit, or rollback transactions. At the end of the transactional method invocation, the transaction commits and the persistence context flushes any changes to the Event entity instances that it is managing to the database.
+
+### Configuring JPA
+
+The ***persistence.xml*** file is a configuration file that defines a persistence unit. The
+persistence unit specifies configuration information for the entity manager.
+
+Create the configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/main/resources/META-INF/persistence.xml
+```
+
+
+> Then, to open the persistence.xml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/resources/META-INF/persistence.xml, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/resources/META-INF/persistence.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.2"
+    xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
+                        http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
+    <persistence-unit name="jpa-unit" transaction-type="JTA">
+      <jta-data-source>jdbc/postgresql</jta-data-source>
+      <exclude-unlisted-classes>false</exclude-unlisted-classes>
+      <properties>
+        <property name="eclipselink.target-database" value="PostgreSQL"/>
+        <property name="eclipselink.ddl-generation" value="create-or-extend-tables" /> 
+        <property name="eclipselink.logging.level" value="FINE"/>
+        <property name="eclipselink.jdbc.url" value="jdbc/postgresql:/admin"/>         
+        <property name="eclipselink.persistence.jdbc.driver" value="org.postgresql.Driver"/>  
+        <property name="eclipselink.persistence.jdbc.user" value="admin"/>  
+        <property name="eclipselink.persistence.jdbc.password" value="adminpwd"/> 
+      </properties>
+    </persistence-unit>
+</persistence>
+```
+
+
+
+The persistence unit is defined by the ***persistence-unit*** XML element. The ***name*** attribute is required. This attribute identifies the persistent unit when you use the ***@PersistenceContext*** annotation to inject the entity manager later in this exercise. The ***transaction-type="JTA"*** attribute specifies to use Java Transaction API (JTA) transaction management. When you use a container-managed entity manager, you must use JTA transactions. 
+
+A JTA transaction type requires a JTA data source to be provided. The ***jta-data-source*** element specifies the Java Naming and Directory Interface (JNDI) name of the data source that is used. 
+
+
+Configure the ***jdbc/postgresql*** data source in the Liberty server configuration file.
+
+Replace the ***server.xml*** configuration file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="inventory">
+
+    <featureManager>
+        <feature>jakartaee-9.1</feature>
+        <feature>microProfile-5.0</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080" />
+    <variable name="default.https.port" defaultValue="9443" />
+    <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="postgres/hostname" defaultValue="localhost" />
+    <variable name="postgres/portnum" defaultValue="5432" />
+
+    <httpEndpoint id="defaultHttpEndpoint"
+                  httpPort="${default.http.port}" 
+                  httpsPort="${default.https.port}" />
+
+    <applicationManager autoExpand="true"/>
+
+    <webApplication contextRoot="${default.context.root}" 
+                    location="inventory.war" /> 
+
+    <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
+    
+    <library id="postgresql-library">
+        <fileset dir="${shared.resource.dir}/" includes="*.jar" />
+    </library>
+
+    <dataSource id="DefaultDataSource" jndiName="jdbc/postgresql">
+        <jdbcDriver libraryRef="postgresql-library" />
+        <properties.postgresql databaseName="admin"
+                               serverName="localhost"
+                               portNumber="5432"
+                               user="admin"
+                               password="adminpwd"/>
+    </dataSource>
+</server>
+```
+
+
+
+The ***library*** element tells the Liberty server where to find the PostgreSQL library. The ***dataSource*** element points to where the Java Database Connectivity (JDBC) connects, along with some database vendor-specific properties.
+
+To use a PostgreSQL database, you need to download its library and store it to the Liberty shared resources directory. Configure the Liberty Maven plug-in in the ***pom.xml*** file.
+
+Replace the ***pom.xml*** configuration file.
+
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/pom.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.deepdive</groupId>
+    <artifactId>inventory</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.default.context.root>/inventory</liberty.var.default.context.root>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>9.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>5.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.3.1</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>inventory</finalName>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>3.3.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>io.openliberty.tools</groupId>
+                    <artifactId>liberty-maven-plugin</artifactId>
+                    <version>3.5.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <configuration>
+                    <copyDependencies>
+                        <dependencyGroup>
+                            <location>${project.build.directory}/liberty/wlp/usr/shared/resources</location>
+                            <dependency>
+                                <groupId>org.postgresql</groupId>
+                                <artifactId>postgresql</artifactId>
+                                <version>42.3.1</version>
+                            </dependency>
+                        </dependencyGroup>
+                    </copyDependencies>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
+
+The ***postgresql*** dependency ensures that Maven downloads the PostgreSQL library to local project. The ***copyDependencies*** configuration tells the Liberty Maven plug-in to copy the library to the Liberty shared resources directory.
+
+
+### Starting PostgreSQL database ###
+
+Use Docker to run an instance of the PostgreSQL database for a fast installation and setup.
+
+A container file is provided for you. First, navigate to the ***finish/postgres*** directory. Then, run the following commands to use the ***Dockerfile*** to build the image, run the image in a Docker container, and map ***5432*** port from the container to your machine:
+
+
+```bash
+cd /home/project/draft-guide-liberty-deepdive/finish/postgres
+docker build -t postgres-sample .
+docker run --name postgres-container -p 5432:5432 -d postgres-sample
+```
+
+### Running the application ###
+
+
+In your dev mode console for the ***inventory*** microservice, type `r` and press ***enter/return*** key to restart the server.
+
+First, make a POST request to the ***/api/systems/*** endpoint by the following command. The POST request adds a system with the specified values to the database.
+
+```bash
+curl -X POST 'http://localhost:9080/inventory/api/systems?heapSize=1048576&hostname=localhost&javaVersion=9&osName=linux'
+```
+
+Next, make a GET request to the ***/api/systems*** endpoint by the following command. The GET request returns all systems from the database.
+
+```bash
+curl -s 'http://localhost:9080/inventory/api/systems' | jq
+```
+
+Next, make a PUT request to the ***/api/systems/{hostname}*** endpoint with the same value for the ***hostname*** path as in the previous step, and different values to the ***heapSize***, ***javaVersion***, and ***osName*** parameters. The PUT request updates the system with the specified values. 
+
+```bash
+curl -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+```
+
+To see the updated system, make a GET request to the ***/api/systems/{hostname}*** endpoint with the same value for the ***hostname*** path as in the previous step. The GET request returns the system from the database.
+
+```bash
+curl -s 'http://localhost:9080/inventory/api/systems/localhost' | jq
+```
+
+Next, make a DELETE request to the ***/api/systems/{hostname}*** endpoint. The DELETE request removes the system from the database.
+
+```bash
+curl -X DELETE 'http://localhost:9080/inventory/api/systems/localhost'
+```
+
+Run the GET request again to see that the system no longer exists in the database. 
+```bash
+curl 'http://localhost:9080/inventory/api/systems'
+```
+
+::page{title="Securing RESTful APIs"}
+
+Now you can secure your RESTful APIs. Navigate to your application directory. 
+
+
+```bash
+cd /home/project/draft-guide-liberty-deepdive/start/inventory
+```
+
+Begin by adding some users and user groups to your ***server.xml*** Liberty configuration file.
+
+Replace the ***server.xml*** file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="inventory">
+
+    <featureManager>
+        <feature>jakartaee-9.1</feature>
+        <feature>microProfile-5.0</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080" />
+    <variable name="default.https.port" defaultValue="9443" />
+    <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="postgres/hostname" defaultValue="localhost" />
+    <variable name="postgres/portnum" defaultValue="5432" />
+
+    <httpEndpoint id="defaultHttpEndpoint"
+                  httpPort="${default.http.port}" 
+                  httpsPort="${default.https.port}" />
+
+    <applicationManager autoExpand="true"/>
+
+    <basicRegistry id="basic" realm="WebRealm">
+        <user name="bob" password="{xor}PTA9Lyg7" />
+        <user name="alice" password="{xor}PjM2PDovKDs=" />
+        <group name="admin">
+            <member name="bob" />
+        </group>
+        <group name="user">
+            <member name="bob" />
+            <member name="alice" />
+        </group>
+    </basicRegistry>
+
+    <webApplication contextRoot="${default.context.root}"
+                    location="inventory.war">
+        <application-bnd>
+            <security-role name="admin">
+                <group name="admin" />
+            </security-role>
+            <security-role name="user">
+                <group name="user" />
+            </security-role>
+        </application-bnd>
+     </webApplication>
+
+    <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
+
+    <library id="postgresql-library">
+        <fileset dir="${shared.resource.dir}/" includes="*.jar" />
+    </library>
+
+    <dataSource id="DefaultDataSource" jndiName="jdbc/postgresql">
+        <jdbcDriver libraryRef="postgresql-library" />
+        <properties.postgresql databaseName="admin"
+                               serverName="localhost"
+                               portNumber="5432"
+                               user="admin"
+                               password="adminpwd"/>
+    </dataSource>
+</server>
+```
+
+
+
+The ***basicRegistry*** element contains a list of all users for the application and their passwords, as well as all of the user groups. Note that this ***basicRegistry*** element is a very simple case for learning purposes. For more information about the different user registries, see the [User registries documentation](https://openliberty.io/docs/latest/user-registries-application-security.html). The ***admin*** group tells the application which of the users are in the administrator group. The ***user*** group tells the application that users are in the user group.
+
+The ***security-role*** maps the ***admin*** role to the ***admin*** group, meaning that all users in the ***admin*** group have the administrator role. Similarly, the ***user*** role is mapped to the ***user*** group, meaning all users in the ***user*** group have the user role.
+
+Your application has the following users and passwords:
+
+| *Username* | *Password* | *Role*
+| --- | --- | ---
+| bob | bobpwd | admin, user
+| alice | alicepwd | user
+
+Now you can secure the ***inventory*** service.
+
+Replace the ***SystemResource*** class.
+
+> To open the SystemResource.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest;
+
+import java.util.List;
+
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameters;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import io.openliberty.deepdive.rest.model.SystemData;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+@ApplicationScoped
+@Path("/systems")
+public class SystemResource {
+
+    @Inject
+    Inventory inventory;
+
+    @Inject
+    @ConfigProperty(name = "client.https.port")
+    String CLIENT_PORT;
+
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(value = SystemData.class,
+        responseDescription = "A list of system data stored within the inventory.",
+        responseCode = "200")
+    @Operation(
+        summary = "List contents.",
+        description = "Returns the currently stored system data in the inventory.",
+        operationId = "listContents")
+    public List<SystemData> listContents() {
+        return inventory.getSystems();
+    }
+
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(value = SystemData.class,
+        responseDescription = "System data of a particular host.",
+        responseCode = "200")
+    @Operation(
+        summary = "Get System",
+        description = "Retrieves and returns the system data from the system "
+                      + "service running on the particular host.",
+        operationId = "getSystem"
+    )
+    public SystemData getSystem(
+        @Parameter(
+            name = "hostname", in = ParameterIn.PATH,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)
+        )
+        @PathParam("hostname") String hostname) {
+        return inventory.getSystem(hostname);
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully added system to inventory"),
+        @APIResponse(responseCode = "400",
+            description = "Unable to add system to inventory")
+    })
+    @Parameters(value = {
+        @Parameter(
+            name = "hostname", in = ParameterIn.QUERY,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "osName", in = ParameterIn.QUERY,
+            description = "The operating system of the system",
+            required = true, example = "linux",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "javaVersion", in = ParameterIn.QUERY,
+            description = "The Java version of the system",
+            required = true, example = "11",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "heapSize", in = ParameterIn.QUERY,
+            description = "The heap size of the system",
+            required = true, example = "1048576",
+            schema = @Schema(type = SchemaType.NUMBER)),
+    })
+    @Operation(
+        summary = "Add system",
+        description = "Add a system and its data to the inventory.",
+        operationId = "addSystem"
+    )
+    public Response addSystem(
+        @QueryParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            return fail(hostname + " already exists.");
+        }
+        inventory.add(hostname, osName, javaVersion, heapSize);
+        return success(hostname + " was added.");
+    }
+
+    @PUT
+    @Path("/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @RolesAllowed({ "admin", "user" })
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully updated system"),
+        @APIResponse(responseCode = "400",
+           description =
+           "Unable to update because the system does not exist in the inventory.")
+    })
+    @Parameters(value = {
+        @Parameter(
+            name = "hostname", in = ParameterIn.PATH,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "osName", in = ParameterIn.QUERY,
+            description = "The operating system of the system",
+            required = true, example = "linux",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "javaVersion", in = ParameterIn.QUERY,
+            description = "The Java version of the system",
+            required = true, example = "11",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "heapSize", in = ParameterIn.QUERY,
+            description = "The heap size of the system",
+            required = true, example = "1048576",
+            schema = @Schema(type = SchemaType.NUMBER)),
+    })
+    @Operation(
+        summary = "Update system",
+        description = "Update a system and its data on the inventory.",
+        operationId = "updateSystem"
+    )
+    public Response updateSystem(
+        @PathParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s == null) {
+            return fail(hostname + " does not exists.");
+        }
+        s.setOsName(osName);
+        s.setJavaVersion(javaVersion);
+        s.setHeapSize(heapSize);
+        inventory.update(s);
+        return success(hostname + " was updated.");
+    }
+
+    @DELETE
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @RolesAllowed({ "admin" })
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully deleted the system from inventory"),
+        @APIResponse(responseCode = "400",
+            description =
+                "Unable to delete because the system does not exist in the inventory")
+    })
+    @Parameter(
+        name = "hostname", in = ParameterIn.PATH,
+        description = "The hostname of the system",
+        required = true, example = "localhost",
+        schema = @Schema(type = SchemaType.STRING)
+    )
+    @Operation(
+        summary = "Remove system",
+        description = "Removes a system from the inventory.",
+        operationId = "removeSystem"
+    )
+    public Response removeSystem(@PathParam("hostname") String hostname) {
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            inventory.removeSystem(s);
+            return success(hostname + " was removed.");
+        } else {
+            return fail(hostname + " does not exists.");
+        }
+    }
+
+    @POST
+    @Path("/client/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @RolesAllowed({ "admin" })
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully added system client"),
+        @APIResponse(responseCode = "400",
+            description = "Unable to add system client")
+    })
+    @Parameter(
+        name = "hostname", in = ParameterIn.PATH,
+        description = "The hostname of the system",
+        required = true, example = "localhost",
+        schema = @Schema(type = SchemaType.STRING)
+    )
+    @Operation(
+        summary = "Add system client",
+        description = "This adds a system client.",
+        operationId = "addSystemClient"
+    )
+    public Response addSystemClient(@PathParam("hostname") String hostname) {
+        System.out.println(CLIENT_PORT);
+        return success("Client Port: " + CLIENT_PORT);
+    }
+
+    private Response success(String message) {
+        return Response.ok("{ \"ok\" : \"" + message + "\" }").build();
+    }
+
+    private Response fail(String message) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                       .entity("{ \"error\" : \"" + message + "\" }")
+                       .build();
     }
 }
 
 ```
-{: codeblock}
 
-This test sends a `json` request to the **barista** service and checks for a `200 OK` response. 
 
-You'll see the following information from the **barista** service output:
-```
-[INFO] Tests compilation was successful.
-```
 
-Because you started Open Liberty in dev mode, press the **enter/return** key to run the tests.
+This class now has role-based access control. The role names that are used in the ***@RolesAllowed*** annotations are mapped to group names in the groups claim of the JSON Web Token (JWT). This mapping results in an authorization decision wherever the security constraint is applied.
 
-If the tests pass, you see a similar output to the following example:
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running com.sebastian_daschner.barista.it.BaristaIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.365 sec - in com.sebastian_daschner.barista.it.BaristaIT
+The ***/{hostname}*** endpoint that is annotated with the ***@PUT*** annotation updates a system in the inventory. This PUT endpoint is annotated with the ***@RolesAllowed({ "admin", "user" })*** annotation. Only authenticated users with the role of ***admin*** or ***user*** can access this endpoint.
 
-Results :
+The ***/{hostname}*** endpoint that is annotated with the ***@DELETE*** annotation removes a system from the inventory. This DELETE endpoint is annotated with the ***@RolesAllowed({ "admin" })*** annotation. Only authenticated users with the role of ***admin*** can access this endpoint.
 
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+You can manually check that the ***inventory*** microservice is secured by making requests to the PUT and DELETE endpoints.
+
+Before making requests, you must add a system to the inventory. Try adding a system by using the POST endpoint ***/systems*** by running the following command:
+
+```bash
+curl -X POST 'http://localhost:9080/inventory/api/systems?hostname=localhost&osName=mac&javaVersion=11&heapSize=1'
 ```
 
-When you are done checking out the services, exit dev mode by pressing **CTRL+C** in the command-line sessions
-where you ran the **barista** and **coffee-shop** services, or by typing **q** and then pressing the **enter/return** key.
+You can expect the following response:
 
-# Module 7: Docker
+```
+{ "ok" : "localhost was added." }
+```
 
-We're now going to dockerize the two services and show how we can override the defaults to re-wire the two services.  We're going to use a Docker user-defined network (see https://docs.docker.com/network/network-tutorial-standalone/#use-user-defined-bridge-networks) because by using Docker user-defined networks we are able to connect the two containers to the same network and have them communicate using only the others IP address or name.  For real-world production deployments you would use a Kubernetes environment, such as IBM Cloud Private or the IBM Cloud Kubernetes Service.
+This command calls the ***/systems*** endpoint and adds a system ***localhost*** to the inventory. You can validate that the command worked by calling the ***/systems*** endpoint with a ***GET*** request to retrieve all the systems in the inventory, with the following curl command:
 
-Take a look at the **open-liberty-deep-dive/start/coffee-shop/Dockerfile:**
+```bash
+curl -s 'http://localhost:9080/inventory/api/systems' | jq
+```
 
-```Dockerfile
-FROM openliberty/open-liberty:full-java11-openj9-ubi
+You can now expect the following response:
 
-COPY src/main/liberty/config /config/
-ADD target/coffee-shop.war /config/dropins
+```
+[{"heapSize":1,"hostname":"localhost","javaVersion":"11","osName":"mac","id":23}]
+```
+
+Now try calling your secure PUT endpoint to update the system that you just added by the following curl command:
+
+```bash
+curl -k --user alice:alicepwd -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+```
+
+As this endpoint is accessible to the groups ***user*** and ***admin***, you must log in with ***user*** credentials to update the system.
+
+You should see the following response:
+
+```
+{ "ok" : "localhost was updated." }
+```
+
+This response means that you logged in successfully as an authenticated ***user***, and that the endpoint works as expected.
+
+Now try calling the DELETE endpoint. As this endpoint is only accessible to ***admin*** users, you can expect this command to fail if you attempt to access it with a user in the ***user*** group.
+
+You can check that your application is secured against these requests with the following command:
+
+```bash
+curl -k --user alice:alicepwd -X DELETE 'https://localhost:9443/inventory/api/systems/localhost'
+```
+
+As ***alice*** is part of the ***user*** group, this request cannot work. In your dev mode console, you can expect the following output:
+
+```
+jakarta.ws.rs.ForbiddenException: Unauthorized
+```
+
+Now attempt to call this endpoint with an authenticated ***admin*** user that can work correctly. Run the following curl command:
+
+```bash
+curl -k --user bob:bobpwd -X DELETE 'https://localhost:9443/inventory/api/systems/localhost'
+```
+
+You can expect to see the following response:
+
+```
+{ "ok" : "localhost was removed." }
+```
+
+This response means that your endpoint is secure. Validate that it works correctly by calling the ***/systems*** endpoint with the following curl command:
+
+```bash
+curl 'http://localhost:9080/inventory/api/systems'
+```
+
+You can expect to see the following output:
+
+```
+[]
+```
+
+This response shows that the endpoints work as expected and that the system you added was successfully deleted.
+
+::page{title="Consuming the secured RESTful APIs by JWT"}
+
+You can now implement JSON Web Tokens (JWT) and configure them as Single Sign On (SSO) cookies to use the RESTful APIs. The JWT that is generated by Liberty is used to communicate securely between the ***inventory*** and ***system*** microservices. You can implement the ***/client/{hostname}*** POST endpoint to collect the properties from the ***system*** microservices and create a system in the inventory. 
+
+The ***system*** microservice is provided for you.
+
+### Writing the RESTful client interface
+Create the ***client*** subdirectory. Then, create a RESTful client interface for the ***system*** microservice in the ***inventory*** microservice.
+
+
+```bash
+mkdir /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/java/io/openliberty/deepdive/rest/client
+```
+
+Create the ***SystemClient*** interface.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/client/SystemClient.java
+```
+
+
+> Then, to open the SystemClient.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/client/SystemClient.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/client/SystemClient.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest.client;
+
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+@Path("/api")
+public interface SystemClient extends AutoCloseable {
+
+    @GET
+    @Path("/property/{property}")
+    @Produces(MediaType.TEXT_PLAIN)
+    String getProperty(@HeaderParam("Authorization") String authHeader,
+                       @PathParam("property") String property);
+
+    @GET
+    @Path("/heapsize")
+    @Produces(MediaType.TEXT_PLAIN)
+    Long getHeapSize(@HeaderParam("Authorization") String authHeader);
+
+}
+```
+
+
+
+
+This interface declares methods for accessing each of the endpoints that are set up for you in the ***system*** service. The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the ***SystemClient*** interface. You don’t need to set up the client and connect with the remote service.
+
+Now create the required exception classes that are used by the ***SystemClient*** instance.
+
+Create the ***UnknownUriException*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/client/UnknownUriException.java
+```
+
+
+> Then, to open the UnknownUriException.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/client/UnknownUriException.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/client/UnknownUriException.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest.client;
+
+public class UnknownUriException extends Exception {
+
+    private static final long serialVersionUID = 1L;
+
+    public UnknownUriException() {
+        super();
+    }
+
+    public UnknownUriException(String message) {
+        super(message);
+    }
+
+}
+```
+
+
+
+This class is an exception that is thrown when an unknown URI is passed to the ***SystemClient***.
+
+Create the ***UnknownUriExceptionMapper*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/client/UnknownUriExceptionMapper.java
+```
+
+
+> Then, to open the UnknownUriExceptionMapper.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/client/UnknownUriExceptionMapper.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/client/UnknownUriExceptionMapper.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest.client;
+
+import java.util.logging.Logger;
+
+import org.eclipse.microprofile.rest.client.ext.ResponseExceptionMapper;
+
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+
+public class UnknownUriExceptionMapper
+    implements ResponseExceptionMapper<UnknownUriException> {
+    Logger LOG = Logger.getLogger(UnknownUriExceptionMapper.class.getName());
+
+    @Override
+    public boolean handles(int status, MultivaluedMap<String, Object> headers) {
+        LOG.info("status = " + status);
+        return status == 404;
+    }
+
+    @Override
+    public UnknownUriException toThrowable(Response response) {
+        return new UnknownUriException();
+    }
+}
+```
+
+
+
+This class links the ***UnknownUriException*** class with the corresponding response code through a ***ResponseExceptionMapper*** mapper class.
+
+### Implementing the ***/client/{hostname}*** endpoint
+
+Now implement the ***/client/{hostname}*** POST endpoint of the ***SystemResource*** class to consume the secured ***system*** microservice.
+
+Replace the ***SystemResource*** class.
+
+> To open the SystemResource.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest;
+
+import java.net.URI;
+import java.util.List;
+
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameters;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.jwt.JsonWebToken;
+
+import io.openliberty.deepdive.rest.client.SystemClient;
+import io.openliberty.deepdive.rest.client.UnknownUriExceptionMapper;
+import io.openliberty.deepdive.rest.model.SystemData;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+@ApplicationScoped
+@Path("/systems")
+public class SystemResource {
+
+    @Inject
+    Inventory inventory;
+
+    @Inject
+    @ConfigProperty(name = "client.https.port")
+    String CLIENT_PORT;
+
+    @Inject
+    JsonWebToken jwt;
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(value = SystemData.class,
+        responseDescription = "A list of system data stored within the inventory.",
+        responseCode = "200")
+    @Operation(
+        summary = "List contents.",
+        description = "Returns the currently stored system data in the inventory.",
+        operationId = "listContents")
+    public List<SystemData> listContents() {
+        return inventory.getSystems();
+    }
+
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(value = SystemData.class,
+        responseDescription = "System data of a particular host.",
+        responseCode = "200")
+    @Operation(
+        summary = "Get System",
+        description = "Retrieves and returns the system data from the system "
+                      + "service running on the particular host.",
+        operationId = "getSystem"
+    )
+    public SystemData getSystem(
+        @Parameter(
+            name = "hostname", in = ParameterIn.PATH,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)
+        )
+        @PathParam("hostname") String hostname) {
+        return inventory.getSystem(hostname);
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully added system to inventory"),
+        @APIResponse(responseCode = "400",
+            description = "Unable to add system to inventory")
+    })
+    @Parameters(value = {
+        @Parameter(
+            name = "hostname", in = ParameterIn.QUERY,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "osName", in = ParameterIn.QUERY,
+            description = "The operating system of the system",
+            required = true, example = "linux",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "javaVersion", in = ParameterIn.QUERY,
+            description = "The Java version of the system",
+            required = true, example = "11",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "heapSize", in = ParameterIn.QUERY,
+            description = "The heap size of the system",
+            required = true, example = "1048576",
+            schema = @Schema(type = SchemaType.NUMBER)),
+    })
+    @Operation(
+        summary = "Add system",
+        description = "Add a system and its data to the inventory.",
+        operationId = "addSystem"
+    )
+    public Response addSystem(
+        @QueryParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            return fail(hostname + " already exists.");
+        }
+        inventory.add(hostname, osName, javaVersion, heapSize);
+        return success(hostname + " was added.");
+    }
+
+    @PUT
+    @Path("/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @RolesAllowed({ "admin", "user" })
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully updated system"),
+        @APIResponse(responseCode = "400",
+           description =
+               "Unable to update because the system does not exist in the inventory.")
+    })
+    @Parameters(value = {
+        @Parameter(
+            name = "hostname", in = ParameterIn.PATH,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "osName", in = ParameterIn.QUERY,
+            description = "The operating system of the system",
+            required = true, example = "linux",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "javaVersion", in = ParameterIn.QUERY,
+            description = "The Java version of the system",
+            required = true, example = "11",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "heapSize", in = ParameterIn.QUERY,
+            description = "The heap size of the system",
+            required = true, example = "1048576",
+            schema = @Schema(type = SchemaType.NUMBER)),
+    })
+    @Operation(
+        summary = "Update system",
+        description = "Update a system and its data on the inventory.",
+        operationId = "updateSystem"
+    )
+    public Response updateSystem(
+        @PathParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s == null) {
+            return fail(hostname + " does not exists.");
+        }
+        s.setOsName(osName);
+        s.setJavaVersion(javaVersion);
+        s.setHeapSize(heapSize);
+        inventory.update(s);
+        return success(hostname + " was updated.");
+    }
+
+    @DELETE
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @RolesAllowed({ "admin" })
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully deleted the system from inventory"),
+        @APIResponse(responseCode = "400",
+            description =
+                "Unable to delete because the system does not exist in the inventory")
+    })
+    @Parameter(
+        name = "hostname", in = ParameterIn.PATH,
+        description = "The hostname of the system",
+        required = true, example = "localhost",
+        schema = @Schema(type = SchemaType.STRING)
+    )
+    @Operation(
+        summary = "Remove system",
+        description = "Removes a system from the inventory.",
+        operationId = "removeSystem"
+    )
+    public Response removeSystem(@PathParam("hostname") String hostname) {
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            inventory.removeSystem(s);
+            return success(hostname + " was removed.");
+        } else {
+            return fail(hostname + " does not exists.");
+        }
+    }
+
+    @POST
+    @Path("/client/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @RolesAllowed({ "admin" })
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully added system client"),
+        @APIResponse(responseCode = "400",
+            description = "Unable to add system client")
+    })
+    @Parameter(
+        name = "hostname", in = ParameterIn.PATH,
+        description = "The hostname of the system",
+        required = true, example = "localhost",
+        schema = @Schema(type = SchemaType.STRING)
+    )
+    @Operation(
+        summary = "Add system client",
+        description = "This adds a system client.",
+        operationId = "addSystemClient"
+    )
+    public Response addSystemClient(@PathParam("hostname") String hostname) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            return fail(hostname + " already exists.");
+        }
+
+        SystemClient customRestClient = null;
+        try {
+            customRestClient = getSystemClient(hostname);
+        } catch (Exception e) {
+            return fail("Failed to create the client " + hostname + ".");
+        }
+
+        String authHeader = "Bearer " + jwt.getRawToken();
+        try {
+            String osName = customRestClient.getProperty(authHeader, "os.name");
+            String javaVer = customRestClient.getProperty(authHeader, "java.version");
+            Long heapSize = customRestClient.getHeapSize(authHeader);
+            inventory.add(hostname, osName, javaVer, heapSize);
+        } catch (Exception e) {
+            return fail("Failed to reach the client " + hostname + ".");
+        }
+        return success(hostname + " was added.");
+    }
+
+    private SystemClient getSystemClient(String hostname) throws Exception {
+        String customURIString = "https://" + hostname + ":" + CLIENT_PORT + "/system";
+        URI customURI = URI.create(customURIString);
+        return RestClientBuilder.newBuilder()
+                                .baseUri(customURI)
+                                .register(UnknownUriExceptionMapper.class)
+                                .build(SystemClient.class);
+    }
+
+    private Response success(String message) {
+        return Response.ok("{ \"ok\" : \"" + message + "\" }").build();
+    }
+
+    private Response fail(String message) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                       .entity("{ \"error\" : \"" + message + "\" }")
+                       .build();
+    }
+}
+```
+
+
+
+The ***getSystemClient()*** method builds and returns a new instance of the ***SystemClient*** class for the hostname provided. The ***/client/{hostname}*** POST endpoint uses this method to create a REST client that is called ***customRestClient*** to consume the ***system*** microservice.
+
+A JWT instance is injected to the ***jwt*** field variable by the ***jwtSso*** feature. It is used to create the ***authHeader*** authentication header. It is then passed as a parameter to the endpoints of the ***customRestClient*** to get the properties from the ***system*** microservice. A ***system*** is then added to the inventory.
+
+### Configuring the JSON Web Token
+
+Next, add the JSON Web Token (Single Sign On) feature to the server configuration file for the ***inventory*** service.
+
+Replace the ***server.xml*** file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="inventory">
+
+    <featureManager>
+        <feature>jakartaee-9.1</feature>
+        <feature>microProfile-5.0</feature>
+        <feature>jwtSso-1.0</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080" />
+    <variable name="default.https.port" defaultValue="9443" />
+    <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="postgres/hostname" defaultValue="localhost" />
+    <variable name="postgres/portnum" defaultValue="5432" />
+
+    <httpEndpoint id="defaultHttpEndpoint"
+                  httpPort="${default.http.port}" 
+                  httpsPort="${default.https.port}" />
+
+    <applicationManager autoExpand="true"/>
+    
+    <keyStore id="defaultKeyStore" password="secret" />
+    
+    <basicRegistry id="basic" realm="WebRealm">
+        <user name="bob" password="{xor}PTA9Lyg7" />
+        <user name="alice" password="{xor}PjM2PDovKDs=" />
+
+        <group name="admin">
+            <member name="bob" />
+        </group>
+
+        <group name="user">
+            <member name="bob" />
+            <member name="alice" />
+        </group>
+    </basicRegistry>
+
+    <webApplication contextRoot="${default.context.root}"
+                    location="inventory.war">
+        <application-bnd>
+            <security-role name="admin">
+                <group name="admin" />
+            </security-role>
+            <security-role name="user">
+                <group name="user" />
+            </security-role>
+        </application-bnd>
+    </webApplication>
+
+    <jwtSso jwtBuilderRef="jwtInventoryBuilder"/> 
+    <jwtBuilder id="jwtInventoryBuilder" 
+                issuer="http://openliberty.io" 
+                audiences="systemService"
+                expiry="24h"/>
+    <mpJwt audiences="systemService" 
+           groupNameAttribute="groups" 
+           id="myMpJwt" 
+           issuer="http://openliberty.io"/>
+
+    <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
+
+    <library id="postgresql-library">
+        <fileset dir="${shared.resource.dir}/" includes="*.jar" />
+    </library>
+
+    <dataSource id="DefaultDataSource" jndiName="jdbc/postgresql">
+        <jdbcDriver libraryRef="postgresql-library" />
+        <properties.postgresql databaseName="admin"
+                               serverName="localhost"
+                               portNumber="5432"
+                               user="admin"
+                               password="adminpwd"/>
+    </dataSource>
+</server>
+```
+
+
+
+
+The ***jwtSso*** feature adds the libraries that are required for JWT SSO implementation. Configure the ***jwtSso*** feature by adding the ***jwtBuilder*** configuration to your ***server.xml***. Also, configure the MicroProfile ***JWT*** with the ***audiences*** and ***issuer*** properties that match the ***microprofile-config.properties*** defined at the ***system/src/main/webapp/META-INF*** directory under the ***system*** project.
+
+The ***keyStore*** element is used to define the repository of security certificates used for SSL encryption. The ***id*** attribute is a unique configuration ID that is set to ***defaultKeyStore***. The ***password*** attribute is used to load the keystore file, and its value can be stored in clear text or encoded form. To learn more about other attributes, see the [keyStore](https://openliberty.io/docs/latest/reference/config/keyStore.html#keyStore.html) attribute documentation. 
+
+Because the keystore file is not provided at the ***src*** directory, Liberty creates a Public Key Cryptography Standards #12 (PKCS12) keystore file for you by default. This file needs to be replaced, as the ***keyStore*** configuration must be the same in both ***system*** and ***inventory*** microservices. As the configured ***system*** microservice is already provided for you, copy the ***key.p12*** keystore file from the ***system*** microservice to your ***inventory*** service.
+
+
+```bash
+mkdir -p /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/liberty/config/resources/security
+cp /home/project/draft-guide-liberty-deepdive/finish/system/src/main/liberty/config/resources/security/key.p12 \
+   /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/liberty/config/resources/security/key.p12
+```
+
+Now configure the client https port in the ***pom.xml*** configuration file.
+
+Replace the ***pom.xml*** file.
+
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/pom.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.deepdive</groupId>
+    <artifactId>inventory</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.default.context.root>/inventory</liberty.var.default.context.root>
+        <liberty.var.client.https.port>9444</liberty.var.client.https.port>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>9.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>5.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.3.1</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>inventory</finalName>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>3.3.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>io.openliberty.tools</groupId>
+                    <artifactId>liberty-maven-plugin</artifactId>
+                    <version>3.5.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <configuration>
+                    <copyDependencies>
+                        <dependencyGroup>
+                            <location>${project.build.directory}/liberty/wlp/usr/shared/resources</location>
+                            <dependency>
+                                <groupId>org.postgresql</groupId>
+                                <artifactId>postgresql</artifactId>
+                                <version>42.3.1</version>
+                            </dependency>
+                        </dependencyGroup>
+                    </copyDependencies>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
+Configure the client https port by setting the ***\<liberty.var.client.https.port\>*** to ***9444***.
+
+In your dev mode console for the ***inventory*** microservice, press ***CTRL+C*** to stop the server. Then, restart the dev mode of the ***inventory*** microservice.
+```bash
+mvn liberty:dev
+```
+
+### Running the ***/client/{hostname}*** endpoint
+
+Open another command-line session and run the ***system*** microservice from the ***finish*** directory.
+
+
+```bash
+cd /home/project/draft-guide-liberty-deepdive/finish/system
+mvn liberty:run
+```
+
+Wait until the following message displays on the ***system*** microservice console.
+```
+CWWKF0011I: The defaultServer server is ready to run a smarter planet. ...
+```
+
+You can check that the ***system*** microservice is secured against unauthenticated requests at the https://localhost:9444/system/api/heapsize URL. You can expect to see the following error in the console of the ***system*** microservice:
+
+Open another command-line session and run the following command:
+```bash
+curl -k 'https://localhost:9444/system/api/heapsize'
+```
+
+```
+CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+```
+
+You can check that the ***/client/{hostname}*** endpoint you updated can access the ***system*** microservice. 
+
+Make an authorized request to the new ***/client/{hostname}*** endpoint.
+As this endpoint is restricted to ***admin***, you can use the login credentials for ***bob***, which is in the ***admin*** group.
+
+```bash
+curl -k --user bob:bobpwd -X POST 'https://localhost:9443/inventory/api/systems/client/localhost'
+```
+
+You can expect the following output:
+
+```
+{ "ok" : "localhost was added." }
+```
+
+You can verify that this endpoint works as expected by running the following command:
+
+
+```bash
+curl -s 'http://localhost:9080/inventory/api/systems' | jq
+```
+
+You can expect to see your system listed in the output.
+
+```
+[
+  {
+    "heapSize": 2999975936,
+    "hostname": "localhost",
+    "id": 11,
+    "javaVersion": "11.0.11",
+    "osName": "Linux"
+  }
+]
+```
+
+::page{title="Adding health checks"}
+Next, you'll use [MicroProfile Health](https://download.eclipse.org/microprofile/microprofile-health-4.0/microprofile-health-spec-4.0.html) to report the health status of the microservice and PostgreSQL database connection.
+
+Navigate to your application directory
+
+
+```bash
+cd /home/project/draft-guide-liberty-deepdive/start/inventory
+```
+
+A health report is generated automatically for all health services that enable MicroProfile Health.
+
+All health services must provide an implementation of the ***HealthCheck*** interface, which is used to verify their health. MicroProfile Health offers health checks for startup, liveness, and readiness.
+
+A startup check allows applications to define startup probes that are used for initial verification of the application before the liveness probe takes over. For example, a startup check might check which applications require additional startup time on their first initialization.
+
+A liveness check allows third-party services to determine whether a microservice is running. If the liveness check fails, the application can be terminated. For example, a liveness check might fail if the application runs out of memory.
+
+A readiness check allows third-party services, such as Kubernetes, to determine whether a microservice is ready to process requests.
+
+Create the ***health*** subdirectory before creating the health check classes.
+
+
+```bash
+mkdir /home/project/draft-guide-liberty-deepdive/start/inventory/src/main/java/io/openliberty/deepdive/rest/health
+```
+
+Create the ***StartupCheck*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/health/StartupCheck.java
+```
+
+
+> Then, to open the StartupCheck.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/health/StartupCheck.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/health/StartupCheck.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest.health;
+
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
+import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Startup;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Startup
+@ApplicationScoped
+public class StartupCheck implements HealthCheck {
+
+    @Override
+    public HealthCheckResponse call() {
+        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
+        ManagementFactory.getOperatingSystemMXBean();
+        double cpuUsed = bean.getSystemCpuLoad();
+        String cpuUsage = String.valueOf(cpuUsed);
+        return HealthCheckResponse.named("Startup Check")
+                                  .status(cpuUsed < 0.95).build();
+    }
+}
+```
+
+
+
+The ***@Startup*** annotation indicates that this class is a startup health check procedure. Navigate to the http://localhost:9080/health/started URL to check the status of the startup health check. In this case, you are checking the cpu usage. If more than 95% of the cpu is being used, a status of ***DOWN*** is returned.
+```bash
+curl -s http://localhost:9080/health/started | jq
+```
+
+Create the ***LivenessCheck*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/health/LivenessCheck.java
+```
+
+
+> Then, to open the LivenessCheck.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/health/LivenessCheck.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/health/LivenessCheck.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest.health;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.Liveness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
+@Liveness
+@ApplicationScoped
+public class LivenessCheck implements HealthCheck {
+
+    @Override
+    public HealthCheckResponse call() {
+        MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+        long memUsed = memBean.getHeapMemoryUsage().getUsed();
+        long memMax = memBean.getHeapMemoryUsage().getMax();
+
+        return HealthCheckResponse.named("Liveness Check")
+                                  .status(memUsed < memMax * 0.9)
+                                  .build();
+    }
+}
+```
+
+
+
+The ***@Liveness*** annotation indicates that this class is a liveness health check procedure. Navigate to the http://localhost:9080/health/live URL to check the status of the liveness health check. In this case, you are checking the heap memory usage. If more than 90% of the maximum memory is being used, a status of ***DOWN*** is returned.
+
+```bash
+curl -s http://localhost:9080/health/live | jq
+```
+
+Create the ***ReadinessCheck*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/health/ReadinessCheck.java
+```
+
+
+> Then, to open the ReadinessCheck.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/health/ReadinessCheck.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/health/ReadinessCheck.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest.health;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.health.Readiness;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+import org.eclipse.microprofile.health.HealthCheckResponseBuilder;
+
+import java.io.IOException;
+import java.net.Socket;
+
+@Readiness
+@ApplicationScoped
+public class ReadinessCheck implements HealthCheck {
+
+    @Inject
+    @ConfigProperty(name = "postgres/hostname")
+    private String host;
+
+    @Inject
+    @ConfigProperty(name = "postgres/portnum")
+    private int port;
+
+    @Override
+    public HealthCheckResponse call() {
+        HealthCheckResponseBuilder responseBuilder =
+            HealthCheckResponse.named("Readiness Check");
+
+        try {
+            Socket socket = new Socket(host, port);
+            socket.close();
+            responseBuilder.up();
+        } catch (Exception e) {
+            responseBuilder.down();
+        }
+        return responseBuilder.build();
+    }
+}
+```
+
+
+The ***@Readiness*** annotation indicates that this class is a readiness health check procedure. Navigate to the http://localhost:9080/health/ready URL to check the status of the liveness health check. This tests the connection to the PostgreSQL container that was created earlier in the guide. If the connection is refused, a status of ***DOWN*** is returned.
+
+```bash
+curl -s http://localhost:9080/health/ready | jq
+```
+
+Or, you can visit the http://localhost:9080/health URL to see the overall health status of the application.
+
+```bash
+curl -s http://localhost:9080/health | jq
+```
+
+::page{title="Providing metrics"}
+
+Next, you can learn how to use [MicroProfile Metrics](https://download.eclipse.org/microprofile/microprofile-metrics-4.0/microprofile-metrics-spec-4.0.html) to provide metrics from the ***inventory*** microservice.
+
+Go to your application directory.
+
+
+```bash
+cd /home/project/draft-guide-liberty-deepdive/start/inventory
+```
+
+Enable the ***bob*** user to access the ***/metrics*** endpoints.
+
+Replace the ***server.xml*** file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="inventory">
+
+    <featureManager>
+        <feature>jakartaee-9.1</feature>
+        <feature>microProfile-5.0</feature>
+        <feature>jwtSso-1.0</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080" />
+    <variable name="default.https.port" defaultValue="9443" />
+    <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="postgres/hostname" defaultValue="localhost" />
+    <variable name="postgres/portnum" defaultValue="5432" />
+
+    <httpEndpoint id="defaultHttpEndpoint"
+                  httpPort="${default.http.port}" 
+                  httpsPort="${default.https.port}" />
+
+    <applicationManager autoExpand="true"/>
+    
+    <keyStore id="defaultKeyStore" password="secret" />
+    
+    <basicRegistry id="basic" realm="WebRealm">
+        <user name="bob" password="{xor}PTA9Lyg7" />
+        <user name="alice" password="{xor}PjM2PDovKDs=" />
+
+        <group name="admin">
+            <member name="bob" />
+        </group>
+
+        <group name="user">
+            <member name="bob" />
+            <member name="alice" />
+        </group>
+    </basicRegistry>
+
+    <administrator-role>
+        <user>bob</user>
+        <group>AuthorizedGroup</group>
+    </administrator-role>
+
+    <webApplication contextRoot="${default.context.root}"
+                    location="inventory.war">
+        <application-bnd>
+            <security-role name="admin">
+                <group name="admin" />
+            </security-role>
+            <security-role name="user">
+                <group name="user" />
+            </security-role>
+        </application-bnd>
+    </webApplication>
+
+    <jwtSso jwtBuilderRef="jwtInventoryBuilder"/> 
+    <jwtBuilder id="jwtInventoryBuilder" 
+                issuer="http://openliberty.io" 
+                audiences="systemService"
+                expiry="24h"/>
+    <mpJwt audiences="systemService" 
+           groupNameAttribute="groups" 
+           id="myMpJwt" 
+           issuer="http://openliberty.io"/>
+
+    <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
+
+    <library id="postgresql-library">
+        <fileset dir="${shared.resource.dir}/" includes="*.jar" />
+    </library>
+
+    <dataSource id="DefaultDataSource" jndiName="jdbc/postgresql">
+        <jdbcDriver libraryRef="postgresql-library" />
+        <properties.postgresql databaseName="admin"
+                               serverName="localhost"
+                               portNumber="5432"
+                               user="admin"
+                               password="adminpwd"/>
+    </dataSource>
+</server>
+```
+
+
+
+The ***administrator-role*** configuration authorizes the ***bob*** user as an administrator.
+
+Use annotations that are provided by MicroProfile Metrics to instrument the ***inventory*** microservice to provide application-level metrics data.
+
+Replace the ***SystemResource*** class.
+
+> To open the SystemResource.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/java/io/openliberty/deepdive/rest/SystemResource.java"}
+
+
+
+```java
+package io.openliberty.deepdive.rest;
+
+import java.net.URI;
+import java.util.List;
+
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameters;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.eclipse.microprofile.metrics.annotation.Counted;
+
+import io.openliberty.deepdive.rest.client.SystemClient;
+import io.openliberty.deepdive.rest.client.UnknownUriExceptionMapper;
+import io.openliberty.deepdive.rest.model.SystemData;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+@ApplicationScoped
+@Path("/systems")
+public class SystemResource {
+
+    @Inject
+    Inventory inventory;
+
+    @Inject
+    @ConfigProperty(name = "client.https.port")
+    String CLIENT_PORT;
+
+    @Inject
+    JsonWebToken jwt;
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(value = SystemData.class,
+        responseDescription = "A list of system data stored within the inventory.",
+        responseCode = "200")
+    @Operation(
+        summary = "List contents.",
+        description = "Returns the currently stored system data in the inventory.",
+        operationId = "listContents")
+    public List<SystemData> listContents() {
+        return inventory.getSystems();
+    }
+
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponseSchema(value = SystemData.class,
+        responseDescription = "System data of a particular host.",
+        responseCode = "200")
+    @Operation(
+        summary = "Get System",
+        description = "Retrieves and returns the system data from the system "
+                      + "service running on the particular host.",
+        operationId = "getSystem"
+    )
+    public SystemData getSystem(
+        @Parameter(
+            name = "hostname", in = ParameterIn.PATH,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)
+        )
+        @PathParam("hostname") String hostname) {
+        return inventory.getSystem(hostname);
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @Counted(name = "addSystem",
+             absolute = true,
+             description = "Number of times adding system endpoint is called")
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully added system to inventory"),
+        @APIResponse(responseCode = "400",
+            description = "Unable to add system to inventory")
+    })
+    @Parameters(value = {
+        @Parameter(
+            name = "hostname", in = ParameterIn.QUERY,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "osName", in = ParameterIn.QUERY,
+            description = "The operating system of the system",
+            required = true, example = "linux",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "javaVersion", in = ParameterIn.QUERY,
+            description = "The Java version of the system",
+            required = true, example = "11",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "heapSize", in = ParameterIn.QUERY,
+            description = "The heap size of the system",
+            required = true, example = "1048576",
+            schema = @Schema(type = SchemaType.NUMBER)),
+    })
+    @Operation(
+        summary = "Add system",
+        description = "Add a system and its data to the inventory.",
+        operationId = "addSystem"
+    )
+    public Response addSystem(
+        @QueryParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            return fail(hostname + " already exists.");
+        }
+        inventory.add(hostname, osName, javaVersion, heapSize);
+        return success(hostname + " was added.");
+    }
+
+    @PUT
+    @Path("/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @RolesAllowed({ "admin", "user" })
+    @Counted(name = "updateSystem",
+             absolute = true,
+             description = "Number of times updating a system endpoint is called")
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully updated system"),
+        @APIResponse(responseCode = "400",
+           description =
+               "Unable to update because the system does not exist in the inventory.")
+    })
+    @Parameters(value = {
+        @Parameter(
+            name = "hostname", in = ParameterIn.PATH,
+            description = "The hostname of the system",
+            required = true, example = "localhost",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "osName", in = ParameterIn.QUERY,
+            description = "The operating system of the system",
+            required = true, example = "linux",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "javaVersion", in = ParameterIn.QUERY,
+            description = "The Java version of the system",
+            required = true, example = "11",
+            schema = @Schema(type = SchemaType.STRING)),
+        @Parameter(
+            name = "heapSize", in = ParameterIn.QUERY,
+            description = "The heap size of the system",
+            required = true, example = "1048576",
+            schema = @Schema(type = SchemaType.NUMBER)),
+    })
+    @Operation(
+        summary = "Update system",
+        description = "Update a system and its data on the inventory.",
+        operationId = "updateSystem"
+    )
+    public Response updateSystem(
+        @PathParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s == null) {
+            return fail(hostname + " does not exists.");
+        }
+        s.setOsName(osName);
+        s.setJavaVersion(javaVersion);
+        s.setHeapSize(heapSize);
+        inventory.update(s);
+        return success(hostname + " was updated.");
+    }
+
+    @DELETE
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @RolesAllowed({ "admin" })
+    @Counted(name = "removeSystem",
+             absolute = true,
+             description = "Number of times removing a system endpoint is called")
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully deleted the system from inventory"),
+        @APIResponse(responseCode = "400",
+            description =
+                "Unable to delete because the system does not exist in the inventory")
+    })
+    @Parameter(
+        name = "hostname", in = ParameterIn.PATH,
+        description = "The hostname of the system",
+        required = true, example = "localhost",
+        schema = @Schema(type = SchemaType.STRING)
+    )
+    @Operation(
+        summary = "Remove system",
+        description = "Removes a system from the inventory.",
+        operationId = "removeSystem"
+    )
+    public Response removeSystem(@PathParam("hostname") String hostname) {
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            inventory.removeSystem(s);
+            return success(hostname + " was removed.");
+        } else {
+            return fail(hostname + " does not exists.");
+        }
+    }
+
+    @POST
+    @Path("/client/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    @RolesAllowed({ "admin" })
+    @Counted(name = "addSystemClient",
+             absolute = true,
+             description = "Number of times adding a system by client is called")
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+            description = "Successfully added system client"),
+        @APIResponse(responseCode = "400",
+            description = "Unable to add system client")
+    })
+    @Parameter(
+        name = "hostname", in = ParameterIn.PATH,
+        description = "The hostname of the system",
+        required = true, example = "localhost",
+        schema = @Schema(type = SchemaType.STRING)
+    )
+    @Operation(
+        summary = "Add system client",
+        description = "This adds a system client.",
+        operationId = "addSystemClient"
+    )
+    public Response addSystemClient(@PathParam("hostname") String hostname) {
+
+        SystemData s = inventory.getSystem(hostname);
+        if (s != null) {
+            return fail(hostname + " already exists.");
+        }
+
+        SystemClient customRestClient = null;
+        try {
+            customRestClient = getSystemClient(hostname);
+        } catch (Exception e) {
+            return fail("Failed to create the client " + hostname + ".");
+        }
+
+        String authHeader = "Bearer " + jwt.getRawToken();
+        try {
+            String osName = customRestClient.getProperty(authHeader, "os.name");
+            String javaVer = customRestClient.getProperty(authHeader, "java.version");
+            Long heapSize = customRestClient.getHeapSize(authHeader);
+            inventory.add(hostname, osName, javaVer, heapSize);
+        } catch (Exception e) {
+            return fail("Failed to reach the client " + hostname + ".");
+        }
+        return success(hostname + " was added.");
+    }
+
+    private SystemClient getSystemClient(String hostname) throws Exception {
+        String customURIString = "https://" + hostname + ":" + CLIENT_PORT + "/system";
+        URI customURI = URI.create(customURIString);
+        return RestClientBuilder.newBuilder()
+                                .baseUri(customURI)
+                                .register(UnknownUriExceptionMapper.class)
+                                .build(SystemClient.class);
+    }
+
+    private Response success(String message) {
+        return Response.ok("{ \"ok\" : \"" + message + "\" }").build();
+    }
+
+    private Response fail(String message) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                       .entity("{ \"error\" : \"" + message + "\" }")
+                       .build();
+    }
+}
+```
+
+
+
+Import the ***Counted*** annotation and apply it to the ***POST /api/systems***, ***PUT /api/systems/{hostname}***, ***DELETE /api/systems/{hostname}***, and ***POST /api/systems/client/{hostname}*** endpoints to monotonically count how many times that the endpoints are accessed. 
+
+Additional information about the annotations that MicroProfile metrics provides, relevant metadata fields, and more are available at the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/22.0.0.4/reference/javadoc/microprofile-5.0-javadoc.html?package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=overview-summary.html).
+
+
+Run the following commands to call some of the endpoints that you annotated:
+
+```bash
+curl -k --user bob:bobpwd -X DELETE \
+  'https://localhost:9443/inventory/api/systems/localhost'
+```
+
+```bash
+curl -X POST 'http://localhost:9080/inventory/api/systems?heapSize=1048576&hostname=localhost&javaVersion=9&osName=linux'
+```
+
+```bash
+curl -k --user alice:alicepwd -X PUT \
+  'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+```
+
+```bash
+curl -s 'http://localhost:9080/inventory/api/systems' | jq
+```
+
+MicroProfile Metrics provides 4 different REST endpoints.
+
+* The ***/metrics*** endpoint provides you with all the metrics in text format. 
+* The ***/metrics/application*** endpoint provides you with application-specific metrics.
+* The ***/metrics/base*** endpoint provides you with metrics that are defined in MicroProfile specifications. Metrics in the base scope are intended to be portable between different MicroProfile-compatible runtimes.
+* The ***/metrics/vendor*** endpoint provides you with metrics that are specific to the runtime.
+
+
+Run the following curl command to see the application metrics that are enabled through MicroProfile Metrics:
+```bash
+curl -k --user bob:bobpwd https://localhost:9443/metrics/application
+```
+
+You can expect to see your application metrics in text format as the following output:
+
+```
+# TYPE application_addSystemClient_total counter
+# HELP application_addSystemClient_total Number of times adding a system by client is called
+application_addSystemClient_total 0
+# TYPE application_addSystem_total counter
+# HELP application_addSystem_total Number of times adding system endpoint is called
+application_addSystem_total 1
+# TYPE application_updateSystem_total counter
+# HELP application_updateSystem_total Number of times updating a system endpoint is called
+application_updateSystem_total 1
+# TYPE application_removeSystem_total counter
+# HELP application_removeSystem_total Number of times removing a system endpoint is called
+application_removeSystem_total 1
+```
+
+To see the system metrics, run the following curl command:
+```bash
+curl -k --user bob:bobpwd https://localhost:9443/metrics/base
+```
+
+To see the vendor metrics, run the following curl command:
+```bash
+curl -k --user bob:bobpwd https://localhost:9443/metrics/vendor
+```
+
+To review all the metrics, run the following curl command:
+```bash
+curl -k --user bob:bobpwd https://localhost:9443/metrics
+```
+
+
+::page{title="Building the container "}
+
+Press ***CTRL+C*** in the command-line session to stop the ***mvn liberty:dev*** dev mode that you started in the previous section.
+
+Navigate to your application directory:
+
+
+```bash
+cd /home/project/draft-guide-liberty-deepdive/start/inventory
+```
+
+The first step to containerizing your application inside of a Docker container is creating a Dockerfile. A Dockerfile is a collection of instructions for building a Docker image that can then be run as a container. 
+
+Make sure to start your Docker daemon before you proceed.
+
+Create the ***Dockerfile*** in the ***start/inventory*** directory.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/Dockerfile
+```
+
+
+> Then, to open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/Dockerfile, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="My Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/draft-guide-liberty-deepdive" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="inventory" \
+  version="$VERSION-$REVISION" \
+  summary="" \
+  description="This image contains the inventory microservice running with the Open Liberty runtime."
+
+USER root
+
+COPY --chown=1001:0 \
+    src/main/liberty/config/ \
+    /config/
+
+COPY --chown=1001:0 \
+    target/inventory.war \
+    /config/apps
+
+COPY --chown=1001:0 \
+    target/liberty/wlp/usr/shared/resources/*.jar \
+    /opt/ol/wlp/usr/shared/resources/
+
+USER 1001
 
 RUN configure.sh
 ```
 
-The **FROM** statement is building this image using the Open Liberty kernel image (see https://hub.docker.com/_/open-liberty/ for the available images).
-
-Let's build the docker image.  In the **open-liberty-deep-dive/start/coffee-shop** directory:
-
-```
-mvn package
-docker build -t deep-dive:coffee-shop .
-```
-{: codeblock}
-
-Navigate to the **barista** directory and build the docker image: 
-
-```
-cd ../barista/
-mvn package
-docker build -t deep-dive:barista .
-```
-{: codeblock}
-
-Next, create the user-defined bridge network:
-
-```
-docker network create --driver bridge deep-dive-net
-```
-{: codeblock}
-
-You can now run the two Docker containers and get them to join the same bridge network.  Providing names to the containers makes those names available for DNS resolution within the bridge network so there's no need to use IP addresses.
-
-Run the **barista** container:
-
-```
-docker run -d --network=deep-dive-net --name=barista deep-dive:barista
-```
-{: codeblock}
 
 
-Note, we don't need to map the **barista** service ports outside the container because the bridge network gives access to the other containers on the same network.
+The ***FROM*** instruction initializes a new build stage and indicates the parent image from which your image is built. In this case, you’re using the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image that comes with the latest Open Liberty runtime as your parent image.
 
-Next, we're going to run the **coffee-shop** container. The approach we're going to take is to use a Docker volume, therefore we'll need to provide new values for ports and the location of the barista service.  Run the **coffee-shop** container
+To help you manage your images, you can label your container images with the ***LABEL*** command. 
 
-```
-docker run -d -p 9080:9080 -p 9445:9443 --network=deep-dive-net --name=coffee-shop \
-  -e default_barista_base_url='http://barista:9081' \
-  -e default_http_port=9080 \
-  -e default_https_port=9443 deep-dive:coffee-shop
-```
-{: codeblock}
+The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the first ***COPY*** instruction copies the server configuration file that is at ***src/main/liberty/config/server.xml*** to the ***/config/*** destination directory. Similarly, the second ***COPY*** instruction copies the ***.war*** file to the ***/config/apps*** destination directory. The third ***COPY*** instruction copies the PostgreSQL library file to the Liberty shared resources directory.
 
 
-You can take a look at the bridge network using:
+### Developing the application in a container
 
-```
-docker network inspect deep-dive-net
-```
-{: codeblock}
+Make the PostgreSQL database configurable in the Liberty server configuraton file.
 
-You'll see something like:
+Replace the ***server.xml*** file.
 
-```JSON
-[
-    {
-        "Name": "deep-dive-net",
-        ...
-        "IPAM": {
-            "Driver": "default",
-            "Options": {},
-            "Config": [
-                {
-                    "Subnet": "172.19.0.0/16",
-                    "Gateway": "172.19.0.1"
-                }
-            ]
-        },
-        ...
-        "Containers": {
-            "0fc740d52f2ed8dfdb04127fe3e49366dcbeb7924fee6b0cbf6f891c0909b0e8": {
-                "Name": "coffee-shop",
-                "EndpointID": "157d697fb4bff2722d654c68e3a5e5fe7554a91e860213d22362cd7cc074fc8f",
-                "MacAddress": "02:42:ac:13:00:02",
-                "IPv4Address": "172.19.0.2/16",
-                "IPv6Address": ""
-            },
-            "2b78ebf13596147042c8f2f5bd3171ca1c6f77241f419472010ddc2f28fd7a0c": {
-                "Name": "barista",
-                "EndpointID": "c93163547eb7e3c2c84dd0f72beb77127cfc319b6d9d7f6d9d99e17b85ff6d30",
-                "MacAddress": "02:42:ac:13:00:03",
-                "IPv4Address": "172.19.0.3/16",
-                "IPv6Address": ""
-            }
-        },
-        "Options": {},
-        "Labels": {}
-    }
-]
-```
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/main/liberty/config/server.xml, or click the following button
 
-You should now be able to load the **coffee-shop**  service's Open API page `http://accountname-9080.theiadocker-1.proxy.cognitiveclass.ai/openapi/ui` and call the service.  Give it a try. Or, you can run the following curl commands to try out the services running in containers:
-```
-curl http://localhost:9080/health
-curl -X POST "http://localhost:9080/coffee-shop/resources/orders" \
-     -H  "accept: */*" -H  "Content-Type: application/json" \
-     -d "{\"status\":\"FINISHED\",\"type\":\"ESPRESSO\"}"
-curl http://localhost:9080/coffee-shop/resources/orders
-
-```
-{: codeblock}
-
-Now, let's stop and remove the **coffee-shop**  container for the following section:
-
-```
-docker stop coffee-shop
-docker rm coffee-shop
-```
-{: codeblock}
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/main/liberty/config/server.xml"}
 
 
-## Overriding Dev Server Configuration
 
-The above works fine, but still has a metrics endpoint with authentication turned off.  We'll now show how `configDropins/overrides` can be used to override existing, or add new, server configuration.  For example, this can be used to add server configuration in a production environment. The approach we're going to take is to use a Docker volume for simplicity. Docker Volumes are the preferred mechanism for persisting data generated by and used by Docker containers. While bind mounts are dependent on the directory structure and OS of the host machine, volumes are completely managed by Docker. .In a real-world scenario you would use Kubernetes ConfigMaps and secrets to include the production server configuration, security configuration and environment variables. 
-
-In fact, unlike what we have done here, the best practice is to build an image that does not contain any environment specific configuration (such as the unsecured endpoint in our example) and then add those things through external configuration in the development, staging and production environments.  The goal is to ensure deployment of the image without configuration doesn't not cause undesirable results such as security vulnerabilities or talking to the wrong data sources.
-
-Take a look at the file **open-liberty-deep-dive/start/coffee-shop/configDropins/overrides/metrics-prod.xml**:
-
-```XML
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<server description="Coffee Shop Server">
+<server description="inventory">
 
     <featureManager>
-        <feature>appSecurity-3.0</feature>
+        <feature>jakartaee-9.1</feature>
+        <feature>microProfile-5.0</feature>
+        <feature>jwtSso-1.0</feature>
     </featureManager>
-    
-    <mpMetrics authentication="true" />
 
-     <!-- 
-     Note, this configuration is for demo purposes
-     only and MUST NOT BE USED IN PRODUCTION AS IT 
-     IS INSECURE. -->  
-    <variable name="admin.password" value="change_it" />
+    <variable name="default.http.port" defaultValue="9080" />
+    <variable name="default.https.port" defaultValue="9443" />
+    <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="postgres/hostname" defaultValue="localhost" />
+    <variable name="postgres/portnum" defaultValue="5432" />
+    <variable name="postgres/username" defaultValue="admin" />
+    <variable name="postgres/password" defaultValue="adminpwd" />
+
+    <httpEndpoint id="defaultHttpEndpoint"
+                  httpPort="${default.http.port}" 
+                  httpsPort="${default.https.port}" />
+
+    <applicationManager autoExpand="true"/>
+
+    <keyStore id="defaultKeyStore" password="secret" />
     
-    <quickStartSecurity userName="admin" userPassword="${admin.password}"/>
-     
+    <basicRegistry id="basic" realm="WebRealm">
+        <user name="bob" password="{xor}PTA9Lyg7" />
+        <user name="alice" password="{xor}PjM2PDovKDs=" />
+
+        <group name="admin">
+            <member name="bob" />
+        </group>
+
+        <group name="user">
+            <member name="bob" />
+            <member name="alice" />
+        </group>
+    </basicRegistry>
+
+    <webApplication contextRoot="${default.context.root}"
+                    location="inventory.war">
+        <application-bnd>
+            <security-role name="admin">
+                <group name="admin" />
+            </security-role>
+            <security-role name="user">
+                <group name="user" />
+            </security-role>
+        </application-bnd>
+    </webApplication>
+
+    <jwtSso jwtBuilderRef="jwtInventoryBuilder"/> 
+    <jwtBuilder id="jwtInventoryBuilder" 
+                issuer="http://openliberty.io" 
+                audiences="systemService"
+                expiry="24h"/>
+    <mpJwt audiences="systemService" 
+           groupNameAttribute="groups" 
+           id="myMpJwt" 
+           issuer="http://openliberty.io"/>
+
+    <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
+
+    <library id="postgresql-library">
+        <fileset dir="${shared.resource.dir}/" includes="*.jar" />
+    </library>
+
+    <dataSource id="DefaultDataSource" jndiName="jdbc/postgresql">
+        <jdbcDriver libraryRef="postgresql-library" />
+        <properties.postgresql databaseName="admin"
+                               serverName="${postgres/hostname}"
+                               portNumber="${postgres/portnum}"
+                               user="${postgres/username}"
+                               password="${postgres/password}"/>
+    </dataSource>
 </server>
 ```
 
-You'll see that this turns metrics authentication on and sets up some simple security required for securing/accessing the metrics endpoint.  Note, this configuration really is **NOT FOR PRODUCTION**, it's simply aiming to show how to override, or provide new, server configuration.
 
-In the `open-liberty-deep-dive/start/coffee-shop` directory, run the **coffee-shop** container:
+
+
+Instead of the hard-coded ***serverName***, ***portNumber***, ***user***, and ***password*** values in the ***properties.postgresql*** properties, use ***${postgres/hostname}***, ***${postgres/portnum}***, ***${postgres/username}***, and ***${postgres/password}***, which are defined by the ***variable*** elements.
+
+You can use the Dockerfile to try out your application with the PostGreSQL database by running the ***devc*** goal.
+
+The Open Liberty Maven plug-in includes a ***devc*** goal that simplifies developing your application in a container by starting dev mode with container support. This goal builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. Dev mode also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
+
+Retrieve the PostgreSQL container IP address by running the following command:
+
+```bash
+docker inspect -f "{{.NetworkSettings.IPAddress }}" postgres-container
+```
+
+The command returns the PostgreSQL container IP address:
 
 ```
-cd /home/project/open-liberty-deep-dive/start/coffee-shop
-touch configDropins/overrides/metrics-prod.xml
-docker run -d -p 9080:9080 -p 9445:9443 --network=deep-dive-net --name=coffee-shop \
-  -e default_barista_base_url='http://barista:9081' \
-  -e default_http_port=9080 \
-  -e default_https_port=9443 \
-  -v $(pwd)/configDropins/overrides:/opt/ol/wlp/usr/servers/defaultServer/configDropins/overrides deep-dive:coffee-shop
+172.17.0.2
 ```
-{: codeblock}
 
-The above relies on `pwd` to fill in the docker volume source path.
+Build and run the container by running the ***devc*** goal with the PostgreSQL container IP address from the ***start/inventory*** directory. If your PostgreSQL container IP address is not ***172.17.0.2***, replace the command with the right IP address.
 
-Run the following docker command. 
 
+```bash
+POSTGRES_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" postgres-container`
+mvn liberty:devc \
+  -DdockerRunOpts="-e POSTGRES_HOSTNAME=$POSTGRES_IP" \
+  -DserverStartTimeout=240
 ```
-docker logs coffee-shop
-```
-{: codeblock}
 
-You should see the following message as the server is starting:
-
+You need to wait a while to let dev mode start. After you see the following message, your application server in dev mode is ready:
 ```
-[AUDIT ] CWWKG0093A: Processing configuration drop-ins resource: /opt/ol/wlp/usr/servers/defaultServer/configDropins/overrides/metrics-prod.xml
+**************************************************************
+*    Liberty is running in dev mode.
+*    ...
+*    Docker network information:
+*        Container name: [ liberty-dev ]
+*        IP address [ 172.17.0.2 ] on Docker network [ bridge ]
+*    ...
 ```
-This shows that we have turned metrics authentication back on.
 
-You can run the following curl command to retrieve the metrics:
+Open another command-line session and run the following command to make sure that your
+container is running and didn’t crash:
+
+```bash
+docker ps 
 ```
-curl -k --user admin:change_it https://localhost:9445/metrics
-```
-{: codeblock}
 
-This curl command uses userid `admin` and password `change_it` (the values in the `metrics-prod.xml`).
-
-Now, let's stop and remove the **barista** and **coffee-shop** containers and the network:
+You can see something similar to the following output:
 
 ```
-docker stop barista coffee-shop
-docker rm barista coffee-shop
-docker network rm deep-dive-net
+CONTAINER ID  IMAGE               COMMAND                 CREATED        STATUS        PORTS                                                                   NAMES
+ee2daf0b33e1  inventory-dev-mode  "/opt/ol/helpers/run…"  2 minutes ago  Up 2 minutes  0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp  liberty-dev
 ```
-{: codeblock}
 
-# Module 8: Testing in Containers
 
-We saw in an earlier module, how to perform Integration Tests against the application running in the server.  We then showed how to package the application and server and run them inside a Docker container.  Assuming we're going to deploy our application in production inside Containers it would be a good idea to actually perform tests against that configuration.  The more we can make our development and test environments the same as production, the less likely we are to encounter issues in production. [MicroShed Testing](https://microshed.org/) is a project that enables us to do just that.
+Try out your application by the following commands:
 
-Firstly let's start by deleting the tests we created earlier. We would not normally have integration tests done with MicroShed testing and the way we previously looked at. This can be achieved but it is not best practice. The reason for deleting the old tests is because without extra configuration maven will try to run those tests against MicroShed but as these tests run in a container the configuration for connecting to our application will be different.
-
-Delete the **BaristaIT.java**
+```bash
+curl -s http://localhost:9080/health | jq
 ```
-cd /home/project/open-liberty-deep-dive/start/barista/
-rm -f src/test/java/com/sebastian_daschner/barista/it/BaristaIT.java
+
+```bash
+curl 'http://localhost:9080/inventory/api/systems'
 ```
-{: codeblock}
 
-Now let's create a new Integration Test that will perform the same test, but inside a running container.  In the **barista** project, add the following dependencies to the `/home/project/open-liberty-deep-dive/start/barista/pom.xml` file in the `<dependencies>` element:
+When you're finished trying out the microservice, press ***CTRL+C*** in the command-line session where you started dev mode to stop and remove the container.
 
-```XML
-        <!-- For MicroShed Testing -->      
-        <dependency>
-            <groupId>org.microshed</groupId>
-            <artifactId>microshed-testing-liberty</artifactId>
-            <version>0.9.1</version>
-        <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.30</version>
-            <scope>test</scope>
-        </dependency>
+Also, run the following commands to stop the PostgreSQL container that was started in the previous section.
+
+```bash
+docker stop postgres-container
+docker rm postgres-container
 ```
-{: codeblock}
 
-Create a new Integration Test called `BaristaContainerIT.java`:
+### Building the container image
 
+Run the ***mvn package*** command from the ***start/inventory*** directory so that the ***.war*** file resides in the ***target*** directory.
+
+```bash
+mvn package
 ```
-touch /home/project/open-liberty-deep-dive/start/barista/src/test/java/com/sebastian_daschner/barista/it/BaristaContainerIT.java
+
+Build your Docker image with the following commands:
+
+```bash
+docker build -t liberty-deepdive-inventory:1.0-SNAPSHOT .
 ```
-{: codeblock}
 
-Add the following
+In this Skills Network environment, you need to push the image to your container registry on IBM Cloud by running the following commands:
+```bash
+docker tag liberty-deepdive-inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/liberty-deepdive-inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/liberty-deepdive-inventory:1.0-SNAPSHOT
+```
 
-```Java
-package com.sebastian_daschner.barista.it;
+When the build finishes, run the following command to list all local Docker images:
+```bash
+docker images
+```
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+Verify that the ***liberty-deepdive-inventory:1.0-SNAPSHOT*** image is listed among the Docker images, for example:
+```
+REPOSITORY                    TAG
+liberty-deepdive-inventory    1.0-SNAPSHOT
+icr.io/appcafe/open-liberty   full-java11-openj9-ubi
+```
 
-import javax.ws.rs.core.Response;
+::page{title="Testing the microservice with Testcontainers"}
 
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.junit.jupiter.Container;
+Although you can test your microservice manually, you should rely on automated tests. In this section, you can learn how to use Testcontainers to verify your microservice in the same Docker container that you’ll use in production.
 
-import com.sebastian_daschner.barista.boundary.BrewsResource;
-import com.sebastian_daschner.barista.entity.CoffeeBrew;
-import com.sebastian_daschner.barista.entity.CoffeeType;
+First, create the ***test*** directory at the ***src*** directory of your Maven project.
 
-@MicroShedTest
-public class BaristaContainerIT {
 
-    @Container
-    public static ApplicationContainer app = new ApplicationContainer()
-                    .withAppContextRoot("/barista")
-                    .withExposedPorts(9081)
-                    .withReadinessPath("/health/ready");
-    
-    @RESTClient
-    public static BrewsResource brews;
+```bash
+mkdir -p /home/project/draft-guide-liberty-deepdive/start/inventory/src/test/java/it/io/openliberty/deepdive/rest
+mkdir /home/project/draft-guide-liberty-deepdive/start/inventory/src/test/resources
+```
 
-    @Test
-    public void testService() throws Exception {
-        CoffeeBrew brew = new CoffeeBrew();
-        brew.setType(CoffeeType.POUR_OVER);
-        Response response = brews.startCoffeeBrew(brew);
+Create a RESTful client interface for the ***inventory*** microservice.
 
-        try {
-            if (response == null) {
-                assertNotNull(response, "GreetingService response must not be NULL");
-            } else {
-                assertEquals( 200, response.getStatus(), "Response must be 200 OK");
-            }
-        } finally {
-            response.close();
-        }
-    }
+Create the ***SystemResourceClient.java*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceClient.java
+```
+
+
+> Then, to open the SystemResourceClient.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceClient.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceClient.java"}
+
+
+
+```java
+package it.io.openliberty.deepdive.rest;
+
+import java.util.List;
+
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+
+@ApplicationScoped
+@Path("/systems")
+public interface SystemResourceClient {
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    List<SystemData> listContents();
+
+    @GET
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    SystemData getSystem(
+        @PathParam("hostname") String hostname);
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    Response addSystem(
+        @QueryParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize);
+
+    @PUT
+    @Path("/{hostname}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin", "user" })
+    Response updateSystem(
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("hostname") String hostname,
+        @QueryParam("osName") String osName,
+        @QueryParam("javaVersion") String javaVersion,
+        @QueryParam("heapSize") Long heapSize);
+
+    @DELETE
+    @Path("/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin" })
+    Response removeSystem(
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("hostname") String hostname);
 }
 
 ```
-{: codeblock}
 
-You'll see that the class is marked as a MicroShed test with the `@MicroShedTest` annotation.
 
-The test also contains the following Container configuration:
 
-```Java
+This interface declares ***listContents()***, ***getSystem()***, ***addSystem()***, ***updateSystem()***, and ***removeSystem()*** methods for accessing each of the endpoints that are set up to access the ***inventory*** microservice. 
+
+
+Create the ***SystemData*** data model for each system in the inventory.
+
+Create the ***SystemData.java*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/test/java/it/io/openliberty/deepdive/rest/SystemData.java
+```
+
+
+> Then, to open the SystemData.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/test/java/it/io/openliberty/deepdive/rest/SystemData.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/test/java/it/io/openliberty/deepdive/rest/SystemData.java"}
+
+
+
+```java
+package it.io.openliberty.deepdive.rest;
+
+public class SystemData {
+
+    private int id;
+    private String hostname;
+    private String osName;
+    private String javaVersion;
+    private Long heapSize;
+
+    public SystemData() {
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    public String getOsName() {
+        return osName;
+    }
+
+    public String getJavaVersion() {
+        return javaVersion;
+    }
+
+    public Long getHeapSize() {
+        return heapSize;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
+
+    public void setOsName(String osName) {
+        this.osName = osName;
+    }
+
+    public void setJavaVersion(String javaVersion) {
+        this.javaVersion = javaVersion;
+    }
+
+    public void setHeapSize(Long heapSize) {
+        this.heapSize = heapSize;
+    }
+}
+```
+
+
+
+The ***SystemData*** class contains the ID, hostname, operating system name, Java version, and heap size properties. The various ***get*** and ***set*** methods within this class enable you to view and edit the properties of each system in the inventory.
+
+Create the test container class that access the ***inventory*** docker image that you built in previous section.
+
+Create the ***LibertyContainer.java*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/test/java/it/io/openliberty/deepdive/rest/LibertyContainer.java
+```
+
+
+> Then, to open the LibertyContainer.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/test/java/it/io/openliberty/deepdive/rest/LibertyContainer.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/test/java/it/io/openliberty/deepdive/rest/LibertyContainer.java"}
+
+
+
+```java
+package it.io.openliberty.deepdive.rest;
+
+import java.io.FileInputStream;
+import java.security.KeyStore;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.UriBuilder;
+
+public class LibertyContainer extends GenericContainer<LibertyContainer> {
+
+    static final Logger LOGGER = LoggerFactory.getLogger(LibertyContainer.class);
+
+    private String baseURL;
+
+    private KeyStore keystore;
+    private SSLContext sslContext;
+
+    public static String getProtocol() {
+        return System.getProperty("test.protocol", "https");
+    }
+
+    public static boolean testHttps() {
+        return getProtocol().equalsIgnoreCase("https");
+    }
+
+    public LibertyContainer(final String dockerImageName) {
+        super(dockerImageName);
+        waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
+        init();
+    }
+
+    public <T> T createRestClient(Class<T> clazz, String applicationPath) {
+        String urlPath = getBaseURL();
+        if (applicationPath != null) {
+            urlPath += applicationPath;
+        }
+        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
+        if (testHttps()) {
+            builder.sslContext(sslContext);
+            builder.trustStore(keystore);
+        }
+        ResteasyClient client = (ResteasyClient) builder.build();
+        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
+        return target.proxy(clazz);
+    }
+
+    public String getBaseURL() throws IllegalStateException {
+        if (baseURL != null) {
+            return baseURL;
+        }
+        if (!this.isRunning()) {
+            throw new IllegalStateException(
+                "Container must be running to determine hostname and port");
+        }
+        baseURL =  getProtocol() + "://" + this.getContainerIpAddress()
+            + ":" + this.getFirstMappedPort();
+        System.out.println("TEST: " + baseURL);
+        return baseURL;
+    }
+
+    private void init() {
+
+        if (!testHttps()) {
+            this.addExposedPorts(9080);
+            return;
+        }
+
+        this.addExposedPorts(9443, 9080);
+        try {
+            String keystoreFile = System.getProperty("user.dir")
+                    + "/../../finish/system/src/main"
+                    + "/liberty/config/resources/security/key.p12";
+            keystore = KeyStore.getInstance("PKCS12");
+            keystore.load(new FileInputStream(keystoreFile), "secret".toCharArray());
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance(
+                                        KeyManagerFactory.getDefaultAlgorithm());
+            kmf.init(keystore, "secret".toCharArray());
+            X509TrustManager xtm = new X509TrustManager() {
+                @Override
+                public void checkClientTrusted(X509Certificate[] chain, String authType)
+                    throws CertificateException { }
+
+                @Override
+                public void checkServerTrusted(X509Certificate[] chain, String authType)
+                    throws CertificateException { }
+
+                @Override
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+            };
+            TrustManager[] tm = new TrustManager[] {
+                                    xtm
+                                };
+            sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(kmf.getKeyManagers(), tm, new SecureRandom());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+
+
+The ***createRestClient()*** method creates a REST client instance with the ***SystemResourceClient*** interface. The ***getBaseURL()*** method constructs the URL that can access the ***inventory*** docker image.
+
+Now, you can create your integration test cases.
+
+Create the ***SystemResourceIT.java*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceIT.java
+```
+
+
+> Then, to open the SystemResourceIT.java file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/test/java/it/io/openliberty/deepdive/rest/SystemResourceIT.java"}
+
+
+
+```java
+package it.io.openliberty.deepdive.rest;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.Base64;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+@Testcontainers
+@TestMethodOrder(OrderAnnotation.class)
+public class SystemResourceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(SystemResourceIT.class);
+    private static String appPath = "/inventory/api";
+    private static String postgresHost = "postgres";
+    private static String postgresImageName = "postgres-sample:latest";
+    private static String appImageName = "liberty-deepdive-inventory:1.0-SNAPSHOT";
+
+    public static SystemResourceClient client;
+    public static Network network = Network.newNetwork();
+    private static String authHeader;
+
     @Container
-    public static ApplicationContainer app = new ApplicationContainer()
-                    .withAppContextRoot("/barista")
-                    .withExposedPorts(9081)
-                    .withReadinessPath("/health/ready");
+    public static GenericContainer<?> postgresContainer
+        = new GenericContainer<>(postgresImageName)
+              .withNetwork(network)
+              .withExposedPorts(5432)
+              .withNetworkAliases(postgresHost)
+              .withLogConsumer(new Slf4jLogConsumer(logger));
+
+    @Container
+    public static LibertyContainer libertyContainer
+        = new LibertyContainer(appImageName)
+              .withEnv("POSTGRES_HOSTNAME", postgresHost)
+              .withNetwork(network)
+              .waitingFor(Wait.forHttp("/health/ready"))
+              .withLogConsumer(new Slf4jLogConsumer(logger));
+
+    @BeforeAll
+    public static void setupTestClass() throws Exception {
+        System.out.println("TEST: Starting Liberty Container setup");
+        client = libertyContainer.createRestClient(
+            SystemResourceClient.class, appPath);
+        String userPassword = "bob" + ":" + "bobpwd";
+        authHeader = "Basic "
+            + Base64.getEncoder().encodeToString(userPassword.getBytes());
+    }
+
+    private void showSystemData(SystemData system) {
+        System.out.println("TEST: SystemData > "
+            + system.getId() + ", "
+            + system.getHostname() + ", "
+            + system.getOsName() + ", "
+            + system.getJavaVersion() + ", "
+            + system.getHeapSize());
+    }
+
+    @Test
+    @Order(1)
+    public void testAddSystem() {
+        System.out.println("TEST: Testing add a system");
+        client.addSystem("localhost", "linux", "11", Long.valueOf(2048));
+        List<SystemData> systems = client.listContents();
+        assertEquals(1, systems.size());
+        showSystemData(systems.get(0));
+        assertEquals("11", systems.get(0).getJavaVersion());
+        assertEquals(Long.valueOf(2048), systems.get(0).getHeapSize());
+    }
+
+    @Test
+    @Order(2)
+    public void testUpdateSystem() {
+        System.out.println("TEST: Testing update a system");
+        client.updateSystem(authHeader, "localhost", "linux", "8", Long.valueOf(1024));
+        SystemData system = client.getSystem("localhost");
+        showSystemData(system);
+        assertEquals("8", system.getJavaVersion());
+        assertEquals(Long.valueOf(1024), system.getHeapSize());
+    }
+
+    @Test
+    @Order(3)
+    public void testRemoveSystem() {
+        System.out.println("TEST: Testing remove a system");
+        client.removeSystem(authHeader, "localhost");
+        List<SystemData> systems = client.listContents();
+        assertEquals(0, systems.size());
+    }
+}
 ```
 
 
-You'll see that the unit test is like any other.
 
-We need to configure `log4j` in order to see the detailed progress of the MicroShed test. 
+Define the ***postgresContainer*** test container to start up the PostgreSQL docker image, and define the ***libertyContainer*** test container to start up the ***inventory*** docker image. Make sure that both containers use the same ***network***. The ***/health/ready*** endpoint can tell you whether the container is ready to start testing.
 
-Create the file **log4j.properties**:
+The ***testAddSystem()*** verifies the ***addSystem*** and ***listContents*** endpoints.
+
+The ***testUpdateSystem()*** verifies the ***updateSystem*** and ***getSystem*** endpoints.
+
+The ***testRemoveSystem()*** verifies the ***removeSystem*** endpoint.
+
+
+Create the log4j properites that are required by the Testcontainers framework.
+
+Create the ***log4j.properties*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/src/test/resources/log4j.properties
+```
+
+
+> Then, to open the log4j.properties file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/src/test/resources/log4j.properties, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/src/test/resources/log4j.properties"}
+
+
 
 ```
-touch /home/project/open-liberty-deep-dive/start/barista/src/test/resources/log4j.properties
-```
-{: codeblock}
-
-```properties
 log4j.rootLogger=INFO, stdout
 
 log4j.appender=org.apache.log4j.ConsoleAppender
@@ -922,123 +4806,534 @@ log4j.appender.stdout=org.apache.log4j.ConsoleAppender
 log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
 log4j.appender.stdout.layout.ConversionPattern=%r %p %c %x - %m%n
 
-log4j.logger.org.microshed=DEBUG
-```
-{: codeblock}
-
-Rebuild and run the test:
-
-```
-mvn clean package
-mvn failsafe:integration-test
-```
-{: codeblock}
-
-You should see the following output:
-
-```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running com.sebastian_daschner.barista.it.BaristaContainerIT
-0 INFO org.microshed.testing.jupiter.MicroShedTestExtension  - Using ApplicationEnvironment class: org.microshed.testing.testcontainers.config.HollowTestcontainersConfiguration
-70 INFO org.testcontainers.dockerclient.DockerClientProviderStrategy  - Loaded org.testcontainers.dockerclient.UnixSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
-710 INFO org.testcontainers.dockerclient.UnixSocketClientProviderStrategy  - Accessing docker with local Unix socket
-710 INFO org.testcontainers.dockerclient.DockerClientProviderStrategy  - Found Docker environment with local Unix socket (unix:///var/run/docker.sock)
-868 INFO org.testcontainers.DockerClientFactory  - Docker host IP address is localhost
-914 INFO org.testcontainers.DockerClientFactory  - Connected to docker: 
-  Server Version: 19.03.1
-  API Version: 1.40
-  Operating System: Docker Desktop
-  Total Memory: 1998 MB
-1638 INFO org.testcontainers.utility.RegistryAuthLocator  - Credential helper/store (docker-credential-desktop) does not have credentials for quay.io
-2627 INFO org.testcontainers.DockerClientFactory  - Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
-        ℹ︎ Checking the system...
-        ✔ Docker version should be at least 1.6.0
-        ✔ Docker environment should have more than 2GB free disk space
-2827 INFO org.microshed.testing.testcontainers.MicroProfileApplication  - Discovered ServerAdapter: class org.testcontainers.containers.liberty.LibertyAdapter
-2828 INFO org.microshed.testing.testcontainers.MicroProfileApplication  - Using ServerAdapter: org.testcontainers.containers.liberty.LibertyAdapter
-2834 DEBUG org.microshed.testing.testcontainers.config.TestcontainersConfiguration  - No networks explicitly defined. Using shared network for all containers in class com.sebastian_daschner.barista.it.BaristaContainerIT
-2842 INFO org.microshed.testing.testcontainers.config.HollowTestcontainersConfiguration  - exposing port: 9081 for container alpine:3.5
-2843 INFO org.microshed.testing.testcontainers.config.HollowTestcontainersConfiguration  - exposing port: 9444 for container alpine:3.5
-2844 INFO org.microshed.testing.testcontainers.config.TestcontainersConfiguration  - Starting containers in parallel for class com.sebastian_daschner.barista.it.BaristaContainerIT
-2845 INFO org.microshed.testing.testcontainers.config.TestcontainersConfiguration  -   java.util.concurrent.CompletableFuture@465232e9[Completed normally]
-2848 INFO org.microshed.testing.testcontainers.config.TestcontainersConfiguration  - All containers started in 3ms
-2868 DEBUG org.microshed.testing.jaxrs.RestClientBuilder  - no classes implementing Application found in pkg: com.sebastian_daschner.barista.boundary
-2868 DEBUG org.microshed.testing.jaxrs.RestClientBuilder  - checking in pkg: com.sebastian_daschner.barista
-2873 DEBUG org.microshed.testing.jaxrs.RestClientBuilder  - Using ApplicationPath of 'resources'
-2874 INFO org.microshed.testing.jaxrs.RestClientBuilder  - Building rest client for class com.sebastian_daschner.barista.boundary.BrewsResource with base path: http://localhost:9081/barista/resources and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
-3273 DEBUG org.microshed.testing.jupiter.MicroShedTestExtension  - Injecting rest client for public static com.sebastian_daschner.barista.boundary.BrewsResource com.sebastian_daschner.barista.it.BaristaContainerIT.brews
-3419 INFO org.microshed.testing.jaxrs.JsonBProvider  - Sending data to server: {"type":"POUR_OVER"}
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.93 s - in com.sebastian_daschner.barista.it.BaristaContainerIT
-[INFO] 
-[INFO] Results:
-[INFO] 
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-[INFO] 
-[INFO] 
+log4j.logger.io.openliberty.guides.testing=DEBUG
 ```
 
-# Module 9: Support Licensing
 
-Open Liberty is Open Source under the Eclipse Public License v1, as a result there is no fee to use in production.  Community support is available via StackOverflow, Gitter, or the mail list, and bugs can be raised in [GitHub](https://github.com/openliberty/open-liberty). Commercial support from IBM is available for Open Liberty, you can find out more on the [IBM Marketplace](https://www.ibm.com/uk-en/marketplace/elite-support-for-open-liberty). The WebSphere Liberty product is built on Open Liberty, there is no migration required to use WebSphere Liberty, you simply point to WebSphere Liberty in your build.  Users of WebSphere Liberty get support for the packaged Open Liberty function.
 
-WebSphere Liberty is also available in Maven Central[https://search.maven.org/search?q=g:com.ibm.websphere.appserver.runtime].
+Update the Maven configuration file with the required dependencies.
 
-You can use WebSphere Liberty for development even if you haven't purchased it, but if you have production entitlement you can easily change to use it, as follows:
+Replace the ***pom.xml*** file.
 
-In the `open-liberty-deep-dive/start/barista/pom.xml` and `open-liberty-deep-dive/start/coffee-shop/pom.xml`, add the `<configuration>...</configuration>` as the following:
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/pom.xml, or click the following button
 
-```XML
+::openFile{path="/home/project/guide-liberty-deep-dive/start/pom.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.deepdive</groupId>
+    <artifactId>inventory</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.default.context.root>/inventory</liberty.var.default.context.root>
+        <liberty.var.client.https.port>9444</liberty.var.client.https.port>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>9.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>5.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.3.1</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.8.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.16.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.16.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.36</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.0.0.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-json-binding-provider</artifactId>
+            <version>6.0.0.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.json</artifactId>
+            <version>2.0.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+            <version>2.0.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib-nodep</artifactId>
+            <version>3.3.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-auth-jwt</artifactId>
+            <version>4.0.3</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>inventory</finalName>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>3.3.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>io.openliberty.tools</groupId>
+                    <artifactId>liberty-maven-plugin</artifactId>
+                    <version>3.5.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.3.4</version>
                 <configuration>
-                  <runtimeArtifact>
-                      <groupId>com.ibm.websphere.appserver.runtime</groupId>
-                      <artifactId>wlp-kernel</artifactId>
-                      <version>[21.0.0.4,)</version>
-                      <type>zip</type>
-                  </runtimeArtifact>
+                    <copyDependencies>
+                        <dependencyGroup>
+                            <location>${project.build.directory}/liberty/wlp/usr/shared/resources</location>
+                            <dependency>
+                                <groupId>org.postgresql</groupId>
+                                <artifactId>postgresql</artifactId>
+                                <version>42.3.1</version>
+                            </dependency>
+                        </dependencyGroup>
+                    </copyDependencies>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
 ```
-{: codeblock}
 
-Rebuild and re-start the **barista** service:
+
+
+Add each required ***dependency*** with ***test*** scope, including JUnit5, Testcontainers, Log4J, JBoss RESTEasy client, Glassfish JSON, and Vert.x libraries. Also, add the ***maven-failsafe-plugin*** plugin, so that the integration test can be run by the Maven ***verify*** goal.
+
+### Running the tests
+
+You can run the Maven ***verify*** goal, which compiles the java files, starts the containers, runs the tests, and then stops the containers.
+
+
+In this Skills Network environment, you can test the HTTP protcol only.
+```bash
+mvn verify -Dtest.protocol=http
+```
+
+
+You will see the following output:
 
 ```
-cd /home/project/open-liberty-deep-dive/start/barista
-export DEFAULT_HTTP_PORT=9082
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.deepdive.rest.SystemResourceIT
+...
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 17.413 s - in it.io.openliberty.deepdive.rest.SystemResourceIT
+
+Results :
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
+
+::page{title="Deploying the microservice to Kubernetes"}
+
+Now that the containerized application is built and tested, deploy it to a local Kubernetes cluster. 
+
+### Installing the Open Liberty Operator 
+
+
+In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you would like to learn how to install the Open Liberty Operator, see the [Deploying a microservice to Kubernetes by using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html) guide or the Open Liberty Operator [documentation](https://github.com/OpenLiberty/open-liberty-operator/tree/main/deploy/releases/0.8.0#readme).
+
+To check that the Open Liberty Operator is installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
+
+```bash
+kubectl api-resources --api-group=apps.openliberty.io
+```
+
+Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
+
+```
+NAME                      SHORTNAMES         APIGROUP              NAMESPACED   KIND
+openlibertyapplications   olapp,olapps       apps.openliberty.io   true         OpenLibertyApplication
+openlibertydumps          oldump,oldumps     apps.openliberty.io   true         OpenLibertyDump
+openlibertytraces         oltrace,oltraces   apps.openliberty.io   true         OpenLibertyTrace
+```
+
+Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
+
+The ***openlibertyapplications*** CRD defines a set of configurations for deploying an Open Liberty-based application, including the application image, number of instances, and storage settings. The Open Liberty Operator watches for changes to instances of the ***OpenLibertyApplication*** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
+
+### Deploying the container image
+
+
+Create the ***inventory.yaml*** in the ***start/inventory*** directory.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-liberty-deep-dive/start/inventory.yaml
+```
+
+
+> Then, to open the inventory.yaml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/inventory.yaml, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory.yaml"}
+
+
+
+```yaml
+apiVersion: apps.openliberty.io/v1beta2
+kind: OpenLibertyApplication
+metadata:
+  name: inventory-deployment
+  labels:
+    name: inventory-deployment
+spec:
+  applicationImage: liberty-deepdive-inventory:1.0-SNAPSHOT
+  service:
+    port: 9443
+  env:
+    - name: POSTGRES_HOSTNAME
+      value: "postgres"
+```
+
+
+
+In the ***inventory.yaml*** file, the custom resource (CR) is specified to be ***OpenLibertyApplication***. The CR triggers the Open Liberty Operator to create, update, or delete Kubernetes resources that are needed by the application to run on your cluster. Additionally, the ***applicationImage*** field must be specified and set to the image that was created in the previous module. 
+
+
+Similarly, a Kubernetes resource definition is provided in the ***postgres.yaml*** file at the ***finish/postgres*** directory. In the ***postgres.yaml*** file, the deployment for the PostgreSQL database is defined. 
+
+
+Create a Kubernetes Secret to configure the credentials for the ***admin*** user to access the database.
+```bash
+kubectl create secret generic post-app-credentials --from-literal username=admin --from-literal password=adminpwd
+```
+
+The credentials are passed to the PostgreSQL database service as environment variables in the ***env*** field.
+
+
+To deploy the **inventory** microservice and ***Postgres*** database in this Skills Network environment, you need to update the image name so that the image in your IBM Cloud container registry is used, and add the **pullSecret** and ***pullPolicy*** settings. Run the following commands:
+
+```bash
+sed -i 's=liberty-deepdive-inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/liberty-deepdive-inventory:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' /home/project/draft-guide-liberty-deepdive/start/inventory/inventory.yaml
+kubectl apply -f /home/project/draft-guide-liberty-deepdive/start/inventory/inventory.yaml
+sed -i 's=namespace: default=namespace: '"$SN_ICR_NAMESPACE"'=g' /home/project/draft-guide-liberty-deepdive/finish/postgres/postgres.yaml
+kubectl apply -f /home/project/draft-guide-liberty-deepdive/finish/postgres/postgres.yaml
+```
+
+When your pods are deployed, run the following command to check their status:
+```bash
+kubectl get pods
+```
+
+If all the pods are working correctly, you see an output similar to the following example:
+
+```
+NAME                                    READY   STATUS    RESTARTS   AGE
+inventory-deployment-75f9dc56d9-g9lzl   1/1     Running   0          35s
+postgres-58bd9b55c7-6vzz8               1/1     Running   0          13s
+olo-controller-manager-6fc6b456dc-s29wl 1/1     Running   0          10m
+```
+
+Run the following command to set up port forwarding to access the ***inventory*** microservice:
+
+```bash
+kubectl port-forward svc/inventory-deployment 9443
+```
+
+
+In another command-line session, access the microservice by running the following commands:
+
+```bash
+curl -k --user bob:bobpwd -X DELETE \
+  'https://localhost:9443/inventory/api/systems/localhost'
+```
+
+```bash
+curl -k -X POST 'https://localhost:9443/inventory/api/systems?heapSize=1048576&hostname=localhost&javaVersion=9&osName=linux'
+```
+
+```bash
+curl -k --user alice:alicepwd -X PUT \
+  'https://localhost:9443/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+```
+
+```bash
+curl -k -s 'https://localhost:9443/inventory/api/systems' | jq
+```
+
+
+When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
+
+### Customizing deployments
+
+
+You can modify the inventory deployment to customize the service. Customizations for a service include changing the port number, changing the context root, and passing confidential information by using Secrets. 
+
+The ***default.context.root*** variable is defined in the ***server.xml*** file. The context root for the inventory service can be changed by using this variable. The value for the ***default.context.root*** variable can be defined in a ConfigMap and accessed as an environment variable.
+
+Create a ConfigMap to configure the app name with the following ***kubectl*** command.
+```bash
+kubectl create configmap inv-app-root --from-literal contextRoot=/dev
+```
+This command deploys a ConfigMap named ***inv-app-root*** to your cluster. It has a key called ***contextRoot*** with a value of ***/dev***. The ***--from-literal*** flag specifies individual key-value pairs to store in this ConfigMap. 
+
+
+Replace the ***inventory.yaml*** file.
+
+> To open the inventory.yaml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/inventory.yaml, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory.yaml"}
+
+
+
+```yaml
+apiVersion: apps.openliberty.io/v1beta2
+kind: OpenLibertyApplication
+metadata:
+  name: inventory-deployment
+  labels:
+    name: inventory-deployment
+spec:
+  applicationImage: liberty-deepdive-inventory:1.0-SNAPSHOT
+  service:
+    port: 9443
+  volumeMounts:
+  - name: postgres
+    mountPath: "/config/variables/postgres"
+    readOnly: true
+  volumes:
+  - name: postgres
+    secret:
+      secretName: post-app-credentials 
+  env:
+    - name: POSTGRES_HOSTNAME
+      value: "postgres"
+    - name: DEFAULT_CONTEXT_ROOT
+      valueFrom:
+        configMapKeyRef:
+          name: inv-app-root
+          key: contextRoot
+```
+
+
+
+During deployment, the ***post-app-credentials*** secret can be mounted to the ***/config/variables/postgres*** in the pod to create Liberty config variables. Liberty creates variables from the files in the ***/config/variables/postgres*** directory. Instead of including confidential information in the ***server.xml***, users can access it using normal Liberty variable syntax, ***${postgres/username}*** and ***${postgres/password}***.
+
+Run the following command to deploy your changes.
+
+```bash
+sed -i 's=liberty-deepdive-inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/liberty-deepdive-inventory:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' /home/project/draft-guide-liberty-deepdive/start/inventory/inventory.yaml
+kubectl apply -f /home/project/draft-guide-liberty-deepdive/start/inventory/inventory.yaml
+```
+
+Run the following command to set up port forwarding to access the ***inventory*** microservice:
+
+```bash
+kubectl port-forward svc/inventory-deployment 9443
+```
+
+
+In another command-line session, access the microservice by running the following commands:
+
+```bash
+curl -k --user bob:bobpwd -X DELETE \
+  'https://localhost:9443/dev/api/systems/localhost'
+```
+
+```bash
+curl -k -X POST 'https://localhost:9443/dev/api/systems?heapSize=1048576&hostname=localhost&javaVersion=9&osName=linux'
+```
+
+```bash
+curl -k --user alice:alicepwd -X PUT \
+  'https://localhost:9443/dev/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+```
+
+```bash
+curl -k -s 'https://localhost:9443/dev/api/systems' | jq
+```
+
+### Tearing down the environment 
+
+When you're finished trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding. You can delete all Kubernetes resources by running the ***kubectl delete*** commands:
+
+
+```bash
+kubectl delete -f /home/project/draft-guide-liberty-deepdive/start/inventory/inventory.yaml
+kubectl delete -f /home/project/draft-guide-liberty-deepdive/finish/postgres/postgres.yaml
+kubectl delete configmap inv-app-root
+kubectl delete secret post-app-credentials
+```
+
+::page{title="Support Licensing"}
+
+Open Liberty is open source under the Eclipse Public License v1 so there is no fee to use it in production. Community support is available at StackOverflow, Gitter, or the mail list, and bugs can be raised in [GitHub](https://github.com/openliberty/open-liberty). Commercial support is available for Open Liberty from IBM. For more information, see the [IBM Marketplace](https://www.ibm.com/uk-en/marketplace/elite-support-for-open-liberty). The WebSphere Liberty product is built on Open Liberty. No migration is required to use WebSphere Liberty, you simply point to WebSphere Liberty in your build. WebSphere Liberty users get support for the packaged Open Liberty function.
+
+WebSphere Liberty is also available in [Maven Central](https://search.maven.org/search?q=g:com.ibm.websphere.appserver.runtime).
+
+You can use WebSphere Liberty for development even without purchasing it. However, if you have production entitlement, you can easily change to use it with the following steps.
+
+In the ***pom.xml***, add the ***\<configuration\>*** element as the following:
+
+```XML
+  <plugin>
+      <groupId>io.openliberty.tools</groupId>
+      <artifactId>liberty-maven-plugin</artifactId>
+      <version>3.5.1</version>
+      <configuration>
+          <runtimeArtifact>
+              <groupId>com.ibm.websphere.appserver.runtime</groupId>
+              <artifactId>wlp-kernel</artifactId>
+               <version>[22.0.0.4,)</version>
+               <type>zip</type>
+          </runtimeArtifact>
+      </configuration>
+  </plugin>
+```
+
+Rebuild and restart the ***inventory*** service by dev mode:
+
+```bash
 mvn clean
 mvn liberty:dev
 ```
-{: codeblock}
 
-and the **coffee-shop** service:
+In the ***Dockerfile***, replace the Liberty image at the ***FROM*** statement with ***websphere-liberty*** as shown in the following example:
 ```
-cd /home/project/open-liberty-deep-dive/start/coffee-shop
-export DEFAULT_HTTP_PORT=9080
-mvn clean
-mvn liberty:dev
+FROM icr.io/appcafe/websphere-liberty:full-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+...
 ```
-{: codeblock}
 
-The **barista** service should be started at the port `9082` and the **coffee-shop** service at the port `9080`. 
-Then, try the service out using the Open API Web page and you should see the behavior is identical.  Not surprising since the code is identical, from the same build, just built into WebSphere Liberty.
+::page{title="Summary"}
 
-Or, you can run the following curl commands to try out the services running in containers:
+### Nice Work!
+
+You just learned to build a microservice in Liberty!
+
+
+
+### Clean up your environment
+
+
+Clean up your online environment so that it is ready to be used with the next guide:
+
+Delete the ***guide-liberty-deep-dive*** project by running the following commands:
+
+```bash
+cd /home/project
+rm -fr guide-liberty-deep-dive
 ```
-curl http://localhost:9080/health
-curl -X POST "http://localhost:9080/coffee-shop/resources/orders" \
-     -H  "accept: */*" -H  "Content-Type: application/json" \
-     -d "{\"status\":\"FINISHED\",\"type\":\"ESPRESSO\"}"
-curl http://localhost:9080/coffee-shop/resources/orders
 
-```
-{: codeblock}
+### What did you think of this guide?
 
-## Conclusion
+We want to hear from you. To provide feedback, click the following link.
 
-Thanks for trying the Open Liberty deep dive class. If you're interested in finding out more, please visit the [Open Liberty website](http://openliberty.io), and for more hands-on experience, why not try the [Open Liberty Guides](http://openliberty.io/guides).
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=A%20Technical%20Deep%20on%20Liberty&guide-id=cloud-hosted-guide-liberty-deep-dive)
+
+Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
+
+### What could make this guide better?
+
+You can also provide feedback or contribute to this guide from GitHub.
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-liberty-deep-dive/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-liberty-deep-dive/pulls)
+
+
+
+### Where to next?
+
+* [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Accessing and persisting data in microservices using Java Persistence API (JPA)](https://openliberty.io/guides/jpa-intro.html)
+* [Securing microservices with JSON Web Tokens](https://openliberty.io/guides/microprofile-jwt.html)
+* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
+* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
+* [Deploying a microservice to Kubernetes by using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html)
+* [Configuring microservices running in Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-config.html)
+
+
+### Log out of the session
+
+Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
