@@ -4,9 +4,9 @@ title: instructions
 branch: lab-204-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 ---
-::page{title="Welcome to the Testing reactive Java microservices guide!"}
+::page{title="Welcome to the Testing a MicroProfile or Jakarta EE application guide!"}
 
-Learn how to test reactive Java microservices in true-to-production environments using MicroShed Testing.
+Learn how to use MicroShed Testing to test a MicroProfile or Jakarta EE application.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -18,14 +18,15 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to write integration tests for reactive Java microservices and to run the tests in true-to-production environments by using containers with [MicroShed Testing](https://microshed.org/microshed-testing/). MicroShed Testing tests your containerized application from outside the container so that you are testing the exact same image that runs in production. The reactive application in this guide sends and receives messages between services by using an external message broker, [MicroShed Testing](https://microshed.org/microshed-testing/). Using an external message broker enables asynchronous communications between services so that requests are non-blocking and decoupled from responses. You can learn more about reactive Java  services that use an external message broker to manage communications in the [MicroShed Testing](https://microshed.org/microshed-testing/) guide.
+You'll start with an existing REST application that runs on Open Liberty and use [MicroShed Testing](https://microshed.org/microshed-testing/) to write tests for the application that exercise the application in a Docker container.
 
-![Reactive system inventory application](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-service-testing/prod/assets/reactive-messaging-system-inventory.png)
+Sometimes tests might pass in development and testing (dev/test) environments, but fail in production because the application runs differently in production than in dev/test. Fortunately, you can minimize these differences between dev/test and production by testing your application in the same Docker container that you'll use in production.
 
+### What is Docker?
 
-*True-to-production integration testing with MicroShed Testing*
+Docker is a tool that you can use to deploy and run applications with containers. You can think of Docker as a virtual machine that runs various applications. However, unlike with a typical virtual machine, you can run these applications simultaneously on a single system and independent of one another.
 
-Tests sometimes pass during the development and testing stages of an application's lifecycle but then fail in production because of differences between your development and production environments. While you can create mock objects and custom setups to minimize differences between environments, it is difficult to mimic a production system for an application that uses an external messaging system. MicroShed Testing addresses this problem by enabling the testing of applications in the same Docker containers that you’ll use in production. As a result, your environment remains the same throughout the application’s lifecycle – from development, through testing, and into production. You can learn more about MicroShed Testing in the [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html) guide.
+Learn more about Docker on the [official Docker website](https://www.docker.com/what-docker).
 
 ::page{title="Getting started"}
 
@@ -38,11 +39,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-service-testing.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microshed-testing.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-reactive-service-testing.git
-cd guide-reactive-service-testing
+git clone https://github.com/openliberty/guide-microshed-testing.git
+cd guide-microshed-testing
 ```
 
 
@@ -54,73 +55,43 @@ The ***finish*** directory contains the finished project that you will build.
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the tests, go to the ***finish*** directory and run the following Maven goal to install the ***models*** artifact to the local Maven repository:
+First, review the ***PersonServiceIT*** class to see what the tests look like:
+From the menu of the IDE, select ***File*** > ***Open*** > guide-microshed-testing/finish/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java
+
+
+To try out the application, go to the ***finish*** directory and run the following Maven goal to build the application and run the integration tests on an Open Liberty server in a container:
+
 
 ```bash
-cd finish
-mvn -pl models install
-```
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-
-Next, navigate to the ***finish/system*** directory and run the following Maven goal to build the ***system*** service and run the integration tests on an Open Liberty server in a container:
-
-```bash
-cd system
+cd /home/project/guide-microshed-testing/finish
 mvn verify
 ```
 
-You will see the following output:
+This command might take some time to run initially because the dependencies and the Docker image for Open Liberty must download. If you run the same command again, it will be faster.
 
-```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 33.001 s - in it.io.openliberty.guides.system.SystemServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
-
- --- maven-failsafe-plugin:2.22.2:verify (verify) @ system ---
- ------------------------------------------------------------------------
- BUILD SUCCESS
- ------------------------------------------------------------------------
- Total time:  52.817 s
- Finished at: 2020-03-13T16:28:55-04:00
- ------------------------------------------------------------------------
-```
-
-This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty must download. If you run the same command again, it will be faster.
-
-You can also try out the ***inventory*** integration tests by repeating the same commands in the ***finish/inventory*** directory.
-
-::page{title="Testing with the Kafka consumer client"}
-
-Navigate to the ***start*** directory to begin.
-```bash
-cd /home/project/guide-reactive-service-testing/start
-```
-
-The example reactive application consists of the ***system*** and ***inventory*** microservices. The ***system*** microservice produces messages to the Kafka message broker, and the ***inventory*** microservice consumes messages from the Kafka message broker. You will write integration tests to see how you can use the Kafka consumer and producer client APIs to test each service. MicroShed Testing and Kafka Testcontainers have already been included as required test dependencies in your Maven ***pom.xml*** files for the ***system*** and ***inventory*** services.
-
-The ***start*** directory contains three directories: the ***system*** service directory, the ***inventory*** service directory, and the ***models*** directory. The ***models*** directory contains the model class that defines the structure of the system load data that is used in the application. Run the following Maven goal to install the packaged ***models*** artifact to the local Maven repository so it can be used later by the ***system*** and ***inventory*** services:
+The previous example shows how you can run integration tests from a cold start. With Open Liberty development mode, you can use MicroShed Testing to run tests on an active Open Liberty server. Run the following Maven goal to start Open Liberty in development mode:
 
 ```bash
-mvn -pl models install
+mvn liberty:dev
 ```
 
-If you don't have the latest Docker image, pull it by running the following command:
+After you see the following message, your application server in dev mode is ready:
 
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+```
+**************************************************************
+*    Liberty is running in dev mode.
 ```
 
-With Open Liberty development mode, known as dev mode, you can use MicroShed Testing to run tests on an already running Open Liberty server. Navigate to the ***start/system*** directory.
+After the Open Liberty server starts and you see the ***To run tests on demand, press Enter.*** message, you can press the ***enter/return*** key to run the integration tests. After the tests finish, you can press the ***enter/return*** key to run the tests again, or you can make code changes to the application or tests. Development mode automatically recompiles and updates any application or test code changes that you make.
+
+After you're finished running tests, exit development mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+
+::page{title="Bootstrapping your application for testing"}
+
+
+To begin, run the following command to navigate to the ***start*** directory:
 ```bash
-cd /home/project/guide-reactive-service-testing/start/system
+cd /home/project/guide-microshed-testing/start
 ```
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -138,345 +109,581 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Now you can add your test files.
+Wait for the ***To run tests on demand, press Enter.*** message, and then press the ***enter/return*** key to run the tests. You see that one test runs:
 
-The running ***system*** service searches for a Kafka topic to push its messages to. Because there are not yet any running Kafka services, the ***system*** service throws errors. Later in the guide, you will write and run tests that start a Kafka Testcontainer that can communicate with the ***system*** service. This will resolve the errors that you see now.
+```
+ Running integration tests...
 
-### Configuring your containers
+ -------------------------------------------------------
+  T E S T S
+ -------------------------------------------------------
+ Running io.openliberty.guides.testing.PersonServiceIT
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.024 s - in io.openliberty.guides.testing.PersonServiceIT
 
-Create a class to externalize your container configurations.
+ Results:
 
-Create the ***AppContainerConfig*** class.
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/AppContainerConfig.java
+ Integration tests finished.
 ```
 
+To begin bootstrapping, import the ***MicroShedTest*** annotation and annotate the ***PersonServiceIT*** class with ***@MicroShedTest***. This annotation indicates that the test class uses MicroShed Testing. 
 
-> Then, to open the AppContainerConfig.java file in your IDE, select
-> **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/AppContainerConfig.java, or click the following button
+The ***PersonServiceIT*** class outlines some basic information that informs how MicroShed Testing starts the application runtime and at which URL path the application is available:
 
-::openFile{path="/home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/AppContainerConfig.java"}
+Replace the ***PersonServiceIT*** class.
+
+> To open the PersonServiceIT.java file in your IDE, select
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.system;
+package io.openliberty.guides.testing;
 
-import java.time.Duration;
+
+import org.junit.jupiter.api.Test;
+import org.microshed.testing.jaxrs.RESTClient;
+import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
+
+@MicroShedTest
+public class PersonServiceIT {
+
+    @RESTClient
+    public static PersonService personSvc;
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
+    @Test
+    public void testCreatePerson() {
+    }
+
+}
+```
+
+
+Import the ***ApplicationContainer*** class and the ***Container*** annotation, create the ***ApplicationContainer*** application, and annotate the application with ***@Container*** annotation.
+
+
+The ***withAppContextRoot(String)*** method indicates the base path of the application. The app context root is the portion of the URL after the hostname and port. In this case, the application is deployed at the ***http://localhost:9080/guide-microshed-testing*** URL, so the app context root is ***/guide-microshed-testing***.
+
+
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+
+The ***withReadinessPath(String)*** method indicates what path is polled by HTTP to determine application readiness. MicroShed Testing automatically starts the ApplicationContainer application and waits for it to be ready before the tests start running. In this case, you're using the default application readiness check at the http://localhost:9080/health/ready URL, which is enabled by the ***MicroProfile Health*** feature in the server.xml configuration file. When the readiness URL returns the ***HTTP 200*** message, the application is considered ready and the tests begin running.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/health/ready | jq
+```
+
+
+
+Save your changes to the ***PersonServiceIT*** class and press the ***enter/return*** key in your console window to rerun the tests. You still see only one test running, but the output is different. Notice that MicroShed Testing is using a ***hollow*** configuration mode. This configuration mode means that MicroShed Testing is reusing an existing application runtime for the test, not starting up a new application instance each time you initiate a test run.
+
+::page{title="Talking to your application with a REST client"}
+
+With MicroShed Testing, applications are exercised in a black-box fashion. Black-box means the tests can't access the application internals. Instead, the application is exercised from the outside, usually with HTTP requests. To simplify the HTTP interactions, a REST client is injected into the tests. To do this, you imported the ***org.microshed.testing.jaxrs.RESTClient*** annotation, created a ***PersonService*** REST client, and annotated the REST client with ***@RESTClient***.
+
+In this example, the ***PersonService*** injected type is the same ***io.openliberty.guides.testing.PersonService*** class that is used in your application. However, the _instance_ that gets injected is a REST client proxy. So, if you call ***personSvc.createPerson("Bob", 42)***, the REST client makes an HTTP POST request to the application that is running at ***http://localhost:9080/guide-microshed-testing/people*** URL, which triggers the corresponding Java method in the application.
+
+
+
+
+::page{title="Writing your first test"}
+
+Now that the setup is complete, you can write your first test case. Start by testing the basic "create person" use case for your REST-based application. To test this use case, use the REST client that's injected by MicroShed Testing to make the HTTP POST request to the application and read the response.
+
+Replace the ***PersonServiceIT*** class.
+
+> To open the PersonServiceIT.java file in your IDE, select
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java"}
+
+
+
+```java
+package io.openliberty.guides.testing;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.api.Test;
+import org.microshed.testing.jaxrs.RESTClient;
+import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
+
+@MicroShedTest
+public class PersonServiceIT {
+
+    @RESTClient
+    public static PersonService personSvc;
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
+    @Test
+    public void testCreatePerson() {
+        Long createId = personSvc.createPerson("Hank", 42);
+        assertNotNull(createId);
+    }
+
+}
+```
+
+
+Replace the ***PersonServiceIT*** class to include the ***assertNotNull*** static method and write the test logic in the ***testCreatePerson()*** method.
+
+
+Save the changes. Then, press the ***enter/return*** key in your console window to run the test. You see that the test ran again and exercised the REST endpoint of your application, including the response of your application's endpoint:
+
+```
+[INFO] Building rest client for class io.openliberty.guides.testing.PersonService with base path: http://localhost:9080/guide-microshed-testing/ and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
+[INFO] Response from server: 1809686877352335426
+```
+
+Next, add more tests.
+
+Replace the ***PersonServiceIT*** class.
+
+> To open the PersonServiceIT.java file in your IDE, select
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java"}
+
+
+
+```java
+package io.openliberty.guides.testing;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Collection;
+
+import org.junit.jupiter.api.Test;
+import org.microshed.testing.jaxrs.RESTClient;
+import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
+
+@MicroShedTest
+public class PersonServiceIT {
+
+    @RESTClient
+    public static PersonService personSvc;
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
+    @Test
+    public void testCreatePerson() {
+        Long createId = personSvc.createPerson("Hank", 42);
+        assertNotNull(createId);
+    }
+
+    @Test
+    public void testMinSizeName() {
+        Long minSizeNameId = personSvc.createPerson("Ha", 42);
+        assertEquals(new Person("Ha", 42, minSizeNameId),
+                     personSvc.getPerson(minSizeNameId));
+    }
+
+    @Test
+    public void testMinAge() {
+        Long minAgeId = personSvc.createPerson("Newborn", 0);
+        assertEquals(new Person("Newborn", 0, minAgeId),
+                     personSvc.getPerson(minAgeId));
+    }
+
+    @Test
+    public void testGetPerson() {
+        Long bobId = personSvc.createPerson("Bob", 24);
+        Person bob = personSvc.getPerson(bobId);
+        assertEquals("Bob", bob.name);
+        assertEquals(24, bob.age);
+        assertNotNull(bob.id);
+    }
+
+    @Test
+    public void testGetAllPeople() {
+        Long person1Id = personSvc.createPerson("Person1", 1);
+        Long person2Id = personSvc.createPerson("Person2", 2);
+
+        Person expected1 = new Person("Person1", 1, person1Id);
+        Person expected2 = new Person("Person2", 2, person2Id);
+
+        Collection<Person> allPeople = personSvc.getAllPeople();
+        assertTrue(allPeople.size() >= 2,
+            "Expected at least 2 people to be registered, but there were only: "
+            + allPeople);
+        assertTrue(allPeople.contains(expected1),
+            "Did not find person " + expected1 + " in all people: " + allPeople);
+        assertTrue(allPeople.contains(expected2),
+            "Did not find person " + expected2 + " in all people: " + allPeople);
+    }
+
+    @Test
+    public void testUpdateAge() {
+        Long personId = personSvc.createPerson("newAgePerson", 1);
+
+        Person originalPerson = personSvc.getPerson(personId);
+        assertEquals("newAgePerson", originalPerson.name);
+        assertEquals(1, originalPerson.age);
+        assertEquals(personId, Long.valueOf(originalPerson.id));
+
+        personSvc.updatePerson(personId,
+            new Person(originalPerson.name, 2, originalPerson.id));
+        Person updatedPerson = personSvc.getPerson(personId);
+        assertEquals("newAgePerson", updatedPerson.name);
+        assertEquals(2, updatedPerson.age);
+        assertEquals(personId, Long.valueOf(updatedPerson.id));
+    }
+}
+```
+
+
+
+The following tests are added: ***testMinSizeName()***, ***testMinAge()***, ***testGetPerson()***, ***testGetAllPeople()***, and ***testUpdateAge()***.
+
+
+Save the changes, and  press the ***enter/return*** key in your console window to run the tests.
+
+::page{title="Testing outside of development mode"}
+
+Running tests in development mode is convenient for local development, but it can be tedious to test against a running Open Liberty server in non-development scenarios such as CI/CD pipelines. For this reason, MicroShed Testing can start and stop the application runtime before and after the tests are run. This process is primarily accomplished by using Docker and Testcontainers.
+
+To test outside of development mode, exit development mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+
+Next, use the following Maven goal to run the tests from a cold start:
+```bash
+mvn verify
+```
+
+Running tests from a cold start takes a little longer than running tests from development mode because the application runtime needs to start each time. However, tests that are run from a cold start use a clean instance on each run to ensure consistent results. These tests also automatically hook into existing build pipelines that are set up to run the ***integration-test*** phase.
+
+::page{title="Sharing configuration across multiple classes"}
+
+Typically, projects have multiple test classes that all use the same type of application deployment. For these cases, it's useful to reuse an existing configuration and application lifecycle across multiple test classes.
+
+First, create another test class.
+
+Create the ***ErrorPathIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java
+```
+
+
+> Then, to open the ErrorPathIT.java file in your IDE, select
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java, or click the following button
+
+::openFile{path="/home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java"}
+
+
+
+```java
+package io.openliberty.guides.testing;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+
+import org.junit.jupiter.api.Test;
+import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.testcontainers.ApplicationContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.microshed.testing.jaxrs.RESTClient;
+
+@MicroShedTest
+public class ErrorPathIT {
+
+    @Container
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
+
+    @RESTClient
+    public static PersonService personSvc;
+
+    @Test
+    public void testGetUnknownPerson() {
+        assertThrows(NotFoundException.class, () -> personSvc.getPerson(-1L));
+    }
+
+    @Test
+    public void testCreateBadPersonNullName() {
+        assertThrows(BadRequestException.class, () -> personSvc.createPerson(null, 5));
+    }
+
+    @Test
+    public void testCreateBadPersonNegativeAge() {
+        assertThrows(BadRequestException.class, () ->
+          personSvc.createPerson("NegativeAgePersoN", -1));
+    }
+
+    @Test
+    public void testCreateBadPersonNameTooLong() {
+        assertThrows(BadRequestException.class, () ->
+          personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson",
+          5));
+    }
+}
+```
+
+
+
+The ***ErrorPathIT*** test class has the same ***@Container*** configuration and ***PersonService*** REST client as the ***PersonServiceIT*** class.
+
+Now, run the tests again outside of development mode: [role='command']
+```
+mvn verify
+```
+
+Notice that tests for both the ***PersonServiceIT*** and ***ErrorPathIT*** classes run, but a new server starts for each test class, resulting in a longer test runtime.
+
+### Creating a common configuration
+
+To solve this issue, common configuration can be placed in a class that implements ***SharedContainerConfiguration***.
+
+Create the ***AppDeploymentConfig*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java
+```
+
+
+> Then, to open the AppDeploymentConfig.java file in your IDE, select
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java, or click the following button
+
+::openFile{path="/home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/AppDeploymentConfig.java"}
+
+
+
+```java
+package io.openliberty.guides.testing;
 
 import org.microshed.testing.SharedContainerConfiguration;
 import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.containers.Network;
 import org.testcontainers.junit.jupiter.Container;
 
-public class AppContainerConfig implements SharedContainerConfiguration {
-
-    private static Network network = Network.newNetwork();
+public class AppDeploymentConfig implements SharedContainerConfiguration {
 
     @Container
-    public static KafkaContainer kafka = new KafkaContainer()
-                    .withNetwork(network);
+    public static ApplicationContainer app = new ApplicationContainer()
+                    .withAppContextRoot("/guide-microshed-testing")
+                    .withReadinessPath("/health/ready");
 
-    @Container
-    public static ApplicationContainer system = new ApplicationContainer()
-                    .withAppContextRoot("/")
-                    .withExposedPorts(9083)
-                    .withReadinessPath("/health/ready")
-                    .withNetwork(network)
-                    .withStartupTimeout(Duration.ofMinutes(3))
-                    .dependsOn(kafka);
 }
 ```
 
 
 
-The ***AppContainerConfig*** class externalizes test container setup and configuration, so you can use the same application containers across multiple tests.The ***@Container*** annotation denotes an application container that is started up and used in the tests.
+After the common configuration is created, the test classes can be updated to reference this shared configuration.
 
-Two containers are used for testing the ***system*** service: the ***system*** container, which you built, and the ***kafka*** container, which receives messages from the ***system*** service.
-
-The ***dependsOn()*** method specifies that the ***system*** service container must wait until the ***kafka*** container is ready before it can start.
-
-### Testing your containers
-
-Now you can start writing the test that uses the configured containers.
+### Updating the PersonServiceIT class
 
 
-Create the ***SystemServiceIT*** class.
+Remove the container code from the ***PersonServiceIT*** class. Remove ***import*** statements for ***ApplicationContainer*** and ***Container*** and the ***ApplicationContainer app*** field.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
-```
+Next, annotate the ***PersonServiceIT*** class with the ***@SharedContainerConfig*** annotation that references the ***AppDeploymentConfig*** shared configuration class.
 
+Replace the ***PersonServiceIT*** class.
 
-> Then, to open the SystemServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
+> To open the PersonServiceIT.java file in your IDE, select
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java, or click the following button
 
-::openFile{path="/home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
+::openFile{path="/home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/PersonServiceIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.system;
+package io.openliberty.guides.testing;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Duration;
+import java.util.Collection;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.kafka.KafkaConsumerClient;
-
-import io.openliberty.guides.models.SystemLoad;
-import io.openliberty.guides.models.SystemLoad.SystemLoadDeserializer;
-
-@MicroShedTest
-@SharedContainerConfig(AppContainerConfig.class)
-public class SystemServiceIT {
-
-    @KafkaConsumerClient(valueDeserializer = SystemLoadDeserializer.class,
-                         groupId = "system-load-status",
-                         topics = "system.load",
-                         properties = ConsumerConfig.AUTO_OFFSET_RESET_CONFIG
-                                      + "=earliest")
-    public static KafkaConsumer<String, SystemLoad> consumer;
-
-    @Test
-    public void testCpuStatus() {
-        ConsumerRecords<String, SystemLoad> records =
-                consumer.poll(Duration.ofMillis(30 * 1000));
-        System.out.println("Polled " + records.count() + " records from Kafka:");
-
-        for (ConsumerRecord<String, SystemLoad> record : records) {
-            SystemLoad sl = record.value();
-            System.out.println(sl);
-            assertNotNull(sl.hostname);
-            assertNotNull(sl.loadAverage);
-        }
-
-        consumer.commitAsync();
-    }
-}
-```
-
-
-
-
-The test uses the ***KafkaConsumer*** client API and is configured by using the ***@KafkaConsumerClient*** annotation. The consumer client is configured to consume messages from the ***system.load*** topic in the ***kafka*** container. To learn more about Kafka APIs and how to use them, check out the [official Kafka Documentation](https://kafka.apache.org/documentation/#api).
-
-To consume messages from a stream, the messages need to be deserialized from bytes. Kafka has its own default deserializer, but a custom deserializer is provided for you. The deserializer is configured to the consumer’s ***valueDeserializer*** and is implemented in the ***SystemLoad*** class.
-
-The running ***system*** service container produces messages to the ***systemLoad*** Kafka topic, as denoted by the ***@Outgoing*** annotation. The ***testCpuStatus()*** test method ***polls*** a record from Kafka every 3 seconds until the timeout limit. It then ***verifies*** that the record polled matches the expected record.
-
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You will see the following output:
-
-```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.674 s - in it.io.openliberty.guides.system.SystemServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
- Integration tests finished.
-```
-
-After you are finished running tests, stop the Open Liberty server by typing ***q*** in the command-line session where you ran the server, and then press the ***enter/return*** key.
-
-If you aren't running in dev mode, you can run the tests by running the following command:
-
-```bash
-mvn verify
-```
-
-You will see the following output:
-
-```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 33.001 s - in it.io.openliberty.guides.system.SystemServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
-
- --- maven-failsafe-plugin:2.22.2:verify (verify) @ system ---
- ------------------------------------------------------------------------
- BUILD SUCCESS
- ------------------------------------------------------------------------
- Total time:  52.817 s
- Finished at: 2020-03-13T16:28:55-04:00
- ------------------------------------------------------------------------
-```
-
-::page{title="Testing with the Kafka producer client"}
-
-The ***inventory*** service is tested in the same way as the ***system*** service. The only difference is that the ***inventory*** service consumes messages, which means that tests are written to use the Kafka producer client.
-
-### Configuring your containers
-
-Navigate to the ***start/inventory*** directory.
-```bash
-cd /home/project/guide-reactive-service-testing/start/inventory
-```
-
-The ***AppContainerConfig*** class is provided, and it is configured in the same way as it was for the ***system*** service. The two containers that are configured for use in the ***inventory*** service integration test are the ***kafka*** and ***inventory*** containers.
-
-### Testing your containers
-
-As you did with the ***system*** service, run Open Liberty in dev mode to listen for file changes:
-
-```bash
-mvn liberty:dev
-```
-
-Now you can create your integrated test.
-
-Create the ***InventoryServiceIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
-```
-
-
-> Then, to open the InventoryServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java, or click the following button
-
-::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.inventory;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Properties;
-
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.microshed.testing.SharedContainerConfig;
 import org.microshed.testing.jaxrs.RESTClient;
 import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.kafka.KafkaProducerClient;
-
-import io.openliberty.guides.inventory.InventoryResource;
-import io.openliberty.guides.models.SystemLoad;
-import io.openliberty.guides.models.SystemLoad.SystemLoadSerializer;
 
 @MicroShedTest
-@SharedContainerConfig(AppContainerConfig.class)
-@TestMethodOrder(OrderAnnotation.class)
-public class InventoryServiceIT {
+@SharedContainerConfig(AppDeploymentConfig.class)
+public class PersonServiceIT {
 
     @RESTClient
-    public static InventoryResource inventoryResource;
+    public static PersonService personSvc;
 
-    @KafkaProducerClient(valueSerializer = SystemLoadSerializer.class)
-    public static KafkaProducer<String, SystemLoad> producer;
-
-    @AfterAll
-    public static void cleanup() {
-        inventoryResource.resetSystems();
+    @Test
+    public void testCreatePerson() {
+        Long createId = personSvc.createPerson("Hank", 42);
+        assertNotNull(createId);
     }
 
     @Test
-    public void testCpuUsage() throws InterruptedException {
-        SystemLoad sl = new SystemLoad("localhost", 1.1);
-        producer.send(new ProducerRecord<String, SystemLoad>("system.load", sl));
-        Thread.sleep(5000);
-        Response response = inventoryResource.getSystems();
-        List<Properties> systems =
-                response.readEntity(new GenericType<List<Properties>>() { });
-        Assertions.assertEquals(200, response.getStatus(),
-                "Response should be 200");
-        Assertions.assertEquals(systems.size(), 1);
-        for (Properties system : systems) {
-            Assertions.assertEquals(sl.hostname, system.get("hostname"),
-                    "Hostname doesn't match!");
-            BigDecimal systemLoad = (BigDecimal) system.get("systemLoad");
-            Assertions.assertEquals(sl.loadAverage, systemLoad.doubleValue(),
-                    "CPU load doesn't match!");
-        }
+    public void testMinSizeName() {
+        Long minSizeNameId = personSvc.createPerson("Ha", 42);
+        assertEquals(new Person("Ha", 42, minSizeNameId),
+                     personSvc.getPerson(minSizeNameId));
+    }
+
+    @Test
+    public void testMinAge() {
+        Long minAgeId = personSvc.createPerson("Newborn", 0);
+        assertEquals(new Person("Newborn", 0, minAgeId),
+                     personSvc.getPerson(minAgeId));
+    }
+
+    @Test
+    public void testGetPerson() {
+        Long bobId = personSvc.createPerson("Bob", 24);
+        Person bob = personSvc.getPerson(bobId);
+        assertEquals("Bob", bob.name);
+        assertEquals(24, bob.age);
+        assertNotNull(bob.id);
+    }
+
+    @Test
+    public void testGetAllPeople() {
+        Long person1Id = personSvc.createPerson("Person1", 1);
+        Long person2Id = personSvc.createPerson("Person2", 2);
+
+        Person expected1 = new Person("Person1", 1, person1Id);
+        Person expected2 = new Person("Person2", 2, person2Id);
+
+        Collection<Person> allPeople = personSvc.getAllPeople();
+        assertTrue(allPeople.size() >= 2,
+            "Expected at least 2 people to be registered, but there were only: "
+            + allPeople);
+        assertTrue(allPeople.contains(expected1),
+            "Did not find person " + expected1 + " in all people: " + allPeople);
+        assertTrue(allPeople.contains(expected2),
+            "Did not find person " + expected2 + " in all people: " + allPeople);
+    }
+
+    @Test
+    public void testUpdateAge() {
+        Long personId = personSvc.createPerson("newAgePerson", 1);
+
+        Person originalPerson = personSvc.getPerson(personId);
+        assertEquals("newAgePerson", originalPerson.name);
+        assertEquals(1, originalPerson.age);
+        assertEquals(personId, Long.valueOf(originalPerson.id));
+
+        personSvc.updatePerson(personId,
+            new Person(originalPerson.name, 2, originalPerson.id));
+        Person updatedPerson = personSvc.getPerson(personId);
+        assertEquals("newAgePerson", updatedPerson.name);
+        assertEquals(2, updatedPerson.age);
+        assertEquals(personId, Long.valueOf(updatedPerson.id));
     }
 }
 ```
 
 
+Import the ***SharedContainerConfig*** annotation and annotate the ***PersonServiceIT*** class with ***@SharedContainerConfig***. 
 
-The ***InventoryServiceIT*** class uses the ***KafkaProducer*** client API to produce messages in the test environment for the ***inventory*** service container to consume. The ***@KafkaProducerClient*** annotation configures the producer to use the custom serializer provided in the ***SystemLoad*** class. The ***@KafkaProducerClient*** annotation doesn't include a topic that the client produces messages to because it has the flexibility to produce messages to any topic. In this example, it is configured to produce messages to the ***system.load*** topic.
 
-The ***testCpuUsage*** test method produces a message to Kafka and then ***verifies*** that the response from the ***inventory*** service matches what is expected.
+### Updating the ErrorPathIT class
 
-The ***@RESTClient*** annotation injects a REST client proxy of the ***InventoryResource*** class, which allows HTTP requests to be made to the running application. To learn more about REST clients, check out the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html) guide.
 
-### Running the tests
+Similarly, replace the ***ErrorPathIT*** class to remove the container code. Remove ***import*** statements for ***ApplicationContainer*** and ***Container*** and the ***ApplicationContainer app*** field.
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+Next, annotate the ***ErrorPathIT*** class with the ***@SharedContainerConfig*** annotation.
 
-You will see the following output:
+Replace the ***ErrorPathIT*** class.
 
+> To open the ErrorPathIT.java file in your IDE, select
+> **File** > **Open** > guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java, or click the following button
+
+::openFile{path="/home/project/guide-microshed-testing/start/src/test/java/io/openliberty/guides/testing/ErrorPathIT.java"}
+
+
+
+```java
+package io.openliberty.guides.testing;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+
+import org.junit.jupiter.api.Test;
+import org.microshed.testing.SharedContainerConfig;
+import org.microshed.testing.jaxrs.RESTClient;
+import org.microshed.testing.jupiter.MicroShedTest;
+
+@MicroShedTest
+@SharedContainerConfig(AppDeploymentConfig.class)
+public class ErrorPathIT {
+
+    @RESTClient
+    public static PersonService personSvc;
+
+    @Test
+    public void testGetUnknownPerson() {
+        assertThrows(NotFoundException.class, () -> personSvc.getPerson(-1L));
+    }
+
+    @Test
+    public void testCreateBadPersonNullName() {
+        assertThrows(BadRequestException.class, () -> personSvc.createPerson(null, 5));
+    }
+
+    @Test
+    public void testCreateBadPersonNegativeAge() {
+        assertThrows(BadRequestException.class, () ->
+          personSvc.createPerson("NegativeAgePersoN", -1));
+    }
+
+    @Test
+    public void testCreateBadPersonNameTooLong() {
+        assertThrows(BadRequestException.class, () ->
+           personSvc.createPerson("NameTooLongPersonNameTooLongPersonNameTooLongPerson",
+           5));
+    }
+}
 ```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.564 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
 
- Results:
 
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Import the ***SharedContainerConfig*** annotation and annotate the ***ErrorPathIT*** class with ***@SharedContainerConfig***. 
 
- Integration tests finished.
-```
 
-After you are finished running tests, stop the Open Liberty server by typing ***q*** in the command-line session where you ran the server, and then press the ***enter/return*** key.
-
-If you aren't running in dev mode, you can run the tests by running the following command:
-
+If you rerun the tests now, they run in about half the time because the same server instance is being used for both test classes:
 ```bash
 mvn verify
-```
-
-You will see the following output:
-
-```
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 42.345 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
-
- Results:
-
- Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
-
- --- maven-failsafe-plugin:2.22.2:verify (verify) @ inventory ---
- ------------------------------------------------------------------------
- BUILD SUCCESS
- ------------------------------------------------------------------------
- Total time:  48.213 s
- Finished at: 2020-03-13T16:43:34-04:00
- ------------------------------------------------------------------------
 ```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just tested two reactive Java microservices using MicroShed Testing.
+You developed automated tests for a REST service in Open Liberty by using MicroShed Testing and Open Liberty development mode.
 
 
 
@@ -485,36 +692,37 @@ You just tested two reactive Java microservices using MicroShed Testing.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-reactive-service-testing*** project by running the following commands:
+Delete the ***guide-microshed-testing*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-reactive-service-testing
+rm -fr guide-microshed-testing
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20reactive%20Java%20microservices&guide-id=cloud-hosted-guide-reactive-service-testing)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20a%20MicroProfile%20or%20Jakarta%20EE%20application&guide-id=cloud-hosted-guide-microshed-testing)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-service-testing/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-service-testing/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microshed-testing/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microshed-testing/pulls)
 
 
 
 ### Where to next?
 
-* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
 
 **Learn more about MicroShed Testing**
-* [Visit the official MicroShed Testing website](https://microshed.org/microshed-testing/)
+* [View the MicroShed Testing website](https://microshed.org/microshed-testing/)
 
 
 ### Log out of the session
