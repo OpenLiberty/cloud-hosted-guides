@@ -30,6 +30,7 @@ jobs:
           - {"github":"cloud-hosted-guide-kubernetes-intro","gitlab":"cloud-hosted-guide-kubernetes-intro","gitlab-branch":"lab-137-instruction"}
           - {"github":"cloud-hosted-guide-kubernetes-microprofile-config","gitlab":"cloud-hosted-guide-kubernetes-microprofile-config","gitlab-branch":"lab-143-instruction"}
           - {"github":"cloud-hosted-guide-kubernetes-microprofile-health","gitlab":"cloud-hosted-guide-kubernetes-microprofile-health","gitlab-branch":"lab-144-instruction"}
+          - {"github":"cloud-hosted-guide-liberty-deep-dive","gitlab":"cloud-hosted-liberty-deepdive","gitlab-branch":"lab-372-instruction"}
           - {"github":"cloud-hosted-guide-maven-intro","gitlab":"cloud-hosted-guide-maven-intro","gitlab-branch":"lab-91-instruction"}
           - {"github":"cloud-hosted-guide-maven-multimodules","gitlab":"cloud-hosted-guide-maven-multimodules","gitlab-branch":"lab-70-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-config","gitlab":"cloud-hosted-guide-microprofile-config","gitlab-branch":"lab-166-instruction"}
@@ -52,7 +53,6 @@ jobs:
           - {"github":"cloud-hosted-guide-rest-hateoas","gitlab":"cloud-hosted-guide-rest-hateoas","gitlab-branch":"lab-86-instruction"}
           - {"github":"cloud-hosted-guide-rest-intro","gitlab":"cloud-hosted-guide-rest-intro","gitlab-branch":"lab-141-instruction"}
           - {"github":"cloud-hosted-guide-spring-boot","gitlab":"cloud-hosted-guide-spring-boot","gitlab-branch":"lab-110-instruction"}
-          - {"github":"cloud-hosted-liberty-deep-dive","gitlab":"cloud-hosted-liberty-deepdive","gitlab-branch":"lab-372-instruction"}
 
     steps:
 
