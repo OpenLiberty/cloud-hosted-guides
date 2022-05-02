@@ -4,7 +4,7 @@ title: instructions
 branch: lab-372-instruction
 version-history-start-date: 2022-03-23T11:59:55Z
 ---
-::page{title="Welcome to the A Technical Deep on Liberty guide!"}
+::page{title="Welcome to the A Technical Deep Dive on Liberty guide!"}
 
 Liberty is a cloud-optimized Java runtime that is fast to start up with a low memory footprint and a development mode, known as dev mode, for quick iteration. With Liberty, adopting the latest open cloud-native Java APIs, like MicroProfile and Jakarta EE, is as simple as adding features to your server configuration. The Liberty zero migration architecture lets you focus on what's important and not the APIs changing under you.
 
@@ -5288,7 +5288,7 @@ ARG REVISION=SNAPSHOT
 
 ### Nice Work!
 
-You just learned to build a microservice in Liberty!
+You just completed a hands-on deep dive on Liberty!
 
 
 
@@ -5308,7 +5308,7 @@ rm -fr guide-liberty-deep-dive
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=A%20Technical%20Deep%20on%20Liberty&guide-id=cloud-hosted-guide-liberty-deep-dive)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=A%20Technical%20Deep%20Dive%20on%20Liberty&guide-id=cloud-hosted-guide-liberty-deep-dive)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
