@@ -345,7 +345,7 @@ kubectl delete -f deploy.yaml
 
 ### Nice Work!
 
-You just deployed a microservice running in Open Liberty to Kubernetes and implemented application health checks by using the Open Liberty Operator.
+You just deployed a microservice running in Open Liberty to Kubernetes and configured the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator.
 
 
 
