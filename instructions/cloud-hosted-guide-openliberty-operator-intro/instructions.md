@@ -27,7 +27,7 @@ You will learn how to deploy a cloud-native application with a microservice to K
 
 The application in this guide consists of one microservice, ***system***. The system microservice returns the JVM system properties of its host.
 
-You will deploy the ***system*** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) provides a method of packaging, deploying, and managing Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including ***Deployments***, ***Services***, and ***Routes***, depending on the configurations. The Operator then continuously compares the current state of the resources, the desired state of application deployment, and reconciles them when necessary.
+You will deploy the ***system*** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) packages, deploys, and manages Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including ***Deployments***, ***Services***, and ***Routes***, depending on the configurations. The Operator then continuously compares the current state of the resources, the desired state of application deployment, and reconciles them when necessary.
 
 
 
@@ -243,11 +243,11 @@ Run the following command to remove the deployed ***system*** microservice:
 kubectl delete -f deploy.yaml
 ```
 
-::page{title="Specifying other parameters"}
+::page{title="Specifying optional parameters"}
 
-You can visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1beta2.adoc#configuration) to find all of the supported optional parameters.
+You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1beta2.adoc#configuration) to find all of the supported optional CRDs.
 
-You can now configure the startup, readiness, and liveness probes. The ***startup probe*** is used to verify whether deployed application is fully initialized before the liveness probe takes over, the ***liveness probe*** is used to determine whether the application is running, and the ***readiness probe*** is used to know whether the application is ready to process requests.
+To configure the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator, specify the ***probes*** in your ***deploy.yaml*** file. The ***startup*** probe verifies whether deployed application is fully initialized before the liveness probe takes over. Then, the ***liveness*** probe determines whether the application is running and the ***readiness*** probe determines whether the application is ready to process requests. For more information about application health checks, see the [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide.
 
 Replace the ***deploy.yaml*** configuration file.
 
@@ -309,7 +309,7 @@ spec:
 
 
 
-The health check endpoints ***/health/started***, ***/health/live*** and ***/health/ready*** have already been created for you. 
+The health check endpoints ***/health/started***, ***/health/live*** and ***/health/ready*** are already created for you. 
 
 
 Run the following commands to update the **applicationImage** with the **pullSecret** and redeploy the **system** microservice with the new configuration:
@@ -345,7 +345,7 @@ kubectl delete -f deploy.yaml
 
 ### Nice Work!
 
-You just deployed a microservice running in Open Liberty to Kubernetes by using the Open Liberty Operator.
+You just deployed a microservice running in Open Liberty to Kubernetes and implemented application health checks by using the Open Liberty Operator.
 
 
 
