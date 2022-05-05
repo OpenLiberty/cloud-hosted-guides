@@ -1,10 +1,10 @@
 ---
+markdown-version: v1
 title: instructions
-branch: lab-160-instruction
-version-history-start-date: 2020-09-14 09:20:41 UTC
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
 ---
-
-# **Welcome to the Consuming RESTful services using the reactive JAX-RS client guide!**
+::page{title="Welcome to the Consuming RESTful services using the reactive JAX-RS client guide!"}
 
 Learn how to use a reactive JAX-RS client to asynchronously invoke RESTful microservices over HTTP.
 
@@ -16,7 +16,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 First, you'll learn how to create a reactive JAX-RS client application by using the default reactive JAX-RS client APIs.
 You will then learn how to take advantage of the RxJava reactive extensions with a
@@ -33,78 +33,76 @@ the application is not blocked from responding to other requests in the meantime
 Because reactive applications can run faster than synchronous applications, they provide a much smoother user experience.
 
 The application in this guide demonstrates how the JAX-RS client accesses remote RESTful services by using asynchronous method calls. 
-You’ll first look at the supplied client application that uses the JAX-RS default **CompletionStage**-based provider. 
+You’ll first look at the supplied client application that uses the JAX-RS default ***CompletionStage***-based provider. 
 Then, you’ll modify the client application to use Jersey’s RxJava provider, which is an alternative JAX-RS reactive provider. 
 Both Jersey and Apache CXF provide third-party reactive libraries for RxJava and were tested for use in Open Liberty.
 
-The application that you will be working with consists of three microservices, **system**, **inventory**, and **query**. 
-Every 15 seconds, the **system** microservice calculates and publishes an event that contains its current average system load. 
-The **inventory** microservice subscribes to that information so that it can keep an updated list of all the systems
+The application that you will be working with consists of three microservices, ***system***, ***inventory***, and ***query***. 
+Every 15 seconds, the ***system*** microservice calculates and publishes an event that contains its current average system load. 
+The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems
 and their current system loads.
 
-![Reactive Query Service](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-rest-client/master/assets/QueryService.png)
+![Reactive Query Service](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-rest-client/prod/assets/QueryService.png)
 
 
-The microservice that you will modify is the **query** service. It communicates with the **inventory** service 
+The microservice that you will modify is the ***query*** service. It communicates with the ***inventory*** service 
 to determine which system has the highest system load and which system has the lowest system load.
 
-The **system** and **inventory** microservices use MicroProfile Reactive Messaging to send and receive the system load events.
+The ***system*** and ***inventory*** microservices use MicroProfile Reactive Messaging to send and receive the system load events.
 If you want to learn more about reactive messaging, see the 
 [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-# **Getting started**
+::page{title="Getting started"}
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
 
 Run the following command to navigate to the **/home/project** directory:
 
-```
+```bash
 cd /home/project
 ```
-{: codeblock}
 
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-rest-client.git) and use the projects that are provided inside:
 
-```
+```bash
 git clone https://github.com/openliberty/guide-reactive-rest-client.git
 cd guide-reactive-rest-client
 ```
-{: codeblock}
 
 
-The **start** directory contains the starting project that you will build upon.
+The ***start*** directory contains the starting project that you will build upon.
 
-The **finish** directory contains the finished project that you will build.
+The ***finish*** directory contains the finished project that you will build.
 
-# **Creating a web client using the default JAX-RS API**
+::page{title="Creating a web client using the default JAX-RS API"}
 
-Navigate to the **start** directory to begin.
+Navigate to the ***start*** directory to begin.
 ```
 cd /home/project/guide-reactive-rest-client/start
 ```
-{: codeblock}
 
-JAX-RS provides a default reactive provider that you can use to create a reactive REST client using the **CompletionStage** interface.
+JAX-RS provides a default reactive provider that you can use to create a reactive REST client using the ***CompletionStage*** interface.
 
-Create an **InventoryClient** class, which retrieves inventory data,
-and a **QueryResource** class, which queries data from the **inventory** service.
+Create an ***InventoryClient*** class, which retrieves inventory data,
+and a ***QueryResource*** class, which queries data from the ***inventory*** service.
 
-Create the **InventoryClient** interface.
+Create the ***InventoryClient*** interface.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
 ```
-{: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
+> Then, to open the InventoryClient.java file in your IDE, select
+> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java"}
 
 
 
-
-```
+```java
 package io.openliberty.guides.query.client;
 
 import java.util.List;
@@ -149,32 +147,32 @@ public class InventoryClient {
     }
 }
 ```
-{: codeblock}
 
 
 
-The **getSystem()** method returns the **CompletionStage** interface. 
+The ***getSystem()*** method returns the ***CompletionStage*** interface. 
 This interface represents a unit or stage of a computation.
 When the associated computation completes, the value can be retrieved. 
-The **rx()** method calls the **CompletionStage** interface. 
-It retrieves the **CompletionStageRxInvoker** class and allows these methods to
-function correctly with the **CompletionStage** interface return type.
+The ***rx()*** method calls the ***CompletionStage*** interface. 
+It retrieves the ***CompletionStageRxInvoker*** class and allows these methods to
+function correctly with the ***CompletionStage*** interface return type.
 
-Create the **QueryResource** class.
+Create the ***QueryResource*** class.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
 ```
-{: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
+> Then, to open the QueryResource.java file in your IDE, select
+> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
 
 
 
-
-```
+```java
 package io.openliberty.guides.query;
 
 import java.math.BigDecimal;
@@ -269,71 +267,61 @@ public class QueryResource {
     }
 }
 ```
-{: codeblock}
 
 
 
-The **systemLoad** endpoint asynchronously processes the data that is
-retrieved by the **InventoryClient** interface and serves that data after all of the services respond. 
-The **thenAcceptAsync()** and **exceptionally()**
+The ***systemLoad*** endpoint asynchronously processes the data that is
+retrieved by the ***InventoryClient*** interface and serves that data after all of the services respond. 
+The ***thenAcceptAsync()*** and ***exceptionally()***
 methods together behave like an asynchronous try-catch block. 
-The data is processed in the **thenAcceptAsync()** method only after the **CompletionStage** interface finishes retrieving it. 
-When you return a **CompletionStage** type in the resource, it doesn’t necessarily mean that the computation completed and the response was built.
+The data is processed in the ***thenAcceptAsync()*** method only after the ***CompletionStage*** interface finishes retrieving it. 
+When you return a ***CompletionStage*** type in the resource, it doesn’t necessarily mean that the computation completed and the response was built.
 
-A **CountDownLatch** object is used to track how many asynchronous requests are being waited on. 
-After each thread is completed, the **countdown()** method
-counts the **CountDownLatch** object down towards **0**. 
+A ***CountDownLatch*** object is used to track how many asynchronous requests are being waited on. 
+After each thread is completed, the ***countdown()*** method
+counts the ***CountDownLatch*** object down towards ***0***. 
 This means that the value returns only after the thread that's retrieving the value is complete.
-The **await()** method stops and waits until all of the requests are complete. 
+The ***await()*** method stops and waits until all of the requests are complete. 
 While the countdown completes, the main thread is free to perform other tasks. 
 In this case, no such task is present.
 
-# **Building and running the application**
+::page{title="Building and running the application"}
 
-The **system**, **inventory**, and **query** microservices will be built in Docker containers. 
+The ***system***, ***inventory***, and ***query*** microservices will be built in Docker containers. 
 If you want to learn more about Docker containers,
 check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
 
 Start your Docker environment.
 
-To build the application, run the Maven **install** and **package** goals from the command-line session in the **start** directory:
+To build the application, run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
 
-```
+```bash
 mvn -pl models install
 mvn package
 ```
-{: codeblock}
-
 
 Run the following command to download or update to the latest Open Liberty Docker image:
 
-```
+```bash
 docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
-{: codeblock}
-
 
 Run the following commands to containerize the microservices:
 
-```
+```bash
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 docker build -t query:1.0-SNAPSHOT query/.
 ```
-{: codeblock}
-
 
 Next, use the provided script to start the application in Docker containers.
 The script creates a network for the containers to communicate with each other.
 It creates containers for Kafka, Zookeeper, and all of the microservices in the project.
 
 
-```
+```bash
 ./scripts/startContainers.sh
 ```
-{: codeblock}
-
-
 
 
 The microservices will take some time to become available.
@@ -341,19 +329,16 @@ Run the following commands to confirm that the **inventory** and **query** micro
 ```
 curl -s http://localhost:9085/health | jq
 ```
-{: codeblock}
 
 ```
 curl -s http://localhost:9080/health | jq
 ```
-{: codeblock}
 
 Once the microservices are up and running, you can access the application by making requests to the **query/systemLoad** endpoint
 by using the following **curl** command:
 ```
 curl -s http://localhost:9080/query/systemLoad | jq
 ```
-{: codeblock}
 
 When the service is ready, you see an output similar to the following example. 
 This example was formatted for readability:
@@ -371,201 +356,53 @@ This example was formatted for readability:
 }
 ```
 
-The JSON output contains a **highest** attribute that represents the system with the highest load.
-Similarly, the **lowest** attribute represents the system with the lowest load. 
-The JSON output for each of these attributes contains the **hostname** and **systemLoad** of the system.
+The JSON output contains a ***highest*** attribute that represents the system with the highest load.
+Similarly, the ***lowest*** attribute represents the system with the lowest load. 
+The JSON output for each of these attributes contains the ***hostname*** and ***systemLoad*** of the system.
 
-When you are done checking out the application, run the following command to stop the **query** microservice. 
-Leave the **system** and **inventory** services running because they will be used when the application is rebuilt later in the guide:
+When you are done checking out the application, run the following command to stop the ***query*** microservice. 
+Leave the ***system*** and ***inventory*** services running because they will be used when the application is rebuilt later in the guide:
 
-```
+```bash
 docker stop query
 ```
-{: codeblock}
 
 
+::page{title="Updating the web client to use an alternative reactive provider"}
 
-# **Updating the web client to use an alternative reactive provider**
 
-
-Although JAX-RS provides the default reactive provider that returns **CompletionStage** types,
+Although JAX-RS provides the default reactive provider that returns ***CompletionStage*** types,
 you can alternatively use another provider that supports other reactive frameworks like [RxJava](https://github.com/ReactiveX/RxJava). 
 The Apache CXF and Eclipse Jersey projects produce such providers.
 You'll now update the web client to use the Jersey reactive provider for RxJava. 
-With this updated reactive provider, you can write clients that use RxJava objects instead of clients that use only the **CompletionStage** interface. 
-These custom objects provide a simpler and faster way for you to create scalable RESTful services with a **CompletionStage** interface.
+With this updated reactive provider, you can write clients that use RxJava objects instead of clients that use only the ***CompletionStage*** interface. 
+These custom objects provide a simpler and faster way for you to create scalable RESTful services with a ***CompletionStage*** interface.
 
 Replace the Maven configuration file.
 
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-reactive-rest-client/start/query/pom.xml
+> To open the unknown file in your IDE, select
+> **File** > **Open** > guide-reactive-rest-client/start/unknown, or click the following button
+
+::openFile{path="/home/project/guide-reactive-rest-client/start/unknown"}
 
 
-
-
-```
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>query</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>8.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.enterprise.concurrent</groupId>
-            <artifactId>javax.enterprise.concurrent-api</artifactId>
-            <version>1.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-            <version>2.0.1.Final</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>3.3</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.openliberty.guides</groupId>
-            <artifactId>models</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <!-- tag::jerseyClient[] -->
-        <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-client</artifactId>
-            <version>2.35</version>
-        </dependency>
-        <!-- tag::jerseyRxjava[] -->
-        <dependency>
-            <groupId>org.glassfish.jersey.ext.rx</groupId>
-            <artifactId>jersey-rx-client-rxjava</artifactId>
-            <version>2.35</version>
-        </dependency>
-        <!-- tag::jerseyRxjava2[] -->
-        <dependency>
-            <groupId>org.glassfish.jersey.ext.rx</groupId>
-            <artifactId>jersey-rx-client-rxjava2</artifactId>
-            <version>2.35</version>
-        </dependency>
-        <!-- For tests -->
-        <dependency>
-            <groupId>org.microshed</groupId>
-            <artifactId>microshed-testing-liberty</artifactId>
-            <version>0.9.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>mockserver</artifactId>
-            <version>1.16.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mock-server</groupId>
-            <artifactId>mockserver-client-java</artifactId>
-            <version>5.11.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.8.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
-                <configuration>
-                    <packagingExcludes>pom.xml</packagingExcludes>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5.1</version>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <executions>
-                    <execution>
-                        <id>integration-test</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>verify</id>
-                        <goals>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-{: codeblock}
-
-
-The **jersey-rx-client-rxjava** and
-**jersey-rx-client-rxjava2** dependencies provide the **RxInvokerProvider** classes,
-which are registered to the **jersey-client** **ClientBuilder** class.
+The ***jersey-rx-client-rxjava*** and
+***jersey-rx-client-rxjava2*** dependencies provide the ***RxInvokerProvider*** classes,
+which are registered to the ***jersey-client*** ***ClientBuilder*** class.
 
 Update the client to accommodate the custom object types that you are trying to return. 
 You'll need to register the type of object that you want inside the client invocation.
 
-Replace the **InventoryClient** interface.
+Replace the ***InventoryClient*** interface.
 
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
+> To open the InventoryClient.java file in your IDE, select
+> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java"}
 
 
 
-
-```
+```java
 package io.openliberty.guides.query.client;
 
 import java.util.List;
@@ -615,170 +452,67 @@ public class InventoryClient {
     }
 }
 ```
-{: codeblock}
 
 
 
-The return type of the **getSystem()** method is now an **Observable** object instead of a **CompletionStage** interface. 
+The return type of the ***getSystem()*** method is now an ***Observable*** object instead of a ***CompletionStage*** interface. 
 [Observable](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html) is a
 collection of data that waits to be subscribed to before it can release any data and is part of RxJava. 
-The **rx()** method now needs to contain **RxObservableInvoker.class** as an argument.
-This argument calls the specific invoker, **RxObservableInvoker**, for the **Observable** class that's provided by Jersey. 
-In the **getSystem()** method,
-the **register(RxObservableInvokerProvider)** method call registers the **RxObservableInvoker** class,
+The ***rx()*** method now needs to contain ***RxObservableInvoker.class*** as an argument.
+This argument calls the specific invoker, ***RxObservableInvoker***, for the ***Observable*** class that's provided by Jersey. 
+In the ***getSystem()*** method,
+the ***register(RxObservableInvokerProvider)*** method call registers the ***RxObservableInvoker*** class,
 which means that the client can recognize the invoker provider.
 
 In some scenarios, a producer might generate more data than the consumers can handle. 
-JAX-RS can deal with cases like these by using the RxJava **Flowable** class with backpressure. 
+JAX-RS can deal with cases like these by using the RxJava ***Flowable*** class with backpressure. 
 To learn more about RxJava and backpressure, see
 [JAX-RS reactive extensions with RxJava backpressure](https://openliberty.io/blog/2019/04/10/jaxrs-reactive-extensions.html).
 
-# **Updating the REST resource to support the reactive JAX-RS client**
+::page{title="Updating the REST resource to support the reactive JAX-RS client"}
 
 
-Now that the client methods return the **Observable** class, you must update the resource to accommodate these changes.
+Now that the client methods return the ***Observable*** class, you must update the resource to accommodate these changes.
 
-Replace the **QueryResource** class.
+Replace the ***QueryResource*** class.
 
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
+> To open the unknown file in your IDE, select
+> **File** > **Open** > guide-reactive-rest-client/start/unknown, or click the following button
 
-
-
-
-```
-package io.openliberty.guides.query;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
-import io.openliberty.guides.query.client.InventoryClient;
-
-@ApplicationScoped
-@Path("/query")
-public class QueryResource {
-    
-    @Inject
-    private InventoryClient inventoryClient;
-
-    @GET
-    @Path("/systemLoad")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Properties> systemLoad() {
-        List<String> systems = inventoryClient.getSystems();
-        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
-        final Holder systemLoads = new Holder();
-        for (String system : systems) {
-            inventoryClient.getSystem(system)
-                           .subscribe(p -> {
-                                if (p != null) {
-                                    systemLoads.updateValues(p);
-                                }
-                                remainingSystems.countDown();
-                           }, e -> {
-                                remainingSystems.countDown();
-                                e.printStackTrace();
-                           });
-        }
-
-        try {
-            remainingSystems.await(30, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        
-        return systemLoads.getValues();
-    }
-
-    private class Holder {
-        private volatile Map<String, Properties> values;
-
-        public Holder() {
-            this.values = new ConcurrentHashMap<String, Properties>();
-            init();
-        }
-
-        public Map<String, Properties> getValues() {
-            return this.values;
-        }
-
-        public void updateValues(Properties p) {
-            final BigDecimal load = (BigDecimal) p.get("systemLoad");
-
-            this.values.computeIfPresent("lowest", (key, curr_val) -> {
-                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(lowest) < 0 ? p : curr_val;
-            });
-            this.values.computeIfPresent("highest", (key, curr_val) -> {
-                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
-                return load.compareTo(highest) > 0 ? p : curr_val;
-            });
-        }
-
-        private void init() {
-            this.values.put("highest", new Properties());
-            this.values.put("lowest", new Properties());
-            this.values.get("highest").put("hostname", "temp_max");
-            this.values.get("lowest").put("hostname", "temp_min");
-            this.values.get("highest").put("systemLoad", new BigDecimal(Double.MIN_VALUE));
-            this.values.get("lowest").put("systemLoad", new BigDecimal(Double.MAX_VALUE));
-        }
-    }
-}
-```
-{: codeblock}
+::openFile{path="/home/project/guide-reactive-rest-client/start/unknown"}
 
 
-The goal of the **systemLoad()** method is to return the system with the largest load and the system with the smallest load. 
-The **systemLoad** endpoint first gets all of the hostnames by calling the **getSystems()** method. 
-Then it loops through the hostnames and calls the **getSystem()** method on each one.
+The goal of the ***systemLoad()*** method is to return the system with the largest load and the system with the smallest load. 
+The ***systemLoad*** endpoint first gets all of the hostnames by calling the ***getSystems()*** method. 
+Then it loops through the hostnames and calls the ***getSystem()*** method on each one.
 
-Instead of using the **thenAcceptAsync()** method,
-**Observable** uses the **subscribe()** method to asynchronously process data. 
-Thus, any necessary data processing happens inside the **subscribe()** method. 
-In this case, the necessary data processing is saving the data in the temporary **Holder** class.
-The **Holder** class is used to store the value that is returned from the client because values cannot be returned inside the **subscribe()** method. 
-The highest and lowest load systems are updated in the **updateValues()** method.
+Instead of using the ***thenAcceptAsync()*** method,
+***Observable*** uses the ***subscribe()*** method to asynchronously process data. 
+Thus, any necessary data processing happens inside the ***subscribe()*** method. 
+In this case, the necessary data processing is saving the data in the temporary ***Holder*** class.
+The ***Holder*** class is used to store the value that is returned from the client because values cannot be returned inside the ***subscribe()*** method. 
+The highest and lowest load systems are updated in the ***updateValues()*** method.
 
-# **Rebuilding and running the application**
+::page{title="Rebuilding and running the application"}
 
-Run the Maven **install** and **package** goals from the command-line session in the **start** directory:
+Run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
 
-```
+```bash
 mvn -pl query package
 ```
-{: codeblock}
 
+Run the following command to containerize the ***query*** microservice:
 
-Run the following command to containerize the **query** microservice:
-
-```
+```bash
 docker build -t query:1.0-SNAPSHOT query/.
 ```
-{: codeblock}
-
 
 Next, use the provided script to restart the query service in a Docker container. 
 
 
-```
+```bash
 ./scripts/startQueryContainer.sh
 ```
-{: codeblock}
-
-
 
 
 The **query** microservice will take some time to become available.
@@ -786,7 +520,6 @@ Run the following command to confirm that the **query** microservice is up and r
 ```
 curl -s http://localhost:9080/health | jq
 ```
-{: codeblock}
 
 Once the **query** microservice is up and running, 
 you can access the application by making requests to the **query/systemLoad** endpoint using
@@ -794,9 +527,8 @@ the following **curl** command:
 ```
 curl -s http://localhost:9080/query/systemLoad | jq
 ```
-{: codeblock}
 
-Switching to a reactive programming model freed up the thread that was handling your request to **query/systemLoad**. 
+Switching to a reactive programming model freed up the thread that was handling your request to ***query/systemLoad***. 
 While the client request is being handled, the thread can handle other work.
 
 When you are done checking out the application, run the following script to stop the application:
@@ -806,29 +538,29 @@ When you are done checking out the application, run the following script to stop
 ```
 ./scripts/stopContainers.sh
 ```
-{: codeblock}
 
 
-# **Testing the query microservice**
+::page{title="Testing the query microservice"}
 
-A few tests are included for you to test the basic functionality of the **query** microservice. 
+A few tests are included for you to test the basic functionality of the ***query*** microservice. 
 If a test failure occurs, then you might have introduced a bug into the code.
 
-Create the **QueryServiceIT** class.
+Create the ***QueryServiceIT*** class.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
 ```
-{: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
+> Then, to open the QueryServiceIT.java file in your IDE, select
+> **File** > **Open** > guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java"}
 
 
 
-
-```
+```java
 package it.io.openliberty.guides.query;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -922,26 +654,22 @@ public class QueryServiceIT {
 
 }
 ```
-{: codeblock}
 
 
-The **testSystemLoad()** test case verifies that the
-**query** service can correctly calculate the highest and lowest system loads. 
+The ***testSystemLoad()*** test case verifies that the
+***query*** service can correctly calculate the highest and lowest system loads. 
 
 
 
 
-<br/>
-### **Running the tests**
+### Running the tests
 
-Navigate to the **query** directory, then verify that the tests pass by running the Maven **verify** goal:
+Navigate to the ***query*** directory, then verify that the tests pass by running the Maven ***verify*** goal:
 
-```
+```bash
 cd query
 mvn verify
 ```
-{: codeblock}
-
 
 When the tests succeed, you see output similar to the following example:
 
@@ -957,30 +685,27 @@ Results:
 Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-# **Summary**
+::page{title="Summary"}
 
-## **Nice Work!**
+### Nice Work!
 
 You modified an application to make HTTP requests by using a reactive JAX-RS client with Open Liberty and Jersey's RxJava provider.
 
 
 
-<br/>
-## **Clean up your environment**
+### Clean up your environment
 
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-reactive-rest-client** project by running the following commands:
+Delete the ***guide-reactive-rest-client*** project by running the following commands:
 
-```
+```bash
 cd /home/project
 rm -fr guide-reactive-rest-client
 ```
-{: codeblock}
 
-<br/>
-## **What did you think of this guide?**
+### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
@@ -988,8 +713,7 @@ We want to hear from you. To provide feedback, click the following link.
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
-<br/>
-## **What could make this guide better?**
+### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-rest-client/issues)
@@ -997,14 +721,12 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/>
-## **Where to next?**
+### Where to next?
 
 * [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
 * [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 
-<br/>
-## **Log out of the session**
+### Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
