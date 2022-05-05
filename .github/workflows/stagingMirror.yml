@@ -39,7 +39,7 @@ jobs:
           # - {"github":"cloud-hosted-guide-microprofile-opentracing","gitlab":"cloud-hosted-guide-microprofile-opentracing"}
           # - {"github":"cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment"}
           # - {"github":"cloud-hosted-guide-microprofile-reactive-messaging-rest-integration","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-rest-integration"}
-          - {"github":"cloud-hosted-guide-microprofile-rest-client-async","gitlab":"cloud-hosted-guide-microprofile-rest-client-async"}
+          # - {"github":"cloud-hosted-guide-microprofile-rest-client-async","gitlab":"cloud-hosted-guide-microprofile-rest-client-async"}
           # - {"github":"cloud-hosted-guide-microprofile-rest-client","gitlab":"cloud-hosted-guide-microprofile-rest-client"}
           - {"github":"cloud-hosted-guide-microshed-testing","gitlab":"cloud-hosted-guide-microshed-testing"}
           - {"github":"cloud-hosted-guide-reactive-messaging-openshift","gitlab":"cloud-hosted-guide-reactive-messaging-openshift"}
