@@ -44,7 +44,7 @@ jobs:
           - {"github":"cloud-hosted-guide-microshed-testing","gitlab":"cloud-hosted-guide-microshed-testing"}
           - {"github":"cloud-hosted-guide-reactive-messaging-openshift","gitlab":"cloud-hosted-guide-reactive-messaging-openshift"}
           # - {"github":"cloud-hosted-guide-microprofile-reactive-messaging","gitlab":"cloud-hosted-guide-reactive-messaging"}
-          - {"github":"cloud-hosted-guide-reactive-rest-client","gitlab":"cloud-hosted-guide-reactive-rest-client"}
+          # - {"github":"cloud-hosted-guide-reactive-rest-client","gitlab":"cloud-hosted-guide-reactive-rest-client"}
           - {"github":"cloud-hosted-guide-reactive-service-testing","gitlab":"cloud-hosted-guide-reactive-service-testing"}
           # - {"github":"cloud-hosted-guide-rest-client-java","gitlab":"cloud-hosted-guide-rest-client-java"}
           # - {"github":"cloud-hosted-guide-rest-intro","gitlab":"cloud-hosted-guide-rest-intro"}
