@@ -43,6 +43,7 @@ jobs:
           - {"github":"cloud-hosted-guide-microprofile-opentracing-jaeger","gitlab":"cloud-hosted-guide-microprofile-opentracing-jaeger","gitlab-branch":"lab-153-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-reactive-messaging","gitlab":"cloud-hosted-guide-reactive-messaging","gitlab-branch":"lab-164-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment","gitlab-branch":"lab-159-instruction"}
+          - {"github":"cloud-hosted-guide-microprofile-reactive-messaging-rest-integration","gitlab":"cloud-hosted-guide-microprofile-reactive-messaging-rest-integration","gitlab-branch":"lab-161-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-rest-client","gitlab":"cloud-hosted-guide-microprofile-rest-client","gitlab-branch":"lab-139-instruction"}
           - {"github":"cloud-hosted-guide-openliberty-operator-intro","gitlab":"cloud-hosted-guide-openliberty-operator-intro","gitlab-branch":"lab-85-instruction"}
           - {"github":"cloud-hosted-guide-openliberty-operator-openshift","gitlab":"cloud-hosted-guide-openliberty-operator-openshift","gitlab-branch":"lab-21-instruction"}
