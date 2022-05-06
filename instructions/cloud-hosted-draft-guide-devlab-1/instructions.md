@@ -854,6 +854,7 @@ curl -s http://localhost:9082/graphql/schema.graphql
 
 To access the GraphQL service, GraphiQL has already been set up and included for you.
 Click the following button to access GraphiQL:
+
 ::startApplication{port="9082" display="external" name="Launch GraphiQL" route="/graphql-ui"}
 
 Queries that are made through GraphiQL are the same as queries that are made through HTTP requests. You can also view the schema through GraphiQL by clicking the ***Docs*** button on the menu bar.
