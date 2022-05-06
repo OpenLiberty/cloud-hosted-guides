@@ -448,7 +448,7 @@ The ***system*** service is available so the request to the service is successfu
 
 
 You can revisit the ***inventory*** service by running the following curl command:
-```
+```bash
 curl -s http://localhost:9085/inventory/systems | jq
 ```
 
