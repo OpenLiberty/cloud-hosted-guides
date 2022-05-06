@@ -25,7 +25,7 @@ Reactive programming is an extension of asynchronous programming and focuses on 
 
 The application in this guide demonstrates how the JAX-RS client accesses remote RESTful services by using asynchronous method calls. You’ll first look at the supplied client application that uses the JAX-RS default ***CompletionStage***-based provider. Then, you’ll modify the client application to use Jersey’s RxJava provider, which is an alternative JAX-RS reactive provider. Both Jersey and Apache CXF provide third-party reactive libraries for RxJava and were tested for use in Open Liberty.
 
-The application that you will be working with consists of three microservices, ***system***, ***inventory***, and ***query***. Every 15 seconds, the ***system*** microservice calculates and publishes an event that contains its current average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systemsand their current system loads.
+The application that you will be working with consists of three microservices, ***system***, ***inventory***, and ***query***. Every 15 seconds, the ***system*** microservice calculates and publishes an event that contains its current average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads.
 
 ![Reactive Query Service](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-rest-client/prod/assets/QueryService.png)
 
@@ -132,7 +132,7 @@ public class InventoryClient {
 
 
 
-The ***getSystem()*** method returns the ***CompletionStage*** interface. This interface represents a unit or stage of a computation. When the associated computation completes, the value can be retrieved. The ***rx()*** method calls the ***CompletionStage*** interface. It retrieves the ***CompletionStageRxInvoker*** class and allows these methods tofunction correctly with the ***CompletionStage*** interface return type.
+The ***getSystem()*** method returns the ***CompletionStage*** interface. This interface represents a unit or stage of a computation. When the associated computation completes, the value can be retrieved. The ***rx()*** method calls the ***CompletionStage*** interface. It retrieves the ***CompletionStageRxInvoker*** class and allows these methods to function correctly with the ***CompletionStage*** interface return type.
 
 Create the ***QueryResource*** class.
 
