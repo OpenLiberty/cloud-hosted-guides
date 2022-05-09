@@ -4,9 +4,9 @@ title: instructions
 branch: lab-207-instruction
 version-history-start-date: 2022-02-11T18:24:15Z
 ---
-::page{title="Welcome to the Checking the health of microservices on Kubernetes guide!"}
+::page{title="Welcome to the Streaming updates to a client using Server-Sent Events guide!"}
 
-Learn how to check the health of microservices on Kubernetes by setting up startup, liveness, and readiness probes to inspect MicroProfile Health Check endpoints.
+Learn how to stream updates from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,18 +17,26 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to create health check endpoints for your microservices. Then, you will configure Kubernetes to use these endpoints to keep your microservices running smoothly. 
+You will learn how to stream messages from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
 
-MicroProfile Health allows services to report their health, and it publishes the overall health status to defined endpoints. If a service reports ***UP***, then it's available. If the service reports ***DOWN***, then it's unavailable. MicroProfile Health reports an individual service status at the endpoint and indicates the overall status as ***UP*** if all the services are ***UP***. A service orchestrator can then use the health statuses to make decisions.
+MicroProfile Reactive Messaging provides an easy way for Java services to send requests to other Java services, and asynchronously receive and process the responses as a stream of events. SSE provides a framework to stream the data in these events to a browser client.
 
-Kubernetes provides startup, liveness, and readiness probes that are used to check the health of your containers. These probes can check certain files in your containers, check a TCP socket, or make HTTP requests. MicroProfile Health exposes startup, liveness, and readiness endpoints on your microservices. Kubernetes polls these endpoints as specified by the probes to react appropriately to any change in the microservice's status. Read the [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) guide to learn more about MicroProfile Health.
+### What is SSE?
 
-The two microservices you will work with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster.
+Server-Sent Events is an API that allows clients to subscribe to a stream of events that is pushed from a server. First, the client makes a connection with the server over HTTP. The server continuously pushes events to the client as long as the connection persists. SSE differs from traditional HTTP requests, which use one request for one response. SSE also differs from Web Sockets in that SSE is unidirectional from the server to the client, and Web Sockets allow for bidirectional communication.
+
+For example, an application that provides real-time stock quotes might use SSE to push price updates from the server to the browser as soon as the server receives them. Such an application wouldn't need Web Sockets because the data travels in only one direction, and polling the server by using HTTP requests wouldn't provide real-time updates.
+
+The application that you will build in this guide consists of a ***frontend*** service, a ***bff*** (backend for frontend) service, and three instances of a ***system*** service. The ***system*** services periodically publish messages that contain their hostname and current system load. The ***bff*** service receives the messages from the ***system*** services and pushes the contents as SSE to a JavaScript client in the ***frontend*** service. This client uses the events to update a table in the UI that displays each system's hostname and its periodically updating load. The following diagram depicts the application that is used in this guide:
+
+![SSE Diagram](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/prod/assets/SSE_Diagram.png)
 
 
+In this guide, you will set up the ***bff*** service by creating an endpoint that clients can use to subscribe to events. You will also enable the service to read from the reactive messaging channel and push the contents to subscribers via SSE. After that, you will configure the Kafka connectors to allow the ***bff*** service to receive messages from the ***system*** services. Finally, you will configure the client in the ***frontend*** service to subscribe to these events, consume them, and display them in the UI.
+
+To learn more about the reactive Java services that are used in this guide, check out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 
 
@@ -43,11 +51,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-health.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-messaging-sse.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-kubernetes-microprofile-health.git
-cd guide-kubernetes-microprofile-health
+git clone https://github.com/openliberty/guide-reactive-messaging-sse.git
+cd guide-reactive-messaging-sse
 ```
 
 
@@ -56,585 +64,293 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-::page{title="Adding health checks to the inventory microservice"}
 
-Navigate to ***start*** directory to begin.
+::page{title="Setting up SSE in the bff service"}
 
-Create the ***InventoryStartupCheck*** class.
+In this section, you will create a REST API for SSE in the ***bff*** service. When a client makes a request to this endpoint, the initial connection between the client and server is established and the client is subscribed to receive events that are pushed from the server. Later in this guide, the client in the ***frontend*** service uses this endpoint to subscribe to the events that are pushed from the ***bff*** service.
+
+Additionally, you will enable the ***bff*** service to read messages from the incoming stream and push the contents as events to subscribers via SSE.
+
+Navigate to the ***start*** directory to begin.
+
+Create the BFFResource class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java
 ```
 
 
-> Then, to open the InventoryStartupCheck.java file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java, or click the following button
+> Then, to open the BFFResource.java file in your IDE, select
+> **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java, or click the following button
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java"}
+::openFile{path="/home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.bff;
 
-import java.lang.management.ManagementFactory;
-import com.sun.management.OperatingSystemMXBean;
-import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.health.Startup;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+import io.openliberty.guides.models.SystemLoad;
 
-@Startup
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.sse.OutboundSseEvent;
+import javax.ws.rs.sse.Sse;
+import javax.ws.rs.sse.SseBroadcaster;
+import javax.ws.rs.sse.SseEventSink;
+import java.util.logging.Logger;
+
 @ApplicationScoped
-public class InventoryStartupCheck implements HealthCheck {
+@Path("/sse")
+public class BFFResource {
 
-    @Override
-    public HealthCheckResponse call() {
-        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
-        ManagementFactory.getOperatingSystemMXBean();
-        double cpuUsed = bean.getSystemCpuLoad();
-        String cpuUsage = String.valueOf(cpuUsed);
-        return HealthCheckResponse.named(InventoryResource.class
-                                            .getSimpleName() + " Startup Check")
-                                            .status(cpuUsed < 0.95).build();
+    private Logger logger = Logger.getLogger(BFFResource.class.getName());
+
+    private Sse sse;
+    private SseBroadcaster broadcaster;
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.SERVER_SENT_EVENTS)
+    public void subscribeToSystem(
+        @Context SseEventSink sink,
+        @Context Sse sse
+        ) {
+
+        if (this.sse == null || this.broadcaster == null) { 
+            this.sse = sse;
+            this.broadcaster = sse.newBroadcaster();
+        }
+        
+        this.broadcaster.register(sink);
+        logger.info("New sink registered to broadcaster.");
     }
-}
 
-```
-
-
-
-A health check for startup allows applications to define startup probes that verify whether deployed application is fully initialized before the liveness probe takes over. This check is useful for applications that require additional startup time on their first initialization. The ***@Startup*** annotation must be applied on a HealthCheck implementation to define a startup check procedure. Otherwise, this annotation is ignored. This startup check verifies that the cpu usage is below 95%. If more than 95% of the cpu is used, a status of ***DOWN*** is returned. 
-
-Create the ***InventoryLivenessCheck*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
-```
-
-
-> Then, to open the InventoryLivenessCheck.java file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java, or click the following button
-
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import jakarta.enterprise.context.ApplicationScoped;
-
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
-
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class InventoryLivenessCheck implements HealthCheck {
-
-  @Override
-  public HealthCheckResponse call() {
-      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-      long memUsed = memBean.getHeapMemoryUsage().getUsed();
-      long memMax = memBean.getHeapMemoryUsage().getMax();
-
-      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
-                                      + " Liveness Check")
-                                .status(memUsed < memMax * 0.9).build();
-  }
-}
-```
-
-
-
-A health check for liveness allows third party services to determine whether the application is running. If this procedure fails, the application can be stopped. The ***@Liveness*** annotation must be applied on a HealthCheck implementation to define a Liveness check procedure. Otherwise, this annotation is ignored. This liveness check verifies that the heap memory usage is below 90% of the maximum memory. If more than 90% of the maximum memory is used, a status of ***DOWN*** is returned. 
-
-The ***inventory*** microservice is healthy only when the ***system*** microservice is available. To add this check to the ***/health/ready*** endpoint, create a class that is annotated with the ***@Readiness*** annotation and implements the ***HealthCheck*** interface. A Health Check for readiness allows third party services to know whether the application is ready to process requests. The ***@Readiness*** annotation must be applied on a HealthCheck implementation to define a readiness check procedure. Otherwise, this annotation is ignored.
-
-Create the ***InventoryReadinessCheck*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
-```
-
-
-> Then, to open the InventoryReadinessCheck.java file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java, or click the following button
-
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Readiness
-@ApplicationScoped
-public class InventoryReadinessCheck implements HealthCheck {
-
-    private static final String READINESS_CHECK = InventoryResource.class
-                                                .getSimpleName()
-                                                + " Readiness Check";
-
-    @Inject
-    @ConfigProperty(name = "SYS_APP_HOSTNAME")
-    private String hostname;
-
-    public HealthCheckResponse call() {
-        if (isSystemServiceReachable()) {
-            return HealthCheckResponse.up(READINESS_CHECK);
+    private void broadcastData(String name, Object data) {
+        if (broadcaster != null) {
+            OutboundSseEvent event = sse.newEventBuilder()
+                                        .name(name)
+                                        .data(data.getClass(), data)
+                                        .mediaType(MediaType.APPLICATION_JSON_TYPE)
+                                        .build();
+            broadcaster.broadcast(event);
         } else {
-            return HealthCheckResponse.down(READINESS_CHECK);
+            logger.info("Unable to send SSE. Broadcaster context is not set up.");
         }
     }
 
-    private boolean isSystemServiceReachable() {
-        try {
-            Client client = ClientBuilder.newClient();
-            client
-                .target("http://" + hostname + ":9080/system/properties")
-                .request()
-                .post(null);
-
-            return true;
-        } catch (Exception ex) {
-            return false;
-        }
+    @Incoming("systemLoad")
+    public void getSystemLoadMessage(SystemLoad sl)  {
+        logger.info("Message received from system.load topic. " + sl.toString());
+        broadcastData("systemLoad", sl);
     }
 }
 ```
 
 
 
-This health check verifies that the ***system*** microservice is available at ***http://system-service:9080/***. The ***system-service*** host name is accessible only from inside the cluster; you can't access it yourself. If it's available, then it returns an ***UP*** status. Similarly, if it's unavailable then it returns a ***DOWN*** status. When the status is ***DOWN***, the microservice is considered to be unhealthy.
+### Creating the SSE API endpoint
 
-The health checks for the ***system*** microservice were already been implemented. The ***system*** microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. This endpoint has been provided for you to observe the results of an unhealthy pod and how Kubernetes reacts.
+The ***subscribeToSystem()*** method allows clients to subscribe to events via an HTTP ***GET*** request to the ***/bff/sse/*** endpoint. The ***@Produces(MediaType.SERVER_SENT_EVENTS)*** annotation sets the ***Content-Type*** in the response header to ***text/event-stream***. This content type indicates that client requests that are made to this endpoint are to receive Server-Sent Events. Additionally, the method parameters take in an instance of the ***SseEventSink*** class and the ***Sse*** class, both of which are injected using the ***@Context*** annotation. First, the method checks if the ***sse*** and ***broadcaster*** instance variables are assigned. If these variables aren't assigned, the ***sse*** variable is obtained from the ***@Context*** injection and the ***broadcaster*** variable is obtained by using the ***Sse.newBroadcaster()*** method. Then, the ***register()*** method is called to register the ***SseEventSink*** instance to the ***SseBroadcaster*** instance to subscribe to events.
 
-::page{title="Configuring startup, liveness, and readiness probes"}
+For more information about these interfaces, see the Javadocs for [OutboundSseEvent](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.html&package=allclasses-frame.html) and [OutboundSseEvent.Builder](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.Builder.html&package=allclasses-frame.html).
 
-You will configure Kubernetes startup, liveness, and readiness probes. Startup probes determine whether your application is fully initialized. Liveness probes determine whether a container needs to be restarted. Readiness probes determine whether your application is ready to accept requests. If it's not ready, no traffic is routed to the container.
+### Reading from the reactive messaging channel
 
-Create the kubernetes configuration file.
+The ***getSystemLoadMessage()*** method receives the message that contains the hostname and the average system load. The ***@Incoming("systemLoad")*** annotation indicates that the method retrieves the message by connecting to the ***systemLoad*** channel in Kafka, which you configure in the next section.
+
+Each time a message is received, the ***getSystemLoadMessage()*** method is called, and the hostname and system load contained in that message are broadcasted in an event to all subscribers.
+
+### Broadcasting events
+
+Broadcasting events is handled in the ***broadcastData()*** method. First, it checks whether the ***broadcaster*** value is ***null***. The ***broadcaster*** value must include at least one subscriber or there's no client to send the event to. If the ***broadcaster*** value is specified, the ***OutboundSseEvent*** interface is created by using the ***Sse.newEventBuilder()*** method, where the ***name*** of the event, the ***data*** it contains, and the ***mediaType*** are set. The ***OutboundSseEvent*** interface is then broadcasted, or sent to all registered sinks, by invoking the ***SseBroadcaster.broadcast()*** method.
+
+
+You just set up an endpoint in the ***bff*** service that the client in the ***frontend*** service can use to subscribe to events. You also enabled the service to read from the reactive messaging channel and broadcast the information as events to subscribers via SSE.
+
+
+::page{title="Configuring the Kafka connector for the bff service"}
+
+A complete ***system*** service is provided for you in the ***start/system*** directory. The ***system*** service is the producer of the messages that are published to the Kafka messaging system. The periodically published messages contain the system's hostname and a calculation of the average system load (its CPU usage) for the last minute.
+
+Configure the Kafka connector in the ***bff*** service to receive the messages from the ***system*** service.
+
+Create the microprofile-config.properties file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
+touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties
 ```
 
 
-> Then, to open the kubernetes.yaml file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/kubernetes.yaml, or click the following button
+> Then, to open the microprofile-config.properties file in your IDE, select
+> **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml"}
+::openFile{path="/home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties"}
 
 
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: system
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        # system probes
-        startupProbe:
-          httpGet:
-            path: /health/started
-            port: 9080
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        env:
-        - name: SYS_APP_HOSTNAME
-          value: system-service
-        # inventory probes
-        startupProbe:
-          httpGet:
-            path: /health/started
-            port: 9080
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 31000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 32000
+```
+mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
+
+mp.messaging.incoming.systemLoad.connector=liberty-kafka
+mp.messaging.incoming.systemLoad.topic=system.load
+mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
+mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
+mp.messaging.incoming.systemLoad.group.id=bff
 ```
 
 
 
-The startup, liveness, and readiness probes are configured for the containers that are running the ***system*** and ***inventory*** microservices.
+The ***bff*** service uses an incoming connector to receive messages through the ***systemLoad*** channel. The messages are then published by the ***system*** service to the ***system.load***  topic in the Kafka message broker. The ***key.deserializer*** and ***value.deserializer*** properties define how to deserialize the messages. The ***group.id*** property defines a unique name for the consumer group. All of these properties are required by the [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs) documentation.
 
-The startup probes are configured to poll the ***/health/started*** endpoint. The startup probe determines whether a container is started.
 
-The liveness probes are configured to poll the ***/health/live*** endpoint. The liveness probes determine whether a container needs to be restarted. The ***initialDelaySeconds*** field defines the duration that the probe waits before it starts to poll so that it does not make requests before the server is started. The ***periodSeconds*** option defines how often the probe polls the given endpoint. The ***timeoutSeconds*** option defines how many seconds before the probe times out. The ***failureThreshold*** option defines how many times the probe fails before the state changes from ready to not ready.
 
-The readiness probes are configured to poll the ***/health/ready*** endpoint. The readiness probe determines the READY status of the container, as seen in the ***kubectl get pods*** output. Similar to the liveness probes, the readiness probes also define ***initialDelaySeconds***, ***periodSeconds***, ***timeoutSeconds***, and ***failureThreshold***.
+::page{title="Configuring the frontend service to subscribe to and consume events"}
 
-::page{title="Deploying the microservices"}
+In this section, you will configure the client in the ***frontend*** service to subscribe to events and display their contents in a table in the UI.
 
-To build these microservices, navigate to the ***start*** directory and run the following command.
+The front-end UI is a table where each row contains the hostname and load of one of the three ***system*** services. The HTML and styling for the UI is provided for you but you must populate the table with information that is received from the Server-Sent Events.
+
+Create the index.js file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
+```
+
+
+> Then, to open the index.js file in your IDE, select
+> **File** > **Open** > guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js, or click the following button
+
+::openFile{path="/home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js"}
+
+
+
+```javascript
+function initSSE() {
+    var source = new EventSource('http://localhost:9084/bff/sse', { withCredentials: true });
+    source.addEventListener(
+        'systemLoad',
+        systemLoadHandler
+    );
+}
+
+function systemLoadHandler(event) {
+    var system = JSON.parse(event.data);
+    if (document.getElementById(system.hostname)) {
+        document.getElementById(system.hostname).cells[1].innerHTML =
+                                        system.loadAverage.toFixed(2);
+    } else {
+        var tableRow = document.createElement('tr');
+        tableRow.id = system.hostname;
+        tableRow.innerHTML = '<td>' + system.hostname + '</td><td>'
+                             + system.loadAverage.toFixed(2) + '</td>';
+        document.getElementById('sysPropertiesTableBody').appendChild(tableRow);
+    }
+}
+
+
+```
+
+
+
+### Subscribing to SSE
+
+The ***initSSE()*** method is called when the page first loads. This method subscribes the client to the SSE by creating a new instance of the ***EventSource*** interface and specifying the ***http://localhost:9084/bff/sse*** URL in the parameters. To connect to the server, the ***EventSource*** interface makes a ***GET*** request to this endpoint with a request header of ***Accept: text/event-stream***.
+
+In this IBM cloud environment, you need to update the ***EventSource*** URL with the ***bff*** service domain instead of ***localhost***. Run the following command:
+```bash
+BFF_DOMAIN=${USERNAME}-9084.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+sed -i 's=localhost:9084='"$BFF_DOMAIN"'=g' frontend/src/main/webapp/js/index.js
+```
+
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+Because this request comes from ***localhost:9080*** and is made to ***localhost:9084***, it must follow the Cross-Origin Resource Sharing (CORS) specification to avoid being blocked by the browser. To enable CORS for the client, set the ***withCredentials*** configuration element to true in the parameters of the ***EventSource*** interface. CORS is already enabled for you in the ***bff*** service. To learn more about CORS, check out the [CORS guide](https://openliberty.io/guides/cors.html).
+
+
+### Consuming the SSE
+
+The ***EventSource.addEventListener()*** method is called to add an event listener. This event listener listens for events with the name of ***systemLoad***. The ***systemLoadHandler()*** function is set as the handler function, and each time an event is received, this function is called. The ***systemLoadHandler()*** function will take the event object and parse the event's data property from a JSON string into a JavaScript object. The contents of this object are used to update the table with the system hostname and load. If a system is already present in the table, the load is updated, otherwise a new row is added for the system.
+
+
+::page{title="Building and running the application"}
+
+To build the application, navigate to the ***start*** directory and run the following Maven ***install*** and ***package*** goals from the command line:
 
 ```bash
+cd /home/project/guide-reactive-messaging-sse/start
+mvn -pl models install
 mvn package
 ```
 
-Run the following command to download or update to the latest Open Liberty Docker image:
+Run the following command to download or update to the latest
+Open Liberty Docker image:
 
 ```bash
 docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 
-Next, run the ***docker build*** commands to build container images for your application:
+Run the following commands to containerize the ***frontend***, ***bff***, and ***system*** services:
+
 ```bash
+docker build -t frontend:1.0-SNAPSHOT frontend/.
+docker build -t bff:1.0-SNAPSHOT bff/.
 docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
+Next, use the following ***startContainers.sh*** script to start the application in Docker containers:
 
-Push your images to the container registry on IBM Cloud with the following commands:
+
 
 ```bash
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+./scripts/startContainers.sh
 ```
+This script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, the ***frontend*** service, the ***bff*** service , and three instances of the ***system*** service.
 
-Update the image names so that the images in your IBM Cloud container registry are used. Set the image pull policy to ***Always*** and remove the ***nodePort*** fields so that the ports can be automatically generated:
+
+The application might take some time to get ready. Run the following command to confirm that the ***bff*** microservice is up and running:
 ```bash
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
+curl -s http://localhost:9084/health | jq
 ```
 
-When the builds succeed, run the following command to deploy the necessary Kubernetes resources to serve the applications.
-
+Once your application is up and running, use the following command to get the URL. Open your browser and check out your service by going to the URL that the command returns.
 ```bash
-kubectl apply -f kubernetes.yaml
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
 
-Use the following command to view the status of the pods. There will be two ***system*** pods and one ***inventory*** pod, later you'll observe their behavior as the ***system*** pods become unhealthy. 
+The latest version of most modern web browsers supports Server-Sent Events. The exception is Internet Explorer, which does not support SSE. When you visit the URL, look for a table similar to the following example:
 
-```bash
-kubectl get pods
-```
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          59s
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          59s
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          59s
-```
-
-Wait until the pods are ready. After the pods are ready, you will make requests to your services.
+![System table](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/prod/assets/system_table.png)
 
 
-In this IBM cloud environment, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
+The table contains three rows, one for each of the running ***system*** containers. If you can see the loads updating, you know that your ***bff*** service is successfully receiving messages and broadcasting them as SSE to the client in the ***frontend*** service.
 
-```bash
-kubectl proxy
-```
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
-```bash
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
-```
-
-Run the following echo commands to verify the variables:
-
-```bash
-echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
-```
-
-The output appears as shown in the following example:
-
-```
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
-```
-
-Make a request to the system service to see the JVM system properties with the following ***curl*** command:
-```bash
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-
-The readiness probe ensures the READY state won't be ***1/1*** until the container is available to accept requests. Without a readiness probe, you might notice an unsuccessful response from the server. This scenario can occur when the container is started, but the application server isn't fully initialized. With the readiness probe, you can be certain the pod accepts traffic only when the microservice is fully started.
-
-Similarly, access the inventory service and observe the successful request with the following command:
-```bash
-curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
-```
-
-::page{title="Changing the ready state of the system microservice"}
-
-An ***unhealthy*** endpoint has been provided under the ***system*** microservice to set it to an unhealthy state. The unhealthy state causes the readiness probe to fail. A request to the ***unhealthy*** endpoint puts the service in an unhealthy state as a simulation.
-
-
-Run the following ***curl*** command to invoke the unhealthy endpoint:
-```bash
-curl http://$SYSTEM_PROXY/system/unhealthy
-```
-
-Run the following command to view the state of the pods:
-
-```bash
-kubectl get pods
-```
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          1m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          1m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
-```
-
-
-You will notice that one of the two ***system*** pods is no longer in the ready state. Make a request to the ***/system/properties*** endpoint with the following command:
-```bash
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-
-Your request is successful because you have two replicas and one is still healthy.
-
-### Observing the effects on the inventory microservice
-
-
-Wait until the ***system-service*** pod is ready again. Make several requests to the ***/system/unhealthy*** endpoint of the ***system*** service until you see two pods are unhealthy.
-```bash
-curl http://$SYSTEM_PROXY/system/unhealthy
-```
-
-Observe the output of ***kubectl get pods***.
-```bash
-kubectl get pods
-```
-
-You will see both pods are no longer ready. During this process, the readiness probe for the ***inventory*** microservice will also fail. Observe that it's no longer in the ready state either.
-
-First, both ***system*** pods will no longer be ready because the readiness probe failed.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          5m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          5m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          5m
-```
-
-Next, the ***inventory*** pod is no longer ready because the readiness probe failed. The probe failed because ***system-service*** is now unavailable.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          6m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          6m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          6m
-```
-
-Then, the ***system*** pods will start to become healthy again after 60 seconds.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
-```
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
-```
-
-Finally, you will see all of the pods have recovered.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          8m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          8m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
-```
-
-::page{title="Testing the microservices"}
-
-
-Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
-```bash
-cd /home/project/guide-kubernetes-microprofile-health/start
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
-```
-
-Run the integration tests by using the following command:
-```bash
-mvn failsafe:integration-test \
-    -Dsystem.service.root=$SYSTEM_PROXY \
-    -Dinventory.service.root=$INVENTORY_PROXY
-```
-
-A few tests are included for you to test the basic functions of the microservices. If a test fails, then you might have introduced a bug into the code. Wait for all pods to be in the ready state before you run the tests. 
-
-When the tests succeed, you should see output similar to the following in your console.
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.65 s - in it.io.openliberty.guides.system.SystemEndpointIT
-
-Results:
-
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-```
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
-
-Results:
-
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
-```
 
 ::page{title="Tearing down the environment"}
 
-Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
+Run the following script to stop the application:
 
-To remove all of the resources created during this guide, run the following command to delete all of the resources that you created.
 
 ```bash
-kubectl delete -f kubernetes.yaml
+./scripts/stopContainers.sh
 ```
-
-
-
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have used MicroProfile Health and Open Liberty to create endpoints that report on your microservice's status. Then, you observed how Kubernetes uses the **/health/started**, **/health/live**, and **/health/ready** endpoints to keep your microservices running smoothly.
-
+You developed an application that subscribes to Server-Sent Events by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
 
 
@@ -643,33 +359,43 @@ You have used MicroProfile Health and Open Liberty to create endpoints that repo
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-kubernetes-microprofile-health*** project by running the following commands:
+Delete the ***guide-reactive-messaging-sse*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-kubernetes-microprofile-health
+rm -fr guide-reactive-messaging-sse
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Checking%20the%20health%20of%20microservices%20on%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-health)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Streaming%20updates%20to%20a%20client%20using%20Server-Sent%20Events&guide-id=cloud-hosted-guide-reactive-messaging-sse)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/pulls)
 
 
 
 ### Where to next?
 
-* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Acknowledging messages using MicroProfile Reactive Messaging](https://openliberty.io/guides/microprofile-reactive-messaging-acknowledgment.html)
+* [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest-integration.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
+
+**Learn more about MicroProfile**
+* [See the MicroProfile specs](https://microprofile.io/)
+* [View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
+* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html#_microprofile_reactive_messaging)
+* [View the JAX-RS Server-Sent Events API](https://openliberty.io/docs/ref/javaee/8/#package=javax/ws/rs/sse/package-frame.html&class=javax/ws/rs/sse/package-summary.html)
+* [View the Server-Sent Events HTML Specification](https://html.spec.whatwg.org/multipage/server-sent-events.html)
 
 
 ### Log out of the session
