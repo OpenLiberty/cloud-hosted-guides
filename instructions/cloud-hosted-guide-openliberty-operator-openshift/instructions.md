@@ -26,7 +26,7 @@ You will learn how to deploy a cloud-native application with a microservice to R
 
 The application in this guide consists of one microservice, ***system***. The system microservice returns the JVM system properties of its host.
 
-You will deploy the ***system*** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) provides a method of packaging, deploying, and managing Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including ***Deployments***, ***Services***, and ***Routes***, depending on the configurations. The Operator then continuously compares the current state of the resources, the desired state of application deployment, and reconciles them when necessary.
+You will deploy the ***system*** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) provides a method of packaging, deploying, and managing Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including ***Deployments***, ***Services***, and ***Routes***, depending on the configurations. The Operator then continuously compares the current state of the resources with the desired state of application deployment and reconciles them when necessary.
 
 
 
@@ -152,7 +152,7 @@ objects:
 
 
 
-The ***build.yaml*** template includes two objects. The ***ImageStream*** object provides an abstraction from the image in the image registry. This allows you to reference and tag the image. The image registry used is the integrated internal OpenShift Container Registry.
+The ***build.yaml*** template includes two objects. The ***ImageStream*** object provides an abstraction from the image in the image registry, which allows you to reference and tag the image. The image registry is the integrated internal OpenShift Container Registry.
 
 The ***BuildConfig*** object defines a single build definition and any triggers that kickstart the build. The ***source*** spec defines the build input. In this case, the build inputs are your ***binary*** (local) files, which are streamed to OpenShift for the build. The uploaded files need to include the packaged ***WAR*** application binaries, which is why you needed to run the Maven commands. The template specifies a ***Docker*** strategy build, which invokes the ***docker build*** command, and creates a runnable container image of the microservice from the build input.
 
@@ -197,7 +197,7 @@ NAME                    TYPE     FROM             STATUS     STARTED
 system-buildconfig-1    Docker   Binary@f24cb58   Running    45 seconds ago
 ```
 
-You may need to wait some time until the build is complete. To check whether the build is complete, run the following command to view the build log until the ***Push successful*** message appears:
+You might need to wait some time until the build is complete. To check whether the build is complete, run the following command to view the build log until the ***Push successful*** message appears:
 
 ```bash
 oc logs build/system-buildconfig-1
@@ -279,7 +279,7 @@ The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication
 
 The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\<project-name\>/\<image-stream-name\>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
 
-One of the benefits of using ***ImageStream*** objects is that the operator redeploys the application when it detects a new image is pushed. The ***env*** parameter is used to specify environment variables that are passed to the container at runtime.
+One of the benefits of using ***ImageStream*** objects is that the operator redeploys the application when it detects that a new image is pushed. The ***env*** parameter is used to specify environment variables that are passed to the container at runtime.
 
 Additionally, the microservice includes the ***service*** and ***expose*** parameters. The ***service.port*** parameter specifies which port is exposed by the container, allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster, it must be exposed by setting the ***expose*** parameter to ***true***. After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
 
@@ -358,11 +358,11 @@ When you’re done trying out the microservice, run following command to stop th
 oc delete -f deploy.yaml
 ```
 
-::page{title="Specifying other parameters"}
+::page{title="Specifying optional parameters"}
 
-You can visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1beta2.adoc#configuration) to find all of the supported optional parameters.
+You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1beta2.adoc#configuration) to find all of the supported optional CRDs.
 
-You can now configure the startup, readiness, and liveness probes. The ***startup probe*** is used to verify whether deployed application is fully initialized before the liveness probe takes over, the ***liveness probe*** is used to determine whether the application is running, and the ***readiness probe*** is used to know whether the application is ready to process requests.
+To configure the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator, specify the ***probes*** in your ***deploy.yaml*** file. The ***startup*** probe verifies whether deployed application is fully initialized before the liveness probe takes over. Then, the ***liveness*** probe determines whether the application is running and the ***readiness*** probe determines whether the application is ready to process requests. For more information about application health checks, see the [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide.
 
 Replace the ***deploy.yaml*** configuration file.
 
@@ -422,7 +422,7 @@ spec:
 
 
 
-The health check endpoints ***/health/started***, ***/health/live*** and ***/health/ready*** have already been created for you. 
+The ***/health/started***, ***/health/live***, and ***/health/ready*** health check endpoints are already created for you. 
 
 
 Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the new configuration:
@@ -453,7 +453,7 @@ oc delete bc system-buildconfig
 
 ### Nice Work!
 
-You just deployed a microservice running in Open Liberty to OpenShift 4 by using the Open Liberty Operator.
+You just deployed a microservice running in Open Liberty to OpenShift 4 and configured the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator.
 
 
 
