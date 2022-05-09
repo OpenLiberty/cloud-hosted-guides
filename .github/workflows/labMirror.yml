@@ -27,6 +27,7 @@ jobs:
           - {"github":"cloud-hosted-guide-docker","gitlab":"cloud-hosted-guide-docker","gitlab-branch":"lab-169-instruction"}
           - {"github":"cloud-hosted-guide-getting-started","gitlab":"cloud-hosted-guide-getting-started","gitlab-branch":"lab-138-instruction"}
           - {"github":"cloud-hosted-guide-graphql-client","gitlab":"cloud-hosted-guide-graphql-client","gitlab-branch":"lab-557-instruction"}
+          - {"github":"cloud-hosted-guide-graphql-client","gitlab":"IBM-GPXX04S5EN","gitlab-branch":"lab-557-instruction"}
           - {"github":"cloud-hosted-guide-jpa-intro","gitlab":"cloud-hosted-guide-jpa-intro","gitlab-branch":"lab-101-instruction"}
           - {"github":"cloud-hosted-guide-kubernetes-intro","gitlab":"cloud-hosted-guide-kubernetes-intro","gitlab-branch":"lab-137-instruction"}
           - {"github":"cloud-hosted-guide-kubernetes-microprofile-config","gitlab":"cloud-hosted-guide-kubernetes-microprofile-config","gitlab-branch":"lab-143-instruction"}
