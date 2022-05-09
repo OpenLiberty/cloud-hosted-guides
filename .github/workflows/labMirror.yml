@@ -36,6 +36,7 @@ jobs:
           - {"github":"cloud-hosted-guide-maven-multimodules","gitlab":"cloud-hosted-guide-maven-multimodules","gitlab-branch":"lab-70-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-config","gitlab":"cloud-hosted-guide-microprofile-config","gitlab-branch":"lab-166-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-fallback","gitlab":"cloud-hosted-guide-microprofile-fallback","gitlab-branch":"lab-140-instruction"}
+          - {"github":"cloud-hosted-guide-microprofile-graphql","gitlab":"cloud-hosted-guide-microprofile-graphql","gitlab-branch":"lab-98-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-health","gitlab":"cloud-hosted-guide-microprofile-health","gitlab-branch":"lab-168-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-jwt","gitlab":"cloud-hosted-guide-microprofile-jwt","gitlab-branch":"lab-165-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-metrics","gitlab":"cloud-hosted-guide-microprofile-metrics","gitlab-branch":"lab-152-instruction"}
