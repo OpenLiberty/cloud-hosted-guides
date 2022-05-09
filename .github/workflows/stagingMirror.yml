@@ -57,7 +57,7 @@ jobs:
           # - {"github":"cloud-hosted-guide-arquillian-managed","gitlab":"cloud-hosted-guide-arquillian-managed"}
           # - {"github":"cloud-hosted-guide-cors","gitlab":"cloud-hosted-guide-cors"}
           # - {"github":"cloud-hosted-guide-jpa-intro","gitlab":"cloud-hosted-guide-jpa-intro"}
-          - {"github":"cloud-hosted-guide-microprofile-graphql","gitlab":"cloud-hosted-guide-microprofile-graphql"}
+          # - {"github":"cloud-hosted-guide-microprofile-graphql","gitlab":"cloud-hosted-guide-microprofile-graphql"}
           # - {"github":"cloud-hosted-guide-maven-intro","gitlab":"cloud-hosted-guide-maven-intro"}
           # - {"github":"cloud-hosted-guide-rest-client-angular","gitlab":"cloud-hosted-guide-rest-client-angular"}
           - {"github":"cloud-hosted-guide-rest-client-angularjs","gitlab":"cloud-hosted-guide-rest-client-angularjs"}
