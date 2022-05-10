@@ -219,6 +219,8 @@ public class Inventory {
 
 
 
+Click the :fa-copy: **copy** button to copy the code and press `CTRL+V` in the IDE to add the code to the file.
+
 This ***Inventory*** class stores a record of all systems and their system properties. The ***getSystem()*** method within this class retrieves and returns the system data from the system. The ***add()*** method enables the addition of a system and its data to the inventory. The ***update()*** method enables a system and its data on the inventory to be updated. The ***removeSystem()*** method enables the deletion of a system from the inventory.
 
 
@@ -5008,6 +5010,7 @@ Results :
 
 Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
+
 
 ::page{title="Deploying the microservice to Kubernetes"}
 
