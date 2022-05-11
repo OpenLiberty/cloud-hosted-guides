@@ -1,5 +1,10 @@
-
-# **Welcome to the Streaming updates to a client using Server-Sent Events guide!**
+---
+markdown-version: v1
+title: instructions
+branch: lab-129-instruction
+version-history-start-date: 2021-10-01 14:24:37 UTC
+---
+::page{title="Welcome to the Streaming updates to a client using Server-Sent Events guide!"}
 
 Learn how to stream updates from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
 
@@ -12,111 +17,78 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-# **What you'll learn**
+::page{title="What you'll learn"}
 
 You will learn how to stream messages from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
 
-MicroProfile Reactive Messaging provides an easy way for Java services to send
-requests to other Java services, and asynchronously receive and process the
-responses as a stream of events. SSE provides a framework to stream the data in
-these events to a browser client.
+MicroProfile Reactive Messaging provides an easy way for Java services to send requests to other Java services, and asynchronously receive and process the responses as a stream of events. SSE provides a framework to stream the data in these events to a browser client.
 
-<br/>
-### **What is SSE?**
+### What is SSE?
 
-Server-Sent Events is an API that allows
-clients to subscribe to a stream of events that is pushed from a server. First, the
-client makes a connection with the server over HTTP. The server continuously pushes events to the client as
-long as the connection persists. SSE differs from traditional HTTP requests, which
-use one request for one response. SSE also differs from Web Sockets in that SSE is unidirectional from
-the server to the client, and Web Sockets allow for bidirectional communication.
+Server-Sent Events is an API that allows clients to subscribe to a stream of events that is pushed from a server. First, the client makes a connection with the server over HTTP. The server continuously pushes events to the client as long as the connection persists. SSE differs from traditional HTTP requests, which use one request for one response. SSE also differs from Web Sockets in that SSE is unidirectional from the server to the client, and Web Sockets allow for bidirectional communication.
 
-For example, an application that provides real-time stock quotes might use SSE to push price
-updates from the server to the browser as soon as the server receives them. Such an application wouldn't need Web Sockets because the data travels in only one direction, and polling the server by using HTTP requests wouldn't provide real-time
-updates.
+For example, an application that provides real-time stock quotes might use SSE to push price updates from the server to the browser as soon as the server receives them. Such an application wouldn't need Web Sockets because the data travels in only one direction, and polling the server by using HTTP requests wouldn't provide real-time updates.
 
-The application that you will build in this guide consists of a **frontend**
-service, a **bff** (backend for frontend) service, and three instances of a
-**system** service. The **system** services periodically publish messages that
-contain their hostname and current system load. The **bff** service receives the
-messages from the **system** services and pushes the contents as SSE to a JavaScript
-client in the **frontend** service. This client uses the events to update a table
-in the UI that displays each system's hostname and its periodically updating
-load. The following diagram depicts the application that is used in this guide:
+The application that you will build in this guide consists of a ***frontend*** service, a ***bff*** (backend for frontend) service, and three instances of a ***system*** service. The ***system*** services periodically publish messages that contain their hostname and current system load. The ***bff*** service receives the messages from the ***system*** services and pushes the contents as SSE to a JavaScript client in the ***frontend*** service. This client uses the events to update a table in the UI that displays each system's hostname and its periodically updating load. The following diagram depicts the application that is used in this guide:
 
-![SSE Diagram](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/master/assets/SSE_Diagram.png)
+![SSE Diagram](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/prod/assets/SSE_Diagram.png)
 
 
-In this guide, you will set up the **bff** service by creating an endpoint that
-clients can use to subscribe to events. You will also enable the service to read
-from the reactive messaging channel and push the contents to subscribers via
-SSE. After that, you will configure the Kafka connectors to allow the **bff**
-service to receive messages from the **system** services. Finally, you will
-configure the client in the **frontend** service to subscribe to these events,
-consume them, and display them in the UI.
+In this guide, you will set up the ***bff*** service by creating an endpoint that clients can use to subscribe to events. You will also enable the service to read from the reactive messaging channel and push the contents to subscribers via SSE. After that, you will configure the Kafka connectors to allow the ***bff*** service to receive messages from the ***system*** services. Finally, you will configure the client in the ***frontend*** service to subscribe to these events, consume them, and display them in the UI.
 
 To learn more about the reactive Java services that are used in this guide, check out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 
 
-# **Getting started**
+::page{title="Getting started"}
 
 To open a new command-line session,
 select **Terminal** > **New Terminal** from the menu of the IDE.
 
 Run the following command to navigate to the **/home/project** directory:
 
-```
+```bash
 cd /home/project
 ```
-{: codeblock}
 
 The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-messaging-sse.git) and use the projects that are provided inside:
 
-```
+```bash
 git clone https://github.com/openliberty/guide-reactive-messaging-sse.git
 cd guide-reactive-messaging-sse
 ```
-{: codeblock}
 
 
-The **start** directory contains the starting project that you will build upon.
+The ***start*** directory contains the starting project that you will build upon.
 
-The **finish** directory contains the finished project that you will build.
-
-
-
-# **Setting up SSE in the bff service**
+The ***finish*** directory contains the finished project that you will build.
 
 
 
-In this section, you will create a REST API for SSE in the **bff** service. When a
-client makes a request to this endpoint, the initial connection between the
-client and server is established and the client is subscribed to receive events
-that are pushed from the server. Later in this guide, the client in the **frontend**
-service uses this endpoint to subscribe to the events that are pushed from the
-**bff** service.
+::page{title="Setting up SSE in the bff service"}
 
-Additionally, you will enable the **bff** service to read messages from the
-incoming stream and push the contents as events to subscribers via SSE.
+In this section, you will create a REST API for SSE in the ***bff*** service. When a client makes a request to this endpoint, the initial connection between the client and server is established and the client is subscribed to receive events that are pushed from the server. Later in this guide, the client in the ***frontend*** service uses this endpoint to subscribe to the events that are pushed from the ***bff*** service.
 
-Navigate to the **start** directory to begin.
+Additionally, you will enable the ***bff*** service to read messages from the incoming stream and push the contents as events to subscribers via SSE.
+
+Navigate to the ***start*** directory to begin.
 
 Create the BFFResource class.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java
 ```
-{: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java
+> Then, to open the BFFResource.java file in your IDE, select
+> **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java"}
 
 
 
-
-```
+```java
 package io.openliberty.guides.bff;
 
 import io.openliberty.guides.models.SystemLoad;
@@ -181,89 +153,47 @@ public class BFFResource {
     }
 }
 ```
-{: codeblock}
 
 
-<br/>
-### **Creating the SSE API endpoint**
 
-The **subscribeToSystem()** method allows
-clients to subscribe to events via an HTTP **GET** request to the **/bff/sse/**
-endpoint. The **`@Produces(MediaType.SERVER_SENT_EVENTS)`** annotation sets the **Content-Type** in the
-response header to **text/event-stream**. This content type indicates that client requests that are made
-to this endpoint are to receive Server-Sent Events. Additionally, the method
-parameters take in an instance of the **SseEventSink** class and
-the **Sse** class, both of which are injected using the **@Context**
-annotation. First, the method checks if the **sse** and
-**broadcaster** instance variables are assigned.
-If these variables aren't assigned, the
-**sse** variable is obtained from the **@Context** 
-injection and the **broadcaster** variable
-is obtained by using the **Sse.newBroadcaster()**
-method. Then, the **register()** method is called to
-register the **SseEventSink** instance to the
-**SseBroadcaster** instance to subscribe to events.
+### Creating the SSE API endpoint
 
-For more information about these interfaces, see the Javadocs for
-[OutboundSseEvent](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.html&package=allclasses-frame.html)
-and
-[OutboundSseEvent.Builder](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.Builder.html&package=allclasses-frame.html).
+The ***subscribeToSystem()*** method allows clients to subscribe to events via an HTTP ***GET*** request to the ***/bff/sse/*** endpoint. The ***@Produces(MediaType.SERVER_SENT_EVENTS)*** annotation sets the ***Content-Type*** in the response header to ***text/event-stream***. This content type indicates that client requests that are made to this endpoint are to receive Server-Sent Events. Additionally, the method parameters take in an instance of the ***SseEventSink*** class and the ***Sse*** class, both of which are injected using the ***@Context*** annotation. First, the method checks if the ***sse*** and ***broadcaster*** instance variables are assigned. If these variables aren't assigned, the ***sse*** variable is obtained from the ***@Context*** injection and the ***broadcaster*** variable is obtained by using the ***Sse.newBroadcaster()*** method. Then, the ***register()*** method is called to register the ***SseEventSink*** instance to the ***SseBroadcaster*** instance to subscribe to events.
 
-<br/>
-### **Reading from the reactive messaging channel**
+For more information about these interfaces, see the Javadocs for [OutboundSseEvent](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.html&package=allclasses-frame.html) and [OutboundSseEvent.Builder](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.Builder.html&package=allclasses-frame.html).
 
-The **getSystemLoadMessage()** method
-receives the message that contains the hostname and the average system load. The
-**@Incoming("systemLoad")** annotation indicates that
-the method retrieves the message by connecting to the **systemLoad** channel in
-Kafka, which you configure in the next section.
+### Reading from the reactive messaging channel
 
-Each time a message is received, the **getSystemLoadMessage()** 
-method is called, and the hostname and system
-load contained in that message are broadcasted in an event to all subscribers.
+The ***getSystemLoadMessage()*** method receives the message that contains the hostname and the average system load. The ***@Incoming("systemLoad")*** annotation indicates that the method retrieves the message by connecting to the ***systemLoad*** channel in Kafka, which you configure in the next section.
 
-<br/>
-### **Broadcasting events**
+Each time a message is received, the ***getSystemLoadMessage()*** method is called, and the hostname and system load contained in that message are broadcasted in an event to all subscribers.
 
-Broadcasting events is handled in the **broadcastData()** method.
-First, it checks whether the **broadcaster** value is **null**.
-The **broadcaster** value must include at least one subscriber or there's no client to send the event to.
-If the **broadcaster** value is specified, the **OutboundSseEvent** interface is created 
-by using the **Sse.newEventBuilder()** method, 
-where the **name** of the event, the **data** it contains, and the
-**mediaType** are set. The **OutboundSseEvent** interface is then
-broadcasted, or sent to all registered sinks, by invoking the
-**SseBroadcaster.broadcast()** method.
+### Broadcasting events
+
+Broadcasting events is handled in the ***broadcastData()*** method. First, it checks whether the ***broadcaster*** value is ***null***. The ***broadcaster*** value must include at least one subscriber or there's no client to send the event to. If the ***broadcaster*** value is specified, the ***OutboundSseEvent*** interface is created by using the ***Sse.newEventBuilder()*** method, where the ***name*** of the event, the ***data*** it contains, and the ***mediaType*** are set. The ***OutboundSseEvent*** interface is then broadcasted, or sent to all registered sinks, by invoking the ***SseBroadcaster.broadcast()*** method.
 
 
-You just set up an endpoint in the **bff** service that the client in the
-**frontend** service can use to subscribe to events. You also enabled the
-service to read from the reactive messaging channel and broadcast the
-information as events to subscribers via SSE.
+You just set up an endpoint in the ***bff*** service that the client in the ***frontend*** service can use to subscribe to events. You also enabled the service to read from the reactive messaging channel and broadcast the information as events to subscribers via SSE.
 
 
-# **Configuring the Kafka connector for the bff service**
+::page{title="Configuring the Kafka connector for the bff service"}
 
+A complete ***system*** service is provided for you in the ***start/system*** directory. The ***system*** service is the producer of the messages that are published to the Kafka messaging system. The periodically published messages contain the system's hostname and a calculation of the average system load (its CPU usage) for the last minute.
 
-A complete **system** service is provided for you in the **start/system**
-directory. The **system** service is the producer of the messages that are
-published to the Kafka messaging system. The periodically
-published messages contain the system's hostname and a calculation of the
-average system load (its CPU usage) for the last minute.
-
-Configure the Kafka connector in the **bff** service to receive the messages from the **system** service.
+Configure the Kafka connector in the ***bff*** service to receive the messages from the ***system*** service.
 
 Create the microprofile-config.properties file.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties
 ```
-{: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties
+> Then, to open the microprofile-config.properties file in your IDE, select
+> **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
+::openFile{path="/home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties"}
 
 
 
@@ -276,45 +206,35 @@ mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serial
 mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
 mp.messaging.incoming.systemLoad.group.id=bff
 ```
-{: codeblock}
-
-
-The **bff** service uses an incoming connector to receive messages through
-the **systemLoad** channel. The messages are
-then published by the **system** service to the **system.load** 
-topic in the Kafka message broker. The **key.deserializer** and
-**value.deserializer** properties define how to
-deserialize the messages. The **group.id** property
-defines a unique name for the consumer group. All of these properties are
-required by the [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs) documentation.
 
 
 
-# **Configuring the frontend service to subscribe to and consume events**
+The ***bff*** service uses an incoming connector to receive messages through the ***systemLoad*** channel. The messages are then published by the ***system*** service to the ***system.load***  topic in the Kafka message broker. The ***key.deserializer*** and ***value.deserializer*** properties define how to deserialize the messages. The ***group.id*** property defines a unique name for the consumer group. All of these properties are required by the [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs) documentation.
 
 
-In this section, you will configure the client in the **frontend** service to subscribe to events
-and display their contents in a table in the UI.
 
-The front-end UI is a table where each row contains the hostname and load of one of the three **system** services.
-The HTML and styling for the UI is provided for you but you must populate the table with
-information that is received from the Server-Sent Events.
+::page{title="Configuring the frontend service to subscribe to and consume events"}
+
+In this section, you will configure the client in the ***frontend*** service to subscribe to events and display their contents in a table in the UI.
+
+The front-end UI is a table where each row contains the hostname and load of one of the three ***system*** services. The HTML and styling for the UI is provided for you but you must populate the table with information that is received from the Server-Sent Events.
 
 Create the index.js file.
 
 > Run the following touch command in your terminal
-```
+```bash
 touch /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
 ```
-{: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
+> Then, to open the index.js file in your IDE, select
+> **File** > **Open** > guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js, or click the following button
+
+::openFile{path="/home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js"}
 
 
 
-
-```
+```javascript
 function initSSE() {
     var source = new EventSource('http://localhost:9084/bff/sse', { withCredentials: true });
     source.addEventListener(
@@ -339,158 +259,114 @@ function systemLoadHandler(event) {
 
 
 ```
-{: codeblock}
 
 
-<br/>
-### **Subscribing to SSE**
 
-The **initSSE()** method is called when the page first
-loads. This method subscribes the client to the SSE by creating a new instance of the
-**EventSource** interface and specifying the
-**http://localhost:9084/bff/sse** URL in the parameters. 
-To connect to the server, the **EventSource** interface
-makes a **GET** request to this endpoint with a request header of **Accept: text/event-stream**.
+### Subscribing to SSE
 
-In this IBM cloud environment, you need to update the **EventSource** URL with the **bff** service domain
-instead of **localhost**. Run the following command:
-```
+The ***initSSE()*** method is called when the page first loads. This method subscribes the client to the SSE by creating a new instance of the ***EventSource*** interface and specifying the ***http://localhost:9084/bff/sse*** URL in the parameters. To connect to the server, the ***EventSource*** interface makes a ***GET*** request to this endpoint with a request header of ***Accept: text/event-stream***.
+
+In this IBM cloud environment, you need to update the ***EventSource*** URL with the ***bff*** service domain instead of ***localhost***. Run the following command:
+```bash
 BFF_DOMAIN=${USERNAME}-9084.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 sed -i 's=localhost:9084='"$BFF_DOMAIN"'=g' frontend/src/main/webapp/js/index.js
 ```
-{: codeblock}
-
-Because this request comes from **localhost:9080** and is made to
-**localhost:9084**, it must follow the Cross-Origin Resource Sharing (CORS)
-specification to avoid being blocked by the browser. To enable CORS for the
-client, set the **withCredentials** configuration element to true in the
-parameters of the **EventSource** interface. CORS is
-already enabled for you in the **bff** service. To learn more about CORS, check out
-the [CORS guide](https://openliberty.io/guides/cors.html).
 
 
-<br/>
-### **Consuming the SSE**
 
-The **EventSource.addEventListener()** method is
-called to add an event listener. This event listener listens for events with
-the name of **systemLoad**. The
-**systemLoadHandler()** function is set as the
-handler function, and each time an event is received, this function is called.
-The **systemLoadHandler()** function will take the event
-object and parse the event's data property from a JSON string into a JavaScript
-object. The contents of this object are used to
-update the table with the system hostname and load. If a system is already present in the table, the load is
-updated, otherwise a new row is added for the system.
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+Because this request comes from ***localhost:9080*** and is made to ***localhost:9084***, it must follow the Cross-Origin Resource Sharing (CORS) specification to avoid being blocked by the browser. To enable CORS for the client, set the ***withCredentials*** configuration element to true in the parameters of the ***EventSource*** interface. CORS is already enabled for you in the ***bff*** service. To learn more about CORS, check out the [CORS guide](https://openliberty.io/guides/cors.html).
 
 
-# **Building and running the application**
+### Consuming the SSE
 
-To build the application, navigate to the **start** directory and run the following Maven **install** and **package** goals from the command line:
+The ***EventSource.addEventListener()*** method is called to add an event listener. This event listener listens for events with the name of ***systemLoad***. The ***systemLoadHandler()*** function is set as the handler function, and each time an event is received, this function is called. The ***systemLoadHandler()*** function will take the event object and parse the event's data property from a JSON string into a JavaScript object. The contents of this object are used to update the table with the system hostname and load. If a system is already present in the table, the load is updated, otherwise a new row is added for the system.
 
-```
+
+::page{title="Building and running the application"}
+
+To build the application, navigate to the ***start*** directory and run the following Maven ***install*** and ***package*** goals from the command line:
+
+```bash
 cd /home/project/guide-reactive-messaging-sse/start
 mvn -pl models install
 mvn package
 ```
-{: codeblock}
 
 Run the following command to download or update to the latest
 Open Liberty Docker image:
 
-```
+```bash
 docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
-{: codeblock}
 
+Run the following commands to containerize the ***frontend***, ***bff***, and ***system*** services:
 
-Run the following commands to containerize the **frontend**, **bff**, and **system** services:
-
-```
+```bash
 docker build -t frontend:1.0-SNAPSHOT frontend/.
 docker build -t bff:1.0-SNAPSHOT bff/.
 docker build -t system:1.0-SNAPSHOT system/.
 ```
-{: codeblock}
 
-
-Next, use the following **startContainers.sh** script to start the application in Docker containers:
+Next, use the following ***startContainers.sh*** script to start the application in Docker containers:
 
 
 
-```
+```bash
 ./scripts/startContainers.sh
 ```
-{: codeblock}
+This script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, the ***frontend*** service, the ***bff*** service , and three instances of the ***system*** service.
 
 
-This script creates a network for the containers to communicate with each other. It
-also creates containers for Kafka, Zookeeper, the **frontend** service, the **bff** service , and three
-instances of the **system** service.
-
-
-The application might take some time to get ready.
-Run the following command to confirm that the **bff** microservice is up and running:
-```
+The application might take some time to get ready. Run the following command to confirm that the ***bff*** microservice is up and running:
+```bash
 curl -s http://localhost:9084/health | jq
 ```
-{: codeblock}
 
-Once your application is up and running, use the following command to get the URL.
-Open your browser and check out your service by going to the URL that the command returns.
-```
+Once your application is up and running, use the following command to get the URL. Open your browser and check out your service by going to the URL that the command returns.
+```bash
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
-{: codeblock} 
 
-The latest version of most modern web browsers supports Server-Sent Events.
-The exception is Internet Explorer, which does not support SSE. 
-When you visit the URL, look for a table similar to the following example:
+The latest version of most modern web browsers supports Server-Sent Events. The exception is Internet Explorer, which does not support SSE. When you visit the URL, look for a table similar to the following example:
 
-![System table](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/master/assets/system_table.png)
+![System table](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/prod/assets/system_table.png)
 
 
-The table contains three rows, one for each of the running **system**
-containers. If you can see the loads updating, you know that your **bff** service
-is successfully receiving messages and broadcasting them as SSE to the client in the **frontend** service.
+The table contains three rows, one for each of the running ***system*** containers. If you can see the loads updating, you know that your ***bff*** service is successfully receiving messages and broadcasting them as SSE to the client in the ***frontend*** service.
 
 
-# **Tearing down the environment**
+::page{title="Tearing down the environment"}
 
 Run the following script to stop the application:
 
 
-```
+```bash
 ./scripts/stopContainers.sh
 ```
-{: codeblock}
 
+::page{title="Summary"}
 
-
-# **Summary**
-
-## **Nice Work!**
+### Nice Work!
 
 You developed an application that subscribes to Server-Sent Events by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
 
 
 
-<br/>
-## **Clean up your environment**
+### Clean up your environment
 
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-reactive-messaging-sse** project by running the following commands:
+Delete the ***guide-reactive-messaging-sse*** project by running the following commands:
 
-```
+```bash
 cd /home/project
 rm -fr guide-reactive-messaging-sse
 ```
-{: codeblock}
 
-<br/>
-## **What did you think of this guide?**
+### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
@@ -498,8 +374,7 @@ We want to hear from you. To provide feedback, click the following link.
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
-<br/>
-## **What could make this guide better?**
+### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
 * [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/issues)
@@ -507,8 +382,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 
 
-<br/>
-## **Where to next?**
+### Where to next?
 
 * [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
 * [Acknowledging messages using MicroProfile Reactive Messaging](https://openliberty.io/guides/microprofile-reactive-messaging-acknowledgment.html)
@@ -524,7 +398,6 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [View the Server-Sent Events HTML Specification](https://html.spec.whatwg.org/multipage/server-sent-events.html)
 
 
-<br/>
-## **Log out of the session**
+### Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
