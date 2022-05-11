@@ -486,7 +486,7 @@ When you're done checking out the application, run the following script to stop 
 
 ### Nice Work!
 
-You just created a GraphQL client microservce!
+You just learnt how to use a GraphQL client to run GraphQL queries and mutations!
 
 
 
