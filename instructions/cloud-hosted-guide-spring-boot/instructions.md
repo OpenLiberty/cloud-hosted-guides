@@ -300,9 +300,6 @@ Update the ***Maven POM*** file in the ***start*** directory.
         <artifactId>liberty-maven-plugin</artifactId>
         <version>3.5.1</version>
         <configuration>
-          <install>
-            <version>22.0.0.2</version>
-          </install>
           <appsDirectory>apps</appsDirectory>
           <installAppPackages>spring-boot-project</installAppPackages>
         </configuration>
@@ -483,9 +480,6 @@ Update the Maven POM file in the ***start*** directory.
         <artifactId>liberty-maven-plugin</artifactId>
         <version>3.5.1</version>
         <configuration>
-          <install>
-            <version>22.0.0.2</version>
-          </install>
           <appsDirectory>apps</appsDirectory>
           <installAppPackages>spring-boot-project</installAppPackages>
           <include>minify,runnable</include>
