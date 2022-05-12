@@ -325,6 +325,7 @@ curl -s http://localhost:9084/health | jq
 ```
 
 Once your application is up and running, click the following button to check out your ***frontend*** service.
+
 ::startApplication{port="9080" display="external" name="Visit application" route="/"}
 
 The latest version of most modern web browsers supports Server-Sent Events. The exception is Internet Explorer, which does not support SSE. When you visit the URL, look for a table similar to the following example:
