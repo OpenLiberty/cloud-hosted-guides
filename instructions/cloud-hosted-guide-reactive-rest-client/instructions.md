@@ -131,6 +131,8 @@ public class InventoryClient {
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or ***Command+V*** in the IDE to add the code to the file.
+
 
 The ***getSystem()*** method returns the ***CompletionStage*** interface. This interface represents a unit or stage of a computation. When the associated computation completes, the value can be retrieved. The ***rx()*** method calls the ***CompletionStage*** interface. It retrieves the ***CompletionStageRxInvoker*** class and allows these methods to function correctly with the ***CompletionStage*** interface return type.
 

@@ -104,7 +104,7 @@ curl -s http://localhost:9080/system/properties | jq
 }
 ```
 
-When you need to stop the server, press ***CTRL+C*** in the command-line session where you ran the server, or run the ***liberty:stop*** goal from the ***start*** directory in another command-line session:
+When you need to stop the server, press `Ctrl+C` in the command-line session where you ran the server, or run the ***liberty:stop*** goal from the ***start*** directory in another command-line session:
 
 ```bash
 mvn liberty:stop
@@ -201,6 +201,8 @@ Replace the server configuration file.
 </server>
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or ***Command+V*** in the IDE to replace the code to the file.
 
 
 After you make the file changes, Open Liberty automatically reloads its configuration. When enabled, the ***mpHealth*** feature automatically adds a ***/health*** endpoint to the application. You can see the server being updated in the server log displayed in your command-line session:
@@ -480,7 +482,7 @@ After you change the file, Open Liberty automatically reloads its configuration.
 
 Now, when you visit the ***/health*** endpoint, additional traces are logged in the ***trace.log*** file.
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Running the application in a Docker container"}
@@ -685,7 +687,7 @@ curl -s http://localhost:9080/dev/system/properties | jq
 
 
 
-When you are finished, exit dev mode by pressing ***CTRL+C*** in the command-line session that the container was started from, or by typing ***q*** and then pressing the ***enter/return*** key. Either of these options stops and removes the container. To check that the container was stopped, run the ***docker ps*** command.
+When you are finished, exit dev mode by pressing `Ctrl+C` in the command-line session that the container was started from, or by typing ***q*** and then pressing the ***enter/return*** key. Either of these options stops and removes the container. To check that the container was stopped, run the ***docker ps*** command.
 
 
 ::page{title="Running the application from a minimal runnable JAR"}
@@ -721,7 +723,7 @@ curl -s http://localhost:9080/dev/system/properties | jq
 
 
 
-You can stop the server by pressing ***CTRL+C*** in the command-line session that the server runs in.
+You can stop the server by pressing `Ctrl+C` in the command-line session that the server runs in.
 
 
 

@@ -128,7 +128,7 @@ Verify that there are three spans from ***inventory*** and one span from ***syst
 ![Finished application's trace](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-opentracing-jaeger/prod/assets/trace01.png)
 
 
-After you’re finished reviewing the application, stop the Open Liberty servers by pressing ***CTRL+C*** in the command-line sessions where you ran the system and inventory services. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+After you’re finished reviewing the application, stop the Open Liberty servers by pressing `Ctrl+C` in the command-line sessions where you ran the system and inventory services. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
 
 
 ```bash
@@ -295,6 +295,8 @@ public class InventoryManager {
 }
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or ***Command+V*** in the IDE to replace the code to the file.
 
 
 Enable tracing of the ***list()*** non-JAX-RS endpoint method by updating ***@Traced*** as shown.
@@ -522,7 +524,7 @@ A few tests are included for you to test the basic functionality of the services
 
 Since you started Open Liberty in dev mode, run the tests for the system and inventory services by pressing the ***enter/return*** key in the command-line sessions where you started the services.
 
-When you are done checking out the services, exit dev mode by pressing ***CTRL+C*** in the shell sessions where you ran the ***system*** and ***inventory*** services,  or by typing ***q*** and then pressing the ***enter/return key***.
+When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the shell sessions where you ran the ***system*** and ***inventory*** services,  or by typing ***q*** and then pressing the ***enter/return key***.
 
 
 Finally, stop the ***Jaeger*** service that you started in the previous step.

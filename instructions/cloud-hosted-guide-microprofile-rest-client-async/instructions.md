@@ -112,6 +112,8 @@ public interface InventoryClient extends AutoCloseable {
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or ***Command+V*** in the IDE to replace the code to the file.
+
 
 The changes involve the ***getSystem*** method. Change the return type to ***CompletionStage\<Properties\>*** to make the method asynchronous. The method now has the return type of ***CompletionStage\<Properties\>*** so you aren't able to directly manipulate the ***Properties*** inner type. As you will see in the next section, you're able to indirectly use the ***Properties*** by chaining callbacks.
 
