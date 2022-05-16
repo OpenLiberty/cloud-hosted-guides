@@ -99,7 +99,7 @@ public interface GraphQlClient {
 
 The ***GraphQlClient*** interface is annotated with the ***@GraphQlClientApi*** annotation. This annotation denotes that this interface is used to create a typesafe GraphQL client.
 
-Inside the interface, a function header is written for each resolver available in the ***graphql*** microservice The names of the functions match the names of the resolvers in the GraphQL schema. Resolvers that require input variables have the input variables passed in using the ***@Name*** annotation on the function inputs. The return types of the functions should match those of the GraphQL resolvers.
+Inside the interface, a function header is written for each resolver available in the ***graphql*** microservice. The names of the functions match the names of the resolvers in the GraphQL schema. Resolvers that require input variables have the input variables passed in using the ***@Name*** annotation on the function inputs. The return types of the functions should match those of the GraphQL resolvers.
 
 For example, the ***system()*** function maps to the ***system*** resolver. The resolver returns a ***SystemInfo*** object, which is described by the ***SystemInfo*** class. Thus, the ***system()*** function returns the type ***SystemInfo***.
 
