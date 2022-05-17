@@ -104,6 +104,8 @@ public class InventoryStartupCheck implements HealthCheck {
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
 
 A health check for startup allows applications to define startup probes that verify whether deployed application is fully initialized before the liveness probe takes over. This check is useful for applications that require additional startup time on their first initialization. The ***@Startup*** annotation must be applied on a HealthCheck implementation to define a startup check procedure. Otherwise, this annotation is ignored. This startup check verifies that the cpu usage is below 95%. If more than 95% of the cpu is used, a status of ***DOWN*** is returned. 
 

@@ -252,6 +252,8 @@ public class InventoryPactIT {
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
 
 The ***InventoryPactIT*** class contains a ***PactProviderRule*** mock provider that mimics the HTTP responses from the ***system*** microservice. The ***@Pact*** annotation takes the name of the microservice as a parameter, which makes it easier to differentiate microservices from each other when you have multiple applications.
 
@@ -809,7 +811,7 @@ The pact file that's created by the ***inventory*** microservice was successfull
 
 ::page{title="Tearing down the environment"}
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line sessions where you ran the servers for the ***system*** and ***inventory*** microservices, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the servers for the ***system*** and ***inventory*** microservices, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 Navigate back to the ***/guide-contract-testing*** directory and run the following commands to remove the Pact Broker:
 

@@ -102,7 +102,7 @@ Similarly, access the ***/health/ready*** endpoint by visiting the http://localh
 curl -s http://localhost:9080/health/ready | jq
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -183,6 +183,8 @@ public class SystemStartupCheck implements HealthCheck {
 
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***@Startup*** annotation indicates that this class is a startup health check procedure. In this case, you are checking the cpu usage. If more than 95% of the cpu is being used, a status of ***DOWN*** is returned.
@@ -683,7 +685,7 @@ The tests might fail if your system CPU or memory use is high. The status of the
 
 To see whether the tests detect a failure, manually change the configuration of ***io_openliberty_guides_inventory_inMaintenance*** from ***false*** to ***true*** in the ***resources/CustomConfigSource.json*** file. Rerun the tests to see a test failure occur. The test failure occurs because the initial status of the ***inventory*** service is ***DOWN***.
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
