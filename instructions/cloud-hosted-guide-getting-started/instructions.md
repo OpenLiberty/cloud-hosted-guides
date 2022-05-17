@@ -202,7 +202,7 @@ Replace the server configuration file.
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or ***Command+V*** in the IDE to replace the code to the file.
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 After you make the file changes, Open Liberty automatically reloads its configuration. When enabled, the ***mpHealth*** feature automatically adds a ***/health*** endpoint to the application. You can see the server being updated in the server log displayed in your command-line session:

@@ -121,6 +121,8 @@ USER 1001
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
 
 The ***FROM*** instruction initializes a new build stage and indicates the parent image from which your image is built. If you don't need a parent image, then use ***FROM scratch***, which makes your image a base image. 
 
@@ -316,7 +318,7 @@ Results :
 Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are finished, press ***CTRL+C*** in the session that the dev mode was
+When you are finished, press `Ctrl+C` in the session that the dev mode was
 started from to stop and remove the container.
 
 
