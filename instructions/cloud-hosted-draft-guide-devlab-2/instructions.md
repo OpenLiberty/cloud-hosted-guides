@@ -78,8 +78,11 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-When the server is running, click the following button to check out the application:
-::startApplication{port="9080" display="external" name="Visit application" route="/"}
+When the server is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
+Open your browser and check out the application by going to the URL that the following command returns:
+```bash
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
 
 See the following output:
 
@@ -250,8 +253,10 @@ Next, the ***ArtistCtrl*** controller is attached to the DOM to create a new chi
 Once the controller is attached, the ***artists*** property can be data-bounded to the template and accessed using the ***{{ artists }}*** expression. You can use the ***ng-repeat*** directive to iterate over the contents of the ***artists*** property.
 
 
-After everything is set up,click the following button to check out the application:
-::startApplication{port="9080" display="external" name="Visit application" route="/"}
+After everything is set up, open your browser and check out the application by going to the URL that the following command returns:
+```bash
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
 
 See the following output:
 
