@@ -109,7 +109,7 @@ While the server starts up, various messages display in your command-line sessio
 [INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
 ```
 
-When you need to stop the server, press ***CTRL+C*** in the command-line session where you ran the server, or run the ***liberty:stop*** goal from the ***start/inventory*** directory in another command-line session:
+When you need to stop the server, press `Ctrl+C` in the command-line session where you ran the server, or run the ***liberty:stop*** goal from the ***start/inventory*** directory in another command-line session:
 
 ```bash
 mvn liberty:stop
@@ -217,6 +217,8 @@ public class Inventory {
 }
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
@@ -3281,7 +3283,7 @@ Replace the ***pom.xml*** file.
 
 Configure the client https port by setting the ***\<liberty.var.client.https.port\>*** to ***9444***.
 
-In your dev mode console for the ***inventory*** microservice, press ***CTRL+C*** to stop the server. Then, restart the dev mode of the ***inventory*** microservice.
+In your dev mode console for the ***inventory*** microservice, press `Ctrl+C` to stop the server. Then, restart the dev mode of the ***inventory*** microservice.
 ```bash
 mvn liberty:dev
 ```
@@ -4053,7 +4055,7 @@ curl -k --user bob:bobpwd https://localhost:9443/metrics
 
 ::page{title="Building the container "}
 
-Press ***CTRL+C*** in the command-line session to stop the ***mvn liberty:dev*** dev mode that you started in the previous section.
+Press `Ctrl+C` in the command-line session to stop the ***mvn liberty:dev*** dev mode that you started in the previous section.
 
 Navigate to your application directory:
 
@@ -4287,7 +4289,7 @@ curl -s http://localhost:9080/health | jq
 curl 'http://localhost:9080/inventory/api/systems'
 ```
 
-When you're finished trying out the microservice, press ***CTRL+C*** in the command-line session where you started dev mode to stop and remove the container.
+When you're finished trying out the microservice, press `Ctrl+C` in the command-line session where you started dev mode to stop and remove the container.
 
 Also, run the following commands to stop the PostgreSQL container that was started in the previous section.
 
