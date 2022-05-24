@@ -465,7 +465,6 @@ You can expect the following response is similar to the following example:
 ```
 
 
-
 **Try the mutation operation**
 
 You can also make POST requests to add a note to a system service at the ***/query/mutation/system/note*** endpoint.
@@ -474,18 +473,16 @@ To add a note to the system service running on Java 8, run the following command
 ```bash
 curl -i -X 'POST' 'http://localhost:9084/query/mutation/system/note' -H 'Content-Type: application/json' -d '{"hostname": "system-java8","text": "I am trying out GraphQL on Open Liberty!"}'
 ```
+
 You will recieve a `200` response code, similar to below, if the request is processed succesfully. 
 
-[role='no_copy']
-----
+```
 HTTP/1.1 200 OK
 X-Powered-By: Servlet/4.0
 Date: Fri, 20 May 2022 19:11:46 GMT
 Content-Length: 0
 Content-Language: en-US
-----
-
-
+```
 
 
 ::page{title="Tearing down the environment"}
