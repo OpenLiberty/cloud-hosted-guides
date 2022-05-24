@@ -78,8 +78,11 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-When the server is running, click the following button to check out the application:
-::startApplication{port="9080" display="external" name="Visit application" route="/"}
+When the server is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
+Open your browser and check out the application by going to the URL that the following command returns:
+```bash
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
 
 See the following output:
 
@@ -92,7 +95,7 @@ bar wrote 1 albums:
 dj wrote 0 albums:
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -169,6 +172,8 @@ app.controller("ArtistsCtrl", function($scope, artists) {
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
 
 Run the following command to update the URL to access the ***artists.json*** in the ***consume-rest.js*** file:
 ```bash
@@ -208,28 +213,20 @@ touch /home/project/guide-rest-client-angularjs/start/src/main/webapp/index.html
 
 
 ```html
-<!-- tag::html[] -->
 <!DOCTYPE html>
 <html>
     <head>
-        <!-- tag::angular-script[] -->
         <script 
             src='http://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.js'/>
         </script>
-        <!-- tag::angular-resource-script[] -->
         <script 
            src='http://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-resource.js'>
         </script>
-        <!-- end::AngularJS[] -->
         <script src='./js/consume-rest.js'></script>
     </head>
-    <!-- tag::body[] -->
     <body ng-app='consumeRestApp'>
-        <!-- tag::controller[] -->
         <div ng-controller='ArtistsCtrl'>
-            <!-- tag::repeat[] -->
             <div ng-repeat='artist in artists'>
-                <!-- tag::artist-info[] -->
                 <p>{{ artist.name }} wrote {{ artist.albums.length }} albums:</p>
                 <div ng-repeat='album in artist.albums'>
                     <p style='text-indent: 20px'>
@@ -256,8 +253,10 @@ Next, the ***ArtistCtrl*** controller is attached to the DOM to create a new chi
 Once the controller is attached, the ***artists*** property can be data-bounded to the template and accessed using the ***{{ artists }}*** expression. You can use the ***ng-repeat*** directive to iterate over the contents of the ***artists*** property.
 
 
-After everything is set up,click the following button to check out the application:
-::startApplication{port="9080" display="external" name="Visit application" route="/"}
+After everything is set up, open your browser and check out the application by going to the URL that the following command returns:
+```bash
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
 
 See the following output:
 
