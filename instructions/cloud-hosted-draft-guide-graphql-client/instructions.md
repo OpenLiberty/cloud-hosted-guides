@@ -23,7 +23,7 @@ GraphQL is an open source data query language. Unlike REST APIs, each request se
 
 You will start with the ***graphql*** microservice created as part of the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide. Then, you'll use the [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) to create a ***query*** microservice that will make requests to the GraphQL microservice. The GraphQL microservice retrieves data from multiple ***system*** microservices. 
 
-The results of the requests will be displayed at REST endpoints. OpenAPI will be used to help make the requests and display the data. To learn more about OpenAPI, check out the https://openliberty.io/guides/microprofile-openapi.html[Documenting RESTful APIs] guide.
+The results of the requests will be displayed at REST endpoints. OpenAPI will be used to help make the requests and display the data. To learn more about OpenAPI, check out the [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html) guide.
 
 ::page{title="Getting started"}
 
@@ -95,6 +95,8 @@ public interface GraphQlClient {
 }
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***GraphQlClient*** interface is annotated with the ***@GraphQlClientApi*** annotation. This annotation denotes that this interface is used to create a typesafe GraphQL client.
@@ -396,25 +398,19 @@ The containers may take some time to become available.
 
 
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+To access the client service, there are several available REST endpoints that test the API endpoints that you created. 
 
+**Try the query operations**
 
-To access the client service, visit the http://localhost:9084/openapi/ui/ URL. This URL displays the available REST endpoints that test the API endpoints that you created.
+First, make a GET request to the ***/query/system/{hostname}*** endpoint by the following command. This request retrieves the system properties for the ***hostname*** specified.
 
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+The ***hostname*** is specified to ***system-java8***. You can try out the operations using the hostname ***system-java11*** as well. 
 
 ```bash
-curl http://localhost:9084/openapi/ui/
+curl -s 'http://localhost:9084/query/system/system-java8' | jq
 ```
+You can expect response similar to the following example:
 
-
-
-### Try the query operations
-
-From the OpenAPI UI, test the read operation at the ***GET /query/system/{hostname}*** endpoint. This request retrieves the system properties for the ***hostname*** specified.
-
-When the ***hostname*** is specified to ***system-java8***. The response is similar to the following example:
 
 ```
 {
@@ -435,9 +431,17 @@ When the ***hostname*** is specified to ***system-java8***. The response is simi
 }
 ```
 
-You can try out the operations using the hostname ***system-java11*** as well. 
 
-You can retrieve the information about the resource usage of any number of system services at the ***GET /query/systemLoad/{hostnames}*** endpoint. When the ***hostnames*** are specified to ***system-java8,system-java11***. The response is similar to the following example:
+
+You can retrieve the information about the resource usage of any number of system services by making a GET request at ***/query/systemLoad/{hostnames}*** endpoint. 
+The ***hostnames*** are specified to ***system-java8,system-java11***.
+
+```bash
+curl -s 'http://localhost:9084/query/systemLoad/system-java8,system-java11' | jq
+```
+
+You can expect the following response is similar to the following example:
+
 
 ```
 [
@@ -460,18 +464,29 @@ You can retrieve the information about the resource usage of any number of syste
 ]
 ```
 
-### Try the mutation operation
 
-You can also make requests to add a note to a system service at the ***POST /query/mutation/system/note*** endpoint. To add a note to the system service running on Java 8, specify the following in the request body:
+
+**Try the mutation operation**
+
+You can also make POST requests to add a note to a system service at the ***/query/mutation/system/note*** endpoint.
+To add a note to the system service running on Java 8, run the following command:
 
 ```bash
-{
-  "hostname": "system-java8",
-  "text": "I'm trying out GraphQL on Open Liberty!"
-}
+curl -i -X 'POST' 'http://localhost:9084/query/mutation/system/note' -H 'Content-Type: application/json' -d '{"hostname": "system-java8","text": "I am trying out GraphQL on Open Liberty!"}'
 ```
+You will recieve a `200` response code, similar to below, if the request is processed succesfully. 
 
-You will recieve a ***200*** response code if the request is processed succesfully. 
+[role='no_copy']
+----
+HTTP/1.1 200 OK
+X-Powered-By: Servlet/4.0
+Date: Fri, 20 May 2022 19:11:46 GMT
+Content-Length: 0
+Content-Language: en-US
+----
+
+
+
 
 ::page{title="Tearing down the environment"}
 
