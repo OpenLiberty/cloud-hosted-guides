@@ -77,15 +77,17 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
-When the server is running, click the following button to check out the application:
-::startApplication{port="9080" display="external" name="Visit application" route="/"}
+When the server is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Open your browser and check out the application by going to the URL that the following command returns:
+```bash
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
 
 See the following output:
 
 ![React Paginated Table](https://raw.githubusercontent.com/OpenLiberty/guide-rest-client-reactjs/prod/assets/react-table.png)
 
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -169,6 +171,8 @@ import App from './Components/App';
 ReactDOM.render(<App />, document.getElementById('root'));
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 
@@ -439,8 +443,10 @@ mvn process-resources
 The build may take a few minutes to complete. You can rebuild the front end at any time with the Maven ***process-resources*** goal. Any local changes to your JavaScript and HTML are picked up when you build the front end.
 
 
-Click the following button to view the front end of your application:
-::startApplication{port="9080" display="external" name="Visit application" route="/"}
+Open your browser and view the front end of your application by going to the URL that the following command returns:
+```bash
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
 
 
 ::page{title="Testing the React client"}
@@ -514,7 +520,6 @@ Update the ***pom.xml*** file.
                 <artifactId>liberty-maven-plugin</artifactId>
                 <version>3.5.1</version>            
             </plugin>
-            <!-- tag::frontend-plugin[] -->
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
@@ -542,7 +547,6 @@ Update the ***pom.xml*** file.
                             <arguments>install</arguments>
                         </configuration>
                     </execution>
-                    <!-- tag::node-resource-build[] -->
                     <execution>
                         <id>npm run build</id>
                         <goals>
@@ -552,7 +556,6 @@ Update the ***pom.xml*** file.
                             <arguments>run build</arguments>
                         </configuration>
                     </execution>
-                    <!-- tag::node-tests[] -->
                     <execution>
                         <id>run tests</id>
                         <goals>
@@ -567,7 +570,6 @@ Update the ***pom.xml*** file.
                     </execution>
                 </executions>
             </plugin>
-            <!-- Copy frontend static files to target directory -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
