@@ -4,9 +4,9 @@ title: instructions
 branch: lab-204-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 ---
-::page{title="Welcome to the Consuming a RESTful web service with ReactJS guide!"}
+::page{title="Welcome to the Caching HTTP session data using JCache and Hazelcast guide!"}
 
-Explore how to access a simple RESTful web service and consume its resources with ReactJS in Open Liberty.
+ WINDOWS
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,19 +16,44 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to access a REST service and deserialize the returned JSON that contains a list of artists and their albums by using an HTTP client with the ReactJS library. You will then present this data by using a ReactJS paginated table component.
+### What is a session?
+On the internet, a web server doesn't know who you are or what you do
+because it's processing stateless HTTP requests. An HTTP session provides a way to store
+information to be used across multiple requests.
+Session variables store user information like user name or items in a shopping cart.
+By default, session variables will timeout after 30 minutes of being unused.
+Cookies, which also store user information, are maintained on a client's computer,
+whereas session variables are maintained on a web server. For security reasons,
+an HTTP session is preferred over cookies when used with sensitive data.
+A session hides data from users.
+Cookies can be manipulated by a savvy user to make fake requests to your site.
 
-[ReactJS](https://reactjs.org/) is a JavaScript library that is used to build user interfaces. Its main purpose is to incorporate a component-based approach to create reusable UI elements. With ReactJS, you can also interface with other libraries and frameworks. Note that the names ReactJS and React are used interchangeably.
+### What is session persistence?
+High traffic websites must support thousands of users in a fast and reliable way.
+Load balancing requires running several instances of the same application in parallel
+so that traffic can be routed to different instances to maximize speed and reliability.
+Unless a user is tied to a particular instance, running multiple instances of the same
+application can pose an out-of-sync problem when each instance keeps an isolated copy of its
+session data. HTTP session data caching can solve this problem by allowing all
+instances of the application to share caches among each other.
+Sharing caches among instances eliminates the need to route a user to the same instance
+and helps in failover situations by distributing the cache.
 
-The React application in this guide is provided and configured for you in the ***src/main/frontend*** directory. The application uses the [Create React App](https://reactjs.org/docs/create-a-new-react-app.html) prebuilt configuration to set up the modern single-page React application. The [create-react-app](https://github.com/facebook/create-react-app) integrated toolchain is a comfortable environment for learning React and is the best way to start building a new single-page application with React.
+![Session Cache](https://raw.githubusercontent.com/OpenLiberty/guide-sessions/prod/assets/sessionCache.png)
 
 
-The REST service that provides the resources was written for you in advance in the back end of the application, and it responds with the ***artists.json*** in the ***src/resources*** directory. You will implement a ReactJS client as the front end of your application, which consumes this JSON file and displays its contents on a single-page webpage. 
+You will learn how to build an application that creates and uses HTTP session data.
+You will also learn how to use Open Liberty's ***sessionCache*** feature to persist HTTP sessions
+by using Java Caching (JCache), the standard caching API for Java.
 
-To learn more about REST services and how you can write them, see the [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
+You will containerize and deploy the application to a local Kubernetes cluster.
+You will then replicate the application in multiple pods and see that the session data is cached and
+shared among all instances of the application. Even if an instance is unavailable, the other instances
+are able to take over and handle requests from the same user by using the cached session data.
+
+
 
 ::page{title="Getting started"}
 
@@ -41,11 +66,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-reactjs.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-sessions.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-rest-client-reactjs.git
-cd guide-rest-client-reactjs
+git clone https://github.com/openliberty/guide-sessions.git
+cd guide-sessions
 ```
 
 
@@ -54,54 +79,325 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-### Try what you'll build
+::page{title="Creating the application"}
 
-The ***finish*** directory in the root of this guide contains the finished application. The React front end is already pre-built for you and the static files from the production build can be found in the ***src/main/webapp/static*** directory.
-
-
-In this IBM cloud environment, you need to update the URL to access the ***artists.json***. Run the following commands to go to the ***finish*** directory and update the file where specified the URL:
-```bash
-cd finish
-sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/static/js/main.a223975a.js
-```
-
-To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
-```bash
-mvn liberty:run
-```
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-When the server is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Open your browser and check out the application by going to the URL that the following command returns:
-```bash
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
-```
-
-See the following output:
-
-![React Paginated Table](https://raw.githubusercontent.com/OpenLiberty/guide-rest-client-reactjs/prod/assets/react-table.png)
-
-
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
-
-```bash
-mvn liberty:stop
-```
-
-
-::page{title="Starting the service"}
-
-Before you begin the implementation, start the provided REST service so that the artist JSON is available to you.
+The application that you are working with is a shopping cart web service that uses JAX-RS,
+which is a Java API for building RESTful web services.
+You'll learn how to persist a user's shopping cart data between servers by using the
+***sessionCache*** feature in Open Liberty. The ***sessionCache*** feature persists HTTP
+sessions using JCache. You can have high-performance HTTP session persistence
+without using a relational database.
 
 Navigate to the ***start*** directory to begin.
+
+Create the ***CartApplication*** class.
+
+> Run the following touch command in your terminal
 ```bash
-cd /home/project/guide-rest-client-reactjs/start
+touch /home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java
 ```
+
+
+> Then, to open the CartApplication.java file in your IDE, select
+> **File** > **Open** > guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java, or click the following button
+
+::openFile{path="/home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java"}
+
+
+
+```java
+package io.openliberty.guides.cart;
+
+import jakarta.ws.rs.ApplicationPath;
+import jakarta.ws.rs.core.Application;
+
+@ApplicationPath("/")
+public class CartApplication extends Application {
+
+}
+```
+
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+The ***CartApplication*** class extends the generic JAX-RS application class that is needed to run the
+application.
+
+Create the ***CartResource*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java
+```
+
+
+> Then, to open the CartResource.java file in your IDE, select
+> **File** > **Open** > guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java, or click the following button
+
+::openFile{path="/home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java"}
+
+
+
+```java
+package io.openliberty.guides.cart;
+
+import java.util.Enumeration;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+
+@Path("/")
+public class CartResource {
+
+    @POST
+    @Path("cart/{item}&{price}")
+    @Produces(MediaType.TEXT_PLAIN)
+    @APIResponse(responseCode = "200", description = "Item successfully added to cart.")
+    @Operation(summary = "Add a new item to cart.")
+    public String addToCart(@Context HttpServletRequest request,
+                    @Parameter(description = "Item you need for intergalatic travel.",
+                               required = true)
+                    @PathParam("item") String item,
+                    @Parameter(description = "Price for this item.",
+                               required = true)
+                    @PathParam("price") double price) {
+        HttpSession session = request.getSession();
+        session.setAttribute(item, price);
+        return item + " added to your cart and costs $" + price;
+    }
+
+    @GET
+    @Path("cart")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponse(responseCode = "200",
+        description = "Items successfully retrieved from your cart.")
+    @Operation(summary = "Return an JsonObject instance which contains "
+                        + "the items in your cart and the subtotal.")
+    public JsonObject getCart(@Context HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        Enumeration<String> names = session.getAttributeNames();
+        JsonObjectBuilder builder = Json.createObjectBuilder();
+        builder.add("pod-name", getHostname());
+        builder.add("session-id", session.getId());
+        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+        Double subtotal = 0.0;
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+            String price = session.getAttribute(name).toString();
+            arrayBuilder.add(name + " | $" + price);
+            subtotal += Double.valueOf(price).doubleValue();
+        }
+        builder.add("cart", arrayBuilder);
+        builder.add("subtotal", subtotal);
+        return builder.build();
+    }
+
+    private String getHostname() {
+        String hostname = System.getenv("HOSTNAME");
+        if (hostname == null) {
+            hostname = "localhost";
+        }
+        return hostname;
+    }
+}
+```
+
+
+
+The ***CartResource*** class defines the REST endpoints at which a user can make
+an HTTP request.
+
+The ***addToCart*** and ***getCart*** methods
+have a number of annotations. Most of these annotations are used by the
+MicroProfile OpenAPI and JAX-RS features to document the REST endpoints and map Java objects to web resources.
+More information about these annotations can be found in the
+[Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html#augmenting-the-existing-jax-rs-annotations-with-openapi-annotations)
+and
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html#creating-a-jax-rs-application)
+guides.
+
+The ***cart/{item}&{price}*** endpoint demonstrates how to set session data.
+The ***@PathParam*** annotation injects a custom ***item*** and
+***price*** from the POST request into the method parameter.
+The ***addToCart*** method gets the current ***session*** and binds
+the ***{item}:{price}*** key-value pair into the session by the ***setAttribute()*** method.
+A response is then built and returned to confirm that an item was added to your cart and session.
+
+The ***cart*** endpoint demonstrates how to get session data.
+The ***getCart*** method gets the current session, iterates through all key-value
+pairs that are stored in the current session, and creates a ***JsonObject*** response.
+The ***JsonObject*** response is returned to confirm the server instance by
+***pod-name***, the session by ***session-id***,
+and the items in your cart by ***cart***.
+
+
+::page{title="Configuring session persistence"}
+
+### Using client-server vs peer-to-peer model
+
+Session caching is only valuable when a server is connected to at least
+one other member. There are two different ways session caching can behave in a
+cluster environment:
+
+* Client-server model: A Liberty server can act as the JCache client and connect
+to a dedicated JCache server.
+* Peer-to-peer model: A Liberty server can connect with other Liberty servers
+that are also running with the session cache and configured to be
+part of the same cluster.
+
+You'll use the peer-to-peer model in a Kubernetes environment for this guide.
+
+### Configuring session persistence with JCache in Open Liberty
+
+JCache, which stands for Java Caching, is an interface
+to standardize distributed caching on the Java platform.
+The ***sessionCache*** feature uses JCache, which allows for session
+persistence by providing a common cache of session data between servers.
+This feature doesn't include a JCache implementation.
+For this guide, you'll use Hazelcast as an open source JCache provider.
+
+Hazelcast is a JCache provider. Open Liberty needs to be configured to use
+Hazelcast after the ***sessionCache*** feature is enabled.
+
+Create the ***server.xml*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-sessions/start/src/main/liberty/config/server.xml
+```
+
+
+> Then, to open the server.xml file in your IDE, select
+> **File** > **Open** > guide-sessions/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Liberty Server for Sessions Management">
+
+    <featureManager>
+        <feature>servlet-5.0</feature>
+        <feature>sessionCache-1.0</feature>
+        <feature>restfulWS-3.0</feature>
+        <feature>jsonb-2.0</feature>
+        <feature>jsonp-2.0</feature>
+        <feature>mpOpenAPI-3.0</feature>
+    </featureManager>
+
+    <variable name="default.http.port" defaultValue="9080"/>
+    <variable name="default.https.port" defaultValue="9443"/>
+    <variable name="app.context.root" defaultValue="guide-sessions"/>
+
+    <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
+        id="defaultHttpEndpoint" host="*" />
+    <httpSessionCache libraryRef="jCacheVendorLib"
+        uri="file:${server.config.dir}/hazelcast-config.xml" />
+    <library id="jCacheVendorLib">
+        <file name="${shared.resource.dir}/hazelcast-5.1.1.jar" />
+    </library>
+
+    <webApplication location="guide-sessions.war" contextRoot="${app.context.root}" />
+
+</server>
+```
+
+
+
+
+The ***library*** element includes the library reference that indicates
+to the server where the Hazelcast implementation of JCache is located. 
+Your Hazelcast implementation of JCache is a JAR file that resides in the shared resources directory that is defined by the ***file*** element.
+The ***hazelcast-*.jar*** file is downloaded by the Liberty Maven plugin. The ***configuration*** is defined in the provided Maven POM file.
+
+### Configuring Hazelcast
+
+
+By default, all Open Liberty servers that run the ***sessionCache***
+feature and Hazelcast are connected using a peer-to-peer model.
+
+You can share the session cache only among certain Hazelcast instances
+by using the ***cluster-name*** configuration element in the Hazelcast configuration file.
+
+Create the ***hazelcast-config.xml*** configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-sessions/start/src/main/liberty/config/hazelcast-config.xml
+```
+
+
+> Then, to open the hazelcast-config.xml file in your IDE, select
+> **File** > **Open** > guide-sessions/start/src/main/liberty/config/hazelcast-config.xml, or click the following button
+
+::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/hazelcast-config.xml"}
+
+
+
+```xml
+<hazelcast xmlns="http://www.hazelcast.com/schema/config"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.hazelcast.com/schema/config
+       https://hazelcast.com/schema/config/hazelcast-config-5.1.xsd">
+
+    <cluster-name>CartCluster</cluster-name>
+
+</hazelcast>
+```
+
+
+
+The cluster name ***CartCluster*** is defined in the ***hazelcast-config.xml***.
+
+In the ***server.xml*** file, a reference to the Hazelcast configuration file is made by using
+the ***httpSessionCache*** tag.
+
+
+Create the ***bootstrap.properties*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-sessions/start/src/main/liberty/config/bootstrap.properties
+```
+
+
+> Then, to open the bootstrap.properties file in your IDE, select
+> **File** > **Open** > guide-sessions/start/src/main/liberty/config/bootstrap.properties, or click the following button
+
+::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/bootstrap.properties"}
+
+
+
+```
+hazelcast.jcache.provider.type=member
+```
+
+
+
+Hazelcast JCache provides the client and member providers. Set ***hazelcast.jcache.provider.type*** to ***member*** to use the member provider.
+
+There are more configuration settings that you can explore in the
+[Hazelcast documentation](https://docs.hazelcast.org/docs/latest/manual/html-single/#understanding-configuration).
+
+
+::page{title="Running the application"}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -119,502 +415,198 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 
-After the server is started, run the following curl command to view your artist JSON.
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+
+Point your browser to the link:http://localhost:9080/openapi/ui/ URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
 ```bash
-curl -s http://localhost:9080/artists | jq
+curl link:http://localhost:9080/openapi/ui/
 ```
 
-All the dependencies for the React front end can be found in ***src/main/frontend/src/package.json***, and they are installed before the front end is built by the ***frontend-maven-plugin***. Additionally, some provided ***CSS*** stylesheets files are provided and can be found in the ***src/main/frontend/src/Styles*** directory.
+
+This URL displays the available REST endpoints.
+
+First, make a POST request to the ***/cart/{item}&{price}*** endpoint. To make this request, expand the POST
+endpoint on the UI, click the ***Try it out*** button, provide an item and a price,
+and then click the ***Execute*** button.
+The POST request adds a user-specified item and price to a session
+that represents data in a user's cart.
+
+Next, make a GET request to the ***/cart*** endpoint. To make this request, expand the GET
+endpoint on the UI, click the ***Try it out*** button,
+and then click the ***Execute*** button. The GET request
+returns a pod name, a session ID, and all the items from your session.
+
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
-::page{title="Project configuration"}
-
-The front end of your application uses Node.js to build your React code. The Maven project is configured for you to install Node.js and produce the production files, which are copied to the web content of your application.
-
-Node.js is a server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to run the React build scripts that are found in the ***package.json*** file. To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
 
 
-Take a look at the **pom.xml** file.
-> From the menu of the IDE, select **File** > **Open** > guide-rest-client-reactjs/start/pom.xml, or click the following button
-::openFile{path="/home/project/guide-rest-client-reactjs/start/pom.xml"}
+::page{title="Containerizing the application"}
 
-The ***frontend-maven-plugin*** is used to ***install*** the dependencies that are listed in your ***package.json*** file from the npm registry into a folder called ***node_modules***. The ***node_modules*** folder can be found in your ***working*** directory. Then, the configuration ***produces*** the production files to the ***src/main/frontend/build*** directory. 
+Before you can deploy the application to Kubernetes, you need to containerize it with Docker.
 
-The ***maven-resources-plugin*** copies the ***static*** content from the ***build*** directory to the ***web content*** of the application.
+Make sure to start your Docker daemon before you proceed.
+
+The Dockerfile is provided at the ***start*** directory. If you're unfamiliar with Dockerfile,
 
 
-::page{title="Creating the default page"}
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-You need to create the entry point of your React application. ***create-react-app*** uses the ***index.js*** file as the main entry point of the application. This JavaScript file corresponds with the ***index.html*** file, which is the entry point where your code runs in the browser.
+check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide,
+which covers Dockerfile in depth.
 
-Create the ***index.js*** file.
+Run the ***mvn package*** command from the ***start*** directory so that the ***.war*** file resides in the ***target*** directory.
 
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/index.js
+mvn package
 ```
 
+Run the following command to download or update to the latest Open Liberty Docker image:
 
-> Then, to open the index.js file in your IDE, select
-> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/index.js, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/index.js"}
-
-
-
-```javascript
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './Styles/index.css';
-import App from './Components/App';
-
-ReactDOM.render(<App />, document.getElementById('root'));
-```
-
-
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-
-The ***React*** library imports the ***react*** package. A DOM, or Document Object Model, is a programming interface for HTML and XML documents. React offers a virtual DOM, which is essentially a copy of the browser DOM that resides in memory. The React virtual DOM improves the performance of your web application and plays a crucial role in the rendering process. The ***react-dom*** package provides DOM-specific methods that can be used in your application to get outside of the React model, if necessary. 
-
-The ***render*** method takes an HTML DOM element and tells the ReactDOM to render your React application inside of this DOM element. To learn more about the React virtual DOM, see the [ReactDOM](https://reactjs.org/docs/react-dom.html) documentation.
-
-
-::page{title="Creating the React components"}
-
-A React web application is a collection of components, and each component has a specific function. You will create the components that are used in the application to acquire and display data from the REST API. 
-
-The main component in your React application is the ***App*** component. You need to create the ***App.js*** file to act as a container for all other components. 
-
-Create the ***App.js*** file.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/App.js
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+```
+
+To build and containerize the application, run the following Docker build command in the ***start*** directory:
+
+```bash
+docker build -t cart-app:1.0-SNAPSHOT .
+```
+
+When the build finishes, run the following command to list all local Docker images:
+```bash
+docker images
+```
+
+Verify that the ***cart-app:1.0-SNAPSHOT*** image is listed among the Docker images, for example:
+```
+REPOSITORY                      TAG
+cart-app                        1.0-SNAPSHOT
+openliberty/open-liberty        full-java11-openj9-ubi
 ```
 
 
-> Then, to open the App.js file in your IDE, select
-> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/Components/App.js, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/App.js"}
+::page{title="Deploying and running the application in Kubernetes"}
 
 
+Now that the containerized application is built, deploy it to a local Kubernetes cluster by using
+a Kubernetes resource definition, which is provided in the ***kubernetes.yaml*** file
+at the ***start*** directory.
 
-```javascript
-import React from 'react';
-import ArtistTable from './ArtistTable';
+First, use the ***ClusterRoleBinding*** Kubernetes API object to grant Hazelcast members to access the cluster.
+```bash
+kubectl apply -f https://raw.githubusercontent.com/hazelcast/hazelcast/master/kubernetes-rbac.yaml
+```
 
-function App() {
-  return (
-      <ArtistTable/>
-  );
+Run the following command to deploy the application into `3` replicated pods as defined
+in the ***kubernetes.yaml*** file:
+```bash
+kubectl apply -f kubernetes.yaml
+```
+
+When the application is deployed, run the following command to check the status of your pods:
+```bash
+kubectl get pods
+```
+
+You see an output similar to the following if all the pods are working correctly:
+
+```
+NAME                             READY  STATUS   RESTARTS  AGE
+cart-deployment-98f4ff789-2xlhs  1/1    Running  0         17s
+cart-deployment-98f4ff789-6rvfj  1/1    Running  0         17s
+cart-deployment-98f4ff789-qrh45  1/1    Running  0         17s
+```
+
+
+
+Run the ***minikube ip*** command to get the hostname for minikube.
+Then, go to the ***http://[hostname]:31000/openapi/ui/*** URL in your browser. 
+This URL displays the available REST endpoints.
+
+Make a POST request to the ***/cart/{item}&{price}*** endpoint. To make this request, expand the POST
+endpoint on the UI, click the ***Try it out*** button, provide an item and a price,
+and then click the ***Execute*** button.
+The POST request adds a user-specified item and price to a session
+that represents data in a user's cart.
+
+Next, make a GET request to the ***/cart*** endpoint. To make this request, expand the GET
+endpoint on the UI, click the ***Try it out*** button, and then click the ***Execute*** button.
+The GET request returns a pod name, a session ID, and all the items from your session.
+
+```
+{
+  "pod-name": "cart-deployment-98f4ff789-2xlhs",
+  "session-id": "RyJKzmka6Yc-ZCMzEA8-uPq",
+  "cart": [
+    "eggs | $2.89"
+  ],
+  "subtotal": 2.89
 }
-
-export default App;
 ```
 
-
-
-The ***App.js*** file returns the ***ArtistTable*** component to create a reusable element that encompasses your web application. 
-
-Next, create the ***ArtistTable*** component that fetches data from your back end and renders it in a table. 
-
-Create the ***ArtistTable.js*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js
-```
-
-
-> Then, to open the ArtistTable.js file in your IDE, select
-> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js"}
-
-
-
-```javascript
-import React, { Component } from 'react';
-import ReactTable from 'react-table-6';
-import 'react-table-6/react-table.css';
-
-class ArtistTable extends Component {
-  state = {
-    posts: [],
-    isLoading: true,
-    error: null,
-  };
-
-
-  render() {
-    const { isLoading, posts } = this.state;
-    const columns = [{
-      Header: 'Artist Info',
-      columns: [
-        {
-          Header: 'Artist ID',
-          accessor: 'id'
-        },
-        {
-          Header: 'Artist Name',
-          accessor: 'name'
-        },
-        {
-          Header: 'Genres',
-          accessor: 'genres',
-        }
-      ]
-    },
-    {
-      Header: 'Albums',
-      columns: [
-        {
-          Header: 'Title',
-          accessor: 'title',
-        },
-        {
-          Header: 'Number of Tracks',
-          accessor: 'ntracks',
-        }
-      ]
-    }
-  ]
-
-  return (
-    <div>
-      <h2>Artist Web Service</h2>
-      {!isLoading ? (
-        <ReactTable
-          data={posts}
-          columns={columns}
-          defaultPageSize={4}
-          pageSizeOptions={[4, 5, 6]}
-        />) : (
-          <p>Loading .....</p>
-        )}
-    </div>
-    );
-  }
-}
-
-export default ArtistTable;
-```
-
-
-
-The ***React*** library imports the ***react*** package for you to create the ***ArtistTable*** component as inheritance of the ***React Component*** and use its values. The ***state*** object is initialized to represent the state of the posts that appear on the paginated table. The ***ArtistTable*** component also needs to be ***exported*** as a reusable UI element that can be used across your application.
-
-To display the returned data, you will use pagination. Pagination is the process of separating content into discrete pages, and it can be used for handling data sets in React. In your application, you'll render the columns in the paginated table. The ***columns*** constant is used to define the table that is present on the webpage.
-
-The ***return*** statement returns the paginated table where you defined the properties for the ***ReactTable***. The ***data*** property corresponds to the consumed data from the API endpoint and is assigned to the ***data*** of the table. The ***columns*** property corresponds to the rendered column object and is assigned to the ***columns*** of the table.
-
-
-### Importing the HTTP client
-
-Your application needs a way to communicate with and retrieve resources from RESTful web services to output the resources onto the paginated table. The [Axios](https://github.com/axios/axios) library will provide you with an HTTP client. This client is used to make HTTP requests to external resources. Axios is a promise-based HTTP client that can send asynchronous requests to REST endpoints. To learn more about the Axios library and its HTTP client, see the [Axios documentation](https://www.npmjs.com/package/axios).
-
-The ***getArtistsInfo()*** function uses the Axios API to fetch data from your back end. This function is called when the ***ArtistTable*** is rendered to the page using the ***componentDidMount()*** React lifecycle method.
-
-Update the ***ArtistTable.js*** file.
-
-> To open the ArtistTable.js file in your IDE, select
-> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js"}
-
-
-
-```javascript
-import React, { Component } from 'react';
-import axios from 'axios';
-import ReactTable from 'react-table-6';
-import 'react-table-6/react-table.css';
-
-class ArtistTable extends Component {
-  state = {
-    posts: [],
-    isLoading: true,
-    error: null,
-  };
-
-  getArtistsInfo() {
-    axios('http://localhost:9080/artists')
-      .then(response => {
-        const artists = response.data;
-        const posts = [];
-        for (const artist of artists) {
-          const { albums, ...rest } = artist;
-          for (const album of albums) {
-            posts.push({ ...rest, ...album });
-          }
-        };
-        this.setState({
-          posts,
-          isLoading: false
-        });
-      })
-      .catch(error => this.setState({ error, isLoading: false }));
-  }
-
-  componentDidMount() {
-    this.getArtistsInfo();
-  }
-  render() {
-    const { isLoading, posts } = this.state;
-    const columns = [{
-      Header: 'Artist Info',
-      columns: [
-        {
-          Header: 'Artist ID',
-          accessor: 'id'
-        },
-        {
-          Header: 'Artist Name',
-          accessor: 'name'
-        },
-        {
-          Header: 'Genres',
-          accessor: 'genres',
-        }
-      ]
-    },
-    {
-      Header: 'Albums',
-      columns: [
-        {
-          Header: 'Title',
-          accessor: 'title',
-        },
-        {
-          Header: 'Number of Tracks',
-          accessor: 'ntracks',
-        }
-      ]
-    }
-  ]
-
-  return (
-    <div>
-      <h2>Artist Web Service</h2>
-      {!isLoading ? (
-        <ReactTable
-          data={posts}
-          columns={columns}
-          defaultPageSize={4}
-          pageSizeOptions={[4, 5, 6]}
-        />) : (
-          <p>Loading .....</p>
-        )}
-    </div>
-    );
-  }
-}
-
-export default ArtistTable;
-```
-
-
-
-
-The ***axios*** HTTP call is used to read the artist JSON that contains the data from the sample JSON file in the ***resources*** directory. When a response is successful, the state of the system changes by assigning ***response.data*** to ***posts***. The ***convertData*** function manipulates the JSON data to allow it to be accessed by the ***ReactTable***. You will notice the ***object spread syntax*** that the ***convertData*** function uses, which is a relatively new sytnax made for simplicity. To learn more about it, see [Spread in object literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax#Spread_in_object_literals).
-
-The ***this.setState*** function is used to update the state of your React component with the data that was fetched from the server. This update triggers a rerender of your React component, which updates the table with the artist data. For more information on how state in React works, see the React documentation on [state and lifecycle](https://reactjs.org/docs/faq-state.html).
-
-Finally, run the following command to update the URL to access the ***artists.json*** in the ***ArtistTable.js*** file:
-```bash
-sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js
-```
-
-
-::page{title="Building and packaging the front end"}
-
-After you successfully build your components, you need to build the front end and package your application. The Maven ***process-resources*** goal generates the Node.js resources, creates the front-end production build, and copies and processes the resources into the destination directory. 
-
-In a new command-line session, build the front end by running the following command in the ***start*** directory:
+Replace the ***[pod-name]*** in the following command, and then run the command to pause
+the pod for the GET request that you just ran:
 
 ```bash
-cd /home/project/guide-rest-client-reactjs/start
-mvn process-resources
+kubectl exec -it [pod-name] -- /opt/ol/wlp/bin/server pause
 ```
 
-The build may take a few minutes to complete. You can rebuild the front end at any time with the Maven ***process-resources*** goal. Any local changes to your JavaScript and HTML are picked up when you build the front end.
+Repeat the GET request. You see the same ***session-id***
+but a different ***pod-name*** because the session data is cached but the request
+is served by a different pod (server).
 
+Verify that the Hazelcast cluster is running by checking the Open Liberty log. 
+To check the log, run the following command:
 
-Open your browser and view the front end of your application by going to the URL that the following command returns:
 ```bash
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+kubectl exec -it [pod-name] -- cat /logs/messages.log
 ```
 
+You see a message similar to the following:
 
-::page{title="Testing the React client"}
+```
+... [10.1.0.46]:5701 [CartCluster] [3.11.2]
 
-New projects that are created with ***create-react-app*** comes with a test file called ***App.test.js***, which is included in the ***src/main/frontend/src*** directory. The ***App.test.js*** file is a simple JavaScript file that tests against the ***App.js*** component. There are no explicit test cases that are written for this application. The ***create-react-app*** configuration uses [Jest](https://jestjs.io/) as its test runner.
-To learn more about Jest, go to their documentation on [Testing React apps](https://jestjs.io/docs/en/tutorial-react). 
+Members {size:3, ver:3} [
+	Member [10.1.0.40]:5701 - 01227d80-501e-4789-ae9d-6fb348d794ea
+	Member [10.1.0.41]:5701 - a68d0ed1-f50e-4a4c-82b0-389f356b8c73 this
+	Member [10.1.0.42]:5701 - b0dfa05a-c110-45ed-9424-adb1b2896a3d
+]
+```
 
+You can resume the paused pod by running the following command:
 
-Update the ***pom.xml*** file.
-
-> To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-rest-client-reactjs/start/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-rest-client-reactjs/start/pom.xml"}
-
-
-
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>com.microprofile.demo</groupId>
-    <artifactId>guide-rest-client-reactjs</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>5.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.8.2</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
-            </plugin>
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5.1</version>            
-            </plugin>
-            <plugin>
-                <groupId>com.github.eirslett</groupId>
-                <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.10.0</version>
-                <configuration>
-                    <workingDirectory>src/main/frontend</workingDirectory>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>install node and npm</id>
-                        <goals>
-                            <goal>install-node-and-npm</goal>
-                        </goals>
-                        <configuration>
-                            <nodeVersion>v12.18.3</nodeVersion>
-                            <npmVersion>6.14.6</npmVersion>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>npm install</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>install</arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>npm run build</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>run build</arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>run tests</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>test a</arguments>
-                            <environmentVariables>
-                                <CI>true</CI>
-                            </environmentVariables>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.2.0</version>
-                <executions>
-                 <execution>
-                        <id>Copy frontend build to target</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>
-                                ${basedir}/src/main/webapp
-                            </outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>
-                                        ${basedir}/src/main/frontend/build
-                                    </directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+```bash
+kubectl exec -it [pod-name] -- /opt/ol/wlp/bin/server resume
 ```
 
 
 
-To run the default test, you can add the ***testing*** configuration to the ***frontend-maven-plugin***. Rerun the Maven ***process-resources*** goal to rebuild the front end and run the tests.
+::page{title="Tearing down the environment"}
 
-Although the React application in this guide is simple, when you build more complex React applications, testing becomes a crucial part of your development lifecycle. If you need to write application-oriented test cases, follow the official [React testing documentation](https://reactjs.org/docs/testing.html).
+When you no longer need your deployed application, you can delete all Kubernetes resources and disable the Hazelcast members' access to the cluster by running the ***kubectl delete*** commands:
 
-When you are done checking the application root, exit dev mode by pressing CTRL+C in the shell session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+```bash
+kubectl delete -f kubernetes.yaml
+kubectl delete -f https://raw.githubusercontent.com/hazelcast/hazelcast/master/kubernetes-rbac.yaml
+```
+
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-Nice work! You just accessed a simple RESTful web service and consumed its resources by using ReactJS in Open Liberty.
+You have created, used, and cached HTTP session data for an application that was running on Open Liberty server
+
+and deployed in a Kubernetes cluster.
 
 
 
@@ -623,33 +615,34 @@ Nice work! You just accessed a simple RESTful web service and consumed its resou
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-rest-client-reactjs*** project by running the following commands:
+Delete the ***guide-sessions*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-rest-client-reactjs
+rm -fr guide-sessions
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20ReactJS&guide-id=cloud-hosted-guide-rest-client-reactjs)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Caching%20HTTP%20session%20data%20using%20JCache%20and%20Hazelcast&guide-id=cloud-hosted-guide-sessions)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-reactjs/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-reactjs/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-sessions/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-sessions/pulls)
 
 
 
 ### Where to next?
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
 ### Log out of the session
