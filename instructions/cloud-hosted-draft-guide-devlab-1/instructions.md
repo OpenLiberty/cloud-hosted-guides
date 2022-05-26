@@ -50,10 +50,6 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application that is secured with form authentication. Give it a try before you proceed.
-
-### Try what you'll build
-
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
 To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
@@ -69,6 +65,8 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
+The finished application is secured with form authentication.
+
 
 Click the following button to visit the application:
 
@@ -78,28 +76,12 @@ The application automatically switches from an HTTP connection to a secure HTTPS
 
 Sign in to the application with one of the following user credentials from the user registry, which are provided to you:
 
-|Username|Password|Role|Group
+| *Username* | *Password* | *Role* | *Group*
 | --- | --- | --- | ---
-
-|alice
-|alicepwd
-|user
-|Employee
-
-|bob
-|bobpwd
-|admin, user
-|Manager, Employee
-
-|carl
-|carlpwd
-|admin, user
-|TeamLead, Employee
-
-|dave
-|davepwd
-|N/A
-|PartTime
+| alice | alicepwd | user | Employee
+| bob | bobpwd | admin, user | Manager, Employee
+| carl | carlpwd | admin, user | TeamLead, Employee
+| dave | davepwd | N/A | PartTime
 
 Notice that when you sign in as Bob or Carl, the browser redirects to the ***admin*** page and you can view their names and roles. When you sign in as Alice, you can only view Alice's name. When you sign in as Dave, you are blocked and see an ***Error 403: Authorization failed*** message because Dave doesn't have a role that is supported by the application.
 
@@ -287,28 +269,12 @@ As you can see, the browser gets automatically redirected from an HTTP connectio
 
 You will see a login form because form authentication is implemented and configured. Sign in to the application by using one of the credentials from the following table. The credentials are defined in the configured user registry.
 
-|Username|Password|Role|Group
+| *Username* | *Password* | *Role* | *Group*
 | --- | --- | --- | ---
-
-|alice
-|alicepwd
-|user
-|Employee
-
-|bob
-|bobpwd
-|admin, user
-|Manager, Employee
-
-|carl
-|carlpwd
-|admin, user
-|TeamLead, Employee
-
-|dave
-|davepwd
-|N/A
-|PartTime
+| alice | alicepwd | user | Employee
+| bob | bobpwd | admin, user | Manager, Employee
+| carl | carlpwd | admin, user | TeamLead, Employee
+| dave | davepwd | N/A | PartTime
 
 Notice that when you sign in as Bob or Carl, the browser redirects to the ***admin*** page and you can view their names and roles. When you sign in as Alice, you can only view Alice's name. When you sign in as Dave, you are blocked and see an ***Error 403: Authorization failed*** message because Dave doesn't have a role that is supported by the application.
 
