@@ -4,9 +4,9 @@ title: instructions
 branch: lab-204-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 ---
-::page{title="Welcome to the Caching HTTP session data using JCache and Hazelcast guide!"}
+::page{title="Welcome to the Securing a web application guide!"}
 
- WINDOWS
+Learn how to secure a web application through authentication and authorization.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,44 +16,14 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-### What is a session?
-On the internet, a web server doesn't know who you are or what you do
-because it's processing stateless HTTP requests. An HTTP session provides a way to store
-information to be used across multiple requests.
-Session variables store user information like user name or items in a shopping cart.
-By default, session variables will timeout after 30 minutes of being unused.
-Cookies, which also store user information, are maintained on a client's computer,
-whereas session variables are maintained on a web server. For security reasons,
-an HTTP session is preferred over cookies when used with sensitive data.
-A session hides data from users.
-Cookies can be manipulated by a savvy user to make fake requests to your site.
+You'll learn how to secure a web application by performing authentication and authorization using Jakarta EE Security. Authentication confirms the identity of the user by verifying a user's credentials while authorization determines whether a user has access to restricted resources.
 
-### What is session persistence?
-High traffic websites must support thousands of users in a fast and reliable way.
-Load balancing requires running several instances of the same application in parallel
-so that traffic can be routed to different instances to maximize speed and reliability.
-Unless a user is tied to a particular instance, running multiple instances of the same
-application can pose an out-of-sync problem when each instance keeps an isolated copy of its
-session data. HTTP session data caching can solve this problem by allowing all
-instances of the application to share caches among each other.
-Sharing caches among instances eliminates the need to route a user to the same instance
-and helps in failover situations by distributing the cache.
+Jakarta EE Security provides capability to configure the basic authentication, form authentication, or custom form authentication mechanism by using annotations in servlets. It also provides the SecurityContext API for programmatic security checks in application code.
 
-![Session Cache](https://raw.githubusercontent.com/OpenLiberty/guide-sessions/prod/assets/sessionCache.png)
-
-
-You will learn how to build an application that creates and uses HTTP session data.
-You will also learn how to use Open Liberty's ***sessionCache*** feature to persist HTTP sessions
-by using Java Caching (JCache), the standard caching API for Java.
-
-You will containerize and deploy the application to a local Kubernetes cluster.
-You will then replicate the application in multiple pods and see that the session data is cached and
-shared among all instances of the application. Even if an instance is unavailable, the other instances
-are able to take over and handle requests from the same user by using the cached session data.
-
-
+You’ll implement form authentication for a simple web front end. You'll also learn to specify security constraints for a servlet and use the SecurityContext API to determine the role of a logged-in user.
 
 ::page{title="Getting started"}
 
@@ -66,11 +36,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-sessions.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-security-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-sessions.git
-cd guide-sessions
+git clone https://github.com/openliberty/guide-security-intro.git
+cd guide-security-intro
 ```
 
 
@@ -78,326 +48,57 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+### Try what you'll build
 
-::page{title="Creating the application"}
+The ***finish*** directory in the root of this guide contains the finished application that is secured with form authentication. Give it a try before you proceed.
 
-The application that you are working with is a shopping cart web service that uses JAX-RS,
-which is a Java API for building RESTful web services.
-You'll learn how to persist a user's shopping cart data between servers by using the
-***sessionCache*** feature in Open Liberty. The ***sessionCache*** feature persists HTTP
-sessions using JCache. You can have high-performance HTTP session persistence
-without using a relational database.
+
+
+Click the following button to visit the application:
+
+::startApplication{port="9080" display="external" name="Visit application" route="/"}
+
+The application automatically switches from an HTTP connection to a secure HTTPS connection and forwards you to a login page. If the browser gives you a certificate warning, it's because the Open Liberty server created a self-signed SSL certificate by default. You can follow your browser's provided instructions to accept the certificate and continue.
+
+Sign in to the application with one of the following user credentials from the user registry, which are provided to you:
+
+|Username|Password|Role|Group
+| --- | --- | --- | ---
+
+|alice
+|alicepwd
+|user
+|Employee
+
+|bob
+|bobpwd
+|admin, user
+|Manager, Employee
+
+|carl
+|carlpwd
+|admin, user
+|TeamLead, Employee
+
+|dave
+|davepwd
+|N/A
+|PartTime
+
+Notice that when you sign in as Bob or Carl, the browser redirects to the ***admin*** page and you can view their names and roles. When you sign in as Alice, you can only view Alice's name. When you sign in as Dave, you are blocked and see an ***Error 403: Authorization failed*** message because Dave doesn't have a role that is supported by the application.
+
+After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+```bash
+mvn liberty:stop
+```
+
+
+::page{title="Adding authentication and authorization"}
+
+For this application, users are asked to log in with a form when they access the application. Users are authenticated and depending on their roles, they are redirected to the pages that they are authorized to access. If authentication or authorization fails, users are sent to an error page. The application supports two roles, ***admin*** and ***user***.
 
 Navigate to the ***start*** directory to begin.
-
-Create the ***CartApplication*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java
-```
-
-
-> Then, to open the CartApplication.java file in your IDE, select
-> **File** > **Open** > guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java, or click the following button
-
-::openFile{path="/home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartApplication.java"}
-
-
-
-```java
-package io.openliberty.guides.cart;
-
-import jakarta.ws.rs.ApplicationPath;
-import jakarta.ws.rs.core.Application;
-
-@ApplicationPath("/")
-public class CartApplication extends Application {
-
-}
-```
-
-
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-The ***CartApplication*** class extends the generic JAX-RS application class that is needed to run the
-application.
-
-Create the ***CartResource*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java
-```
-
-
-> Then, to open the CartResource.java file in your IDE, select
-> **File** > **Open** > guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java, or click the following button
-
-::openFile{path="/home/project/guide-sessions/start/src/main/java/io/openliberty/guides/cart/CartResource.java"}
-
-
-
-```java
-package io.openliberty.guides.cart;
-
-import java.util.Enumeration;
-
-import jakarta.json.Json;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-
-@Path("/")
-public class CartResource {
-
-    @POST
-    @Path("cart/{item}&{price}")
-    @Produces(MediaType.TEXT_PLAIN)
-    @APIResponse(responseCode = "200", description = "Item successfully added to cart.")
-    @Operation(summary = "Add a new item to cart.")
-    public String addToCart(@Context HttpServletRequest request,
-                    @Parameter(description = "Item you need for intergalatic travel.",
-                               required = true)
-                    @PathParam("item") String item,
-                    @Parameter(description = "Price for this item.",
-                               required = true)
-                    @PathParam("price") double price) {
-        HttpSession session = request.getSession();
-        session.setAttribute(item, price);
-        return item + " added to your cart and costs $" + price;
-    }
-
-    @GET
-    @Path("cart")
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponse(responseCode = "200",
-        description = "Items successfully retrieved from your cart.")
-    @Operation(summary = "Return an JsonObject instance which contains "
-                        + "the items in your cart and the subtotal.")
-    public JsonObject getCart(@Context HttpServletRequest request) {
-        HttpSession session = request.getSession();
-        Enumeration<String> names = session.getAttributeNames();
-        JsonObjectBuilder builder = Json.createObjectBuilder();
-        builder.add("pod-name", getHostname());
-        builder.add("session-id", session.getId());
-        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-        Double subtotal = 0.0;
-        while (names.hasMoreElements()) {
-            String name = names.nextElement();
-            String price = session.getAttribute(name).toString();
-            arrayBuilder.add(name + " | $" + price);
-            subtotal += Double.valueOf(price).doubleValue();
-        }
-        builder.add("cart", arrayBuilder);
-        builder.add("subtotal", subtotal);
-        return builder.build();
-    }
-
-    private String getHostname() {
-        String hostname = System.getenv("HOSTNAME");
-        if (hostname == null) {
-            hostname = "localhost";
-        }
-        return hostname;
-    }
-}
-```
-
-
-
-The ***CartResource*** class defines the REST endpoints at which a user can make
-an HTTP request.
-
-The ***addToCart*** and ***getCart*** methods
-have a number of annotations. Most of these annotations are used by the
-MicroProfile OpenAPI and JAX-RS features to document the REST endpoints and map Java objects to web resources.
-More information about these annotations can be found in the
-[Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html#augmenting-the-existing-jax-rs-annotations-with-openapi-annotations)
-and
-[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html#creating-a-jax-rs-application)
-guides.
-
-The ***cart/{item}&{price}*** endpoint demonstrates how to set session data.
-The ***@PathParam*** annotation injects a custom ***item*** and
-***price*** from the POST request into the method parameter.
-The ***addToCart*** method gets the current ***session*** and binds
-the ***{item}:{price}*** key-value pair into the session by the ***setAttribute()*** method.
-A response is then built and returned to confirm that an item was added to your cart and session.
-
-The ***cart*** endpoint demonstrates how to get session data.
-The ***getCart*** method gets the current session, iterates through all key-value
-pairs that are stored in the current session, and creates a ***JsonObject*** response.
-The ***JsonObject*** response is returned to confirm the server instance by
-***pod-name***, the session by ***session-id***,
-and the items in your cart by ***cart***.
-
-
-::page{title="Configuring session persistence"}
-
-### Using client-server vs peer-to-peer model
-
-Session caching is only valuable when a server is connected to at least
-one other member. There are two different ways session caching can behave in a
-cluster environment:
-
-* Client-server model: A Liberty server can act as the JCache client and connect
-to a dedicated JCache server.
-* Peer-to-peer model: A Liberty server can connect with other Liberty servers
-that are also running with the session cache and configured to be
-part of the same cluster.
-
-You'll use the peer-to-peer model in a Kubernetes environment for this guide.
-
-### Configuring session persistence with JCache in Open Liberty
-
-JCache, which stands for Java Caching, is an interface
-to standardize distributed caching on the Java platform.
-The ***sessionCache*** feature uses JCache, which allows for session
-persistence by providing a common cache of session data between servers.
-This feature doesn't include a JCache implementation.
-For this guide, you'll use Hazelcast as an open source JCache provider.
-
-Hazelcast is a JCache provider. Open Liberty needs to be configured to use
-Hazelcast after the ***sessionCache*** feature is enabled.
-
-Create the ***server.xml*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-sessions/start/src/main/liberty/config/server.xml
-```
-
-
-> Then, to open the server.xml file in your IDE, select
-> **File** > **Open** > guide-sessions/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Liberty Server for Sessions Management">
-
-    <featureManager>
-        <feature>servlet-5.0</feature>
-        <feature>sessionCache-1.0</feature>
-        <feature>restfulWS-3.0</feature>
-        <feature>jsonb-2.0</feature>
-        <feature>jsonp-2.0</feature>
-        <feature>mpOpenAPI-3.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-    <variable name="app.context.root" defaultValue="guide-sessions"/>
-
-    <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
-        id="defaultHttpEndpoint" host="*" />
-    <httpSessionCache libraryRef="jCacheVendorLib"
-        uri="file:${server.config.dir}/hazelcast-config.xml" />
-    <library id="jCacheVendorLib">
-        <file name="${shared.resource.dir}/hazelcast-5.1.1.jar" />
-    </library>
-
-    <webApplication location="guide-sessions.war" contextRoot="${app.context.root}" />
-
-</server>
-```
-
-
-
-
-The ***library*** element includes the library reference that indicates
-to the server where the Hazelcast implementation of JCache is located. 
-Your Hazelcast implementation of JCache is a JAR file that resides in the shared resources directory that is defined by the ***file*** element.
-The ***hazelcast-*.jar*** file is downloaded by the Liberty Maven plugin. The ***configuration*** is defined in the provided Maven POM file.
-
-### Configuring Hazelcast
-
-
-By default, all Open Liberty servers that run the ***sessionCache***
-feature and Hazelcast are connected using a peer-to-peer model.
-
-You can share the session cache only among certain Hazelcast instances
-by using the ***cluster-name*** configuration element in the Hazelcast configuration file.
-
-Create the ***hazelcast-config.xml*** configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-sessions/start/src/main/liberty/config/hazelcast-config.xml
-```
-
-
-> Then, to open the hazelcast-config.xml file in your IDE, select
-> **File** > **Open** > guide-sessions/start/src/main/liberty/config/hazelcast-config.xml, or click the following button
-
-::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/hazelcast-config.xml"}
-
-
-
-```xml
-<hazelcast xmlns="http://www.hazelcast.com/schema/config"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.hazelcast.com/schema/config
-       https://hazelcast.com/schema/config/hazelcast-config-5.1.xsd">
-
-    <cluster-name>CartCluster</cluster-name>
-
-</hazelcast>
-```
-
-
-
-The cluster name ***CartCluster*** is defined in the ***hazelcast-config.xml***.
-
-In the ***server.xml*** file, a reference to the Hazelcast configuration file is made by using
-the ***httpSessionCache*** tag.
-
-
-Create the ***bootstrap.properties*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-sessions/start/src/main/liberty/config/bootstrap.properties
-```
-
-
-> Then, to open the bootstrap.properties file in your IDE, select
-> **File** > **Open** > guide-sessions/start/src/main/liberty/config/bootstrap.properties, or click the following button
-
-::openFile{path="/home/project/guide-sessions/start/src/main/liberty/config/bootstrap.properties"}
-
-
-
-```
-hazelcast.jcache.provider.type=member
-```
-
-
-
-Hazelcast JCache provides the client and member providers. Set ***hazelcast.jcache.provider.type*** to ***member*** to use the member provider.
-
-There are more configuration settings that you can explore in the
-[Hazelcast documentation](https://docs.hazelcast.org/docs/latest/manual/html-single/#understanding-configuration).
-
-
-::page{title="Running the application"}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -414,199 +115,365 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
+Create the ***HomeServlet*** class.
 
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-Point your browser to the link:http://localhost:9080/openapi/ui/ URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+> Run the following touch command in your terminal
 ```bash
-curl link:http://localhost:9080/openapi/ui/
+touch /home/project/guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java
 ```
 
 
-This URL displays the available REST endpoints.
+> Then, to open the HomeServlet.java file in your IDE, select
+> **File** > **Open** > guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java, or click the following button
 
-First, make a POST request to the ***/cart/{item}&{price}*** endpoint. To make this request, expand the POST
-endpoint on the UI, click the ***Try it out*** button, provide an item and a price,
-and then click the ***Execute*** button.
-The POST request adds a user-specified item and price to a session
-that represents data in a user's cart.
-
-Next, make a GET request to the ***/cart*** endpoint. To make this request, expand the GET
-endpoint on the UI, click the ***Try it out*** button,
-and then click the ***Execute*** button. The GET request
-returns a pod name, a session ID, and all the items from your session.
-
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+::openFile{path="/home/project/guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java"}
 
 
 
+```java
+package io.openliberty.guides.ui;
 
-::page{title="Containerizing the application"}
+import java.io.IOException;
+import jakarta.inject.Inject;
+import jakarta.security.enterprise.SecurityContext;
+import jakarta.security.enterprise.authentication.mechanism.http.FormAuthenticationMechanismDefinition;
+import jakarta.security.enterprise.authentication.mechanism.http.LoginToContinue;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.HttpConstraint;
+import jakarta.servlet.annotation.ServletSecurity;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
-Before you can deploy the application to Kubernetes, you need to containerize it with Docker.
+@WebServlet(urlPatterns = "/home")
+@FormAuthenticationMechanismDefinition(
+    loginToContinue = @LoginToContinue(errorPage = "/error.html",
+                                       loginPage = "/welcome.html"))
+@ServletSecurity(value = @HttpConstraint(rolesAllowed = { "user", "admin" },
+  transportGuarantee = ServletSecurity.TransportGuarantee.CONFIDENTIAL))
+public class HomeServlet extends HttpServlet {
 
-Make sure to start your Docker daemon before you proceed.
+    private static final long serialVersionUID = 1L;
 
-The Dockerfile is provided at the ***start*** directory. If you're unfamiliar with Dockerfile,
+    @Inject
+    private SecurityContext securityContext;
 
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+        if (securityContext.isCallerInRole(Utils.ADMIN)) {
+            response.sendRedirect("/admin.jsf");
+        } else if  (securityContext.isCallerInRole(Utils.USER)) {
+            response.sendRedirect("/user.jsf");
+        }
+    }
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide,
-which covers Dockerfile in depth.
-
-Run the ***mvn package*** command from the ***start*** directory so that the ***.war*** file resides in the ***target*** directory.
-
-```bash
-mvn package
-```
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-
-To build and containerize the application, run the following Docker build command in the ***start*** directory:
-
-```bash
-docker build -t cart-app:1.0-SNAPSHOT .
-```
-
-When the build finishes, run the following command to list all local Docker images:
-```bash
-docker images
-```
-
-Verify that the ***cart-app:1.0-SNAPSHOT*** image is listed among the Docker images, for example:
-```
-REPOSITORY                      TAG
-cart-app                        1.0-SNAPSHOT
-openliberty/open-liberty        full-java11-openj9-ubi
-```
-
-
-::page{title="Deploying and running the application in Kubernetes"}
-
-
-Now that the containerized application is built, deploy it to a local Kubernetes cluster by using
-a Kubernetes resource definition, which is provided in the ***kubernetes.yaml*** file
-at the ***start*** directory.
-
-First, use the ***ClusterRoleBinding*** Kubernetes API object to grant Hazelcast members to access the cluster.
-```bash
-kubectl apply -f https://raw.githubusercontent.com/hazelcast/hazelcast/master/kubernetes-rbac.yaml
-```
-
-Run the following command to deploy the application into `3` replicated pods as defined
-in the ***kubernetes.yaml*** file:
-```bash
-kubectl apply -f kubernetes.yaml
-```
-
-When the application is deployed, run the following command to check the status of your pods:
-```bash
-kubectl get pods
-```
-
-You see an output similar to the following if all the pods are working correctly:
-
-```
-NAME                             READY  STATUS   RESTARTS  AGE
-cart-deployment-98f4ff789-2xlhs  1/1    Running  0         17s
-cart-deployment-98f4ff789-6rvfj  1/1    Running  0         17s
-cart-deployment-98f4ff789-qrh45  1/1    Running  0         17s
-```
-
-
-
-Run the ***minikube ip*** command to get the hostname for minikube.
-Then, go to the ***http://[hostname]:31000/openapi/ui/*** URL in your browser. 
-This URL displays the available REST endpoints.
-
-Make a POST request to the ***/cart/{item}&{price}*** endpoint. To make this request, expand the POST
-endpoint on the UI, click the ***Try it out*** button, provide an item and a price,
-and then click the ***Execute*** button.
-The POST request adds a user-specified item and price to a session
-that represents data in a user's cart.
-
-Next, make a GET request to the ***/cart*** endpoint. To make this request, expand the GET
-endpoint on the UI, click the ***Try it out*** button, and then click the ***Execute*** button.
-The GET request returns a pod name, a session ID, and all the items from your session.
-
-```
-{
-  "pod-name": "cart-deployment-98f4ff789-2xlhs",
-  "session-id": "RyJKzmka6Yc-ZCMzEA8-uPq",
-  "cart": [
-    "eggs | $2.89"
-  ],
-  "subtotal": 2.89
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+        doGet(request, response);
+    }
 }
 ```
 
-Replace the ***[pod-name]*** in the following command, and then run the command to pause
-the pod for the GET request that you just ran:
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+The ***HomeServlet*** servlet is the entry point of the application. To enable form authentication for the ***HomeServlet*** class, define the ***@FormAuthenticationMechanismDefinition*** annotation and set its ***loginToContinue*** attribute with a ***@LoginToContinue*** annotation. This ***@FormAuthenticationMechanismDefinition*** annotation defines ***welcome.html*** as the login page and ***error.html*** as the error page.
+
+The ***welcome.html*** page implements the login form, and the ***error.html*** page implements the error page. Both pages are provided for you under the ***src/main/webapp*** directory. The login form in the ***welcome.html*** page uses the ***j_security_check*** action, which is defined by Jakarta EE and available by default.
+
+Authorization determines whether a user can access a resource. To restrict access to authenticated users with ***user*** and ***admin*** roles, define the ***@ServletSecurity*** annotation with the ***@HttpConstraint*** annotation and set the ***rolesAllowed*** attribute to these two roles.
+
+The ***transportGuarantee*** attribute defines the constraint on the traffic between the client and the application. Set it to ***CONFIDENTIAL*** to enforce that all user data must be encrypted, which is why an HTTP connection from a browser switches to HTTPS.
+
+The SecurityContext interface provides programmatic access to the Jakarta EE Security API. Inject a SecurityContext instance into the ***HomeServlet*** class. The ***doGet()*** method uses the ***isCallerInRole()*** method from the SecurityContext API to check a user's role and then forwards the response to the appropriate page.
+
+The ***src/main/webapp/WEB-INF/web.xml*** file contains the rest of the security declaration for the application.
+
+
+The ***security-role*** elements define the roles that are supported by the application, which are ***user*** and ***admin***. The ***security-constraint*** elements specify that JSF resources like the ***user.jsf*** and ***admin.jsf*** pages can be accessed only by users with ***user*** and ***admin*** roles.
+
+
+::page{title="Configuring the user registry"}
+
+User registries store user account information, such as username and password, for use by applications to perform security-related operations. Typically, application servers would be configured to use an external registry like a Lightweight Directory Access Protocol (LDAP) registry. Applications would access information in the registry for authentication and authorization by using APIs like the Jakarta EE Security API.
+
+Open Liberty provides an easy-to-use basic user registry for developers, which you will configure.
+
+Create the ***userRegistry*** configuration file.
+
+> Run the following touch command in your terminal
 ```bash
-kubectl exec -it [pod-name] -- /opt/ol/wlp/bin/server pause
+touch /home/project/guide-security-intro/start/src/main/liberty/config/userRegistry.xml 
 ```
 
-Repeat the GET request. You see the same ***session-id***
-but a different ***pod-name*** because the session data is cached but the request
-is served by a different pod (server).
 
-Verify that the Hazelcast cluster is running by checking the Open Liberty log. 
-To check the log, run the following command:
+> Then, to open the userRegistry.xml file in your IDE, select
+> **File** > **Open** > guide-security-intro/start/src/main/liberty/config/userRegistry.xml, or click the following button
 
+::openFile{path="/home/project/guide-security-intro/start/src/main/liberty/config/userRegistry.xml"}
+
+
+
+```xml
+<server description="Sample Liberty server">
+  <basicRegistry id="basic" realm="WebRealm">
+    <user name="bob"
+    <user name="alice"
+    <user name="carl"
+    <user name="dave"
+
+    <group name="Manager">
+      <member name="bob" />
+    </group>
+
+    <group name="TeamLead">
+      <member name="carl" />
+    </group>
+    
+    <group name="Employee">
+      <member name="alice" />
+      <member name="bob" />
+      <member name="carl" />
+    </group>
+
+    <group name="PartTime">
+      <member name="dave" />
+    </group>
+  </basicRegistry>
+</server>
+```
+
+
+
+The registry has four users, ***bob***, ***alice***, ***carl***, and ***dave***. It also has four groups: ***Manager***, ***TeamLead***, ***Employee***, and ***PartTime***. Each user belongs to one or more groups.
+
+It is not recommended to store passwords in plain text. The passwords in the ***userRegistry.xml*** file are encoded by using the Liberty ***securityUtility*** command with XOR encoding.
+
+
+Use the ***include*** element to add the basic user registry configuration to your server configuration. Open Liberty includes configuration information from the specified XML file in its server configuration.
+
+The ***server.xml*** file contains the security configuration of the server under the ***application-bnd*** element. Use the ***security-role*** and ***group*** elements to map the groups in the ***userRegistry.xml*** file to the appropriate user roles supported by the application for proper user authorization. The ***Manager*** and ***TeamLead*** groups are mapped to the ***admin*** role while the ***Employee*** group is mapped to the ***user*** role.
+
+
+::page{title="Running the application"}
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+
+Click the following button to visit the application:
+
+::startApplication{port="9080" display="external" name="Visit application" route="/"}
+
+As you can see, the browser gets automatically redirected from an HTTP connection to an HTTPS connection because the transport guarantee is defined in the ***HomeServlet*** class.
+
+You will see a login form because form authentication is implemented and configured. Sign in to the application by using one of the credentials from the following table. The credentials are defined in the configured user registry.
+
+|Username|Password|Role|Group
+| --- | --- | --- | ---
+
+|alice
+|alicepwd
+|user
+|Employee
+
+|bob
+|bobpwd
+|admin, user
+|Manager, Employee
+
+|carl
+|carlpwd
+|admin, user
+|TeamLead, Employee
+
+|dave
+|davepwd
+|N/A
+|PartTime
+
+Notice that when you sign in as Bob or Carl, the browser redirects to the ***admin*** page and you can view their names and roles. When you sign in as Alice, you can only view Alice's name. When you sign in as Dave, you are blocked and see an ***Error 403: Authorization failed*** message because Dave doesn't have a role that is supported by the application.
+
+
+
+::page{title="Testing the application"}
+
+Write the ***SecurityIT*** class to test the authentication and authorization of the application.
+
+Create the ***SecurityIT*** class.
+
+> Run the following touch command in your terminal
 ```bash
-kubectl exec -it [pod-name] -- cat /logs/messages.log
-```
-
-You see a message similar to the following:
-
-```
-... [10.1.0.46]:5701 [CartCluster] [3.11.2]
-
-Members {size:3, ver:3} [
-	Member [10.1.0.40]:5701 - 01227d80-501e-4789-ae9d-6fb348d794ea
-	Member [10.1.0.41]:5701 - a68d0ed1-f50e-4a4c-82b0-389f356b8c73 this
-	Member [10.1.0.42]:5701 - b0dfa05a-c110-45ed-9424-adb1b2896a3d
-]
-```
-
-You can resume the paused pod by running the following command:
-
-```bash
-kubectl exec -it [pod-name] -- /opt/ol/wlp/bin/server resume
+touch /home/project/guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java
 ```
 
 
+> Then, to open the SecurityIT.java file in your IDE, select
+> **File** > **Open** > guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java, or click the following button
 
-::page{title="Tearing down the environment"}
+::openFile{path="/home/project/guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java"}
 
-When you no longer need your deployed application, you can delete all Kubernetes resources and disable the Hazelcast members' access to the cluster by running the ***kubectl delete*** commands:
 
-```bash
-kubectl delete -f kubernetes.yaml
-kubectl delete -f https://raw.githubusercontent.com/hazelcast/hazelcast/master/kubernetes-rbac.yaml
+
+```java
+package it.io.openliberty.guides.security;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.net.ssl.SSLContext;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class SecurityIT {
+
+    private static String urlHttp;
+    private static String urlHttps;
+
+    @BeforeEach
+    public void setup() throws Exception {
+        urlHttp = "http://localhost:" + System.getProperty("http.port");
+        urlHttps = "https://localhost:" + System.getProperty("https.port");
+        ITUtils.trustAll();
+    }
+
+    @Test
+    public void testAuthenticationFail() throws Exception {
+        executeURL("/", "bob", "wrongpassword", true, -1, "Don't care");
+    }
+
+    @Test
+    public void testAuthorizationForAdmin() throws Exception {
+        executeURL("/", "bob", "bobpwd", false,
+            HttpServletResponse.SC_OK, "admin, user");
+    }
+
+    @Test
+    public void testAuthorizationForUser() throws Exception {
+        executeURL("/", "alice", "alicepwd", false,
+            HttpServletResponse.SC_OK, "<title>User</title>");
+    }
+
+    @Test
+    public void testAuthorizationFail() throws Exception {
+        executeURL("/", "dave", "davepwd", false,
+            HttpServletResponse.SC_FORBIDDEN, "Error 403: Authorization failed");
+    }
+
+    private void executeURL(
+        String testUrl, String userid, String password,
+        boolean expectLoginFail, int expectedCode, String expectedContent)
+        throws Exception {
+
+        URI url = new URI(urlHttp + testUrl);
+        HttpGet getMethod = new HttpGet(url);
+        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
+        SSLContext sslContext = SSLContext.getDefault();
+        clientBuilder.setSSLContext(sslContext);
+        clientBuilder.setDefaultRequestConfig(
+            RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
+        HttpClient client = clientBuilder.build();
+        HttpResponse response = client.execute(getMethod);
+
+        String loginBody = EntityUtils.toString(response.getEntity(), "UTF-8");
+        assertTrue(loginBody.contains("window.location.assign"),
+            "Not redirected to home.html");
+        String[] redirect = loginBody.split("'");
+
+        HttpPost postMethod = new HttpPost(urlHttps + "/j_security_check");
+        List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+        nvps.add(new BasicNameValuePair("j_username", userid));
+        nvps.add(new BasicNameValuePair("j_password", password));
+        postMethod.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
+        response = client.execute(postMethod);
+        assertEquals(HttpServletResponse.SC_FOUND,
+            response.getStatusLine().getStatusCode(),
+            "Expected " + HttpServletResponse.SC_FOUND + " status code for login");
+
+        if (expectLoginFail) {
+            String location = response.getFirstHeader("Location").getValue();
+            assertTrue(location.contains("error.html"),
+                "Error.html was not returned");
+            return;
+        }
+
+        url = new URI(urlHttps + redirect[1]);
+        getMethod = new HttpGet(url);
+        response = client.execute(getMethod);
+        assertEquals(expectedCode, response.getStatusLine().getStatusCode(),
+            "Expected " + expectedCode + " status code for login");
+
+        if (expectedCode != HttpServletResponse.SC_OK) {
+            return;
+        }
+
+        String actual = EntityUtils.toString(response.getEntity(), "UTF-8");
+        assertTrue(actual.contains(userid),
+            "The actual content did not contain the userid \"" + userid
+            + "\". It was:\n" + actual);
+        assertTrue(actual.contains(expectedContent),
+            "The url " + testUrl + " did not return the expected content \""
+            + expectedContent + "\"" + "The actual content was:\n" + actual);
+    }
+
+}
 ```
 
+
+
+The ***testAuthenticationFail()*** method tests an invalid user authentication while the ***testAuthorizationFail()*** method tests unauthorized access to the application.
+
+The ***testAuthorizationForAdmin()*** and ***testAuthorizationForUser()*** methods verify that users with ***admin*** or ***user*** roles are properly authenticated and can access authorized resource.
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+You see the following output:
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.security.SecurityIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.78 sec - in it.io.openliberty.guides.security.SecurityIT
+
+Results :
+
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+
+```
+
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have created, used, and cached HTTP session data for an application that was running on Open Liberty server
+You learned how to use Jakarta EE Security in Open Liberty to authenticate and authorize users to secure your web application.
 
-and deployed in a Kubernetes cluster.
+
+Next, you can try the related [MicroProfile JWT](https://openliberty.io/guides/microprofile-jwt.html) guide. It demonstrates technologies to secure backend services.
 
 
 
@@ -615,34 +482,33 @@ and deployed in a Kubernetes cluster.
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-sessions*** project by running the following commands:
+Delete the ***guide-security-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-sessions
+rm -fr guide-security-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Caching%20HTTP%20session%20data%20using%20JCache%20and%20Hazelcast&guide-id=cloud-hosted-guide-sessions)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20a%20web%20application&guide-id=cloud-hosted-guide-security-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-sessions/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-sessions/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-security-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-security-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html)
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Securing microservices with JSON Web Tokens](https://openliberty.io/guides/microprofile-jwt.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 
 
 ### Log out of the session
