@@ -52,6 +52,22 @@ The ***finish*** directory contains the finished project that you will build.
 
 The ***finish*** directory in the root of this guide contains the finished application that is secured with form authentication. Give it a try before you proceed.
 
+### Try what you'll build
+
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+
+```bash
+cd finish
+mvn liberty:run
+```
+
+After you see the following message, your application server is ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
 
 
 Click the following button to visit the application:
