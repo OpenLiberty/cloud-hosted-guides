@@ -73,7 +73,7 @@ Creating pact-broker_pact-broker_1 ... done
 ```
 
 
-Confirm that the Pact Broker is working. Click the following button, or select ***Launch Application*** from the menu of the IDE and type ***9292*** to specify the port number for the Pact Broker service. Click the ***OK*** button. The Pact Broker can also be found at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, where ***accountname*** is your account name.
+Click the following button to visit the Pact Broker to confirm that it is working. The Pact Broker can be found at the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai` URL, where ***accountname*** is your account name.
 ::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
 
 Confirm that you can access the user interface of the Pact Broker. The Pact Broker interface is similar to the following image:
@@ -252,6 +252,8 @@ public class InventoryPactIT {
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
 
 The ***InventoryPactIT*** class contains a ***PactProviderRule*** mock provider that mimics the HTTP responses from the ***system*** microservice. The ***@Pact*** annotation takes the name of the microservice as a parameter, which makes it easier to differentiate microservices from each other when you have multiple applications.
 
@@ -284,6 +286,7 @@ Replace the inventory Maven project file.
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- Liberty configuration -->
         <liberty.var.default.http.port>9081</liberty.var.default.http.port>
         <liberty.var.default.https.port>9443</liberty.var.default.https.port>
     </properties>
@@ -302,6 +305,7 @@ Replace the inventory Maven project file.
             <version>9.1.0</version>
             <scope>provided</scope>
         </dependency>
+        <!-- For tests -->
         <dependency>
             <groupId>au.com.dius</groupId>
             <artifactId>pact-jvm-consumer-junit</artifactId>
@@ -351,6 +355,7 @@ Replace the inventory Maven project file.
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.3.2</version>
             </plugin>
+            <!-- Plugin to run functional tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -361,6 +366,7 @@ Replace the inventory Maven project file.
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
+            <!-- Enable liberty-maven plugin -->
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
@@ -450,7 +456,7 @@ Publishing 'Inventory-System.json' with tags 'open-liberty-pact' ... OK
 ::page{title="Verifying the pact in the Pact Broker"}
 
 
-Refresh the Pact Broker at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, where ***accountname*** is your account name.
+Refresh the Pact Broker at the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai` URL, where ***accountname*** is your account name.
 ::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
 
 The last verified column doesn't show a timestamp because the ***system*** microservice hasn't verified the pact yet.
@@ -462,7 +468,7 @@ The last verified column doesn't show a timestamp because the ***system*** micro
 
 
 
-You can see detailed insights about each interaction by clicking the following button or going to the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai/pacts/provider/System/consumer/Inventory/latest`** URL, where ***accountname*** is your account name.
+You can see detailed insights about each interaction by clicking the following button or going to the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai/pacts/provider/System/consumer/Inventory/latest` URL, where ***accountname*** is your account name.
 ::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/pacts/provider/System/consumer/Inventory/latest"}
 
 The insights look similar to the following image:
@@ -607,12 +613,14 @@ Replace the system Maven project file.
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Liberty configuration -->
         <liberty.var.default.http.port>9080</liberty.var.default.http.port>
         <liberty.var.default.https.port>9443</liberty.var.default.https.port>
         <debugPort>8787</debugPort>
     </properties>
 
     <dependencies>
+        <!-- Provided dependencies -->
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
@@ -647,6 +655,7 @@ Replace the system Maven project file.
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
+            <!-- Enable liberty-maven plugin -->
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
@@ -657,6 +666,7 @@ Replace the system Maven project file.
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.3.2</version>
             </plugin>
+            <!-- Plugin to run functional tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -794,7 +804,7 @@ Verifying a pact between pact between Inventory (1.0-SNAPSHOT) and System
 ```
 
 
-After the tests are complete, refresh the Pact Broker at the **`https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai`** URL, where ***accountname*** is your account name.
+After the tests are complete, refresh the Pact Broker at the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai` URL, where ***accountname*** is your account name.
 ::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
 
 Confirm that the last verified column now shows a timestamp:
@@ -809,7 +819,7 @@ The pact file that's created by the ***inventory*** microservice was successfull
 
 ::page{title="Tearing down the environment"}
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line sessions where you ran the servers for the ***system*** and ***inventory*** microservices, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the servers for the ***system*** and ***inventory*** microservices, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 Navigate back to the ***/guide-contract-testing*** directory and run the following commands to remove the Pact Broker:
 
