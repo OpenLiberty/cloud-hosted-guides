@@ -131,6 +131,8 @@ public class InventoryClient {
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
 
 The ***getSystem()*** method returns the ***CompletionStage*** interface. This interface represents a unit or stage of a computation. When the associated computation completes, the value can be retrieved. The ***rx()*** method calls the ***CompletionStage*** interface. It retrieves the ***CompletionStageRxInvoker*** class and allows these methods to function correctly with the ***CompletionStage*** interface return type.
 
@@ -355,11 +357,13 @@ Replace the Maven configuration file.
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Liberty configuration -->
         <liberty.var.default.http.port>9080</liberty.var.default.http.port>
         <liberty.var.default.https.port>9443</liberty.var.default.https.port>
     </properties>
 
     <dependencies>
+        <!-- Provided dependencies -->
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
@@ -385,11 +389,13 @@ Replace the Maven configuration file.
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
+        <!-- Required dependencies -->
         <dependency>
             <groupId>io.openliberty.guides</groupId>
             <artifactId>models</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <!-- Reactive dependencies -->
         <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-client</artifactId>
@@ -405,6 +411,7 @@ Replace the Maven configuration file.
             <artifactId>jersey-rx-client-rxjava2</artifactId>
             <version>2.35</version>
         </dependency>
+        <!-- For tests -->
         <dependency>
             <groupId>org.microshed</groupId>
             <artifactId>microshed-testing-liberty</artifactId>
@@ -443,18 +450,21 @@ Replace the Maven configuration file.
                 </configuration>
             </plugin>
 
+            <!-- Liberty plugin -->
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
                 <version>3.5.1</version>
             </plugin>
 
+            <!-- Plugin to run unit tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
             </plugin>
 
+            <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>

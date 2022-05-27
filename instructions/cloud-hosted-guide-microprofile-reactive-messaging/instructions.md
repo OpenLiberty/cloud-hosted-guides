@@ -126,6 +126,8 @@ public class SystemService {
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
 
 
 The ***SystemService*** class contains a ***Publisher*** method that is called ***sendSystemLoad()***, which calculates and returns the average system load. The ***@Outgoing*** annotation on the ***sendSystemLoad()*** method indicates that the method publishes its calculation as a message on a topic in the Kafka messaging system. The ***Flowable.interval()*** method from ***rxJava*** is used to set the frequency of how often the system service publishes the calculation to the event stream.
@@ -397,11 +399,13 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Liberty configuration -->
         <liberty.var.default.http.port>9083</liberty.var.default.http.port>
         <liberty.var.default.https.port>9446</liberty.var.default.https.port>
     </properties>
 
     <dependencies>
+        <!-- Provided dependencies -->
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
@@ -421,6 +425,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
             <version>1.0</version>
             <scope>provided</scope>
         </dependency>
+        <!-- Required dependencies -->
         <dependency>
             <groupId>io.openliberty.guides</groupId>
             <artifactId>models</artifactId>
@@ -436,6 +441,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
             <artifactId>rxjava</artifactId>
             <version>3.1.2</version>
         </dependency>
+        <!-- For tests -->
         <dependency>
             <groupId>org.microshed</groupId>
             <artifactId>microshed-testing-liberty</artifactId>
@@ -468,18 +474,21 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
                 </configuration>
             </plugin>
 
+            <!-- Liberty plugin -->
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
                 <version>3.5.1</version>
             </plugin>
 
+            <!-- Plugin to run unit tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
             </plugin>
 
+            <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>

@@ -113,7 +113,7 @@ The response is empty because you don't have access. Access is granted if a vali
 [ERROR] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
 ```
 
-When you are done with the application, stop both the ***frontend*** and ***system*** services by pressing ***CTRL+C*** in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+When you are done with the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
 
 ```bash
 mvn -pl system liberty:stop
@@ -216,6 +216,8 @@ public class SystemResource {
 }
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 This class has role-based access control. The role names that are used in the ***@RolesAllowed*** annotations are mapped to group names in the ***groups*** claim of the JWT, which results in an authorization decision wherever the security constraint is applied.
@@ -659,7 +661,7 @@ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 
 The three errors in the output are expected and result from the ***system*** service successfully rejecting the requests that didn't include a JWT.
 
-When you are finished testing the application, stop both the ***frontend*** and ***system*** services by pressing ***CTRL+C*** in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***start*** directory in another command-line session:
+When you are finished testing the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***start*** directory in another command-line session:
 
 ```bash
 mvn -pl system liberty:stop
