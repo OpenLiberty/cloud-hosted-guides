@@ -97,6 +97,9 @@ mvn liberty:stop
 For this application, users are asked to log in with a form when they access the application. Users are authenticated and depending on their roles, they are redirected to the pages that they are authorized to access. If authentication or authorization fails, users are sent to an error page. The application supports two roles, ***admin*** and ***user***.
 
 Navigate to the ***start*** directory to begin.
+```bash
+cd /home/project/guide-security-intro/start
+```
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -189,6 +192,8 @@ The SecurityContext interface provides programmatic access to the Jakarta EE Sec
 
 The ***src/main/webapp/WEB-INF/web.xml*** file contains the rest of the security declaration for the application.
 
+
+::openFile{path="/home/project/guide-security-intro/start/src/main/webapp/WEB-INF/web.xml"}
 
 The ***security-role*** elements define the roles that are supported by the application, which are ***user*** and ***admin***. The ***security-constraint*** elements specify that JSF resources like the ***user.jsf*** and ***admin.jsf*** pages can be accessed only by users with ***user*** and ***admin*** roles.
 
