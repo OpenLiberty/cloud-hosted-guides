@@ -161,6 +161,7 @@ Replace the ***server.xml*** file.
     <feature>cdi-3.0</feature>
     <feature>jsonp-2.0</feature>
     <feature>mpConfig-3.0</feature>
+    <feature>mpHealth-4.0</feature>
     <feature>appSecurity-4.0</feature>
   </featureManager>
 
@@ -182,6 +183,8 @@ Replace the ***server.xml*** file.
 </server>
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 The ***contextRoot*** attribute in the ***webApplication*** element now gets its value from the ***context.root*** variable. To find a value for the ***context.root*** variable, Open Liberty looks for the following environment variables, in order:
@@ -366,6 +369,11 @@ spec:
   selector:
     matchLabels:
       app: system
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   template:
     metadata:
       labels:
@@ -376,6 +384,27 @@ spec:
         image: system:1.0-SNAPSHOT
         ports:
         - containerPort: 9080
+        # system probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9080
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+           httpGet:
+            path: /health/ready
+            port: 9080
+           initialDelaySeconds: 30
+           periodSeconds: 10
+           timeoutSeconds: 3
+           failureThreshold: 1
         # Set the environment variables
         env:
         - name: CONTEXT_ROOT
@@ -404,6 +433,11 @@ spec:
   selector:
     matchLabels:
       app: inventory
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   template:
     metadata:
       labels:
@@ -414,8 +448,31 @@ spec:
         image: inventory:1.0-SNAPSHOT
         ports:
         - containerPort: 9080
+        # inventory probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9080
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
         # Set the environment variables
         env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
         - name: CONTEXT_ROOT
           valueFrom:
             configMapKeyRef:
