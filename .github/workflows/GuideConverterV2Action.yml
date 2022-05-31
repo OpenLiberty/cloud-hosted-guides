@@ -70,7 +70,7 @@ jobs:
       - name: Run Converter
         run: |
           branchName=${{ github.event.inputs.branch }}
-          instructionsMD=`echo "cloud_hosted_${{ github.event.inputs.guide_name }.md}" | sed -e 's/-/_/g'`
+          instructionsMD=`echo "cloud_hosted_${{ github.event.inputs.guide_name }}.md" | sed -e 's/-/_/g'`
           git init
           mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs
           rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
@@ -141,7 +141,7 @@ jobs:
       - name: Run Converter
         run: |
           branchName=${{ github.event.inputs.branch }}
-          instructionsMD=`echo "cloud_hosted_${{ github.event.inputs.guide_name }.md}" | sed -e 's/-/_/g'`
+          instructionsMD=`echo "cloud_hosted_${{ github.event.inputs.guide_name }}.md" | sed -e 's/-/_/g'`
           git init
           mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs
           rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
