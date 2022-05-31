@@ -69,6 +69,7 @@ jobs:
       - name: Run Converter
         run: |
           branchName=${{ github.event.inputs.branch }}
+          instructionsMD=`echo "cloud_hosted_${{ github.event.inputs.guide_name }.md}" | sed -e 's/-/_/g'`
           git init
           mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs
           rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
@@ -79,14 +80,14 @@ jobs:
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs/cloud-hosted-${{ github.event.inputs.guide_name }}.md
+          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs/${instructionsMD}
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh cloud-hosted-${{ github.event.inputs.guide_name }}
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
           git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
-          git checkout --ours instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs/cloud-hosted-${{ github.event.inputs.guide_name }}.md
+          git checkout --ours instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs/${instructionsMD}
     
       - uses: peter-evans/create-pull-request@v3
         with:
@@ -139,6 +140,7 @@ jobs:
       - name: Run Converter
         run: |
           branchName=${{ github.event.inputs.branch }}
+          instructionsMD=`echo "cloud_hosted_${{ github.event.inputs.guide_name }.md}" | sed -e 's/-/_/g'`
           git init
           mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs
           rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
@@ -149,14 +151,14 @@ jobs:
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs/cloud-hosted-${{ github.event.inputs.guide_name }}.md
+          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs/${instructionsMD}
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh cloud-hosted-${{ github.event.inputs.guide_name }}
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
           git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
-          git checkout --ours instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs/cloud-hosted-${{ github.event.inputs.guide_name }}.md
+          git checkout --ours instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs/${instructionsMD}
     
       - uses: peter-evans/create-pull-request@v3
         with:
