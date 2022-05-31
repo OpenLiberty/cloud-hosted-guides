@@ -60,6 +60,7 @@ jobs:
           - {"github":"cloud-hosted-guide-rest-client-reactjs","gitlab":"cloud-hosted-guide-rest-client-reactjs","gitlab-branch":"lab-88-instruction"}
           - {"github":"cloud-hosted-guide-rest-hateoas","gitlab":"cloud-hosted-guide-rest-hateoas","gitlab-branch":"lab-86-instruction"}
           - {"github":"cloud-hosted-guide-rest-intro","gitlab":"cloud-hosted-guide-rest-intro","gitlab-branch":"lab-141-instruction"}
+          - {"github":"cloud-hosted-guide-security-intro","gitlab":"cloud-hosted-guide-security-intro","gitlab-branch":"lab-879-instruction"}
           - {"github":"cloud-hosted-guide-spring-boot","gitlab":"cloud-hosted-guide-spring-boot","gitlab-branch":"lab-110-instruction"}
 
     steps:
@@ -83,5 +84,7 @@ jobs:
     
     # Output link to staged files
     - name: Print gitlab URL
-      run: echo "Gitlab url at https://gitlab.com/ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}/-/blob/${{matrix.repo.gitlab-branch}}/instructions.md"
+      run: |
+        echo "Gitlab url at https://gitlab.com/ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}/-/blob/${{matrix.repo.gitlab-branch}}/instructions.md"
+        echo "or at https://gitlab.com/ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}/-/blob/${{matrix.repo.gitlab-branch}}/labs/${{matrix.repo.gitlab}}.md"
       shell: bash
