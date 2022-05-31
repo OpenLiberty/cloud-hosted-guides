@@ -60,8 +60,8 @@ jobs:
           # - {"github":"cloud-hosted-guide-maven-intro","gitlab":"cloud-hosted-guide-maven-intro"}
           # - {"github":"cloud-hosted-guide-rest-client-angular","gitlab":"cloud-hosted-guide-rest-client-angular"}
           # - {"github":"cloud-hosted-guide-rest-hateoas","gitlab":"cloud-hosted-guide-rest-hateoas"}
-          - {"github":"cloud-hosted-guide-rest-client-reactjs","gitlab":"cloud-hosted-guide-rest-client-reactjs"}
-          - {"github":"cloud-hosted-guide-rest-client-angularjs","gitlab":"cloud-hosted-guide-rest-client-angularjs"}
+          # - {"github":"cloud-hosted-guide-rest-client-reactjs","gitlab":"cloud-hosted-guide-rest-client-reactjs"}
+          # - {"github":"cloud-hosted-guide-rest-client-angularjs","gitlab":"cloud-hosted-guide-rest-client-angularjs"}
           # - {"github":"cloud-hosted-guide-microprofile-graphql","gitlab":"cloud-hosted-guide-microprofile-graphql"}
           # - {"github":"cloud-hosted-guide-openliberty-operator-intro","gitlab":"cloud-hosted-guide-openliberty-operator-intro"}
           # - {"github":"cloud-hosted-guide-openliberty-operator-openshift","gitlab":"cloud-hosted-guide-openliberty-operator-openshift"}
