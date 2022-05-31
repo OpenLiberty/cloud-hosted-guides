@@ -945,6 +945,7 @@ Replace the ***server.xml*** file.
 <?xml version="1.0" encoding="UTF-8"?>
 <server description="inventory">
 
+    <!-- Enable features -->
     <featureManager>
         <feature>jakartaee-9.1</feature>
         <feature>microProfile-5.0</feature>
@@ -960,11 +961,14 @@ Replace the ***server.xml*** file.
                   httpPort="${default.http.port}" 
                   httpsPort="${default.https.port}" />
     
+    <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
 
+    <!-- Configures the application on a specified context root -->
     <webApplication contextRoot="${default.context.root}" 
                     location="inventory.war" /> 
 
+    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
     <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
 </server>
 ```
@@ -1975,17 +1979,21 @@ Replace the ***server.xml*** configuration file.
                   httpPort="${default.http.port}" 
                   httpsPort="${default.https.port}" />
 
+    <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
 
+    <!-- Configures the application on a specified context root -->
     <webApplication contextRoot="${default.context.root}" 
                     location="inventory.war" /> 
 
+    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
     <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
     
     <library id="postgresql-library">
         <fileset dir="${shared.resource.dir}/" includes="*.jar" />
     </library>
 
+    <!-- Datasource Configuration -->
     <dataSource id="DefaultDataSource" jndiName="jdbc/postgresql">
         <jdbcDriver libraryRef="postgresql-library" />
         <properties.postgresql databaseName="admin"
@@ -2191,6 +2199,7 @@ Replace the ***server.xml*** file.
                   httpPort="${default.http.port}" 
                   httpsPort="${default.https.port}" />
 
+    <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
 
     <basicRegistry id="basic" realm="WebRealm">
@@ -2205,6 +2214,7 @@ Replace the ***server.xml*** file.
         </group>
     </basicRegistry>
 
+    <!-- Configures the application on a specified context root -->
     <webApplication contextRoot="${default.context.root}"
                     location="inventory.war">
         <application-bnd>
@@ -2217,6 +2227,7 @@ Replace the ***server.xml*** file.
         </application-bnd>
      </webApplication>
 
+    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
     <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
 
     <library id="postgresql-library">
@@ -3111,6 +3122,7 @@ Replace the ***server.xml*** file.
                   httpPort="${default.http.port}" 
                   httpsPort="${default.https.port}" />
 
+    <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
     
     <keyStore id="defaultKeyStore" password="secret" />
@@ -3129,6 +3141,7 @@ Replace the ***server.xml*** file.
         </group>
     </basicRegistry>
 
+    <!-- Configures the application on a specified context root -->
     <webApplication contextRoot="${default.context.root}"
                     location="inventory.war">
         <application-bnd>
@@ -3151,6 +3164,7 @@ Replace the ***server.xml*** file.
            id="myMpJwt" 
            issuer="http://openliberty.io"/>
 
+    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
     <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
 
     <library id="postgresql-library">
@@ -3589,6 +3603,7 @@ Replace the ***server.xml*** file.
                   httpPort="${default.http.port}" 
                   httpsPort="${default.https.port}" />
 
+    <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
     
     <keyStore id="defaultKeyStore" password="secret" />
@@ -3612,6 +3627,7 @@ Replace the ***server.xml*** file.
         <group>AuthorizedGroup</group>
     </administrator-role>
 
+    <!-- Configures the application on a specified context root -->
     <webApplication contextRoot="${default.context.root}"
                     location="inventory.war">
         <application-bnd>
@@ -3634,6 +3650,7 @@ Replace the ***server.xml*** file.
            id="myMpJwt" 
            issuer="http://openliberty.io"/>
 
+    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
     <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
 
     <library id="postgresql-library">
@@ -4164,6 +4181,7 @@ Replace the ***server.xml*** file.
                   httpPort="${default.http.port}" 
                   httpsPort="${default.https.port}" />
 
+    <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
 
     <keyStore id="defaultKeyStore" password="secret" />
@@ -4182,6 +4200,7 @@ Replace the ***server.xml*** file.
         </group>
     </basicRegistry>
 
+    <!-- Configures the application on a specified context root -->
     <webApplication contextRoot="${default.context.root}"
                     location="inventory.war">
         <application-bnd>
@@ -4204,6 +4223,7 @@ Replace the ***server.xml*** file.
            id="myMpJwt" 
            issuer="http://openliberty.io"/>
 
+    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
     <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
 
     <library id="postgresql-library">
@@ -4869,6 +4889,7 @@ Replace the ***pom.xml*** file.
             <scope>provided</scope>
         </dependency>
         
+        <!-- Test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -5121,6 +5142,13 @@ kubectl port-forward svc/inventory-deployment 9443
 ```
 
 
+The application might take some time to get ready. To confirm that the `inventory` microservice is up and running, run the following curl command:
+
+```bash
+curl -k http://localhost:9443/health | jq
+```
+
+If the application is up and running, you are ready to access the microservice.
 In another command-line session, access the microservice by running the following commands:
 
 ```bash
