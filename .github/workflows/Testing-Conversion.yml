@@ -56,7 +56,7 @@ jobs:
           prText="${{ github.event.pull_request.body }}"
           removeStart="${prText:44}"
           removeEnd="${removeStart% *}"
-          instructionsMD=`echo "${removeEnd}" | sed -e 's/-/_/g'`
+          instructionsMD=`echo "cloud_hosted_${removeEnd}" | sed -e 's/-/_/g'`
           echo $removeEnd
           echo $instructionsMD
           cd GuideConverter
@@ -96,7 +96,7 @@ jobs:
           prText="${{ github.event.pull_request.body }}"
           removeStart="${prText:44}"
           removeEnd="${removeStart% *}"
-          instructionsMD=`echo "${removeEnd}" | sed -e 's/-/_/g'`
+          instructionsMD=`echo "cloud_hosted_${removeEnd}" | sed -e 's/-/_/g'`
           echo $removeEnd
           echo $instructionsMD
           cd GuideConverter
@@ -138,7 +138,7 @@ jobs:
       - name: Get Guide name
         run: |
           cd GuideConverter
-          instructionsMD=`echo "${{matrix.guides.guide}}" | sed -e 's/-/_/g'`
+          instructionsMD=`echo "cloud_hosted_${{matrix.guides.guide}}" | sed -e 's/-/_/g'`
           echo $instructionsMD
           if [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions.md" ]; then 
           mvn -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-${{matrix.guides.guide}}/instructions"; else mvn -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-${{matrix.guides.guide}}/labs/${instructionsMD}"; fi
