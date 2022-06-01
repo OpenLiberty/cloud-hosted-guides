@@ -4,9 +4,9 @@ title: instructions
 branch: lab-204-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 ---
-::page{title="Welcome to the Securing a web application guide!"}
+::page{title="Welcome to the Persisting data with MongoDB guide!"}
 
-Learn how to secure a web application through authentication and authorization.
+Learn how to persist data in your microservices to MongoDB, a document-oriented NoSQL database.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,14 +16,27 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You'll learn how to secure a web application by performing authentication and authorization using Jakarta EE Security. Authentication confirms the identity of the user by verifying a user's credentials while authorization determines whether a user has access to restricted resources.
+You will learn how to use MongoDB to build and test a simple microservice that manages the members of a crew. The microservice will respond to ***POST***, ***GET***, ***PUT***, and ***DELETE*** requests that manipulate the database.
 
-Jakarta EE Security provides capability to configure the basic authentication, form authentication, or custom form authentication mechanism by using annotations in servlets. It also provides the SecurityContext API for programmatic security checks in application code.
+The crew members will be stored in MongoDB as documents in the following JSON format:
 
-You’ll implement form authentication for a simple web front end. You'll also learn to specify security constraints for a servlet and use the SecurityContext API to determine the role of a logged-in user.
+```
+{
+  "_id": {
+    "$oid": "5dee6b079503234323db2ebc"
+  },
+  "Name": "Member1",
+  "Rank": "Captain",
+  "CrewID": "000001"
+}
+```
+
+This microservice connects to MongoDB by using Transport Layer Security (TLS) and injects a ***MongoDatabase*** instance into the service with a Contexts and Dependency Injection (CDI) producer. Additionally, MicroProfile Config is used to easily configure the MongoDB driver.
+
+For more information about CDI and MicroProfile Config, see the guides on [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) and [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html).
+
 
 ::page{title="Getting started"}
 
@@ -36,17 +49,48 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-security-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-mongodb-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-security-intro.git
-cd guide-security-intro
+git clone https://github.com/openliberty/guide-mongodb-intro.git
+cd guide-mongodb-intro
 ```
 
 
 The ***start*** directory contains the starting project that you will build upon.
 
 The ***finish*** directory contains the finished project that you will build.
+
+
+### Setting up MongoDB
+
+This guide uses Docker to run an instance of MongoDB. A multi-stage Dockerfile is provided for you. This Dockerfile uses the ***mongo*** image as the base image of the final stage and gathers the required configuration files. The resulting ***mongo*** image runs in a Docker container, and you must set up a new database for the microservice. Lastly, the truststore that's generated in the Docker image is copied from the container and placed into the Open Liberty server.
+
+You can find more details and configuration options on the [MongoDB website](https://docs.mongodb.com/manual/reference/configuration-options/). For more information about the ***mongo*** image, see [mongo](https://hub.docker.com/_/mongo) in Docker Hub.
+
+**Running MongoDB in a Docker container**
+
+Run the following commands to use the Dockerfile to build the image, run the image in a Docker container, and map port ***27017*** from the container to your host machine:
+
+```bash
+docker build -t mongo-sample -f assets/Dockerfile .
+docker run --name mongo-guide -p 27017:27017 -d mongo-sample
+```
+
+**Adding the truststore to the Open Liberty server**
+
+The truststore that's created in the container needs to be added to the Open Liberty server so that the server can trust the certificate that MongoDB presents when they connect. Run the following command to copy the ***truststore.p12*** file from the container to the ***start*** and ***finish*** directories:
+
+
+```bash
+docker cp \
+  mongo-guide:/home/mongodb/certs/truststore.p12 \
+  start/src/main/liberty/config/resources/security
+docker cp \
+  mongo-guide:/home/mongodb/certs/truststore.p12 \
+  finish/src/main/liberty/config/resources/security
+```
+
 
 ### Try what you'll build
 
@@ -65,25 +109,21 @@ After you see the following message, your application server is ready:
 The defaultServer server is ready to run a smarter planet.
 ```
 
-The finished application is secured with form authentication.
 
 
-Click the following button to visit the application:
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
-::startApplication{port="9080" display="external" name="Visit application" route="/"}
 
-The application automatically switches from an HTTP connection to a secure HTTPS connection and forwards you to a login page. If the browser gives you a certificate warning, it's because the Open Liberty server created a self-signed SSL certificate by default. You can follow your browser's provided instructions to accept the certificate and continue.
+You can now check out the service by going to the http://localhost:9080/mongo/ URL.
 
-Sign in to the application with one of the following user credentials from the user registry, which are provided to you:
 
-| *Username* | *Password* | *Role* | *Group*
-| --- | --- | --- | ---
-| alice | alicepwd | user | Employee
-| bob | bobpwd | admin, user | Manager, Employee
-| carl | carlpwd | admin, user | TeamLead, Employee
-| dave | davepwd | N/A | PartTime
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
-Notice that when you sign in as Bob or Carl, the browser redirects to the ***admin*** page and you can view their names and roles. When you sign in as Alice, you can only view Alice's name. When you sign in as Dave, you are blocked and see an ***Error 403: Authorization failed*** message because Dave doesn't have a role that is supported by the application.
+```bash
+curl http://localhost:9080/mongo/
+```
+
+
 
 After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -92,14 +132,9 @@ mvn liberty:stop
 ```
 
 
-::page{title="Adding authentication and authorization"}
-
-For this application, users are asked to log in with a form when they access the application. Users are authenticated and depending on their roles, they are redirected to the pages that they are authorized to access. If authentication or authorization fails, users are sent to an error page. The application supports two roles, ***admin*** and ***user***.
+::page{title="Providing a MongoDatabase"}
 
 Navigate to the ***start*** directory to begin.
-```bash
-cd /home/project/guide-security-intro/start
-```
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -116,62 +151,102 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Create the ***HomeServlet*** class.
+With a CDI producer, you can easily provide a ***MongoDatabase*** to your microservice.
+
+Create the ***MongoProducer*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java
+touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java
 ```
 
 
-> Then, to open the HomeServlet.java file in your IDE, select
-> **File** > **Open** > guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java, or click the following button
+> Then, to open the MongoProducer.java file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java, or click the following button
 
-::openFile{path="/home/project/guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java"}
+::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java"}
 
 
 
 ```java
-package io.openliberty.guides.ui;
+package io.openliberty.guides.mongo;
 
-import java.io.IOException;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Disposes;
+import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
-import jakarta.security.enterprise.SecurityContext;
-import jakarta.security.enterprise.authentication.mechanism.http.FormAuthenticationMechanismDefinition;
-import jakarta.security.enterprise.authentication.mechanism.http.LoginToContinue;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.HttpConstraint;
-import jakarta.servlet.annotation.ServletSecurity;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.net.ssl.SSLContext;
 
-@WebServlet(urlPatterns = "/home")
-@FormAuthenticationMechanismDefinition(
-    loginToContinue = @LoginToContinue(errorPage = "/error.html",
-                                       loginPage = "/welcome.html"))
-@ServletSecurity(value = @HttpConstraint(rolesAllowed = { "user", "admin" },
-  transportGuarantee = ServletSecurity.TransportGuarantee.CONFIDENTIAL))
-public class HomeServlet extends HttpServlet {
+import com.ibm.websphere.ssl.JSSEHelper;
+import com.ibm.websphere.ssl.SSLException;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-    private static final long serialVersionUID = 1L;
+import com.ibm.websphere.crypto.PasswordUtil;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoDatabase;
+
+import java.util.Collections;
+
+@ApplicationScoped
+public class MongoProducer {
 
     @Inject
-    private SecurityContext securityContext;
+    @ConfigProperty(name = "mongo.hostname", defaultValue = "localhost")
+    String hostname;
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-        if (securityContext.isCallerInRole(Utils.ADMIN)) {
-            response.sendRedirect("/admin.jsf");
-        } else if  (securityContext.isCallerInRole(Utils.USER)) {
-            response.sendRedirect("/user.jsf");
-        }
+    @Inject
+    @ConfigProperty(name = "mongo.port", defaultValue = "27017")
+    int port;
+
+    @Inject
+    @ConfigProperty(name = "mongo.dbname", defaultValue = "testdb")
+    String dbName;
+
+    @Inject
+    @ConfigProperty(name = "mongo.user")
+    String user;
+
+    @Inject
+    @ConfigProperty(name = "mongo.pass.encoded")
+    String encodedPass;
+
+    @Produces
+    public MongoClient createMongo() throws SSLException {
+        String password = PasswordUtil.passwordDecode(encodedPass);
+        MongoCredential creds = MongoCredential.createCredential(
+                user,
+                dbName,
+                password.toCharArray()
+        );
+
+        SSLContext sslContext = JSSEHelper.getInstance().getSSLContext(
+                "outboundSSLContext",
+                Collections.emptyMap(),
+                null
+        );
+
+        return new MongoClient(
+                new ServerAddress(hostname, port),
+                creds,
+                new MongoClientOptions.Builder()
+                        .sslEnabled(true)
+                        .sslContext(sslContext)
+                        .build()
+        );
     }
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-        doGet(request, response);
+    @Produces
+    public MongoDatabase createDB(
+            MongoClient client) {
+        return client.getDatabase(dbName);
+    }
+
+    public void close(
+            @Disposes MongoClient toClose) {
+        toClose.close();
     }
 }
 ```
@@ -180,88 +255,422 @@ public class HomeServlet extends HttpServlet {
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***HomeServlet*** servlet is the entry point of the application. To enable form authentication for the ***HomeServlet*** class, define the ***@FormAuthenticationMechanismDefinition*** annotation and set its ***loginToContinue*** attribute with a ***@LoginToContinue*** annotation. This ***@FormAuthenticationMechanismDefinition*** annotation defines ***welcome.html*** as the login page and ***error.html*** as the error page.
-
-The ***welcome.html*** page implements the login form, and the ***error.html*** page implements the error page. Both pages are provided for you under the ***src/main/webapp*** directory. The login form in the ***welcome.html*** page uses the ***j_security_check*** action, which is defined by Jakarta EE and available by default.
-
-Authorization determines whether a user can access a resource. To restrict access to authenticated users with ***user*** and ***admin*** roles, define the ***@ServletSecurity*** annotation with the ***@HttpConstraint*** annotation and set the ***rolesAllowed*** attribute to these two roles.
-
-The ***transportGuarantee*** attribute defines the constraint on the traffic between the client and the application. Set it to ***CONFIDENTIAL*** to enforce that all user data must be encrypted, which is why an HTTP connection from a browser switches to HTTPS.
-
-The SecurityContext interface provides programmatic access to the Jakarta EE Security API. Inject a SecurityContext instance into the ***HomeServlet*** class. The ***doGet()*** method uses the ***isCallerInRole()*** method from the SecurityContext API to check a user's role and then forwards the response to the appropriate page.
-
-The ***src/main/webapp/WEB-INF/web.xml*** file contains the rest of the security declaration for the application.
 
 
-::openFile{path="/home/project/guide-security-intro/start/src/main/webapp/WEB-INF/web.xml"}
 
-The ***security-role*** elements define the roles that are supported by the application, which are ***user*** and ***admin***. The ***security-constraint*** elements specify that JSF resources like the ***user.jsf*** and ***admin.jsf*** pages can be accessed only by users with ***user*** and ***admin*** roles.
+The values from the ***microprofile-config.properties*** file are injected into the ***MongoProducer*** class. The ***MongoProducer*** class requires the following methods for the ***MongoClient***:
+
+* The ***createMongo()*** producer method returns an instance of ***MongoClient***. In this method, the username, database name, and decoded password are passed into the ***MongoCredential.createCredential()*** method to get an instance of ***MongoCredential***. The ***JSSEHelper*** gets the ***SSLContext*** from the ***outboundSSLContext*** in the ***server.xml*** file. Then, a ***MongoClient*** instance is created.
+
+* The ***createDB()*** producer method returns an instance of ***MongoDatabase*** that depends on the ***MongoClient***. This method injects the ***MongoClient*** in its parameters and passes the database name into the ***MongoClient.getDatabase()*** method to get a ***MongoDatabase*** instance.
+
+* The ***close()*** method is a clean-up function for the ***MongoClient*** that closes the connection to the ***MongoDatabase*** instance.
 
 
-::page{title="Configuring the user registry"}
 
-User registries store user account information, such as username and password, for use by applications to perform security-related operations. Typically, application servers would be configured to use an external registry like a Lightweight Directory Access Protocol (LDAP) registry. Applications would access information in the registry for authentication and authorization by using APIs like the Jakarta EE Security API.
+::page{title="Implementing the Create, Retrieve, Update, and Delete operations"}
 
-Open Liberty provides an easy-to-use basic user registry for developers, which you will configure.
 
-Create the ***userRegistry*** configuration file.
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+You are going to implement the basic create, retrieve, update, and delete (CRUD) operations in the ***CrewService*** class. The ***com.mongodb.client*** and ***com.mongodb.client.result*** packages are used to help implement these operations for the microservice. For more information about these packages, see the [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html) and [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html) Javadoc. For more information about creating a RESTful service with JAX-RS, JSON-B, and Open Liberty, see the guide on [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html).
+
+Create the ***CrewService*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-security-intro/start/src/main/liberty/config/userRegistry.xml 
+touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java
 ```
 
 
-> Then, to open the userRegistry.xml file in your IDE, select
-> **File** > **Open** > guide-security-intro/start/src/main/liberty/config/userRegistry.xml, or click the following button
+> Then, to open the CrewService.java file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java, or click the following button
 
-::openFile{path="/home/project/guide-security-intro/start/src/main/liberty/config/userRegistry.xml"}
+::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java"}
+
+
+
+```java
+package io.openliberty.guides.application;
+
+import java.util.Set;
+
+import java.io.StringWriter;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.Json;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import jakarta.validation.Validator;
+import jakarta.validation.ConstraintViolation;
+
+import com.mongodb.client.FindIterable;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
+
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+
+@Path("/crew")
+@ApplicationScoped
+public class CrewService {
+
+    @Inject
+    MongoDatabase db;
+
+    @Inject
+    Validator validator;
+
+    private JsonArray getViolations(CrewMember crewMember) {
+        Set<ConstraintViolation<CrewMember>> violations = validator.validate(
+                crewMember);
+
+        JsonArrayBuilder messages = Json.createArrayBuilder();
+
+        for (ConstraintViolation<CrewMember> v : violations) {
+            messages.add(v.getMessage());
+        }
+
+        return messages.build();
+    }
+
+    @POST
+    @Path("/")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Successfully added crew member."),
+        @APIResponse(
+            responseCode = "400",
+            description = "Invalid crew member configuration.") })
+    @Operation(summary = "Add a new crew member to the database.")
+    public Response add(CrewMember crewMember) {
+        JsonArray violations = getViolations(crewMember);
+
+        if (!violations.isEmpty()) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(violations.toString())
+                    .build();
+        }
+
+        MongoCollection<Document> crew = db.getCollection("Crew");
+
+        Document newCrewMember = new Document();
+        newCrewMember.put("Name", crewMember.getName());
+        newCrewMember.put("Rank", crewMember.getRank());
+        newCrewMember.put("CrewID", crewMember.getCrewID());
+
+        crew.insertOne(newCrewMember);
+
+        return Response
+            .status(Response.Status.OK)
+            .entity(newCrewMember.toJson())
+            .build();
+    }
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Successfully listed the crew members."),
+        @APIResponse(
+            responseCode = "500",
+            description = "Failed to list the crew members.") })
+    @Operation(summary = "List the crew members from the database.")
+    public Response retrieve() {
+        StringWriter sb = new StringWriter();
+
+        try {
+            MongoCollection<Document> crew = db.getCollection("Crew");
+            sb.append("[");
+            boolean first = true;
+            FindIterable<Document> docs = crew.find();
+            for (Document d : docs) {
+                if (!first) {
+                    sb.append(",");
+                } else {
+                    first = false;
+                }
+                sb.append(d.toJson());
+            }
+            sb.append("]");
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
+            return Response
+                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("[\"Unable to list crew members!\"]")
+                .build();
+        }
+
+        return Response
+            .status(Response.Status.OK)
+            .entity(sb.toString())
+            .build();
+    }
+
+    @PUT
+    @Path("/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Successfully updated crew member."),
+        @APIResponse(
+            responseCode = "400",
+            description = "Invalid object id or crew member configuration."),
+        @APIResponse(
+            responseCode = "404",
+            description = "Crew member object id was not found.") })
+    @Operation(summary = "Update a crew member in the database.")
+    public Response update(CrewMember crewMember,
+        @Parameter(
+            description = "Object id of the crew member to update.",
+            required = true
+        )
+        @PathParam("id") String id) {
+
+        JsonArray violations = getViolations(crewMember);
+
+        if (!violations.isEmpty()) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(violations.toString())
+                    .build();
+        }
+
+        ObjectId oid;
+
+        try {
+            oid = new ObjectId(id);
+        } catch (Exception e) {
+            return Response
+                .status(Response.Status.BAD_REQUEST)
+                .entity("[\"Invalid object id!\"]")
+                .build();
+        }
+
+        MongoCollection<Document> crew = db.getCollection("Crew");
+
+        Document query = new Document("_id", oid);
+
+        Document newCrewMember = new Document();
+        newCrewMember.put("Name", crewMember.getName());
+        newCrewMember.put("Rank", crewMember.getRank());
+        newCrewMember.put("CrewID", crewMember.getCrewID());
+
+        UpdateResult updateResult = crew.replaceOne(query, newCrewMember);
+
+        if (updateResult.getMatchedCount() == 0) {
+            return Response
+                .status(Response.Status.NOT_FOUND)
+                .entity("[\"_id was not found!\"]")
+                .build();
+        }
+
+        newCrewMember.put("_id", oid);
+
+        return Response
+            .status(Response.Status.OK)
+            .entity(newCrewMember.toJson())
+            .build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Successfully deleted crew member."),
+        @APIResponse(
+            responseCode = "400",
+            description = "Invalid object id."),
+        @APIResponse(
+            responseCode = "404",
+            description = "Crew member object id was not found.") })
+    @Operation(summary = "Delete a crew member from the database.")
+    public Response remove(
+        @Parameter(
+            description = "Object id of the crew member to delete.",
+            required = true
+        )
+        @PathParam("id") String id) {
+
+        ObjectId oid;
+
+        try {
+            oid = new ObjectId(id);
+        } catch (Exception e) {
+            return Response
+                .status(Response.Status.BAD_REQUEST)
+                .entity("[\"Invalid object id!\"]")
+                .build();
+        }
+
+        MongoCollection<Document> crew = db.getCollection("Crew");
+
+        Document query = new Document("_id", oid);
+
+        DeleteResult deleteResult = crew.deleteOne(query);
+
+        if (deleteResult.getDeletedCount() == 0) {
+            return Response
+                .status(Response.Status.NOT_FOUND)
+                .entity("[\"_id was not found!\"]")
+                .build();
+        }
+
+        return Response
+            .status(Response.Status.OK)
+            .entity(query.toJson())
+            .build();
+    }
+}
+```
+
+
+
+
+In this class, a ***Validator*** is used to validate a ***CrewMember*** before the database is updated. The CDI producer is used to inject a ***MongoDatabase*** into the CrewService class.
+
+
+**Implementing the Create operation**
+
+The ***add()*** method handles the implementation of the create operation. An instance of ***MongoCollection*** is retrieved with the ***MongoDatabase.getCollection()*** method. The ***Document*** type parameter specifies that the ***Document*** type is used to store data in the ***MongoCollection***. Each crew member is converted into a ***Document***, and the ***MongoCollection.insertOne()*** method inserts a new crew member document.
+
+
+**Implementing the Retrieve operation**
+
+The ***retrieve()*** method handles the implementation of the retrieve operation. The ***Crew*** collection is retrieved with the ***MongoDatabase.getCollection()*** method. Then, the ***MongoCollection.find()*** method retrieves a ***FindIterable*** object. This object is iterable for all the crew members documents in the collection, so each crew member document is concatenated into a String array and returned.
+
+
+**Implementing the Update operation**
+
+The ***update()*** method handles the implementation of the update operation. After the ***Crew*** collection is retrieved, a document is created with the specified object ***id*** and is used to query the collection. Next, a new crew member ***Document*** is created with the updated configuration. The ***MongoCollection.replaceOne()*** method is called with the query and new crew member document. This method updates all of the matching queries with the new document. Because the object ***id*** is unique in the ***Crew*** collection, only one document is updated. The ***MongoCollection.replaceOne()*** method also returns an ***UpdateResult*** instance, which determines how many documents matched the query. If there are zero matches, then the object ***id*** doesn't exist.
+
+
+**Implementing the Delete operation**
+
+The ***remove()*** method handles the implementation of the delete operation. After the ***Crew*** collection is retrieved, a ***Document*** is created with the specified object ***id*** and is used to query the collection. Because the object ***id*** is unique in the ***Crew*** collection, only one document is deleted. After the document is deleted, the ***MongoCollection.deleteOne()*** method returns a ***DeleteResult*** instance, which determines how many documents were deleted. If zero documents were deleted, then the object ***id*** doesn't exist.
+
+
+
+::page{title="Configuring the MongoDB driver and the server"}
+
+MicroProfile Config makes configuring the MongoDB driver simple because all of the configuration can be set in one place and injected into the CDI producer.
+
+Create the configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-mongodb-intro/start/src/main/webapp/META-INF/microprofile-config.properties
+```
+
+
+> Then, to open the microprofile-config.properties file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/main/webapp/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-mongodb-intro/start/src/main/webapp/META-INF/microprofile-config.properties"}
+
+
+
+```
+mongo.hostname=localhost
+mongo.port=27017
+mongo.dbname=testdb
+mongo.user=sampleUser
+mongo.pass.encoded={aes}APtt+/vYxxPa0jE1rhmZue9wBm3JGqFK3JR4oJdSDGWM1wLr1ckvqkqKjSB2Voty8g==
+```
+
+
+
+Values such as the hostname, port, and database name for the running MongoDB instance are set in this file. The user’s username and password are also set here. For added security, the password was encoded by using the https://openliberty.io/docs/latest/reference/command/securityUtility-encode.html[securityUtility encode command].
+
+To create a CDI producer for MongoDB and connect over TLS, the Open Liberty server needs to be correctly configured.
+
+Replace the server configuration file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-mongodb-intro/start/src/main/liberty/config/server.xml"}
 
 
 
 ```xml
 <server description="Sample Liberty server">
-  <basicRegistry id="basic" realm="WebRealm">
-    <user name="bob"
-      password="{xor}PTA9Lyg7" /> <!-- bobpwd -->
-    <user name="alice"
-      password="{xor}PjM2PDovKDs=" />  <!-- alicepwd -->
-    <user name="carl"
-      password="{xor}PD4tMy8oOw==" />  <!-- carlpwd -->
-    <user name="dave"
-      password="{xor}Oz4pOi8oOw==" />  <!-- davepwd -->
+    <featureManager>
+        <feature>cdi-3.0</feature>
+        <feature>ssl-1.0</feature>
+        <feature>mpConfig-3.0</feature>
+        <feature>passwordUtilities-1.0</feature>
+        <feature>beanValidation-3.0</feature>	   
+        <feature>restfulWS-3.0</feature>
+        <feature>jsonb-2.0</feature>
+        <feature>mpOpenAPI-3.0</feature>
+    </featureManager>
 
-    <group name="Manager">
-      <member name="bob" />
-    </group>
+    <variable name="default.http.port" defaultValue="9080"/>
+    <variable name="default.https.port" defaultValue="9443"/>
+    <variable name="app.context.root" defaultValue="/mongo"/>
 
-    <group name="TeamLead">
-      <member name="carl" />
-    </group>
-    
-    <group name="Employee">
-      <member name="alice" />
-      <member name="bob" />
-      <member name="carl" />
-    </group>
+    <httpEndpoint
+        host="*" 
+        httpPort="${default.http.port}" 
+        httpsPort="${default.https.port}" 
+        id="defaultHttpEndpoint"
+    />
 
-    <group name="PartTime">
-      <member name="dave" />
-    </group>
-  </basicRegistry>
+    <webApplication 
+        location="guide-mongodb-intro.war" 
+        contextRoot="${app.context.root}"
+    />
+    <keyStore
+        id="outboundTrustStore" 
+        location="${server.output.dir}/resources/security/truststore.p12"
+        password="mongodb"
+        type="PKCS12" 
+    />
+    <ssl 
+        id="outboundSSLContext" 
+        keyStoreRef="defaultKeyStore" 
+        trustStoreRef="outboundTrustStore" 
+        sslProtocol="TLS" 
+    />
 </server>
 ```
 
 
 
-The registry has four users, ***bob***, ***alice***, ***carl***, and ***dave***. It also has four groups: ***Manager***, ***TeamLead***, ***Employee***, and ***PartTime***. Each user belongs to one or more groups.
+The features that are required to create the CDI producer for MongoDB are https://openliberty.io/docs/latest/reference/feature/cdi-2.0.html[Contexts and Dependency Injection] (***cdi-2.0***), https://openliberty.io/docs/latest/reference/feature/ssl-1.0.html[Secure Socket Layer] (***ssl-1.0***), https://openliberty.io/docs/latest/reference/feature/mpConfig-1.4.html[MicroProfile Config] (***mpConfig-1.4***), and https://openliberty.io/docs/latest/reference/feature/passwordUtilities-1.0.html[Password Utilities] (***passwordUtilities-1.0***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
 
-It is not recommended to store passwords in plain text. The passwords in the ***userRegistry.xml*** file are encoded by using the Liberty ***securityUtility*** command with XOR encoding.
-
-
-Use the ***include*** element to add the basic user registry configuration to your server configuration. Open Liberty includes configuration information from the specified XML file in its server configuration.
-
-The ***server.xml*** file contains the security configuration of the server under the ***application-bnd*** element. Use the ***security-role*** and ***group*** elements to map the groups in the ***userRegistry.xml*** file to the appropriate user roles supported by the application for proper user authorization. The ***Manager*** and ***TeamLead*** groups are mapped to the ***admin*** role while the ***Employee*** group is mapped to the ***user*** role.
+After you replace the ***server.xml*** file, the Open Liberty configuration is automatically reloaded.
 
 
 ::page{title="Running the application"}
@@ -269,202 +678,357 @@ The ***server.xml*** file contains the security configuration of the server unde
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
+Go to the http://localhost:9080/openapi/ui/ URL to see the OpenAPI user interface (UI) that provides API documentation and a client to test the API endpoints that you create after you see a message similar to the following example:
 
-Click the following button to visit the application:
 
-::startApplication{port="9080" display="external" name="Visit application" route="/"}
+_To see the output for this URL in the IDE, run the following command at a terminal:_
 
-As you can see, the browser gets automatically redirected from an HTTP connection to an HTTPS connection because the transport guarantee is defined in the ***HomeServlet*** class.
+```bash
+curl http://localhost:9080/openapi/ui/
+```
 
-You will see a login form because form authentication is implemented and configured. Sign in to the application by using one of the credentials from the following table. The credentials are defined in the configured user registry.
 
-| *Username* | *Password* | *Role* | *Group*
-| --- | --- | --- | ---
-| alice | alicepwd | user | Employee
-| bob | bobpwd | admin, user | Manager, Employee
-| carl | carlpwd | admin, user | TeamLead, Employee
-| dave | davepwd | N/A | PartTime
+```
+CWWKZ0001I: Application guide-mongodb-intro started in 5.715 seconds.
+```
 
-Notice that when you sign in as Bob or Carl, the browser redirects to the ***admin*** page and you can view their names and roles. When you sign in as Alice, you can only view Alice's name. When you sign in as Dave, you are blocked and see an ***Error 403: Authorization failed*** message because Dave doesn't have a role that is supported by the application.
+
+**Try the Create operation**
+
+From the OpenAPI UI, test the create operation at the ***POST /api/crew*** endpoint by using the following code as the request body:
+
+```bash
+{
+  "name": "Member1",
+  "rank": "Officer",
+  "crewID": "000001"
+}
+```
+
+This request creates a new document in the ***Crew*** collection with a name of ***Member1***, rank of ***Officer***, and crew ID of ***000001***.
+
+You'll receive a response that contains the JSON object of the new crew member, as shown in the following example:
+```
+{
+  "Name": "Member1",
+  "Rank": "Officer",
+  "CrewID": "000001",
+  "_id": {
+    "$oid": "<<ID>>"
+  }
+}
+```
+
+The ***\\<\<ID\>\>*** that you receive is a unique identifier in the collection. Save this value for future commands.
+
+
+**Try the Retrieve operation**
+
+From the OpenAPI UI, test the read operation at the ***GET /api/crew*** endpoint. This request gets all crew member documents from the collection.
+
+You'll receive a response that contains an array of all the members in your crew. The response might include crew members that were created in the **Try what you’ll build** section of this guide:
+```
+[
+  {
+    "_id": {
+      "$oid": "<<ID>>"
+    },
+    "Name": "Member1",
+    "Rank": "Officer",
+    "CrewID": "000001"
+  }
+]
+```
+
+
+**Try the Update operation**
+
+From the OpenAPI UI, test the update operation at the ***PUT /api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\\<\<ID\>\>*** that you saved from the create operation. Use the following code as the request body:
+```bash
+{
+  "name": "Member1",
+  "rank": "Captain",
+  "crewID": "000001"
+}
+```
+
+This request updates the rank of the crew member that you created from ***Officer*** to ***Captain***.
+
+You'll receive a response that contains the JSON object of the updated crew member, as shown in the following example:
+
+```
+{
+  "Name": "Member1",
+  "Rank": "Captain",
+  "CrewID": "000001",
+  "_id": {
+    "$oid": "<<ID>>"
+  }
+}
+```
+
+
+**Try the Delete operation**
+
+From the OpenAPI UI, test the delete operation at the ***DELETE/api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\\<\<ID\>\>*** that you saved from the create operation. This request removes the document that contains the specified crew member object ***id*** from the collection.
+
+You'll receive a response that contains the object ***id*** of the deleted crew member, as shown in the following example:
+
+```
+{
+  "_id": {
+    "$oid": "<<ID>>"
+  }
+}
+```
+
+
+Now, you can check out the microservice that you created by going to the http://localhost:9080/mongo/ URL.
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl http://localhost:9080/mongo/
+```
+
 
 
 
 ::page{title="Testing the application"}
 
-Write the ***SecurityIT*** class to test the authentication and authorization of the application.
+Next, you'll create integration tests to ensure that the basic operations you implemented function correctly.
 
-Create the ***SecurityIT*** class.
+Create the ***CrewServiceIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java
+touch /home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java
 ```
 
 
-> Then, to open the SecurityIT.java file in your IDE, select
-> **File** > **Open** > guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java, or click the following button
+> Then, to open the CrewServiceIT.java file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java, or click the following button
 
-::openFile{path="/home/project/guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java"}
+::openFile{path="/home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.security;
+package it.io.openliberty.guides.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.net.URI;
+import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.List;
 
-import javax.net.ssl.SSLContext;
-import jakarta.servlet.http.HttpServletResponse;
-
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.CookieSpecs;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.TestMethodOrder;
 
-public class SecurityIT {
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonReader;
+import jakarta.json.JsonValue;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.client.Entity;
 
-    private static String urlHttp;
-    private static String urlHttps;
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class CrewServiceIT {
 
-    @BeforeEach
-    public void setup() throws Exception {
-        urlHttp = "http://localhost:" + System.getProperty("http.port");
-        urlHttps = "https://localhost:" + System.getProperty("https.port");
-        ITUtils.trustAll();
+    private static Client client;
+    private static JsonArray testData;
+    private static String rootURL;
+    private static ArrayList<String> testIDs = new ArrayList<>(2);
+
+    @BeforeAll
+    public static void setup() {
+        client = ClientBuilder.newClient();
+
+        String port = System.getProperty("app.http.port");
+        String context = System.getProperty("app.context.root");
+        rootURL = "http://localhost:" + port + context;
+
+        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+        JsonObjectBuilder jsonBuilder = Json.createObjectBuilder();
+        jsonBuilder.add("name", "Member1");
+        jsonBuilder.add("crewID", "000001");
+        jsonBuilder.add("rank", "Captain");
+        arrayBuilder.add(jsonBuilder.build());
+        jsonBuilder = Json.createObjectBuilder();
+        jsonBuilder.add("name", "Member2");
+        jsonBuilder.add("crewID", "000002");
+        jsonBuilder.add("rank", "Engineer");
+        arrayBuilder.add(jsonBuilder.build());
+        testData = arrayBuilder.build();
+    }
+
+    @AfterAll
+    public static void teardown() {
+        client.close();
     }
 
     @Test
-    public void testAuthenticationFail() throws Exception {
-        executeURL("/", "bob", "wrongpassword", true, -1, "Don't care");
+    @Order(1)
+    public void testAddCrewMember() {
+        System.out.println("   === Adding " + testData.size()
+                + " crew members to the database. ===");
+
+        for (int i = 0; i < testData.size(); i++) {
+            JsonObject member = (JsonObject) testData.get(i);
+            String url = rootURL + "/api/crew";
+            Response response = client.target(url).request().post(Entity.json(member));
+            this.assertResponse(url, response);
+
+            JsonObject newMember = response.readEntity(JsonObject.class);
+            testIDs.add(newMember.getJsonObject("_id").getString("$oid"));
+
+            response.close();
+        }
+        System.out.println("      === Done. ===");
     }
 
     @Test
-    public void testAuthorizationForAdmin() throws Exception {
-        executeURL("/", "bob", "bobpwd", false,
-            HttpServletResponse.SC_OK, "admin, user");
+    @Order(2)
+    public void testUpdateCrewMember() {
+        System.out.println("   === Updating crew member with id " + testIDs.get(0)
+                + ". ===");
+
+        JsonObject oldMember = (JsonObject) testData.get(0);
+
+        JsonObjectBuilder newMember = Json.createObjectBuilder();
+        newMember.add("name", oldMember.get("name"));
+        newMember.add("crewID", oldMember.get("crewID"));
+        newMember.add("rank", "Officer");
+
+        String url = rootURL + "/api/crew/" + testIDs.get(0);
+        Response response = client.target(url).request()
+                .put(Entity.json(newMember.build()));
+
+        this.assertResponse(url, response);
+
+        System.out.println("      === Done. ===");
     }
 
     @Test
-    public void testAuthorizationForUser() throws Exception {
-        executeURL("/", "alice", "alicepwd", false,
-            HttpServletResponse.SC_OK, "<title>User</title>");
-    }
+    @Order(3)
+    public void testGetCrewMembers() {
+        System.out.println("   === Listing crew members from the database. ===");
 
-    @Test
-    public void testAuthorizationFail() throws Exception {
-        executeURL("/", "dave", "davepwd", false,
-            HttpServletResponse.SC_FORBIDDEN, "Error 403: Authorization failed");
-    }
+        String url = rootURL + "/api/crew";
+        Response response = client.target(url).request().get();
 
-    private void executeURL(
-        String testUrl, String userid, String password,
-        boolean expectLoginFail, int expectedCode, String expectedContent)
-        throws Exception {
+        this.assertResponse(url, response);
 
-        URI url = new URI(urlHttp + testUrl);
-        HttpGet getMethod = new HttpGet(url);
-        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
-        SSLContext sslContext = SSLContext.getDefault();
-        clientBuilder.setSSLContext(sslContext);
-        clientBuilder.setDefaultRequestConfig(
-            RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
-        HttpClient client = clientBuilder.build();
-        HttpResponse response = client.execute(getMethod);
+        String responseText = response.readEntity(String.class);
+        JsonReader reader = Json.createReader(new StringReader(responseText));
+        JsonArray crew = reader.readArray();
+        reader.close();
 
-        String loginBody = EntityUtils.toString(response.getEntity(), "UTF-8");
-        assertTrue(loginBody.contains("window.location.assign"),
-            "Not redirected to home.html");
-        String[] redirect = loginBody.split("'");
-
-        HttpPost postMethod = new HttpPost(urlHttps + "/j_security_check");
-        List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-        nvps.add(new BasicNameValuePair("j_username", userid));
-        nvps.add(new BasicNameValuePair("j_password", password));
-        postMethod.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
-        response = client.execute(postMethod);
-        assertEquals(HttpServletResponse.SC_FOUND,
-            response.getStatusLine().getStatusCode(),
-            "Expected " + HttpServletResponse.SC_FOUND + " status code for login");
-
-        if (expectLoginFail) {
-            String location = response.getFirstHeader("Location").getValue();
-            assertTrue(location.contains("error.html"),
-                "Error.html was not returned");
-            return;
+        int testMemberCount = 0;
+        for (JsonValue value : crew) {
+            JsonObject member = (JsonObject) value;
+            String id = member.getJsonObject("_id").getString("$oid");
+            if (testIDs.contains(id)) {
+                testMemberCount++;
+            }
         }
 
-        url = new URI(urlHttps + redirect[1]);
-        getMethod = new HttpGet(url);
-        response = client.execute(getMethod);
-        assertEquals(expectedCode, response.getStatusLine().getStatusCode(),
-            "Expected " + expectedCode + " status code for login");
+        assertEquals(testIDs.size(), testMemberCount,
+                "Incorrect number of testing members.");
 
-        if (expectedCode != HttpServletResponse.SC_OK) {
-            return;
-        }
+        System.out.println("      === Done. There are " + crew.size()
+                + " crew members. ===");
 
-        String actual = EntityUtils.toString(response.getEntity(), "UTF-8");
-        assertTrue(actual.contains(userid),
-            "The actual content did not contain the userid \"" + userid
-            + "\". It was:\n" + actual);
-        assertTrue(actual.contains(expectedContent),
-            "The url " + testUrl + " did not return the expected content \""
-            + expectedContent + "\"" + "The actual content was:\n" + actual);
+        response.close();
     }
 
+    @Test
+    @Order(4)
+    public void testDeleteCrewMember() {
+        System.out.println("   === Removing " + testIDs.size()
+                + " crew members from the database. ===");
+
+        for (String id : testIDs) {
+            String url = rootURL + "/api/crew/" + id;
+            Response response = client.target(url).request().delete();
+            this.assertResponse(url, response);
+            response.close();
+        }
+
+        System.out.println("      === Done. ===");
+    }
+
+    private void assertResponse(String url, Response response) {
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
 }
 ```
 
 
 
-The ***testAuthenticationFail()*** method tests an invalid user authentication while the ***testAuthorizationFail()*** method tests unauthorized access to the application.
+The test methods are annotated with the ***@Test*** annotation.
 
-The ***testAuthorizationForAdmin()*** and ***testAuthorizationForUser()*** methods verify that users with ***admin*** or ***user*** roles are properly authenticated and can access authorized resource.
+The following test cases are included in this class:
+
+* ***testAddCrewMember()*** verifies that new members are correctly added to the database.
+
+* ***testUpdateCrewMember()*** verifies that a crew member's information is correctly updated.
+
+* ***testGetCrewMembers()*** verifies that a list of crew members is returned by the microservice API.
+
+* ***testDeleteCrewMember()*** verifies that the crew members are correctly removed from the database.
 
 ### Running the tests
 
 Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
-You see the following output:
+You'll see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.security.SecurityIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.78 sec - in it.io.openliberty.guides.security.SecurityIT
-
-Results :
-
+Running it.io.openliberty.guides.application.CrewServiceIT
+   === Adding 2 crew members to the database. ===
+      === Done. ===
+   === Updating crew member with id 5df8e0a004ccc019976c7d0a. ===
+      === Done. ===
+   === Listing crew members from the database. ===
+      === Done. There are 2 crew members. ===
+   === Removing 2 crew members from the database. ===
+      === Done. ===
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.411 s - in it.io.openliberty.guides.application.CrewServiceIT
+Results:
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-
 ```
+
+::page{title="Tearing down the environment"}
 
 When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
+Then, run the following commands to stop and remove the ***mongo-guide*** container and to remove the ***mongo-sample*** and ***mongo*** images.
+
+```bash
+docker stop mongo-guide
+docker rm mongo-guide
+docker rmi mongo-sample
+docker rmi mongo
+```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You learned how to use Jakarta EE Security in Open Liberty to authenticate and authorize users to secure your web application.
-
-
-Next, you can try the related [MicroProfile JWT](https://openliberty.io/guides/microprofile-jwt.html) guide. It demonstrates technologies to secure backend services.
+You've successfully accessed and persisted data to a MongoDB database from a Java microservice using Contexts and Dependency Injection (CDI) and MicroProfile Config with Open Liberty.
 
 
 
@@ -473,33 +1037,38 @@ Next, you can try the related [MicroProfile JWT](https://openliberty.io/guides/m
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-security-intro*** project by running the following commands:
+Delete the ***guide-mongodb-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-security-intro
+rm -fr guide-mongodb-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20a%20web%20application&guide-id=cloud-hosted-guide-security-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Persisting%20data%20with%20MongoDB&guide-id=cloud-hosted-guide-mongodb-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-security-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-security-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-mongodb-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-mongodb-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Securing microservices with JSON Web Tokens](https://openliberty.io/guides/microprofile-jwt.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+
+**Learn more about MicroProfile**
+* [See the MicroProfile specs](https://microprofile.io/)
+* [View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
 
 
 ### Log out of the session
