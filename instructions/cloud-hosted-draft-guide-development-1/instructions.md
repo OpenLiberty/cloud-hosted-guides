@@ -1,917 +1,993 @@
+---
+markdown-version: v1
+title: instructions
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
+---
 
-# **Welcome to the Getting started with Open Liberty guide!**
+::page{title="What you'll learn"}
 
-Learn how to develop a Java application on Open Liberty with Maven and Docker.
+You will learn how to use MongoDB to build and test a simple microservice that manages the members of a crew. The microservice will respond to ***POST***, ***GET***, ***PUT***, and ***DELETE*** requests that manipulate the database.
 
-In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
-
-This panel contains the step-by-step guide instructions. You can customize these instructions by using the toolbar at the top of this panel. Move between steps by using either the arrows or the buttons at the bottom of this panel.
-
-The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
-
-
-
-# **What you'll learn**
-
-You will learn how to run and update a simple REST microservice on Open Liberty.
-You will use Maven throughout the guide to build and deploy the microservice as well as
-to interact with the running Liberty instance.
-
-Open Liberty is an open application framework designed for the cloud. It's small, lightweight,
-and designed with modern cloud-native application development in mind. It supports the
-full MicroProfile and Jakarta EE APIs and is composable, meaning that you can use only the
-features that you need, keeping everything lightweight, which is great for microservices.
-It also deploys to every major cloud platform, including Docker, Kubernetes, and Cloud
-Foundry.
-
-Maven is an automation build tool that provides an efficient way to develop Java applications.
-Using Maven, you will build a simple microservice, called **system**, that collects basic
-system properties from your laptop and displays them on an endpoint that you can access
-in your web browser. 
-
-You'll also explore how to package your application with Open Liberty
-so that it can be deployed anywhere in one go. You will then make Liberty configuration and code changes and see how
-they are immediately picked up by a running instance.
-
-Finally, you will package the application along with the server configuration into a Docker
-image and run that image as a container.
-
-
-# **Getting started**
-
-To open a new command-line session,
-select **Terminal** > **New Terminal** from the menu of the IDE.
-
-Run the following command to navigate to the **/home/project** directory:
-
-```
-cd /home/project
-```
-{: codeblock}
-
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-getting-started.git) and use the projects that are provided inside:
-
-```
-git clone https://github.com/openliberty/guide-getting-started.git
-cd guide-getting-started
-```
-{: codeblock}
-
-
-The **start** directory contains the starting project that you will build upon.
-
-The **finish** directory contains the finished project that you will build.
-
-
-
-
-# **Building and running the application**
-
-Your application is configured to be built with Maven. Every Maven-configured project
-contains a **pom.xml** file, which defines the project configuration, dependencies, plug-ins,
-and so on.
-
-Your **pom.xml** file is located in the **start** directory and is configured to
-include the **liberty-maven-plugin**, which allows you
-to install applications into Open Liberty and manage the server instances.
-
-
-To begin, navigate to the **start** directory. Build the **system** microservice
-that is provided and deploy it to Open Liberty by running the Maven
-**liberty:run** goal:
-
-```
-cd start
-mvn liberty:run
-```
-{: codeblock}
-
-
-The **mvn** command initiates a Maven build, during which the **target** directory is created
-to store all build-related files.
-
-The **liberty:run** argument specifies the Open Liberty **run** goal, which
-starts an Open Liberty server instance in the foreground.
-As part of this phase, an Open Liberty server runtime is downloaded and installed into
-the **target/liberty/wlp** directory, a server instance is created and configured in the
-**target/liberty/wlp/usr/servers/defaultServer** directory, and the application is
-installed into that server via [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
-
-For more information about the Liberty Maven plug-in, see its [GitHub repository](https://github.com/WASdev/ci.maven).
-
-When the server begins starting up, various messages display in your command-line session. Wait
-for the following message, which indicates that the server startup is complete:
-
-```
-[INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
-```
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-To access the **system** microservice, see the http://localhost:9080/system/properties URL,
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/system/properties | jq
-```
-{: codeblock}
-
-
-and you see a list of the various system properties of your JVM:
+The crew members will be stored in MongoDB as documents in the following JSON format:
 
 ```
 {
-    "os.name": "Mac OS X",
-    "java.version": "1.8.0_151",
-    ...
+  "_id": {
+    "$oid": "5dee6b079503234323db2ebc"
+  },
+  "Name": "Member1",
+  "Rank": "Captain",
+  "CrewID": "000001"
 }
 ```
 
-When you need to stop the server, press **CTRL+C** in the command-line session where
-you ran the server, or run the **liberty:stop** goal from the **start** directory in
-another command-line session:
+This microservice connects to MongoDB by using Transport Layer Security (TLS) and injects a ***MongoDatabase*** instance into the service with a Contexts and Dependency Injection (CDI) producer. Additionally, MicroProfile Config is used to easily configure the MongoDB driver.
 
+For more information about CDI and MicroProfile Config, see the guides on [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) and [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html).
+
+
+
+
+### Setting up MongoDB
+
+This guide uses Docker to run an instance of MongoDB. A multi-stage Dockerfile is provided for you. This Dockerfile uses the ***mongo*** image as the base image of the final stage and gathers the required configuration files. The resulting ***mongo*** image runs in a Docker container, and you must set up a new database for the microservice. Lastly, the truststore that's generated in the Docker image is copied from the container and placed into the Open Liberty server.
+
+You can find more details and configuration options on the [MongoDB website](https://docs.mongodb.com/manual/reference/configuration-options/). For more information about the ***mongo*** image, see [mongo](https://hub.docker.com/_/mongo) in Docker Hub.
+
+**Running MongoDB in a Docker container**
+
+Run the following commands to use the Dockerfile to build the image, run the image in a Docker container, and map port ***27017*** from the container to your host machine:
+
+```bash
+docker build -t mongo-sample -f assets/Dockerfile .
+docker run --name mongo-guide -p 27017:27017 -d mongo-sample
 ```
-mvn liberty:stop
+
+**Adding the truststore to the Open Liberty server**
+
+The truststore that's created in the container needs to be added to the Open Liberty server so that the server can trust the certificate that MongoDB presents when they connect. Run the following command to copy the ***truststore.p12*** file from the container to the ***start*** and ***finish*** directories:
+
+
+```bash
+docker cp \
+  mongo-guide:/home/mongodb/certs/truststore.p12 \
+  start/src/main/liberty/config/resources/security
+docker cp \
+  mongo-guide:/home/mongodb/certs/truststore.p12 \
+  finish/src/main/liberty/config/resources/security
 ```
-{: codeblock}
 
 
 
 
-# **Starting and stopping the Open Liberty server in the background**
-
-Although you can start and stop the server in the foreground by using the Maven
-**liberty:run** goal, you can also start and stop the server in the background with
-the Maven **liberty:start** and **liberty:stop** goals:
-
-```
-mvn liberty:start
-mvn liberty:stop
-```
-{: codeblock}
-
-
-
-
-
-# **Updating the server configuration without restarting the server**
-
-The Open Liberty Maven plug-in includes a **dev** goal that listens for any changes in the project, 
-including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
-
-Stop the Open Liberty server if it is running, and start it in dev mode by running the **liberty:dev** goal in the **start** directory:
-
-```
-mvn liberty:dev
-```
-{: codeblock}
-
-
-Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the **enter/return** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the **enter/return** key to verify your change.
-
-
-As before, you can see that the application is running by going to the http://localhost:9080/system/properties URL.
+You can now check out the service by going to the http://localhost:9080/mongo/ URL.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
-```
-curl -s http://localhost:9080/system/properties | jq
-```
-{: codeblock}
-
-
-
-Now try updating the server configuration while the server is running in dev mode.
-The **system** microservice does not currently include health monitoring to report whether the server and the microservice that it runs are healthy.
-You can add health reports with the MicroProfile Health feature, which adds a **/health** endpoint to your application.
-
-If you try to access this endpoint now at the http://localhost:9080/health/ URL, you see a 404 error because the **/health** endpoint does not yet exist:
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl http://localhost:9080/health/
-```
-{: codeblock}
-
-
-
-```
-Error 404: java.io.FileNotFoundException: SRVE0190E: File not found: /health
-```
-
-To add the MicroProfile Health feature to the server, include the **mpHealth** feature in the **server.xml**.
-
-Replace the server configuration file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
-
-
-
-
-```
-<server description="Sample Liberty server">
-    <featureManager>
-        <feature>jaxrs-2.1</feature>
-        <feature>jsonp-2.1</feature>
-        <feature>cdi-4.0</feature>
-        <feature>mpMetrics-4.0</feature>
-        <feature>mpHealth-4.0</feature>
-        <feature>mpConfig-3.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/" />
-    
-    <mpMetrics authentication="false"/>
-
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-{: codeblock}
-
-
-
-After you make the file changes, Open Liberty automatically reloads its configuration.
-When enabled, the **mpHealth** feature automatically adds a **/health** endpoint to the application.
-You can see the server being updated in the server log displayed in your command-line session:
-
-```
-[INFO] [AUDIT] CWWKG0016I: Starting server configuration update.
-[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
-[INFO] [AUDIT] CWWKG0017I: The server configuration was successfully updated in 0.284 seconds.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/health/
-[INFO] [AUDIT] CWWKF0012I: The server installed the following features: [mpHealth-3.0].
-[INFO] [AUDIT] CWWKF0008I: Feature update completed in 0.285 seconds.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.173 seconds.
+```bash
+curl http://localhost:9080/mongo/
 ```
 
 
-Try to access the **/health** endpoint again by visiting the http://localhost:9080/health URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/health | jq
-```
-{: codeblock}
-
-
-You see the following JSON:
-
-```
-{
-    "checks":[],
-    "status":"UP"
-}
-```
-
-Now you can verify whether your server is up and running.
 
 
 
-# **Updating the source code without restarting the server**
+::page{title="Providing a MongoDatabase"}
 
-The JAX-RS application that contains your **system** microservice runs in a server from its **.class** file and other artifacts.
-Open Liberty automatically monitors these artifacts, and whenever they are updated, it updates the running server without the need for the server to be restarted.
-
-Look at your **pom.xml** file.
+Navigate to the ***start*** directory to begin.
 
 
-Try updating the source code while the server is running in dev mode.
-At the moment, the **/health** endpoint reports whether the server is running, but the endpoint doesn't provide any details on the microservices that are running inside of the server.
+With a CDI producer, you can easily provide a ***MongoDatabase*** to your microservice.
 
-MicroProfile Health offers health checks for both readiness and liveness.
-A readiness check allows third-party services, such as Kubernetes, to know if the microservice is ready to process requests.
-A liveness check allows third-party services to determine if the microservice is running.
-
-Create the **SystemReadinessCheck** class.
+Create the ***MongoProducer*** class.
 
 > Run the following touch command in your terminal
+```bash
+touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java
 ```
-touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
-```
-{: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+> Then, to open the MongoProducer.java file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java, or click the following button
+
+::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java"}
 
 
 
-
-```
-package io.openliberty.sample.system;
+```java
+package io.openliberty.guides.mongo;
 
 import jakarta.enterprise.context.ApplicationScoped;
-
+import jakarta.enterprise.inject.Disposes;
+import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
+import javax.net.ssl.SSLContext;
 
+import com.ibm.websphere.ssl.JSSEHelper;
+import com.ibm.websphere.ssl.SSLException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
 
-@Readiness
+import com.ibm.websphere.crypto.PasswordUtil;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoDatabase;
+
+import java.util.Collections;
+
 @ApplicationScoped
-public class SystemReadinessCheck implements HealthCheck {
-
-    private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
-                                                 + " Readiness Check";
+public class MongoProducer {
 
     @Inject
-    @ConfigProperty(name = "io_openliberty_guides_system_inMaintenance")
-    Provider<String> inMaintenance;
+    @ConfigProperty(name = "mongo.hostname", defaultValue = "localhost")
+    String hostname;
 
-    @Override
-    public HealthCheckResponse call() {
-        if (inMaintenance != null && inMaintenance.get().equalsIgnoreCase("true")) {
-            return HealthCheckResponse.down(READINESS_CHECK);
-        }
-        return HealthCheckResponse.up(READINESS_CHECK);
+    @Inject
+    @ConfigProperty(name = "mongo.port", defaultValue = "27017")
+    int port;
+
+    @Inject
+    @ConfigProperty(name = "mongo.dbname", defaultValue = "testdb")
+    String dbName;
+
+    @Inject
+    @ConfigProperty(name = "mongo.user")
+    String user;
+
+    @Inject
+    @ConfigProperty(name = "mongo.pass.encoded")
+    String encodedPass;
+
+    @Produces
+    public MongoClient createMongo() throws SSLException {
+        String password = PasswordUtil.passwordDecode(encodedPass);
+        MongoCredential creds = MongoCredential.createCredential(
+                user,
+                dbName,
+                password.toCharArray()
+        );
+
+        SSLContext sslContext = JSSEHelper.getInstance().getSSLContext(
+                "outboundSSLContext",
+                Collections.emptyMap(),
+                null
+        );
+
+        return new MongoClient(
+                new ServerAddress(hostname, port),
+                creds,
+                new MongoClientOptions.Builder()
+                        .sslEnabled(true)
+                        .sslContext(sslContext)
+                        .build()
+        );
     }
 
+    @Produces
+    public MongoDatabase createDB(
+            MongoClient client) {
+        return client.getDatabase(dbName);
+    }
+
+    public void close(
+            @Disposes MongoClient toClose) {
+        toClose.close();
+    }
 }
 ```
-{: codeblock}
+
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 
-The **SystemReadinessCheck** class verifies that the 
-**system** microservice is not in maintenance by checking a config property.
 
-Create the **SystemLivenessCheck** class.
+
+The values from the ***microprofile-config.properties*** file are injected into the ***MongoProducer*** class. The ***MongoProducer*** class requires the following methods for the ***MongoClient***:
+
+* The ***createMongo()*** producer method returns an instance of ***MongoClient***. In this method, the username, database name, and decoded password are passed into the ***MongoCredential.createCredential()*** method to get an instance of ***MongoCredential***. The ***JSSEHelper*** gets the ***SSLContext*** from the ***outboundSSLContext*** in the ***server.xml*** file. Then, a ***MongoClient*** instance is created.
+
+* The ***createDB()*** producer method returns an instance of ***MongoDatabase*** that depends on the ***MongoClient***. This method injects the ***MongoClient*** in its parameters and passes the database name into the ***MongoClient.getDatabase()*** method to get a ***MongoDatabase*** instance.
+
+* The ***close()*** method is a clean-up function for the ***MongoClient*** that closes the connection to the ***MongoDatabase*** instance.
+
+
+
+::page{title="Implementing the Create, Retrieve, Update, and Delete operations"}
+
+You are going to implement the basic create, retrieve, update, and delete (CRUD) operations in the ***CrewService*** class. The ***com.mongodb.client*** and ***com.mongodb.client.result*** packages are used to help implement these operations for the microservice. For more information about these packages, see the [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html) and [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html) Javadoc. For more information about creating a RESTful service with JAX-RS, JSON-B, and Open Liberty, see the guide on [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html).
+
+Create the ***CrewService*** class.
 
 > Run the following touch command in your terminal
+```bash
+touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java
 ```
-touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
-```
-{: codeblock}
 
 
-> Then from the menu of the IDE, select **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
+> Then, to open the CrewService.java file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java, or click the following button
+
+::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java"}
 
 
 
+```java
+package io.openliberty.guides.application;
 
-```
-package io.openliberty.sample.system;
+import java.util.Set;
+
+import java.io.StringWriter;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.Json;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
+import jakarta.validation.Validator;
+import jakarta.validation.ConstraintViolation;
 
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+import com.mongodb.client.FindIterable;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
-@Liveness
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
+
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+
+@Path("/crew")
 @ApplicationScoped
-public class SystemLivenessCheck implements HealthCheck {
+public class CrewService {
 
-    @Override
-    public HealthCheckResponse call() {
-        MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-        long memUsed = memBean.getHeapMemoryUsage().getUsed();
-        long memMax = memBean.getHeapMemoryUsage().getMax();
+    @Inject
+    MongoDatabase db;
 
-        return HealthCheckResponse.named(
-            SystemResource.class.getSimpleName() + " Liveness Check")
-                                  .withData("memory used", memUsed)
-                                  .withData("memory max", memMax)
-                                  .status(memUsed < memMax * 0.9).build();
+    @Inject
+    Validator validator;
+
+    private JsonArray getViolations(CrewMember crewMember) {
+        Set<ConstraintViolation<CrewMember>> violations = validator.validate(
+                crewMember);
+
+        JsonArrayBuilder messages = Json.createArrayBuilder();
+
+        for (ConstraintViolation<CrewMember> v : violations) {
+            messages.add(v.getMessage());
+        }
+
+        return messages.build();
     }
 
+    @POST
+    @Path("/")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Successfully added crew member."),
+        @APIResponse(
+            responseCode = "400",
+            description = "Invalid crew member configuration.") })
+    @Operation(summary = "Add a new crew member to the database.")
+    public Response add(CrewMember crewMember) {
+        JsonArray violations = getViolations(crewMember);
+
+        if (!violations.isEmpty()) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(violations.toString())
+                    .build();
+        }
+
+        MongoCollection<Document> crew = db.getCollection("Crew");
+
+        Document newCrewMember = new Document();
+        newCrewMember.put("Name", crewMember.getName());
+        newCrewMember.put("Rank", crewMember.getRank());
+        newCrewMember.put("CrewID", crewMember.getCrewID());
+
+        crew.insertOne(newCrewMember);
+
+        return Response
+            .status(Response.Status.OK)
+            .entity(newCrewMember.toJson())
+            .build();
+    }
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Successfully listed the crew members."),
+        @APIResponse(
+            responseCode = "500",
+            description = "Failed to list the crew members.") })
+    @Operation(summary = "List the crew members from the database.")
+    public Response retrieve() {
+        StringWriter sb = new StringWriter();
+
+        try {
+            MongoCollection<Document> crew = db.getCollection("Crew");
+            sb.append("[");
+            boolean first = true;
+            FindIterable<Document> docs = crew.find();
+            for (Document d : docs) {
+                if (!first) {
+                    sb.append(",");
+                } else {
+                    first = false;
+                }
+                sb.append(d.toJson());
+            }
+            sb.append("]");
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
+            return Response
+                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("[\"Unable to list crew members!\"]")
+                .build();
+        }
+
+        return Response
+            .status(Response.Status.OK)
+            .entity(sb.toString())
+            .build();
+    }
+
+    @PUT
+    @Path("/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Successfully updated crew member."),
+        @APIResponse(
+            responseCode = "400",
+            description = "Invalid object id or crew member configuration."),
+        @APIResponse(
+            responseCode = "404",
+            description = "Crew member object id was not found.") })
+    @Operation(summary = "Update a crew member in the database.")
+    public Response update(CrewMember crewMember,
+        @Parameter(
+            description = "Object id of the crew member to update.",
+            required = true
+        )
+        @PathParam("id") String id) {
+
+        JsonArray violations = getViolations(crewMember);
+
+        if (!violations.isEmpty()) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(violations.toString())
+                    .build();
+        }
+
+        ObjectId oid;
+
+        try {
+            oid = new ObjectId(id);
+        } catch (Exception e) {
+            return Response
+                .status(Response.Status.BAD_REQUEST)
+                .entity("[\"Invalid object id!\"]")
+                .build();
+        }
+
+        MongoCollection<Document> crew = db.getCollection("Crew");
+
+        Document query = new Document("_id", oid);
+
+        Document newCrewMember = new Document();
+        newCrewMember.put("Name", crewMember.getName());
+        newCrewMember.put("Rank", crewMember.getRank());
+        newCrewMember.put("CrewID", crewMember.getCrewID());
+
+        UpdateResult updateResult = crew.replaceOne(query, newCrewMember);
+
+        if (updateResult.getMatchedCount() == 0) {
+            return Response
+                .status(Response.Status.NOT_FOUND)
+                .entity("[\"_id was not found!\"]")
+                .build();
+        }
+
+        newCrewMember.put("_id", oid);
+
+        return Response
+            .status(Response.Status.OK)
+            .entity(newCrewMember.toJson())
+            .build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Successfully deleted crew member."),
+        @APIResponse(
+            responseCode = "400",
+            description = "Invalid object id."),
+        @APIResponse(
+            responseCode = "404",
+            description = "Crew member object id was not found.") })
+    @Operation(summary = "Delete a crew member from the database.")
+    public Response remove(
+        @Parameter(
+            description = "Object id of the crew member to delete.",
+            required = true
+        )
+        @PathParam("id") String id) {
+
+        ObjectId oid;
+
+        try {
+            oid = new ObjectId(id);
+        } catch (Exception e) {
+            return Response
+                .status(Response.Status.BAD_REQUEST)
+                .entity("[\"Invalid object id!\"]")
+                .build();
+        }
+
+        MongoCollection<Document> crew = db.getCollection("Crew");
+
+        Document query = new Document("_id", oid);
+
+        DeleteResult deleteResult = crew.deleteOne(query);
+
+        if (deleteResult.getDeletedCount() == 0) {
+            return Response
+                .status(Response.Status.NOT_FOUND)
+                .entity("[\"_id was not found!\"]")
+                .build();
+        }
+
+        return Response
+            .status(Response.Status.OK)
+            .entity(query.toJson())
+            .build();
+    }
 }
 ```
-{: codeblock}
 
 
 
-The **SystemLivenessCheck** class reports a status of 
-**DOWN** if the microservice uses over 90% of the maximum amount of memory.
 
-After you make the file changes, Open Liberty automatically reloads its configuration and the **system** application.
-
-The following messages display in your first command-line session:
-
-```
-[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.136 seconds.
-```
+In this class, a ***Validator*** is used to validate a ***CrewMember*** before the database is updated. The CDI producer is used to inject a ***MongoDatabase*** into the CrewService class.
 
 
-Access the **/health** endpoint again by going to the http://localhost:9080/health URL.
+**Implementing the Create operation**
+
+The ***add()*** method handles the implementation of the create operation. An instance of ***MongoCollection*** is retrieved with the ***MongoDatabase.getCollection()*** method. The ***Document*** type parameter specifies that the ***Document*** type is used to store data in the ***MongoCollection***. Each crew member is converted into a ***Document***, and the ***MongoCollection.insertOne()*** method inserts a new crew member document.
 
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+**Implementing the Retrieve operation**
 
-```
-curl -s http://localhost:9080/health | jq
-```
-{: codeblock}
+The ***retrieve()*** method handles the implementation of the retrieve operation. The ***Crew*** collection is retrieved with the ***MongoDatabase.getCollection()*** method. Then, the ***MongoCollection.find()*** method retrieves a ***FindIterable*** object. This object is iterable for all the crew members documents in the collection, so each crew member document is concatenated into a String array and returned.
 
 
-This time you see the overall status of your server and the aggregated data of the liveness and readiness checks for the **system** microservice:
+**Implementing the Update operation**
 
-```
-{  
-   "checks":[  
-      {  
-         "data":{},
-         "name":"SystemResource Readiness Check",
-         "status":"UP"
-      },
-      {  
-         "data":{
-            "memory used":40434888,
-            "memory max":4294967296
-         },
-         "name":"SystemResource Liveness Check",
-         "status":"UP"
-      }
-   ],
-   "status":"UP"
-}
+The ***update()*** method handles the implementation of the update operation. After the ***Crew*** collection is retrieved, a document is created with the specified object ***id*** and is used to query the collection. Next, a new crew member ***Document*** is created with the updated configuration. The ***MongoCollection.replaceOne()*** method is called with the query and new crew member document. This method updates all of the matching queries with the new document. Because the object ***id*** is unique in the ***Crew*** collection, only one document is updated. The ***MongoCollection.replaceOne()*** method also returns an ***UpdateResult*** instance, which determines how many documents matched the query. If there are zero matches, then the object ***id*** doesn't exist.
+
+
+**Implementing the Delete operation**
+
+The ***remove()*** method handles the implementation of the delete operation. After the ***Crew*** collection is retrieved, a ***Document*** is created with the specified object ***id*** and is used to query the collection. Because the object ***id*** is unique in the ***Crew*** collection, only one document is deleted. After the document is deleted, the ***MongoCollection.deleteOne()*** method returns a ***DeleteResult*** instance, which determines how many documents were deleted. If zero documents were deleted, then the object ***id*** doesn't exist.
+
+
+
+::page{title="Configuring the MongoDB driver and the server"}
+
+MicroProfile Config makes configuring the MongoDB driver simple because all of the configuration can be set in one place and injected into the CDI producer.
+
+Create the configuration file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-mongodb-intro/start/src/main/webapp/META-INF/microprofile-config.properties
 ```
 
 
-You can also access the **/health/ready** endpoint by going to the http://localhost:9080/health/ready URL to view the data from the readiness health check.
+> Then, to open the microprofile-config.properties file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/main/webapp/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-mongodb-intro/start/src/main/webapp/META-INF/microprofile-config.properties"}
 
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
 
 ```
-curl -s http://localhost:9080/health/ready | jq
-```
-{: codeblock}
-
-
-
-Similarly, access the **/health/live** endpoint by going to the http://localhost:9080/health/live URL to view the data from the liveness health check.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/health/live | jq
-```
-{: codeblock}
-
-
-
-Making code changes and recompiling is fast and straightforward.
-Open Liberty dev mode automatically picks up changes in the **.class** files and artifacts, without needing to be restarted.
-Alternatively, you can run the **run** goal and manually repackage or recompile the application by using the **mvn package** command or the **mvn compile** command while the server is running. Dev mode was added to further improve the developer experience by minimizing turnaround times.
-
-
-
-# **Checking the Open Liberty server logs**
-
-While the server is running in the foreground, it displays various console messages in
-the command-line session. These messages are also logged to the **target/liberty/wlp/usr/servers/defaultServer/logs/console.log**
-file. You can find the complete server logs in the **target/liberty/wlp/usr/servers/defaultServer/logs**
-directory. The **console.log** and **messages.log** files are the primary log files that contain
-console output of the running application and the server. More logs are created when runtime errors 
-occur or whenever tracing is enabled. You can find the error logs in the
-**ffdc** directory and the tracing logs in the **trace.log** file.
-
-In addition to the log files that are generated automatically, you can enable logging of
-specific Java packages or classes by using the **logging** element:
-
-```
-<logging traceSpecification="<component_1>=<level>:<component_2>=<level>:..."/>
+mongo.hostname=localhost
+mongo.port=27017
+mongo.dbname=testdb
+mongo.user=sampleUser
+mongo.pass.encoded={aes}APtt+/vYxxPa0jE1rhmZue9wBm3JGqFK3JR4oJdSDGWM1wLr1ckvqkqKjSB2Voty8g==
 ```
 
-The **component** element is a Java package or class, and the **level** element is one
-of the following logging levels: **off**, **fatal**, **severe**, **warning**, **audit**, **info**,
-**config**, **detail**, **fine**, **finer**, **finest**, **all**.
 
-Try enabling detailed logging of the MicroProfile Health feature by adding the
-**logging** element to your configuration file.
+
+Values such as the hostname, port, and database name for the running MongoDB instance are set in this file. The user’s username and password are also set here. For added security, the password was encoded by using the https://openliberty.io/docs/latest/reference/command/securityUtility-encode.html[securityUtility encode command].
+
+To create a CDI producer for MongoDB and connect over TLS, the Open Liberty server needs to be correctly configured.
 
 Replace the server configuration file.
 
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-mongodb-intro/start/src/main/liberty/config/server.xml"}
 
 
 
-
-```
+```xml
 <server description="Sample Liberty server">
     <featureManager>
-        <feature>jaxrs-2.1</feature>
-        <feature>jsonp-2.1</feature>
-        <feature>cdi-4.0</feature>
-        <feature>mpMetrics-4.0</feature>
-        <feature>mpHealth-4.0</feature>
+        <feature>cdi-3.0</feature>
+        <feature>ssl-1.0</feature>
         <feature>mpConfig-3.0</feature>
+        <feature>passwordUtilities-1.0</feature>
+        <feature>beanValidation-3.0</feature>	   
+        <feature>restfulWS-3.0</feature>
+        <feature>jsonb-2.0</feature>
+        <feature>mpOpenAPI-3.0</feature>
     </featureManager>
 
     <variable name="default.http.port" defaultValue="9080"/>
     <variable name="default.https.port" defaultValue="9443"/>
+    <variable name="app.context.root" defaultValue="/mongo"/>
 
-    <webApplication location="guide-getting-started.war" contextRoot="/" />
-    
-    <mpMetrics authentication="false"/>
+    <httpEndpoint
+        host="*" 
+        httpPort="${default.http.port}" 
+        httpsPort="${default.https.port}" 
+        id="defaultHttpEndpoint"
+    />
 
-    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
+    <webApplication 
+        location="guide-mongodb-intro.war" 
+        contextRoot="${app.context.root}"
+    />
+    <keyStore
+        id="outboundTrustStore" 
+        location="${server.output.dir}/resources/security/truststore.p12"
+        password="mongodb"
+        type="PKCS12" 
+    />
+    <ssl 
+        id="outboundSSLContext" 
+        keyStoreRef="defaultKeyStore" 
+        trustStoreRef="outboundTrustStore" 
+        sslProtocol="TLS" 
+    />
 </server>
 ```
-{: codeblock}
 
 
 
-After you change the file, Open Liberty automatically reloads its configuration.
+The features that are required to create the CDI producer for MongoDB are https://openliberty.io/docs/latest/reference/feature/cdi-2.0.html[Contexts and Dependency Injection] (***cdi-2.0***), https://openliberty.io/docs/latest/reference/feature/ssl-1.0.html[Secure Socket Layer] (***ssl-1.0***), https://openliberty.io/docs/latest/reference/feature/mpConfig-1.4.html[MicroProfile Config] (***mpConfig-1.4***), and https://openliberty.io/docs/latest/reference/feature/passwordUtilities-1.0.html[Password Utilities] (***passwordUtilities-1.0***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
 
-Now, when you visit the **/health** endpoint, additional traces are logged in the **trace.log** file.
-
-When you are done checking out the service, exit dev mode by pressing **CTRL+C** in the command-line session
-where you ran the server, or by typing **q** and then pressing the **enter/return** key.
+After you replace the ***server.xml*** file, the Open Liberty configuration is automatically reloaded.
 
 
-# **Running the application in a Docker container**
-
-To run the application in a container, Docker needs to be installed. For installation
-instructions, see the [Official Docker Docs](https://docs.docker.com/install/).
-
-Make sure to start your Docker daemon before you proceed.
-
-To containerize the application, you need a **Dockerfile**. This file contains a collection
-of instructions that define how a Docker image is built, what files are packaged into it,
-what commands run when the image runs as a container, and other information. You can find a complete
-**Dockerfile** in the **start** directory. This **Dockerfile** copies the **.war** file into a Docker
-image that contains the Java runtime and a preconfigured Open Liberty server.
-
-Run the **mvn package** command from the **start** directory so that the **.war** file resides in the **target** directory.
-
-```
-mvn package
-```
-{: codeblock}
 
 
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-{: codeblock}
-
-
-To build and containerize the application, run the
-following Docker build command in the **start** directory:
-
-```
-docker build -t openliberty-getting-started:1.0-SNAPSHOT .
-```
-{: codeblock}
-
-
-The Docker **openliberty-getting-started:1.0-SNAPSHOT** image is also built from the **Dockerfile**.
-To verify that the image is built, run the **docker images** command to list all local Docker images:
-
-```
-docker images
-```
-{: codeblock}
-
-
-Your image should appear in the list of all Docker images:
-
-```
-REPOSITORY                     TAG             IMAGE ID        CREATED         SIZE
-openliberty-getting-started    1.0-SNAPSHOT    85085141269b    21 hours ago    487MB
-```
-
-Next, run the image as a container:
-```
-docker run -d --name gettingstarted-app -p 9080:9080 openliberty-getting-started:1.0-SNAPSHOT
-```
-{: codeblock}
-
-
-There is a bit going on here, so here's a breakdown of the command:
-
-| *Flag* | *Description*
-| ---| ---
-| -d     | Runs the container in the background.
-| --name | Specifies a name for the container.
-| -p     | Maps the container ports to the host ports.
-
-The final argument in the **docker run** command is the Docker image name.
-
-Next, run the **docker ps** command to verify that your container started:
-```
-docker ps
-```
-{: codeblock}
-
-
-Make sure that your container is running and does not have **Exited** as its status:
-
-```
-CONTAINER ID    IMAGE                         CREATED          STATUS           NAMES
-4294a6bdf41b    openliberty-getting-started   9 seconds ago    Up 11 seconds    gettingstarted-app
-```
-
-
-To access the application, go to the http://localhost:9080/system/properties URL.
+Go to the http://localhost:9080/openapi/ui/ URL to see the OpenAPI user interface (UI) that provides API documentation and a client to test the API endpoints that you create after you see a message similar to the following example:
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
-```
-curl -s http://localhost:9080/system/properties | jq
-```
-{: codeblock}
-
-
-
-To stop and remove the container, run the following commands:
-```
-docker stop gettingstarted-app && docker rm gettingstarted-app
-```
-{: codeblock}
-
-
-To remove the image, run the following command:
-```
-docker rmi openliberty-getting-started:1.0-SNAPSHOT
-```
-{: codeblock}
-
-
-
-# **Developing the application in a Docker container**
-
-The Open Liberty Maven plug-in includes a **devc** goal that simplifies developing
-your application in a Docker container by starting dev mode with container
-support. This goal builds a Docker image, mounts the required directories, binds
-the required ports, and then runs the application inside of a container. Dev
-mode also listens for any changes in the application source code or
-configuration and rebuilds the image and restarts the container as necessary.
-
-Build and run the container by running the devc goal from the **start** directory:
-
-
-```
-mvn liberty:devc -DserverStartTimeout=300
-```
-{: codeblock}
-
-When you see the following message, Open Liberty is ready to run in dev mode:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Open another command-line session and run the **docker ps** command to verify that your container started:
-```
-docker ps
-```
-{: codeblock}
-
-
-Your container should be running and have **Up** as its status:
-
-```
-CONTAINER ID        IMAGE                                 COMMAND                  CREATED             STATUS                         PORTS                                                                    NAMES
-17af26af0539        guide-getting-started-dev-mode        "/opt/ol/helpers/run…"   3 minutes ago       Up 3 minutes                   0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
+```bash
+curl http://localhost:9080/openapi/ui/
 ```
 
 
-To access the application, go to the http://localhost:9080/system/properties URL. 
+```
+CWWKZ0001I: Application guide-mongodb-intro started in 5.715 seconds.
+```
+
+
+**Try the Create operation**
+
+From the OpenAPI UI, test the create operation at the ***POST /api/crew*** endpoint by using the following code as the request body:
+
+```bash
+{
+  "name": "Member1",
+  "rank": "Officer",
+  "crewID": "000001"
+}
+```
+
+This request creates a new document in the ***Crew*** collection with a name of ***Member1***, rank of ***Officer***, and crew ID of ***000001***.
+
+You'll receive a response that contains the JSON object of the new crew member, as shown in the following example:
+```
+{
+  "Name": "Member1",
+  "Rank": "Officer",
+  "CrewID": "000001",
+  "_id": {
+    "$oid": "<<ID>>"
+  }
+}
+```
+
+The ***\\<\<ID\>\>*** that you receive is a unique identifier in the collection. Save this value for future commands.
+
+
+**Try the Retrieve operation**
+
+From the OpenAPI UI, test the read operation at the ***GET /api/crew*** endpoint. This request gets all crew member documents from the collection.
+
+You'll receive a response that contains an array of all the members in your crew. The response might include crew members that were created in the **Try what you’ll build** section of this guide:
+```
+[
+  {
+    "_id": {
+      "$oid": "<<ID>>"
+    },
+    "Name": "Member1",
+    "Rank": "Officer",
+    "CrewID": "000001"
+  }
+]
+```
+
+
+**Try the Update operation**
+
+From the OpenAPI UI, test the update operation at the ***PUT /api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\\<\<ID\>\>*** that you saved from the create operation. Use the following code as the request body:
+```bash
+{
+  "name": "Member1",
+  "rank": "Captain",
+  "crewID": "000001"
+}
+```
+
+This request updates the rank of the crew member that you created from ***Officer*** to ***Captain***.
+
+You'll receive a response that contains the JSON object of the updated crew member, as shown in the following example:
+
+```
+{
+  "Name": "Member1",
+  "Rank": "Captain",
+  "CrewID": "000001",
+  "_id": {
+    "$oid": "<<ID>>"
+  }
+}
+```
+
+
+**Try the Delete operation**
+
+From the OpenAPI UI, test the delete operation at the ***DELETE/api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\\<\<ID\>\>*** that you saved from the create operation. This request removes the document that contains the specified crew member object ***id*** from the collection.
+
+You'll receive a response that contains the object ***id*** of the deleted crew member, as shown in the following example:
+
+```
+{
+  "_id": {
+    "$oid": "<<ID>>"
+  }
+}
+```
+
+
+Now, you can check out the microservice that you created by going to the http://localhost:9080/mongo/ URL.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
 
-```
-curl -s http://localhost:9080/system/properties | jq
-```
-{: codeblock}
-
-
-
-Dev mode automatically picks up changes that you make to your
-application and allows you to run tests by pressing the **enter/return** key in the
-active command-line session.
-
-Update the **server.xml** file to change the context root from **/** to **/dev**.
-
-Replace the server configuration file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml
-
-
-
-
-```
-<server description="Sample Liberty server">
-    <featureManager>
-        <feature>jaxrs-2.1</feature>
-        <feature>jsonp-2.1</feature>
-        <feature>cdi-4.0</feature>
-        <feature>mpMetrics-4.0</feature>
-        <feature>mpHealth-4.0</feature>
-        <feature>mpConfig-3.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/dev" />
-    <mpMetrics authentication="false"/>
-
-    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-{: codeblock}
-
-
-
-Update the **mpData.js** file to change the **url** in the **getSystemPropertiesRequest** method to reflect the new context root.
-
-
-Update the mpData.js file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-getting-started/start/src/main/webapp/js/mpData.js
-
-```
-function getSystemPropertiesRequest() {
-    var propToDisplay = ["java.vendor", "java.version", "user.name", "os.name", "wlp.install.dir", "wlp.server.name" ];
-    var url = "http://localhost:9080/dev/system/properties";
-    var req = new XMLHttpRequest();
-    var table = document.getElementById("systemPropertiesTable");
-    ...
+```bash
+curl http://localhost:9080/mongo/
 ```
 
-After you make the file changes, Open Liberty automatically reloads its
-configuration. You can access the application at the
-
-http://localhost:9080/dev/system/properties
 
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+::page{title="Testing the application"}
+
+Next, you'll create integration tests to ensure that the basic operations you implemented function correctly.
+
+Create the ***CrewServiceIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java
+```
+
+
+> Then, to open the CrewServiceIT.java file in your IDE, select
+> **File** > **Open** > guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.application;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.StringReader;
+import java.util.ArrayList;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.TestMethodOrder;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonReader;
+import jakarta.json.JsonValue;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.client.Entity;
+
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class CrewServiceIT {
+
+    private static Client client;
+    private static JsonArray testData;
+    private static String rootURL;
+    private static ArrayList<String> testIDs = new ArrayList<>(2);
+
+    @BeforeAll
+    public static void setup() {
+        client = ClientBuilder.newClient();
+
+        String port = System.getProperty("app.http.port");
+        String context = System.getProperty("app.context.root");
+        rootURL = "http://localhost:" + port + context;
+
+        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+        JsonObjectBuilder jsonBuilder = Json.createObjectBuilder();
+        jsonBuilder.add("name", "Member1");
+        jsonBuilder.add("crewID", "000001");
+        jsonBuilder.add("rank", "Captain");
+        arrayBuilder.add(jsonBuilder.build());
+        jsonBuilder = Json.createObjectBuilder();
+        jsonBuilder.add("name", "Member2");
+        jsonBuilder.add("crewID", "000002");
+        jsonBuilder.add("rank", "Engineer");
+        arrayBuilder.add(jsonBuilder.build());
+        testData = arrayBuilder.build();
+    }
+
+    @AfterAll
+    public static void teardown() {
+        client.close();
+    }
+
+    @Test
+    @Order(1)
+    public void testAddCrewMember() {
+        System.out.println("   === Adding " + testData.size()
+                + " crew members to the database. ===");
+
+        for (int i = 0; i < testData.size(); i++) {
+            JsonObject member = (JsonObject) testData.get(i);
+            String url = rootURL + "/api/crew";
+            Response response = client.target(url).request().post(Entity.json(member));
+            this.assertResponse(url, response);
+
+            JsonObject newMember = response.readEntity(JsonObject.class);
+            testIDs.add(newMember.getJsonObject("_id").getString("$oid"));
+
+            response.close();
+        }
+        System.out.println("      === Done. ===");
+    }
+
+    @Test
+    @Order(2)
+    public void testUpdateCrewMember() {
+        System.out.println("   === Updating crew member with id " + testIDs.get(0)
+                + ". ===");
+
+        JsonObject oldMember = (JsonObject) testData.get(0);
+
+        JsonObjectBuilder newMember = Json.createObjectBuilder();
+        newMember.add("name", oldMember.get("name"));
+        newMember.add("crewID", oldMember.get("crewID"));
+        newMember.add("rank", "Officer");
+
+        String url = rootURL + "/api/crew/" + testIDs.get(0);
+        Response response = client.target(url).request()
+                .put(Entity.json(newMember.build()));
+
+        this.assertResponse(url, response);
+
+        System.out.println("      === Done. ===");
+    }
+
+    @Test
+    @Order(3)
+    public void testGetCrewMembers() {
+        System.out.println("   === Listing crew members from the database. ===");
+
+        String url = rootURL + "/api/crew";
+        Response response = client.target(url).request().get();
+
+        this.assertResponse(url, response);
+
+        String responseText = response.readEntity(String.class);
+        JsonReader reader = Json.createReader(new StringReader(responseText));
+        JsonArray crew = reader.readArray();
+        reader.close();
+
+        int testMemberCount = 0;
+        for (JsonValue value : crew) {
+            JsonObject member = (JsonObject) value;
+            String id = member.getJsonObject("_id").getString("$oid");
+            if (testIDs.contains(id)) {
+                testMemberCount++;
+            }
+        }
+
+        assertEquals(testIDs.size(), testMemberCount,
+                "Incorrect number of testing members.");
+
+        System.out.println("      === Done. There are " + crew.size()
+                + " crew members. ===");
+
+        response.close();
+    }
+
+    @Test
+    @Order(4)
+    public void testDeleteCrewMember() {
+        System.out.println("   === Removing " + testIDs.size()
+                + " crew members from the database. ===");
+
+        for (String id : testIDs) {
+            String url = rootURL + "/api/crew/" + id;
+            Response response = client.target(url).request().delete();
+            this.assertResponse(url, response);
+            response.close();
+        }
+
+        System.out.println("      === Done. ===");
+    }
+
+    private void assertResponse(String url, Response response) {
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
+}
+```
+
+
+
+The test methods are annotated with the ***@Test*** annotation.
+
+The following test cases are included in this class:
+
+* ***testAddCrewMember()*** verifies that new members are correctly added to the database.
+
+* ***testUpdateCrewMember()*** verifies that a crew member's information is correctly updated.
+
+* ***testGetCrewMembers()*** verifies that a list of crew members is returned by the microservice API.
+
+* ***testDeleteCrewMember()*** verifies that the crew members are correctly removed from the database.
+
+
+You'll see the following output:
 
 ```
-curl -s http://localhost:9080/dev/system/properties | jq
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.application.CrewServiceIT
+   === Adding 2 crew members to the database. ===
+      === Done. ===
+   === Updating crew member with id 5df8e0a004ccc019976c7d0a. ===
+      === Done. ===
+   === Listing crew members from the database. ===
+      === Done. There are 2 crew members. ===
+   === Removing 2 crew members from the database. ===
+      === Done. ===
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.411 s - in it.io.openliberty.guides.application.CrewServiceIT
+Results:
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
-{: codeblock}
+
+::page{title="Tearing down the environment"}
 
 
-URL. Notice that context root is now **/dev**.
+Then, run the following commands to stop and remove the ***mongo-guide*** container and to remove the ***mongo-sample*** and ***mongo*** images.
 
-When you are finished, exit dev mode by pressing **CTRL+C** in the
-command-line session that the container was started from, or by typing `q` and
-then pressing the **enter/return** key. Either of these options stops and 
-removes the container. To check that the container was stopped, run the **docker ps** command.
-
-
-# **Running the application from a minimal runnable JAR**
-
-So far, Open Liberty was running out of the **target/liberty/wlp** directory, which
-effectively contains an Open Liberty server installation and the deployed application. The
-final product of the Maven build is a server package for use in a continuous integration
-pipeline and, ultimately, a production deployment.
-
-Open Liberty supports a number of different server packages. The sample application
-currently generates a **usr** package that contains the servers and application to be
-extracted onto an Open Liberty installation.
-
-Instead of creating a server package, you can generate a runnable JAR file that contains
-the application along with a server runtime. This JAR file can then be run anywhere and deploy
-your application and server at the same time. To generate a runnable JAR file, override the 
-**include** property: 
+```bash
+docker stop mongo-guide
+docker rm mongo-guide
+docker rmi mongo-sample
+docker rmi mongo
 ```
-mvn liberty:package -Dinclude=runnable
-```
-{: codeblock}
 
+::page{title="Summary"}
 
-The packaging type is overridden from the **usr** package to the **runnable**
-package. This property then propagates to the **liberty-maven-plugin**
-plug-in, which generates the server package based on the **openliberty-kernel** package.
+### Nice Work!
 
-When the build completes, you can find the minimal runnable **guide-getting-started.jar** file in the
-**target** directory. This JAR file contains only the **features** that you
-explicitly enabled in your **server.xml** file. As a result, the
-generated JAR file is only about 50 MB.
-
-To run the JAR file, first stop the server if it's running. Then, navigate to the **target**
-directory and run the **java -jar** command:
-
-```
-java -jar guide-getting-started.jar
-```
-{: codeblock}
+You've successfully accessed and persisted data to a MongoDB database from a Java microservice using Contexts and Dependency Injection (CDI) and MicroProfile Config with Open Liberty.
 
 
 
-When the server starts, go to the http://localhost:9080/dev/system/properties URL to access
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```
-curl -s http://localhost:9080/dev/system/properties | jq
-```
-{: codeblock}
-
-
-your application that is now running out of the minimal runnable JAR file.
-
-You can stop the server by pressing **CTRL+C** in the command-line session that the server runs in.
-
-
-
-
-
-# **Summary**
-
-## **Nice Work!**
-
-You've learned the basics of deploying and updating an application on an Open Liberty server.
-
-
-
-
-<br/>
-## **Clean up your environment**
+### Clean up your environment
 
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the **guide-getting-started** project by running the following commands:
+Delete the ***guide-mongodb-intro*** project by running the following commands:
 
-```
+```bash
 cd /home/project
-rm -fr guide-getting-started
+rm -fr guide-mongodb-intro
 ```
-{: codeblock}
 
-<br/>
-## **What did you think of this guide?**
+### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Getting%20started%20with%20Open%20Liberty&guide-id=cloud-hosted-guide-getting-started)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Persisting%20data%20with%20MongoDB&guide-id=cloud-hosted-guide-mongodb-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
-<br/>
-## **What could make this guide better?**
+### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-getting-started/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-getting-started/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-mongodb-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-mongodb-intro/pulls)
 
 
 
-<br/>
-## **Where to next?**
+### Where to next?
 
-* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+
+**Learn more about MicroProfile**
+* [See the MicroProfile specs](https://microprofile.io/)
+* [View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
 
 
-<br/>
-## **Log out of the session**
+### Log out of the session
 
 Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
