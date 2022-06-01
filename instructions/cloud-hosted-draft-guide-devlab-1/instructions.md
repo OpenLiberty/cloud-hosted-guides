@@ -599,7 +599,7 @@ mongo.pass.encoded={aes}APtt+/vYxxPa0jE1rhmZue9wBm3JGqFK3JR4oJdSDGWM1wLr1ckvqkqK
 
 
 
-Values such as the hostname, port, and database name for the running MongoDB instance are set in this file. The user’s username and password are also set here. For added security, the password was encoded by using the https://openliberty.io/docs/latest/reference/command/securityUtility-encode.html[securityUtility encode command].
+Values such as the hostname, port, and database name for the running MongoDB instance are set in this file. The user’s username and password are also set here. For added security, the password was encoded by using the [securityUtility encode command](https://openliberty.io/docs/latest/reference/command/securityUtility-encode.html).
 
 To create a CDI producer for MongoDB and connect over TLS, the Open Liberty server needs to be correctly configured.
 
@@ -667,14 +667,15 @@ After you replace the ***server.xml*** file, the Open Liberty configuration is a
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-Click the following button to see the OpenAPI user interface (UI) that provides API documentation and a client to test the API endpoints that you create after you see a message similar to the following example:
-
-::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+Wait until you see a message similar to the following example:
 
 ```
 CWWKZ0001I: Application guide-mongodb-intro started in 5.715 seconds.
 ```
 
+Click the following button to see the OpenAPI user interface (UI) that provides API documentation and a client to test the API endpoints that you create:
+
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
 **Try the Create operation**
 
