@@ -790,6 +790,7 @@ paths:
 
 You can also visit the http://localhost:9080/openapi/ui URL to see each endpoint's updated description. Click each of the icons within the UI to see the updated descriptions for each of the endpoints.
 In this Skills Network environment, simply click the following button:
+
 ::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
 ### Augmenting POJOs with OpenAPI annotations
@@ -1072,6 +1073,7 @@ curl http://localhost:9081/trial/api/systems
 ```
 
 Alternatively, for the updated OpenAPI UI, click the following button to visit ***/openapi/ui*** endpoint:
+
 ::startApplication{port="9081" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
 When you are finished trying out changing this configuration, change the variables back to their original values.
