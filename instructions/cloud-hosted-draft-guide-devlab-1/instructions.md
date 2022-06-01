@@ -110,20 +110,9 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
+You can now check out the service by clicking the following button:
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-You can now check out the service by going to the http://localhost:9080/mongo/ URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl http://localhost:9080/mongo/
-```
-
-
+::startApplication{port="9080" display="external" name="Launch application" route="/mongo"}
 
 After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -135,6 +124,10 @@ mvn liberty:stop
 ::page{title="Providing a MongoDatabase"}
 
 Navigate to the ***start*** directory to begin.
+
+```bash
+cd /home/project/guide-mongodb-intro/start
+```
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -269,10 +262,6 @@ The values from the ***microprofile-config.properties*** file are injected into 
 
 
 ::page{title="Implementing the Create, Retrieve, Update, and Delete operations"}
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 You are going to implement the basic create, retrieve, update, and delete (CRUD) operations in the ***CrewService*** class. The ***com.mongodb.client*** and ***com.mongodb.client.result*** packages are used to help implement these operations for the microservice. For more information about these packages, see the [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html) and [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html) Javadoc. For more information about creating a RESTful service with JAX-RS, JSON-B, and Open Liberty, see the guide on [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html).
 
@@ -668,7 +657,7 @@ Replace the server configuration file.
 
 
 
-The features that are required to create the CDI producer for MongoDB are https://openliberty.io/docs/latest/reference/feature/cdi-2.0.html[Contexts and Dependency Injection] (***cdi-2.0***), https://openliberty.io/docs/latest/reference/feature/ssl-1.0.html[Secure Socket Layer] (***ssl-1.0***), https://openliberty.io/docs/latest/reference/feature/mpConfig-1.4.html[MicroProfile Config] (***mpConfig-1.4***), and https://openliberty.io/docs/latest/reference/feature/passwordUtilities-1.0.html[Password Utilities] (***passwordUtilities-1.0***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
+The features that are required to create the CDI producer for MongoDB are [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi-2.0.html) (***cdi-2.0***), [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi-2.0.html) (***ssl-1.0***), [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi-2.0.html) (***mpConfig-1.4***), and [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi-2.0.html) (***passwordUtilities-1.0***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
 
 After you replace the ***server.xml*** file, the Open Liberty configuration is automatically reloaded.
 
@@ -678,15 +667,9 @@ After you replace the ***server.xml*** file, the Open Liberty configuration is a
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-Go to the http://localhost:9080/openapi/ui/ URL to see the OpenAPI user interface (UI) that provides API documentation and a client to test the API endpoints that you create after you see a message similar to the following example:
+Click the following button to see the OpenAPI user interface (UI) that provides API documentation and a client to test the API endpoints that you create after you see a message similar to the following example:
 
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl http://localhost:9080/openapi/ui/
-```
-
+::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
 ```
 CWWKZ0001I: Application guide-mongodb-intro started in 5.715 seconds.
@@ -719,8 +702,9 @@ You'll receive a response that contains the JSON object of the new crew member, 
 }
 ```
 
-The ***\\<\<ID\>\>*** that you receive is a unique identifier in the collection. Save this value for future commands.
 
+
+The ***\<\<ID\>\>*** that you receive is a unique identifier in the collection. Save this value for future commands.
 
 **Try the Retrieve operation**
 
@@ -743,7 +727,9 @@ You'll receive a response that contains an array of all the members in your crew
 
 **Try the Update operation**
 
-From the OpenAPI UI, test the update operation at the ***PUT /api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\\<\<ID\>\>*** that you saved from the create operation. Use the following code as the request body:
+
+From the OpenAPI UI, test the update operation at the ***PUT /api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\<\<ID\>\>*** that you saved from the create operation. Use the following code as the request body:
+
 ```bash
 {
   "name": "Member1",
@@ -770,7 +756,8 @@ You'll receive a response that contains the JSON object of the updated crew memb
 
 **Try the Delete operation**
 
-From the OpenAPI UI, test the delete operation at the ***DELETE/api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\\<\<ID\>\>*** that you saved from the create operation. This request removes the document that contains the specified crew member object ***id*** from the collection.
+
+From the OpenAPI UI, test the delete operation at the ***DELETE/api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\<\<ID\>\>*** that you saved from the create operation. This request removes the document that contains the specified crew member object ***id*** from the collection.
 
 You'll receive a response that contains the object ***id*** of the deleted crew member, as shown in the following example:
 
@@ -783,15 +770,9 @@ You'll receive a response that contains the object ***id*** of the deleted crew 
 ```
 
 
-Now, you can check out the microservice that you created by going to the http://localhost:9080/mongo/ URL.
+Now, you can check out the microservice that you created by clicking the following button:
 
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl http://localhost:9080/mongo/
-```
-
+::startApplication{port="9080" display="external" name="Launch application" route="/mongo"}
 
 
 
