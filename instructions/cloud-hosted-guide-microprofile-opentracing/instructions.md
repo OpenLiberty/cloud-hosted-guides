@@ -221,6 +221,8 @@ public class InventoryManager {
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
 
 The ***@Traced*** annotation can be configured with the following two parameters:
 
