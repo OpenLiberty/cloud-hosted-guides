@@ -339,7 +339,7 @@ The ***http://$INVENTORY_PROXY/inventory/systems/system-service*** URL adds prop
 
 ::page{title="Rolling update"}
 
-Rolling Update refers to continually installing Kubernetes patches without disrupting the availability of the deployed applications. Without continuous updates, a Kubernetes cluster will be susceptible to a denial of a service attack. Update the yaml as follows to add the rollingUpdate configuration. 
+Rolling update refers to continually installing Kubernetes patches without disrupting the availability of the deployed applications. Without continuous updates, a Kubernetes cluster will be susceptible to a denial of a service attack. Update the yaml file as follows to add the ***rollingUpdate*** configuration. 
 
 Replace the Kubernetes configuration file
 
@@ -454,9 +454,9 @@ spec:
 
 
 
-The rollingUpdate configuration has two attributes maxUnavailable and maxSurge. The ***maxUnavailable*** attribute refers to the the number of Kubernetes pods that are allowed to be unavailable during the update process. Similarly, the ***maxSurge*** attribute refers to the number of additional pods that are allowed to be created during the update process.
+The ***rollingUpdate*** configuration has two attributes ***maxUnavailable*** and ***maxSurge***. The ***maxUnavailable*** attribute refers to the the number of Kubernetes pods that are allowed to be unavailable during the update process. Similarly, the ***maxSurge*** attribute refers to the number of additional pods that are allowed to be created during the update process.
 
-The ***readiness check*** allows third party applications and services to know whether the service is ready to handle requests. A readiness health check has already been implemented for the inventory and system services. You can learn more about how to use health checks in Kubernetes, check out the [Kubernetes-microprofile-health](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide. 
+The ***readinessProbe*** allows Kubernetes to know whether the service is ready to handle requests. The readiness health check classes for the ***/health/ready*** endpoint to the ***inventory*** and ***system*** services are provided for you. If you want to learn more about how to use health checks in Kubernetes, check out the [Kubernetes-microprofile-health](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide. 
 
 ::page{title="Scaling a deployment"}
 
