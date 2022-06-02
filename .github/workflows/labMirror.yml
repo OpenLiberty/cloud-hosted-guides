@@ -49,6 +49,7 @@ jobs:
           - {"github":"cloud-hosted-guide-microprofile-rest-client","gitlab":"cloud-hosted-guide-microprofile-rest-client","gitlab-branch":"lab-139-instruction"}
           - {"github":"cloud-hosted-guide-microprofile-rest-client-async","gitlab":"cloud-hosted-guide-microprofile-rest-client-async","gitlab-branch":"lab-162-instruction"}
           - {"github":"cloud-hosted-guide-microshed-testing","gitlab":"cloud-hosted-guide-microshed-testing","gitlab-branch":"lab-136-instruction"}
+          - {"github":"cloud-hosted-guide-mongodb-intro","gitlab":"cloud-hosted-guide-mongodb-intro","gitlab-branch":"lab-895-instruction"}
           - {"github":"cloud-hosted-guide-openliberty-operator-intro","gitlab":"cloud-hosted-guide-openliberty-operator-intro","gitlab-branch":"lab-85-instruction"}
           - {"github":"cloud-hosted-guide-openliberty-operator-openshift","gitlab":"cloud-hosted-guide-openliberty-operator-openshift","gitlab-branch":"lab-21-instruction"}
           - {"github":"cloud-hosted-guide-reactive-messaging-sse","gitlab":"cloud-hosted-guide-reactive-messaging-sse","gitlab-branch":"lab-129-instruction"}
