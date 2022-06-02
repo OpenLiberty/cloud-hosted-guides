@@ -151,6 +151,8 @@ objects:
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
 
 The ***build.yaml*** template includes two objects. The ***ImageStream*** object provides an abstraction from the image in the image registry, which allows you to reference and tag the image. The image registry is the integrated internal OpenShift Container Registry.
 
