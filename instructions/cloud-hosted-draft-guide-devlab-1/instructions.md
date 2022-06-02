@@ -4,9 +4,9 @@ title: instructions
 branch: lab-204-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 ---
-::page{title="Welcome to the Persisting data with MongoDB guide!"}
+::page{title="Welcome to the Containerizing microservices guide!"}
 
-Learn how to persist data in your microservices to MongoDB, a document-oriented NoSQL database.
+Learn how to containerize and run your microservices with Open Liberty using Docker.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,27 +16,15 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You will learn how to use MongoDB to build and test a simple microservice that manages the members of a crew. The microservice will respond to ***POST***, ***GET***, ***PUT***, and ***DELETE*** requests that manipulate the database.
 
-The crew members will be stored in MongoDB as documents in the following JSON format:
+You can easily deploy your microservices in different environments in a lightweight and portable manner by using containers. From development to production and across your DevOps environments, you can deploy your microservices consistently and efficiently with containers. You can run a container from a container image. Each container image is a package of what you need to run your microservice or application, from the code to its dependencies and configuration.
 
-```
-{
-  "_id": {
-    "$oid": "5dee6b079503234323db2ebc"
-  },
-  "Name": "Member1",
-  "Rank": "Captain",
-  "CrewID": "000001"
-}
-```
+You'll learn how to build container images and run containers using Docker for your microservices. You'll construct ***Dockerfile*** files, create Docker images by using the ***docker build*** command, and run the image as Docker containers by using ***docker run*** command.
 
-This microservice connects to MongoDB by using Transport Layer Security (TLS) and injects a ***MongoDatabase*** instance into the service with a Contexts and Dependency Injection (CDI) producer. Additionally, MicroProfile Config is used to easily configure the MongoDB driver.
-
-For more information about CDI and MicroProfile Config, see the guides on [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) and [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html).
-
+The two microservices that you'll be working with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This guide demonstrates how both microservices can run and communicate with each other in different Docker containers. 
 
 ::page{title="Getting started"}
 
@@ -49,11 +37,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-mongodb-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-containerize.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-mongodb-intro.git
-cd guide-mongodb-intro
+git clone https://github.com/openliberty/guide-containerize.git
+cd guide-containerize
 ```
 
 
@@ -62,795 +50,621 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-### Setting up MongoDB
+::page{title="Packaging your microservices"}
 
-This guide uses Docker to run an instance of MongoDB. A multi-stage Dockerfile is provided for you. This Dockerfile uses the ***mongo*** image as the base image of the final stage and gathers the required configuration files. The resulting ***mongo*** image runs in a Docker container, and you must set up a new database for the microservice. Lastly, the truststore that's generated in the Docker image is copied from the container and placed into the Open Liberty server.
 
-You can find more details and configuration options on the [MongoDB website](https://docs.mongodb.com/manual/reference/configuration-options/). For more information about the ***mongo*** image, see [mongo](https://hub.docker.com/_/mongo) in Docker Hub.
-
-**Running MongoDB in a Docker container**
-
-Run the following commands to use the Dockerfile to build the image, run the image in a Docker container, and map port ***27017*** from the container to your host machine:
-
+To begin, run the following command to navigate to the **start** directory:
 ```bash
-docker build -t mongo-sample -f assets/Dockerfile .
-docker run --name mongo-guide -p 27017:27017 -d mongo-sample
+cd start
 ```
 
-**Adding the truststore to the Open Liberty server**
+You can find the starting Java project in the ***start*** directory. This project is a multi-module Maven project that is made up of the ***system*** and ***inventory*** microservices. Each microservice is located in its own corresponding directory, ***system*** and ***inventory***.
 
-The truststore that's created in the container needs to be added to the Open Liberty server so that the server can trust the certificate that MongoDB presents when they connect. Run the following command to copy the ***truststore.p12*** file from the container to the ***start*** and ***finish*** directories:
-
-
+To try out the microservices by using Maven, run the following Maven goal to build the ***system*** microservice and run it inside Open Liberty:
 ```bash
-docker cp \
-  mongo-guide:/home/mongodb/certs/truststore.p12 \
-  start/src/main/liberty/config/resources/security
-docker cp \
-  mongo-guide:/home/mongodb/certs/truststore.p12 \
-  finish/src/main/liberty/config/resources/security
+mvn -pl system liberty:run
 ```
 
 
-### Try what you'll build
-
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
-
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session and run the following Maven goal to build the **inventory** microservice and run it inside Open Liberty:
 ```bash
-cd finish
-mvn liberty:run
+cd /home/project/guide-containerize/start
+mvn -pl inventory liberty:run
 ```
 
-After you see the following message, your application server is ready:
+Select **Terminal** > **New Terminal** from the menu of the IDE to open a new command-line session. To access the **inventory** service, which displays the current contents of the inventory, run the following curl command: 
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+After you see the following message in both command-line sessions, both of your services are ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
-
-You can now check out the service by clicking the following button:
-
-::startApplication{port="9080" display="external" name="Launch application" route="/mongo"}
-
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
-
+The **system** service shows the system properties of the running JVM and can be found by running the following curl command:
 ```bash
-mvn liberty:stop
+curl -s http://localhost:9080/system/properties | jq
 ```
 
-
-::page{title="Providing a MongoDatabase"}
-
-Navigate to the ***start*** directory to begin.
-
+The system properties of your localhost can be added to the **inventory** service at **http://localhost:9081/inventory/systems/localhost**. Run the following curl command:
 ```bash
-cd /home/project/guide-mongodb-intro/start
+curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
+After you are finished checking out the microservices, stop the Open Liberty servers by pressing **CTRL+C** in the command-line sessions where you ran the servers. Alternatively, you can run the **liberty:stop** goal in another command-line session from the 
+**start** directory:
 ```bash
-mvn liberty:dev
+cd /home/project/guide-containerize/start
+mvn -pl system liberty:stop
+mvn -pl inventory liberty:stop
 ```
 
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
+To package your microservices, run the Maven package goal to build the application ***.war*** files from the start directory so that the ***.war*** files are in the ***system/target*** and ***inventory/target*** directories.
+```bash
+mvn package
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+To learn more about RESTful web services and how to build them, see [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the ***system*** service. The ***inventory*** service is built in a similar way.
 
-With a CDI producer, you can easily provide a ***MongoDatabase*** to your microservice.
 
-Create the ***MongoProducer*** class.
+::page{title="Building your Docker images"}
+
+A Docker image is a binary file. It is made up of multiple layers and is used to run code in a Docker container. Images are built from instructions in Dockerfiles to create a containerized version of the application.
+
+A ***Dockerfile*** is a collection of instructions for building a Docker image that can then be run as a container. As each instruction is run in a ***Dockerfile***, a new Docker layer is created. These layers, which are known as intermediate images, are created when a change is made to your Docker image.
+
+Every ***Dockerfile*** begins with a parent or base image over which various commands are run. For example, you can start your image from scratch and run commands that download and install a Java runtime, or you can start from an image that already contains a Java installation.
+
+Learn more about Docker on the [official Docker page](https://www.docker.com/what-docker).
+
+### Creating your Dockerfiles
+You will be creating two Docker images to run the ***inventory*** service and ***system*** service. The first step is to create Dockerfiles for both services.
+
+In this guide, you're using an official image from the IBM Container Registry (ICR), ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi***, as your parent image. This image is tagged with the word ***full***, meaning it includes all Liberty features. ***full*** images are recommended for development only because they significantly expand the image size with features that are not required by the application.
+
+To minimize your image footprint in production, you can use one of the ***kernel-slim*** images, such as ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi***.  This image installs the basic server. You can then add all the necessary features for your application with the usage pattern that is detailed in the Open Liberty [container image documentation](https://github.com/OpenLiberty/ci.docker#building-an-application-image). To use the default image that comes with the Open Liberty runtime, define the ***FROM*** instruction as ***FROM icr.io/appcafe/open-liberty***. You can find all official images on the Open Liberty [container image repository](https://github.com/OpenLiberty/ci.docker#container-images).
+
+Create the ***Dockerfile*** for the inventory service.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java
+touch /home/project/guide-containerize/start/inventory/Dockerfile
 ```
 
 
-> Then, to open the MongoProducer.java file in your IDE, select
-> **File** > **Open** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java, or click the following button
+> Then, to open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-containerize/start/inventory/Dockerfile, or click the following button
 
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/mongo/MongoProducer.java"}
+::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
 
 
 
-```java
-package io.openliberty.guides.mongo;
+```
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Disposes;
-import jakarta.enterprise.inject.Produces;
-import jakarta.inject.Inject;
-import javax.net.ssl.SSLContext;
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
 
-import com.ibm.websphere.ssl.JSSEHelper;
-import com.ibm.websphere.ssl.SSLException;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="inventory" \
+  version="$VERSION-$REVISION" \
+  summary="The inventory microservice from the Containerizing microservices guide" \
+  description="This image contains the inventory microservice running with the Open Liberty runtime."
 
-import com.ibm.websphere.crypto.PasswordUtil;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
-import com.mongodb.client.MongoDatabase;
+COPY --chown=1001:0 \
+    src/main/liberty/config \
+    /config/
 
-import java.util.Collections;
+COPY --chown=1001:0 \
+    target/guide-containerize-inventory.war \
+    /config/apps
 
-@ApplicationScoped
-public class MongoProducer {
-
-    @Inject
-    @ConfigProperty(name = "mongo.hostname", defaultValue = "localhost")
-    String hostname;
-
-    @Inject
-    @ConfigProperty(name = "mongo.port", defaultValue = "27017")
-    int port;
-
-    @Inject
-    @ConfigProperty(name = "mongo.dbname", defaultValue = "testdb")
-    String dbName;
-
-    @Inject
-    @ConfigProperty(name = "mongo.user")
-    String user;
-
-    @Inject
-    @ConfigProperty(name = "mongo.pass.encoded")
-    String encodedPass;
-
-    @Produces
-    public MongoClient createMongo() throws SSLException {
-        String password = PasswordUtil.passwordDecode(encodedPass);
-        MongoCredential creds = MongoCredential.createCredential(
-                user,
-                dbName,
-                password.toCharArray()
-        );
-
-        SSLContext sslContext = JSSEHelper.getInstance().getSSLContext(
-                "outboundSSLContext",
-                Collections.emptyMap(),
-                null
-        );
-
-        return new MongoClient(
-                new ServerAddress(hostname, port),
-                creds,
-                new MongoClientOptions.Builder()
-                        .sslEnabled(true)
-                        .sslContext(sslContext)
-                        .build()
-        );
-    }
-
-    @Produces
-    public MongoDatabase createDB(
-            MongoClient client) {
-        return client.getDatabase(dbName);
-    }
-
-    public void close(
-            @Disposes MongoClient toClose) {
-        toClose.close();
-    }
-}
+RUN configure.sh
 ```
 
 
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
+The ***FROM*** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use ***FROM scratch***, which makes your image a base image. 
 
+It is also recommended to label your Docker images with the ***LABEL*** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
 
+The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the ***inventory*** server configuration files that are located at ***src/main/liberty/config*** are copied to the ***/config/*** destination directory. The ***inventory*** application WAR file ***inventory.war***, which was created from running ***mvn package***, is copied to the ***/config/apps*** destination directory.
 
-The values from the ***microprofile-config.properties*** file are injected into the ***MongoProducer*** class. The ***MongoProducer*** class requires the following methods for the ***MongoClient***:
+The ***COPY*** instructions use the ***1001*** user ID  and ***0*** group because the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image runs by default with the ***USER 1001*** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user.
 
-* The ***createMongo()*** producer method returns an instance of ***MongoClient***. In this method, the username, database name, and decoded password are passed into the ***MongoCredential.createCredential()*** method to get an instance of ***MongoCredential***. The ***JSSEHelper*** gets the ***SSLContext*** from the ***outboundSSLContext*** in the ***server.xml*** file. Then, a ***MongoClient*** instance is created.
+Place the ***RUN configure.sh*** command at the end to get a pre-warmed Docker image. It improves the startup time of running your Docker container.
 
-* The ***createDB()*** producer method returns an instance of ***MongoDatabase*** that depends on the ***MongoClient***. This method injects the ***MongoClient*** in its parameters and passes the database name into the ***MongoClient.getDatabase()*** method to get a ***MongoDatabase*** instance.
+The ***Dockerfile*** for the ***system*** service follows the same instructions as the ***inventory*** service, except that some ***labels*** are updated, and the ***system.war*** archive is copied into ***/config/apps***.
 
-* The ***close()*** method is a clean-up function for the ***MongoClient*** that closes the connection to the ***MongoDatabase*** instance.
-
-
-
-::page{title="Implementing the Create, Retrieve, Update, and Delete operations"}
-
-You are going to implement the basic create, retrieve, update, and delete (CRUD) operations in the ***CrewService*** class. The ***com.mongodb.client*** and ***com.mongodb.client.result*** packages are used to help implement these operations for the microservice. For more information about these packages, see the [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html) and [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html) Javadoc. For more information about creating a RESTful service with JAX-RS, JSON-B, and Open Liberty, see the guide on [com.mongodb.client](https://mongodb.github.io/mongo-java-driver/3.12/javadoc/com/mongodb/client/package-summary.html).
-
-Create the ***CrewService*** class.
+Create the ***Dockerfile*** for the system service.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java
+touch /home/project/guide-containerize/start/system/Dockerfile
 ```
 
 
-> Then, to open the CrewService.java file in your IDE, select
-> **File** > **Open** > guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java, or click the following button
+> Then, to open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-containerize/start/system/Dockerfile, or click the following button
 
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guides/application/CrewService.java"}
+::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Containerizing microservices guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 src/main/liberty/config /config/
+
+COPY --chown=1001:0 target/guide-containerize-system.war /config/apps
+
+RUN configure.sh
+```
+
+
+
+
+### Building your Docker image
+
+Now that your microservices are packaged and you have written your Dockerfiles, you will build your Docker images by using the ***docker build*** command.
+
+Run the following command to download or update to the latest Open Liberty Docker image:
+
+```bash
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+```
+
+Run the following commands to build container images for your application:
+
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
+
+To verify that the images are built, run the ***docker images*** command to list all local Docker images:
+
+```bash
+docker images
+```
+
+Or, run the ***docker images*** command with ***--filter*** option to list your images:
+```bash
+docker images -f "label=org.opencontainers.image.authors=Your Name"
+```
+
+Your ***inventory*** and ***system*** images appear in the list of all Docker images:
+
+```
+REPOSITORY    TAG             IMAGE ID        CREATED          SIZE
+inventory     1.0-SNAPSHOT    08fef024e986    4 minutes ago    471MB
+system        1.0-SNAPSHOT    1dff6d0b4f31    5 minutes ago    470MB
+```
+
+
+::page{title="Running your microservices in Docker containers"}
+Now that your two images are built, you will run your microservices in Docker containers:
+
+```bash
+docker run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
+docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
+```
+
+The following table describes the flags in these commands:
+
+| *Flag* | *Description*
+| ---| ---
+| -d     | Runs the container in the background.
+| --name | Specifies a name for the container.
+| -p     | Maps the host ports to the container ports. For example: ***-p \<HOST_PORT\>:\<CONTAINER_PORT\>***
+
+Next, run the ***docker ps*** command to verify that your containers are started:
+
+```bash
+docker ps
+```
+
+Make sure that your containers are running and show ***Up*** as their status:
+
+```
+CONTAINER ID    IMAGE                   COMMAND                  CREATED          STATUS          PORTS                                        NAMES
+2b584282e0f5    inventory:1.0-SNAPSHOT  "/opt/ol/helpers/run…"   2 seconds ago    Up 1 second     9080/tcp, 9443/tcp, 0.0.0.0:9081->9081/tcp   inventory
+99a98313705f    system:1.0-SNAPSHOT     "/opt/ol/helpers/run…"   3 seconds ago    Up 2 seconds    0.0.0.0:9080->9080/tcp, 9443/tcp             system
+```
+
+If a problem occurs and your containers exit prematurely, the containers don't appear in the container list that the ***docker ps*** command displays. Instead, your containers appear with an ***Exited*** status when they run the ***docker ps -a*** command. Run the ***docker logs system*** and ***docker logs inventory*** commands to view the container logs for any potential problems. Run the ***docker stats system*** and ***docker stats inventory*** commands to display a live stream of usage statistics for your containers. You can also double-check that your Dockerfiles are correct. When you find the cause of the issues, remove the faulty containers with the ***docker rm system*** and ***docker rm inventory*** commands. Rebuild your images, and start the containers again.
+
+
+To access the application, run the following curl command. An empty list is expected because no system properties are stored in the inventory yet:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+Next, retrieve the ***system*** container's IP address by running the following:
+
+```bash
+docker inspect -f "{{.NetworkSettings.IPAddress }}" system
+```
+
+The command returns the system container IP address:
+
+```
+172.17.0.2
+```
+
+In this case, the IP address for the ***system*** service is ***172.17.0.2***. Take note of this IP address to construct the URL to view the system properties. 
+
+
+Run the following commands to go to the **http://localhost:9081/inventory/systems/[system-ip-address]** by replacing **[system-ip-address]** URL with the IP address that you obtained earlier:
+```bash
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
+```
+
+You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. Run the following curl command and you see a new entry for **[system-ip-address]**:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+::page{title="Externalizing server configuration"}
+
+
+As mentioned at the beginning of this guide, one of the advantages of using containers is that they are portable and can be moved and deployed efficiently across all of your DevOps environments. Configuration often changes across different environments, and by externalizing your server configuration, you can simplify the development process.
+
+Imagine a scenario where you are developing an Open Liberty application on port ***9081*** but to deploy it to production, it must be available on port ***9091***. To manage this scenario, you can keep two different versions of the ***server.xml*** file; one for production and one for development. However, trying to maintain two different versions of a file might lead to mistakes. A better solution would be to externalize the configuration of the port number and use the value of an environment variable that is stored in each environment. 
+
+In this example, you will use an environment variable to externally configure the HTTP port number of the ***inventory*** service. 
+
+In the ***inventory/server.xml*** file, the ***default.http.port*** variable is declared and is used in the ***httpEndpoint*** element to define the service endpoint. The default value of the ***default.http.port*** variable is ***9081***. However, this value is only used if no other value is specified. You can replace this value in the container by using the -e flag for the podman run command. 
+
+Run the following commands to stop and remove the ***inventory*** container and rerun it with the ***default.http.port*** environment variable set:
+
+```bash
+docker stop inventory
+docker rm inventory 
+docker run -d --name inventory -e default.http.port=9091 -p 9091:9091 inventory:1.0-SNAPSHOT
+```
+
+The ***-e*** flag can be used to create and set the values of environment variables in a Docker container. In this case, you are setting the ***default.http.port*** environment variable to ***9091*** for the ***inventory*** container.
+
+Now, when the service is starting up, Open Liberty finds the ***default.http.port*** environment variable and uses it to set the value of the ***default.http.port*** variable to be used in the HTTP endpoint.
+
+
+The **inventory** service is now available on the new port number that you specified. You can see the contents of the inventory at the **http://localhost:9091/inventory/systems** URL. Run the following curl command:
+```bash
+curl -s http://localhost:9091/inventory/systems | jq
+```
+
+You can add your local system properties at the **http://localhost:9091/inventory/systems/[system-ip-address]** URL by replacing **[system-ip-address]** with the IP address that you obtained in the previous section. Run the following commands:
+```bash
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9091/inventory/systems/{$SYSTEM_IP} | jq
+```
+
+The **system** service remains unchanged and is available at the **http://localhost:9080/system/properties** URL. Run the following curl command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+You can externalize the configuration of more than just the port numbers. To learn more about Open Liberty server configuration, check out the [Server Configuration Overview](https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html) docs. 
+
+::page{title="Optimizing the image size"}
+
+As previously mentioned, the parent image used in each ***Dockerfile*** contains the ***full*** tag which includes all of the Liberty features. This is recommended for development but when deploying to production it's recommended to use a parent image with the ***kernel-slim*** tag to provide a bare minimum server with the ability to add the features required by the application.
+
+Replace the ***Dockerfile*** for the inventory service.
+
+> To open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-containerize/start/inventory/Dockerfile, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="inventory" \
+  version="$VERSION-$REVISION" \
+  summary="The inventory microservice from the Containerizing microservices guide" \
+  description="This image contains the inventory microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 \
+    src/main/liberty/config \
+    /config/
+
+RUN features.sh
+
+COPY --chown=1001:0 \
+    target/guide-containerize-inventory.war \
+    /config/apps
+
+RUN configure.sh
+```
+
+
+
+Replace the parent image with ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi*** at the top of your Dockerfile. This image contains the ***kernel-slim*** tag that's recommended when deploying to production.
+
+Place ***RUN features.sh*** between the ***COPY*** commands in the ***Dockerfile***. The ***features.sh*** script adds the Liberty features that your application is required to operate.
+
+Ensure that you repeat these instructions again for the ***system*** service.
+
+Replace the ***Dockerfile*** for the system service.
+
+> To open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-containerize/start/system/Dockerfile, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Containerizing microservices guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 src/main/liberty/config /config/
+
+RUN features.sh
+
+COPY --chown=1001:0 target/guide-containerize-system.war /config/apps
+
+RUN configure.sh
+```
+
+
+
+Continue by running the following commands to stop and remove your current ***Docker*** containers that are using the ***full*** parent image:
+
+```bash
+docker stop inventory system
+docker rm inventory system
+```
+
+Next, build your new ***Docker*** images with the ***kernel-slim*** parent image:
+
+```bash
+docker build -t system-slim:1.0-SNAPSHOT system/.
+docker build -t inventory-slim:1.0-SNAPSHOT inventory/.
+```
+
+Verify that the images have built by executing the following command to list all the local ***Docker*** images.
+
+```bash
+docker images
+```
+
+Alternatively, run ***docker images*** with the ***--filter*** option to list your images:
+```bash
+docker images -f "label=org.opencontainers.image.authors=Your Name"
+```
+
+Notice that both the ***full*** and the ***kernel-slim*** images for both of the ***inventory*** and ***system*** services are in the list of all Docker images. Concurrently, you can note the size difference between the two sets of images:
+```
+REPOSITORY      TAG             IMAGE ID        CREATED         SIZE
+inventory-slim  1.0-SNAPSHOT	d5a3d1b2c20e    4 minutes ago	705MB
+system-slim     1.0-SNAPSHOT	6346cf87eae0	5 minutes ago	701MB
+inventory       1.0-SNAPSHOT	5b0f25cee9c5	14 minutes ago	1.01GB
+system          1.0-SNAPSHOT	df4518f27d1e	14 minutes ago	1.01GB
+```
+
+After confirming that the images have been built, run the following commands to start the ***Docker*** containers:
+
+```bash
+docker run -d --name system -p 9080:9080 system-slim:1.0-SNAPSHOT
+docker run -d --name inventory -p 9081:9081 inventory-slim:1.0-SNAPSHOT
+```
+
+To ensure your containers are working properly, try accessing the ***system*** service, which shows the system properties of the running JVM in JSON format. 
+See http://localhost:9080/system/properties
+
+Next, replace ***[system-ip-address]*** with the IP address that you obtained earlier and add your system's properties to the ***inventory*** service by visting:
+http://localhost:9081/inventory/systems/[system-ip-address]
+
+Then verify the addition of your system's properties to your 	***inventory*** service. 
+See http://localhost:9081/inventory/systems
+
+::page{title="Testing the microservices"}
+
+You can test your microservices manually by hitting the endpoints or with automated tests that check your running Docker containers.
+
+Create the ***SystemEndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
+```
+
+
+> Then, to open the SystemEndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
 
 
 
 ```java
-package io.openliberty.guides.application;
-
-import java.util.Set;
-
-import java.io.StringWriter;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.Json;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-import jakarta.validation.Validator;
-import jakarta.validation.ConstraintViolation;
-
-import com.mongodb.client.FindIterable;
-import org.bson.Document;
-import org.bson.types.ObjectId;
-
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
-
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
-
-@Path("/crew")
-@ApplicationScoped
-public class CrewService {
-
-    @Inject
-    MongoDatabase db;
-
-    @Inject
-    Validator validator;
-
-    private JsonArray getViolations(CrewMember crewMember) {
-        Set<ConstraintViolation<CrewMember>> violations = validator.validate(
-                crewMember);
-
-        JsonArrayBuilder messages = Json.createArrayBuilder();
-
-        for (ConstraintViolation<CrewMember> v : violations) {
-            messages.add(v.getMessage());
-        }
-
-        return messages.build();
-    }
-
-    @POST
-    @Path("/")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully added crew member."),
-        @APIResponse(
-            responseCode = "400",
-            description = "Invalid crew member configuration.") })
-    @Operation(summary = "Add a new crew member to the database.")
-    public Response add(CrewMember crewMember) {
-        JsonArray violations = getViolations(crewMember);
-
-        if (!violations.isEmpty()) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(violations.toString())
-                    .build();
-        }
-
-        MongoCollection<Document> crew = db.getCollection("Crew");
-
-        Document newCrewMember = new Document();
-        newCrewMember.put("Name", crewMember.getName());
-        newCrewMember.put("Rank", crewMember.getRank());
-        newCrewMember.put("CrewID", crewMember.getCrewID());
-
-        crew.insertOne(newCrewMember);
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(newCrewMember.toJson())
-            .build();
-    }
-
-    @GET
-    @Path("/")
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully listed the crew members."),
-        @APIResponse(
-            responseCode = "500",
-            description = "Failed to list the crew members.") })
-    @Operation(summary = "List the crew members from the database.")
-    public Response retrieve() {
-        StringWriter sb = new StringWriter();
-
-        try {
-            MongoCollection<Document> crew = db.getCollection("Crew");
-            sb.append("[");
-            boolean first = true;
-            FindIterable<Document> docs = crew.find();
-            for (Document d : docs) {
-                if (!first) {
-                    sb.append(",");
-                } else {
-                    first = false;
-                }
-                sb.append(d.toJson());
-            }
-            sb.append("]");
-        } catch (Exception e) {
-            e.printStackTrace(System.out);
-            return Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity("[\"Unable to list crew members!\"]")
-                .build();
-        }
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(sb.toString())
-            .build();
-    }
-
-    @PUT
-    @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully updated crew member."),
-        @APIResponse(
-            responseCode = "400",
-            description = "Invalid object id or crew member configuration."),
-        @APIResponse(
-            responseCode = "404",
-            description = "Crew member object id was not found.") })
-    @Operation(summary = "Update a crew member in the database.")
-    public Response update(CrewMember crewMember,
-        @Parameter(
-            description = "Object id of the crew member to update.",
-            required = true
-        )
-        @PathParam("id") String id) {
-
-        JsonArray violations = getViolations(crewMember);
-
-        if (!violations.isEmpty()) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(violations.toString())
-                    .build();
-        }
-
-        ObjectId oid;
-
-        try {
-            oid = new ObjectId(id);
-        } catch (Exception e) {
-            return Response
-                .status(Response.Status.BAD_REQUEST)
-                .entity("[\"Invalid object id!\"]")
-                .build();
-        }
-
-        MongoCollection<Document> crew = db.getCollection("Crew");
-
-        Document query = new Document("_id", oid);
-
-        Document newCrewMember = new Document();
-        newCrewMember.put("Name", crewMember.getName());
-        newCrewMember.put("Rank", crewMember.getRank());
-        newCrewMember.put("CrewID", crewMember.getCrewID());
-
-        UpdateResult updateResult = crew.replaceOne(query, newCrewMember);
-
-        if (updateResult.getMatchedCount() == 0) {
-            return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("[\"_id was not found!\"]")
-                .build();
-        }
-
-        newCrewMember.put("_id", oid);
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(newCrewMember.toJson())
-            .build();
-    }
-
-    @DELETE
-    @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully deleted crew member."),
-        @APIResponse(
-            responseCode = "400",
-            description = "Invalid object id."),
-        @APIResponse(
-            responseCode = "404",
-            description = "Crew member object id was not found.") })
-    @Operation(summary = "Delete a crew member from the database.")
-    public Response remove(
-        @Parameter(
-            description = "Object id of the crew member to delete.",
-            required = true
-        )
-        @PathParam("id") String id) {
-
-        ObjectId oid;
-
-        try {
-            oid = new ObjectId(id);
-        } catch (Exception e) {
-            return Response
-                .status(Response.Status.BAD_REQUEST)
-                .entity("[\"Invalid object id!\"]")
-                .build();
-        }
-
-        MongoCollection<Document> crew = db.getCollection("Crew");
-
-        Document query = new Document("_id", oid);
-
-        DeleteResult deleteResult = crew.deleteOne(query);
-
-        if (deleteResult.getDeletedCount() == 0) {
-            return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("[\"_id was not found!\"]")
-                .build();
-        }
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(query.toJson())
-            .build();
-    }
-}
-```
-
-
-
-
-In this class, a ***Validator*** is used to validate a ***CrewMember*** before the database is updated. The CDI producer is used to inject a ***MongoDatabase*** into the CrewService class.
-
-
-**Implementing the Create operation**
-
-The ***add()*** method handles the implementation of the create operation. An instance of ***MongoCollection*** is retrieved with the ***MongoDatabase.getCollection()*** method. The ***Document*** type parameter specifies that the ***Document*** type is used to store data in the ***MongoCollection***. Each crew member is converted into a ***Document***, and the ***MongoCollection.insertOne()*** method inserts a new crew member document.
-
-
-**Implementing the Retrieve operation**
-
-The ***retrieve()*** method handles the implementation of the retrieve operation. The ***Crew*** collection is retrieved with the ***MongoDatabase.getCollection()*** method. Then, the ***MongoCollection.find()*** method retrieves a ***FindIterable*** object. This object is iterable for all the crew members documents in the collection, so each crew member document is concatenated into a String array and returned.
-
-
-**Implementing the Update operation**
-
-The ***update()*** method handles the implementation of the update operation. After the ***Crew*** collection is retrieved, a document is created with the specified object ***id*** and is used to query the collection. Next, a new crew member ***Document*** is created with the updated configuration. The ***MongoCollection.replaceOne()*** method is called with the query and new crew member document. This method updates all of the matching queries with the new document. Because the object ***id*** is unique in the ***Crew*** collection, only one document is updated. The ***MongoCollection.replaceOne()*** method also returns an ***UpdateResult*** instance, which determines how many documents matched the query. If there are zero matches, then the object ***id*** doesn't exist.
-
-
-**Implementing the Delete operation**
-
-The ***remove()*** method handles the implementation of the delete operation. After the ***Crew*** collection is retrieved, a ***Document*** is created with the specified object ***id*** and is used to query the collection. Because the object ***id*** is unique in the ***Crew*** collection, only one document is deleted. After the document is deleted, the ***MongoCollection.deleteOne()*** method returns a ***DeleteResult*** instance, which determines how many documents were deleted. If zero documents were deleted, then the object ***id*** doesn't exist.
-
-
-
-::page{title="Configuring the MongoDB driver and the server"}
-
-MicroProfile Config makes configuring the MongoDB driver simple because all of the configuration can be set in one place and injected into the CDI producer.
-
-Create the configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-mongodb-intro/start/src/main/webapp/META-INF/microprofile-config.properties
-```
-
-
-> Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-mongodb-intro/start/src/main/webapp/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/webapp/META-INF/microprofile-config.properties"}
-
-
-
-```
-mongo.hostname=localhost
-mongo.port=27017
-mongo.dbname=testdb
-mongo.user=sampleUser
-mongo.pass.encoded={aes}APtt+/vYxxPa0jE1rhmZue9wBm3JGqFK3JR4oJdSDGWM1wLr1ckvqkqKjSB2Voty8g==
-```
-
-
-
-Values such as the hostname, port, and database name for the running MongoDB instance are set in this file. The user’s username and password are also set here. For added security, the password was encoded by using the [securityUtility encode command](https://openliberty.io/docs/latest/reference/command/securityUtility-encode.html).
-
-To create a CDI producer for MongoDB and connect over TLS, the Open Liberty server needs to be correctly configured.
-
-Replace the server configuration file.
-
-> To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-mongodb-intro/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-mongodb-intro/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Sample Liberty server">
-    <featureManager>
-        <feature>cdi-3.0</feature>
-        <feature>ssl-1.0</feature>
-        <feature>mpConfig-3.0</feature>
-        <feature>passwordUtilities-1.0</feature>
-        <feature>beanValidation-3.0</feature>	   
-        <feature>restfulWS-3.0</feature>
-        <feature>jsonb-2.0</feature>
-        <feature>mpOpenAPI-3.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-    <variable name="app.context.root" defaultValue="/mongo"/>
-
-    <httpEndpoint
-        host="*" 
-        httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" 
-        id="defaultHttpEndpoint"
-    />
-
-    <webApplication 
-        location="guide-mongodb-intro.war" 
-        contextRoot="${app.context.root}"
-    />
-    <keyStore
-        id="outboundTrustStore" 
-        location="${server.output.dir}/resources/security/truststore.p12"
-        password="mongodb"
-        type="PKCS12" 
-    />
-    <ssl 
-        id="outboundSSLContext" 
-        keyStoreRef="defaultKeyStore" 
-        trustStoreRef="outboundTrustStore" 
-        sslProtocol="TLS" 
-    />
-</server>
-```
-
-
-
-The features that are required to create the CDI producer for MongoDB are [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi-2.0.html) (***cdi-2.0***), [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi-2.0.html) (***ssl-1.0***), [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi-2.0.html) (***mpConfig-1.4***), and [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi-2.0.html) (***passwordUtilities-1.0***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
-
-After you replace the ***server.xml*** file, the Open Liberty configuration is automatically reloaded.
-
-
-::page{title="Running the application"}
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-Wait until you see a message similar to the following example:
-
-```
-CWWKZ0001I: Application guide-mongodb-intro started in 5.715 seconds.
-```
-
-Click the following button to see the OpenAPI user interface (UI) that provides API documentation and a client to test the API endpoints that you create:
-
-::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
-
-**Try the Create operation**
-
-From the OpenAPI UI, test the create operation at the ***POST /api/crew*** endpoint by using the following code as the request body:
-
-```bash
-{
-  "name": "Member1",
-  "rank": "Officer",
-  "crewID": "000001"
-}
-```
-
-This request creates a new document in the ***Crew*** collection with a name of ***Member1***, rank of ***Officer***, and crew ID of ***000001***.
-
-You'll receive a response that contains the JSON object of the new crew member, as shown in the following example:
-```
-{
-  "Name": "Member1",
-  "Rank": "Officer",
-  "CrewID": "000001",
-  "_id": {
-    "$oid": "<<ID>>"
-  }
-}
-```
-
-
-
-The ***\<\<ID\>\>*** that you receive is a unique identifier in the collection. Save this value for future commands.
-
-**Try the Retrieve operation**
-
-From the OpenAPI UI, test the read operation at the ***GET /api/crew*** endpoint. This request gets all crew member documents from the collection.
-
-You'll receive a response that contains an array of all the members in your crew. The response might include crew members that were created in the **Try what you’ll build** section of this guide:
-```
-[
-  {
-    "_id": {
-      "$oid": "<<ID>>"
-    },
-    "Name": "Member1",
-    "Rank": "Officer",
-    "CrewID": "000001"
-  }
-]
-```
-
-
-**Try the Update operation**
-
-
-From the OpenAPI UI, test the update operation at the ***PUT /api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\<\<ID\>\>*** that you saved from the create operation. Use the following code as the request body:
-
-```bash
-{
-  "name": "Member1",
-  "rank": "Captain",
-  "crewID": "000001"
-}
-```
-
-This request updates the rank of the crew member that you created from ***Officer*** to ***Captain***.
-
-You'll receive a response that contains the JSON object of the updated crew member, as shown in the following example:
-
-```
-{
-  "Name": "Member1",
-  "Rank": "Captain",
-  "CrewID": "000001",
-  "_id": {
-    "$oid": "<<ID>>"
-  }
-}
-```
-
-
-**Try the Delete operation**
-
-
-From the OpenAPI UI, test the delete operation at the ***DELETE/api/crew/{id}*** endpoint, where the ***{id}*** parameter is the ***\<\<ID\>\>*** that you saved from the create operation. This request removes the document that contains the specified crew member object ***id*** from the collection.
-
-You'll receive a response that contains the object ***id*** of the deleted crew member, as shown in the following example:
-
-```
-{
-  "_id": {
-    "$oid": "<<ID>>"
-  }
-}
-```
-
-
-Now, you can check out the microservice that you created by clicking the following button:
-
-::startApplication{port="9080" display="external" name="Launch application" route="/mongo"}
-
-
-
-::page{title="Testing the application"}
-
-Next, you'll create integration tests to ensure that the basic operations you implemented function correctly.
-
-Create the ***CrewServiceIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java
-```
-
-
-> Then, to open the CrewServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java, or click the following button
-
-::openFile{path="/home/project/guide-mongodb-intro/start/src/test/java/it/io/openliberty/guides/application/CrewServiceIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.application;
+package it.io.openliberty.guides.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.StringReader;
-import java.util.ArrayList;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class SystemEndpointIT {
+
+    private static String clusterUrl;
+
+    private Client client;
+
+    @BeforeAll
+    public static void oneTimeSetup() {
+        String nodePort = System.getProperty("system.http.port");
+        clusterUrl = "http://localhost:" + nodePort + "/system/properties/";
+    }
+
+    @BeforeEach
+    public void setup() {
+        client = ClientBuilder.newBuilder()
+                    .hostnameVerifier(new HostnameVerifier() {
+                        public boolean verify(String hostname, SSLSession session) {
+                            return true;
+                        }
+                    })
+                    .build();
+    }
+
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
+
+    @Test
+    public void testGetProperties() {
+        Client client = ClientBuilder.newClient();
+
+        WebTarget target = client.target(clusterUrl);
+        Response response = target.request().get();
+
+        assertEquals(200, response.getStatus(),
+            "Incorrect response code from " + clusterUrl);
+        response.close();
+    }
+
+}
+```
+
+
+
+The ***testGetProperties()*** method checks for a ***200*** response code from the ***system*** service endpoint.
+
+Create the ***InventoryEndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+```
+
+
+> Then, to open the InventoryEndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import jakarta.json.JsonObject;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.TestMethodOrder;
 
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.json.JsonReader;
-import jakarta.json.JsonValue;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.client.Entity;
+@TestMethodOrder(OrderAnnotation.class)
+public class InventoryEndpointIT {
 
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class CrewServiceIT {
+    private static String invUrl;
+    private static String sysUrl;
+    private static String systemServiceIp;
 
     private static Client client;
-    private static JsonArray testData;
-    private static String rootURL;
-    private static ArrayList<String> testIDs = new ArrayList<>(2);
 
     @BeforeAll
-    public static void setup() {
-        client = ClientBuilder.newClient();
+    public static void oneTimeSetup() {
 
-        String port = System.getProperty("app.http.port");
-        String context = System.getProperty("app.context.root");
-        rootURL = "http://localhost:" + port + context;
+        String invServPort = System.getProperty("inventory.http.port");
+        String sysServPort = System.getProperty("system.http.port");
 
-        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-        JsonObjectBuilder jsonBuilder = Json.createObjectBuilder();
-        jsonBuilder.add("name", "Member1");
-        jsonBuilder.add("crewID", "000001");
-        jsonBuilder.add("rank", "Captain");
-        arrayBuilder.add(jsonBuilder.build());
-        jsonBuilder = Json.createObjectBuilder();
-        jsonBuilder.add("name", "Member2");
-        jsonBuilder.add("crewID", "000002");
-        jsonBuilder.add("rank", "Engineer");
-        arrayBuilder.add(jsonBuilder.build());
-        testData = arrayBuilder.build();
+        systemServiceIp = System.getProperty("system.ip");
+
+        invUrl = "http://localhost" + ":" + invServPort + "/inventory/systems/";
+        sysUrl = "http://localhost" + ":" + sysServPort + "/system/properties/";
+
+        client = ClientBuilder.newBuilder().hostnameVerifier(new HostnameVerifier() {
+            public boolean verify(String hostname, SSLSession session) {
+                return true;
+            }
+        }).build();
+
+        client.target(invUrl + "reset").request().post(null);
     }
 
     @AfterAll
@@ -860,157 +674,175 @@ public class CrewServiceIT {
 
     @Test
     @Order(1)
-    public void testAddCrewMember() {
-        System.out.println("   === Adding " + testData.size()
-                + " crew members to the database. ===");
+    public void testEmptyInventory() {
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
 
-        for (int i = 0; i < testData.size(); i++) {
-            JsonObject member = (JsonObject) testData.get(i);
-            String url = rootURL + "/api/crew";
-            Response response = client.target(url).request().post(Entity.json(member));
-            this.assertResponse(url, response);
+        JsonObject obj = response.readEntity(JsonObject.class);
 
-            JsonObject newMember = response.readEntity(JsonObject.class);
-            testIDs.add(newMember.getJsonObject("_id").getString("$oid"));
-
-            response.close();
-        }
-        System.out.println("      === Done. ===");
-    }
-
-    @Test
-    @Order(2)
-    public void testUpdateCrewMember() {
-        System.out.println("   === Updating crew member with id " + testIDs.get(0)
-                + ". ===");
-
-        JsonObject oldMember = (JsonObject) testData.get(0);
-
-        JsonObjectBuilder newMember = Json.createObjectBuilder();
-        newMember.add("name", oldMember.get("name"));
-        newMember.add("crewID", oldMember.get("crewID"));
-        newMember.add("rank", "Officer");
-
-        String url = rootURL + "/api/crew/" + testIDs.get(0);
-        Response response = client.target(url).request()
-                .put(Entity.json(newMember.build()));
-
-        this.assertResponse(url, response);
-
-        System.out.println("      === Done. ===");
-    }
-
-    @Test
-    @Order(3)
-    public void testGetCrewMembers() {
-        System.out.println("   === Listing crew members from the database. ===");
-
-        String url = rootURL + "/api/crew";
-        Response response = client.target(url).request().get();
-
-        this.assertResponse(url, response);
-
-        String responseText = response.readEntity(String.class);
-        JsonReader reader = Json.createReader(new StringReader(responseText));
-        JsonArray crew = reader.readArray();
-        reader.close();
-
-        int testMemberCount = 0;
-        for (JsonValue value : crew) {
-            JsonObject member = (JsonObject) value;
-            String id = member.getJsonObject("_id").getString("$oid");
-            if (testIDs.contains(id)) {
-                testMemberCount++;
-            }
-        }
-
-        assertEquals(testIDs.size(), testMemberCount,
-                "Incorrect number of testing members.");
-
-        System.out.println("      === Done. There are " + crew.size()
-                + " crew members. ===");
+        int expected = 0;
+        int actual = obj.getInt("total");
+        assertEquals(expected, actual,
+                    "The inventory should be empty on application start but it wasn't");
 
         response.close();
     }
 
     @Test
-    @Order(4)
-    public void testDeleteCrewMember() {
-        System.out.println("   === Removing " + testIDs.size()
-                + " crew members from the database. ===");
+    @Order(2)
+    public void testHostRegistration() {
+        this.visitSystemService();
 
-        for (String id : testIDs) {
-            String url = rootURL + "/api/crew/" + id;
-            Response response = client.target(url).request().delete();
-            this.assertResponse(url, response);
-            response.close();
-        }
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
 
-        System.out.println("      === Done. ===");
+        JsonObject obj = response.readEntity(JsonObject.class);
+
+        int expected = 1;
+        int actual = obj.getInt("total");
+        assertEquals(expected, actual,
+                        "The inventory should have one entry for " + systemServiceIp);
+
+        boolean serviceExists = obj.getJsonArray("systems").getJsonObject(0)
+                        .get("hostname").toString().contains(systemServiceIp);
+        assertTrue(serviceExists,
+                        "A host was registered, but it was not " + systemServiceIp);
+
+        response.close();
     }
+
+    @Test
+    @Order(3)
+    public void testSystemPropertiesMatch() {
+        Response invResponse = this.getResponse(invUrl);
+        Response sysResponse = this.getResponse(sysUrl);
+
+        this.assertResponse(invUrl, invResponse);
+        this.assertResponse(sysUrl, sysResponse);
+
+        JsonObject jsonFromInventory = (JsonObject) invResponse
+                        .readEntity(JsonObject.class).getJsonArray("systems")
+                        .getJsonObject(0).get("properties");
+
+        JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
+
+        String osNameFromInventory = jsonFromInventory.getString("os.name");
+        String osNameFromSystem = jsonFromSystem.getString("os.name");
+        this.assertProperty("os.name", systemServiceIp, osNameFromSystem,
+                        osNameFromInventory);
+
+        String userNameFromInventory = jsonFromInventory.getString("user.name");
+        String userNameFromSystem = jsonFromSystem.getString("user.name");
+        this.assertProperty("user.name", systemServiceIp, userNameFromSystem,
+                        userNameFromInventory);
+
+        invResponse.close();
+        sysResponse.close();
+    }
+
+    @Test
+    @Order(4)
+    public void testUnknownHost() {
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
+
+        Response badResponse = client.target(invUrl + "badhostname")
+                        .request(MediaType.APPLICATION_JSON).get();
+
+        String obj = badResponse.readEntity(String.class);
+
+        boolean isError = obj.contains("error");
+        assertTrue(isError,
+                        "badhostname is not a valid host but it didn't raise an error");
+
+        response.close();
+        badResponse.close();
+    }
+
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+
 
     private void assertResponse(String url, Response response) {
         assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
+
+    private void assertProperty(String propertyName, String hostname, String expected,
+                    String actual) {
+        assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
+                        + "in the system service does not match the one stored in "
+                        + "the inventory service for " + hostname);
+    }
+
+    private void visitSystemService() {
+        Response response = this.getResponse(sysUrl);
+        this.assertResponse(sysUrl, response);
+        response.close();
+
+        Response targetResponse = client.target(invUrl + systemServiceIp).request()
+                        .get();
+
+        targetResponse.close();
     }
 }
 ```
 
 
 
-The test methods are annotated with the ***@Test*** annotation.
-
-The following test cases are included in this class:
-
-* ***testAddCrewMember()*** verifies that new members are correctly added to the database.
-
-* ***testUpdateCrewMember()*** verifies that a crew member's information is correctly updated.
-
-* ***testGetCrewMembers()*** verifies that a list of crew members is returned by the microservice API.
-
-* ***testDeleteCrewMember()*** verifies that the crew members are correctly removed from the database.
+* The ***testEmptyInventory()*** method checks that the ***inventory*** service has a total of 0 systems before anything is added to it.
+* The ***testHostRegistration()*** method checks that the ***system*** service was added to ***inventory*** properly.
+* The ***testSystemPropertiesMatch()*** checks that the ***system*** properties match what was added into the ***inventory*** service.
+* The ***testUnknownHost()*** method checks that an error is raised if an unknown host name is being added into the ***inventory*** service.
+* The ***systemServiceIp*** variable has the same value as the IP address that you retrieved in the previous section when you manually added the ***system*** service into the ***inventory*** service. This value of the IP address is passed in when you run the tests.
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by setting **-Dsystem.ip** to the IP address that you determined previously.
 
-You'll see the following output:
+```bash
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+mvn package
+mvn failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9081 -Dsystem.http.port=9080
+```
+
+If the tests pass, you see output similar to the following example:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.application.CrewServiceIT
-   === Adding 2 crew members to the database. ===
-      === Done. ===
-   === Updating crew member with id 5df8e0a004ccc019976c7d0a. ===
-      === Done. ===
-   === Listing crew members from the database. ===
-      === Done. There are 2 crew members. ===
-   === Removing 2 crew members from the database. ===
-      === Done. ===
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.411 s - in it.io.openliberty.guides.application.CrewServiceIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.653 s - in it.io.openliberty.guides.system.SystemEndpointIT
+
 Results:
+
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.935 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results:
+
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-::page{title="Tearing down the environment"}
-
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
-
-Then, run the following commands to stop and remove the ***mongo-guide*** container and to remove the ***mongo-sample*** and ***mongo*** images.
+When you are finished with the services, run the following commands to stop and remove your containers:
 
 ```bash
-docker stop mongo-guide
-docker rm mongo-guide
-docker rmi mongo-sample
-docker rmi mongo
+docker stop inventory system 
+docker rm inventory system
 ```
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You've successfully accessed and persisted data to a MongoDB database from a Java microservice using Contexts and Dependency Injection (CDI) and MicroProfile Config with Open Liberty.
+You have just built Docker images and run two microservices on Open Liberty in containers. 
 
 
 
@@ -1019,38 +851,33 @@ You've successfully accessed and persisted data to a MongoDB database from a Jav
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-mongodb-intro*** project by running the following commands:
+Delete the ***guide-containerize*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-mongodb-intro
+rm -fr guide-containerize
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Persisting%20data%20with%20MongoDB&guide-id=cloud-hosted-guide-mongodb-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Containerizing%20microservices&guide-id=cloud-hosted-guide-containerize)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-mongodb-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-mongodb-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-containerize/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-containerize/pulls)
 
 
 
 ### Where to next?
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-
-**Learn more about MicroProfile**
-* [See the MicroProfile specs](https://microprofile.io/)
-* [View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
 ### Log out of the session
