@@ -159,11 +159,6 @@ spec:
   selector:
     matchLabels:
       app: system
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
   template:
     metadata:
       labels:
@@ -174,14 +169,6 @@ spec:
         image: system:1.0-SNAPSHOT
         ports:
         - containerPort: 9080
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -193,11 +180,6 @@ spec:
   selector:
     matchLabels:
       app: inventory
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
   template:
     metadata:
       labels:
@@ -339,7 +321,7 @@ The ***http://$INVENTORY_PROXY/inventory/systems/system-service*** URL adds prop
 
 ::page{title="Rolling update"}
 
-Rolling update refers to continually installing Kubernetes patches without disrupting the availability of the deployed applications. Without continuous updates, a Kubernetes cluster will be susceptible to a denial of a service attack. Update the yaml file as follows to add the ***rollingUpdate*** configuration. 
+Without continuous updates, a Kubernetes cluster is susceptible to a denial of a service attack. Rolling updates continually install Kubernetes patches without disrupting the availability of the deployed applications. Update the yaml file as follows to add the ***rollingUpdate*** configuration. 
 
 Replace the Kubernetes configuration file
 
@@ -454,9 +436,15 @@ spec:
 
 
 
-The ***rollingUpdate*** configuration has two attributes ***maxUnavailable*** and ***maxSurge***. The ***maxUnavailable*** attribute refers to the the number of Kubernetes pods that are allowed to be unavailable during the update process. Similarly, the ***maxSurge*** attribute refers to the number of additional pods that are allowed to be created during the update process.
+The ***rollingUpdate*** configuration has two attributes, ***maxUnavailable*** and ***maxSurge***. The ***maxUnavailable*** attribute specifies the the maximum number of Kubernetes pods that can be unavailable during the update process. Similarly, the ***maxSurge*** attribute specifies the maximum number of additional pods that can be created during the update process.
 
 The ***readinessProbe*** allows Kubernetes to know whether the service is ready to handle requests. The readiness health check classes for the ***/health/ready*** endpoint to the ***inventory*** and ***system*** services are provided for you. If you want to learn more about how to use health checks in Kubernetes, check out the [Kubernetes-microprofile-health](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide. 
+
+Run the following command to deploy the ***inventory*** and ***system*** microservices with the new configuration:
+
+```bash
+kubectl apply -f kubernetes.yaml
+```
 
 ::page{title="Scaling a deployment"}
 
