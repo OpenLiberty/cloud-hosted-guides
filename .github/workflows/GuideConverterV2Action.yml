@@ -72,7 +72,6 @@ jobs:
           instructionsMD=`echo "cloud_hosted_${{ github.event.inputs.guide_name }}.md" | sed -e 's/-/_/g'`
           git init
           mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs
-          rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
           mvn compiler:compile
           mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11} cloud-hosted-${{ github.event.inputs.guide_name }}"
@@ -143,7 +142,6 @@ jobs:
           instructionsMD=`echo "cloud_hosted_${{ github.event.inputs.guide_name }}.md" | sed -e 's/-/_/g'`
           git init
           mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs
-          rm -f instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/README.md
           cd GuideConverter
           mvn compiler:compile
           mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName} cloud-hosted-${{ github.event.inputs.guide_name }}"
