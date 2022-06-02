@@ -198,6 +198,8 @@ public class AppContainerConfig implements SharedContainerConfiguration {
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
 
 The ***AppContainerConfig*** class externalizes test container setup and configuration, so you can use the same application containers across multiple tests.The ***@Container*** annotation denotes an application container that is started up and used in the tests.
 
