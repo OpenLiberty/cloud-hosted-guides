@@ -116,7 +116,7 @@ Update the ***CustomConfigSource*** configuration file. Change the ***io_openlib
 "io_openliberty_guides_system_inMaintenance":false}
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -250,6 +250,8 @@ public class InventoryManager {
 }
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 The ***@Fallback*** annotation dictates a method to call when the original method encounters a failed execution. In this example, use the ***fallbackForGet()*** method.
@@ -502,7 +504,7 @@ Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
 
 To see if the tests detect a failure, comment out the ***changeSystemProperty()*** methods in the ***FaultToleranceIT.java*** file. Rerun the tests to see that a test failure occurs for the ***testFallbackForGet()*** and ***testFallbackSkipForGet()*** test cases.
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
