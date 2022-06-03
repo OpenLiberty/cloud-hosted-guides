@@ -440,10 +440,23 @@ The ***rollingUpdate*** configuration has two attributes, ***maxUnavailable*** a
 
 The ***readinessProbe*** allows Kubernetes to know whether the service is ready to handle requests. The readiness health check classes for the ***/health/ready*** endpoint to the ***inventory*** and ***system*** services are provided for you. If you want to learn more about how to use health checks in Kubernetes, check out the [Kubernetes-microprofile-health](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide. 
 
-Run the following command to deploy the ***inventory*** and ***system*** microservices with the new configuration:
+Update the image names and remove the ***nodePort*** fields by running the following commands:
+```bash
+cd /home/project/guide-kubernetes-intro/start
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
 
+Run the following command to deploy the ***inventory*** and ***system*** microservices with the new configuration:
 ```bash
 kubectl apply -f kubernetes.yaml
+```
+
+Run the following command to check the status of your pods are ready and running:
+```bash
+kubectl get pods
 ```
 
 ::page{title="Scaling a deployment"}
