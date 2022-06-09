@@ -84,7 +84,7 @@ mvn -pl ear liberty:run
 After the server is running, click the following button to check out your service by visiting the ***/converter*** endpoint.
 ::startApplication{port="9080" display="external" name="Visit application" route="/converter"}
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal using the ***-pl ear*** flag from the ***finish*** directory in another command-line session:
+After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal using the ***-pl ear*** flag from the ***finish*** directory in another command-line session:
 
 ```bash
 mvn -pl ear liberty:stop
@@ -141,6 +141,7 @@ Replace the war/POM file.
     </properties>
 
     <dependencies>
+        <!-- Provided dependencies -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
@@ -172,6 +173,8 @@ Replace the war/POM file.
 </project>
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 The added ***dependency*** element is the Java library module that implements the functions that you need for the unit converter.
 
@@ -215,11 +218,13 @@ Replace the ear/POM file.
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- Liberty configuration -->
         <liberty.var.default.http.port>9080</liberty.var.default.http.port>
         <liberty.var.default.https.port>9443</liberty.var.default.https.port>
     </properties>
 
     <dependencies>
+        <!-- web and jar modules as dependencies -->
         <dependency>
             <groupId>io.openliberty.guides</groupId>
             <artifactId>guide-maven-multimodules-jar</artifactId>
@@ -233,6 +238,7 @@ Replace the ear/POM file.
             <type>war</type>
         </dependency>
 
+        <!-- For tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -259,6 +265,7 @@ Replace the ear/POM file.
                             <groupId>io.openliberty.guides</groupId>
                             <artifactId>guide-maven-multimodules-war</artifactId>
                             <uri>/guide-maven-multimodules-war-1.0-SNAPSHOT.war</uri>
+                            <!-- Set custom context root -->
                             <contextRoot>/converter</contextRoot>
                         </webModule>
                     </modules>
@@ -281,6 +288,7 @@ Replace the ear/POM file.
                 </executions>
             </plugin>
 
+            <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -389,6 +397,7 @@ Replace the start/POM file.
 
     <build>
         <plugins>
+            <!-- Enable liberty-maven plugin -->
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
@@ -663,7 +672,7 @@ Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 
-When you are done checking out the service, exit development mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing *q* and then pressing the *enter/return* key.
+When you are done checking out the service, exit development mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing *q* and then pressing the *enter/return* key.
 
 
 ::page{title="Building the multi-module application"}
