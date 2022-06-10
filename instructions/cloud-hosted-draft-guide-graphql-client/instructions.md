@@ -211,11 +211,13 @@ Replace the Maven project file.
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Liberty configuration -->
         <liberty.var.default.http.port>9084</liberty.var.default.http.port>
         <liberty.var.default.https.port>9447</liberty.var.default.https.port>
     </properties>
 
     <dependencies>
+        <!-- Provided dependencies -->
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
@@ -230,12 +232,14 @@ Replace the Maven project file.
             <scope>provided</scope>
         </dependency>
         
+        <!-- Required dependencies -->
         <dependency>
            <groupId>io.openliberty.guides</groupId>
            <artifactId>models</artifactId>
            <version>1.0-SNAPSHOT</version>
         </dependency>
         
+        <!-- GraphQL API dependencies -->
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client</artifactId>
@@ -247,6 +251,7 @@ Replace the Maven project file.
             <version>1.7.30</version>
         </dependency>
         
+        <!-- For tests -->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
@@ -287,6 +292,7 @@ Replace the Maven project file.
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
+            <!-- Enable liberty-maven plugin -->
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
@@ -302,6 +308,7 @@ Replace the Maven project file.
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
             </plugin>
+            <!-- Plugin to run functional tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
