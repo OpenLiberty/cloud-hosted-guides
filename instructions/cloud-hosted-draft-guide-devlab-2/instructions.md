@@ -319,6 +319,10 @@ Run the following commands to update the **applicationImage** with the **pullSec
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
+Run the following command to check status of the pods:
+```bash
+kubectl describe pods | grep health
+```
 
 Run the following command to set up port forwarding to access the ***system*** service:
 
