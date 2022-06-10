@@ -433,9 +433,7 @@ sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-ima
 oc apply -f deploy.yaml
 ```
 Run the following command to check status of the pods:
-
-[role='command']
-```
+```bash
 oc describe pods | grep health
 ```
 
