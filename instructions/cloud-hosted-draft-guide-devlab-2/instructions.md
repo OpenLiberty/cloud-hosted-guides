@@ -437,6 +437,15 @@ Run the following command to check status of the pods:
 oc describe pods | grep health
 ```
 
+Look for an output similar to the following example:
+
+[role='no_copy']
+```
+Liveness:       http-get http://:9080/health/live delay=30s timeout=10s period=2s #success=1 #failure=12
+Readiness:      http-get http://:9080/health/ready delay=30s timeout=10s period=2s #success=1 #failure=12
+Startup:        http-get http://:9080/health/started delay=30s timeout=10s period=2s #success=1 #failure=12
+```
+
 Run the following command to get the URL:
 ```bash
 echo http://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
