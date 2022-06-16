@@ -432,6 +432,18 @@ Run the following commands to update the **applicationImage** with the **pullSec
 sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 oc apply -f deploy.yaml
 ```
+Run the following command to check status of the pods:
+```bash
+oc describe pods | grep health
+```
+
+Look for the following output to confirm that the health checks are successfully applied and working:
+
+```
+Liveness:   http-get http://:9080/health/live delay=30s timeout=10s period=2s #success=1 #failure=12
+Readiness:  http-get http://:9080/health/ready delay=30s timeout=10s period=2s #success=1 #failure=12
+Startup:    http-get http://:9080/health/started delay=30s timeout=10s period=2s #success=1 #failure=12
+```
 
 Run the following command to get the URL:
 ```bash
