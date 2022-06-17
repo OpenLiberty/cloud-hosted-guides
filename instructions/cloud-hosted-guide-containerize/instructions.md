@@ -173,6 +173,8 @@ RUN configure.sh
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
 
 The ***FROM*** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use ***FROM scratch***, which makes your image a base image. 
 
@@ -264,8 +266,8 @@ Your ***inventory*** and ***system*** images appear in the list of all Docker im
 
 ```
 REPOSITORY    TAG             IMAGE ID        CREATED          SIZE
-inventory     1.0-SNAPSHOT    08fef024e986    4 minutes ago    471MB
-system        1.0-SNAPSHOT    1dff6d0b4f31    5 minutes ago    470MB
+inventory     1.0-SNAPSHOT    08fef024e986    4 minutes ago    1GB
+system        1.0-SNAPSHOT    1dff6d0b4f31    5 minutes ago    977MB
 ```
 
 
@@ -374,6 +376,168 @@ curl -s http://localhost:9080/system/properties | jq
 ```
 
 You can externalize the configuration of more than just the port numbers. To learn more about Open Liberty server configuration, check out the [Server Configuration Overview](https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html) docs. 
+
+::page{title="Optimizing the image size"}
+
+As mentioned previously, the parent image that is used in each ***Dockerfile*** contains the ***full*** tag, which includes all of the Liberty features. This parent image with the ***full*** tag is recommended for development, but while deploying to production it is recommended to use a parent image with the ***kernel-slim*** tag. The ***kernel-slim*** tag provides a bare minimum server with the ability to add the features required by the application.
+
+Replace the ***Dockerfile*** for the inventory service.
+
+> To open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-containerize/start/inventory/Dockerfile, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="inventory" \
+  version="$VERSION-$REVISION" \
+  summary="The inventory microservice from the Containerizing microservices guide" \
+  description="This image contains the inventory microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 \
+    src/main/liberty/config \
+    /config/
+
+RUN features.sh
+
+COPY --chown=1001:0 \
+    target/guide-containerize-inventory.war \
+    /config/apps
+
+RUN configure.sh
+```
+
+
+
+Replace the parent image with ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi*** at the top of your ***Dockerfile***. This image contains the ***kernel-slim*** tag that is recommended when deploying to production.
+
+Place ***RUN features.sh*** command after the ***COPY*** command that copies the local ***/config/*** directory into the ***Docker*** image. The ***features.sh*** script adds the Liberty features that your application is required to operate.
+
+Ensure that you repeat these instructions for the ***system*** service.
+
+Replace the ***Dockerfile*** for the system service.
+
+> To open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-containerize/start/system/Dockerfile, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Containerizing microservices guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 src/main/liberty/config /config/
+
+RUN features.sh
+
+COPY --chown=1001:0 target/guide-containerize-system.war /config/apps
+
+RUN configure.sh
+```
+
+
+
+Continue by running the following commands to stop and remove your current ***Docker*** containers that are using the ***full*** parent image:
+
+```bash
+docker stop inventory system
+docker rm inventory system
+```
+
+Next, build your new ***Docker*** images with the ***kernel-slim*** parent image:
+
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+
+Verify that the images have been built by executing the following command to list all the local ***Docker*** images:
+
+```bash
+docker images
+```
+
+Notice that the images for the ***inventory*** and ***system*** services now have a reduced image size.
+```
+REPOSITORY      TAG             IMAGE ID        CREATED         SIZE
+inventory       1.0-SNAPSHOT	d5a3d1b2c20e    4 minutes ago	682MB
+system          1.0-SNAPSHOT	6346cf87eae0	5 minutes ago	694MB
+```
+
+After confirming that the images have been built, run the following commands to start the ***Docker*** containers:
+
+```bash
+docker run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
+docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
+```
+
+Once your ***Docker*** containers are running, run the following command to see the list of required features installed by ***features.sh***:
+
+```bash
+docker exec -it inventory /opt/ol/wlp/bin/productInfo featureInfo
+```
+
+Your list of Liberty features should be similar to the following:
+```
+jndi-1.0
+servlet-5.0
+cdi-3.0
+concurrent-2.0
+jsonb-2.0
+jsonp-2.0
+mpConfig-3.0
+restfulWS-3.0
+restfulWSClient-3.0
+```
+
+
+The **system** service which shows the system properties of the running JVM is now available to be accessed at **http://localhost:9080/system/properties**. Run the following curl command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+Next, you can add your local system properties at the **http://localhost:9081/inventory/systems/[system-ip-address]** URL by replacing **[system-ip-address]** with the IP address that you obtained in the previous section. Run the following commands:
+```bash
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
+```
+
+Then, verify the addition of your localhost system properties to the **inventory** service at **http://localhost:9081/inventory/systems**. Run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
 
 ::page{title="Testing the microservices"}
 
@@ -659,7 +823,7 @@ Run the Maven **package** goal to compile the test classes. Run the Maven **fail
 ```bash
 SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
 mvn package
-mvn failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9091 -Dsystem.http.port=9080
+mvn failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9081 -Dsystem.http.port=9080
 ```
 
 If the tests pass, you see output similar to the following example:
