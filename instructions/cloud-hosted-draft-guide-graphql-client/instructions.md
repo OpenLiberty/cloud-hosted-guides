@@ -21,9 +21,12 @@ Learn how to use a GraphQL client to run GraphQL queries and mutations.
 
 GraphQL is an open source data query language. Unlike REST APIs, each request sent to a GraphQL service goes to a single HTTP endpoint. To learn more about GraphQL, see the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide.
 
-You will start with the ***graphql*** microservice created as part of the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide. Then, you'll use the [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) to create a ***query*** microservice that will make requests to the GraphQL microservice. The GraphQL microservice retrieves data from multiple ***system*** microservices. 
+You will start with the ***graphql*** microservice created as part of the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide. Then, you'll use the [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) to create a ***query*** microservice that will make requests to the ***graphql*** microservice. The ***graphql*** microservice retrieves data from multiple ***system*** microservices.
 
 The results of the requests will be displayed at REST endpoints. OpenAPI will be used to help make the requests and display the data. To learn more about OpenAPI, check out the [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html) guide.
+
+![GraphQL client application architecture where multiple system microservices are integrated behind the graphql service](https://raw.githubusercontent.com/OpenLiberty/draft-guide-graphql-client/draft/assets/architecture.png)
+
 
 ::page{title="Getting started"}
 
@@ -61,14 +64,14 @@ Create the ***GraphQlClient*** interface.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/draft-guide-graphql-client/start/query/src/main/java/io/openliberty/guides/client/GraphQlClient.java
+touch /home/project/draft-guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java
 ```
 
 
 > Then, to open the GraphQlClient.java file in your IDE, select
-> **File** > **Open** > draft-guide-graphql-client/start/query/src/main/java/io/openliberty/guides/client/GraphQlClient.java, or click the following button
+> **File** > **Open** > draft-guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java, or click the following button
 
-::openFile{path="/home/project/draft-guide-graphql-client/start/query/src/main/java/io/openliberty/guides/client/GraphQlClient.java"}
+::openFile{path="/home/project/draft-guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java"}
 
 
 
@@ -80,9 +83,9 @@ import org.eclipse.microprofile.graphql.Name;
 
 import io.openliberty.guides.graphql.models.SystemInfo;
 import io.openliberty.guides.graphql.models.SystemLoad;
-import io.smallrye.graphql.client.typesafe.api.GraphQlClientApi;
+import io.smallrye.graphql.client.typesafe.api.GraphQLClientApi;
 
-@GraphQlClientApi
+@GraphQLClientApi
 public interface GraphQlClient {
 
     SystemInfo system(@Name("hostname") String hostname);
@@ -111,42 +114,40 @@ Create the ***QueryResource*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/draft-guide-graphql-client/start/query/src/main/java/io/openliberty/guides/client/QueryResource.java
+touch /home/project/draft-guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
 ```
 
 
 > Then, to open the QueryResource.java file in your IDE, select
-> **File** > **Open** > draft-guide-graphql-client/start/query/src/main/java/io/openliberty/guides/client/QueryResource.java, or click the following button
+> **File** > **Open** > draft-guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
 
-::openFile{path="/home/project/draft-guide-graphql-client/start/query/src/main/java/io/openliberty/guides/client/QueryResource.java"}
+::openFile{path="/home/project/draft-guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
 
 
 
 ```java
 package io.openliberty.guides.query;
 
-import java.util.Set;
-import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
+import io.openliberty.guides.graphql.models.NoteInfo;
 import io.openliberty.guides.graphql.models.SystemInfo;
 import io.openliberty.guides.graphql.models.SystemLoad;
-import io.openliberty.guides.graphql.models.NoteInfo;
 import io.openliberty.guides.query.client.GraphQlClient;
-import io.smallrye.graphql.client.typesafe.api.GraphQlClientBuilder;
+import io.smallrye.graphql.client.typesafe.api.TypesafeGraphQLClientBuilder;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 @ApplicationScoped
 @Path("query")
 public class QueryResource {
 
-    private GraphQlClient gc = GraphQlClientBuilder.newBuilder()
+    private GraphQlClient gc = TypesafeGraphQLClientBuilder.newBuilder()
                                                    .build(GraphQlClient.class);
 
     @GET
@@ -182,7 +183,7 @@ public class QueryResource {
 
 The ***QueryResource*** class uses the ***GraphQlClient*** interface to make requests to the ***graphql*** microservice and display the results. In a real application, you would be making requests to an external GraphQL API, or you would be doing further manipulation of the data after retrieval.
 
-Use the ***GraphQLClientBuilder*** class to create a client object that implements the ***GraphQlClient*** interface and can interact with the ***graphql*** microservice. The ***GraphQlClient*** client can make requests to the URL specified by the ***graphql.server*** variable in the ***server.xml***. The client is used in the ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** functions.
+Use the ***TypesafeGraphQLClientBuilder*** class to create a client object that implements the ***GraphQlClient*** interface and can interact with the ***graphql*** microservice. The ***GraphQlClient*** client can make requests to the URL specified by the ***graphql.server*** variable in the ***server.xml***. The client is used in the ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** functions.
 
 
 Replace the Maven project file.
@@ -202,7 +203,7 @@ Replace the Maven project file.
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.openliberty.guides</groupId>
-    <artifactId>query</artifactId>
+    <artifactId>guide-graphql-client-query</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>war</packaging>
 
@@ -221,13 +222,13 @@ Replace the Maven project file.
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>8.0.0</version>
+            <version>9.1.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>4.0.1</version>
+            <version>5.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -235,7 +236,7 @@ Replace the Maven project file.
         <!-- Required dependencies -->
         <dependency>
            <groupId>io.openliberty.guides</groupId>
-           <artifactId>models</artifactId>
+           <artifactId>guide-graphql-client-models</artifactId>
            <version>1.0-SNAPSHOT</version>
         </dependency>
         
@@ -243,6 +244,16 @@ Replace the Maven project file.
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client</artifactId>
+            <version>2.0.0.RC4</version>
+        </dependency>
+        <dependency>
+            <groupId>io.smallrye</groupId>
+            <artifactId>smallrye-graphql-client-implementation-vertx</artifactId>
+            <version>2.0.0.RC4</version>
+        </dependency>
+        <dependency>
+            <groupId>io.smallrye.stork</groupId>
+            <artifactId>stork-core</artifactId>
             <version>1.1.2</version>
         </dependency>
         <dependency>
@@ -250,41 +261,48 @@ Replace the Maven project file.
             <artifactId>slf4j-simple</artifactId>
             <version>1.7.30</version>
         </dependency>
-        
+             
         <!-- For tests -->
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.13</version>
-        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.7.1</version>
+            <version>5.8.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-rs-client</artifactId>
-            <version>3.4.3</version>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.0.0.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-rs-extension-providers</artifactId>
-            <version>3.4.3</version>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-json-binding-provider</artifactId>
+            <version>6.0.0.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.glassfish</groupId>
-            <artifactId>javax.json</artifactId>
-            <version>1.1.4</version>
+            <artifactId>jakarta.json</artifactId>
+            <version>2.0.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.eclipse</groupId>
-            <artifactId>yasson</artifactId>
-            <version>1.0.9</version>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.16.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.16.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.36</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -296,7 +314,7 @@ Replace the Maven project file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.3.4</version>
+                <version>3.5.2</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -308,16 +326,23 @@ Replace the Maven project file.
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
             </plugin>
-            <!-- Plugin to run functional tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>2.22.0</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.default.http.port}</http.port>
                     </systemPropertyVariables>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -326,7 +351,7 @@ Replace the Maven project file.
 
 
 
-The ***smallrye-graphql-client*** dependency provides the classes that use to interact with a ***graphql*** microservice.
+The ***smallrye-graphql-client*** dependencies provide the classes that use to interact with a ***graphql*** microservice.
 
 To get the service running, the Liberty server needs to be correctly configured.
 
@@ -343,11 +368,11 @@ Replace the server configuration file.
 <server description="Query Service">
 
   <featureManager>
-    <feature>jaxrs-2.1</feature>
-    <feature>cdi-2.0</feature>
-    <feature>jsonb-1.0</feature>
-    <feature>mpConfig-2.0</feature>
-    <feature>mpOpenAPI-2.0</feature>
+    <feature>restfulWS-3.0</feature>
+    <feature>cdi-3.0</feature>
+    <feature>jsonb-2.0</feature>
+    <feature>mpConfig-3.0</feature>
+    <feature>mpOpenAPI-3.0</feature>
   </featureManager>
 
   <variable name="default.http.port" defaultValue="9084"/>
@@ -357,7 +382,7 @@ Replace the server configuration file.
   <httpEndpoint host="*" httpPort="${default.http.port}"
       httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
 
-  <webApplication location="query.war" contextRoot="/"/>
+  <webApplication location="guide-graphql-client-query.war" contextRoot="/"/>
 </server>
 ```
 
@@ -392,7 +417,7 @@ docker build -t graphql:1.0-SNAPSHOT graphql/.
 docker build -t query:1.0-SNAPSHOT query/.
 ```
 
-Run these Docker images using the provided ***startContainers*** script. The script will create a network for the services to communicate through. It will create the two ***system*** microservices, a ***graphql*** microservice, and a ***query*** microservice that will interact with eachother.
+Run these Docker images using the provided ***startContainers*** script. The script will create a network for the services to communicate through. It will create the two ***system*** microservices, a ***graphql*** microservice, and a ***query*** microservice that will interact with each other.
 
 
 ```bash
@@ -500,6 +525,303 @@ When you're done checking out the application, run the following script to stop 
 ```bash
 ./scripts/stopContainers.sh
 ```
+
+
+::page{title="Testing the application"}
+
+Although you can test your application manually, you should rely on automated tests. In this section, you'll create integration tests using Testcontainers to verify that the basic operations you implemented function correctly. 
+
+First, create a RESTful client interface for the ***query*** microservice.
+
+Create the ***QueryResourceClient.java*** interface.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/draft-guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java
+```
+
+
+> Then, to open the QueryResourceClient.java file in your IDE, select
+> **File** > **Open** > draft-guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java, or click the following button
+
+::openFile{path="/home/project/draft-guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java"}
+
+
+
+```java
+package it.io.openliberty.guides.query;
+
+import java.util.List;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import io.openliberty.guides.graphql.models.SystemInfo;
+import io.openliberty.guides.graphql.models.SystemLoad;
+import io.openliberty.guides.graphql.models.NoteInfo;
+
+@ApplicationScoped
+@Path("query")
+public interface QueryResourceClient {
+
+    @GET
+    @Path("system/{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    SystemInfo querySystem(@PathParam("hostname") String hostname);
+
+    @GET
+    @Path("systemLoad/{hostnames}")
+    @Produces(MediaType.APPLICATION_JSON)
+    List<SystemLoad> querySystemLoad(@PathParam("hostnames") String hostnames);
+
+    @POST
+    @Path("mutation/system/note")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    Response editNote(NoteInfo text);
+}
+```
+
+
+
+This interface declares ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** methods for accessing each of the endpoints that are set up to access the ***query*** microservice.
+
+Create the test container class that access the ***query*** image that you built in previous section.
+
+Create the ***LibertyContainer.java*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/draft-guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java
+```
+
+
+> Then, to open the LibertyContainer.java file in your IDE, select
+> **File** > **Open** > draft-guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java, or click the following button
+
+::openFile{path="/home/project/draft-guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java"}
+
+
+
+```java
+package it.io.openliberty.guides.query;
+
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.UriBuilder;
+
+public class LibertyContainer extends GenericContainer<LibertyContainer> {
+
+    static final Logger LOGGER = LoggerFactory.getLogger(LibertyContainer.class);
+    private String baseURL;
+
+    public LibertyContainer(final String dockerImageName) {
+        super(dockerImageName);
+        waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
+        this.addExposedPorts(9084);
+        return;
+    }
+
+    public <T> T createRestClient(Class<T> clazz) {
+        String urlPath = getBaseURL();
+        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
+        ResteasyClient client = (ResteasyClient) builder.build();
+        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
+        return target.proxy(clazz);
+    }
+
+    public String getBaseURL() throws IllegalStateException {
+        if (baseURL != null) {
+            return baseURL;
+        }
+        if (!this.isRunning()) {
+            throw new IllegalStateException(
+                "Container must be running to determine hostname and port");
+        }
+        baseURL =  "http://" + this.getContainerIpAddress()
+            + ":" + this.getFirstMappedPort();
+        System.out.println("TEST: " + baseURL);
+        return baseURL;
+    }
+}
+```
+
+
+
+The ***createRestClient()*** method creates a REST client instance with the ***QueryResourceClient*** interface. The ***getBaseURL()*** method constructs the URL that can access the ***query*** image.
+
+Now, you'll create your integration test cases.
+
+Create the ***QueryResourceIT.java*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/draft-guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java
+```
+
+
+> Then, to open the QueryResourceIT.java file in your IDE, select
+> **File** > **Open** > draft-guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java, or click the following button
+
+::openFile{path="/home/project/draft-guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.query;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.util.List;
+import jakarta.ws.rs.core.Response;
+import io.openliberty.guides.graphql.models.NoteInfo;
+import io.openliberty.guides.graphql.models.SystemLoad;
+import io.openliberty.guides.graphql.models.SystemLoadData;
+import io.openliberty.guides.graphql.models.SystemInfo;
+
+@Testcontainers
+@TestMethodOrder(OrderAnnotation.class)
+public class QueryResourceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(QueryResourceIT.class);
+    private static String system8ImageName = "system:1.0-java8-SNAPSHOT";
+    private static String queryImageName = "query:1.0-SNAPSHOT";
+    private static String graphqlImageName = "graphql:1.0-SNAPSHOT";
+
+    public static QueryResourceClient client;
+    public static Network network = Network.newNetwork();
+
+    @Container
+    public static GenericContainer<?> systemContainer
+        = new GenericContainer<>(system8ImageName)
+              .withNetwork(network)
+              .withExposedPorts(9080)
+              .withNetworkAliases("system-java8")
+              .withLogConsumer(new Slf4jLogConsumer(logger));
+
+    @Container
+    public static LibertyContainer graphqlContainer
+        = new LibertyContainer(graphqlImageName)
+              .withNetwork(network)
+              .withExposedPorts(9082)
+              .withNetworkAliases("graphql")
+              .withLogConsumer(new Slf4jLogConsumer(logger));
+
+    @Container
+    public static LibertyContainer libertyContainer
+        = new LibertyContainer(queryImageName)
+              .withNetwork(network)
+              .withExposedPorts(9084)
+              .withLogConsumer(new Slf4jLogConsumer(logger));
+
+    @BeforeAll
+    public static void setupTestClass() throws Exception {
+        System.out.println("TEST: Starting Liberty Container setup");
+        client = libertyContainer.createRestClient(QueryResourceClient.class);
+    }
+
+    @Test
+    @Order(1)
+    public void testGetSystem() {
+        System.out.println("TEST: Testing get system /system/system-java8");
+        SystemInfo systemInfo = client.querySystem("system-java8");
+        assertEquals(systemInfo.getHostname(), "system-java8");
+        assertNotNull(systemInfo.getOsVersion(), "osVersion is null");
+        assertNotNull(systemInfo.getJava(), "java is null");
+        assertNotNull(systemInfo.getSystemMetrics(), "systemMetrics is null");
+    }
+
+    @Test
+    @Order(2)
+    public void testGetSystemLoad() {
+        System.out.println("TEST: Testing get system load /systemLoad/system-java8");
+        List<SystemLoad> systemLoad = client.querySystemLoad("system-java8");
+        assertEquals(systemLoad.get(0).getHostname(), "system-java8");
+        SystemLoadData systemLoadData = systemLoad.get(0).getLoadData();
+        assertNotNull(systemLoadData.getLoadAverage(), "loadAverage is null");
+        assertNotNull(systemLoadData.getHeapUsed(), "headUsed is null");
+        assertNotNull(systemLoadData.getNonHeapUsed(), "nonHeapUsed is null");
+    }
+
+    @Test
+    @Order(3)
+    public void testEditNote() {
+        System.out.println("TEST: Testing editing note /mutation/system/note");
+        NoteInfo note = new NoteInfo();
+        note.setHostname("system-java8");
+        note.setText("I am trying out GraphQL on Open Liberty!");
+        Response response = client.editNote(note);
+        assertEquals(200, response.getStatus(), "Incorrect response code");
+        SystemInfo systemInfo = client.querySystem("system-java8");
+        assertEquals(systemInfo.getNote(), "I am trying out GraphQL on Open Liberty!");
+    }
+}
+```
+
+
+
+Define the ***systemContainer*** test container to start up the ***system-java8*** image, the ***graphqlContainer*** test container to start up the ***graphql*** image, and the ***libertyContainer*** test container to start up the ***query*** image. Make sure that the containers use the same network.
+
+The ***@Testcontainers*** annotation finds all fields that are annotated with the ***@Container*** annotation and calls their container lifecycle methods. The ***static*** function declaration on each container indicates that this container will be started only once before any test method is executed and stopped after the last test method is executed.
+
+The ***testGetSystem()*** verifies the ***/query/system/{hostname}*** endpoint with ***hostname*** specified to ***system-java8***.
+
+The ***testGetSystemLoad()*** verifies the ***/query/systemLoad/{hostnames}*** endpoint with ***hostnames*** specified to ***system-java8***.
+
+The ***testEditNote()*** verifies the mutation operation at the ***/query/mutation/system/note*** endpoint.
+
+
+The required ***dependencies*** had already been added to the ***pom.xml*** Maven configuration file for you, including JUnit5, JBoss RESTEasy client, Glassfish JSON, Testcontainers, and Log4J libraries.
+
+To enable running the integration test by the Maven ***verify*** goal, the ***maven-failsafe-plugin*** plugin is also required.
+
+### Running the tests
+
+You can run the Maven ***verify*** goal, which compiles the java files, starts the containers, runs the tests, and then stops the containers.
+
+
+You will see the following output:
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.query.QueryResourceIT
+...
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 11.694 s - in it.io.openliberty.guides.query.QueryResourceIT
+
+Results :
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
+
 
 ::page{title="Summary"}
 
