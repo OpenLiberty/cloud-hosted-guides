@@ -108,7 +108,8 @@ docker build -t system:1.0-SNAPSHOT system/.
 
 The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
 
-Next, push your images to the container registry on IBM Cloud with the following commands:
+
+Next, push your image to the container registry on IBM Cloud with the following commands:
 
 ```bash
 docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
