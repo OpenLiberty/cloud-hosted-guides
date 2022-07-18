@@ -278,6 +278,8 @@ public class Event implements Serializable {
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
 
 The following table breaks down the new annotations:
 
@@ -320,8 +322,12 @@ touch /home/project/guide-jpa-intro/start/backendServices/src/main/resources/MET
     <persistence-unit name="jpa-unit" transaction-type="JTA">
         <jta-data-source>jdbc/eventjpadatasource</jta-data-source>
         <properties>
-            <property name="eclipselink.ddl-generation" value="create-tables"/>
-            <property name="eclipselink.ddl-generation.output-mode" value="both" />
+            <property name="jakarta.persistence.schema-generation.database.action"
+                      value="create"/>
+            <property name="jakarta.persistence.schema-generation.scripts.action"
+                      value="create"/>
+            <property name="jakarta.persistence.schema-generation.scripts.create-target"
+                      value="createDDL.ddl"/>
         </properties>
     </persistence-unit>
 </persistence>
@@ -334,7 +340,7 @@ The persistence unit is defined by the ***persistence-unit*** XML element. The *
 A JTA transaction type requires a JTA data source to be provided. The ***jta-data-source*** element specifies the Java Naming and Directory Interface (JNDI) name of the data source that is used. The ***data source*** has already been configured for you in the ***backendServices/src/main/liberty/config/server.xml*** file. This data source configuration is where the Java Database Connectivity (JDBC) connection is defined along with some database vendor-specific properties.
 
 
-The ***eclipselink.ddl-generation*** properties are used here so that you aren't required to manually create a database table to run this sample application. To learn more about the ***ddl-generation*** properties, see the [JPA Extensions Reference for EclipseLink.](http://www.eclipse.org/eclipselink/documentation/2.5/jpa/extensions/p_ddl_generation.htm)
+The ***jakarta.persistence.schema-generation*** properties are used here so that you aren't required to manually create a database table to run this sample application. To learn more about the JPA schema generation and available properties, see https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a12917[Schema Generation, Section 9.4 of the JPA Specification]
 
 
 ::page{title="Performing CRUD operations using JPA"}
