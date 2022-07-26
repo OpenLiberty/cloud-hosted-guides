@@ -96,7 +96,7 @@ curl -s http://localhost:9080/ServletSample/servlet
 
 The servlet returns a simple response of ***Hello! How are you today?***.
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -158,12 +158,14 @@ touch /home/project/guide-maven-intro/start/pom.xml
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- Liberty configuration -->
         <liberty.var.default.http.port>9080</liberty.var.default.http.port>
         <liberty.var.default.https.port>9443</liberty.var.default.https.port>
         <liberty.var.app.context.root>${project.artifactId}</liberty.var.app.context.root>
     </properties>
 
     <dependencies>
+        <!-- Provided dependencies -->
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
@@ -177,6 +179,7 @@ touch /home/project/guide-maven-intro/start/pom.xml
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
+        <!-- For testing -->
         <dependency>
             <groupId>commons-httpclient</groupId>
             <artifactId>commons-httpclient</artifactId>
@@ -223,6 +226,8 @@ touch /home/project/guide-maven-intro/start/pom.xml
 </project>
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***pom.xml*** file starts with a root ***project*** element and a ***modelversion*** element, which is always set to ***4.0.0***. 
@@ -395,7 +400,7 @@ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 To see whether the test detects a failure, change the ***response string*** in the servlet ***src/main/java/io/openliberty/guides/hello/HelloServlet.java*** so that it doesn't match the string that the test is looking for. Then re-run the tests and check that the test fails.
 
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 ::page{title="Summary"}
 
