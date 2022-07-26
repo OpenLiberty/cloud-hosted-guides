@@ -104,7 +104,7 @@ Click ***Execute*** and you receive the response ***No Constraint Violations*** 
 
 This time you receive ***Constraint Violation Found: must be greater than or equal to 18*** as a response because the age specified was under the minimum age of 18. Try other combinations of values to get a feel for the constraints that will be defined in this guide.
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -200,6 +200,8 @@ public class Astronaut implements Serializable {
 }
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The bean stores the attributes of an astronaut, ***name***, ***age***, and ***emailAddress***, and provides getters and setters to access and set the values.
@@ -782,7 +784,7 @@ Results :
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 ::page{title="Summary"}
 
