@@ -141,6 +141,8 @@ Replace the server configuration file.
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
 
 The CORS configuration contains the following attributes:
 
@@ -442,7 +444,7 @@ Header X-Powered-By = [Servlet/4.0]
 
 You can modify the server configuration and the test code to experiment with the various CORS configuration attributes.
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
