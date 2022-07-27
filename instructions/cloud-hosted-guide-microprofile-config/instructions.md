@@ -81,7 +81,7 @@ In addition, you can run the following curl command to access a third microservi
 curl -s http://localhost:9080/config | jq
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -179,6 +179,8 @@ public class InventoryConfig {
 }
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 Inject the ***io_openliberty_guides_port_number*** property, and add the ***getPortNumber()*** class method to the ***InventoryConfig.java*** file.
@@ -850,7 +852,7 @@ The warning and error messages are expected and result from a request to a bad o
 
 To see whether the tests detect a failure, remove the configuration resetting line in the ***setup()*** method of the ***ConfigurationIT.java*** file. Then, manually change some configuration values in the ***resources/CustomConfigSource.json*** file. Rerun the tests. You will see a test failure occur.
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
