@@ -82,7 +82,7 @@ A UI is also available for a more interactive view of the deployed APIs. Click t
 
 This UI is built from the [Open Source Swagger UI](https://swagger.io/tools/swagger-ui), which renders the generated **/openapi** document into a very user friendly page.
 
-After you are finished checking out the application, stop the Open Liberty server by pressing ***CTRL+C*** in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -219,6 +219,8 @@ public class InventoryResource {
 }
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 Add OpenAPI ***@APIResponse***, ***@APIResponseSchema***, ***@Operation***, and ***@Parameter*** annotations to the two JAX-RS endpoint methods, ***getPropertiesForHost()*** and ***listContents()***.
@@ -741,7 +743,7 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 
 The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
 
-When you are done checking out the service, exit dev mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 
