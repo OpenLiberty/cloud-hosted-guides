@@ -85,7 +85,7 @@ After you see the following message, your application server in dev mode is read
 
 After the Open Liberty server starts and you see the ***To run tests on demand, press Enter.*** message, you can press the ***enter/return*** key to run the integration tests. After the tests finish, you can press the ***enter/return*** key to run the tests again, or you can make code changes to the application or tests. Development mode automatically recompiles and updates any application or test code changes that you make.
 
-After you're finished running tests, exit development mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+After you're finished running tests, exit development mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Bootstrapping your application for testing"}
@@ -170,6 +170,8 @@ public class PersonServiceIT {
 }
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 Import the ***ApplicationContainer*** class and the ***Container*** annotation, create the ***ApplicationContainer*** application, and annotate the application with ***@Container*** annotation.
@@ -375,7 +377,7 @@ Save the changes, and  press the ***enter/return*** key in your console window t
 
 Running tests in development mode is convenient for local development, but it can be tedious to test against a running Open Liberty server in non-development scenarios such as CI/CD pipelines. For this reason, MicroShed Testing can start and stop the application runtime before and after the tests are run. This process is primarily accomplished by using Docker and Testcontainers.
 
-To test outside of development mode, exit development mode by pressing ***CTRL+C*** in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+To test outside of development mode, exit development mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 Next, use the following Maven goal to run the tests from a cold start:
 ```bash
