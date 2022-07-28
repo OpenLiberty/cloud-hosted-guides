@@ -1,8 +1,8 @@
 ---
 markdown-version: v1
 title: instructions
-branch: lab-204-instruction
-version-history-start-date: 2022-02-09T14:19:17.000Z
+branch: lab-163-instruction
+version-history-start-date: 2020-06-11 12:14:46 UTC
 ---
 ::page{title="Welcome to the Testing reactive Java microservices guide!"}
 
@@ -197,6 +197,8 @@ public class AppContainerConfig implements SharedContainerConfiguration {
 }
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 The ***AppContainerConfig*** class externalizes test container setup and configuration, so you can use the same application containers across multiple tests.The ***@Container*** annotation denotes an application container that is started up and used in the tests.
