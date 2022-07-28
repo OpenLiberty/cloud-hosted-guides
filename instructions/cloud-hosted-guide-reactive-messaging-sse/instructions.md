@@ -155,6 +155,8 @@ public class BFFResource {
 ```
 
 
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
 
 ### Creating the SSE API endpoint
 
