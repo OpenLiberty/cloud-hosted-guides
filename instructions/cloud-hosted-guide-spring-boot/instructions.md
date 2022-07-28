@@ -80,7 +80,7 @@ The following output is returned:
 Greetings from Spring Boot!
 ```
 
-When you need to stop the application, press ***CTRL+C*** in the command-line session where you ran the application.
+When you need to stop the application, press `Ctrl+C` in the command-line session where you ran the application.
 
 ::page{title="Building and running the application in a Docker container"}
 
@@ -145,6 +145,8 @@ COPY --chown=1001:0 --from=staging /staging/thin-guide-spring-boot-0.1.0.jar \
 RUN configure.sh 
 ```
 
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 This Dockerfile is written in two main stages. For more information about multi-stage Dockerfiles, see the documentation on the [official Docker website](https://docs.docker.com/develop/develop-images/multistage-build/).
@@ -295,6 +297,7 @@ Update the ***Maven POM*** file in the ***start*** directory.
         </executions>
       </plugin>
 
+      <!-- Enable Liberty Maven plugin -->
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
@@ -316,6 +319,7 @@ Update the ***Maven POM*** file in the ***start*** directory.
           </execution>
         </executions>
       </plugin>
+      <!-- End of Liberty Maven plugin -->
 
     </plugins>
   </build>
@@ -390,7 +394,7 @@ In another command-line sesssion, run the following command to access the applic
 curl http://localhost:9080/hello
 ```
 
-After you finish exploring the application, press ***CTRL+C*** to stop the Open Liberty server. Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in a separate command-line session:
+After you finish exploring the application, press `Ctrl+C` to stop the Open Liberty server. Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in a separate command-line session:
 
 
 ```bash
@@ -475,6 +479,7 @@ Update the Maven POM file in the ***start*** directory.
         </executions>
       </plugin>
 
+      <!-- Enable Liberty Maven plugin -->
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
@@ -498,6 +503,7 @@ Update the Maven POM file in the ***start*** directory.
           </execution>
         </executions>
       </plugin>
+      <!-- End of Liberty Maven plugin -->
 
     </plugins>
   </build>
@@ -532,7 +538,7 @@ In another command-line sesssion, run the following command to access the applic
 curl http://localhost:9080/hello
 ```
 
-When you need to stop the application, press ***CTRL+C***.
+When you need to stop the application, press `Ctrl+C`.
 
 
 ::page{title="Summary"}
