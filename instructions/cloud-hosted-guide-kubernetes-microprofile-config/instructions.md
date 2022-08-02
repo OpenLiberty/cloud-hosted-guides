@@ -564,6 +564,13 @@ Run the following command to deploy your changes to the Kubernetes cluster.
 kubectl replace --force -f kubernetes.yaml
 ```
 
+When this command finishes, wait for the pods to be in the Ready state. Run the following command to view the status of the pods.
+```bash
+kubectl get pods
+```
+
+When the pods are ready, the output shows ***1/1*** for READY and ***Running*** for STATUS.
+
 
 Set up port forwarding to the new services.
 
@@ -607,6 +614,7 @@ If it is not working, then check the configuration of the credentials.
 Update the ***pom.xml*** files so that the ***system.service.root*** and ***inventory.service.root*** properties have the correct ports to access the **system** and **inventory** services.
 
 ```bash
+cd /home/project/guide-kubernetes-microprofile-config/start
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
 INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
 sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' inventory/pom.xml
