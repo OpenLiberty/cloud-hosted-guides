@@ -807,6 +807,11 @@ To enable running the integration test by the Maven ***verify*** goal, the ***ma
 You can run the Maven ***verify*** goal, which compiles the java files, starts the containers, runs the tests, and then stops the containers.
 
 
+```bash
+cd /home/project/guide-graphql-client/start/query
+mvn verify
+```
+
 You will see the following output:
 
 ```
