@@ -539,8 +539,8 @@ Update the ***pom.xml*** file.
                             <goal>install-node-and-npm</goal>
                         </goals>
                         <configuration>
-                            <nodeVersion>v12.18.3</nodeVersion>
-                            <npmVersion>6.14.6</npmVersion>
+                            <nodeVersion>v16.16.0</nodeVersion>
+                            <npmVersion>8.11.0</npmVersion>
                         </configuration>
                     </execution>
                     <execution>
