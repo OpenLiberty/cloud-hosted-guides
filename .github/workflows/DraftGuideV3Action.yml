@@ -72,7 +72,7 @@ jobs:
           branchName=${{ github.event.inputs.branch }}
           instructionsMD="${{ github.event.inputs.cloud_hosted_name }}.md"
           git init
-          mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs
+          mkdir -p instructions/${{ github.event.inputs.cloud_hosted_name }}/labs
           cd GuideConverter
           mvn compiler:compile 
           mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11} ${{ github.event.inputs.cloud_hosted_name }}"
