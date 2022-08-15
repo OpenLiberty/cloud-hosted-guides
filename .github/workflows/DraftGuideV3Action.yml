@@ -70,7 +70,7 @@ jobs:
       - name: Run Converter
         run: |
           branchName=${{ github.event.inputs.branch }}
-          instructionsMD="cloud-hosted-${{ github.event.inputs.cloud_hosted_name }}.md"
+          instructionsMD="${{ github.event.inputs.cloud_hosted_name }}.md"
           git init
           mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs
           cd GuideConverter
