@@ -76,13 +76,23 @@ Next, open another command-line session and start the ***query*** service by usi
 mvn -pl query liberty:run
 ```
 
-Point your browser to the http://localhost:9081/query/properties/os.name URL to test out the basic unary service. You will see your operating system name. Next, point your browser to the following URLs to try out the corresponding streaming rpc call: 
+Click the following button to visit the ***/query/properties/os.name*** endpoint to test out the basic unary service. You will see your operating system name.  
 
-* Visit http://localhost:9081/query/properties/os to test out the server streaming. You should see the information of your localhost operating system.
+::startApplication{port="9081" display="external" name="/query/properties/os.name" route="/query/properties/os.name"}
 
-* Visit http://localhost:9081/query/properties/user to test out the client streaming. You should see the information of your localhost user properties. 
+Next, try out the corresponding streaming rpc call:
 
-* Visit http://localhost:9081/query/properties/java to test out the bidirectional streaming. You should see the information of your localhost Java properties.
+* Visit ***/query/properties/os*** to test out the server streaming. You should see the information of your localhost operating system.
+
+::startApplication{port="9081" display="external" name="/query/properties/os" route="/query/properties/os"}
+
+* Visit ***/query/properties/user*** to test out the client streaming. You should see the information of your localhost user properties. 
+
+::startApplication{port="9081" display="external" name="/query/properties/user" route="/query/properties/user"}
+
+* Visit ***/query/properties/java*** to test out the bidirectional streaming. You should see the information of your localhost Java properties.
+
+::startApplication{port="9081" display="external" name="/query/properties/java" route="/query/properties/java"}
 
 Observe the output from the consoles running the ***system*** and ***query*** services.
 
@@ -417,8 +427,9 @@ Replace the ***query*** server configuration file.
 
 Because you are running the ***system*** and ***query*** services in dev mode, the changes that you made were automatically picked up. You’re now ready to check out your application in your browser.
 
-Point your browser to the http://localhost:9081/query/properties/os.name URL to test out the unary service. You should see your operating system name. You can try out the URL with other property name.
+Click the following button to visit the ***/query/properties/os.name*** endpoint to test out the unary service. You should see your operating system name. You can try out the URL with other property name.
 
+::startApplication{port="9081" display="external" name="/query/properties/os.name" route="/query/properties/os.name"}
 
 
 ::page{title="Implementing server streaming call"}
@@ -622,8 +633,9 @@ public class PropertiesResource {
 
 The endpoint creates a ***channel*** to the ***system*** service and a ***client*** by using the ***SystemServiceGrpc.newStub()*** API. Then, call the ***getPropertiesServer()*** method with an implementation of the ***StreamObserver*** interface. The ***onNext()*** method receives messages streaming from the server individually and stores them into the ***properties*** placeholder. After all properties are received, shutdown the ***channel*** and returns the placeholder. Because the rpc call is asynchronous, use a ***CountDownLatch*** to synchronize the streaming flow.
 
-Point your browser to the http://localhost:9081/query/properties/os URL to test out the server streaming. You should see the ***os.*** properties from the ***system*** service. Observe the output from the consoles running the ***system*** and ***query*** services.
+Click the following button to visit the ***/query/properties/os*** endpoint to test out the server streaming. You should see the ***os.*** properties from the ***system*** service. Observe the output from the consoles running the ***system*** and ***query*** services.
 
+::startApplication{port="9081" display="external" name="/query/properties/os" route="/query/properties/os"}
 
 
 
@@ -914,8 +926,9 @@ public class PropertiesResource {
 
 After a connection is created between the two services, call the ***client.getPropertiesClient()*** method to get a ***stream***, collect the properties started with ***user.***, create a ***SystemPropertyName*** message individually, and send the message to the server through by the ***stream::onNext*** action. When all property names are sent, finish the streaming by calling the ***onCompleted()***. Again, use a ***CountDownLatch*** to synchronize the streaming flow.
 
-Point your browser to the http://localhost:9081/query/properties/user URL to test out the client streaming. You should see the ***user.*** properties from the ***system*** service. Observe the output from the consoles running the ***system*** and ***query*** services.
+Click the following button to visit the ***/query/properties/user*** endpoint to test out the client streaming. You should see the ***user.*** properties from the ***system*** service. Observe the output from the consoles running the ***system*** and ***query*** services.
 
+::startApplication{port="9081" display="external" name="/query/properties/user" route="/query/properties/user"}
 
 
 ::page{title="Implementing bidirectional streaming call"}
@@ -1286,8 +1299,9 @@ public class PropertiesResource {
 
 After a connection is created between the two services, call the ***client.getPropertiesBidirect()*** method with an implementation of the ***StreamObserver*** interface. The ***onNext()*** method receives messages streaming from the server individually and stores them into the ***properties*** placeholder. Then, collect the properties started with ***java.***. For each property name, create a ***SystemPropertyName*** message and send the message to the server through by the ***stream::onNext*** action. When all property names are sent, finish the streaming by calling the ***onCompleted()*** method. Again, use a ***CountDownLatch*** to synchronize the streaming flow.
 
+Click the following button to visit the ***/query/properties/java*** endpoint to test out the bidirectional streaming. You should see the ***java.*** properties from the ***system*** service. Observe the output from the consoles running the ***system*** and ***query*** services.
 
-Point your browser to the http://localhost:9081/query/properties/java URL to test out the bidirectional streaming. You should see the ***java.*** properties from the ***system*** service. Observe the output from the consoles running the ***system*** and ***query*** services.
+::startApplication{port="9081" display="external" name="/query/properties/java" route="/query/properties/java"}
 
 
 ::page{title="Testing the application"}
