@@ -78,6 +78,7 @@ touch /home/project/draft-guide-graphql-client/start/query/src/main/java/io/open
 ```java
 package io.openliberty.guides.query.client;
 
+import org.eclipse.microprofile.graphql.Query;
 import org.eclipse.microprofile.graphql.Mutation;
 import org.eclipse.microprofile.graphql.Name;
 
@@ -87,13 +88,14 @@ import io.smallrye.graphql.client.typesafe.api.GraphQLClientApi;
 
 @GraphQLClientApi
 public interface GraphQlClient {
-
+    @Query
     SystemInfo system(@Name("hostname") String hostname);
 
-    SystemLoad[] systemLoad(@Name("hostnames") String[] hostnames);
+    @Query("systemLoad")
+    SystemLoad[] getSystemLoad(@Name("hostnames") String[] hostnames);
 
     @Mutation
-    boolean editNote(@Name("hostname") String hostname, @Name("note") String note);
+    boolean editNote(@Name("hostname") String host, @Name("note") String note);
 
 }
 ```
@@ -108,7 +110,9 @@ Inside the interface, a function header is written for each resolver available i
 
 For example, the ***system()*** function maps to the ***system*** resolver. The resolver returns a ***SystemInfo*** object, which is described by the ***SystemInfo*** class. Thus, the ***system()*** function returns the type ***SystemInfo***.
 
-Because the ***editNote*** resolver is for a ***mutation*** operation, it has the ***@Mutation*** annotation on it. A ***mutation*** operation allows you to modify data, in this case, it allows you to add and edit a note to the system service. If the ***@Mutation*** annotation was not placed on the function, it would be treated as if it mapped to a ***query*** operation.
+The name of each resolver is the method name, but it can be overridden with the ***@Query*** or ***@Mutation*** annotations. For example, the name of the method ***getSystemLoad*** is overridden as ***systemLoad***. The GraphQL request that goes over the wire will use the name overridden by the ***@Query*** and ***@Mutation*** annotation. Similarly, the name of the function inputs can be overridden by the ***@Name*** annotation. For example, input ***host*** is overridden as ***hostname*** in the ***editNote()*** function. 
+
+The ***editNote*** ***mutation*** operation has the ***@Mutation*** annotation on it. A ***mutation*** operation allows you to modify data, in this case, it allows you to add and edit a note to the system service. If the ***@Mutation*** annotation was not placed on the function, it would be treated as if it mapped to a ***query*** operation. 
 
 Create the ***QueryResource*** class.
 
@@ -162,7 +166,7 @@ public class QueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     public SystemLoad[] querySystemLoad(@PathParam("hostnames") String hostnames) {
         String[] hostnameArray = hostnames.split(",");
-        return gc.systemLoad(hostnameArray);
+        return gc.getSystemLoad(hostnameArray);
     }
 
     @POST
