@@ -80,17 +80,15 @@ Click the following button to visit the ***/query/properties/os.name*** endpoint
 
 ::startApplication{port="9081" display="external" name="/query/properties/os.name" route="/query/properties/os.name"}
 
-Next, try out the corresponding streaming rpc call:
-
-* Visit ***/query/properties/os*** to test out the server streaming. You should see the information of your localhost operating system.
+Next, click the following button to visit the ***/query/properties/os*** endpoint to test out the server streaming. You should see the information of your localhost operating system.
 
 ::startApplication{port="9081" display="external" name="/query/properties/os" route="/query/properties/os"}
 
-* Visit ***/query/properties/user*** to test out the client streaming. You should see the information of your localhost user properties. 
+Visit the ***/query/properties/user*** endpoint to test out the client streaming. You should see the information of your localhost user properties. 
 
 ::startApplication{port="9081" display="external" name="/query/properties/user" route="/query/properties/user"}
 
-* Visit ***/query/properties/java*** to test out the bidirectional streaming. You should see the information of your localhost Java properties.
+Visit the ***/query/properties/java*** endpoint to test out the bidirectional streaming. You should see the information of your localhost Java properties.
 
 ::startApplication{port="9081" display="external" name="/query/properties/java" route="/query/properties/java"}
 
@@ -106,6 +104,10 @@ mvn -pl query liberty:stop
 ::page{title="Creating and defining gRPC service"}
 
 Navigate to the ***start*** directory to begin.
+
+```bash
+cd /home/project/draft-guide-grpc-intro/start
+```
 
 First, create the ***.proto*** file and generate gRPC classes. You will implement the gRPC server with the generated classes later. The ***.proto*** file defines all the service calls and message types. The message types are used in the service call definition for the parameters and returns.
 
@@ -182,6 +184,10 @@ mvn -pl systemproto install
 ::page{title="Implementing unary call"}
 
 Navigate to the ***start*** directory.
+
+```bash
+cd /home/project/draft-guide-grpc-intro/start
+```
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
 
@@ -1408,13 +1414,13 @@ public class QueryIT {
 
 Each test case tests one of the methods for instantiating a RESTful client.
 
-The ***testGetPropertiesString()*** tests the ***http://localhost:9081/query/properties/os.name*** endpoint and confirms that a response is received. 
+The ***testGetPropertiesString()*** tests the ***/query/properties/os.name*** endpoint and confirms that a response is received. 
 
-The ***testGetOSProperties()*** tests the ***http://localhost:9081/query/properties/os*** endpoint and confirms that a response is received. 
+The ***testGetOSProperties()*** tests the ***/query/properties/os*** endpoint and confirms that a response is received. 
 
-The ***testGetUserProperties()*** tests the ***http://localhost:9081/query/properties/user*** endpoint and confirms that a response is received. 
+The ***testGetUserProperties()*** tests the ***/query/properties/user*** endpoint and confirms that a response is received. 
 
-The ***testGetJavaProperties()*** tests the ***http://localhost:9081/query/properties/java*** endpoint and confirms that a response is received. 
+The ***testGetJavaProperties()*** tests the ***/query/properties/java*** endpoint and confirms that a response is received. 
 
 ### Running the tests
 
