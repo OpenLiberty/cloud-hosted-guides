@@ -106,7 +106,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: cloud-hosted-${{matrix.guides.guide}}
-          path: instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instructionDir}}
+          path: instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instructionDir}}/
 
   createPullRequestProd:
     needs: convertProd
@@ -217,7 +217,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: cloud-hosted-${{matrix.guides.guide}}
-          path: instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instructionDir}}
+          path: instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instructionDir}}/
 
   createPullRequestStaging:
     needs: convertStaging
