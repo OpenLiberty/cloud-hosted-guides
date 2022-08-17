@@ -101,7 +101,7 @@ jobs:
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: cloud-hosted-${{matrix.guides.guide}}
           path: instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instructionDir}}/
@@ -211,7 +211,7 @@ jobs:
           bash .github/workflows/draftRemoval.sh ${{matrix.guides.guide}}
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: cloud-hosted-${{matrix.guides.guide}}
           path: instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instructionDir}}/
