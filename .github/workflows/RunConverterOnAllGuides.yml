@@ -95,7 +95,7 @@ jobs:
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{matrix.guides.guide}}.md instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
+          mv GuideConverter/${{matrix.guides.guide}}.md instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh ${{matrix.guides.guide}}
           git add .
@@ -103,8 +103,8 @@ jobs:
           git config --global user.name "GuidesBot"
       - uses: actions/upload-artifact@v3
         with:
-          name: cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
-          path: instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
+          name: ${{matrix.guides.instruction}}
+          path: instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
 
   createPullRequestProd:
     needs: convertProd
@@ -206,7 +206,7 @@ jobs:
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{matrix.guides.guide}}.md instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
+          mv GuideConverter/${{matrix.guides.guide}}.md instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh ${{matrix.guides.guide}}
           git add .
@@ -214,8 +214,8 @@ jobs:
           git config --global user.name "GuidesBot"
       - uses: actions/upload-artifact@v3
         with:
-          name: cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
-          path: instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
+          name: ${{matrix.guides.instruction}}
+          path: instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
 
   createPullRequestStaging:
     needs: convertStaging
