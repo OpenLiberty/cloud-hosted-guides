@@ -1,134 +1,178 @@
 [
     {
-        "guide": "guide-arquillian-managed"
+        "guide": "guide-arquillian-managed",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-bean-validation"
+        "guide": "guide-bean-validation",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-cdi-intro"
+        "guide": "guide-cdi-intro",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-containerize"
+        "guide": "guide-containerize",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-contract-testing"
+        "guide": "guide-contract-testing",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-cors"
+        "guide": "guide-cors",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-docker"
+        "guide": "guide-docker",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-getting-started"
+        "guide": "guide-getting-started",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-jpa-intro"
+        "guide": "guide-jpa-intro",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-kubernetes-intro"
+        "guide": "guide-kubernetes-intro",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-kubernetes-microprofile-config"
+        "guide": "guide-kubernetes-microprofile-config",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-kubernetes-microprofile-health"
+        "guide": "guide-kubernetes-microprofile-health",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-liberty-deep-dive"
+        "guide": "guide-liberty-deep-dive",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-maven-intro"
+        "guide": "guide-maven-intro",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-maven-multimodules"
+        "guide": "guide-maven-multimodules",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microprofile-config"
+        "guide": "guide-microprofile-config",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microprofile-fallback"
+        "guide": "guide-microprofile-fallback",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microprofile-graphql"
+        "guide": "guide-microprofile-graphql",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microprofile-health"
+        "guide": "guide-microprofile-health",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microprofile-jwt"
+        "guide": "guide-microprofile-jwt",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microprofile-metrics"
+        "guide": "guide-microprofile-metrics",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microprofile-openapi"
+        "guide": "guide-microprofile-openapi",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microprofile-opentracing"
+        "guide": "guide-microprofile-opentracing",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microprofile-opentracing-jaeger"
+        "guide": "guide-microprofile-opentracing-jaeger",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microprofile-reactive-messaging"
+        "guide": "guide-microprofile-reactive-messaging",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microprofile-reactive-messaging-acknowledgment"
+        "guide": "guide-microprofile-reactive-messaging-acknowledgment",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microprofile-reactive-messaging-rest-integration"
+        "guide": "guide-microprofile-reactive-messaging-rest-integration",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microprofile-rest-client"
+        "guide": "guide-microprofile-rest-client",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microprofile-rest-client-async"
+        "guide": "guide-microprofile-rest-client-async",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-microshed-testing"
+        "guide": "guide-microshed-testing",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-mongodb-intro"
+        "guide": "guide-mongodb-intro",
+        "instruction": ""
     },
     {
-        "guide": "guide-openliberty-operator-intro"
+        "guide": "guide-openliberty-operator-intro",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-openliberty-operator-openshift"
+        "guide": "guide-openliberty-operator-openshift",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-reactive-messaging-sse"
+        "guide": "guide-reactive-messaging-sse",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-reactive-rest-client"
+        "guide": "guide-reactive-rest-client",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-reactive-service-testing"
+        "guide": "guide-reactive-service-testing",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-rest-client-angular"
+        "guide": "guide-rest-client-angular",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-rest-client-angularjs"
+        "guide": "guide-rest-client-angularjs",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-rest-client-java"
+        "guide": "guide-rest-client-java",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-rest-client-reactjs"
+        "guide": "guide-rest-client-reactjs",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-rest-hateoas"
+        "guide": "guide-rest-hateoas",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-rest-intro"
+        "guide": "guide-rest-intro",
+        "instruction": "instructions.md"
     },
     {
-        "guide": "guide-security-intro"
+        "guide": "guide-security-intro",
+        "instruction": "labs/cloud_hosted_guide_security_intro.md"
     },
     {
-        "guide": "guide-spring-boot"
+        "guide": "guide-spring-boot",
+        "instruction": "instructions.md"
     }
 ]
