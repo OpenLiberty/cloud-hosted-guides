@@ -1,30 +1,30 @@
 [
     {
-        "guide": "guide-getting-started"
+        "guide": "guide-arquillian-managed"
+    },
+    {
+        "guide": "guide-bean-validation"
     },
     {
         "guide": "guide-cdi-intro"
     },
     {
-        "guide": "guide-docker"
-    },
-    {
-        "guide": "guide-rest-intro"
-    },
-    {
-        "guide": "guide-microprofile-rest-client"
-    },
-    {
-        "guide": "guide-microprofile-config"
-    },
-    {
-        "guide": "guide-microprofile-fallback"
-    },
-    {
         "guide": "guide-containerize"
     },
     {
-        "guide": "guide-microshed-testing"
+        "guide": "guide-contract-testing"
+    },
+    {
+        "guide": "guide-cors"
+    },
+    {
+        "guide": "guide-docker"
+    },
+    {
+        "guide": "guide-getting-started"
+    },
+    {
+        "guide": "guide-jpa-intro"
     },
     {
         "guide": "guide-kubernetes-intro"
@@ -36,19 +36,25 @@
         "guide": "guide-kubernetes-microprofile-health"
     },
     {
+        "guide": "guide-liberty-deep-dive"
+    },
+    {
+        "guide": "guide-maven-intro"
+    },
+    {
+        "guide": "guide-maven-multimodules"
+    },
+    {
+        "guide": "guide-microprofile-config"
+    },
+    {
+        "guide": "guide-microprofile-fallback"
+    },
+    {
+        "guide": "guide-microprofile-graphql"
+    },
+    {
         "guide": "guide-microprofile-health"
-    },
-    {
-        "guide": "guide-microprofile-reactive-messaging"
-    },
-    {
-        "guide": "guide-reactive-service-testing"
-    },
-    {
-        "guide": "guide-microprofile-opentracing-jaeger"
-    },
-    {
-        "guide": "guide-microprofile-opentracing"
     },
     {
         "guide": "guide-microprofile-jwt"
@@ -60,24 +66,69 @@
         "guide": "guide-microprofile-openapi"
     },
     {
+        "guide": "guide-microprofile-opentracing"
+    },
+    {
+        "guide": "guide-microprofile-opentracing-jaeger"
+    },
+    {
+        "guide": "guide-microprofile-reactive-messaging"
+    },
+    {
         "guide": "guide-microprofile-reactive-messaging-acknowledgment"
     },
     {
         "guide": "guide-microprofile-reactive-messaging-rest-integration"
     },
     {
+        "guide": "guide-microprofile-rest-client"
+    },
+    {
         "guide": "guide-microprofile-rest-client-async"
     },
     {
-        "guide": "guide-rest-client-java"
+        "guide": "guide-microshed-testing"
+    },
+    {
+        "guide": "guide-mongodb-intro"
+    },
+    {
+        "guide": "guide-openliberty-operator-intro"
+    },
+    {
+        "guide": "guide-openliberty-operator-openshift"
+    },
+    {
+        "guide": "guide-reactive-messaging-sse"
     },
     {
         "guide": "guide-reactive-rest-client"
     },
     {
-        "guide": "guide-contract-testing"
+        "guide": "guide-reactive-service-testing"
     },
     {
-        "guide": "guide-reactive-messaging-sse"
+        "guide": "guide-rest-client-angular"
+    },
+    {
+        "guide": "guide-rest-client-angularjs"
+    },
+    {
+        "guide": "guide-rest-client-java"
+    },
+    {
+        "guide": "guide-rest-client-reactjs"
+    },
+    {
+        "guide": "guide-rest-hateoas"
+    },
+    {
+        "guide": "guide-rest-intro"
+    },
+    {
+        "guide": "guide-security-intro"
+    },
+    {
+        "guide": "guide-spring-boot"
     }
 ]
