@@ -95,7 +95,7 @@ jobs:
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{matrix.guides.guide}}.md instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
+          mv GuideConverter/${{matrix.guides.guide}}.md instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh cloud-hosted-${{matrix.guides.guide}}
           git add .
@@ -104,7 +104,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: cloud-hosted-${{matrix.guides.guide}}
-          path: instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
+          path: instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
 
   createPullRequestProd:
     needs: convertProd
@@ -206,7 +206,7 @@ jobs:
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{matrix.guides.guide}}.md instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
+          mv GuideConverter/${{matrix.guides.guide}}.md instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh cloud-hosted-${{matrix.guides.guide}}
           git config --global user.email "GuidesBot@OpenLiberty.io"
@@ -214,7 +214,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: cloud-hosted-${{matrix.guides.guide}}
-          path: instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
+          path: instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
 
   createPullRequestStaging:
     needs: convertStaging
