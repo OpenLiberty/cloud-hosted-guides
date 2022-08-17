@@ -193,6 +193,7 @@ Replace the server configuration file.
     
     <mpMetrics authentication="false"/>
 
+    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
 
     <httpEndpoint host="*" httpPort="${default.http.port}" 
         httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>

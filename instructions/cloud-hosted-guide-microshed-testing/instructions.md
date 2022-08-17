@@ -145,14 +145,17 @@ Replace the ***PersonServiceIT*** class.
 ```java
 package io.openliberty.guides.testing;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 import org.microshed.testing.jaxrs.RESTClient;
 import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.SharedContainerConfig;
 import org.microshed.testing.testcontainers.ApplicationContainer;
 import org.testcontainers.junit.jupiter.Container;
 
 @MicroShedTest
+@SharedContainerConfig(AppDeploymentConfig.class)
 public class PersonServiceIT {
 
     @RESTClient
@@ -165,6 +168,8 @@ public class PersonServiceIT {
 
     @Test
     public void testCreatePerson() {
+        Long createId = personSvc.createPerson("Hank", 42);
+        assertNotNull(createId);
     }
 
 }
@@ -228,10 +233,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.Test;
 import org.microshed.testing.jaxrs.RESTClient;
 import org.microshed.testing.jupiter.MicroShedTest;
+import org.microshed.testing.SharedContainerConfig;
 import org.microshed.testing.testcontainers.ApplicationContainer;
 import org.testcontainers.junit.jupiter.Container;
 
 @MicroShedTest
+@SharedContainerConfig(AppDeploymentConfig.class)
 public class PersonServiceIT {
 
     @RESTClient
