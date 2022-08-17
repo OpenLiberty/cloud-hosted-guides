@@ -103,8 +103,7 @@ jobs:
           git config --global user.name "GuidesBot"
       - uses: actions/upload-artifact@v3
         with:
-          name: cloud-hosted-${{matrix.guides.guide}}
-          path: instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instructionDir}}/
+          path: instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
 
   createPullRequestProd:
     needs: convertProd
@@ -214,8 +213,7 @@ jobs:
           git config --global user.name "GuidesBot"
       - uses: actions/upload-artifact@v3
         with:
-          name: cloud-hosted-${{matrix.guides.guide}}
-          path: instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instructionDir}}/
+          path: instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
 
   createPullRequestStaging:
     needs: convertStaging
