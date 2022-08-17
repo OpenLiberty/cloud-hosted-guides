@@ -1,222 +1,222 @@
 [
     {
         "guide": "guide-arquillian-managed",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-arquillian-managed",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-bean-validation",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-bean-validation",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-cdi-intro",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-cdi-intro",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-containerize",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-containerize",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-contract-testing",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-contract-testing",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-cors",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-cors",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-docker",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-docker",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-getting-started",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-getting-started",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-jpa-intro",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-jpa-intro",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-kubernetes-intro",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-kubernetes-intro",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-kubernetes-microprofile-config",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-kubernetes-microprofile-config",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-kubernetes-microprofile-health",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-kubernetes-microprofile-health",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-liberty-deep-dive",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-liberty-deep-dive",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-maven-intro",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-maven-intro",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-maven-multimodules",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-maven-multimodules",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microprofile-config",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microprofile-config",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microprofile-fallback",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microprofile-fallback",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microprofile-graphql",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microprofile-graphql",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microprofile-health",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microprofile-health",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microprofile-jwt",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microprofile-jwt",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microprofile-metrics",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microprofile-metrics",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microprofile-openapi",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microprofile-openapi",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microprofile-opentracing",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microprofile-opentracing",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microprofile-opentracing-jaeger",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microprofile-opentracing-jaeger",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microprofile-reactive-messaging",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microprofile-reactive-messaging",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microprofile-reactive-messaging-acknowledgment",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microprofile-reactive-messaging-rest-integration",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microprofile-reactive-messaging-rest-integration",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microprofile-rest-client",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microprofile-rest-client",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microprofile-rest-client-async",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microprofile-rest-client-async",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-microshed-testing",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-microshed-testing",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-mongodb-intro",
-        "instructionDir": "labs",
+        "instructionDir": "cloud-hosted-guide-mongodb-intro/labs",
         "instruction": "cloud_hosted_guide_mongodb_intro.md"
     },
     {
         "guide": "guide-openliberty-operator-intro",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-openliberty-operator-intro",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-openliberty-operator-openshift",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-openliberty-operator-openshift",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-reactive-messaging-sse",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-reactive-messaging-sse",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-reactive-rest-client",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-reactive-rest-client",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-reactive-service-testing",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-reactive-service-testing",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-rest-client-angular",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-rest-client-angular",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-rest-client-angularjs",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-rest-client-angularjs",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-rest-client-java",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-rest-client-java",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-rest-client-reactjs",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-rest-client-reactjs",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-rest-hateoas",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-rest-hateoas",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-rest-intro",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-rest-intro",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-security-intro",
-        "instructionDir": "labs",
+        "instructionDir": "cloud-hosted-guide-security-intro/labs",
         "instruction": "cloud_hosted_guide_security_intro.md"
     },
     {
         "guide": "guide-spring-boot",
-        "instructionDir": "",
+        "instructionDir": "cloud-hosted-guide-spring-boot",
         "instruction": "instructions.md"
     }
 ]
