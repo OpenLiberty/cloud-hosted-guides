@@ -86,7 +86,7 @@ jobs:
         run: |
           branchName=${{ github.event.inputs.branch }}
           git init
-          mkdir -p instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instructionDir}}
+          mkdir -p instructions/${{matrix.guides.instructionDir}}
           rm -f instructions/cloud-hosted-${{matrix.guides.guide}}/README.md
           cd GuideConverter
           mvn compiler:compile
@@ -199,7 +199,7 @@ jobs:
         run: |
           branchName=${{ github.event.inputs.branch }}
           git init
-          mkdir -p instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instructionDir}}
+          mkdir -p instructions/${{matrix.guides.instructionDir}}
           rm -f instructions/cloud-hosted-${{matrix.guides.guide}}/README.md
           cd GuideConverter
           mvn compiler:compile
