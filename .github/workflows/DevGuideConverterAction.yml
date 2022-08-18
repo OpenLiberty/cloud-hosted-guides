@@ -32,7 +32,6 @@ jobs:
           echo "${{ github.event.inputs.devGuide }}"
           echo "${{ github.event.inputs.converter_branch }}"
 
-          
   convertToDevelopmentLab:
     name: Make PR to cloud-hosted-draft-guide-development
     runs-on: ubuntu-latest
