@@ -135,8 +135,11 @@ option java_multiple_files = true;
 service SystemService {
     rpc getProperty (SystemPropertyName) returns (SystemPropertyValue) {}
 
+    rpc getPropertiesServer (SystemPropertyName) returns (stream SystemProperty) {}
 
+    rpc getPropertiesClient (stream SystemPropertyName) returns (SystemProperties) {}
 
+    rpc getPropertiesBidirect (stream SystemPropertyName) returns (stream SystemProperty) {}
 }
 
 message SystemPropertyName {
