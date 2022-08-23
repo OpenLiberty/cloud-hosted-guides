@@ -520,6 +520,7 @@ Content-Length: 0
 Content-Language: en-US
 ```
 
+You can see the note you added to the system service at the ***GET /query/system/{hostname}*** endpoint.
 
 ::page{title="Tearing down the environment"}
 
