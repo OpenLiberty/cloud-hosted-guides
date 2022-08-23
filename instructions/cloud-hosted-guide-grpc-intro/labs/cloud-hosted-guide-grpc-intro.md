@@ -4,7 +4,7 @@ title: instructions
 branch: lab-1145-instruction
 version-history-start-date: 2022-08-11T09:54:57Z
 ---
-::page{title="Welcome to the Streaming messages between client and server services by gRPC guide!"}
+::page{title="Welcome to the Streaming messages between client and server services using gRPC guide!"}
 
 Learn how to use gRPC unary, server streaming, client streaming, and bidirectional streaming to communicate client and server services in Open Liberty.
 
@@ -1473,7 +1473,7 @@ rm -fr draft-guide-grpc-intro
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Streaming%20messages%20between%20client%20and%20server%20services%20by%20gRPC&guide-id=cloud-hosted-draft-guide-grpc-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Streaming%20messages%20between%20client%20and%20server%20services%20using%20gRPC&guide-id=cloud-hosted-draft-guide-grpc-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
