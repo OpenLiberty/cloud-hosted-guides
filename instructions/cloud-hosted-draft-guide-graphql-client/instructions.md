@@ -56,7 +56,7 @@ The ***finish*** directory contains the finished project that you will build.
 
 Navigate to the ***start*** directory to begin.
 
-The [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) will be used to implement the GraphQL client service. SmallRye GraphQL client supports two types of clients: typesafe and dynamic clients. A typesafe client provides ease of use and a high-level approach, while a dynamic client provides a more customizable and low-level approach to handle operations and responses. You will implement a typesafe client microservice. 
+The [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) is used to implement the GraphQL client service. The SmallRye GraphQL client supports two types of clients: typesafe and dynamic. A typesafe client is easy to use and provides a high-level approach, while a dynamic client provides a more customizable and low-level approach to handle operations and responses. You will implement a typesafe client microservice. 
 
 The typesafe client interface contains a function for each resolver available in the ***graphql*** microservice. The JSON objects returned by the ***graphql*** microservice are converted to Java objects.
 
@@ -185,9 +185,9 @@ public class QueryResource {
 
 
 
-The ***QueryResource*** class uses the ***GraphQlClient*** interface to make requests to the ***graphql*** microservice and display the results. In a real application, you would be making requests to an external GraphQL API, or you would be doing further manipulation of the data after retrieval.
+The ***QueryResource*** class uses the ***GraphQlClient*** interface to make requests to the ***graphql*** microservice and display the results. In a real application, you make requests to an external GraphQL API, or do further manipulation of the data after retrieval.
 
-Use the ***TypesafeGraphQLClientBuilder*** class to create a client object that implements the ***GraphQlClient*** interface and can interact with the ***graphql*** microservice. The ***GraphQlClient*** client can make requests to the URL specified by the ***graphql.server*** variable in the ***server.xml***. The client is used in the ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** functions.
+Use the ***TypesafeGraphQLClientBuilder*** class to create a client object that implements the ***GraphQlClient*** interface and can interact with the ***graphql*** microservice. The ***GraphQlClient*** client can make requests to the URL specified by the ***graphql.server*** variable in the ***server.xml*** file. The client is used in the ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** functions.
 
 
 Replace the Maven project file.
@@ -355,9 +355,9 @@ Replace the Maven project file.
 
 
 
-The ***smallrye-graphql-client*** dependencies provide the classes that use to interact with a ***graphql*** microservice.
+The ***smallrye-graphql-client*** dependencies provide the classes that you use to interact with a ***graphql*** microservice.
 
-To get the service running, the Liberty server needs to be correctly configured.
+To run the service, you must correctly configure the Liberty server.
 
 Replace the server configuration file.
 
@@ -412,7 +412,7 @@ Run the following command to download or update to the latest Open Liberty Docke
 docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 
-Dockerfiles have already been set up for you. Build your Docker images with the following commands:
+Dockerfiles are already set up for you. Build your Docker images with the following commands:
 
 ```bash
 docker build -t system:1.0-java8-SNAPSHOT --build-arg JAVA_VERSION=java8 system/.
@@ -421,14 +421,14 @@ docker build -t graphql:1.0-SNAPSHOT graphql/.
 docker build -t query:1.0-SNAPSHOT query/.
 ```
 
-Run these Docker images using the provided ***startContainers*** script. The script will create a network for the services to communicate through. It will create the two ***system*** microservices, a ***graphql*** microservice, and a ***query*** microservice that will interact with each other.
+Run these Docker images using the provided ***startContainers*** script. The script creates a network for the services to communicate through. It creates the two ***system*** microservices, a ***graphql*** microservice, and a ***query*** microservice that interact with each other.
 
 
 ```bash
 ./scripts/startContainers.sh
 ```
 
-The containers may take some time to become available. 
+The containers might take some time to become available. 
 
 ::page{title="Accessing the application"}
 
@@ -438,14 +438,14 @@ To access the client service, there are several available REST endpoints that te
 
 **Try the query operations**
 
-First, make a GET request to the ***/query/system/{hostname}*** endpoint by the following command. This request retrieves the system properties for the ***hostname*** specified.
+First, make a GET request to the ***/query/system/{hostname}*** endpoint by the following command. This request retrieves the system properties for the specified ***hostname***.
 
 The ***hostname*** is specified to ***system-java8***. You can try out the operations using the hostname ***system-java11*** as well. 
 
 ```bash
 curl -s 'http://localhost:9084/query/system/system-java8' | jq
 ```
-You can expect response similar to the following example:
+You can expect a response similar to the following example:
 
 
 ```
@@ -597,7 +597,7 @@ public interface QueryResourceClient {
 
 This interface declares ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** methods for accessing each of the endpoints that are set up to access the ***query*** microservice.
 
-Create the test container class that access the ***query*** image that you built in previous section.
+Create the test container class that accesses the ***query*** image that you built in previous section.
 
 Create the ***LibertyContainer.java*** file.
 
@@ -668,7 +668,7 @@ public class LibertyContainer extends GenericContainer<LibertyContainer> {
 
 The ***createRestClient()*** method creates a REST client instance with the ***QueryResourceClient*** interface. The ***getBaseURL()*** method constructs the URL that can access the ***query*** image.
 
-Now, you'll create your integration test cases.
+Now, create your integration test cases.
 
 Create the ***QueryResourceIT.java*** file.
 
@@ -803,7 +803,7 @@ The ***testGetSystemLoad()*** verifies the ***/query/systemLoad/{hostnames}*** e
 The ***testEditNote()*** verifies the mutation operation at the ***/query/mutation/system/note*** endpoint.
 
 
-The required ***dependencies*** had already been added to the ***pom.xml*** Maven configuration file for you, including JUnit5, JBoss RESTEasy client, Glassfish JSON, Testcontainers, and Log4J libraries.
+The required ***dependencies*** are already added to the ***pom.xml*** Maven configuration file for you, including JUnit5, JBoss RESTEasy client, Glassfish JSON, Testcontainers, and Log4J libraries.
 
 To enable running the integration test by the Maven ***verify*** goal, the ***maven-failsafe-plugin*** plugin is also required.
 
