@@ -5015,6 +5015,7 @@ You can run the Maven ***verify*** goal, which compiles the java files, starts t
 
 In this Skills Network environment, you can test the HTTP protcol only.
 ```bash
+export TESTCONTAINERS_RYUK_DISABLED=true
 mvn verify -Dtest.protocol=http
 ```
 
@@ -5363,7 +5364,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
 * [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
 * [Containerizing microservices](https://openliberty.io/guides/containerize.html)
-* [Deploying a microservice to Kubernetes by using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html)
+* [Deploying a microservice to Kubernetes using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html)
 * [Configuring microservices running in Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-config.html)
 
 
