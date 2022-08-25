@@ -4,9 +4,9 @@ title: instructions
 branch: lab-207-instruction
 version-history-start-date: 2022-02-11T18:24:15Z
 ---
-::page{title="Welcome to the Deploying a microservice to OpenShift 4 by using Open Liberty Operator guide!"}
+::page{title="Welcome to the Configuring microservices running in Kubernetes guide!"}
 
-Explore how to deploy a microservice to Red Hat OpenShift 4 by using Open Liberty Operator.
+Explore how to externalize configuration using MicroProfile Config and configure your microservices using Kubernetes ConfigMaps and Secrets.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,18 +16,14 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
+
 ::page{title="What you'll learn"}
+You will learn how and why to externalize your microservice's configuration. Externalized configuration is useful because configuration usually changes depending on your environment. You will also learn how to configure the environment by providing required values to your application using Kubernetes.
 
-You will learn how to deploy a cloud-native application with a microservice to Red Hat OpenShift 4 by using the Open Liberty Operator. 
+MicroProfile Config provides useful annotations that you can use to inject configured values into your code. These values can come from any configuration source, such as environment variables. Using environment variables allows for easier deployment to different environments. To learn more about MicroProfile Config, read the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide.
 
-[OpenShift](https://www.openshift.com/) is a Kubernetes-based platform with added functions. It streamlines the DevOps process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the deployment and management of cloud applications easier. You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
-
-[Kubernetes operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management. To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
-
-The application in this guide consists of one microservice, ***system***. The system microservice returns the JVM system properties of its host.
-
-You will deploy the ***system*** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) provides a method of packaging, deploying, and managing Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including ***Deployments***, ***Services***, and ***Routes***, depending on the configurations. The Operator then continuously compares the current state of the resources with the desired state of application deployment and reconciles them when necessary.
-
+Furthermore, you'll learn how to set these environment variables with ConfigMaps and Secrets. These resources are provided by Kubernetes and act as a data source for your environment variables. You can use a ConfigMap or Secret to set environment variables for any number of containers.
 
 
 ::page{title="Getting started"}
@@ -41,11 +37,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-openliberty-operator-openshift.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-config.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-openliberty-operator-openshift.git
-cd guide-openliberty-operator-openshift
+git clone https://github.com/openliberty/guide-kubernetes-microprofile-config.git
+cd guide-kubernetes-microprofile-config
 ```
 
 
@@ -54,421 +50,646 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-::page{title="Installing the Operator"}
+::page{title="Deploying the microservices"}
 
-
-A project is created for you to use in this exercise. Run the following command to see your project name:
-
-```bash
-oc projects
-```
-
-In this Skill Network enviornment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/blob/master/deploy/releases/0.7.1/readme.adoc).
-
-Run the following command to view all the supported API resources that are available through the Open Liberty Operator:
+The two microservices you will deploy are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster. To build these applications, navigate to the ***start*** directory and run the following command.
 
 ```bash
-oc api-resources --api-group=apps.openliberty.io
-```
-
-Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
-
-```
-NAME                     SHORTNAMES        APIGROUP                     NAMESPACED  KIND
-openlibertyapplications  olapp,olapps      apps.openliberty.io/v1beta2  true        OpenLibertyApplication
-openlibertydumps         oldump,oldumps    apps.openliberty.io/v1beta2  true        OpenLibertyDump
-openlibertytraces        oltrace,oltraces  apps.openliberty.io/v1beta2  true        OpenLibertyTrace
-```
-
-Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
-
-The ***openlibertyapplications*** CRD defines a set of configurations for deploying an Open Liberty-based application, including the application image, number of instances, and storage settings. The Open Liberty Operator watches for changes to instances of the ***OpenLibertyApplication*** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
-
-
-::page{title="Deploying the system microservice to OpenShift"}
-
-To deploy the ***system*** microservice, you must first package the microservice, then create and run an OpenShift build to produce runnable container images of the packaged microservice.
-
-### Packaging the microservice
-
-Ensure that you are in the ***start*** directory and run the following command to package the ***system*** microservice:
-
-
-```bash
-cd /home/project/guide-openliberty-operator-openshift/start
+cd start
 mvn clean package
 ```
 
-### Building and pushing the image
+Run the following command to download or update to the latest Open Liberty Docker image:
 
-Create a build template to configure how to build your container image.
-
-Create the ***build.yaml*** template file in the ***start*** directory.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-openliberty-operator-openshift/start/build.yaml
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+```
+
+Next, run the ***docker build*** commands to build container images for your application:
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
+
+Push your images to the container registry on IBM Cloud with the following commands:
+
+```bash
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+```
+
+Update the image names and set the image pull policy to **Always** so that the images in your IBM Cloud container registry are used, and remove the **nodePort** fields so that the ports can be automatically generated:
+
+```bash
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
+
+Run the following command to deploy the necessary Kubernetes resources to serve the applications.
+```bash
+kubectl apply -f kubernetes.yaml
+```
+
+When this command finishes, wait for the pods to be in the Ready state. Run the following command to view the status of the pods.
+```bash
+kubectl get pods
+```
+
+When the pods are ready, the output shows ***1/1*** for READY and ***Running*** for STATUS.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-6bd97d9bf6-6d2cj     1/1       Running   0          34s
+inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
+```
+
+After the pods are ready, you will make requests to your services.
+
+
+In this IBM cloud environment, you need to set up port forwarding to access the services. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to set up port forwarding to access the **system** service.
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
+```
+
+Then, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to set up port forwarding to access the **inventory** service.
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
+```
+
+Then use the following commands to access your **system** microservice. The ***-u*** option is used to pass in the username ***bob*** and the password ***bobpwd***.
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u bob:bobpwd | jq
+```
+
+Use the following commands to access your ***inventory*** microservice.
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
+```
+
+When you're done trying out the microservices, press **CTRL+C** in the command line sessions where you ran the ***kubectl port-forward*** commands to stop the port forwarding.
+
+::page{title="Modifying system microservice"}
+
+The ***system*** service is hardcoded to use a single forward slash as the context root. The context root is set in the ***webApplication***
+element, where the ***contextRoot*** attribute is specified as ***"/"***. You'll make the value of the ***contextRoot*** attribute configurable by implementing it as a variable.
+
+Replace the ***server.xml*** file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Sample Liberty server">
+
+  <featureManager>
+    <feature>restfulWS-3.0</feature>
+    <feature>jsonb-2.0</feature>
+    <feature>cdi-3.0</feature>
+    <feature>jsonp-2.0</feature>
+    <feature>mpConfig-3.0</feature>
+    <feature>mpHealth-4.0</feature>
+    <feature>appSecurity-4.0</feature>
+  </featureManager>
+
+  <variable name="default.http.port" defaultValue="9080"/>
+  <variable name="default.https.port" defaultValue="9443"/>
+  <variable name="system.app.username" defaultValue="bob"/>
+  <variable name="system.app.password" defaultValue="bobpwd"/>
+  <variable name="context.root" defaultValue="/"/>
+
+  <httpEndpoint host="*" httpPort="${default.http.port}" 
+    httpsPort="${default.https.port}" id="defaultHttpEndpoint" />
+
+  <webApplication location="guide-kubernetes-microprofile-config-system.war" contextRoot="${context.root}"/>
+
+  <basicRegistry id="basic" realm="BasicRegistry">
+    <user name="${system.app.username}" password="${system.app.password}" />
+  </basicRegistry>
+
+</server>
 ```
 
 
-> Then, to open the build.yaml file in your IDE, select
-> **File** > **Open** > guide-openliberty-operator-openshift/start/build.yaml, or click the following button
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
-::openFile{path="/home/project/guide-openliberty-operator-openshift/start/build.yaml"}
+
+The ***contextRoot*** attribute in the ***webApplication*** element now gets its value from the ***context.root*** variable. To find a value for the ***context.root*** variable, Open Liberty looks for the following environment variables, in order:
+
+
+* `context.root`
+* `context_root`
+* `CONTEXT_ROOT`
+
+::page{title="Modifying inventory microservice"}
+
+The ***inventory*** service is hardcoded to use ***bob*** and ***bobpwd*** as the credentials to authenticate against the ***system*** service. You'll make these credentials configurable. 
+
+Replace the ***SystemClient*** class.
+
+> To open the SystemClient.java file in your IDE, select
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java"}
+
+
+
+```java
+package io.openliberty.guides.inventory.client;
+
+import java.net.URI;
+import java.util.Base64;
+import java.util.Properties;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+@RequestScoped
+public class SystemClient {
+
+  private final String SYSTEM_PROPERTIES = "/system/properties";
+  private final String PROTOCOL = "http";
+
+  @Inject
+  @ConfigProperty(name = "CONTEXT_ROOT", defaultValue = "")
+  String CONTEXT_ROOT;
+
+  @Inject
+  @ConfigProperty(name = "default.http.port")
+  String DEFAULT_PORT;
+
+  @Inject
+  @ConfigProperty(name = "SYSTEM_APP_USERNAME")
+  private String username;
+
+  @Inject
+  @ConfigProperty(name = "SYSTEM_APP_PASSWORD")
+  private String password;
+
+  public Properties getProperties(String hostname) {
+    String url = buildUrl(PROTOCOL,
+                          hostname,
+                          Integer.valueOf(DEFAULT_PORT),
+                          CONTEXT_ROOT + SYSTEM_PROPERTIES);
+    Builder clientBuilder = buildClientBuilder(url);
+    return getPropertiesHelper(clientBuilder);
+  }
+
+  /**
+   * Builds the URI string to the system service for a particular host.
+   * @param protocol
+   *          - http or https.
+   * @param host
+   *          - name of host.
+   * @param port
+   *          - port number.
+   * @param path
+   *          - Note that the path needs to start with a slash!!!
+   * @return String representation of the URI to the system properties service.
+   */
+  protected String buildUrl(String protocol, String host, int port, String path) {
+    try {
+      URI uri = new URI(protocol, null, host, port, path, null, null);
+      return uri.toString();
+    } catch (Exception e) {
+      System.err.println("Exception thrown while building the URL: " + e.getMessage());
+      return null;
+    }
+  }
+
+  protected Builder buildClientBuilder(String urlString) {
+    try {
+      Client client = ClientBuilder.newClient();
+      Builder builder = client.target(urlString).request();
+      return builder
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, getAuthHeader());
+    } catch (Exception e) {
+      System.err.println("Exception thrown while building the client: "
+                         + e.getMessage());
+      return null;
+    }
+  }
+
+  protected Properties getPropertiesHelper(Builder builder) {
+    try {
+      Response response = builder.get();
+      if (response.getStatus() == Status.OK.getStatusCode()) {
+        return response.readEntity(Properties.class);
+      } else {
+        System.err.println("Response Status is not OK.");
+      }
+    } catch (RuntimeException e) {
+      System.err.println("Runtime exception: " + e.getMessage());
+    } catch (Exception e) {
+      System.err.println("Exception thrown while invoking the request: "
+                         + e.getMessage());
+    }
+    return null;
+  }
+
+  private String getAuthHeader() {
+    String usernamePassword = username + ":" + password;
+    String encoded = Base64.getEncoder().encodeToString(usernamePassword.getBytes());
+    return "Basic " + encoded;
+  }
+}
+```
+
+
+
+The changes introduced here use MicroProfile Config and CDI to inject the value of the environment variables ***SYSTEM_APP_USERNAME*** and ***SYSTEM_APP_PASSWORD*** into the ***SystemClient*** class.
+
+
+::page{title="Creating a ConfigMap and Secret"}
+
+Several options exist to configure an environment variable in a Docker container. You can set it directly in the ***Dockerfile*** with the ***ENV*** command. You can also set it in your ***kubernetes.yaml*** file by specifying a name and a value for the environment variable that you want to set for a specific container. With these options in mind, you're going to use a ConfigMap and Secret to set these values. These are resources provided by Kubernetes as a way to provide configuration values to your containers. A benefit is that they can be reused across many different containers, even if they all require different environment variables to be set with the same value.
+
+Create a ConfigMap to configure the app name with the following ***kubectl*** command.
+```bash
+kubectl create configmap sys-app-root --from-literal contextRoot=/dev
+```
+
+This command deploys a ConfigMap named ***sys-app-root*** to your cluster. It has a key called ***contextRoot*** with a value of ***/dev***. The ***--from-literal*** flag allows you to specify individual key-value pairs to store in this ConfigMap. Other available options, such as ***--from-file*** and ***--from-env-file***, provide more versatility as to what you want to configure. Details about these options can be found in the [Kubernetes CLI documentation](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-configmap-em-).
+
+Run the following command to display details of the ConfigMap.
+```bash
+kubectl describe configmaps sys-app-root
+```
+
+Create a Secret to configure the new credentials that ***inventory*** uses to authenticate against ***system*** with the following ***kubectl*** command.
+```bash
+kubectl create secret generic sys-app-credentials --from-literal username=alice --from-literal password=wonderland
+```
+ 
+This command looks similar to the command to create a ConfigMap, but one difference is the word ***generic***. This word creates a Secret that doesn't store information in any specialized way. Different types of secrets are available, such as secrets to store Docker credentials and secrets to store public and private key pairs.
+
+Run the following command to display details of the Secret.
+```bash
+kubectl describe secrets/sys-app-credentials
+```
+
+A Secret is similar to a ConfigMap. A key difference is that a Secret is used for confidential information such as credentials. One of the main differences is that you must explicitly tell ***kubectl*** to show you the contents of a Secret. Additionally, when it does show you the information, it only shows you a Base64 encoded version so that a casual onlooker doesn't accidentally see any sensitive data. Secrets don't provide any encryption by default, that is something you'll either need to do yourself or find an alternate option to configure. Encryption is not required for the application to run.
+
+
+
+::page{title="Updating Kubernetes resources"}
+
+Next, you will update your Kubernetes deployments to set the environment variables in your containers based on the values that are configured in the ConfigMap and Secret that you created previously. 
+
+Replace the kubernetes file.
+
+> To open the kubernetes.yaml file in your IDE, select
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/kubernetes.yaml, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/kubernetes.yaml"}
 
 
 
 ```yaml
-apiVersion: template.openshift.io/v1
-kind: Template
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: "build-template"
-  annotations:
-    description: "Build template for the system service"
-    tags: "build"
-objects:
-  - apiVersion: v1
-    kind: ImageStream
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  selector:
+    matchLabels:
+      app: system
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
     metadata:
-      name: "system-imagestream"
       labels:
-        name: "system"
-  - apiVersion: v1
-    kind: BuildConfig
-    metadata:
-      name: "system-buildconfig"
-      labels:
-        name: "system"
+        app: system
     spec:
-      source:
-        type: Binary
-      strategy:
-        type: Docker
-      output:
-        to:
-          kind: ImageStreamTag
-          name: "system-imagestream:1.0-SNAPSHOT"
-```
-
-
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-The ***build.yaml*** template includes two objects. The ***ImageStream*** object provides an abstraction from the image in the image registry, which allows you to reference and tag the image. The image registry is the integrated internal OpenShift Container Registry.
-
-The ***BuildConfig*** object defines a single build definition and any triggers that kickstart the build. The ***source*** spec defines the build input. In this case, the build inputs are your ***binary*** (local) files, which are streamed to OpenShift for the build. The uploaded files need to include the packaged ***WAR*** application binaries, which is why you needed to run the Maven commands. The template specifies a ***Docker*** strategy build, which invokes the ***docker build*** command, and creates a runnable container image of the microservice from the build input.
-
-Run the following command to create the objects for the ***system*** microservice:
-
-```bash
-oc process -f build.yaml | oc create -f -
-```
-
-Next, run the following command to view the newly created ***ImageStream*** objects and the build configurations for the microservice:
-
-```bash
-oc get all -l name=system
-```
-
-Look for the following similar resources:
-
-```
-NAME                                                TYPE     FROM     LATEST
-buildconfig.build.openshift.io/system-buildconfig   Docker   Binary   0
-
-NAME                                                IMAGE REPOSITORY                                                                   TAGS           UPDATED
-imagestream.image.openshift.io/system-imagestream   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
-```   
-
-Ensure that you are in the ***start*** directory and trigger the build by running the following command:
-
-```bash
-oc start-build system-buildconfig --from-dir=system/.
-```
-
-The local ***system*** directory is uploaded to OpenShift to be built into the Docker image. Run the following command to list the build and track its status:
-
-```bash
-oc get builds
-```
-
-Look for the output that is similar to the following example:
-
-```
-NAME                    TYPE     FROM             STATUS     STARTED
-system-buildconfig-1    Docker   Binary@f24cb58   Running    45 seconds ago
-```
-
-You might need to wait some time until the build is complete. To check whether the build is complete, run the following command to view the build log until the ***Push successful*** message appears:
-
-```bash
-oc logs build/system-buildconfig-1
-```
-
-### Checking the image
-
-During the build process, the image associated with the ***ImageStream*** object that you created earlier was pushed to the image registry and tagged. Run the following command to view the newly updated ***ImageStream*** object:
-
-```bash
-oc get imagestreams
-```
-
-Run the following command to get more details on the newly pushed image within the stream:
-
-```bash
-oc describe imagestream/system-imagestream
-```
-
-The following example shows part of the ***system-imagestream*** output:
-
-```
-Name:               system-imagestream
-Namespace:          guide
-Created:            2 minutes ago
-Labels:             name=system
-Annotations:        <none>
-Image Repository:   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
-Image Lookup:       local=false
-Unique Images:      1
-Tags:               1
-
-...
-```
-
-Now you're ready to deploy the image.
-
-### Deploying the image
-
-You can configure the specifics of the Open Liberty Operator-controlled deployment with a YAML configuration file.
-
-Create the ***deploy.yaml*** configuration file in the ***start*** directory.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-openliberty-operator-openshift/start/deploy.yaml
-```
-
-
-> Then, to open the deploy.yaml file in your IDE, select
-> **File** > **Open** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
-
-::openFile{path="/home/project/guide-openliberty-operator-openshift/start/deploy.yaml"}
-
-
-
-```yaml
-apiVersion: apps.openliberty.io/v1beta2
-kind: OpenLibertyApplication
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        # system probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9080
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+           httpGet:
+            path: /health/ready
+            port: 9080
+           initialDelaySeconds: 30
+           periodSeconds: 10
+           timeoutSeconds: 3
+           failureThreshold: 1
+        # Set the environment variables
+        env:
+        - name: CONTEXT_ROOT
+          valueFrom:
+            configMapKeyRef:
+              name: sys-app-root
+              key: contextRoot
+        - name: SYSTEM_APP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: username
+        - name: SYSTEM_APP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: password
+---
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: system
+  name: inventory-deployment
   labels:
-    name: system
+    app: inventory
 spec:
-  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
-  service:
-    port: 9080
-  expose: true
-  env:
-    - name: WLP_LOGGING_MESSAGE_FORMAT
-      value: "json"
-    - name: WLP_LOGGING_MESSAGE_SOURCE
-      value: "message,trace,accessLog,ffdc,audit"
-```
-
-
-
-The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication*** resource, ***system***, which is controlled by the Open Liberty Operator.
-
-The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\<project-name\>/\<image-stream-name\>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
-
-One of the benefits of using ***ImageStream*** objects is that the operator redeploys the application when it detects that a new image is pushed. The ***env*** parameter is used to specify environment variables that are passed to the container at runtime.
-
-Additionally, the microservice includes the ***service*** and ***expose*** parameters. The ***service.port*** parameter specifies which port is exposed by the container, allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster, it must be exposed by setting the ***expose*** parameter to ***true***. After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
-
-
-Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
-```bash
-sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
-oc apply -f deploy.yaml
-```
-
-Next, run the following command to view your newly created ***OpenLibertyApplications*** resources:
-
-```bash
-oc get OpenLibertyApplications
-```
-
-You can also replace ***OpenLibertyApplications*** with the shortname ***olapps***.
-
-Look for output that is similar to the following example:
-
-```
-NAME      IMAGE                                    EXPOSED   RECONCILED   AGE
-system    guide/system-imagestream:1.0-SNAPSHOT    true      True         10s
-```
-
-A ***RECONCILED*** state value of ***True*** indicates that the operator was able to successfully process the ***OpenLibertyApplications*** instances. Run the following command to view details of your microservice:
-
-```bash
-oc describe olapps/system
-```
-
-This example shows part of the ***olapps/system*** output:
-
-```
-Name:         system
-Namespace:    guide
-Labels:       app.kubernetes.io/part-of=system
-              name=system
-Annotations:  <none>
-API Version:  apps.openliberty.io/v1beta2
-Kind:         OpenLibertyApplication
-
-...
-```
-
-::page{title="Accessing the microservice"}
-
-To access the exposed ***system*** microservice, run the following command and make note of the ***HOST***:
-
-```bash
-oc get routes
-```
-
-Look for an output that is similar to the following example:
-
-```
-NAME     HOST/PORT                                                     PATH   SERVICES   PORT       TERMINATION   WILDCARD
-system   system-guide.2886795274-80-kota02.environments.katacoda.com          system     9080-tcp                 None
-```
-
-
-Visit the microservice by going to the following URL: 
-***http://[HOST]/system/properties***
-
-Make sure to substitute the appropriate ***[HOST]*** value. For example, using the output from the command above, ***system-guide.2886795274-80-kota02.environments.katacoda.com*** is the ***HOST***. The following example shows this value substituted for ***HOST*** in the URL: ***http://system-guide.2886795274-80-kota02.environments.katacoda.com/system/properties***.
-
-Or, you can run the following command to get the URL:
-```bash
-echo http://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
-```
-
-Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
-
-When you’re done trying out the microservice, run following command to stop the microservice:
-```bash
-oc delete -f deploy.yaml
-```
-
-::page{title="Specifying optional parameters"}
-
-You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1beta2.adoc#configuration) to find all of the supported optional CRDs.
-
-To configure the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator, specify the ***probes*** in your ***deploy.yaml*** file. The ***startup*** probe verifies whether deployed application is fully initialized before the liveness probe takes over. Then, the ***liveness*** probe determines whether the application is running and the ***readiness*** probe determines whether the application is ready to process requests. For more information about application health checks, see the [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide.
-
-Replace the ***deploy.yaml*** configuration file.
-
-> To open the deploy.yaml file in your IDE, select
-> **File** > **Open** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
-
-::openFile{path="/home/project/guide-openliberty-operator-openshift/start/deploy.yaml"}
-
-
-
-```yaml
-apiVersion: apps.openliberty.io/v1beta2
-kind: OpenLibertyApplication
+  selector:
+    matchLabels:
+      app: inventory
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        # inventory probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9080
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        # Set the environment variables
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+        - name: CONTEXT_ROOT
+          valueFrom:
+            configMapKeyRef:
+              name: sys-app-root
+              key: contextRoot
+        - name: SYSTEM_APP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: username
+        - name: SYSTEM_APP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: password
+---
+apiVersion: v1
+kind: Service
 metadata:
-  name: system
-  labels:
-    name: system
+  name: system-service
 spec:
-  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
-  service:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
     port: 9080
-  expose: true
-  env:
-    - name: WLP_LOGGING_MESSAGE_FORMAT
-      value: "json"
-    - name: WLP_LOGGING_MESSAGE_SOURCE
-      value: "message,trace,accessLog,ffdc,audit"
-  probes:
-    startup:
-      failureThreshold: 12
-      httpGet:
-        path: /health/started
-        port: 9080
-        scheme: HTTP
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
-    liveness:
-      failureThreshold: 12
-      httpGet:
-        path: /health/live
-        port: 9080
-        scheme: HTTP
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
-    readiness:
-      failureThreshold: 12
-      httpGet:
-        path: /health/ready
-        port: 9080
-        scheme: HTTP
-      initialDelaySeconds: 30
-      periodSeconds: 2
-      timeoutSeconds: 10
+    targetPort: 9080
+    nodePort: 31000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 32000
 ```
 
 
 
-The ***/health/started***, ***/health/live***, and ***/health/ready*** health check endpoints are already created for you. 
+The ***CONTEXT_ROOT***, ***SYSTEM_APP_USERNAME***, and ***SYSTEM_APP_PASSWORD*** environment variables are set in the ***env*** sections of ***system-container*** and ***inventory-container***.
+
+Using the ***valueFrom*** field, you can specify the value of an environment variable from various sources. These sources include a ConfigMap, a Secret, and information about the cluster. In this example ***configMapKeyRef*** gets the value ***contextRoot*** from the ***sys-app-root*** ConfigMap. Similarly, ***secretKeyRef*** gets the values ***username*** and ***password*** from the ***sys-app-credentials*** Secret.
 
 
-Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the new configuration:
+::page{title="Deploying your changes"}
+
+
+Rebuild the application using ***mvn clean package***.
 ```bash
-sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
-oc apply -f deploy.yaml
+cd /home/project/guide-kubernetes-microprofile-config/start
+mvn clean package
 ```
-Run the following command to check status of the pods:
+
+Run the ***docker build*** commands to rebuild container images for your application:
 ```bash
-oc describe pods | grep health
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
-Look for an output similar to the following example:
 
-[role='no_copy']
-```
-Liveness:       http-get http://:9080/health/live delay=30s timeout=10s period=2s #success=1 #failure=12
-Readiness:      http-get http://:9080/health/ready delay=30s timeout=10s period=2s #success=1 #failure=12
-Startup:        http-get http://:9080/health/started delay=30s timeout=10s period=2s #success=1 #failure=12
-```
+Push your updated images to the container registry on IBM Cloud with the following commands:
 
-Run the following command to get the URL:
 ```bash
-echo http://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 ```
 
-Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
+Update the image names and set the image pull policy to **Always** so that the images in your IBM Cloud container registry are used, and remove the **nodePort** fields so that the ports can be automatically generated:
+
+```bash
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
+
+Run the following command to deploy your changes to the Kubernetes cluster.
+```bash
+kubectl replace --force -f kubernetes.yaml
+```
+
+When this command finishes, wait for the pods to be in the Ready state. Run the following command to view the status of the pods.
+```bash
+kubectl get pods
+```
+
+When the pods are ready, the output shows ***1/1*** for READY and ***Running*** for STATUS.
+
+
+Set up port forwarding to the new services.
+
+Run the following commands to set up port forwarding to access the ***system*** service.
+
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
+```
+
+Then, run the following commands to set up port forwarding to access the **inventory** service.
+
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
+```
+
+You now need to use the new username, ***alice***, and the new password, ***wonderland***, to log in. Access your application with the following commands:
+
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+curl -s http://localhost:$SYSTEM_NODEPORT/dev/system/properties -u alice:wonderland | jq
+```
+
+Notice that the URL you are using to reach the application now has ***/dev*** as the context root. 
+
+
+Verify the inventory service is working as intended by using the following commands:
+
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
+```
+
+If it is not working, then check the configuration of the credentials.
+
+::page{title="Testing the microservices"}
+
+
+
+Update the ***pom.xml*** files so that the ***system.service.root*** and ***inventory.service.root*** properties have the correct ports to access the **system** and **inventory** services.
+
+```bash
+cd /home/project/guide-kubernetes-microprofile-config/start
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' inventory/pom.xml
+sed -i 's=localhost:32000='"localhost:$INVENTORY_NODEPORT"'=g' inventory/pom.xml
+sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' system/pom.xml
+```
+
+Run the integration tests by using the following command:
+
+```bash
+mvn failsafe:integration-test \
+    -Dsystem.service.root=localhost:$SYSTEM_NODEPORT \
+    -Dsystem.context.root=/dev \
+    -Dinventory.service.root=localhost:$INVENTORY_NODEPORT
+```
+
+The tests for ***inventory*** verify that the service can communicate with ***system*** using the configured credentials. If the credentials are misconfigured, then the ***inventory*** test fails, so the ***inventory*** test indirectly verifies that the credentials are correctly configured.
+
+After the tests succeed, you should see output similar to the following in your console.
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.706 s - in it.io.openliberty.guides.system.SystemEndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+```
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.696 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results:
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
 
 ::page{title="Tearing down the environment"}
 
+Press **CTRL+C** in the command-line sessions where you ran ***kubectl port-forward*** to stop the port forwarding. 
 
-When you no longer need your deployed microservice, you can delete all resources by running the following commands:
+Run the following commands to delete all the resources that you created.
 
 ```bash
-oc delete -f deploy.yaml
-oc delete imagestream.image.openshift.io/system-imagestream
-oc delete bc system-buildconfig
+kubectl delete -f kubernetes.yaml
+kubectl delete configmap sys-app-root
+kubectl delete secret sys-app-credentials
 ```
+
+
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just deployed a microservice running in Open Liberty to OpenShift 4 and configured the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator.
+You have used MicroProfile Config to externalize the configuration of two microservices, and then you configured them by creating a ConfigMap and Secret in your Kubernetes cluster.
+
 
 
 
@@ -477,34 +698,35 @@ You just deployed a microservice running in Open Liberty to OpenShift 4 and conf
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-openliberty-operator-openshift*** project by running the following commands:
+Delete the ***guide-kubernetes-microprofile-config*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-openliberty-operator-openshift
+rm -fr guide-kubernetes-microprofile-config
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20OpenShift%204%20by%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-openshift)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Configuring%20microservices%20running%20in%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-config)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-openliberty-operator-openshift/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-openliberty-operator-openshift/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/pulls)
 
 
 
 ### Where to next?
 
-* [Deploying microservices to OpenShift 3](https://openliberty.io/guides/cloud-openshift.html)
-* [Deploying microservices to OpenShift 4 by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
-* [Deploying microservices to an OKD cluster using Minishift](https://openliberty.io/guides/okd.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
 ### Log out of the session
