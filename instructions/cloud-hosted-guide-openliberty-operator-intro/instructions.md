@@ -4,9 +4,9 @@ title: instructions
 branch: lab-85-instruction
 version-history-start-date: 2021-11-15 16:47:13 UTC
 ---
-::page{title="Welcome to the Deploying a microservice to Kubernetes by using Open Liberty Operator guide!"}
+::page{title="Welcome to the Deploying a microservice to Kubernetes using Open Liberty Operator guide!"}
 
-Explore how to deploy a microservice to Kubernetes by using Open Liberty Operator.
+Explore how to deploy a microservice to Kubernetes using Open Liberty Operator.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -19,7 +19,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to deploy a cloud-native application with a microservice to Kubernetes by using the Open Liberty Operator. 
+You will learn how to deploy a cloud-native application with a microservice to Kubernetes using the Open Liberty Operator. 
 
 [Kubernetes](https://www.kubernetes.io/) is a container orchestration system. It streamlines the DevOps process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the deployment and management of cloud applications easier. You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
 
@@ -380,7 +380,7 @@ rm -fr guide-openliberty-operator-intro
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20Kubernetes%20by%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20Kubernetes%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
