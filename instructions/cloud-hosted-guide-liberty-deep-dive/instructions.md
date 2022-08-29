@@ -5172,7 +5172,11 @@ curl -k -s 'https://localhost:9443/inventory/api/systems' | jq
 ```
 
 
-When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
+When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding. Then, run the ***kubectl delete*** command to stop the ***inventory*** microservice.
+
+```bash
+kubectl delete -f inventory.yaml
+```
 
 ### Customizing deployments
 
@@ -5244,7 +5248,15 @@ kubectl port-forward svc/inventory-deployment 9443
 ```
 
 
-In another command-line session, access the microservice by running the following commands:
+The application might take some time to get ready. To confirm that the `inventory` microservice is up and running, run the following curl command in another command-line session:
+
+```bash
+curl -k https://localhost:9443/health | jq
+```
+
+If the application is up and running, you are ready to access the microservice.
+
+Access the microservice with the context root ***/dev*** by running the following commands:
 
 ```bash
 curl -k --user bob:bobpwd -X DELETE \
