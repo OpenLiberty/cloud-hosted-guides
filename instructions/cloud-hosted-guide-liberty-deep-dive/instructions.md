@@ -5147,7 +5147,7 @@ kubectl port-forward svc/inventory-deployment 9443
 The application might take some time to get ready. To confirm that the `inventory` microservice is up and running, run the following curl command:
 
 ```bash
-curl -k http://localhost:9443/health | jq
+curl -k https://localhost:9443/health | jq
 ```
 
 If the application is up and running, you are ready to access the microservice.
