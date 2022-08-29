@@ -814,6 +814,7 @@ You can run the Maven ***verify*** goal, which compiles the java files, starts t
 
 ```bash
 cd /home/project/guide-graphql-client/start/query
+export TESTCONTAINERS_RYUK_DISABLED=true
 mvn verify
 ```
 
