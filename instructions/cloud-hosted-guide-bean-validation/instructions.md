@@ -550,7 +550,7 @@ Replace the ***server*** configuration file.
 
 
 
-You can now use the ***beanValidation-2.0*** feature to validate that the supplied JavaBeans meet the defined constraints.
+You can now use the ***beanValidation*** feature to validate that the supplied JavaBeans meet the defined constraints.
 
 
 ::page{title="Running the application"}
