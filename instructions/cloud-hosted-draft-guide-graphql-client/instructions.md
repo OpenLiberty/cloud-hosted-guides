@@ -19,7 +19,7 @@ Learn how to use a GraphQL client to run GraphQL queries and mutations.
 
 ::page{title="What you'll learn"}
 
-GraphQL is an open source data query language. Unlike REST APIs, each request sent to a GraphQL service goes to a single HTTP endpoint. This guide assumes you have a basic understanding of GraphQL concepts. If you're new to GraphQL, you might want to start with the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide first.
+GraphQL is an open source data query language. You can use a GraphQL service to obtain data from multiple sources, such as APIs, databases, and other services, by sending a single request to a GraphQL service. GraphQL services require less data fetching than REST services, which results in faster application load times and lower data transfer costs. This guide assumes you have a basic understanding of [GraphQL concepts](https://openliberty.io/docs/latest/microprofile-graphql.html). If you're new to GraphQL, you might want to start with the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide first.
 
 You'll use the [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) to create a ***query*** microservice that will make requests to the ***graphql*** microservice. The ***graphql*** microservice retrieves data from multiple ***system*** microservices and is identical to the one created as part of the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide. 
 
@@ -112,7 +112,7 @@ For example, the ***system()*** function maps to the ***system*** resolver. The 
 
 The name of each resolver is the method name, but it can be overridden with the ***@Query*** or ***@Mutation*** annotations. For example, the name of the method ***getSystemLoad*** is overridden as ***systemLoad***. The GraphQL request that goes over the wire will use the name overridden by the ***@Query*** and ***@Mutation*** annotation. Similarly, the name of the function inputs can be overridden by the ***@Name*** annotation. For example, input ***host*** is overridden as ***hostname*** in the ***editNote()*** function. 
 
-The ***editNote*** ***mutation*** operation has the ***@Mutation*** annotation on it. A ***mutation*** operation allows you to modify data, in this case, it allows you to add and edit a note to the system service. If the ***@Mutation*** annotation was not placed on the function, it would be treated as if it mapped to a ***query*** operation. 
+The ***editNote*** ***mutation*** operation has the ***@Mutation*** annotation on it. A ***mutation*** operation allows you to modify data, in this case, it allows you to add and edit a note to the system service. If the ***@Mutation*** annotation were not placed on the function, it would be treated as if it mapped to a ***query*** operation. 
 
 Create the ***QueryResource*** class.
 
@@ -185,9 +185,9 @@ public class QueryResource {
 
 
 
-The ***QueryResource*** class uses the ***GraphQlClient*** interface to make requests to the ***graphql*** microservice and display the results. In a real application, you make requests to an external GraphQL API, or do further manipulation of the data after retrieval.
+The ***QueryResource*** class uses the ***GraphQlClient*** interface to make requests to the ***graphql*** microservice and display the results. In a real application, you would make requests to an external GraphQL service, and you might do further manipulation of the data after retrieval.
 
-Use the ***TypesafeGraphQLClientBuilder*** class to create a client object that implements the ***GraphQlClient*** interface and can interact with the ***graphql*** microservice. The ***GraphQlClient*** client can make requests to the URL specified by the ***graphql.server*** variable in the ***server.xml*** file. The client is used in the ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** functions.
+The ***TypesafeGraphQLClientBuilder*** class creates a client object that implements the ***GraphQlClient*** interface and can interact with the ***graphql*** microservice. The ***GraphQlClient*** client can make requests to the URL specified by the ***graphql.server*** variable in the ***server.xml*** file. The client is used in the ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** functions.
 
 
 Replace the Maven project file.
@@ -440,7 +440,7 @@ To access the client service, there are several available REST endpoints that te
 
 First, make a GET request to the ***/query/system/{hostname}*** endpoint by the following command. This request retrieves the system properties for the specified ***hostname***.
 
-The ***hostname*** is specified to ***system-java8***. You can try out the operations using the hostname ***system-java11*** as well. 
+The ***hostname*** is set to ***system-java8***. You can try out the operations using the hostname ***system-java11*** as well. 
 
 ```bash
 curl -s 'http://localhost:9084/query/system/system-java8' | jq
@@ -470,7 +470,7 @@ You can expect a response similar to the following example:
 
 
 You can retrieve the information about the resource usage of any number of system services by making a GET request at ***/query/systemLoad/{hostnames}*** endpoint. 
-The ***hostnames*** are specified to ***system-java8,system-java11***.
+The ***hostnames*** are set to ***system-java8,system-java11***.
 
 ```bash
 curl -s 'http://localhost:9084/query/systemLoad/system-java8,system-java11' | jq
@@ -796,9 +796,9 @@ Define the ***systemContainer*** test container to start up the ***system-java8*
 
 The ***@Testcontainers*** annotation finds all fields that are annotated with the ***@Container*** annotation and calls their container lifecycle methods. The ***static*** function declaration on each container indicates that this container will be started only once before any test method is executed and stopped after the last test method is executed.
 
-The ***testGetSystem()*** verifies the ***/query/system/{hostname}*** endpoint with ***hostname*** specified to ***system-java8***.
+The ***testGetSystem()*** verifies the ***/query/system/{hostname}*** endpoint with ***hostname*** set to ***system-java8***.
 
-The ***testGetSystemLoad()*** verifies the ***/query/systemLoad/{hostnames}*** endpoint with ***hostnames*** specified to ***system-java8***.
+The ***testGetSystemLoad()*** verifies the ***/query/systemLoad/{hostnames}*** endpoint with ***hostnames*** set to ***system-java8***.
 
 The ***testEditNote()*** verifies the mutation operation at the ***/query/mutation/system/note*** endpoint.
 
