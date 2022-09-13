@@ -58,7 +58,7 @@ Navigate to the ***start*** directory to begin.
 
 The [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) is used to implement the GraphQL client service. The SmallRye GraphQL client supports two types of clients: typesafe and dynamic. A typesafe client is easy to use and provides a high-level approach, while a dynamic client provides a more customizable and low-level approach to handle operations and responses. You will implement a typesafe client microservice. 
 
-The typesafe client interface contains a function for each resolver available in the ***graphql*** microservice. The JSON objects returned by the ***graphql*** microservice are converted to Java objects.
+The typesafe client interface contains a method for each resolver available in the ***graphql*** microservice. The JSON objects returned by the ***graphql*** microservice are converted to Java objects.
 
 Create the ***GraphQlClient*** interface.
 
@@ -106,13 +106,13 @@ Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Comm
 
 The ***GraphQlClient*** interface is annotated with the ***@GraphQlClientApi*** annotation. This annotation denotes that this interface is used to create a typesafe GraphQL client.
 
-Inside the interface, a function header is written for each resolver available in the ***graphql*** microservice. The names of the functions match the names of the resolvers in the GraphQL schema. Resolvers that require input variables have the input variables passed in using the ***@Name*** annotation on the function inputs. The return types of the functions should match those of the GraphQL resolvers.
+Inside the interface, a method header is written for each resolver available in the ***graphql*** microservice. The names of the methods match the names of the resolvers in the GraphQL schema. Resolvers that require input variables have the input variables passed in using the ***@Name*** annotation on the method inputs. The return types of the methods should match those of the GraphQL resolvers.
 
-For example, the ***system()*** function maps to the ***system*** resolver. The resolver returns a ***SystemInfo*** object, which is described by the ***SystemInfo*** class. Thus, the ***system()*** function returns the type ***SystemInfo***.
+For example, the ***system()*** method maps to the ***system*** resolver. The resolver returns a ***SystemInfo*** object, which is described by the ***SystemInfo*** class. Thus, the ***system()*** method returns the type ***SystemInfo***.
 
-The name of each resolver is the method name, but it can be overridden with the ***@Query*** or ***@Mutation*** annotations. For example, the name of the method ***getSystemLoad*** is overridden as ***systemLoad***. The GraphQL request that goes over the wire will use the name overridden by the ***@Query*** and ***@Mutation*** annotation. Similarly, the name of the function inputs can be overridden by the ***@Name*** annotation. For example, input ***host*** is overridden as ***hostname*** in the ***editNote()*** function. 
+The name of each resolver is the method name, but it can be overridden with the ***@Query*** or ***@Mutation*** annotations. For example, the name of the method ***getSystemLoad*** is overridden as ***systemLoad***. The GraphQL request that goes over the wire will use the name overridden by the ***@Query*** and ***@Mutation*** annotation. Similarly, the name of the method inputs can be overridden by the ***@Name*** annotation. For example, input ***host*** is overridden as ***hostname*** in the ***editNote()*** method. 
 
-The ***editNote*** ***mutation*** operation has the ***@Mutation*** annotation on it. A ***mutation*** operation allows you to modify data, in this case, it allows you to add and edit a note to the system service. If the ***@Mutation*** annotation were not placed on the function, it would be treated as if it mapped to a ***query*** operation. 
+The ***editNote*** ***mutation*** operation has the ***@Mutation*** annotation on it. A ***mutation*** operation allows you to modify data, in this case, it allows you to add and edit a note to the system service. If the ***@Mutation*** annotation were not placed on the method, it would be treated as if it mapped to a ***query*** operation. 
 
 Create the ***QueryResource*** class.
 
@@ -187,7 +187,7 @@ public class QueryResource {
 
 The ***QueryResource*** class uses the ***GraphQlClient*** interface to make requests to the ***graphql*** microservice and display the results. In a real application, you would make requests to an external GraphQL service, and you might do further manipulation of the data after retrieval.
 
-The ***TypesafeGraphQLClientBuilder*** class creates a client object that implements the ***GraphQlClient*** interface and can interact with the ***graphql*** microservice. The ***GraphQlClient*** client can make requests to the URL specified by the ***graphql.server*** variable in the ***server.xml*** file. The client is used in the ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** functions.
+The ***TypesafeGraphQLClientBuilder*** class creates a client object that implements the ***GraphQlClient*** interface and can interact with the ***graphql*** microservice. The ***GraphQlClient*** client can make requests to the URL specified by the ***graphql.server*** variable in the ***server.xml*** file. The client is used in the ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** methods.
 
 
 Replace the Maven project file.
