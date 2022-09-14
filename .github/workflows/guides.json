@@ -90,6 +90,11 @@
         "instruction": "instructions.md"
     },
     {
+        "guide": "guide-graphql-client",
+        "instructionDir": "cloud-hosted-guide-graphql-client",
+        "instruction": "instructions.md"
+    },
+    {
         "guide": "guide-microprofile-health",
         "instructionDir": "cloud-hosted-guide-microprofile-health",
         "instruction": "instructions.md"
