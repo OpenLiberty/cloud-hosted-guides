@@ -63,6 +63,7 @@ jobs:
           - {"github":"cloud-hosted-guide-maven-multimodules","gitlab":"cloud-hosted-guide-maven-multimodules","gitlab_branch":"master"}
           - {"github":"cloud-hosted-guide-security-intro","gitlab":"cloud-hosted-guide-security-intro","gitlab_branch":"main"}
           - {"github":"cloud-hosted-guide-mongodb-intro","gitlab":"cloud-hosted-guide-mongodb-intro","gitlab_branch":"main"}
+          - {"github":"cloud-hosted-guide-graphql-client","gitlab":"cloud-hosted-guide-graphql-client","gitlab-branch":"main"}
 
 
     steps:
