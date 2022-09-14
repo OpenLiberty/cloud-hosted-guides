@@ -20,7 +20,7 @@ Learn how to use MicroProfile GraphQL to query and update data from multiple ser
 
 ::page{title="What you'll learn"}
 
-You will learn how to build and use a simple GraphQL service with [MicroProfile GraphQL](https://openliberty.io/docs/latest/reference/feature/mpGraphQL-1.0.html). 
+You will learn how to build and use a simple GraphQL service with [MicroProfile GraphQL](https://openliberty.io/docs/latest/reference/feature/mpGraphQL-2.0.html). 
 
 GraphQL is an open source data query language. Unlike REST APIs, each HTTP request that is sent to a GraphQL service goes to a single HTTP endpoint. Create, read, update, and delete operations and their details are differentiated by the contents of the request. If the operation returns data, the user specifies what properties of the data that they want returned. For read operations, a JSON object is returned that contains only the data and properties that are specified. For other operations, a JSON object might be returned containing information such as a success message. 
 
@@ -327,7 +327,7 @@ To save time, the ***SystemLoad*** class and ***SystemLoadData*** class are prov
 
 ::page{title="Implementing system service"}
 
-The ***system*** microservices are backend services that use JAX-RS. For more details on using JAX-RS, see the [Creating a RESTful web service guide](https://www.openliberty.io/guides/rest-intro.html). These ***system*** microservices report system properties. GraphQL can access multiple instances of these ***system*** microservices and collate their information. In a real scenario, GraphQL might access multiple databases or other services.
+The ***system*** microservices are backend services that use Jakarta Restful Web Services. For more details on using Jakarta Restful Web Services, see the [Creating a RESTful web service guide](https://www.openliberty.io/guides/rest-intro.html). These ***system*** microservices report system properties. GraphQL can access multiple instances of these ***system*** microservices and collate their information. In a real scenario, GraphQL might access multiple databases or other services.
 
 Create the ***SystemPropertiesResource*** class.
 
@@ -806,7 +806,7 @@ Replace the server configuration file.
 
 
 
-The ***mpGraphQL-1.0*** feature that is added to the ***server.xml*** enables the use of the [MicroProfile GraphQL](https://openliberty.io/docs/latest/reference/feature/mpGraphQL-1.0.html) feature in Open Liberty. Open Liberty's MicroProfile GraphQL feature includes GraphiQL. Enable it by setting the ***io.openliberty.enableGraphQLUI*** variable to ***true***.
+The ***mpGraphQL*** feature that is added to the ***server.xml*** enables the use of the [MicroProfile GraphQL](https://openliberty.io/docs/latest/reference/feature/mpGraphQL-2.0.html) feature in Open Liberty. Open Liberty's MicroProfile GraphQL feature includes GraphiQL. Enable it by setting the ***io.openliberty.enableGraphQLUI*** variable to ***true***.
 
 
 ::page{title="Building and running the application"}
@@ -1035,6 +1035,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 ### Where to next?
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Running GraphQL queries and mutations using a GraphQL client](https://openliberty.io/guides/graphql-client.html)
 * [Accessing and persisting data in microservices using Java Persistence API (JPA)](https://openliberty.io/guides/jpa-intro.html)
 * [Persisting data with MongoDB](https://openliberty.io/guides/mongodb-intro.html)
 
