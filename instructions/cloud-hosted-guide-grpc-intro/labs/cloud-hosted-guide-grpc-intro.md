@@ -19,13 +19,13 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What is gRPC?"}
 
-The [gRPC](https://grpc.io/) Remote Procedure Call is a technology that implements remote procedure call (RPC) style APIs with HTTP/2. gRPC uses [protocol buffers](https://developers.google.com/protocol-buffers/docs/reference/overview) to define its routines that include service calls and expected messages. For each service defined in a ***.proto*** file, gRPC uses it to generate the skeleton code for users to implement and extend. Protocol buffers use a binary format to send and receive messages that are much faster and lightweight compared to JSON used in RESTful APIs.
+The [gRPC](https://grpc.io/) Remote Procedure Call is a technology that implements remote procedure call (RPC) style APIs with HTTP/2. gRPC uses [protocol buffers](https://developers.google.com/protocol-buffers/docs/reference/overview) to define its routines that include service calls and expected messages. For each service defined in a ***.proto*** file, gRPC uses the definition to generate the skeleton code for users to implement and extend. Protocol buffers use a binary format to send and receive messages that are faster and lightweight compared to JSON used in RESTful APIs.
 
-Protocol buffers allow cross project support through the ***.proto*** file, as a result gRPC clients and servers are also able to run and communicate with each other on different environments. For example, a gRPC client running in Java codebase is able to call a gRPC server from either [supported languages](https://grpc.io/docs/languages/). This feature of protocol buffers allows for easier integration between services.
+Protocol buffers allow cross project support through the ***.proto*** file, as a result gRPC clients and servers are also able to run and communicate with each other on different environments. For example, a gRPC client running in Java codebase is able to call a gRPC server from other [supported languages](https://grpc.io/docs/languages/). This feature of protocol buffers allows for easier integration between services.
 
 ::page{title="What you'll learn"}
 
-You will learn how to create gRPC client and server services by using protocol buffers and how to implement them with Open Liberty. You will use Maven throughout the guide to generate the gRPC stubs and deploy the services and to interact with the running Liberty server.
+You will learn how to create gRPC services and their clients by using protocol buffers and how to implement them with Open Liberty. You will use Maven throughout the guide to generate the gRPC stubs and deploy the services and to interact with the running Liberty server.
 
 The application that you will build in this guide consists of the ***systemproto*** model project, the ***query*** client service, and the ***system*** server service. The ***query*** service implements four RESTful APIs by using four different gRPC streaming methods.
 
@@ -135,7 +135,7 @@ option java_multiple_files = true;
 service SystemService {
     rpc getProperty (SystemPropertyName) returns (SystemPropertyValue) {}
 
-    rpc getPropertiesServer (SystemPropertyName) returns (stream SystemProperty) {}
+    rpc getPropertiesServer (SystemPropertyPrefix) returns (stream SystemProperty) {}
 
     rpc getPropertiesClient (stream SystemPropertyName) returns (SystemProperties) {}
 
@@ -144,6 +144,10 @@ service SystemService {
 
 message SystemPropertyName {
     string propertyName = 1;
+}
+
+message SystemPropertyPrefix {
+    string propertyPrefix = 1;
 }
 
 message SystemPropertyValue {
@@ -169,7 +173,7 @@ The first few lines define the ***syntax***, ***package***, and ***option*** bas
 
 The ***getProperty*** rpc defines the unary call. In this call, the client side sends a ***SystemPropertyName*** message to the server side that returns back a ***SystemPropertyValue*** message with the property value. The ***SystemPropertyName*** and ***SystemPropertyValue*** message types define that the ***propertyName*** and ***propertyValue*** must be string.
 
-The ***getPropertiesServer*** rpc defines the server streaming call. The client side sends a ***SystemPropertyName*** message to the server side. The server returns back a stream of ***SystemProperty*** messages. Each ***SystemProperty*** message contains a ***propertyName*** and a ***propertyValue*** strings.
+The ***getPropertiesServer*** rpc defines the server streaming call. The client side sends a ***SystemPropertyPrefix*** message to the server side. The server returns back a stream of ***SystemProperty*** messages. Each ***SystemProperty*** message contains a ***propertyName*** and a ***propertyValue*** strings.
 
 The ***getPropertiesClient*** rpc defines the client streaming call. The client side streams ***SystemPropertyName*** messages to the server side. The server returns back a ***SystemProperties*** message that contains a map of the properties with their respective values.
 
@@ -240,6 +244,7 @@ import io.grpc.stub.StreamObserver;
 import io.openliberty.guides.systemproto.SystemProperties;
 import io.openliberty.guides.systemproto.SystemProperty;
 import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
 import io.openliberty.guides.systemproto.SystemPropertyValue;
 import io.openliberty.guides.systemproto.SystemServiceGrpc;
 
@@ -349,6 +354,7 @@ import io.grpc.stub.StreamObserver;
 import io.openliberty.guides.systemproto.SystemProperties;
 import io.openliberty.guides.systemproto.SystemProperty;
 import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
 import io.openliberty.guides.systemproto.SystemPropertyValue;
 import io.openliberty.guides.systemproto.SystemServiceGrpc;
 import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceBlockingStub;
@@ -367,15 +373,16 @@ public class PropertiesResource {
     int SYSTEM_PORT;
 
     @GET
-    @Path("/{propertyName}")
+    @Path("/{property}")
     @Produces(MediaType.TEXT_PLAIN)
-    public String getPropertiesString(@PathParam("propertyName") String propertyName) {
+    public String getPropertiesString(@PathParam("property") String property) {
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(SYSTEM_HOST, SYSTEM_PORT)
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
                                      .usePlaintext().build();
         SystemServiceBlockingStub client = SystemServiceGrpc.newBlockingStub(channel);
         SystemPropertyName request = SystemPropertyName.newBuilder()
-                                             .setPropertyName(propertyName).build();
+                                             .setPropertyName(property).build();
         SystemPropertyValue response = client.getProperty(request);
         channel.shutdownNow();
         return response.getPropertyValue();
@@ -387,7 +394,7 @@ public class PropertiesResource {
 ```
 
 
-The ***PropertiesResource*** class provides RESTful endpoints to interact with the ***system*** service. The ***/query/properties/${propertyName}*** endpoint uses the unary service call to get the property value from the ***system*** service. The endpoint creates a ***channel***, uses the channel to create a client by the ***SystemServiceGrpc.newBlockingStub()*** API, uses the client to get the property value, shutdowns the channel, and then returns the value that the ***system*** service responses immediately.
+The ***PropertiesResource*** class provides RESTful endpoints to interact with the ***system*** service. The ***/query/properties/${property}*** endpoint uses the unary service call to get the property value from the ***system*** service. The endpoint creates a ***channel***, uses the channel to create a client by the ***SystemServiceGrpc.newBlockingStub()*** API, uses the client to get the property value, shutdowns the channel, and then returns the value that the ***system*** service responses immediately.
 
 Replace the ***query*** server configuration file.
 
@@ -465,6 +472,7 @@ import io.grpc.stub.StreamObserver;
 import io.openliberty.guides.systemproto.SystemProperties;
 import io.openliberty.guides.systemproto.SystemProperty;
 import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
 import io.openliberty.guides.systemproto.SystemPropertyValue;
 import io.openliberty.guides.systemproto.SystemServiceGrpc;
 
@@ -491,9 +499,9 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
 
     @Override
     public void getPropertiesServer(
-        SystemPropertyName request, StreamObserver<SystemProperty> observer) {
+        SystemPropertyPrefix request, StreamObserver<SystemProperty> observer) {
 
-        String prefix = request.getPropertyName();
+        String prefix = request.getPropertyPrefix();
         System.getProperties()
               .stringPropertyNames()
               .stream()
@@ -518,7 +526,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
 
 
 
-The ***getPropertiesServer()*** method implements server streaming rpc call. Use the ***getPropertyName()*** getter method to retrieve the property prefix from the client. Filter out the properties that starts with the ***prefix***. For each property, build a ***SystemProperty*** message and stream the message to the client through the ***StreamObserver*** by using its ***onNext()*** method. When all properties are streamed, finish the streaming by calling the ***onComplete()*** method.
+The ***getPropertiesServer()*** method implements server streaming rpc call. Use the ***getPropertyPrefix()*** getter method to retrieve the property prefix from the client. Filter out the properties that starts with the ***prefix***. For each property, build a ***SystemProperty*** message and stream the message to the client through the ***StreamObserver*** by using its ***onNext()*** method. When all properties are streamed, finish the streaming by calling the ***onComplete()*** method.
 
 Update the ***PropertiesResource*** class to implement the ***/query/properties/os*** endpoint of the ***query*** service.
 
@@ -556,6 +564,7 @@ import io.grpc.stub.StreamObserver;
 import io.openliberty.guides.systemproto.SystemProperties;
 import io.openliberty.guides.systemproto.SystemProperty;
 import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
 import io.openliberty.guides.systemproto.SystemPropertyValue;
 import io.openliberty.guides.systemproto.SystemServiceGrpc;
 import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceBlockingStub;
@@ -574,15 +583,16 @@ public class PropertiesResource {
     int SYSTEM_PORT;
 
     @GET
-    @Path("/{propertyName}")
+    @Path("/{property}")
     @Produces(MediaType.TEXT_PLAIN)
-    public String getPropertiesString(@PathParam("propertyName") String propertyName) {
+    public String getPropertiesString(@PathParam("property") String property) {
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(SYSTEM_HOST, SYSTEM_PORT)
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
                                      .usePlaintext().build();
         SystemServiceBlockingStub client = SystemServiceGrpc.newBlockingStub(channel);
         SystemPropertyName request = SystemPropertyName.newBuilder()
-                                             .setPropertyName(propertyName).build();
+                                             .setPropertyName(property).build();
         SystemPropertyValue response = client.getProperty(request);
         channel.shutdownNow();
         return response.getPropertyValue();
@@ -593,14 +603,15 @@ public class PropertiesResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Properties getOSProperties() {
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(SYSTEM_HOST, SYSTEM_PORT)
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
                                      .usePlaintext().build();
         SystemServiceStub client = SystemServiceGrpc.newStub(channel);
 
         Properties properties = new Properties();
         CountDownLatch countDown = new CountDownLatch(1);
-        SystemPropertyName request = SystemPropertyName.newBuilder()
-                                         .setPropertyName("os.").build();
+        SystemPropertyPrefix request = SystemPropertyPrefix.newBuilder()
+                                         .setPropertyPrefix("os.").build();
         client.getPropertiesServer(request, new StreamObserver<SystemProperty>() {
 
             @Override
@@ -640,7 +651,7 @@ public class PropertiesResource {
 
 
 
-The endpoint creates a ***channel*** to the ***system*** service and a ***client*** by using the ***SystemServiceGrpc.newStub()*** API. Then, call the ***getPropertiesServer()*** method with an implementation of the ***StreamObserver*** interface. The ***onNext()*** method receives messages streaming from the server individually and stores them into the ***properties*** placeholder. After all properties are received, shutdown the ***channel*** and returns the placeholder. Because the rpc call is asynchronous, use a ***CountDownLatch*** to synchronize the streaming flow.
+The endpoint creates a ***channel*** to the ***system*** service and a ***client*** by using the ***SystemServiceGrpc.newStub()*** API. Then, calls the ***getPropertiesServer()*** method with an implementation of the ***StreamObserver*** interface. The ***onNext()*** method receives messages streaming from the server individually and stores them into the ***properties*** placeholder. After all properties are received, it shutdowns the ***channel*** and returns the placeholder. Because the rpc call is asynchronous, use a ***CountDownLatch*** to synchronize the streaming flow.
 
 Click the following button to visit the ***/query/properties/os*** endpoint to test out the server streaming. You should see the ***os.*** properties from the ***system*** service. Observe the output from the consoles running the ***system*** and ***query*** services.
 
@@ -673,6 +684,7 @@ import io.grpc.stub.StreamObserver;
 import io.openliberty.guides.systemproto.SystemProperties;
 import io.openliberty.guides.systemproto.SystemProperty;
 import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
 import io.openliberty.guides.systemproto.SystemPropertyValue;
 import io.openliberty.guides.systemproto.SystemServiceGrpc;
 
@@ -699,9 +711,9 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
 
     @Override
     public void getPropertiesServer(
-        SystemPropertyName request, StreamObserver<SystemProperty> observer) {
+        SystemPropertyPrefix request, StreamObserver<SystemProperty> observer) {
 
-        String prefix = request.getPropertyName();
+        String prefix = request.getPropertyPrefix();
         System.getProperties()
               .stringPropertyNames()
               .stream()
@@ -761,7 +773,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
 The ***getPropertiesClient()*** method implements client streaming rpc call. This method returns an instance of the ***StreamObserver*** interface. Its ***onNext()*** method receives the messages from the client individually and stores the property values into the ***properties*** map placeholder. When the streaming is completed, the ***properties*** placeholder is sent back to the client by the ***onCompleted()*** method.
 
 
-Update the ***PropertiesResource*** class to implement of ***/query/properties/user*** endpoint of the query service.
+Update the ***PropertiesResource*** class to implement the ***/query/properties/user*** endpoint of the query service.
 
 Replace the ***PropertiesResource*** class.
 
@@ -797,6 +809,7 @@ import io.grpc.stub.StreamObserver;
 import io.openliberty.guides.systemproto.SystemProperties;
 import io.openliberty.guides.systemproto.SystemProperty;
 import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
 import io.openliberty.guides.systemproto.SystemPropertyValue;
 import io.openliberty.guides.systemproto.SystemServiceGrpc;
 import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceBlockingStub;
@@ -815,15 +828,16 @@ public class PropertiesResource {
     int SYSTEM_PORT;
 
     @GET
-    @Path("/{propertyName}")
+    @Path("/{property}")
     @Produces(MediaType.TEXT_PLAIN)
-    public String getPropertiesString(@PathParam("propertyName") String propertyName) {
+    public String getPropertiesString(@PathParam("property") String property) {
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(SYSTEM_HOST, SYSTEM_PORT)
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
                                      .usePlaintext().build();
         SystemServiceBlockingStub client = SystemServiceGrpc.newBlockingStub(channel);
         SystemPropertyName request = SystemPropertyName.newBuilder()
-                                             .setPropertyName(propertyName).build();
+                                             .setPropertyName(property).build();
         SystemPropertyValue response = client.getProperty(request);
         channel.shutdownNow();
         return response.getPropertyValue();
@@ -834,14 +848,15 @@ public class PropertiesResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Properties getOSProperties() {
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(SYSTEM_HOST, SYSTEM_PORT)
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
                                      .usePlaintext().build();
         SystemServiceStub client = SystemServiceGrpc.newStub(channel);
 
         Properties properties = new Properties();
         CountDownLatch countDown = new CountDownLatch(1);
-        SystemPropertyName request = SystemPropertyName.newBuilder()
-                                         .setPropertyName("os.").build();
+        SystemPropertyPrefix request = SystemPropertyPrefix.newBuilder()
+                                         .setPropertyPrefix("os.").build();
         client.getPropertiesServer(request, new StreamObserver<SystemProperty>() {
 
             @Override
@@ -880,7 +895,8 @@ public class PropertiesResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Properties getUserProperties() {
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(SYSTEM_HOST, SYSTEM_PORT)
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
                                      .usePlaintext().build();
         SystemServiceStub client = SystemServiceGrpc.newStub(channel);
         CountDownLatch countDown = new CountDownLatch(1);
@@ -891,7 +907,7 @@ public class PropertiesResource {
 
                 @Override
                 public void onNext(SystemProperties value) {
-                    System.out.println("client streaming received a map that has " 
+                    System.out.println("client streaming received a map that has "
                         + value.getPropertiesCount() + " properties");
                     properties.putAll(value.getPropertiesMap());
                 }
@@ -933,7 +949,7 @@ public class PropertiesResource {
 
 
 
-After a connection is created between the two services, call the ***client.getPropertiesClient()*** method to get a ***stream***, collect the properties started with ***user.***, create a ***SystemPropertyName*** message individually, and send the message to the server through by the ***stream::onNext*** action. When all property names are sent, finish the streaming by calling the ***onCompleted()***. Again, use a ***CountDownLatch*** to synchronize the streaming flow.
+After a connection is created between the two services, call the ***client.getPropertiesClient()*** method to get a ***stream***, collect the properties with property names prefixed by ***user.***, create a ***SystemPropertyName*** message individually, and send the message to the server through by the ***stream::onNext*** action. When all property names are sent, finish the streaming by calling the ***onCompleted()***. Again, use a ***CountDownLatch*** to synchronize the streaming flow.
 
 Click the following button to visit the ***/query/properties/user*** endpoint to test out the client streaming. You should see the ***user.*** properties from the ***system*** service. Observe the output from the consoles running the ***system*** and ***query*** services.
 
@@ -965,6 +981,7 @@ import io.grpc.stub.StreamObserver;
 import io.openliberty.guides.systemproto.SystemProperties;
 import io.openliberty.guides.systemproto.SystemProperty;
 import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
 import io.openliberty.guides.systemproto.SystemPropertyValue;
 import io.openliberty.guides.systemproto.SystemServiceGrpc;
 
@@ -991,9 +1008,9 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
 
     @Override
     public void getPropertiesServer(
-        SystemPropertyName request, StreamObserver<SystemProperty> observer) {
+        SystemPropertyPrefix request, StreamObserver<SystemProperty> observer) {
 
-        String prefix = request.getPropertyName();
+        String prefix = request.getPropertyPrefix();
         System.getProperties()
               .stringPropertyNames()
               .stream()
@@ -1079,8 +1096,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
 
 
 
-The ***getPropertiesBidirect()*** method implements bidirectional streaming rpc call. This method returns an instance of the ***StreamObserver*** interface. Its ***onNext()*** method receives the messages from the client individually, creates a ***SystemProperty*** message with the property name and value, and sends the message back to the client by the ***onNext()*** method. When the client streaming is completed, close the server streaming by calling the ***onCompleted()*** method.
-
+The ***getPropertiesBidirect()*** method implements bidirectional streaming rpc call. This method returns an instance of the ***StreamObserver*** interface. Its ***onNext()*** method receives the messages from the client individually, creates a ***SystemProperty*** message with the property name and value, and sends the message back to the client by the ***onNext()*** method. When the client streaming is completed, closes the server streaming by calling the ***onCompleted()*** method.
 
 Update the ***PropertiesResource*** class to implement of ***/query/properties/java*** endpoint of the query service.
 
@@ -1118,6 +1134,7 @@ import io.grpc.stub.StreamObserver;
 import io.openliberty.guides.systemproto.SystemProperties;
 import io.openliberty.guides.systemproto.SystemProperty;
 import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
 import io.openliberty.guides.systemproto.SystemPropertyValue;
 import io.openliberty.guides.systemproto.SystemServiceGrpc;
 import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceBlockingStub;
@@ -1136,15 +1153,16 @@ public class PropertiesResource {
     int SYSTEM_PORT;
 
     @GET
-    @Path("/{propertyName}")
+    @Path("/{property}")
     @Produces(MediaType.TEXT_PLAIN)
-    public String getPropertiesString(@PathParam("propertyName") String propertyName) {
+    public String getPropertiesString(@PathParam("property") String property) {
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(SYSTEM_HOST, SYSTEM_PORT)
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
                                      .usePlaintext().build();
         SystemServiceBlockingStub client = SystemServiceGrpc.newBlockingStub(channel);
         SystemPropertyName request = SystemPropertyName.newBuilder()
-                                             .setPropertyName(propertyName).build();
+                                             .setPropertyName(property).build();
         SystemPropertyValue response = client.getProperty(request);
         channel.shutdownNow();
         return response.getPropertyValue();
@@ -1155,14 +1173,15 @@ public class PropertiesResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Properties getOSProperties() {
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(SYSTEM_HOST, SYSTEM_PORT)
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
                                      .usePlaintext().build();
         SystemServiceStub client = SystemServiceGrpc.newStub(channel);
 
         Properties properties = new Properties();
         CountDownLatch countDown = new CountDownLatch(1);
-        SystemPropertyName request = SystemPropertyName.newBuilder()
-                                         .setPropertyName("os.").build();
+        SystemPropertyPrefix request = SystemPropertyPrefix.newBuilder()
+                                         .setPropertyPrefix("os.").build();
         client.getPropertiesServer(request, new StreamObserver<SystemProperty>() {
 
             @Override
@@ -1201,7 +1220,8 @@ public class PropertiesResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Properties getUserProperties() {
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(SYSTEM_HOST, SYSTEM_PORT)
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
                                      .usePlaintext().build();
         SystemServiceStub client = SystemServiceGrpc.newStub(channel);
         CountDownLatch countDown = new CountDownLatch(1);
@@ -1212,7 +1232,7 @@ public class PropertiesResource {
 
                 @Override
                 public void onNext(SystemProperties value) {
-                    System.out.println("client streaming received a map that has " 
+                    System.out.println("client streaming received a map that has "
                         + value.getPropertiesCount() + " properties");
                     properties.putAll(value.getPropertiesMap());
                 }
@@ -1254,7 +1274,8 @@ public class PropertiesResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Properties getJavaProperties() {
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(SYSTEM_HOST, SYSTEM_PORT)
+        ManagedChannel channel = ManagedChannelBuilder
+                                      .forAddress(SYSTEM_HOST, SYSTEM_PORT)
                                       .usePlaintext().build();
         SystemServiceStub client = SystemServiceGrpc.newStub(channel);
         Properties properties = new Properties();
@@ -1267,7 +1288,8 @@ public class PropertiesResource {
                     public void onNext(SystemProperty value) {
                         System.out.println("bidirectional streaming received: "
                             + value.getPropertyName() + "=" + value.getPropertyValue());
-                        properties.put(value.getPropertyName(), value.getPropertyValue());
+                        properties.put(value.getPropertyName(),
+                                       value.getPropertyValue());
                     }
 
                     @Override
@@ -1427,7 +1449,7 @@ The ***testGetJavaProperties()*** tests the ***/query/properties/java*** endpoin
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started the ***query*** service.
 
 ```
 -------------------------------------------------------
