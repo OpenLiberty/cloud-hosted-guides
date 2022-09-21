@@ -53,7 +53,7 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-In this execrise, you need to change the user home to ***/home/project*** by the following command:
+In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
 ```bash
 sudo usermod -d /home/project theia
 ```
@@ -678,7 +678,9 @@ Update the ***mpData.js*** file to change the ***url*** in the ***getSystemPrope
 Update the mpData.js file.
 
 > From the menu of the IDE, select 
-> **File** > **Open** > guide-getting-started/start/src/main/webapp/js/mpData.js
+> **File** > **Open** > guide-getting-started/start/src/main/webapp/js/mpData.js, or click the following button
+
+::openFile{path="/home/project/guide-getting-started/start/src/main/webapp/js/mpData.js"}
 
 ```
 function getSystemPropertiesRequest() {
