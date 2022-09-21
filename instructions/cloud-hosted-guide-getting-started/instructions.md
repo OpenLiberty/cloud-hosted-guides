@@ -53,6 +53,11 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
+In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
+```bash
+sudo usermod -d /home/project theia
+```
+
 
 
 ::page{title="Building and running the application"}
@@ -582,6 +587,7 @@ Build and run the container by running the devc goal from the ***start*** direct
 
 
 ```bash
+chmod 777 /home/project/guide-getting-started/start/target/liberty/wlp/usr/servers/defaultServer/logs
 mvn liberty:devc -DserverStartTimeout=300
 ```
 
