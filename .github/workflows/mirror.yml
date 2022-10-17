@@ -73,7 +73,7 @@ jobs:
     - name: Mirror
       uses: s0/git-publish-subdir-action@develop
       env:
-        REPO: git@gitlab.com:ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}.git
+        REPO: git@ssh.author-gitlab.skills.network:quicklabs/${{matrix.repo.gitlab}}.git
         BRANCH: ${{matrix.repo.gitlab_branch}}
         FOLDER: instructions/${{matrix.repo.github}}
         MESSAGE: "{msg}" # Sets the commit message on gitlab to be the same as on github.
