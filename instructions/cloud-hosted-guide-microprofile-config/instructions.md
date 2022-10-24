@@ -1,8 +1,9 @@
 ---
 markdown-version: v1
 title: instructions
-branch: lab-166-instruction
+branch: lab-506-instruction
 version-history-start-date: 2020-06-11 12:06:15 UTC
+tool-type: theia
 ---
 ::page{title="Welcome to the Configuring microservices guide!"}
 

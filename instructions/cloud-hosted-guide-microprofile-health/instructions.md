@@ -1,8 +1,9 @@
 ---
 markdown-version: v1
 title: instructions
-branch: lab-168-instruction
+branch: lab-507-instruction
 version-history-start-date: 2020-06-11 12:05:38 UTC
+tool-type: theia
 ---
 ::page{title="Welcome to the Adding health reports to microservices guide!"}
 
