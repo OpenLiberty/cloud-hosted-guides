@@ -1,1 +1,0 @@
-cloud-hosted-guide-cdi-intro
