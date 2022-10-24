@@ -76,7 +76,7 @@ jobs:
     - name: Mirror
       uses: s0/git-publish-subdir-action@develop
       env:
-        REPO: git@gitlab.com:ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}.git
+        REPO: git@ssh.author-gitlab.skills.network:quicklabs/${{matrix.repo.gitlab}}.git
         BRANCH: ${{matrix.repo.gitlab-branch}}
         FOLDER: instructions/${{matrix.repo.github}}
         MESSAGE: "{msg}" # Sets the commit message on gitlab to be the same as on github.
@@ -87,6 +87,6 @@ jobs:
     # Output link to staged files
     - name: Print gitlab URL
       run: |
-        echo "Gitlab url at https://gitlab.com/ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}/-/blob/${{matrix.repo.gitlab-branch}}/instructions.md"
-        echo "or at https://gitlab.com/ibm/skills-network/quicklabs/${{matrix.repo.gitlab}}/-/blob/${{matrix.repo.gitlab-branch}}/labs/${{matrix.repo.gitlab}}.md"
+        echo "Gitlab url at https://author-gitlab.skills.network/quicklabs/${{matrix.repo.gitlab}}/-/blob/${{matrix.repo.gitlab-branch}}/instructions.md"
+        echo "or at https://author-gitlab.skills.network/quicklabs/${{matrix.repo.gitlab}}/-/blob/${{matrix.repo.gitlab-branch}}/labs/${{matrix.repo.github}}.md"
       shell: bash
