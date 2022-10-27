@@ -16,7 +16,7 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-Learn how to use a GraphQL client to run GraphQL queries and mutations.
+Learn how to use the SmallRye GraphQL client's typesafe interface to query and mutate data from multiple microservices.
 
 ::page{title="What you'll learn"}
 
