@@ -1,9 +1,8 @@
 ---
 markdown-version: v1
 title: instructions
-branch: lab-329-instruction
-version-history-start-date: '2022-05-03T13:58:19.000Z'
-tool-type: theia
+branch: lab-557-instruction
+version-history-start-date: 2022-05-03T13:58:19Z
 ---
 ::page{title="Welcome to the Running GraphQL queries and mutations using a GraphQL client guide!"}
 
@@ -56,6 +55,10 @@ The ***finish*** directory contains the finished project that you will build.
 ::page{title="Implementing a GraphQL client"}
 
 Navigate to the ***start*** directory to begin.
+
+```bash
+cd /home/project/guide-graphql-client/start
+```
 
 The [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) is used to implement the GraphQL client service. The SmallRye GraphQL client supports two types of clients: typesafe and dynamic. A typesafe client is easy to use and provides a high-level approach, while a dynamic client provides a more customizable and low-level approach to handle operations and responses. You will implement a typesafe client microservice. 
 
