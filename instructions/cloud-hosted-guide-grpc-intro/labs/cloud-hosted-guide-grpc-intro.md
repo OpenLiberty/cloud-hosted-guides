@@ -6,7 +6,7 @@ version-history-start-date: 2022-08-11T09:54:57Z
 ---
 ::page{title="Welcome to the Streaming messages between client and server services using gRPC guide!"}
 
-Learn how to use gRPC unary, server streaming, client streaming, and bidirectional streaming to communicate client and server services in Open Liberty.
+Learn how to use gRPC unary calls, server streaming, client streaming, and bidirectional streaming to communicate between client and server services in Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -19,15 +19,22 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What is gRPC?"}
 
-The [gRPC](https://grpc.io/) Remote Procedure Call is a technology that implements remote procedure call (RPC) style APIs with HTTP/2. gRPC uses [protocol buffers](https://developers.google.com/protocol-buffers/docs/reference/overview) to define its routines that include service calls and expected messages. For each service defined in a ***.proto*** file, gRPC uses the definition to generate the skeleton code for users to implement and extend. Protocol buffers use a binary format to send and receive messages that are faster and lightweight compared to JSON used in RESTful APIs.
+The [gRPC](https://grpc.io/) Remote Procedure Call is a technology that implements remote procedure call (RPC) style APIs with HTTP/2. gRPC uses [protocol buffers](https://developers.google.com/protocol-buffers/docs/reference/overview) to define its routines, which include service calls and expected messages. For each service defined in a ***.proto*** file, gRPC uses the definition to generate the skeleton code for users to implement and extend. Protocol buffers use a binary format to send and receive messages that is faster and more lightweight than the JSON that is typically used in RESTful APIs.
 
-Protocol buffers allow cross project support through the ***.proto*** file, as a result gRPC clients and servers are also able to run and communicate with each other on different environments. For example, a gRPC client running in Java codebase is able to call a gRPC server from other [supported languages](https://grpc.io/docs/languages/). This feature of protocol buffers allows for easier integration between services.
+Protocol buffers allow cross-project support through the ***.proto*** file. As a result, gRPC clients and servers can run and communicate with each other from different environments. For example, a gRPC client running in Java codebase is able to call a gRPC server from other [supported languages](https://grpc.io/docs/languages/). This feature of protocol buffers allows for easier integration between services.
 
 ::page{title="What you'll learn"}
 
-You will learn how to create gRPC services and their clients by using protocol buffers and how to implement them with Open Liberty. You will use Maven throughout the guide to generate the gRPC stubs and deploy the services and to interact with the running Liberty server.
+You will learn how to create gRPC services and their clients by using protocol buffers and how to implement them with Open Liberty. You will use Maven to generate the gRPC stubs, deploy the services, and to interact with the running Liberty server.
 
-The application that you will build in this guide consists of the ***systemproto*** model project, the ***query*** client service, and the ***system*** server service. The ***query*** service implements four RESTful APIs by using four different gRPC streaming methods.
+The application that you will build in this guide consists of three projects: the ***systemproto*** model project, the ***query*** client service, and the ***system*** server service.
+
+The ***query*** service implements four RESTful APIs by using four different gRPC streaming methods.
+
+* Unary RPC: The client sends a single request and recieves a single response.
+* Server streaming RPC: The client sends a single request and the server returns a stream of messages.
+* Client streaming RPC: The client sends a stream of messages and the server responds with a single message.
+* Bidirectional RPC: Both client and server send a stream of messages. The client and server can read and write messages in any order.
 
 ![gRPC application architecture that the system service provides gRPC server and the query service makes different gRPC streaming calls](https://raw.githubusercontent.com/OpenLiberty/draft-guide-grpc-intro/draft/assets/architecture.png)
 
@@ -71,7 +78,7 @@ Start the ***system*** service by running the following command:
 mvn -pl system liberty:run
 ```
 
-Next, open another command-line session and start the ***query*** service by using the following command:
+Next, open another command-line session, navigate to the ***finish*** directory, and start the ***query*** service by using the following command:
 ```bash
 mvn -pl query liberty:run
 ```
@@ -80,15 +87,15 @@ Click the following button to visit the ***/query/properties/os.name*** endpoint
 
 ::startApplication{port="9081" display="external" name="/query/properties/os.name" route="/query/properties/os.name"}
 
-Next, click the following button to visit the ***/query/properties/os*** endpoint to test out the server streaming. You should see the information of your localhost operating system.
+Next, click the following button to visit the ***/query/properties/os*** endpoint to test out the server streaming. The details of your localhost operating system are displayed.
 
 ::startApplication{port="9081" display="external" name="/query/properties/os" route="/query/properties/os"}
 
-Visit the ***/query/properties/user*** endpoint to test out the client streaming. You should see the information of your localhost user properties. 
+Visit the ***/query/properties/user*** endpoint to test out the client streaming. The details of your localhost user properties are displayed.  
 
 ::startApplication{port="9081" display="external" name="/query/properties/user" route="/query/properties/user"}
 
-Visit the ***/query/properties/java*** endpoint to test out the bidirectional streaming. You should see the information of your localhost Java properties.
+Visit the ***/query/properties/java*** endpoint to test out the bidirectional streaming. The details of your localhost Java properties are displayed.
 
 ::startApplication{port="9081" display="external" name="/query/properties/java" route="/query/properties/java"}
 
@@ -101,7 +108,7 @@ mvn -pl query liberty:stop
 ```
 
 
-::page{title="Creating and defining gRPC service"}
+::page{title="Creating and defining the gRPC service"}
 
 Navigate to the ***start*** directory to begin.
 
@@ -169,18 +176,18 @@ Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Comm
 
 
 
-The first few lines define the ***syntax***, ***package***, and ***option*** basic configuration of the ***.proto*** file. The ***SystemService*** service contains the four service calls that will be implemented in the coming sections.
+The first few lines define the ***syntax***, ***package***, and ***option*** basic configuration of the ***.proto*** file. The ***SystemService*** service contains the four service calls that you will implement in the coming sections.
 
-The ***getProperty*** rpc defines the unary call. In this call, the client side sends a ***SystemPropertyName*** message to the server side that returns back a ***SystemPropertyValue*** message with the property value. The ***SystemPropertyName*** and ***SystemPropertyValue*** message types define that the ***propertyName*** and ***propertyValue*** must be string.
+The ***getProperty*** rpc defines the unary call. In this call, the client side sends a ***SystemPropertyName*** message to the server side, which returns a ***SystemPropertyValue*** message with the property value. The ***SystemPropertyName*** and ***SystemPropertyValue*** message types define that the ***propertyName*** and ***propertyValue*** must be string.
 
-The ***getPropertiesServer*** rpc defines the server streaming call. The client side sends a ***SystemPropertyPrefix*** message to the server side. The server returns back a stream of ***SystemProperty*** messages. Each ***SystemProperty*** message contains a ***propertyName*** and a ***propertyValue*** strings.
+The ***getPropertiesServer*** RPC defines the server streaming call. The client side sends a ***SystemPropertyPrefix*** message to the server side. The server returns a stream of ***SystemProperty*** messages. Each ***SystemProperty*** message contains ***propertyName*** and ***propertyValue*** strings.
 
-The ***getPropertiesClient*** rpc defines the client streaming call. The client side streams ***SystemPropertyName*** messages to the server side. The server returns back a ***SystemProperties*** message that contains a map of the properties with their respective values.
+The ***getPropertiesClient*** RPC defines the client streaming call. The client side streams ***SystemPropertyName*** messages to the server side. The server returns a ***SystemProperties*** message that contains a map of the properties with their respective values.
 
 
-The ***getPropertiesBidirect*** rpc defines the bidirectional streaming call. In this service, the client side streams ***SystemPropertyName*** messages to the server side. The server returns back a stream of ***SystemProperty*** messages.
+The ***getPropertiesBidirect*** RPC defines the bidirectional streaming call. In this service, the client side streams ***SystemPropertyName*** messages to the server side. The server returns a stream of ***SystemProperty*** messages.
 
-To compile the ***.proto*** file, the ***pom.xml*** Maven configuration file needs the  ***grpc-protobuf*** and ***grpc-stub*** dependencies, and the ***protobuf-maven-plugin*** plugin. To install the correct version of Protobuf compiler automatically, the ***os-maven-plugin*** extension is required in the ***build*** configuration.
+To compile the ***.proto*** file, the ***pom.xml*** Maven configuration file needs the  ***grpc-protobuf*** and ***grpc-stub*** dependencies, and the ***protobuf-maven-plugin*** plugin. To install the correct version of the Protobuf compiler automatically, the ***os-maven-plugin*** extension is required in the ***build*** configuration.
 
 Run the following command to generate the gRPC classes.
 ```bash
@@ -188,7 +195,7 @@ mvn -pl systemproto install
 ```
 
 
-::page{title="Implementing unary call"}
+::page{title="Implementing the unary call"}
 
 Navigate to the ***start*** directory.
 
@@ -196,13 +203,13 @@ Navigate to the ***start*** directory.
 cd /home/project/draft-guide-grpc-intro/start
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
 
 ```bash
 mvn -pl system liberty:dev
 ```
 
-Open another command-line session and run the following commands to start the ***query*** service in dev mode:
+Open another command-line session, navigate to the ***start*** directory, and run the following command to start the ***query*** service in dev mode:
 
 ```bash
 mvn -pl query liberty:dev
@@ -215,9 +222,9 @@ After you see the following message, your application servers in dev mode are re
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+Dev mode holds your command-line session to listen for file changes. Open another command-line session and navigate to the ***start*** directory to continue, or open the project in your editor.
 
-Start by implementing the first service call, the unary call. In this service call, the ***query*** client service sends a property to the ***system*** server service that will return the property value. This type of service call resembles the RESTful API. 
+Start by implementing the first service call, the unary call. In this service call, the ***query*** client service sends a property to the ***system*** server service, which returns the property value. This type of service call resembles a RESTful API. 
 
 Create the ***SystemService*** class.
 
@@ -276,9 +283,9 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
 
 
 
-The ***SystemService*** class implements the ***SystemServiceGrpc*** class that is generated by the proto file. The four types of services defined in the proto file are implemented in this class.
+The ***SystemService*** class implements the ***SystemServiceGrpc*** class that is generated by the ***.proto*** file. The four types of services defined in the proto file are implemented in this class.
 
-The ***getProperty()*** method implements the rpc unary call defined in the proto file. Use the ***getPropertyName()*** getter method that is generated by gRPC to retrieve the property name from the client, and store into the ***pName*** variable. Get and store the System property value into the ***pValue*** variable. Use the the gRPC APIs to create a ***SystemPropertyValue*** message that its type is defined in the ***SystemService.proto*** file. Then, send the message to the client service through the ***StreamObserver*** by using its ***onNext()*** and ***onComplete()*** methods.
+The ***getProperty()*** method implements the rpc unary call defined in the ***.proto*** file. The ***getPropertyName()*** getter method that is generated by gRPC retrieves the property name from the client, and stores it into the ***pName*** variable. The System property value is stored into the ***pValue*** variable. The gRPC APIs will create a ***SystemPropertyValue*** message, with its type defined in the ***SystemService.proto*** file. Then, the message is sent to the client service through the ***StreamObserver*** by using its ***onNext()*** and ***onComplete()*** methods.
 
 Replace the ***system*** server configuration file.
 
@@ -312,7 +319,7 @@ Replace the ***system*** server configuration file.
 
 
 
-Implement the RESTful endpoint in the ***query*** service.
+Next, implement the RESTful endpoint in the ***query*** service.
 
 Create the ***PropertiesResource*** class.
 
@@ -394,7 +401,7 @@ public class PropertiesResource {
 ```
 
 
-The ***PropertiesResource*** class provides RESTful endpoints to interact with the ***system*** service. The ***/query/properties/${property}*** endpoint uses the unary service call to get the property value from the ***system*** service. The endpoint creates a ***channel***, uses the channel to create a client by the ***SystemServiceGrpc.newBlockingStub()*** API, uses the client to get the property value, shutdowns the channel, and then returns the value that the ***system*** service responses immediately.
+The ***PropertiesResource*** class provides RESTful endpoints to interact with the ***system*** service. The ***/query/properties/${property}*** endpoint uses the unary service call to get the property value from the ***system*** service. The endpoint creates a ***channel***, which it uses to create a client by the ***SystemServiceGrpc.newBlockingStub()*** API. The endpoint then uses the client to get the property value, shuts down the channel, and immediately returns the value from the ***system*** service response.
 
 Replace the ***query*** server configuration file.
 
@@ -443,14 +450,14 @@ Replace the ***query*** server configuration file.
 
 Because you are running the ***system*** and ***query*** services in dev mode, the changes that you made were automatically picked up. You’re now ready to check out your application in your browser.
 
-Click the following button to visit the ***/query/properties/os.name*** endpoint to test out the unary service. You should see your operating system name. You can try out the URL with other property name.
+Click the following button to visit the ***/query/properties/os.name*** endpoint to test out the unary service. Your operating system name is displayed. 
 
 ::startApplication{port="9081" display="external" name="/query/properties/os.name" route="/query/properties/os.name"}
 
 
-::page{title="Implementing server streaming call"}
+::page{title="Implementing the server streaming call"}
 
-In the server streaming call, the ***query*** client service provides the ***/query/properties/os*** endpoint that sends a message to the ***system*** server service. The ***system*** service streams the properties started with ***os.*** back to the ***query*** service. A channel is created between the ***query*** and the ***system*** services to stream messages. The channel is only closed by the ***system*** service after sending the last message to the ***query*** service. 
+In the server streaming call, the ***query*** client service provides the ***/query/properties/os*** endpoint that sends a message to the ***system*** server service. The ***system*** service streams any properties that start with ***os.*** back to the ***query*** service. A channel is created between the ***query*** and the ***system*** services to stream messages. The channel is closed by the ***system*** service only after sending the last message to the ***query*** service. 
 
 Update the ***SystemService*** class to implement the server streaming rpc call.
 Replace the ***SystemService*** class.
@@ -526,7 +533,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
 
 
 
-The ***getPropertiesServer()*** method implements server streaming rpc call. Use the ***getPropertyPrefix()*** getter method to retrieve the property prefix from the client. Filter out the properties that starts with the ***prefix***. For each property, build a ***SystemProperty*** message and stream the message to the client through the ***StreamObserver*** by using its ***onNext()*** method. When all properties are streamed, finish the streaming by calling the ***onComplete()*** method.
+The ***getPropertiesServer()*** method implements the server streaming RPC call. The ***getPropertyPrefix()*** getter method retrieves the property prefix from the client. Properties that start with the ***prefix*** are filtered out. For each property, a ***SystemProperty*** message is built and streamed to the client through the ***StreamObserver*** by using its ***onNext()*** method. When all properties are streamed, the service stops streaming by calling the ***onComplete()*** method.
 
 Update the ***PropertiesResource*** class to implement the ***/query/properties/os*** endpoint of the ***query*** service.
 
@@ -651,19 +658,19 @@ public class PropertiesResource {
 
 
 
-The endpoint creates a ***channel*** to the ***system*** service and a ***client*** by using the ***SystemServiceGrpc.newStub()*** API. Then, calls the ***getPropertiesServer()*** method with an implementation of the ***StreamObserver*** interface. The ***onNext()*** method receives messages streaming from the server individually and stores them into the ***properties*** placeholder. After all properties are received, it shutdowns the ***channel*** and returns the placeholder. Because the rpc call is asynchronous, use a ***CountDownLatch*** to synchronize the streaming flow.
+The endpoint creates a ***channel*** to the ***system*** service and a ***client*** by using the ***SystemServiceGrpc.newStub()*** API. Then, it calls the ***getPropertiesServer()*** method with an implementation of the ***StreamObserver*** interface. The ***onNext()*** method receives messages streaming from the server individually and stores them into the ***properties*** placeholder. After all properties are received, the ***system*** service shuts down the ***channel*** and returns the placeholder. Because the RPC call is asynchronous, a ***CountDownLatch*** instance synchronizes the streaming flow.
 
-Click the following button to visit the ***/query/properties/os*** endpoint to test out the server streaming. You should see the ***os.*** properties from the ***system*** service. Observe the output from the consoles running the ***system*** and ***query*** services.
+Click the following button to visit the ***/query/properties/os*** endpoint to test out the server streaming. The ***os.*** properties from the ***system*** service are displayed. Observe the output from the consoles running the ***system*** and ***query*** services.
 
 ::startApplication{port="9081" display="external" name="/query/properties/os" route="/query/properties/os"}
 
 
 
-::page{title="Implementing client streaming call"}
+::page{title="Implementing the client streaming call"}
 
-In the client streaming call, the ***query*** client service provides the ***/query/properties/user*** endpoint that streams the user properties to the ***system*** server service. The ***system*** service returns a map of user properties with their values.
+In the client streaming call, the ***query*** client service provides the ***/query/properties/user*** endpoint, which streams the user properties to the ***system*** server service. The ***system*** service returns a map of user properties with their values.
 
-Update the ***SystemService*** class to implement the client streaming rpc call.
+Update the ***SystemService*** class to implement the client streaming RPC call.
 
 Replace the ***SystemService*** class.
 
@@ -770,7 +777,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
 
 
 
-The ***getPropertiesClient()*** method implements client streaming rpc call. This method returns an instance of the ***StreamObserver*** interface. Its ***onNext()*** method receives the messages from the client individually and stores the property values into the ***properties*** map placeholder. When the streaming is completed, the ***properties*** placeholder is sent back to the client by the ***onCompleted()*** method.
+The ***getPropertiesClient()*** method implements client streaming RPC call. This method returns an instance of the ***StreamObserver*** interface. Its ***onNext()*** method receives the messages from the client individually and stores the property values into the ***properties*** map placeholder. When the streaming is completed, the ***properties*** placeholder is sent back to the client by the ***onCompleted()*** method.
 
 
 Update the ***PropertiesResource*** class to implement the ***/query/properties/user*** endpoint of the query service.
@@ -949,16 +956,16 @@ public class PropertiesResource {
 
 
 
-After a connection is created between the two services, call the ***client.getPropertiesClient()*** method to get a ***stream***, collect the properties with property names prefixed by ***user.***, create a ***SystemPropertyName*** message individually, and send the message to the server through by the ***stream::onNext*** action. When all property names are sent, finish the streaming by calling the ***onCompleted()***. Again, use a ***CountDownLatch*** to synchronize the streaming flow.
+After a connection is created between the two services, the ***client.getPropertiesClient()*** method is called to get a ***stream*** and collect the properties with property names that are prefixed by ***user.***. The method creates a ***SystemPropertyName*** message individually and sends the message to the server by the ***stream::onNext*** action. When all property names are sent, the ***onCompleted()*** method is called to finish the streaming. Again, a ***CountDownLatch*** instance synchronizes the streaming flow.
 
-Click the following button to visit the ***/query/properties/user*** endpoint to test out the client streaming. You should see the ***user.*** properties from the ***system*** service. Observe the output from the consoles running the ***system*** and ***query*** services.
+Click the following button to visit the ***/query/properties/user*** endpoint to test the client streaming. The ***user.*** properties from the ***system*** service are displayed. Observe the output from the consoles running the ***system*** and ***query*** services.
 
 ::startApplication{port="9081" display="external" name="/query/properties/user" route="/query/properties/user"}
 
 
-::page{title="Implementing bidirectional streaming call"}
+::page{title="Implementing the bidirectional streaming call"}
 
-In the bidirectional streaming call, the ***query*** client service provides the ***/query/properties/java*** endpoint that streams the property names started with ***java.*** to the ***system*** server service. The ***system*** service streams the property values back to the ***query*** service.
+In the bidirectional streaming call, the ***query*** client service provides the ***/query/properties/java*** endpoint, which streams the property names that start with ***java.*** to the ***system*** server service. The ***system*** service streams the property values back to the ***query*** service.
 
 Update the ***SystemService*** class to implement the bidirectional streaming rpc call.
 
@@ -1096,7 +1103,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
 
 
 
-The ***getPropertiesBidirect()*** method implements bidirectional streaming rpc call. This method returns an instance of the ***StreamObserver*** interface. Its ***onNext()*** method receives the messages from the client individually, creates a ***SystemProperty*** message with the property name and value, and sends the message back to the client by the ***onNext()*** method. When the client streaming is completed, closes the server streaming by calling the ***onCompleted()*** method.
+The ***getPropertiesBidirect()*** method implements bidirectional streaming RPC call. This method returns an instance of the ***StreamObserver*** interface. Its ***onNext()*** method receives the messages from the client individually, creates a ***SystemProperty*** message with the property name and value, and sends the message back to the client. When the client streaming is completed, the method closes the server streaming by calling the ***onCompleted()*** method.
 
 Update the ***PropertiesResource*** class to implement of ***/query/properties/java*** endpoint of the query service.
 
@@ -1328,9 +1335,9 @@ public class PropertiesResource {
 
 
 
-After a connection is created between the two services, call the ***client.getPropertiesBidirect()*** method with an implementation of the ***StreamObserver*** interface. The ***onNext()*** method receives messages streaming from the server individually and stores them into the ***properties*** placeholder. Then, collect the properties started with ***java.***. For each property name, create a ***SystemPropertyName*** message and send the message to the server through by the ***stream::onNext*** action. When all property names are sent, finish the streaming by calling the ***onCompleted()*** method. Again, use a ***CountDownLatch*** to synchronize the streaming flow.
+After a connection is created between the two services, the ***client.getPropertiesBidirect()*** method is called with an implementation of the ***StreamObserver*** interface. The ***onNext()*** method receives messages that are streaming from the server individually and stores them into the ***properties*** placeholder. Then, collect the properties . For each property name that starts with ***java.***, a ***SystemPropertyName*** message is created and sent to the server by the ***stream::onNext*** action. When all property names are sent, the streaming is finished by calling the ***onCompleted()*** method. Again, a ***CountDownLatch*** instance synchronizes the streaming flow.
 
-Click the following button to visit the ***/query/properties/java*** endpoint to test out the bidirectional streaming. You should see the ***java.*** properties from the ***system*** service. Observe the output from the consoles running the ***system*** and ***query*** services.
+Click the following button to visit the ***/query/properties/java*** endpoint to test out the bidirectional streaming. The ***java.*** properties from the ***system*** service are displayed. Observe the output from the consoles running the ***system*** and ***query*** services.
 
 ::startApplication{port="9081" display="external" name="/query/properties/java" route="/query/properties/java"}
 
@@ -1437,7 +1444,7 @@ public class QueryIT {
 ```
 
 
-Each test case tests one of the methods for instantiating a RESTful client.
+Each test case tests one of the methods for instantiating a gRPC client.
 
 The ***testGetPropertiesString()*** tests the ***/query/properties/os.name*** endpoint and confirms that a response is received. 
 
@@ -1475,7 +1482,7 @@ mvn -pl query liberty:stop
 
 ### Nice Work!
 
-You just developed an application that implements four gRPC streaming calls with Open Liberty.
+You just developed an application that implements four gRPC streaming calls with Open Liberty. For more information, see https://openliberty.io/docs/latest/grpc-services.html[Provide and consume gRPC services on Open Liberty] in the Open Liberty docs.
 
 
 
