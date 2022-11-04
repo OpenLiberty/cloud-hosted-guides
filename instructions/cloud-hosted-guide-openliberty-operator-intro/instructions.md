@@ -396,7 +396,7 @@ You can also provide feedback or contribute to this guide from GitHub.
 ### Where to next?
 
 * [Deploying microservices to OpenShift 3](https://openliberty.io/guides/cloud-openshift.html)
-* [Deploying microservices to OpenShift 4 by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
+* [Deploying microservices to OpenShift 4 using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
 * [Deploying microservices to an OKD cluster using Minishift](https://openliberty.io/guides/okd.html)
 
 
