@@ -1,9 +1,9 @@
 ---
 markdown-version: v1
-tool-type: theiadocker
 title: cloud-hosted-guide-mongodb-intro
 branch: lab-668-instruction
-version-history-start-date: '2022-05-30T12:31:47.000Z'
+version-history-start-date: 2022-05-30T12:31:47Z
+tool-type: theiadocker
 ---
 ::page{title="Welcome to the Persisting data with MongoDB guide!"}
 
