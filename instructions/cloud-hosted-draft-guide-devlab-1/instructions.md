@@ -1,13 +1,12 @@
 ---
 markdown-version: v1
 title: instructions
-branch: lab-364-instruction
-version-history-start-date: '2022-02-09T14:19:17.000Z'
-tool-type: theia
+branch: lab-204-instruction
+version-history-start-date: 2022-02-09T14:19:17.000Z
 ---
-::page{title="Welcome to the Getting started with Open Liberty guide!"}
+::page{title="Welcome to the Consuming a RESTful web service with Angular guide!"}
 
-Learn how to develop a Java application on Open Liberty with Maven and Docker.
+Explore how to access a simple RESTful web service and consume its resources with Angular in OpenLiberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,17 +16,25 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You will learn how to run and update a simple REST microservice on Open Liberty. You will use Maven throughout the guide to build and deploy the microservice as well as to interact with the running Liberty instance.
+[Angular](https://angular.io) is a framework for creating interactive web applications. Angular applications are written in HTML, CSS, and [TypeScript](https://www.typescriptlang.org), a variant of JavaScript. Angular helps you create responsive and intuitive applications that download once and run as a single web page. Consuming REST services with your Angular application allows you to request only the data and operations that you need, minimizing loading times.
 
-Open Liberty is an open application framework designed for the cloud. It's small, lightweight, and designed with modern cloud-native application development in mind. It supports the full MicroProfile and Jakarta EE APIs and is composable, meaning that you can use only the features that you need, keeping everything lightweight, which is great for microservices. It also deploys to every major cloud platform, including Docker, Kubernetes, and Cloud Foundry.
+You will learn how to access a REST service and deserialize the returned JSON that contains a list of artists and their albums by using an Angular service and the Angular HTTP Client. You will then present this data using an Angular component.
 
-Maven is an automation build tool that provides an efficient way to develop Java applications. Using Maven, you will build a simple microservice, called ***system***, that collects basic system properties from your laptop and displays them on an endpoint that you can access in your web browser. 
+The REST service that provides the artists and albums resource was written for you in advance and responds with the ***artists.json***.
 
-You'll also explore how to package your application with Open Liberty so that it can be deployed anywhere in one go. You will then make Liberty configuration and code changes and see how they are immediately picked up by a running instance.
+The Angular application was created and configured for you in the ***frontend*** directory. It contains the default starter application. There are many files that make up an Angular application, but you only need to edit a few to consume the REST service and display its data.
 
-Finally, you will package the application along with the server configuration into a Docker image and run that image as a container.
+Angular applications must be compiled before they can be used. The Angular compilation step was configured as part of the Maven build. You can use the ***start*** folder of this guide as a template for getting started with your own applications built on Angular and Open Liberty.
+
+
+
+You will implement an Angular client that consumes this JSON and displays its contents.
+
+To learn more about REST services and how you can write them, see
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
 
 
 ::page{title="Getting started"}
@@ -41,11 +48,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-getting-started.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-angular.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-getting-started.git
-cd guide-getting-started
+git clone https://github.com/openliberty/guide-rest-client-angular.git
+cd guide-rest-client-angular
 ```
 
 
@@ -53,820 +60,363 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+### Try what you'll build
 
-In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
-```bash
-sudo usermod -d /home/project theia
-```
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-
-
-::page{title="Building and running the application"}
-
-Your application is configured to be built with Maven. Every Maven-configured project contains a ***pom.xml*** file, which defines the project configuration, dependencies, plug-ins, and so on.
-
-Your ***pom.xml*** file is located in the ***start*** directory and is configured to include the ***liberty-maven-plugin***, which allows you to install applications into Open Liberty and manage the server instances.
-
-
-To begin, navigate to the ***start*** directory. Build the ***system*** microservice that is provided and deploy it to Open Liberty by running the Maven ***liberty:run*** goal:
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
 ```bash
-cd start
+cd finish
 mvn liberty:run
 ```
 
-The ***mvn*** command initiates a Maven build, during which the ***target*** directory is created to store all build-related files.
-
-The ***liberty:run*** argument specifies the Open Liberty ***run*** goal, which starts an Open Liberty server instance in the foreground. As part of this phase, an Open Liberty server runtime is downloaded and installed into the ***target/liberty/wlp*** directory, a server instance is created and configured in the ***target/liberty/wlp/usr/servers/defaultServer*** directory, and the application is installed into that server via [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
-
-For more information about the Liberty Maven plug-in, see its [GitHub repository](https://github.com/WASdev/ci.maven).
-
-When the server begins starting up, various messages display in your command-line session. Wait for the following message, which indicates that the server startup is complete:
+After you see the following message, your application server is ready:
 
 ```
-[INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
+The defaultServer server is ready to run a smarter planet.
 ```
 
 
+Click the following button to visit the web application ***/app*** root endpoint:
+::startApplication{port="9080" display="external" name="Visit application" route="/app"}
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+ You will see the following output:
 
-
-To access the ***system*** microservice, see the http://localhost:9080/system/properties URL, and you see a list of the various system properties of your JVM:
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
 
 
 ```
-{
-    "os.name": "Mac OS X",
-    "java.version": "1.8.0_151",
-    ...
-}
+foo wrote 2 albums:
+    Album titled *album_one* by *foo* contains *12* tracks
+    Album tilted *album_two* by *foo* contains *15* tracks
+bar wrote 1 albums:
+    Album titled *foo walks into a bar* by *bar* contains *12* tracks
+dj wrote 0 albums:
 ```
 
-When you need to stop the server, press `Ctrl+C` in the command-line session where you ran the server, or run the ***liberty:stop*** goal from the ***start*** directory in another command-line session:
+After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
 ```
 
 
+::page{title="Starting the service"}
 
-::page{title="Starting and stopping the Open Liberty server in the background"}
+Before you begin the implementation, start the provided REST service so that the artist JSON is available to you.
 
-Although you can start and stop the server in the foreground by using the Maven ***liberty:run*** goal, you can also start and stop the server in the background with the Maven ***liberty:start*** and ***liberty:stop*** goals:
+Navigate to the ***start*** directory to begin.
 
 ```bash
-mvn liberty:start
-mvn liberty:stop
+cd /home/project/guide-rest-client-angular/start
 ```
 
-
-
-::page{title="Updating the server configuration without restarting the server"}
-
-The Open Liberty Maven plug-in includes a ***dev*** goal that listens for any changes in the project, including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
-
-Stop the Open Liberty server if it is running, and start it in dev mode by running the ***liberty:dev*** goal in the ***start*** directory:
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the ***enter/return*** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the ***enter/return*** key to verify your change.
-
-
-As before, you can see that the application is running by going to the http://localhost:9080/system/properties URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-
-
-
-Now try updating the server configuration while the server is running in dev mode. The ***system*** microservice does not currently include health monitoring to report whether the server and the microservice that it runs are healthy. You can add health reports with the MicroProfile Health feature, which adds a ***/health*** endpoint to your application. If you try to access this endpoint now at the http://localhost:9080/health/ URL, you see a 404 error because the ***/health*** endpoint does not yet exist:
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl http://localhost:9080/health/
-```
-
-
-
-```
-Error 404: java.io.FileNotFoundException: SRVE0190E: File not found: /health
-```
-
-To add the MicroProfile Health feature to the server, include the ***mpHealth*** feature in the ***server.xml***.
-
-Replace the server configuration file.
-
-> To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Sample Liberty server">
-    <featureManager>
-        <feature>restfulWS-3.0</feature>
-        <feature>jsonp-2.0</feature>
-        <feature>jsonb-2.0</feature>
-        <feature>cdi-3.0</feature>
-        <feature>mpMetrics-4.0</feature>
-        <feature>mpHealth-4.0</feature>
-        <feature>mpConfig-3.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/" />
-    
-    <mpMetrics authentication="false"/>
-
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-
-
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
-
-
-After you make the file changes, Open Liberty automatically reloads its configuration. When enabled, the ***mpHealth*** feature automatically adds a ***/health*** endpoint to the application. You can see the server being updated in the server log displayed in your command-line session:
-
-```
-[INFO] [AUDIT] CWWKG0016I: Starting server configuration update.
-[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
-[INFO] [AUDIT] CWWKG0017I: The server configuration was successfully updated in 0.284 seconds.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/health/
-[INFO] [AUDIT] CWWKF0012I: The server installed the following features: [mpHealth-3.0].
-[INFO] [AUDIT] CWWKF0008I: Feature update completed in 0.285 seconds.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.173 seconds.
-```
-
-
-Try to access the ***/health*** endpoint again by visiting the http://localhost:9080/health URL. You see the following JSON:
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/health | jq
-```
-
-
-
-```
-{
-    "checks":[],
-    "status":"UP"
-}
-```
-
-Now you can verify whether your server is up and running.
-
-
-
-::page{title="Updating the source code without restarting the server"}
-
-The RESTful application that contains your ***system*** microservice runs in a server from its ***.class*** file and other artifacts. Open Liberty automatically monitors these artifacts, and whenever they are updated, it updates the running server without the need for the server to be restarted.
-
-Look at your ***pom.xml*** file.
-
-
-Try updating the source code while the server is running in dev mode. At the moment, the ***/health*** endpoint reports whether the server is running, but the endpoint doesn't provide any details on the microservices that are running inside of the server.
-
-MicroProfile Health offers health checks for both readiness and liveness. A readiness check allows third-party services, such as Kubernetes, to know if the microservice is ready to process requests. A liveness check allows third-party services to determine if the microservice is running.
-
-Create the ***SystemReadinessCheck*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
-```
-
-
-> Then, to open the SystemReadinessCheck.java file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java"}
-
-
-
-```java
-package io.openliberty.sample.system;
-
-import jakarta.enterprise.context.ApplicationScoped;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Readiness
-@ApplicationScoped
-public class SystemReadinessCheck implements HealthCheck {
-
-    private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
-                                                 + " Readiness Check";
-
-    @Inject
-    @ConfigProperty(name = "io_openliberty_guides_system_inMaintenance")
-    Provider<String> inMaintenance;
-
-    @Override
-    public HealthCheckResponse call() {
-        if (inMaintenance != null && inMaintenance.get().equalsIgnoreCase("true")) {
-            return HealthCheckResponse.down(READINESS_CHECK);
-        }
-        return HealthCheckResponse.up(READINESS_CHECK);
-    }
-
-}
-```
-
-
-
-The ***SystemReadinessCheck*** class verifies that the 
-***system*** microservice is not in maintenance by checking a config property.
-
-Create the ***SystemLivenessCheck*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
-```
-
-
-> Then, to open the SystemLivenessCheck.java file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java"}
-
-
-
-```java
-package io.openliberty.sample.system;
-
-import jakarta.enterprise.context.ApplicationScoped;
-
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
-
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class SystemLivenessCheck implements HealthCheck {
-
-    @Override
-    public HealthCheckResponse call() {
-        MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-        long memUsed = memBean.getHeapMemoryUsage().getUsed();
-        long memMax = memBean.getHeapMemoryUsage().getMax();
-
-        return HealthCheckResponse.named(
-            SystemResource.class.getSimpleName() + " Liveness Check")
-                                  .status(memUsed < memMax * 0.9).build();
-    }
-
-}
-```
-
-
-
-The ***SystemLivenessCheck*** class reports a status of 
-***DOWN*** if the microservice uses over 90% of the maximum amount of memory.
-
-After you make the file changes, Open Liberty automatically reloads its configuration and the ***system*** application.
-
-The following messages display in your first command-line session:
-
-```
-[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.136 seconds.
-```
-
-
-Access the ***/health*** endpoint again by going to the http://localhost:9080/health URL. This time you see the overall status of your server and the aggregated data of the liveness and readiness checks for the ***system*** microservice:
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/health | jq
-```
-
-
-
-```
-{  
-   "checks":[  
-      {  
-         "data":{},
-         "name":"SystemResource Readiness Check",
-         "status":"UP"
-      },
-      {  
-         "data":{},
-         "name":"SystemResource Liveness Check",
-         "status":"UP"
-      }
-   ],
-   "status":"UP"
-}
-```
-
-
-
-You can also access the ***/health/ready*** endpoint by going to the http://localhost:9080/health/ready URL to view the data from the readiness health check. Similarly, access the ***/health/live*** endpoint by going to the http://localhost:9080/health/live URL to view the data from the liveness health check.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/health/ready | jq
-```
-
-
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/health/live | jq
-```
-
-
-
-Making code changes and recompiling is fast and straightforward. Open Liberty dev mode automatically picks up changes in the ***.class*** files and artifacts, without needing to be restarted. Alternatively, you can run the ***run*** goal and manually repackage or recompile the application by using the ***mvn package*** command or the ***mvn compile*** command while the server is running. Dev mode was added to further improve the developer experience by minimizing turnaround times.
-
-
-
-::page{title="Checking the Open Liberty server logs"}
-
-While the server is running in the foreground, it displays various console messages in the command-line session. These messages are also logged to the ***target/liberty/wlp/usr/servers/defaultServer/logs/console.log*** file. You can find the complete server logs in the ***target/liberty/wlp/usr/servers/defaultServer/logs*** directory. The ***console.log*** and ***messages.log*** files are the primary log files that contain console output of the running application and the server. More logs are created when runtime errors occur or whenever tracing is enabled. You can find the error logs in the ***ffdc*** directory and the tracing logs in the ***trace.log*** file.
-
-In addition to the log files that are generated automatically, you can enable logging of specific Java packages or classes by using the ***logging*** element:
-
-```
-<logging traceSpecification="<component_1>=<level>:<component_2>=<level>:..."/>
-```
-
-The ***component*** element is a Java package or class, and the ***level*** element is one of the following logging levels: ***off***, ***fatal***, ***severe***, ***warning***, ***audit***, ***info***, ***config***, ***detail***, ***fine***, ***finer***, ***finest***, ***all***.
-
-Try enabling detailed logging of the MicroProfile Health feature by adding the ***logging*** element to your configuration file.
-
-Replace the server configuration file.
-
-> To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Sample Liberty server">
-    <featureManager>
-        <feature>restfulWS-3.0</feature>
-        <feature>jsonp-2.0</feature>
-        <feature>jsonb-2.0</feature>
-        <feature>cdi-3.0</feature>
-        <feature>mpMetrics-4.0</feature>
-        <feature>mpHealth-4.0</feature>
-        <feature>mpConfig-3.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/" />
-    
-    <mpMetrics authentication="false"/>
-
-    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-
-
-
-After you change the file, Open Liberty automatically reloads its configuration.
-
-Now, when you visit the ***/health*** endpoint, additional traces are logged in the ***trace.log*** file.
-
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
-
-
-::page{title="Running the application in a Docker container"}
-
-To run the application in a container, Docker needs to be installed. For installation instructions, see the [Official Docker Docs](https://docs.docker.com/install/).
-
-Make sure to start your Docker daemon before you proceed.
-
-To containerize the application, you need a ***Dockerfile***. This file contains a collection of instructions that define how a Docker image is built, what files are packaged into it, what commands run when the image runs as a container, and other information. You can find a complete ***Dockerfile*** in the ***start*** directory. This ***Dockerfile*** copies the ***.war*** file into a Docker image that contains the Java runtime and a preconfigured Open Liberty server.
-
-Run the ***mvn package*** command from the ***start*** directory so that the ***.war*** file resides in the ***target*** directory.
-
-```bash
-mvn package
-```
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-
-To build and containerize the application, run the following Docker build command in the ***start*** directory:
-
-```bash
-docker build -t openliberty-getting-started:1.0-SNAPSHOT .
-```
-
-The Docker ***openliberty-getting-started:1.0-SNAPSHOT*** image is also built from the ***Dockerfile***. To verify that the image is built, run the ***docker images*** command to list all local Docker images:
-
-```bash
-docker images
-```
-
-Your image should appear in the list of all Docker images:
-
-```
-REPOSITORY                     TAG             IMAGE ID        CREATED         SIZE
-openliberty-getting-started    1.0-SNAPSHOT    85085141269b    21 hours ago    487MB
-```
-
-Next, run the image as a container:
-```bash
-docker run -d --name gettingstarted-app -p 9080:9080 openliberty-getting-started:1.0-SNAPSHOT
-```
-
-There is a bit going on here, so here's a breakdown of the command:
-
-| *Flag* | *Description*
-| ---| ---
-| -d     | Runs the container in the background.
-| --name | Specifies a name for the container.
-| -p     | Maps the container ports to the host ports.
-
-The final argument in the ***docker run*** command is the Docker image name.
-
-Next, run the ***docker ps*** command to verify that your container started:
-```bash
-docker ps
-```
-
-Make sure that your container is running and does not have ***Exited*** as its status:
-
-```
-CONTAINER ID    IMAGE                         CREATED          STATUS           NAMES
-4294a6bdf41b    openliberty-getting-started   9 seconds ago    Up 11 seconds    gettingstarted-app
-```
-
-
-To access the application, go to the http://localhost:9080/system/properties URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-
-
-To stop and remove the container, run the following commands:
-```bash
-docker stop gettingstarted-app && docker rm gettingstarted-app
-```
-
-To remove the image, run the following command:
-```bash
-docker rmi openliberty-getting-started:1.0-SNAPSHOT
-```
-
-
-::page{title="Developing the application in a Docker container"}
-
-The Open Liberty Maven plug-in includes a ***devc*** goal that simplifies developing your application in a Docker container by starting dev mode with container support. This goal builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. Dev mode also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
-
-Build and run the container by running the devc goal from the ***start*** directory:
-
-
-```bash
-chmod 777 /home/project/guide-getting-started/start/target/liberty/wlp/usr/servers/defaultServer/logs
-mvn liberty:devc -DserverStartTimeout=300
-```
-
-When you see the following message, Open Liberty is ready to run in dev mode:
+After you see the following message, your application server in dev mode is ready:
 
 ```
 **************************************************************
 *    Liberty is running in dev mode.
 ```
 
-Open another command-line session and run the ***docker ps*** command to verify that your container started:
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+
+You can find your artist JSON by running the following command at a terminal:
 ```bash
-docker ps
-```
-
-Your container should be running and have ***Up*** as its status:
-
-```
-CONTAINER ID        IMAGE                                 COMMAND                  CREATED             STATUS                         PORTS                                                                    NAMES
-17af26af0539        guide-getting-started-dev-mode        "/opt/ol/helpers/run…"   3 minutes ago       Up 3 minutes                   0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
+curl -s http://localhost:9080/artists | jq
 ```
 
 
-To access the application, go to the http://localhost:9080/system/properties URL. 
+::page{title="Project configuration"}
+
+The front end of your application uses Node.js to execute your Angular code. The Maven project is configured for you to install Node.js and produce the production files, which are copied to the web content of your application.
+
+Node.js is server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to execute the Angular scripts found in the ***package.json*** file. To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
+
+The ***frontend-maven-plugin*** is used to ***install*** the dependencies listed in your ***package.json*** file from the npm registry into a folder called ***node_modules***. The ***node_modules*** folder is found in your ***working*** directory. Then, the configuration ***produces*** the production files to the ***src/main/frontend/src/app*** directory. 
+
+The ***src/main/frontend/src/angular.json*** file is defined so that the production build is copied into the web content of your application.
 
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+::page{title="Creating the root Angular module"}
+
+Your application needs a way to communicate with and retrieve resources from RESTful web services. In this case, the provided Angular application needs to communicate with the artists service to retrieve the artists JSON. While there are various ways to perform this task, Angular contains a built-in ***HttpClientModule*** that you can use.
+
+Angular applications consist of modules, which are groups of classes that perform specific functions. The Angular framework provides its own modules for applications to use. One of these modules, the HTTP Client module, includes convenience classes that make it easier and quicker for you to consume a RESTful API from your application.
+
+You will create the module that organizes your application, which is called the root module. The root module includes the Angular HTTP Client module.
+
+Create the ***app.module.ts*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts
+```
+
+
+> Then, to open the app.module.ts file in your IDE, select
+> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts, or click the following button
+
+::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.module.ts"}
+
+
+
+```
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import { HttpClientModule } from '@angular/common/http';
+import { AppComponent } from './app.component';
+
+@NgModule({
+  declarations: [
+    AppComponent
+  ],
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+```
+
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+The ***HttpClientModule*** imports the class into the file. By using the ***@NgModule*** tag, you can declare a module and organize  your dependencies within the Angular framework. The ***imports*** array is a declaration array that imports the ***HttpClientModule*** so that you can use the HTTP Client module in your application.
+
+
+::page{title="Creating the Angular service to fetch data"}
+
+You need to create the component that is used in the application to acquire and display data from the REST API. The component file contains two classes: the service, which handles data access, and the component itself, which handles the presentation of the data.
+
+Services are classes in Angular that are designed to share their functionality across entire applications. A good service performs only one function, and it performs this function well. In this case, the ***ArtistsService*** class requests artists data from the REST service.
+
+Create the ***app.component.ts*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts
+```
+
+
+> Then, to open the app.component.ts file in your IDE, select
+> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts, or click the following button
+
+::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts"}
+
+
+
+```
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+
+@Injectable()
+export class ArtistsService {
+  constructor(private http: HttpClient) { }
+
+  private static ARTISTS_URL = '/artists';
+
+  async fetchArtists() {
+    try {
+      const data: any = await this.http.get(ArtistsService.ARTISTS_URL).toPromise();
+      return data;
+    } catch (error) {
+      console.error('Error occurred: ' + error);
+    }
+  }
+}
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent implements OnInit {
+  artists: any[] = [];
+
+  constructor(private artistsService: ArtistsService) { }
+
+  ngOnInit() {
+    this.artistsService.fetchArtists().then(data => {
+      this.artists = data;
+    });
+  }
+}
+```
+
+
+
+The file imports the ***HttpClient*** class and the ***Injectable*** decorator.
+
+The ***ArtistsService*** class is defined. While it shares the file of the component class ***AppComponent***, it can also be defined in its own file. The class is annotated by ***@Injectable*** so instances of it can be provided to other classes anywhere in the application.
+
+The class injects an instance of the ***HttpClient*** class, which it uses to request data from the REST API. It contains the ***ARTISTS_URL*** constant, which points to the API endpoint it requests data from. The URL does not contain a host name because the artists API endpoint is accessible from the same host as the Angular application. You can send requests to external APIs by specifying the full URL. Finally, it implements a ***fetchArtists()*** method that makes the request and returns the result.
+
+To obtain the data for display on the page, the ***fetchArtists()*** method tries to use the injected ***http*** instance to perform a ***GET*** HTTP request to the ***ARTISTS_URL*** constant. If successful, it returns the result. If an error occurs, it prints the error message to the console.
+
+The ***fetchArtists()*** method uses a feature of JavaScript called ***async***, ***await*** to make requests and receive responses without preventing the application from working while it waits. For the result of the ***HttpClient.get()*** method to be compatible with this feature, it must be converted to a Promise by invoking its ***toPromise()*** method. APromise is how JavaScript represents the state of an asynchronous operation. If you want to learn more, check out [promisejs.org](https://promisejs.org) for an introduction.
+
+
+::page{title="Defining the component to consume the service"}
+
+Components are the basic building blocks of Angular application user interfaces. Components are made up of a TypeScript class annotated with the ***@Component*** annotation and the HTML template file (specified by ***templateUrl***) and CSS style files (specified by ***styleUrls***.)
+
+Update the ***AppComponent*** class to use the artists service to fetch the artists data and save it so the component can display it.
+
+Update the ***app.component.ts*** file.
+
+> To open the app.component.ts file in your IDE, select
+> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts, or click the following button
+
+::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.ts"}
+
+
+
+```
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+
+@Injectable()
+export class ArtistsService {
+  constructor(private http: HttpClient) { }
+
+  private static ARTISTS_URL = '/artists';
+
+  async fetchArtists() {
+    try {
+      const data: any = await this.http.get(ArtistsService.ARTISTS_URL).toPromise();
+      return data;
+    } catch (error) {
+      console.error('Error occurred: ' + error);
+    }
+  }
+}
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  providers: [ ArtistsService ],
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent implements OnInit {
+  artists: any[] = [];
+
+  constructor(private artistsService: ArtistsService) { }
+
+  ngOnInit() {
+    this.artistsService.fetchArtists().then(data => {
+      this.artists = data;
+    });
+  }
+}
+```
+
+
+
+Replace the entire ***AppComponent*** class along with the ***@Component*** annotation. Add ***OnInit*** to the list of imported classes at the top.
+
+The ***providers*** property on the ***@Component*** annotation indicates that this component provides the ***ArtistsService*** to other classes in the application.
+
+***AppComponent*** implements ***OnInit***, which is a special interface called a lifecycle hook. When Angular displays, updates, or removes a component, it calls a specific function, the lifecycle hook, on the component so the component can run code in response to this event. This component responds to the ***OnInit*** event via the ***ngOnInit*** method, which fetches and populates the component's template with data when it is initialized for display. The file imports the ***OnInit*** interface from the ***@angular/core*** package.
+
+***artists*** is a class member of type ***any[]*** that starts out as an empty array. It holds the artists retrieved from the service so the template can display them.
+
+An instance of the ***ArtistsService*** class is injected into the constructor and is accessible by any function that is defined in the class. The ***ngOnInit*** function uses the ***artistsService*** instance to request the artists data. The ***fetchArtists()*** method is an ***async*** function so it returns a Promise. To retrieve the data from the request, ***ngOnInit*** calls the ***then()*** method on the Promise which takes in the data and stores it to the ***artists*** class member.
+
+
+::page{title="Creating the Angular component template"}
+
+Now that you have a service to fetch the data and a component to store it in, you will create a template to specify how the data will be displayed on the page. When you visit the page in the browser, the component populates the template to display the artists data with formatting.
+
+Create the ***app.component.html*** file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html
+```
+
+
+> Then, to open the app.component.html file in your IDE, select
+> **File** > **Open** > guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html, or click the following button
+
+::openFile{path="/home/project/guide-rest-client-angular/start/src/main/frontend/src/app/app.component.html"}
+
+
+
+```html
+<div *ngFor="let artist of artists">
+  <p>{{ artist.name }} wrote {{ artist.albums.length }} albums: </p>
+  <div *ngFor="let album of artist.albums">
+    <p style="text-indent: 20px">
+      Album titled <b>{{ album.title }}</b> by
+                   <b>{{ album.artist }}</b> contains
+                   <b>{{ album.ntracks }}</b> tracks
+    </p>
+  </div>
+</div>
+```
+
+
+
+The template contains a ***div*** element that is enumerated by using the ***ngFor*** directive. The ***artist*** variable is bound to the ***artists*** member of the component. The ***div*** element itself and all elements contained within it are repeated for each artist, and the ***{{ artist.name }}*** and ***{{ artist.albums.length }}*** placeholders are populated with the information from each artist. The same strategy is used to display each ***album*** by each artist.
+
+
+::page{title="Building the front end"}
+
+The Open Liberty server is already started, and the REST service is running. In a new command-line session, build the front end by running the following command in the ***start*** directory:
 
 ```bash
-curl -s http://localhost:9080/system/properties | jq
+cd /home/project/guide-rest-client-angular/start
+mvn generate-resources
 ```
 
+The build might take a few minutes to complete. You can rebuild the front end at any time with the ***generate-resources*** Maven goal. Any local changes to your TypeScript or HTML are picked up when you build the front end.
 
 
-Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the ***enter/return*** key in the active command-line session.
+Click the following button to visit the web application ***/app*** root endpoint:
+::startApplication{port="9080" display="external" name="Visit application" route="/app"}
 
-Update the ***server.xml*** file to change the context root from ***/*** to ***/dev***.
-
-Replace the server configuration file.
-
-> To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Sample Liberty server">
-    <featureManager>
-        <feature>restfulWS-3.0</feature>
-        <feature>jsonp-2.0</feature>
-        <feature>jsonb-2.0</feature>
-        <feature>cdi-3.0</feature>
-        <feature>mpMetrics-4.0</feature>
-        <feature>mpHealth-4.0</feature>
-        <feature>mpConfig-3.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/dev" />
-    <mpMetrics authentication="false"/>
-
-    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-
-
-
-After you make the file changes, Open Liberty automatically reloads its configuration. When you see the following message in your command-line session, Open Liberty is ready to run again:
+You will see the following output:
 
 ```
-The server has been restarted.
-************************************************************************
-*    Liberty is running in dev mode.
+foo wrote 2 albums:
+    Album titled *album_one* by *foo* contains *12* tracks
+    Album tilted *album_two* by *foo* contains *15* tracks
+bar wrote 1 albums:
+    Album titled *foo walks into a bar* by *bar* contains *12* tracks
+dj wrote 0 albums:
 ```
 
-Update the ***mpData.js*** file to change the ***url*** in the ***getSystemPropertiesRequest*** method to reflect the new context root.
+If you use the ***curl*** command to access the web application root URL, you see only the application root page in HTML. The Angular framework uses JavaScript to render the HTML to display the application data. A web browser runs JavaScript, and the ***curl*** command doesn't.
 
 
-Update the mpData.js file.
+::page{title="Testing the Angular client"}
 
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-getting-started/start/src/main/webapp/js/mpData.js, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/webapp/js/mpData.js"}
-
-```
-function getSystemPropertiesRequest() {
-    var propToDisplay = ["java.vendor", "java.version", "user.name", "os.name", "wlp.install.dir", "wlp.server.name" ];
-    var url = "http://localhost:9080/dev/system/properties";
-    var req = new XMLHttpRequest();
-    var table = document.getElementById("systemPropertiesTable");
-    ...
-```
-
-Update the ***pom.xml*** file to change the context root from ***/*** to ***/dev*** in the ***maven-failsafe-plugin*** to reflect the new context root when you run functional tests.
-
-Replace the pom.xml file.
-
-> To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/pom.xml"}
+No explicit code directly uses the consumed artist JSON, so you don't need to write any test cases.
 
 
+Whenever you change and build your Angular implementation, the changes are automatically reflected at the URL for the launched application.
 
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+When you are done checking the application root, exit development mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-getting-started</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-    </properties>
-
-    <dependencies>
-        <!-- Provided dependencies -->
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>5.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        <!-- For tests -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.8.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>6.0.0.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.0.0.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.json</artifactId>
-            <version>2.0.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <!-- Enable liberty-maven plugin -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5.1</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
-            </plugin>
-            <!-- Plugin to run functional tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
-                        <context.root>/dev</context.root>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-
-
-You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode to verify your change.
-
-
-You can access the application at the http://localhost:9080/dev/system/properties URL. Notice that the context root is now ***/dev***.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/dev/system/properties | jq
-```
-
-
-
-When you are finished, exit dev mode by pressing `Ctrl+C` in the command-line session that the container was started from, or by typing ***q*** and then pressing the ***enter/return*** key. Either of these options stops and removes the container. To check that the container was stopped, run the ***docker ps*** command.
-
-
-::page{title="Running the application from a minimal runnable JAR"}
-
-So far, Open Liberty was running out of the ***target/liberty/wlp*** directory, which effectively contains an Open Liberty server installation and the deployed application. The final product of the Maven build is a server package for use in a continuous integration pipeline and, ultimately, a production deployment.
-
-Open Liberty supports a number of different server packages. The sample application currently generates a ***usr*** package that contains the servers and application to be extracted onto an Open Liberty installation.
-
-Instead of creating a server package, you can generate a runnable JAR file that contains the application along with a server runtime. This JAR file can then be run anywhere and deploy your application and server at the same time. To generate a runnable JAR file, override the  ***include*** property: 
-```bash
-mvn liberty:package -Dinclude=runnable
-```
-
-The packaging type is overridden from the ***usr*** package to the ***runnable*** package. This property then propagates to the ***liberty-maven-plugin*** plug-in, which generates the server package based on the ***openliberty-kernel*** package.
-
-When the build completes, you can find the minimal runnable ***guide-getting-started.jar*** file in the ***target*** directory. This JAR file contains only the ***features*** that you explicitly enabled in your ***server.xml*** file. As a result, the generated JAR file is only about 50 MB.
-
-To run the JAR file, first stop the server if it's running. Then, navigate to the ***target*** directory and run the ***java -jar*** command:
-
-```bash
-java -jar guide-getting-started.jar
-```
-
-
-When the server starts, go to the http://localhost:9080/dev/system/properties URL to access your application that is now running out of the minimal runnable JAR file.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/dev/system/properties | jq
-```
-
-
-
-You can stop the server by pressing `Ctrl+C` in the command-line session that the server runs in.
-
-
-
-
+Although the Angular application that this guide shows you how to build is simple, when you build more complex Angular applications, testing becomes a crucial part of your development lifecycle. If you need to write test cases, follow the official unit testing and end-to-end testing documentation on the [official Angular page](https://angular.io/guide/testing).
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You've learned the basics of deploying and updating an application on an Open Liberty server.
-
+You just accessed a simple RESTful web service and consumed its resources by using Angular in Open Liberty.
 
 
 
@@ -875,34 +425,34 @@ You've learned the basics of deploying and updating an application on an Open Li
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-getting-started*** project by running the following commands:
+Delete the ***guide-rest-client-angular*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-getting-started
+rm -fr guide-rest-client-angular
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Getting%20started%20with%20Open%20Liberty&guide-id=cloud-hosted-guide-getting-started)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20Angular&guide-id=cloud-hosted-guide-rest-client-angular)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-getting-started/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-getting-started/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-angular/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-angular/pulls)
 
 
 
 ### Where to next?
 
-* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
 ### Log out of the session
