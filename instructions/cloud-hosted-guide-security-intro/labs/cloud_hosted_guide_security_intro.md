@@ -1,9 +1,9 @@
 ---
 markdown-version: v1
-tool-type: theiadocker
 title: cloud-hosted-guide-security-intro
 branch: lab-653-instruction
-version-history-start-date: '2022-05-27T14:10:25.000Z'
+version-history-start-date: 2022-05-27T14:10:25Z
+tool-type: theiadocker
 ---
 ::page{title="Welcome to the Securing a web application guide!"}
 
