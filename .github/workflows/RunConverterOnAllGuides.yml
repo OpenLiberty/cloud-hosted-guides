@@ -198,6 +198,7 @@ jobs:
       - name: Run Converter
         run: |
           branchName=${{ github.event.inputs.branch }}
+          echo "${{ github.event.inputs.GuideConverterBranch }}"
           git init
           mkdir -p instructions/${{matrix.guides.instructionDir}}
           rm -f instructions/cloud-hosted-${{matrix.guides.guide}}/README.md
