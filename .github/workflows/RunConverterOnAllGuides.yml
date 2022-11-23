@@ -218,8 +218,8 @@ jobs:
         with:
           name: ${{matrix.guides.guide}}
           path: |
-            instructions/cloud-hosted-*-${{matrix.guides.guide}}/labs/*.md
-            instructions/cloud-hosted-*-${{matrix.guides.guide}}/instructions.md
+            instructions/cloud-hosted-${{matrix.guides.guide}}/labs/*.md
+            instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
 
   createPullRequestStaging:
     needs: convertStaging
