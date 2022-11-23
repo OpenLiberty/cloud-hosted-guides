@@ -198,7 +198,6 @@ jobs:
       - name: Run Converter
         run: |
           branchName=${{ github.event.inputs.branch }}
-          echo "${{ github.event.inputs.GuideConverterBranch }}"
           git init
           mkdir -p instructions/${{matrix.guides.instructionDir}}
           rm -f instructions/cloud-hosted-${{matrix.guides.guide}}/README.md
@@ -217,7 +216,7 @@ jobs:
           git config --global user.name "GuidesBot"
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{matrix.guides.guide}}
+          name: ${{matrix.guides.instructionDir}}
           path: |
             instructions/cloud-hosted-${{matrix.guides.guide}}/labs/*.md
             instructions/cloud-hosted-${{matrix.guides.guide}}/instructions.md
