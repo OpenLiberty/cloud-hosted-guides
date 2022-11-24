@@ -216,7 +216,7 @@ jobs:
           git config --global user.name "GuidesBot"
 
       - uses: actions/upload-artifact@v3
-        if: ${{matrix.guides.instructionDir}}.contains('/labs')
+        if: contains(${{matrix.guides.instructionDir}}, '/labs')
         with:
           name: ${{matrix.guides.instructionDir}}
           path: |
