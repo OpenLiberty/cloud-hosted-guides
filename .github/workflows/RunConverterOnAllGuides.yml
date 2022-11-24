@@ -101,11 +101,13 @@ jobs:
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
+
       - uses: actions/upload-artifact@v3
         with:
           name: ${{matrix.guides.instructionDir}}
           path: |
             instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
+            instructions/${{matrix.guides.instructionDir}}/labs/${{matrix.guides.guide}}.md
 
   createPullRequestProd:
     needs: convertProd
@@ -217,6 +219,7 @@ jobs:
           name: ${{matrix.guides.instructionDir}}
           path: |
             instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
+            instructions/${{matrix.guides.instructionDir}}/labs/${{matrix.guides.guide}}.md
 
   createPullRequestStaging:
     needs: convertStaging
