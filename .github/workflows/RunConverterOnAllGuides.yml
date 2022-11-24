@@ -218,7 +218,6 @@ jobs:
         with:
           name: ${{matrix.guides.guide}}
           path: |
-            instructions/${{matrix.guides.instructionDir}}/labs/*.md
             instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
 
   createPullRequestStaging:
