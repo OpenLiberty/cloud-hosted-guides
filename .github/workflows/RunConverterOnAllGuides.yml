@@ -210,7 +210,7 @@ jobs:
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{matrix.guides.guide}}.md instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
+          mv GuideConverter/${{matrix.guides.guide}}.md instructions/${{matrix.guides.instructionDir}}/instructions.md
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh ${{matrix.guides.guide}}
           git add .
@@ -220,7 +220,7 @@ jobs:
         with:
           name: ${{matrix.guides.guide}}
           path: |
-            instructions/cloud-hosted-${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
+            instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
 
   createPullRequestStaging:
     needs: convertStaging
