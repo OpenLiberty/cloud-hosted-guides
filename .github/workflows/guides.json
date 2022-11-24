@@ -4,7 +4,6 @@
         "instructionDir": "cloud-hosted-guide-arquillian-managed",
         "instruction": "instructions.md"
     },
-    ,
     {
         "guide": "guide-bean-validation",
         "instructionDir": "cloud-hosted-guide-bean-validation",
@@ -225,5 +224,4 @@
         "instructionDir": "cloud-hosted-guide-spring-boot",
         "instruction": "instructions.md"
     }
-
 ]
