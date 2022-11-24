@@ -181,7 +181,7 @@ jobs:
         with:
           ref: staging
           repository: OpenLiberty/${{matrix.guides.guide}}
-          path: GuideConverter/${{matrix.guides.guide}}
+          path: GuideConverter/${{matrix.guides.instructionDir}}
 
       - name: Checkout guides-common repo
         uses: actions/checkout@v3
