@@ -60,11 +60,6 @@
         "instruction": "instructions.md"
     },
     {
-        "guide": "guide-liberty-deep-dive",
-        "instructionDir": "cloud-hosted-guide-liberty-deep-dive",
-        "instruction": "instructions.md"
-    },
-    {
         "guide": "guide-maven-intro",
         "instructionDir": "cloud-hosted-guide-maven-intro",
         "instruction": "instructions.md"

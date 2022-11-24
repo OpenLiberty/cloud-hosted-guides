@@ -197,6 +197,8 @@ jobs:
 
       - name: Run Converter
         run: |
+          echo "${{matrix.guides.instructionDir}}"
+          echo "${{matrix.guides.guide}}"
           branchName=${{ github.event.inputs.branch }}
           git init
           mkdir -p instructions/${{matrix.guides.instructionDir}}
@@ -218,7 +220,7 @@ jobs:
         with:
           name: ${{matrix.guides.guide}}
           path: |
-            instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
+            instructions/${{matrix.guides.instructionDir}}
 
   createPullRequestStaging:
     needs: convertStaging
