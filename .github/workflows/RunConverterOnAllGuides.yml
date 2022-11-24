@@ -197,20 +197,17 @@ jobs:
 
       - name: Run Converter
         run: |
-          echo "${{matrix.guides.instructionDir}}"
-          echo "${{matrix.guides.guide}}"
-          branchName=${{ github.event.inputs.branch }}
           git init
           mkdir -p instructions/${{matrix.guides.instructionDir}}
-          rm -f instructions/cloud-hosted-${{matrix.guides.guide}}/README.md
+          rm -f instructions/${{matrix.guides.instructionDir}}/README.md
           cd GuideConverter
           mvn compiler:compile
-          mvn exec:java -Dexec.args="${{matrix.guides.guide}} ${branchName}"
+          mvn exec:java -Dexec.args="${{matrix.guides.guide}} ${{ github.event.inputs.branch }}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{matrix.guides.guide}}.md instructions/cloud-hosted-${{matrix.guides.instructionDir}}/instructions.md
+          mv GuideConverter/${{matrix.guides.guide}}.md instructions/${{matrix.guides.instructionDir}}/instructions.md
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh ${{matrix.guides.guide}}
           git add .
