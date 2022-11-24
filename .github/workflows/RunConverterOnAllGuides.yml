@@ -181,7 +181,7 @@ jobs:
         with:
           ref: staging
           repository: OpenLiberty/${{matrix.guides.guide}}
-          path: GuideConverter/${{matrix.guides.instructionDir}}
+          path: GuideConverter/${{matrix.guides.guide}}
 
       - name: Checkout guides-common repo
         uses: actions/checkout@v3
@@ -215,7 +215,7 @@ jobs:
           git config --global user.name "GuidesBot"
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{matrix.guides.guide}}
+          name: ${{matrix.guides.instructionDir}}
           path: |
             instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
 
