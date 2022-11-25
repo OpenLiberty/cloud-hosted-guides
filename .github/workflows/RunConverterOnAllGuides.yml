@@ -223,8 +223,8 @@ jobs:
           echo "GUIDES_SAFE=$GUIDES_SAFE" >> $GITHUB_ENV
 
       - uses: actions/upload-artifact@v3
-        if: ${{ contains(${{matrix.guides.instructionDir}}, '/labs') }}
         with:
+        if: contains(${{matrix.guides.instructionDir}}, '/labs')
           name: ${{ env.GUIDES_SAFE }}
           path: |
             instructions/${{ env.GUIDES_SAFE }}/labs/${{matrix.guides.instruction}}
