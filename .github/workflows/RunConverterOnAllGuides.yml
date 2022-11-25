@@ -216,7 +216,6 @@ jobs:
           git config --global user.name "GuidesBot"
 
       - name: Setup GUIDES_SAFE
-        if: contains(${{matrix.guides.instructionDir}}, '/labs')
         run: |
           GUIDES_SAFE=$(echo -n "${{matrix.guides.instructionDir}}" | sed 's|/labs||g')
           echo "GUIDES_SAFE=$GUIDES_SAFE"
@@ -224,7 +223,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-        if: contains(${{matrix.guides.instructionDir}}, '/labs')
+        if: contains(${{ env.GUIDES_SAFE }}, '/labs')
           name: ${{ env.GUIDES_SAFE }}
           path: |
             instructions/${{ env.GUIDES_SAFE }}/labs/${{matrix.guides.instruction}}
