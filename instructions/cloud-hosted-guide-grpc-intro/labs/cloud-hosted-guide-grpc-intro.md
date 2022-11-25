@@ -1,8 +1,9 @@
 ---
 markdown-version: v1
-title: instructions
+title: cloud-hosted-guide-grpc-intro
 branch: lab-1145-instruction
 version-history-start-date: 2022-08-11T09:54:57Z
+tool-type: theia
 ---
 ::page{title="Welcome to the Streaming messages between client and server services using gRPC guide!"}
 
@@ -140,13 +141,13 @@ package io.openliberty.guides.systemproto;
 option java_multiple_files = true;
 
 service SystemService {
-    rpc getProperty (SystemPropertyName) returns (SystemPropertyValue) {}
+  rpc getProperty (SystemPropertyName) returns (SystemPropertyValue) {}
 
-    rpc getPropertiesServer (SystemPropertyPrefix) returns (stream SystemProperty) {}
+  rpc getServerStreamingProperties (SystemPropertyPrefix) returns (stream SystemProperty) {}
 
-    rpc getPropertiesClient (stream SystemPropertyName) returns (SystemProperties) {}
+  rpc getClientStreamingProperties (stream SystemPropertyName) returns (SystemProperties) {}
 
-    rpc getPropertiesBidirect (stream SystemPropertyName) returns (stream SystemProperty) {}
+  rpc getBidirectProperties (stream SystemPropertyName) returns (stream SystemProperty) {}
 }
 
 message SystemPropertyName {
@@ -180,12 +181,12 @@ The first few lines define the ***syntax***, ***package***, and ***option*** bas
 
 The ***getProperty*** rpc defines the unary call. In this call, the client side sends a ***SystemPropertyName*** message to the server side, which returns a ***SystemPropertyValue*** message with the property value. The ***SystemPropertyName*** and ***SystemPropertyValue*** message types define that the ***propertyName*** and ***propertyValue*** must be string.
 
-The ***getPropertiesServer*** RPC defines the server streaming call. The client side sends a ***SystemPropertyPrefix*** message to the server side. The server returns a stream of ***SystemProperty*** messages. Each ***SystemProperty*** message contains ***propertyName*** and ***propertyValue*** strings.
+The ***getServerStreamingProperties*** RPC defines the server streaming call. The client side sends a ***SystemPropertyPrefix*** message to the server side. The server returns a stream of ***SystemProperty*** messages. Each ***SystemProperty*** message contains ***propertyName*** and ***propertyValue*** strings.
 
-The ***getPropertiesClient*** RPC defines the client streaming call. The client side streams ***SystemPropertyName*** messages to the server side. The server returns a ***SystemProperties*** message that contains a map of the properties with their respective values.
+The ***getClientStreamingProperties*** RPC defines the client streaming call. The client side streams ***SystemPropertyName*** messages to the server side. The server returns a ***SystemProperties*** message that contains a map of the properties with their respective values.
 
 
-The ***getPropertiesBidirect*** RPC defines the bidirectional streaming call. In this service, the client side streams ***SystemPropertyName*** messages to the server side. The server returns a stream of ***SystemProperty*** messages.
+The ***getBidirectProperties*** RPC defines the bidirectional streaming call. In this service, the client side streams ***SystemPropertyName*** messages to the server side. The server returns a stream of ***SystemProperty*** messages.
 
 To compile the ***.proto*** file, the ***pom.xml*** Maven configuration file needs the  ***grpc-protobuf*** and ***grpc-stub*** dependencies, and the ***protobuf-maven-plugin*** plugin. To install the correct version of the Protobuf compiler automatically, the ***os-maven-plugin*** extension is required in the ***build*** configuration.
 
@@ -246,6 +247,7 @@ package io.openliberty.guides.system;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import io.grpc.stub.StreamObserver;
 import io.openliberty.guides.systemproto.SystemProperties;
@@ -256,6 +258,8 @@ import io.openliberty.guides.systemproto.SystemPropertyValue;
 import io.openliberty.guides.systemproto.SystemServiceGrpc;
 
 public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
+
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
 
     public SystemService() {
     }
@@ -312,6 +316,8 @@ Replace the ***system*** server configuration file.
     <applicationManager autoExpand="true"/>
 
     <webApplication contextRoot="/" location="guide-grpc-intro-system.war"/>
+
+    <logging consoleLogLevel="INFO"/>
 </server>
 ```
 
@@ -344,6 +350,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -370,6 +377,8 @@ import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceStub;
 @ApplicationScoped
 @Path("/properties")
 public class PropertiesResource {
+
+    private static Logger logger = Logger.getLogger(PropertiesResource.class.getName());
 
     @Inject
     @ConfigProperty(name = "system.hostname", defaultValue = "localhost")
@@ -441,6 +450,8 @@ Replace the ***query*** server configuration file.
     <applicationManager autoExpand="true"/>
 
     <webApplication contextRoot="/" location="guide-grpc-intro-query.war"/>
+
+    <logging consoleLogLevel="INFO"/>
 </server>
 ```
 
@@ -474,6 +485,7 @@ package io.openliberty.guides.system;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import io.grpc.stub.StreamObserver;
 import io.openliberty.guides.systemproto.SystemProperties;
@@ -484,6 +496,8 @@ import io.openliberty.guides.systemproto.SystemPropertyValue;
 import io.openliberty.guides.systemproto.SystemServiceGrpc;
 
 public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
+
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
 
     public SystemService() {
     }
@@ -505,7 +519,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
     }
 
     @Override
-    public void getPropertiesServer(
+    public void getServerStreamingProperties(
         SystemPropertyPrefix request, StreamObserver<SystemProperty> observer) {
 
         String prefix = request.getPropertyPrefix();
@@ -521,10 +535,10 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
                       .setPropertyValue(pValue)
                       .build();
                   observer.onNext(value);
-                  System.out.println("server streaming sent property: " + name);
+                  logger.info("server streaming sent property: " + name);
                });
         observer.onCompleted();
-        System.out.println("server streaming was completed!");
+        logger.info("server streaming was completed!");
     }
 
 
@@ -533,7 +547,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
 
 
 
-The ***getPropertiesServer()*** method implements the server streaming RPC call. The ***getPropertyPrefix()*** getter method retrieves the property prefix from the client. Properties that start with the ***prefix*** are filtered out. For each property, a ***SystemProperty*** message is built and streamed to the client through the ***StreamObserver*** by using its ***onNext()*** method. When all properties are streamed, the service stops streaming by calling the ***onComplete()*** method.
+The ***getServerStreamingProperties()*** method implements the server streaming RPC call. The ***getPropertyPrefix()*** getter method retrieves the property prefix from the client. Properties that start with the ***prefix*** are filtered out. For each property, a ***SystemProperty*** message is built and streamed to the client through the ***StreamObserver*** by using its ***onNext()*** method. When all properties are streamed, the service stops streaming by calling the ***onComplete()*** method.
 
 Update the ***PropertiesResource*** class to implement the ***/query/properties/os*** endpoint of the ***query*** service.
 
@@ -554,6 +568,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -580,6 +595,8 @@ import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceStub;
 @ApplicationScoped
 @Path("/properties")
 public class PropertiesResource {
+
+    private static Logger logger = Logger.getLogger(PropertiesResource.class.getName());
 
     @Inject
     @ConfigProperty(name = "system.hostname", defaultValue = "localhost")
@@ -619,11 +636,12 @@ public class PropertiesResource {
         CountDownLatch countDown = new CountDownLatch(1);
         SystemPropertyPrefix request = SystemPropertyPrefix.newBuilder()
                                          .setPropertyPrefix("os.").build();
-        client.getPropertiesServer(request, new StreamObserver<SystemProperty>() {
+        client.getServerStreamingProperties(
+            request, new StreamObserver<SystemProperty>() {
 
             @Override
             public void onNext(SystemProperty value) {
-                System.out.println("server streaming received: "
+                logger.info("server streaming received: "
                    + value.getPropertyName() + "=" + value.getPropertyValue());
                 properties.put(value.getPropertyName(), value.getPropertyValue());
             }
@@ -635,7 +653,7 @@ public class PropertiesResource {
 
             @Override
             public void onCompleted() {
-                System.out.println("server streaming completed");
+                logger.info("server streaming completed");
                 countDown.countDown();
             }
         });
@@ -658,7 +676,7 @@ public class PropertiesResource {
 
 
 
-The endpoint creates a ***channel*** to the ***system*** service and a ***client*** by using the ***SystemServiceGrpc.newStub()*** API. Then, it calls the ***getPropertiesServer()*** method with an implementation of the ***StreamObserver*** interface. The ***onNext()*** method receives messages streaming from the server individually and stores them into the ***properties*** placeholder. After all properties are received, the ***system*** service shuts down the ***channel*** and returns the placeholder. Because the RPC call is asynchronous, a ***CountDownLatch*** instance synchronizes the streaming flow.
+The endpoint creates a ***channel*** to the ***system*** service and a ***client*** by using the ***SystemServiceGrpc.newStub()*** API. Then, it calls the ***getServerStreamingProperties()*** method with an implementation of the ***StreamObserver*** interface. The ***onNext()*** method receives messages streaming from the server individually and stores them into the ***properties*** placeholder. After all properties are received, the ***system*** service shuts down the ***channel*** and returns the placeholder. Because the RPC call is asynchronous, a ***CountDownLatch*** instance synchronizes the streaming flow.
 
 Click the following button to visit the ***/query/properties/os*** endpoint to test out the server streaming. The ***os.*** properties from the ***system*** service are displayed. Observe the output from the consoles running the ***system*** and ***query*** services.
 
@@ -686,6 +704,7 @@ package io.openliberty.guides.system;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import io.grpc.stub.StreamObserver;
 import io.openliberty.guides.systemproto.SystemProperties;
@@ -696,6 +715,8 @@ import io.openliberty.guides.systemproto.SystemPropertyValue;
 import io.openliberty.guides.systemproto.SystemServiceGrpc;
 
 public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
+
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
 
     public SystemService() {
     }
@@ -717,7 +738,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
     }
 
     @Override
-    public void getPropertiesServer(
+    public void getServerStreamingProperties(
         SystemPropertyPrefix request, StreamObserver<SystemProperty> observer) {
 
         String prefix = request.getPropertyPrefix();
@@ -733,14 +754,14 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
                       .setPropertyValue(pValue)
                       .build();
                   observer.onNext(value);
-                  System.out.println("server streaming sent property: " + name);
+                  logger.info("server streaming sent property: " + name);
                });
         observer.onCompleted();
-        System.out.println("server streaming was completed!");
+        logger.info("server streaming was completed!");
     }
 
     @Override
-    public StreamObserver<SystemPropertyName> getPropertiesClient(
+    public StreamObserver<SystemPropertyName> getClientStreamingProperties(
         StreamObserver<SystemProperties> observer) {
 
         return new StreamObserver<SystemPropertyName>() {
@@ -751,7 +772,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
             public void onNext(SystemPropertyName spn) {
                 String pName = spn.getPropertyName();
                 String pValue = System.getProperty(pName);
-                System.out.println("client streaming received property: " + pName);
+                logger.info("client streaming received property: " + pName);
                 properties.put(pName, pValue);
             }
 
@@ -767,7 +788,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
                                              .build();
                 observer.onNext(value);
                 observer.onCompleted();
-                System.out.println("client streaming was completed!");
+                logger.info("client streaming was completed!");
             }
         };
     }
@@ -777,7 +798,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
 
 
 
-The ***getPropertiesClient()*** method implements client streaming RPC call. This method returns an instance of the ***StreamObserver*** interface. Its ***onNext()*** method receives the messages from the client individually and stores the property values into the ***properties*** map placeholder. When the streaming is completed, the ***properties*** placeholder is sent back to the client by the ***onCompleted()*** method.
+The ***getClientStreamingProperties()*** method implements client streaming RPC call. This method returns an instance of the ***StreamObserver*** interface. Its ***onNext()*** method receives the messages from the client individually and stores the property values into the ***properties*** map placeholder. When the streaming is completed, the ***properties*** placeholder is sent back to the client by the ***onCompleted()*** method.
 
 
 Update the ***PropertiesResource*** class to implement the ***/query/properties/user*** endpoint of the query service.
@@ -799,6 +820,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -825,6 +847,8 @@ import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceStub;
 @ApplicationScoped
 @Path("/properties")
 public class PropertiesResource {
+
+    private static Logger logger = Logger.getLogger(PropertiesResource.class.getName());
 
     @Inject
     @ConfigProperty(name = "system.hostname", defaultValue = "localhost")
@@ -864,11 +888,12 @@ public class PropertiesResource {
         CountDownLatch countDown = new CountDownLatch(1);
         SystemPropertyPrefix request = SystemPropertyPrefix.newBuilder()
                                          .setPropertyPrefix("os.").build();
-        client.getPropertiesServer(request, new StreamObserver<SystemProperty>() {
+        client.getServerStreamingProperties(
+            request, new StreamObserver<SystemProperty>() {
 
             @Override
             public void onNext(SystemProperty value) {
-                System.out.println("server streaming received: "
+                logger.info("server streaming received: "
                    + value.getPropertyName() + "=" + value.getPropertyValue());
                 properties.put(value.getPropertyName(), value.getPropertyValue());
             }
@@ -880,7 +905,7 @@ public class PropertiesResource {
 
             @Override
             public void onCompleted() {
-                System.out.println("server streaming completed");
+                logger.info("server streaming completed");
                 countDown.countDown();
             }
         });
@@ -909,12 +934,12 @@ public class PropertiesResource {
         CountDownLatch countDown = new CountDownLatch(1);
         Properties properties = new Properties();
 
-        StreamObserver<SystemPropertyName> stream = client.getPropertiesClient(
+        StreamObserver<SystemPropertyName> stream = client.getClientStreamingProperties(
             new StreamObserver<SystemProperties>() {
 
                 @Override
                 public void onNext(SystemProperties value) {
-                    System.out.println("client streaming received a map that has "
+                    logger.info("client streaming received a map that has "
                         + value.getPropertiesCount() + " properties");
                     properties.putAll(value.getPropertiesMap());
                 }
@@ -926,7 +951,7 @@ public class PropertiesResource {
 
                 @Override
                 public void onCompleted() {
-                    System.out.println("client streaming completed");
+                    logger.info("client streaming completed");
                     countDown.countDown();
                 }
             });
@@ -956,7 +981,7 @@ public class PropertiesResource {
 
 
 
-After a connection is created between the two services, the ***client.getPropertiesClient()*** method is called to get a ***stream*** and collect the properties with property names that are prefixed by ***user.***. The method creates a ***SystemPropertyName*** message individually and sends the message to the server by the ***stream::onNext*** action. When all property names are sent, the ***onCompleted()*** method is called to finish the streaming. Again, a ***CountDownLatch*** instance synchronizes the streaming flow.
+After a connection is created between the two services, the ***client.getClientStreamingProperties()*** method is called to get a ***stream*** and collect the properties with property names that are prefixed by ***user.***. The method creates a ***SystemPropertyName*** message individually and sends the message to the server by the ***stream::onNext*** action. When all property names are sent, the ***onCompleted()*** method is called to finish the streaming. Again, a ***CountDownLatch*** instance synchronizes the streaming flow.
 
 Click the following button to visit the ***/query/properties/user*** endpoint to test the client streaming. The ***user.*** properties from the ***system*** service are displayed. Observe the output from the consoles running the ***system*** and ***query*** services.
 
@@ -983,6 +1008,7 @@ package io.openliberty.guides.system;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import io.grpc.stub.StreamObserver;
 import io.openliberty.guides.systemproto.SystemProperties;
@@ -993,6 +1019,8 @@ import io.openliberty.guides.systemproto.SystemPropertyValue;
 import io.openliberty.guides.systemproto.SystemServiceGrpc;
 
 public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
+
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
 
     public SystemService() {
     }
@@ -1014,7 +1042,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
     }
 
     @Override
-    public void getPropertiesServer(
+    public void getServerStreamingProperties(
         SystemPropertyPrefix request, StreamObserver<SystemProperty> observer) {
 
         String prefix = request.getPropertyPrefix();
@@ -1030,14 +1058,14 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
                       .setPropertyValue(pValue)
                       .build();
                   observer.onNext(value);
-                  System.out.println("server streaming sent property: " + name);
+                  logger.info("server streaming sent property: " + name);
                });
         observer.onCompleted();
-        System.out.println("server streaming was completed!");
+        logger.info("server streaming was completed!");
     }
 
     @Override
-    public StreamObserver<SystemPropertyName> getPropertiesClient(
+    public StreamObserver<SystemPropertyName> getClientStreamingProperties(
         StreamObserver<SystemProperties> observer) {
 
         return new StreamObserver<SystemPropertyName>() {
@@ -1048,7 +1076,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
             public void onNext(SystemPropertyName spn) {
                 String pName = spn.getPropertyName();
                 String pValue = System.getProperty(pName);
-                System.out.println("client streaming received property: " + pName);
+                logger.info("client streaming received property: " + pName);
                 properties.put(pName, pValue);
             }
 
@@ -1064,13 +1092,13 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
                                              .build();
                 observer.onNext(value);
                 observer.onCompleted();
-                System.out.println("client streaming was completed!");
+                logger.info("client streaming was completed!");
             }
         };
     }
 
     @Override
-    public StreamObserver<SystemPropertyName> getPropertiesBidirect(
+    public StreamObserver<SystemPropertyName> getBidirectProperties(
         StreamObserver<SystemProperty> observer) {
 
         return new StreamObserver<SystemPropertyName>() {
@@ -1078,7 +1106,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
             public void onNext(SystemPropertyName spn) {
                 String pName = spn.getPropertyName();
                 String pValue = System.getProperty(pName);
-                System.out.println("bi-directional streaming received: " + pName);
+                logger.info("bi-directional streaming received: " + pName);
                 SystemProperty value = SystemProperty.newBuilder()
                                            .setPropertyName(pName)
                                            .setPropertyValue(pValue)
@@ -1094,7 +1122,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
             @Override
             public void onCompleted() {
                 observer.onCompleted();
-                System.out.println("bi-directional streaming was completed!");
+                logger.info("bi-directional streaming was completed!");
             }
         };
     }
@@ -1103,7 +1131,7 @@ public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
 
 
 
-The ***getPropertiesBidirect()*** method implements bidirectional streaming RPC call. This method returns an instance of the ***StreamObserver*** interface. Its ***onNext()*** method receives the messages from the client individually, creates a ***SystemProperty*** message with the property name and value, and sends the message back to the client. When the client streaming is completed, the method closes the server streaming by calling the ***onCompleted()*** method.
+The ***getBidirectProperties()*** method implements bidirectional streaming RPC call. This method returns an instance of the ***StreamObserver*** interface. Its ***onNext()*** method receives the messages from the client individually, creates a ***SystemProperty*** message with the property name and value, and sends the message back to the client. When the client streaming is completed, the method closes the server streaming by calling the ***onCompleted()*** method.
 
 Update the ***PropertiesResource*** class to implement of ***/query/properties/java*** endpoint of the query service.
 
@@ -1124,6 +1152,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -1150,6 +1179,8 @@ import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceStub;
 @ApplicationScoped
 @Path("/properties")
 public class PropertiesResource {
+
+    private static Logger logger = Logger.getLogger(PropertiesResource.class.getName());
 
     @Inject
     @ConfigProperty(name = "system.hostname", defaultValue = "localhost")
@@ -1189,11 +1220,12 @@ public class PropertiesResource {
         CountDownLatch countDown = new CountDownLatch(1);
         SystemPropertyPrefix request = SystemPropertyPrefix.newBuilder()
                                          .setPropertyPrefix("os.").build();
-        client.getPropertiesServer(request, new StreamObserver<SystemProperty>() {
+        client.getServerStreamingProperties(
+            request, new StreamObserver<SystemProperty>() {
 
             @Override
             public void onNext(SystemProperty value) {
-                System.out.println("server streaming received: "
+                logger.info("server streaming received: "
                    + value.getPropertyName() + "=" + value.getPropertyValue());
                 properties.put(value.getPropertyName(), value.getPropertyValue());
             }
@@ -1205,7 +1237,7 @@ public class PropertiesResource {
 
             @Override
             public void onCompleted() {
-                System.out.println("server streaming completed");
+                logger.info("server streaming completed");
                 countDown.countDown();
             }
         });
@@ -1234,12 +1266,12 @@ public class PropertiesResource {
         CountDownLatch countDown = new CountDownLatch(1);
         Properties properties = new Properties();
 
-        StreamObserver<SystemPropertyName> stream = client.getPropertiesClient(
+        StreamObserver<SystemPropertyName> stream = client.getClientStreamingProperties(
             new StreamObserver<SystemProperties>() {
 
                 @Override
                 public void onNext(SystemProperties value) {
-                    System.out.println("client streaming received a map that has "
+                    logger.info("client streaming received a map that has "
                         + value.getPropertiesCount() + " properties");
                     properties.putAll(value.getPropertiesMap());
                 }
@@ -1251,7 +1283,7 @@ public class PropertiesResource {
 
                 @Override
                 public void onCompleted() {
-                    System.out.println("client streaming completed");
+                    logger.info("client streaming completed");
                     countDown.countDown();
                 }
             });
@@ -1288,12 +1320,12 @@ public class PropertiesResource {
         Properties properties = new Properties();
         CountDownLatch countDown = new CountDownLatch(1);
 
-        StreamObserver<SystemPropertyName> stream = client.getPropertiesBidirect(
+        StreamObserver<SystemPropertyName> stream = client.getBidirectProperties(
                 new StreamObserver<SystemProperty>() {
 
                     @Override
                     public void onNext(SystemProperty value) {
-                        System.out.println("bidirectional streaming received: "
+                        logger.info("bidirectional streaming received: "
                             + value.getPropertyName() + "=" + value.getPropertyValue());
                         properties.put(value.getPropertyName(),
                                        value.getPropertyValue());
@@ -1306,7 +1338,7 @@ public class PropertiesResource {
 
                     @Override
                     public void onCompleted() {
-                        System.out.println("bidirectional streaming completed");
+                        logger.info("bidirectional streaming completed");
                         countDown.countDown();
                     }
                 });
@@ -1335,7 +1367,7 @@ public class PropertiesResource {
 
 
 
-After a connection is created between the two services, the ***client.getPropertiesBidirect()*** method is called with an implementation of the ***StreamObserver*** interface. The ***onNext()*** method receives messages that are streaming from the server individually and stores them into the ***properties*** placeholder. Then, collect the properties . For each property name that starts with ***java.***, a ***SystemPropertyName*** message is created and sent to the server by the ***stream::onNext*** action. When all property names are sent, the streaming is finished by calling the ***onCompleted()*** method. Again, a ***CountDownLatch*** instance synchronizes the streaming flow.
+After a connection is created between the two services, the ***client.getBidirectProperties()*** method is called with an implementation of the ***StreamObserver*** interface. The ***onNext()*** method receives messages that are streaming from the server individually and stores them into the ***properties*** placeholder. Then, collect the properties . For each property name that starts with ***java.***, a ***SystemPropertyName*** message is created and sent to the server by the ***stream::onNext*** action. When all property names are sent, the streaming is finished by calling the ***onCompleted()*** method. Again, a ***CountDownLatch*** instance synchronizes the streaming flow.
 
 Click the following button to visit the ***/query/properties/java*** endpoint to test out the bidirectional streaming. The ***java.*** properties from the ***system*** service are displayed. Observe the output from the consoles running the ***system*** and ***query*** services.
 
