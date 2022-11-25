@@ -217,7 +217,7 @@ jobs:
 
       - name: Setup GUIDES_SAFE
         run: |
-          GUIDES_SAFE=$(echo -n "${{matrix.guides.instructionDir}}" | sed 's|/|-|g')
+          GUIDES_SAFE=$(echo -n "${{matrix.guides.instructionDir}}" | sed 's|/labs||g')
           echo "GUIDES_SAFE=$GUIDES_SAFE"
           echo "GUIDES_SAFE=$GUIDES_SAFE" >> $GITHUB_ENV
 
@@ -226,6 +226,8 @@ jobs:
           name: ${{ env.GUIDES_SAFE }}
           path: |
             instructions/${{ env.GUIDES_SAFE }}/${{matrix.guides.instruction}}
+            instructions/${{ env.GUIDES_SAFE }}/${{matrix.guides.instruction}}
+
 
   createPullRequestStaging:
     needs: convertStaging
