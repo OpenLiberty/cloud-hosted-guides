@@ -223,7 +223,6 @@ jobs:
         with:
         if: contains(${{ env.GUIDES_SAFE }}, '/labs')
           name: ${{ env.GUIDES_SAFE }}
-          name: ${{matrix.guides.instructionDir}}
           path: |
             instructions/${{ env.GUIDES_SAFE }}/labs/${{matrix.guides.instruction}}
             instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
