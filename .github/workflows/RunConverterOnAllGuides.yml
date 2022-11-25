@@ -227,8 +227,6 @@ jobs:
           path: |
             instructions/${{ env.GUIDES_SAFE }}/labs/${{matrix.guides.instruction}}
 
-            instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
-
   createPullRequestStaging:
     needs: convertStaging
     runs-on: ubuntu-latest
