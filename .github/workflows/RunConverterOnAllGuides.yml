@@ -230,6 +230,7 @@ jobs:
             instructions/${{ env.GUIDES_SAFE }}/${{matrix.guides.instruction}}
 
       - uses: actions/upload-artifact@v3
+        if: ${{contains(${{matrix.guides.instructionDir}}, '/labs')}}
         with:
           name: ${{ env.GUIDES_SAFE }}
           path: |
