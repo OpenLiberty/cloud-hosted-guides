@@ -221,10 +221,10 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
+        if: contains(${{matrix.guides.instructionDir}}, '/labs')
           name: ${{ env.GUIDES_SAFE }}
           path: |
             instructions/${{ env.GUIDES_SAFE }}/labs/${{matrix.guides.instruction}}
-            instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
 
   createPullRequestStaging:
     needs: convertStaging
