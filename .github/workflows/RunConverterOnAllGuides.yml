@@ -212,19 +212,11 @@ jobs:
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
-
-      - name: Setup GUIDES_SAFE
-        run: |
-          GUIDES_SAFE=$(echo -n "${{matrix.guides.instructionDir}}" | sed 's|/labs||g')
-          echo "GUIDES_SAFE=$GUIDES_SAFE"
-          echo "GUIDES_SAFE=$GUIDES_SAFE" >> $GITHUB_ENV
-
       - uses: actions/upload-artifact@v3
-        if: contains(${{matrix.guides.instructionDir}}, '/labs')
         with:
-          name: ${{ env.GUIDES_SAFE }}/labs
+          name: cloud-hosted-${{matrix.guides.guide}}
           path: |
-            instructions/${{ env.GUIDES_SAFE }}/labs/${{matrix.guides.instruction}}
+            instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
 
   createPullRequestStaging:
     needs: convertStaging
