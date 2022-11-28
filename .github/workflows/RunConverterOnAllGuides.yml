@@ -198,7 +198,7 @@ jobs:
         run: |
           git init
           git checkout -b cloud-hosted-All/staging
-          git pull origin cloud-hosted-All/staging
+          git pull --ff-only origin cloud-hosted-All/staging
           mkdir -p instructions/${{matrix.guides.instructionDir}}
           rm -f instructions/${{matrix.guides.instructionDir}}/README.md
           cd GuideConverter
