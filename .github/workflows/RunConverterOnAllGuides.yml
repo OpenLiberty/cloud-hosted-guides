@@ -215,8 +215,8 @@ jobs:
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
           git add .
-          git commit -m "Updated ${{matrix.guides.guide}}.md"
-          git push --set-upstream origin cloud-hosted-Manual-ALL/staging
+          git commit -m "Update ${{matrix.guides.guide}}.md"
+
 
   createPullRequestStaging:
     needs: convertStaging
