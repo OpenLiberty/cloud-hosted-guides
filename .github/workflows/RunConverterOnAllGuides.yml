@@ -197,6 +197,7 @@ jobs:
       - name: Run Converter
         run: |
           git init
+          git checkout cloud-hosted-All/staging
           mkdir -p instructions/${{matrix.guides.instructionDir}}
           rm -f instructions/${{matrix.guides.instructionDir}}/README.md
           cd GuideConverter
@@ -212,7 +213,6 @@ jobs:
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
           git add .
-          git commit -m "Converting all guides"
           git push --set-upstream origin ${{ github.event.inputs.branch }}
 
   createPullRequestStaging:
