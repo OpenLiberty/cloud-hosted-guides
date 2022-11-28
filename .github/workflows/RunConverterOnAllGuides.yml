@@ -217,7 +217,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: instructions/
-          path: ~/instructions/
+          path: /home/runner/work/cloud-hosted-guides/cloud-hosted-guides/instructions/
 
   createPullRequestStaging:
     needs: convertStaging
