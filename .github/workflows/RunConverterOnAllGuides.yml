@@ -207,8 +207,6 @@ jobs:
           rm -f CloudHostedGuideConverter.class
           cd ..
           mv GuideConverter/${{matrix.guides.guide}}.md instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
-          echo "pwd: $(pwd)"
-          echo "ls: $(ls)"
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh ${{matrix.guides.guide}}
           git add .
