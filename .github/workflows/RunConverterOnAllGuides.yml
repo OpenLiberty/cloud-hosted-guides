@@ -209,13 +209,11 @@ jobs:
           mv GuideConverter/${{matrix.guides.guide}}.md instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh ${{matrix.guides.guide}}
-          git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
-      - uses: actions/upload-artifact@v3
-        with:
-          name: ${{matrix.guides.instruction}}
-          path: ${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
+          git add .
+          git commit -m "Converting all guides"
+          git push --set-upstream origin ${{ github.event.inputs.branch }}
 
   createPullRequestStaging:
     needs: convertStaging

@@ -1,17 +1,17 @@
 [
     {
         "guide": "guide-arquillian-managed",
-        "instructionDir": "instructions/cloud-hosted-guide-arquillian-managed",
+        "instructionDir": "cloud-hosted-guide-arquillian-managed",
         "instruction": "instructions.md"
     },
     {
         "guide": "guide-mongodb-intro",
-        "instructionDir": "instructions/cloud-hosted-guide-mongodb-intro/labs",
+        "instructionDir": "cloud-hosted-guide-mongodb-intro/labs",
         "instruction": "cloud_hosted_guide_mongodb_intro.md"
     },
     {
         "guide": "guide-security-intro",
-        "instructionDir": "instructions/cloud-hosted-guide-security-intro/labs",
+        "instructionDir": "cloud-hosted-guide-security-intro/labs",
         "instruction": "cloud_hosted_guide_security_intro.md"
     }
 ]
