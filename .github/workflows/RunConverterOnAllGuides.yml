@@ -199,6 +199,7 @@ jobs:
           git init
           git fetch
           git checkout cloud-hosted-Manual-ALL/staging
+          git pull
           mkdir -p instructions/${{matrix.guides.instructionDir}}
           rm -f instructions/${{matrix.guides.instructionDir}}/README.md
           cd GuideConverter
