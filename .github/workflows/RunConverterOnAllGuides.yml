@@ -214,9 +214,9 @@ jobs:
           git config --global user.name "GuidesBot"
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{matrix.guides.instruction}}
+          name: ${{matrix.guides.guide}}
           path: |
-            instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
+            instructions/${{matrix.guides.instructionDir}}/
 
   createPullRequestStaging:
     needs: convertStaging
