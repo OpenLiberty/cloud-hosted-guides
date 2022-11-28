@@ -213,22 +213,6 @@ jobs:
           git config --global user.name "GuidesBot"
           git add .
           git commit -m "Update ${{matrix.guides.guide}}.md"
-
-
-  createPullRequestStaging:
-    needs: convertStaging
-    runs-on: ubuntu-latest
-    if: github.event.inputs.PRNumber != 0
-
-    steps:
-      - uses: actions/checkout@v3
-
-      # Download all artifacts
-      # https://github.com/actions/download-artifact#download-all-artifacts
-      - uses: actions/download-artifact@v2
-        with:
-          path: instructions/
-
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
@@ -239,6 +223,21 @@ jobs:
           base: "staging"
           labels: "TestAll"
 
+
+
+  # createPullRequestStaging:
+  #   needs: convertStaging
+  #   runs-on: ubuntu-latest
+  #   if: github.event.inputs.PRNumber != 0
+
+  #   steps:
+  #     - uses: actions/checkout@v3
+
+  #     # Download all artifacts
+  #     # https://github.com/actions/download-artifact#download-all-artifacts
+  #     - uses: actions/download-artifact@v2
+  #       with:
+  #         path: instructions/
 
   createPullRequestStaging0:
     needs: convertStaging
