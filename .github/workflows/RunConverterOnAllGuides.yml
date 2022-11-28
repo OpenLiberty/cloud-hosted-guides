@@ -214,7 +214,7 @@ jobs:
           git config --global user.name "GuidesBot"
           git add .
           git commit -m "Updated ${{matrix.guides.guide}}.md"
-          git push origin ${{ github.event.inputs.branch }}
+          git push
 
   createPullRequestStaging:
     needs: convertStaging
