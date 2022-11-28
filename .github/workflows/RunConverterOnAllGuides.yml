@@ -206,7 +206,7 @@ jobs:
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{matrix.guides.guide}}.md instructions/${{matrix.guides.instructionDir}}/instructions.md
+          mv GuideConverter/${{matrix.guides.guide}}.md instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh ${{matrix.guides.guide}}
           git add .
@@ -214,9 +214,7 @@ jobs:
           git config --global user.name "GuidesBot"
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{matrix.guides.guide}}
-          path: |
-            instructions/${{matrix.guides.instructionDir}}/
+          path: instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
 
   createPullRequestStaging:
     needs: convertStaging
