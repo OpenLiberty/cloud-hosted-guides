@@ -213,7 +213,7 @@ jobs:
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
           git add .
-          git commit -m "Update ${{matrix.guides.guide}}.md"
+          git commit -m "Updated all guides"
           git push --set-upstream origin ${{ github.event.inputs.branch }}
 
   createPullRequestStaging:
