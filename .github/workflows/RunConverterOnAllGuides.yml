@@ -214,7 +214,7 @@ jobs:
           git config --global user.name "GuidesBot"
           git add .
           git commit -m "Updated ${{matrix.guides.guide}}.md"
-          git push
+          git push --set-upstream origin cloud-hosted-All/staging
 
   createPullRequestStaging:
     needs: convertStaging
