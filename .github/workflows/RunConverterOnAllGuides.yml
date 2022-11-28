@@ -216,7 +216,7 @@ jobs:
           git config --global user.name "GuidesBot"
       - uses: actions/upload-artifact@v3
         with:
-          name: instructions/
+          name: instructions
           path: /home/runner/work/cloud-hosted-guides/cloud-hosted-guides/instructions/
 
   createPullRequestStaging:
