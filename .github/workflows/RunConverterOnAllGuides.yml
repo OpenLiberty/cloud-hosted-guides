@@ -216,7 +216,7 @@ jobs:
         with:
           name: ${{matrix.guides.instruction}}
           path: |
-            instructions/${{matrix.guides.instructionDir}}/labs/${{matrix.guides.instruction}}
+            instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
 
   createPullRequestStaging:
     needs: convertStaging
