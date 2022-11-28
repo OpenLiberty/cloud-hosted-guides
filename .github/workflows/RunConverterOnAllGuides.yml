@@ -215,7 +215,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: instructions
-          path: instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
+          path: ${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
 
   createPullRequestStaging:
     needs: convertStaging
