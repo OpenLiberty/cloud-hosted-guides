@@ -197,8 +197,8 @@ jobs:
       - name: Run Converter
         run: |
           git init
-          git checkout -b cloud-hosted-All/staging
-          git pull --ff-only origin cloud-hosted-All/staging
+          git checkout cloud-hosted-Manual-ALL/staging
+          git pull cloud-hosted-Manual-ALL/staging
           mkdir -p instructions/${{matrix.guides.instructionDir}}
           rm -f instructions/${{matrix.guides.instructionDir}}/README.md
           cd GuideConverter
@@ -215,7 +215,7 @@ jobs:
           git config --global user.name "GuidesBot"
           git add .
           git commit -m "Updated ${{matrix.guides.guide}}.md"
-          git push --set-upstream origin cloud-hosted-All/staging
+          git push --set-upstream origin cloud-hosted-Manual-ALL/staging
 
   createPullRequestStaging:
     needs: convertStaging
