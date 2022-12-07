@@ -326,7 +326,7 @@ Replace the ***system*** server configuration file.
 
 
 
-Next, implement the conrespoding REST endpoint in the ***query*** service.
+Next, implement the corresponding REST endpoint in the ***query*** service.
 
 Create the ***PropertiesResource*** class.
 
