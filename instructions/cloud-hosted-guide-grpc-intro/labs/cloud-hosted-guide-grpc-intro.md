@@ -37,7 +37,7 @@ The ***query*** service implements four RESTful APIs by using four different gRP
 * Client streaming RPC: The client sends a stream of messages and the server responds with a single message.
 * Bidirectional RPC: Both client and server send a stream of messages. The client and server can read and write messages in any order.
 
-![Application architecture of the gRPC application covered in guide](https://raw.githubusercontent.com/OpenLiberty/draft-guide-grpc-intro/draft/assets/architecture.png)
+![Application architecture of the gRPC application covered in guide](https://raw.githubusercontent.com/OpenLiberty/guide-grpc-intro/prod/assets/architecture.png)
 
 
 ::page{title="Getting started"}
@@ -51,11 +51,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/draft-guide-grpc-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-grpc-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/draft-guide-grpc-intro.git
-cd draft-guide-grpc-intro
+git clone https://github.com/openliberty/guide-grpc-intro.git
+cd guide-grpc-intro
 ```
 
 
@@ -124,14 +124,14 @@ Create the ***SystemService.proto*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/draft-guide-grpc-intro/start/systemproto/src/main/proto/SystemService.proto
+touch /home/project/guide-grpc-intro/start/systemproto/src/main/proto/SystemService.proto
 ```
 
 
 > Then, to open the SystemService.proto file in your IDE, select
-> **File** > **Open** > draft-guide-grpc-intro/start/systemproto/src/main/proto/SystemService.proto, or click the following button
+> **File** > **Open** > guide-grpc-intro/start/systemproto/src/main/proto/SystemService.proto, or click the following button
 
-::openFile{path="/home/project/draft-guide-grpc-intro/start/systemproto/src/main/proto/SystemService.proto"}
+::openFile{path="/home/project/guide-grpc-intro/start/systemproto/src/main/proto/SystemService.proto"}
 
 
 
@@ -232,14 +232,14 @@ Create the ***SystemService*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/draft-guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+touch /home/project/guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
 ```
 
 
 > Then, to open the SystemService.java file in your IDE, select
-> **File** > **Open** > draft-guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+> **File** > **Open** > guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
 
-::openFile{path="/home/project/draft-guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+::openFile{path="/home/project/guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
 
 
 
@@ -295,9 +295,9 @@ The ***getProperty()*** method implements the unary RPC call defined in the ***.
 Replace the ***system*** server configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > draft-guide-grpc-intro/start/system/src/main/liberty/config/server.xml, or click the following button
+> **File** > **Open** > guide-grpc-intro/start/system/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/draft-guide-grpc-intro/start/system/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-grpc-intro/start/system/src/main/liberty/config/server.xml"}
 
 
 
@@ -332,14 +332,14 @@ Create the ***PropertiesResource*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/draft-guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java
+touch /home/project/guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java
 ```
 
 
 > Then, to open the PropertiesResource.java file in your IDE, select
-> **File** > **Open** > draft-guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java, or click the following button
+> **File** > **Open** > guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java, or click the following button
 
-::openFile{path="/home/project/draft-guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java"}
+::openFile{path="/home/project/guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java"}
 
 
 
@@ -416,9 +416,9 @@ The ***PropertiesResource*** class provides RESTful endpoints to interact with t
 Replace the ***query*** server configuration file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > draft-guide-grpc-intro/start/query/src/main/liberty/config/server.xml, or click the following button
+> **File** > **Open** > guide-grpc-intro/start/query/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/draft-guide-grpc-intro/start/query/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-grpc-intro/start/query/src/main/liberty/config/server.xml"}
 
 
 
@@ -475,9 +475,9 @@ Update the ***SystemService*** class to implement the server streaming RPC call.
 Replace the ***SystemService*** class.
 
 > To open the SystemService.java file in your IDE, select
-> **File** > **Open** > draft-guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+> **File** > **Open** > guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
 
-::openFile{path="/home/project/draft-guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+::openFile{path="/home/project/guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
 
 
 
@@ -555,9 +555,9 @@ Update the ***PropertiesResource*** class to implement the ***/query/properties/
 Replace the ***PropertiesResource*** class.
 
 > To open the PropertiesResource.java file in your IDE, select
-> **File** > **Open** > draft-guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java, or click the following button
+> **File** > **Open** > guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java, or click the following button
 
-::openFile{path="/home/project/draft-guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java"}
+::openFile{path="/home/project/guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java"}
 
 
 
@@ -694,9 +694,9 @@ Update the ***SystemService*** class to implement the client streaming RPC call.
 Replace the ***SystemService*** class.
 
 > To open the SystemService.java file in your IDE, select
-> **File** > **Open** > draft-guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+> **File** > **Open** > guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
 
-::openFile{path="/home/project/draft-guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+::openFile{path="/home/project/guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
 
 
 
@@ -807,9 +807,9 @@ Update the ***PropertiesResource*** class to implement the ***/query/properties/
 Replace the ***PropertiesResource*** class.
 
 > To open the PropertiesResource.java file in your IDE, select
-> **File** > **Open** > draft-guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java, or click the following button
+> **File** > **Open** > guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java, or click the following button
 
-::openFile{path="/home/project/draft-guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java"}
+::openFile{path="/home/project/guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java"}
 
 
 
@@ -998,9 +998,9 @@ Update the ***SystemService*** class to implement the bidirectional streaming RP
 Replace the ***SystemService*** class.
 
 > To open the SystemService.java file in your IDE, select
-> **File** > **Open** > draft-guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+> **File** > **Open** > guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
 
-::openFile{path="/home/project/draft-guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+::openFile{path="/home/project/guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
 
 
 
@@ -1139,9 +1139,9 @@ Update the ***PropertiesResource*** class to implement of ***/query/properties/j
 Replace the ***PropertiesResource*** class.
 
 > To open the PropertiesResource.java file in your IDE, select
-> **File** > **Open** > draft-guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java, or click the following button
+> **File** > **Open** > guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java, or click the following button
 
-::openFile{path="/home/project/draft-guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java"}
+::openFile{path="/home/project/guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java"}
 
 
 
@@ -1380,14 +1380,14 @@ Create the ***QueryIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/draft-guide-grpc-intro/start/query/src/test/java/it/io/openliberty/guides/query/QueryIT.java
+touch /home/project/guide-grpc-intro/start/query/src/test/java/it/io/openliberty/guides/query/QueryIT.java
 ```
 
 
 > Then, to open the QueryIT.java file in your IDE, select
-> **File** > **Open** > draft-guide-grpc-intro/start/query/src/test/java/it/io/openliberty/guides/query/QueryIT.java, or click the following button
+> **File** > **Open** > guide-grpc-intro/start/query/src/test/java/it/io/openliberty/guides/query/QueryIT.java, or click the following button
 
-::openFile{path="/home/project/draft-guide-grpc-intro/start/query/src/test/java/it/io/openliberty/guides/query/QueryIT.java"}
+::openFile{path="/home/project/guide-grpc-intro/start/query/src/test/java/it/io/openliberty/guides/query/QueryIT.java"}
 
 
 
@@ -1524,26 +1524,26 @@ You just developed a Java application that implements four types of gRPC calls w
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***draft-guide-grpc-intro*** project by running the following commands:
+Delete the ***guide-grpc-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr draft-guide-grpc-intro
+rm -fr guide-grpc-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Streaming%20messages%20between%20client%20and%20server%20services%20using%20gRPC&guide-id=cloud-hosted-draft-guide-grpc-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Streaming%20messages%20between%20client%20and%20server%20services%20using%20gRPC&guide-id=cloud-hosted-guide-grpc-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/draft-guide-grpc-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/draft-guide-grpc-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-grpc-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-grpc-intro/pulls)
 
 
 
