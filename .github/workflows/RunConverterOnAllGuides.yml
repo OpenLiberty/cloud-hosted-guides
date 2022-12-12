@@ -27,7 +27,6 @@ jobs:
           echo "${{ github.event.inputs.branch }}"
           echo "${{ github.event.inputs.GuideConverterBranch }}"
           echo "${{ github.event.inputs.PRNumber }}"
-
   matrix:
     runs-on: ubuntu-latest
     outputs:
@@ -45,6 +44,7 @@ jobs:
         echo "::set-output name=matrix::$TASKS"
   convertProd:
     needs: matrix
+    continue-on-error: true
     name: Make PR to Prod
     runs-on: ubuntu-latest
     strategy:
@@ -58,20 +58,20 @@ jobs:
       - uses: actions/checkout@master
         
       - name: Checkout Guide Converter repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: OpenLiberty/cloud-hosted-guide-converter
           ref: ${{ github.event.inputs.GuideConverterBranch }}
           path: GuideConverter
         
       - name: Checkout guide repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: OpenLiberty/${{matrix.guides.guide}}
           path: GuideConverter/${{matrix.guides.guide}}
         
       - name: Checkout guides-common repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: OpenLiberty/guides-common
           path: GuideConverter/guides-common
@@ -84,14 +84,16 @@ jobs:
           architecture: x64 # (x64 or x86) - defaults to x64
 
       - name: Run Converter
+        continue-on-error: true
         run: |
-          branchName=${{ github.event.inputs.branch }}
+          git config --global user.email "GuidesBot@OpenLiberty.io"
+          git config --global user.name "GuidesBot"
           git init
           mkdir -p instructions/${{matrix.guides.instructionDir}}
-          rm -f instructions/cloud-hosted-${{matrix.guides.guide}}/README.md
+          rm -f instructions/${{matrix.guides.instructionDir}}/README.md
           cd GuideConverter
           mvn compiler:compile
-          mvn exec:java -Dexec.args="${{matrix.guides.guide}} ${branchName}"
+          mvn exec:java -Dexec.args="${{matrix.guides.guide}} ${{ github.event.inputs.branch }}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
@@ -99,16 +101,19 @@ jobs:
           mv GuideConverter/${{matrix.guides.guide}}.md instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh ${{matrix.guides.guide}}
-          git add .
-          git config --global user.email "GuidesBot@OpenLiberty.io"
-          git config --global user.name "GuidesBot"
-
+          cd instructions/${{matrix.guides.instructionDir}}
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{matrix.guides.guide}}
+          name: ${{matrix.guides.instructionDir}}
           path: |
-            instructions/cloud-hosted-*-${{matrix.guides.guide}}/labs/*.md
-            instructions/cloud-hosted-*-${{matrix.guides.guide}}/instructions.md
+            instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: cloud-hosted-${{matrix.guides.guide}}
+          path: |
+            instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
+            instructions/cloud-hosted-${{matrix.guides.guide}}/labs/${{matrix.guides.instruction}}
 
   createPullRequestProd:
     needs: convertProd
@@ -116,7 +121,7 @@ jobs:
     if: github.event.inputs.PRNumber != 0
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # Download all artifacts
       # https://github.com/actions/download-artifact#download-all-artifacts
@@ -140,7 +145,7 @@ jobs:
     if: github.event.inputs.PRNumber == 0
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # Download all artifacts
       # https://github.com/actions/download-artifact#download-all-artifacts
@@ -160,6 +165,7 @@ jobs:
 
   convertStaging:
     needs: matrix
+    continue-on-error: true
     name: Make PR to Staging
     runs-on: ubuntu-latest
     strategy:
@@ -172,21 +178,21 @@ jobs:
       - uses: actions/checkout@master
 
       - name: Checkout Guide Converter repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: OpenLiberty/cloud-hosted-guide-converter
           ref: ${{ github.event.inputs.GuideConverterBranch }}
           path: GuideConverter
 
       - name: Checkout guide repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: staging
           repository: OpenLiberty/${{matrix.guides.guide}}
           path: GuideConverter/${{matrix.guides.guide}}
 
       - name: Checkout guides-common repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: OpenLiberty/guides-common
           path: GuideConverter/guides-common
@@ -198,14 +204,16 @@ jobs:
           architecture: x64 # (x64 or x86) - defaults to x64
 
       - name: Run Converter
+        continue-on-error: true
         run: |
-          branchName=${{ github.event.inputs.branch }}
+          git config --global user.email "GuidesBot@OpenLiberty.io"
+          git config --global user.name "GuidesBot"
           git init
           mkdir -p instructions/${{matrix.guides.instructionDir}}
-          rm -f instructions/cloud-hosted-${{matrix.guides.guide}}/README.md
+          rm -f instructions/${{matrix.guides.instructionDir}}/README.md
           cd GuideConverter
           mvn compiler:compile
-          mvn exec:java -Dexec.args="${{matrix.guides.guide}} ${branchName}"
+          mvn exec:java -Dexec.args="${{matrix.guides.guide}} ${{ github.event.inputs.branch }}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
@@ -213,24 +221,28 @@ jobs:
           mv GuideConverter/${{matrix.guides.guide}}.md instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh ${{matrix.guides.guide}}
-          git add .
-          git config --global user.email "GuidesBot@OpenLiberty.io"
-          git config --global user.name "GuidesBot"
-
+          cd instructions/${{matrix.guides.instructionDir}}
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{matrix.guides.guide}}
+          name: ${{matrix.guides.instructionDir}}
           path: |
-            instructions/cloud-hosted-*-${{matrix.guides.guide}}/labs/*.md
-            instructions/cloud-hosted-*-${{matrix.guides.guide}}/instructions.md
+            instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: cloud-hosted-${{matrix.guides.guide}}
+          path: |
+            instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
+            instructions/cloud-hosted-${{matrix.guides.guide}}/labs/${{matrix.guides.instruction}}
 
   createPullRequestStaging:
     needs: convertStaging
+    continue-on-error: true
     runs-on: ubuntu-latest
     if: github.event.inputs.PRNumber != 0
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # Download all artifacts
       # https://github.com/actions/download-artifact#download-all-artifacts
@@ -246,7 +258,8 @@ jobs:
           body: "Updated by github actions, triggered by GuideConverter repo ([PR](https://github.com/OpenLiberty/cloud-hosted-guide-converter/pull/${{ github.event.inputs.PRNumber }}))."
           branch: "cloud-hosted-Manual-ALL/staging"
           base: "staging"
-          labels: "TestAll"
+          labels: |
+            TestAll
 
 
   createPullRequestStaging0:
@@ -255,7 +268,7 @@ jobs:
     if: github.event.inputs.PRNumber == 0
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # Download all artifacts
       # https://github.com/actions/download-artifact#download-all-artifacts
