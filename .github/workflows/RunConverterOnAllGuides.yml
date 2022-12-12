@@ -44,6 +44,7 @@ jobs:
         echo "::set-output name=matrix::$TASKS"
   convertProd:
     needs: matrix
+    continue-on-error: true
     name: Make PR to Prod
     runs-on: ubuntu-latest
     strategy:
@@ -83,14 +84,16 @@ jobs:
           architecture: x64 # (x64 or x86) - defaults to x64
 
       - name: Run Converter
+        continue-on-error: true
         run: |
-          branchName=${{ github.event.inputs.branch }}
+          git config --global user.email "GuidesBot@OpenLiberty.io"
+          git config --global user.name "GuidesBot"
           git init
           mkdir -p instructions/${{matrix.guides.instructionDir}}
-          rm -f instructions/cloud-hosted-${{matrix.guides.guide}}/README.md
+          rm -f instructions/${{matrix.guides.instructionDir}}/README.md
           cd GuideConverter
           mvn compiler:compile
-          mvn exec:java -Dexec.args="${{matrix.guides.guide}} ${branchName}"
+          mvn exec:java -Dexec.args="${{matrix.guides.guide}} ${{ github.event.inputs.branch }}"
           rm -f importFunctions.class
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
@@ -98,14 +101,19 @@ jobs:
           mv GuideConverter/${{matrix.guides.guide}}.md instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh ${{matrix.guides.guide}}
-          git add .
-          git config --global user.email "GuidesBot@OpenLiberty.io"
-          git config --global user.name "GuidesBot"
+          cd instructions/${{matrix.guides.instructionDir}}
       - uses: actions/upload-artifact@v3
         with:
           name: ${{matrix.guides.instructionDir}}
           path: |
             instructions/${{matrix.guides.instructionDir}}/${{matrix.guides.instruction}}
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: cloud-hosted-${{matrix.guides.guide}}
+          path: |
+            instructions/cloud-hosted-${{matrix.guides.guide}}/${{matrix.guides.instruction}}
+            instructions/cloud-hosted-${{matrix.guides.guide}}/labs/${{matrix.guides.instruction}}
 
   createPullRequestProd:
     needs: convertProd
