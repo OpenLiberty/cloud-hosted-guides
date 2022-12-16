@@ -40,6 +40,11 @@
         "instruction": "instructions.md"
     },
     {
+        "guide": "guide-grpc-intro",
+        "instructionDir": "cloud-hosted-guide-grpc-intro/labs",
+        "instruction": "cloud-hosted-guide-security-intro.md"
+    },
+    {
         "guide": "guide-jpa-intro",
         "instructionDir": "cloud-hosted-guide-jpa-intro",
         "instruction": "instructions.md"
