@@ -42,7 +42,7 @@
     {
         "guide": "guide-grpc-intro",
         "instructionDir": "cloud-hosted-guide-grpc-intro/labs",
-        "instruction": "cloud-hosted-guide-security-intro.md"
+        "instruction": "cloud-hosted-guide-grpc-intro.md"
     },
     {
         "guide": "guide-jpa-intro",
