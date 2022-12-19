@@ -67,9 +67,6 @@ jobs:
           # - {"github":"cloud-hosted-guide-openliberty-operator-openshift","gitlab":"cloud-hosted-guide-openliberty-operator-openshift"}
           # - {"github":"cloud-hosted-guide-maven-multimodules","gitlab":"cloud-hosted-guide-maven-multimodules"}
 
-
-
-
     steps:
 
     # Any prerequisite steps
