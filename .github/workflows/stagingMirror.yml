@@ -66,7 +66,7 @@ jobs:
           # - {"github":"cloud-hosted-guide-openliberty-operator-intro","gitlab":"cloud-hosted-guide-openliberty-operator-intro"}
           # - {"github":"cloud-hosted-guide-openliberty-operator-openshift","gitlab":"cloud-hosted-guide-openliberty-operator-openshift"}
           # - {"github":"cloud-hosted-guide-maven-multimodules","gitlab":"cloud-hosted-guide-maven-multimodules"}
-          - {"github":"cloud-hosted-guide-jakarta-websocket","gitlab":"IND-GPXX0TEQEN"}
+          - {"github":"cloud-hosted-guide-jakarta-websocket","gitlab":"IBM-GPXX0TEQEN"}
 
 
 
