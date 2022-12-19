@@ -69,7 +69,6 @@ jobs:
 
 
     steps:
-f
     # Any prerequisite steps
     - uses: actions/checkout@master
 

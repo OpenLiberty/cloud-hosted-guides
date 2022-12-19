@@ -66,7 +66,6 @@ jobs:
           - {"github":"cloud-hosted-guide-spring-boot","gitlab":"IBM-GPXX0Z2PEN","gitlab-branch":"lab-455-instruction"}
           - {"github":"cloud-hosted-guide-jakarta-websocket","gitlab":"IBM-GPXX0TEQEN","gitlab-branch":"lab-2183-instruction"}
 
-
     steps:
 
     # Any prerequisite steps
