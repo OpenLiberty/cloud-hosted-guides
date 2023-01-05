@@ -1,0 +1,167 @@
+name: GuideConverterV3
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Guide branch pushed to'     
+        required: true
+        default: 'prod'
+      guide_name:
+        description: 'Guide changed'
+        required: true
+        default: 'guide-rest-intro'
+      converter_branch:
+        description: 'Converter branch'
+        required: true
+        default: 'main'
+      common_branch:
+        description: 'guides-common branch for staging only'
+        required: true
+        default: 'prod'
+
+jobs:
+  printBranch:
+    runs-on: ubuntu-latest
+
+    steps: 
+
+      - name: Output message
+        run: |
+          echo "branch: ${{ github.event.inputs.branch }}"
+          echo "guide_name: ${{ github.event.inputs.guide_name }}"
+          echo "converter_branch: ${{ github.event.inputs.converter_branch }}"
+          echo "common_branch: ${{ github.event.inputs.common_branch }}"
+          
+  convertMaster:
+    name: Make PR to Master
+    runs-on: ubuntu-latest
+    if: contains(github.event.inputs.branch, 'master') || contains(github.event.inputs.branch, 'main') || contains(github.event.inputs.branch, 'prod')
+  
+    steps:
+
+      # Any prerequisite steps
+      - uses: actions/checkout@master
+        
+      - name: Checkout Guide Converter repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/cloud-hosted-guide-converter
+          path: GuideConverter
+        
+      - name: Checkout guide repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/${{ github.event.inputs.guide_name }}
+          path: GuideConverter/${{ github.event.inputs.guide_name }}
+        
+      - name: Checkout guides-common repo
+        uses: actions/checkout@v2
+        with:
+          repository: OpenLiberty/guides-common
+          path: GuideConverter/guides-common
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '16' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+      
+      - name: Run Converter
+        run: |
+          branchName=${{ github.event.inputs.branch }}
+          git init
+          mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs
+          cd GuideConverter
+          mvn -ntp compiler:compile
+          mvn -ntp exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11} cloud-hosted-${{ github.event.inputs.guide_name }}"
+          rm -f importFunctions.class
+          rm -f functions.class
+          rm -f CloudHostedGuideConverter.class
+          cd ..
+          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs/cloud-hosted-${{ github.event.inputs.guide_name }}.md
+          rm -rf GuideConverter
+          bash .github/workflows/draftRemoval.sh cloud-hosted-${{ github.event.inputs.guide_name }}
+          git add .
+          git config --global user.email "GuidesBot@OpenLiberty.io"
+          git config --global user.name "GuidesBot"
+          git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
+          git checkout --ours instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs/cloud-hosted-${{ github.event.inputs.guide_name }}.md
+    
+      - uses: peter-evans/create-pull-request@v3
+        with:
+            title: "To Prod: Change to cloud-hosted-${{ github.event.inputs.guide_name }}"
+            token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
+            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
+            branch: "cloud-hosted-${{ github.event.inputs.guide_name }}/prod"
+            base: "prod" 
+            labels: "RunTests"
+        name: Create Pull Request
+
+  convertStaging:
+    name: Make PR to Staging
+    runs-on: ubuntu-latest
+    if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging') || contains(github.event.inputs.branch, 'version-update-mp5')
+  
+    steps:
+
+      - uses: actions/checkout@v2
+        with:
+          ref: staging
+        
+      - name: Checkout Guide Converter repo
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.converter_branch }}
+          repository: OpenLiberty/cloud-hosted-guide-converter
+          path: GuideConverter
+        
+      - name: Checkout guide repo
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          repository: OpenLiberty/${{ github.event.inputs.guide_name }}
+          path: GuideConverter/${{ github.event.inputs.guide_name }}
+        
+      - name: Checkout guides-common repo
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.common_branch }}
+          repository: OpenLiberty/guides-common
+          path: GuideConverter/guides-common
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '16' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+
+      - name: Run Converter
+        run: |
+          branchName=${{ github.event.inputs.branch }}
+          git init
+          mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs
+          cd GuideConverter
+          mvn -ntp compiler:compile
+          mvn -ntp exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName} cloud-hosted-${{ github.event.inputs.guide_name }}"
+          rm -f importFunctions.class
+          rm -f functions.class
+          rm -f CloudHostedGuideConverter.class
+          cd ..
+          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs/cloud-hosted-${{ github.event.inputs.guide_name }}.md
+          rm -rf GuideConverter
+          bash .github/workflows/draftRemoval.sh cloud-hosted-${{ github.event.inputs.guide_name }}
+          git add .
+          git config --global user.email "GuidesBot@OpenLiberty.io"
+          git config --global user.name "GuidesBot"
+          git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
+          git checkout --ours instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs/cloud-hosted-${{ github.event.inputs.guide_name }}.md
+    
+      - uses: peter-evans/create-pull-request@v3
+        with:
+            title: "To Staging: Change to cloud-hosted-${{ github.event.inputs.guide_name }}"
+            token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
+            body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
+            branch: "cloud-hosted-${{ github.event.inputs.guide_name }}/staging"
+            base: "staging" 
+            labels: "RunTests"
+        name: Create Pull Request

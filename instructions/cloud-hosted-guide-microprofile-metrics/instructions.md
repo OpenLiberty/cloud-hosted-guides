@@ -209,14 +209,14 @@ Replace the server configuration file.
 <server description="Sample Liberty server">
 
   <featureManager>
-     <feature>restfulWS-3.0</feature>
-     <feature>jsonp-2.0</feature>
-     <feature>jsonb-2.0</feature>
-     <feature>cdi-3.0</feature>
-     <feature>mpConfig-3.0</feature>
-    <feature>mpMetrics-4.0</feature>
-    <feature>mpRestClient-3.0</feature>
-  </featureManager>
+    <feature>restfulWS-3.0</feature>
+    <feature>jsonp-2.0</feature>
+    <feature>jsonb-2.0</feature>
+    <feature>cdi-3.0</feature>
+    <feature>mpConfig-3.0</feature>
+   <feature>mpMetrics-4.0</feature>
+   <feature>mpRestClient-3.0</feature>
+ </featureManager>
 
   <variable name="default.http.port" defaultValue="9080"/>
   <variable name="default.https.port" defaultValue="9443"/>
@@ -263,7 +263,6 @@ import org.eclipse.microprofile.metrics.MetricUnits;
 import org.eclipse.microprofile.metrics.annotation.Counted;
 import org.eclipse.microprofile.metrics.annotation.Gauge;
 import org.eclipse.microprofile.metrics.annotation.Timed;
-import org.eclipse.microprofile.metrics.annotation.SimplyTimed;
 
 import io.openliberty.guides.inventory.model.InventoryList;
 import io.openliberty.guides.inventory.model.SystemData;
@@ -282,7 +281,7 @@ public class InventoryManager {
     return invUtils.getProperties(hostname);
   }
 
-  @SimplyTimed(name = "inventoryAddingTime",
+  @Timed(name = "inventoryAddingTime",
     absolute = true,
     description = "Time needed to add system properties to the inventory")
   public void add(String hostname, Properties systemProps) {
@@ -337,7 +336,7 @@ The ***@Timed*** annotation tracks how frequently the method is invoked and how 
 
 The tags allow you to query the metrics together or separately based on the functionality of the monitoring tool of your choice. The ***inventoryProcessingTime*** metrics for example could be queried to display an aggregate time of both tagged metrics or individual times.
 
-Apply the ***@SimplyTimed*** annotation to the ***add()*** method to track how frequently the method is invoked and how long it takes for each invocation of the method to complete. ***@SimplyTimed*** supports the same fields as ***@Timed*** in the previous table.
+Apply the ***@Timed*** annotation to the ***add()*** method to track how frequently the method is invoked and how long it takes for each invocation of the method to complete.
 
 Apply the ***@Counted*** annotation to the ***list()*** method to count how many times the ***http://localhost:9080/inventory/systems*** URL is accessed monotonically, which is counting up sequentially.
 
@@ -540,13 +539,13 @@ public class MetricsIT {
 
   @Test
   @Order(4)
-  public void testPropertiesAddSimplyTimeMetric() {
+  public void testPropertiesAddTimeMetric() {
     connectToEndpoint(baseHttpUrl + INVENTORY_HOSTNAME);
     metrics = getMetrics();
     boolean checkMetric = false;
     for (String metric : metrics) {
       if (metric.startsWith(
-          "application_inventoryAddingTime_total")) {
+          "application_inventoryAddingTime_seconds_count")) {
             checkMetric = true;
       }
     }
@@ -620,7 +619,7 @@ public class MetricsIT {
 
 * The ***testInventorySizeGaugeMetric()*** test case validates the ***@Gauge*** metric. The test case first ensures that the localhost is in the inventory, then looks for the ***@Gauge*** metric and asserts that the inventory size is greater or equal to 1.
 
-* The ***testPropertiesAddSimplyTimeMetric()*** test case validates the ***@SimplyTimed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics/application*** URL to retrieve application metrics as plain text. Then, it looks for the ***@SimplyTimed*** metric and asserts true if the metric exists.
+* The ***testPropertiesAddTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics/application*** URL to retrieve application metrics as plain text. Then, it looks for the ***@Timed*** metric and asserts true if the metric exists.
 
 The ***oneTimeSetup()*** method retrieves the port number for the server and builds a base URL string to set up the tests. Apply the ***@BeforeAll*** annotation to this method to run it before any of the test cases.
 
