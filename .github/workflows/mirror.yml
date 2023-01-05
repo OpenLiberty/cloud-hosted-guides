@@ -65,7 +65,7 @@ jobs:
           - {"github":"cloud-hosted-guide-mongodb-intro","gitlab":"IBM-GPXX017WEN","gitlab_branch":"main"}
           - {"github":"cloud-hosted-guide-graphql-client","gitlab":"IBM-GPXX04S5EN","gitlab_branch":"main"}
           - {"github":"cloud-hosted-guide-grpc-intro","gitlab":"IBM-GPXX0BCEN","gitlab_branch":"main"}
-          - {"github":"cloud-hosted-guide-jakarta-websocket","gitlab":"IBM-GPXX0T4KEN","gitlab_branch":"main"}
+          - {"github":"cloud-hosted-guide-jakarta-websocket","gitlab":"IBM-GPXX0SGBEN","gitlab_branch":"main"}
     
     steps:
     # Any prerequisite steps
