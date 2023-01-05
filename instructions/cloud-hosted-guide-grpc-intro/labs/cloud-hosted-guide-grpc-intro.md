@@ -115,7 +115,7 @@ mvn -pl query liberty:stop
 Navigate to the ***start*** directory to begin.
 
 ```bash
-cd /home/project/draft-guide-grpc-intro/start
+cd /home/project/guide-grpc-intro/start
 ```
 
 First, create the ***.proto*** file and generate gRPC classes. You will implement the gRPC server service with the generated classes later. The ***.proto*** file defines all the service calls and message types. The message types are used in the service call definition for the parameters and returns.
@@ -202,7 +202,7 @@ mvn -pl systemproto install
 Navigate to the ***start*** directory.
 
 ```bash
-cd /home/project/draft-guide-grpc-intro/start
+cd /home/project/guide-grpc-intro/start
 ```
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
