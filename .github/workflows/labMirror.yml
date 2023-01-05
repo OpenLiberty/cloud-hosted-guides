@@ -64,7 +64,7 @@ jobs:
           - {"github":"cloud-hosted-guide-rest-intro","gitlab":"IBM-GPXX0JGFEN","gitlab-branch":"lab-483-instruction"}
           - {"github":"cloud-hosted-guide-security-intro","gitlab":"IBM-GPXX06JEN","gitlab-branch":"lab-653-instruction"}
           - {"github":"cloud-hosted-guide-spring-boot","gitlab":"IBM-GPXX0Z2PEN","gitlab-branch":"lab-455-instruction"}
-          - {"github":"cloud-hosted-guide-jakarta-websocket","gitlab":"IBM-GPXX0TEQEN","gitlab-branch":"lab-3421-instruction"}
+          - {"github":"cloud-hosted-guide-jakarta-websocket","gitlab":"IBM-GPXX0SGBEN","gitlab-branch":"lab-3446-instruction"}
 
     steps:
 
