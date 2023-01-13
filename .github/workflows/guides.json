@@ -228,5 +228,10 @@
         "guide": "guide-spring-boot",
         "instructionDir": "cloud-hosted-guide-spring-boot",
         "instruction": "instructions.md"
+    },
+    {
+        "guide": "guide-jakarta-websocket",
+        "instructionDir": "cloud-hosted-guide-jakarta-websocket/labs",
+        "instruction": "instructions.md"  
     }
 ]
