@@ -232,6 +232,6 @@
     {
         "guide": "guide-jakarta-websocket",
         "instructionDir": "cloud-hosted-guide-jakarta-websocket/labs",
-        "instruction": "cloud_hosted_guide_jakarta_websocket.md"  
+        "instruction": "cloud-hosted-guide-jakarta-websocket.md"  
     }
 ]
