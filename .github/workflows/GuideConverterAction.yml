@@ -38,7 +38,6 @@ jobs:
     if: contains(github.event.inputs.branch, 'master') || contains(github.event.inputs.branch, 'main') || contains(github.event.inputs.branch, 'prod')
   
     steps:
-
       # Any prerequisite steps
       - uses: actions/checkout@master
         
@@ -101,10 +100,9 @@ jobs:
   convertStaging:
     name: Make PR to Staging
     runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging') || contains(github.event.inputs.branch, 'version-update-mp5')
+    if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging') || contains(github.event.inputs.branch, 'gkwan-ibm')
   
     steps:
-
       - uses: actions/checkout@v2
         with:
           ref: staging
