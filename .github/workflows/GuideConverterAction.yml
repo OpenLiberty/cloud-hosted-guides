@@ -102,7 +102,7 @@ jobs:
   convertStaging:
     name: Make PR to Staging
     runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging') || contains(github.event.inputs.branch, 'gkwan-ibm')
+    if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging')
   
     steps:
 

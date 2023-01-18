@@ -100,7 +100,7 @@ jobs:
   convertStaging:
     name: Make PR to Staging
     runs-on: ubuntu-latest
-    if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging') || contains(github.event.inputs.branch, 'version-update-mp5')
+    if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging')
   
     steps:
 
