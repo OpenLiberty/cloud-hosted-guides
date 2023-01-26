@@ -1,9 +1,9 @@
 ---
 markdown-version: v1
-tool-type: theia
 title: cloud-hosted-guide-jakarta-websocket
 branch: lab-3446-instruction
-version-history-start-date: '2023-01-05T10:56:36Z'
+version-history-start-date: 2023-01-05T10:56:36Z
+tool-type: theia
 ---
 ::page{title="Welcome to the Bidirectional communication between services using Jakarta WebSocket guide!"}
 
@@ -83,7 +83,7 @@ After you are finished checking out the application, stop both the ***system*** 
 mvn -pl system liberty:stop
 mvn -pl client liberty:stop
 ```
-
+ 
 
 ::page{title="Creating the WebSocket server service"}
 
@@ -707,7 +707,7 @@ public class SystemServiceIT {
     @Order(1)
     public void testSystem() throws Exception {
         startCountDown(1);
-        URI uri = new URI( "ws://localhost:9081/systemLoad" );
+        URI uri = new URI("ws://localhost:9081/systemLoad");
         SystemClient client = new SystemClient(uri);
         client.sendMessage("both");
         countDown.await(5, TimeUnit.SECONDS);
@@ -720,7 +720,7 @@ public class SystemServiceIT {
     @Order(2)
     public void testSystemMultipleSessions() throws Exception {
         startCountDown(3);
-        URI uri = new URI( "ws://localhost:9081/systemLoad" );
+        URI uri = new URI("ws://localhost:9081/systemLoad");
         SystemClient client1 = new SystemClient(uri);
         SystemClient client2 = new SystemClient(uri);
         SystemClient client3 = new SystemClient(uri);
@@ -740,8 +740,8 @@ public class SystemServiceIT {
     public static void verify(JsonObject systemLoad) {
         assertNotNull(systemLoad.getString("time"));
         assertTrue(
-            systemLoad.getJsonNumber("loadAverage") != null ||
-            systemLoad.getJsonNumber("memoryUsage") != null
+            systemLoad.getJsonNumber("loadAverage") != null
+            || systemLoad.getJsonNumber("memoryUsage") != null
         );
         countDown.countDown();
     }
