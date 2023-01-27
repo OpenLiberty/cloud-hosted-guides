@@ -189,7 +189,7 @@ The ***getClientStreamingProperties*** RPC defines the client streaming call. Th
 The ***getBidirectionalProperties*** RPC defines the bidirectional streaming call. In this service, the client service streams ***SystemPropertyName*** messages to the server service. The server service returns a stream of ***SystemProperty*** messages.
 
 
-To compile the ***.proto*** file, the ***pom.xml*** Maven configuration file needs the ***grpc-protobuf*** and ***grpc-stub*** dependencies, and the ***protobuf-maven-plugin*** plugin. To install the correct version of the Protobuf compiler automatically, the ***os-maven-plugin*** extension is required in the ***build*** configuration.
+To compile the ***.proto*** file, the ***pom.xml*** Maven configuration file needs the ***grpc-protobuf***, ***grpc-stub***, ***javax.annotation-api*** dependencies, and the ***protobuf-maven-plugin*** plugin. To install the correct version of the Protobuf compiler automatically, the ***os-maven-plugin*** extension is required in the ***build*** configuration.
 
 Run the following command to generate the gRPC classes.
 ```bash
@@ -306,7 +306,7 @@ Replace the ***system*** server configuration file.
 <server description="system service">
 
     <featureManager>
-        <feature>jaxrs-2.1</feature>
+        <feature>restfulWS-3.0</feature>
         <feature>grpc-1.0</feature>
     </featureManager>
 
@@ -353,13 +353,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.logging.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -424,12 +424,14 @@ Replace the ***query*** server configuration file.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<server description="new server">
+<server description="query service">
 
     <featureManager>
-        <feature>jaxrs-2.1</feature>
-        <feature>cdi-2.0</feature>
-        <feature>mpConfig-2.0</feature>
+        <feature>restfulWS-3.0</feature>
+        <feature>jsonp-2.0</feature>
+        <feature>jsonb-2.0</feature>
+        <feature>cdi-3.0</feature>
+        <feature>mpConfig-3.0</feature>
         <feature>grpc-1.0</feature>
         <feature>grpcClient-1.0</feature>
     </featureManager>
@@ -571,13 +573,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.logging.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -823,13 +825,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.logging.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -1155,13 +1157,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.logging.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -1399,13 +1401,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.net.MalformedURLException;
 
-import javax.json.JsonObject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
 
-import org.apache.cxf.jaxrs.provider.jsrjsonp.JsrJsonpProvider;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -1419,7 +1420,6 @@ public class QueryIT {
     @BeforeAll
     private static void setup() {
         client = ClientBuilder.newClient();
-        client.register(JsrJsonpProvider.class);
     }
 
     @AfterAll
@@ -1446,7 +1446,7 @@ public class QueryIT {
                      "Incorrect response code from " + target.getUri().getPath());
         JsonObject obj = response.readEntity(JsonObject.class);
         assertFalse(obj.getString("os.name").isEmpty(),
-        		    "os.name should not be empty.");
+                    "os.name should not be empty.");
         response.close();
     }
 
