@@ -1,0 +1,247 @@
+[
+    {
+        "github": "cloud-hosted-draft-guide-devlab-1",
+        "gitlab": "IBM-GPXX0KRAEN",
+        "gitlab-branch": "lab-364-instruction"
+    },
+    {
+        "github": "cloud-hosted-draft-guide-devlab-2",
+        "gitlab": "IBM-GPXX0E2VEN",
+        "gitlab-branch": "lab-363-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-arquillian-managed",
+        "gitlab": "IBM-GPXX0SDXEN",
+        "gitlab-branch": "lab-449-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-bean-validation",
+        "gitlab": "IBM-GPXX0A1YEN",
+        "gitlab-branch": "lab-451-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-cdi-intro",
+        "gitlab": "IBM-GPXX0G3KEN",
+        "gitlab-branch": "lab-498-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-containerize",
+        "gitlab": "IBM-GPXX01AVEN",
+        "gitlab-branch": "lab-496-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-contract-testing",
+        "gitlab": "IBM-GPXX05LMEN",
+        "gitlab-branch": "lab-495-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-cors",
+        "gitlab": "IBM-GPXX0QJFEN",
+        "gitlab-branch": "lab-448-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-docker",
+        "gitlab": "IBM-GPXX0FTCEN",
+        "gitlab-branch": "lab-508-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-getting-started",
+        "gitlab": "IBM-GPXX04TNEN",
+        "gitlab-branch": "lab-480-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-graphql-client",
+        "gitlab": "IBM-GPXX04S5EN",
+        "gitlab-branch": "lab-329-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-grpc-intro",
+        "gitlab": "IBM-GPXX0BCEN",
+        "gitlab-branch": "lab-1145-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-jpa-intro",
+        "gitlab": "IBM-GPXX0G31EN",
+        "gitlab-branch": "lab-447-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-kubernetes-intro",
+        "gitlab": "IBM-GPXX0HZ2EN",
+        "gitlab-branch": "lab-479-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-kubernetes-microprofile-config",
+        "gitlab": "IBM-GPXX07YGEN",
+        "gitlab-branch": "lab-485-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-kubernetes-microprofile-health",
+        "gitlab": "IBM-GPXX0QU9EN",
+        "gitlab-branch": "lab-486-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-liberty-deep-dive",
+        "gitlab": "IBM-GPXX0FG5EN",
+        "gitlab-branch": "lab-344-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-maven-intro",
+        "gitlab": "IBM-GPXX0FFCEN",
+        "gitlab-branch": "lab-438-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-maven-multimodules",
+        "gitlab": "IBM-GPXX0J71EN",
+        "gitlab-branch": "lab-418-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-config",
+        "gitlab": "IBM-GPXX08WYEN",
+        "gitlab-branch": "lab-506-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-fallback",
+        "gitlab": "IBM-GPXX0E3QEN",
+        "gitlab-branch": "lab-482-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-graphql",
+        "gitlab": "IBM-GPXX0BSAEN",
+        "gitlab-branch": "lab-444-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-health",
+        "gitlab": "IBM-GPXX0QTEEN",
+        "gitlab-branch": "lab-507-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-jwt",
+        "gitlab": "IBM-GPXX0W7KEN",
+        "gitlab-branch": "lab-505-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-metrics",
+        "gitlab": "IBM-GPXX0QS6EN",
+        "gitlab-branch": "lab-493-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-openapi",
+        "gitlab": "IBM-GPXX0YBFEN",
+        "gitlab-branch": "lab-492-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-opentracing",
+        "gitlab": "IBM-GPXX0QR3EN",
+        "gitlab-branch": "lab-497-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-opentracing-jaeger",
+        "gitlab": "IBM-GPXX0JLHEN",
+        "gitlab-branch": "lab-494-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-reactive-messaging",
+        "gitlab": "IBM-GPXX0I4FEN",
+        "gitlab-branch": "lab-504-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-reactive-messaging-acknowledgment",
+        "gitlab": "IBM-GPXX05P1EN",
+        "gitlab-branch": "lab-499-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-reactive-messaging-rest-integration",
+        "gitlab": "IBM-GPXX0UMSEN",
+        "gitlab-branch": "lab-501-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-rest-client",
+        "gitlab": "IBM-GPXX0XV3EN",
+        "gitlab-branch": "lab-481-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-rest-client-async",
+        "gitlab": "IBM-GPXX0IHMEN",
+        "gitlab-branch": "lab-502-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-microshed-testing",
+        "gitlab": "IBM-GPXX0YXHEN",
+        "gitlab-branch": "lab-478-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-mongodb-intro",
+        "gitlab": "IBM-GPXX017WEN",
+        "gitlab-branch": "lab-668-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-openliberty-operator-intro",
+        "gitlab": "IBM-GPXX0HAAEN",
+        "gitlab-branch": "lab-432-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-openliberty-operator-openshift",
+        "gitlab": "IBM-GPXX0M5NEN",
+        "gitlab-branch": "lab-388-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-reactive-messaging-sse",
+        "gitlab": "IBM-GPXX0WRDEN",
+        "gitlab-branch": "lab-472-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-reactive-rest-client",
+        "gitlab": "IBM-GPXX0ZG0EN",
+        "gitlab-branch": "lab-500-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-reactive-service-testing",
+        "gitlab": "IBM-GPXX07UGEN",
+        "gitlab-branch": "lab-503-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-rest-client-angular",
+        "gitlab": "IBM-GPXX0ADEN",
+        "gitlab-branch": "lab-437-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-rest-client-angularjs",
+        "gitlab": "IBM-GPXX0RL8EN",
+        "gitlab-branch": "lab-436-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-rest-client-java",
+        "gitlab": "IBM-GPXX0M7ZEN",
+        "gitlab-branch": "lab-491-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-rest-client-reactjs",
+        "gitlab": "IBM-GPXX0G81EN",
+        "gitlab-branch": "lab-435-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-rest-hateoas",
+        "gitlab": "IBM-GPXX0MP0EN",
+        "gitlab-branch": "lab-433-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-rest-intro",
+        "gitlab": "IBM-GPXX0JGFEN",
+        "gitlab-branch": "lab-483-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-security-intro",
+        "gitlab": "IBM-GPXX06JEN",
+        "gitlab-branch": "lab-653-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-spring-boot",
+        "gitlab": "IBM-GPXX0Z2PEN",
+        "gitlab-branch": "lab-455-instruction"
+    },
+    {
+        "github": "cloud-hosted-guide-jakarta-websocket",
+        "gitlab": "IBM-GPXX0SGBEN",
+        "gitlab-branch": "lab-3446-instruction"
+    }
+]
