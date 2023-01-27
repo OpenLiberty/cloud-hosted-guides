@@ -1515,7 +1515,7 @@ mvn -pl query liberty:stop
 
 ### Nice Work!
 
-You just developed a Java application that implements four types of gRPC calls with Open Liberty. For more information, see https://openliberty.io/docs/latest/grpc-services.html[Provide and consume gRPC services on Open Liberty] in the Open Liberty docs.
+You just developed a Java application that implements four types of gRPC calls with Open Liberty. For more information, see [Provide and consume gRPC services on Open Liberty](https://openliberty.io/docs/latest/grpc-services.html) in the Open Liberty docs.
 
 
 
