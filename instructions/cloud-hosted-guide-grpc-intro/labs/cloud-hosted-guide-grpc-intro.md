@@ -7,7 +7,7 @@ tool-type: theia
 ---
 ::page{title="Welcome to the Streaming messages between client and server services using gRPC guide!"}
 
-Learn how to use gRPC unary calls, server streaming, client streaming, and bidirectional streaming to communicate between Java client and server services with Open Liberty.
+Learn how to use gRPC unary calls, server streaming, client streaming, and bidirectional streaming to communicate between Java client and server services with Open Liberty..
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
