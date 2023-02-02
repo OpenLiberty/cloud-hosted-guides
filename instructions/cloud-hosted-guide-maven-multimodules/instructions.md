@@ -278,7 +278,6 @@ Replace the ear/POM file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.9.0</version>
                 <executions>
                     <execution>
                         <phase>test-compile</phase>
@@ -397,12 +396,24 @@ Replace the start/POM file.
     </modules>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>3.3.2</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.10.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <!-- Enable liberty-maven plugin -->
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.7.1</version>
             </plugin>
         </plugins>
     </build>
@@ -415,7 +426,7 @@ Set the ***basic configuration*** for the project. Set ***pom*** as the value fo
 
 In the parent ***pom.xml*** file, list all of the ***modules*** that you want to aggregate for the application.
 
-Adding the ***liberty-maven-plugin*** plug-in allows each child module to inherit the plug-in, so that you can use the Liberty Maven plug-in to develop the modules.
+Adding the ***maven-war-plugin***, ***maven-compiler-plugin***, and ***liberty-maven-plugin*** plug-ins allows each child module to inherit the plug-ins, so that you can use the these to develop the modules.
 
 
 ::page{title="Developing the application"}
