@@ -455,7 +455,7 @@ Replace the Maven configuration file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.7.1</version>
             </plugin>
 
             <!-- Plugin to run unit tests -->
