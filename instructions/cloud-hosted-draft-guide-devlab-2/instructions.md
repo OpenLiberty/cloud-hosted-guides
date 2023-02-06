@@ -148,11 +148,17 @@ A ***.dockerignore*** file is available to you in the ***start*** directory. Thi
 
 The Open Liberty Maven plug-in includes a ***devc*** goal that builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. This development mode, known as dev mode, also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
 
-Build and run the container by running the ***devc*** goal from the ***start*** directory:
-
+In this IBM Cloud environment, you need to pre-create the ***logs*** directory by running the following commands:
 
 ```bash
+mkdir -p /home/project/guide-docker/start/target/liberty/wlp/usr/servers/defaultServer/logs
 chmod 777 /home/project/guide-docker/start/target/liberty/wlp/usr/servers/defaultServer/logs
+```
+
+
+Build and run the container by running the ***devc*** goal from the ***start*** directory:
+
+```bash
 mvn liberty:devc
 ```
 
