@@ -70,11 +70,6 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
-```bash
-sudo usermod -d /home/project theia
-```
-
 
 ::page{title="Creating the Dockerfile"}
 
@@ -150,9 +145,7 @@ The Open Liberty Maven plug-in includes a ***devc*** goal that builds a Docker i
 
 Build and run the container by running the ***devc*** goal from the ***start*** directory:
 
-
 ```bash
-chmod 777 /home/project/guide-docker/start/target/liberty/wlp/usr/servers/defaultServer/logs
 mvn liberty:devc
 ```
 
