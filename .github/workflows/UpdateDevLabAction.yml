@@ -92,9 +92,9 @@ jobs:
     
       - uses: peter-evans/create-pull-request@v3
         with:
-            title: "To Staging: Change to cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }} for ${{ github.event.inputs.guide_name }}"
+            title: "To Staging: Change to cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}"
             token: ${{ secrets.GUIDECONVERSIONTOOL_PASSWORD }}
-            body: "Updated by github actions, triggered to the cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }} repo."
+            body: "Updated by github actions, triggered to the cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }} repo for ${{ github.event.inputs.guide_name }}."
             branch: "cloud-hosted-draft-guide-devlab-${{ github.event.inputs.devGuide }}/staging"
             base: "staging" 
             labels: "RunTestsDev"
