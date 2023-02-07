@@ -49,6 +49,11 @@ The ***start*** directory is an empty directory where you will build the ***inve
 The ***finish*** directory contains the finished projects of different modules that you will build.
 
 
+In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
+```bash
+sudo usermod -d /home/project theia
+```
+
 ::page{title="Getting started with Liberty and REST"}
 
 Liberty now offers an easier way to get started with developing your application: the Open Liberty Starter. This tool provides a simple and quick way to get the necessary files to start building an application on Liberty. Through this tool, you can specify your application and project name. You can also choose a build tool from either Maven or Gradle, and pick the Java SE, Jakarta EE, and MicroProfile versions for your application.
@@ -4268,6 +4273,7 @@ Build and run the container by running the ***devc*** goal with the PostgreSQL c
 
 
 ```bash
+chmod 777 /home/project/guide-liberty-deep-dive/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
 POSTGRES_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" postgres-container`
 mvn liberty:devc \
   -DdockerRunOpts="-e POSTGRES_HOSTNAME=$POSTGRES_IP" \
