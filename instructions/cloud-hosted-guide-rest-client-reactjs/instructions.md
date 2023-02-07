@@ -205,7 +205,7 @@ touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Compon
 
 ```javascript
 import React from 'react';
-import ArtistTable from './ArtistTable';
+import {ArtistTable} from './ArtistTable';
 
 function App() {
   return (
@@ -218,9 +218,9 @@ export default App;
 
 
 
-The ***App.js*** file returns the ***ArtistTable*** component to create a reusable element that encompasses your web application. 
+The ***App.js*** file returns the ***ArtistTable*** function to create a reusable element that encompasses your web application. 
 
-Next, create the ***ArtistTable*** component that fetches data from your back end and renders it in a table. 
+Next, create the ***ArtistTable*** function that fetches data from your back end and renders it in a table. 
 
 Create the ***ArtistTable.js*** file.
 
@@ -238,86 +238,174 @@ touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Compon
 
 
 ```javascript
-import React, { Component } from 'react';
-import ReactTable from 'react-table-6';
-import 'react-table-6/react-table.css';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTable, usePagination, useSortBy } from 'react-table';
+import '../Styles/table.css'
 
-class ArtistTable extends Component {
-  state = {
-    posts: [],
-    isLoading: true,
-    error: null,
-  };
+export function ArtistTable() {
+
+  const [posts, setPosts] = useState([]);
 
 
-  render() {
-    const { isLoading, posts } = this.state;
-    const columns = [{
-      Header: 'Artist Info',
-      columns: [
-        {
-          Header: 'Artist ID',
-          accessor: 'id'
-        },
-        {
-          Header: 'Artist Name',
-          accessor: 'name'
-        },
-        {
-          Header: 'Genres',
-          accessor: 'genres',
-        }
-      ]
-    },
+  const data = useMemo(() => [...posts], [posts]);
+
+  const columns = useMemo(() => [{
+    Header: 'Artist Info',
+    columns: [
+      {
+        Header: 'Artist ID',
+        accessor: 'id'
+      },
+      {
+        Header: 'Artist Name',
+        accessor: 'name'
+      },
+      {
+        Header: 'Genres',
+        accessor: 'genres',
+      }
+    ]
+  },
+  {
+    Header: 'Albums',
+    columns: [
+      {
+        Header: 'Number of Tracks',
+        accessor: 'ntracks',
+      },
+      {
+        Header: 'Title',
+        accessor: 'title',
+      }
+    ]
+  }
+  ], []
+  );
+
+  const tableInstance = useTable(
     {
-      Header: 'Albums',
-      columns: [
-        {
-          Header: 'Title',
-          accessor: 'title',
-        },
-        {
-          Header: 'Number of Tracks',
-          accessor: 'ntracks',
-        }
-      ]
-    }
-  ]
+      columns,
+      data,
+      initialState: { pageIndex: 0, pageSize: 4 }
+    },
+    useSortBy,
+    usePagination
+  )
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    prepareRow,
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    state: { pageIndex, pageSize }
+  } = tableInstance;
+
 
   return (
-    <div>
+    <>
       <h2>Artist Web Service</h2>
-      {!isLoading ? (
-        <ReactTable
-          data={posts}
-          columns={columns}
-          defaultPageSize={4}
-          pageSizeOptions={[4, 5, 6]}
-        />) : (
-          <p>Loading .....</p>
-        )}
-    </div>
-    );
-  }
+      {/* tag::table[] */}
+      <table {...getTableProps()}>
+        <thead>
+          {headerGroups.map(headerGroup => (
+            <tr {...headerGroup.getHeaderGroupProps()}>
+              {headerGroup.headers.map((column) => (
+                <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                  {column.render('Header')}
+                  <span>
+                    {column.isSorted
+                      ? column.isSortedDesc
+                        ? ' 🔽'
+                        : ' 🔼'
+                      : ''}
+                  </span>
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody {...getTableBodyProps()}>
+          {page.map((row, i) => {
+            prepareRow(row)
+            return (
+              <tr {...row.getRowProps()}>
+                {row.cells.map(cell => {
+                  return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                })}
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+      {/* end::table[] */}
+      <div className="pagination">
+        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+          {'Previous'}
+        </button>{' '}
+        <div class="page-info">
+          <span>
+            Page{' '}
+            <strong>
+              {pageIndex + 1} of {pageOptions.length}
+            </strong>{' '}
+          </span>
+          <span>
+            | Go to page:{' '}
+            <input
+              type="number"
+              defaultValue={pageIndex + 1}
+              onChange={e => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0
+                gotoPage(page)
+              }}
+              style={{ width: '100px' }}
+            />
+          </span>{' '}
+          <select
+            value={pageSize}
+            onChange={e => {
+              setPageSize(Number(e.target.value))
+            }}
+          >
+            {[4, 5, 6, 9].map(pageSize => (
+              <option key={pageSize} value={pageSize}>
+                Show {pageSize}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button onClick={() => nextPage()} disabled={!canNextPage}>
+          {'Next'}
+        </button>{' '}
+      </div>
+    </>
+  );
 }
-
-export default ArtistTable;
 ```
 
 
 
-The ***React*** library imports the ***react*** package for you to create the ***ArtistTable*** component as inheritance of the ***React Component*** and use its values. The ***state*** object is initialized to represent the state of the posts that appear on the paginated table. The ***ArtistTable*** component also needs to be ***exported*** as a reusable UI element that can be used across your application.
+The ***React*** library imports the ***react*** package for you to create the ***ArtistTable*** function. This function must have the ***export*** declaration because it is being exported to the ***App.js*** module. The ***posts*** object is initialized using a React Hook that lets you add a state to represent the state of the posts that appear on the paginated table.
 
 To display the returned data, you will use pagination. Pagination is the process of separating content into discrete pages, and it can be used for handling data sets in React. In your application, you'll render the columns in the paginated table. The ***columns*** constant is used to define the table that is present on the webpage.
 
-The ***return*** statement returns the paginated table where you defined the properties for the ***ReactTable***. The ***data*** property corresponds to the consumed data from the API endpoint and is assigned to the ***data*** of the table. The ***columns*** property corresponds to the rendered column object and is assigned to the ***columns*** of the table.
+The ***useTable*** hook creates a paginated table. The ***useTable*** hook takes in the ***columns***, ***posts***, and ***setPosts*** objects as parameters. It returns a paginated table that is assigned to the ***table*** constant. The ***table*** constant renders the paginated table on the webpage. The ***return*** statement returns the paginated table. The ***useSortBy*** hook sorts the paginated table by the column headers. The ***usePagination*** hook creates the pagination buttons at the bottom of the table that are used to navigate through the paginated table.
 
 
 ### Importing the HTTP client
 
 Your application needs a way to communicate with and retrieve resources from RESTful web services to output the resources onto the paginated table. The [Axios](https://github.com/axios/axios) library will provide you with an HTTP client. This client is used to make HTTP requests to external resources. Axios is a promise-based HTTP client that can send asynchronous requests to REST endpoints. To learn more about the Axios library and its HTTP client, see the [Axios documentation](https://www.npmjs.com/package/axios).
 
-The ***getArtistsInfo()*** function uses the Axios API to fetch data from your back end. This function is called when the ***ArtistTable*** is rendered to the page using the ***componentDidMount()*** React lifecycle method.
+The ***GetArtistsInfo()*** function uses the Axios API to fetch data from your back end. This function is called when the ***ArtistTable*** is rendered to the page using the ***useEffect()*** React lifecycle method.
 
 Update the ***ArtistTable.js*** file.
 
@@ -329,100 +417,181 @@ Update the ***ArtistTable.js*** file.
 
 
 ```javascript
-import React, { Component } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import ReactTable from 'react-table-6';
-import 'react-table-6/react-table.css';
+import { useTable, usePagination, useSortBy } from 'react-table';
+import '../Styles/table.css'
 
-class ArtistTable extends Component {
-  state = {
-    posts: [],
-    isLoading: true,
-    error: null,
-  };
+export function ArtistTable() {
 
-  getArtistsInfo() {
-    axios('http://localhost:9080/artists')
+  const [posts, setPosts] = useState([]);
+
+  const GetArtistsInfo = async () => {
+    const response = await axios.get('http://localhost:9080/artists')
       .then(response => {
         const artists = response.data;
-        const posts = [];
         for (const artist of artists) {
           const { albums, ...rest } = artist;
           for (const album of albums) {
+            setPosts([...posts, { ...rest, ...album }]);
             posts.push({ ...rest, ...album });
           }
         };
-        this.setState({
-          posts,
-          isLoading: false
-        });
-      })
-      .catch(error => this.setState({ error, isLoading: false }));
-  }
+      }).catch(error => { console.log(error); });
+  };
 
-  componentDidMount() {
-    this.getArtistsInfo();
+  const data = useMemo(() => [...posts], [posts]);
+
+  const columns = useMemo(() => [{
+    Header: 'Artist Info',
+    columns: [
+      {
+        Header: 'Artist ID',
+        accessor: 'id'
+      },
+      {
+        Header: 'Artist Name',
+        accessor: 'name'
+      },
+      {
+        Header: 'Genres',
+        accessor: 'genres',
+      }
+    ]
+  },
+  {
+    Header: 'Albums',
+    columns: [
+      {
+        Header: 'Number of Tracks',
+        accessor: 'ntracks',
+      },
+      {
+        Header: 'Title',
+        accessor: 'title',
+      }
+    ]
   }
-  render() {
-    const { isLoading, posts } = this.state;
-    const columns = [{
-      Header: 'Artist Info',
-      columns: [
-        {
-          Header: 'Artist ID',
-          accessor: 'id'
-        },
-        {
-          Header: 'Artist Name',
-          accessor: 'name'
-        },
-        {
-          Header: 'Genres',
-          accessor: 'genres',
-        }
-      ]
-    },
+  ], []
+  );
+
+  const tableInstance = useTable(
     {
-      Header: 'Albums',
-      columns: [
-        {
-          Header: 'Title',
-          accessor: 'title',
-        },
-        {
-          Header: 'Number of Tracks',
-          accessor: 'ntracks',
-        }
-      ]
-    }
-  ]
+      columns,
+      data,
+      initialState: { pageIndex: 0, pageSize: 4 }
+    },
+    useSortBy,
+    usePagination
+  )
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    prepareRow,
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    state: { pageIndex, pageSize }
+  } = tableInstance;
+
+  useEffect(() => {
+    GetArtistsInfo();
+  }, []);
 
   return (
-    <div>
+    <>
       <h2>Artist Web Service</h2>
-      {!isLoading ? (
-        <ReactTable
-          data={posts}
-          columns={columns}
-          defaultPageSize={4}
-          pageSizeOptions={[4, 5, 6]}
-        />) : (
-          <p>Loading .....</p>
-        )}
-    </div>
-    );
-  }
+      {/* tag::table[] */}
+      <table {...getTableProps()}>
+        <thead>
+          {headerGroups.map(headerGroup => (
+            <tr {...headerGroup.getHeaderGroupProps()}>
+              {headerGroup.headers.map((column) => (
+                <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                  {column.render('Header')}
+                  <span>
+                    {column.isSorted
+                      ? column.isSortedDesc
+                        ? ' 🔽'
+                        : ' 🔼'
+                      : ''}
+                  </span>
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody {...getTableBodyProps()}>
+          {page.map((row, i) => {
+            prepareRow(row)
+            return (
+              <tr {...row.getRowProps()}>
+                {row.cells.map(cell => {
+                  return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                })}
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+      {/* end::table[] */}
+      <div className="pagination">
+        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+          {'Previous'}
+        </button>{' '}
+        <div class="page-info">
+          <span>
+            Page{' '}
+            <strong>
+              {pageIndex + 1} of {pageOptions.length}
+            </strong>{' '}
+          </span>
+          <span>
+            | Go to page:{' '}
+            <input
+              type="number"
+              defaultValue={pageIndex + 1}
+              onChange={e => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0
+                gotoPage(page)
+              }}
+              style={{ width: '100px' }}
+            />
+          </span>{' '}
+          <select
+            value={pageSize}
+            onChange={e => {
+              setPageSize(Number(e.target.value))
+            }}
+          >
+            {[4, 5, 6, 9].map(pageSize => (
+              <option key={pageSize} value={pageSize}>
+                Show {pageSize}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button onClick={() => nextPage()} disabled={!canNextPage}>
+          {'Next'}
+        </button>{' '}
+      </div>
+    </>
+  );
 }
-
-export default ArtistTable;
 ```
 
 
 
 
-The ***axios*** HTTP call is used to read the artist JSON that contains the data from the sample JSON file in the ***resources*** directory. When a response is successful, the state of the system changes by assigning ***response.data*** to ***posts***. The ***convertData*** function manipulates the JSON data to allow it to be accessed by the ***ReactTable***. You will notice the ***object spread syntax*** that the ***convertData*** function uses, which is a relatively new sytnax made for simplicity. To learn more about it, see [Spread in object literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax#Spread_in_object_literals).
-
-The ***this.setState*** function is used to update the state of your React component with the data that was fetched from the server. This update triggers a rerender of your React component, which updates the table with the artist data. For more information on how state in React works, see the React documentation on [state and lifecycle](https://reactjs.org/docs/faq-state.html).
+The ***axios*** HTTP call is used to read the artist JSON that contains the data from the sample JSON file in the ***resources*** directory. When a response is successful, the state of the system changes by assigning ***response.data*** to ***posts***. The ***artists*** and their ***albums*** JSON data are manipulated to allow them to be accessed by the ***ReactTable***. The ***...rest*** or ***...album*** object spread syntax is designed for simplicity. To learn more about it, see [Spread in object literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax#Spread_in_object_literals).
 
 Finally, run the following command to update the URL to access the ***artists.json*** in the ***ArtistTable.js*** file:
 ```bash
@@ -523,7 +692,7 @@ Update the ***pom.xml*** file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.5.1</version>            
+                <version>3.7.1</version>            
             </plugin>
             <!-- Frontend resources -->
             <plugin>
