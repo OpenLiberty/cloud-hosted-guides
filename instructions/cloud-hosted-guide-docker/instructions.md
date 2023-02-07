@@ -70,6 +70,11 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
+```bash
+sudo usermod -d /home/project theia
+```
+
 
 ::page{title="Creating the Dockerfile"}
 
@@ -142,6 +147,14 @@ A ***.dockerignore*** file is available to you in the ***start*** directory. Thi
 ::page{title="Launching Open Liberty in dev mode"}
 
 The Open Liberty Maven plug-in includes a ***devc*** goal that builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. This development mode, known as dev mode, also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
+
+In this IBM Cloud environment, you need to pre-create the ***logs*** directory by running the following commands:
+
+```bash
+mkdir -p /home/project/guide-docker/start/target/liberty/wlp/usr/servers/defaultServer/logs
+chmod 777 /home/project/guide-docker/start/target/liberty/wlp/usr/servers/defaultServer/logs
+```
+
 
 Build and run the container by running the ***devc*** goal from the ***start*** directory:
 
