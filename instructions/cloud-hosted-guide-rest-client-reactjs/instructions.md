@@ -63,7 +63,7 @@ The ***finish*** directory in the root of this guide contains the finished appli
 In this IBM cloud environment, you need to update the URL to access the ***artists.json***. Run the following commands to go to the ***finish*** directory and update the file where specified the URL:
 ```bash
 cd finish
-sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/static/js/main.a223975a.js
+sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/static/js/main.2d7e902e.js
 ```
 
 To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
