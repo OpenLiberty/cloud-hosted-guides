@@ -63,7 +63,7 @@ Almost all of the methods in this application that require message acknowledgmen
 
 It’s important that the methods use the ***POST_PROCESSING*** strategy because it fulfills the requirement that a message isn't acknowledged until after the message is fully processed. This processing strategy is beneficial in situations where messages must reliably not get lost. When the ***POST_PROCESSING*** acknowledgment strategy can’t be used, the ***MANUAL*** strategy can be used to fulfill the same requirement. In situations where message acknowledgment reliability isn't important and losing messages is acceptable, the ***PRE_PROCESSING*** strategy might be appropriate.
 
-The only method in the guide that doesn't default to the ***POST_PROCESSING*** strategy is the ***sendProperty()*** method in the ***system*** service. The ***sendProperty()*** method receives property requests from the ***inventory*** service. For each property request, if the property that's being requested is valid, then the method ***returns*** a property response with the value of the property. However, if the requested property ***doesn't exist***, the request is ignored and no property response is ***returned***.
+The only method in the guide that doesn't default to the ***POST_PROCESSING*** strategy is the ***sendProperty()*** method in the ***system*** service. The ***sendProperty()*** method receives property requests from the ***inventory*** service. For each property request, if the property that's being requested is valid, then the method creates and returns a ***PropertyMessage*** object with the value of the property. However, if the ***propertyName*** requested property doesn't exist, the request is ignored and no property response is returned.
 
 A key difference exists between when a property response is returned and when a property response isn't returned. In the case where a property response is returned, the request doesn't finish processing until the response is sent and safely stored by the Kafka broker. Only then is the incoming message acknowledged. However, in the case where the requested property doesn’t exist and a property response isn't returned, the method finishes processing the request message so the message must be acknowledged immediately.
 
@@ -168,10 +168,11 @@ public class SystemService {
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
-The ***sendProperty()*** method needs to manually acknowledge the incoming messages, so it is annotated with the ***@Acknowledgment(Acknowledgment.Strategy.MANUAL)*** annotation. This annotation sets the method up to expect an incoming message. To meet the requirements of acknowledgment, the method parameter is updated to receive and return a ***Message*** of type ***String***, rather than just a ***String***. Then, the message ***payload*** is extracted and checked for validity. One of the following outcomes occurs:
+The ***sendProperty()*** method needs to manually acknowledge the incoming messages, so it is annotated with the ***@Acknowledgment(Acknowledgment.Strategy.MANUAL)*** annotation. This annotation sets the method up to expect an incoming message. To meet the requirements of acknowledgment, the method parameter is updated to receive and return a ***Message*** of type ***String***, rather than just a ***String***. Then, the ***propertyName*** is extracted from the ***propertyMessage*** incoming message using the ***getPayload()*** method and checked for validity. One of the following outcomes occurs:
 
-* If the system property ***isn't valid***, the method ***acknowledges*** the incoming message and ***returns*** an empty reactive stream. The processing is complete.
-* If the system property is valid, the method creates a ***message*** with the value of the requested system property and sends it to the proper channel. The method acknowledges the incoming message only after the sent message is acknowledged.
+* If the ***propertyName*** system property isn't valid, the ***ack()*** method acknowledges the incoming message and returns an empty reactive stream using the ***empty()*** method. The processing is complete.
+* If the system property is valid, the method creates a ***Message*** object with the value of the requested system property and sends it to the proper channel. The method acknowledges the incoming message only after the sent message is acknowledged.
+
 
 ::page{title="Waiting for a message to be acknowledged"}
 
@@ -230,7 +231,7 @@ public class InventoryResource {
 
     @Inject
     private InventoryManager manager;
-    
+
     @GET
     @Path("/systems")
     @Produces(MediaType.APPLICATION_JSON)
@@ -243,7 +244,7 @@ public class InventoryResource {
                 .status(Response.Status.OK)
                 .entity(systems)
                 .build();
-    }
+            }
 
     @GET
     @Path("/systems/{hostname}")
@@ -280,8 +281,8 @@ public class InventoryResource {
                         acknowledged, complete the "result" CompletableFuture. */
                     result.complete(null);
                     /* An ack callback must return a CompletionStage that says
-                        when it's complete. Asynchronous processing isn't necessary 
-                        so a completed CompletionStage is returned to indicate that 
+                        when it's complete. Asynchronous processing isn't necessary
+                        so a completed CompletionStage is returned to indicate that
                         the work here is done. */
                     return CompletableFuture.completedFuture(null);
                 }
@@ -289,7 +290,7 @@ public class InventoryResource {
 
         propertyNameEmitter.onNext(message);
         /* Set up what happens when the message is acknowledged and the "result"
-            CompletableFuture is completed. When "result" completes, the Response 
+            CompletableFuture is completed. When "result" completes, the Response
             object is created with the status code and message. */
         return result.thenApply(a -> Response
                 .status(Response.Status.OK)
