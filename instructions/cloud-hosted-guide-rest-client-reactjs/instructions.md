@@ -596,7 +596,7 @@ The ***axios*** HTTP call is used to read the artist JSON that contains the data
 
 Finally, run the following command to update the URL to access the ***artists.json*** in the ***ArtistTable.js*** file:
 ```bash
-sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js
+sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/Components/ArtistTable.js
 ```
 
 
@@ -699,7 +699,7 @@ Update the ***pom.xml*** file.
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.10.0</version>
+                <version>1.12.1</version>
                 <configuration>
                     <workingDirectory>src/main/frontend</workingDirectory>
                 </configuration>
