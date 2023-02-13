@@ -3556,7 +3556,7 @@ public class ReadinessCheck implements HealthCheck {
 ```
 
 
-The ***@Readiness*** annotation indicates that this class is a readiness health check procedure. Navigate to the http://localhost:9080/health/ready URL to check the status of the liveness health check. This tests the connection to the PostgreSQL container that was created earlier in the guide. If the connection is refused, a status of ***DOWN*** is returned.
+The ***@Readiness*** annotation indicates that this class is a readiness health check procedure. Navigate to the http://localhost:9080/health/ready URL to check the status of the readiness health check. This readiness check tests the connection to the PostgreSQL container that was created earlier in the guide. If the connection is refused, a status of ***DOWN*** is returned.
 
 ```bash
 curl -s http://localhost:9080/health/ready | jq
@@ -5150,6 +5150,8 @@ Run the following command to set up port forwarding to access the ***inventory**
 kubectl port-forward svc/inventory-deployment 9443
 ```
 
+The ***port-forward*** command pauses the command-line session until you click **Ctrl+C** after you try out the microservice.
+
 
 The application might take some time to get ready. To confirm that the ***inventory*** microservice is up and running, run the following curl command:
 
@@ -5310,7 +5312,7 @@ In the ***pom.xml***, add the ***\<configuration\>*** element as the following:
   <plugin>
       <groupId>io.openliberty.tools</groupId>
       <artifactId>liberty-maven-plugin</artifactId>
-      <version>3.5.1</version>
+      <version>3.7.1</version>
       <configuration>
           <runtimeArtifact>
               <groupId>com.ibm.websphere.appserver.runtime</groupId>
