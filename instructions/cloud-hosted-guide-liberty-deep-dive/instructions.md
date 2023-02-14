@@ -2132,6 +2132,13 @@ docker run --name postgres-container -p 5432:5432 -d postgres-sample
 
 In your dev mode console for the ***inventory*** microservice, type `r` and press ***enter/return*** key to restart the server.
 
+After you see the following message, your application server in dev mode is ready again:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
 First, make a POST request to the ***/api/systems/*** endpoint by the following command. The POST request adds a system with the specified values to the database.
 
 ```bash
