@@ -3308,6 +3308,13 @@ In your dev mode console for the ***inventory*** microservice, press `Ctrl+C` to
 mvn liberty:dev
 ```
 
+After you see the following message, your application server in dev mode is ready again:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
 ### Running the ***/client/{hostname}*** endpoint
 
 Open another command-line session and run the ***system*** microservice from the ***finish*** directory.
@@ -4091,15 +4098,9 @@ The first step to containerizing your application inside of a Docker container i
 
 Make sure to start your Docker daemon before you proceed.
 
-Create the ***Dockerfile*** in the ***start/inventory*** directory.
+Replace the ***Dockerfile*** in the ***start/inventory*** directory.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-liberty-deep-dive/start/inventory/Dockerfile
-```
-
-
-> Then, to open the Dockerfile file in your IDE, select
+> To open the Dockerfile file in your IDE, select
 > **File** > **Open** > guide-liberty-deep-dive/start/inventory/Dockerfile, or click the following button
 
 ::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/Dockerfile"}
@@ -4328,6 +4329,10 @@ docker rm postgres-container
 ### Building the container image
 
 Run the ***mvn package*** command from the ***start/inventory*** directory so that the ***.war*** file resides in the ***target*** directory.
+
+```bash
+cd /home/project/guide-liberty-deep-dive/start/inventory
+```
 
 ```bash
 mvn package
@@ -5251,6 +5256,19 @@ sed -i 's=liberty-deepdive-inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"
 kubectl apply -f /home/project/guide-liberty-deep-dive/start/inventory/inventory.yaml
 ```
 
+Run the following command to check your pods status:
+```bash
+kubectl get pods
+```
+
+If all the pods are working correctly, you see an output similar to the following example:
+
+```
+NAME                                    READY   STATUS    RESTARTS   AGE
+inventory-deployment-75f9dc56d9-g9lzl   1/1     Running   0          35s
+postgres-58bd9b55c7-6vzz8               1/1     Running   0          13s
+```
+
 Run the following command to set up port forwarding to access the ***inventory*** microservice:
 
 ```bash
@@ -5317,7 +5335,7 @@ In the ***pom.xml***, add the ***\<configuration\>*** element as the following:
           <runtimeArtifact>
               <groupId>com.ibm.websphere.appserver.runtime</groupId>
               <artifactId>wlp-kernel</artifactId>
-               <version>[22.0.0.4,)</version>
+               <version>[22.0.0.13,)</version>
                <type>zip</type>
           </runtimeArtifact>
       </configuration>
@@ -5326,7 +5344,7 @@ In the ***pom.xml***, add the ***\<configuration\>*** element as the following:
 
 Rebuild and restart the ***inventory*** service by dev mode:
 
-```bash
+```
 mvn clean
 mvn liberty:dev
 ```
