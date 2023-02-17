@@ -71,10 +71,6 @@ On that page, enter the following properties in the **Create a starter applicati
 * Under Java EE/Jakarta EE Version select: ***9.1***
 * Under MicroProfile Version select: `5` 
 
-Then, click ***Generate Project***, which downloads the starter project as ***inventory.zip*** file. 
-
-
-Next, extract the ***inventory.zip*** file on your system. Move the contents of this extracted ***inventory*** directory to the ***start*** directory of this project, which is located at the following path: ***guide-liberty-deepdive/start/inventory***
 
 In this Skills Network environment, instead of manually downloading and extracting the project, run the following commands:
 ```bash
@@ -82,6 +78,14 @@ cd /home/project/guide-liberty-deep-dive/start
 curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=9.1&g=io.openliberty.deepdive&j=11&m=5.0'
 unzip inventory.zip -d inventory
 ```
+
+After getting the ***inventory*** project, switch the workspace to the ***/home/project/guide-liberty-deep-dive/start/inventory*** directory.
+> - Select **File** > **Close Workspace** from the menu of the IDE.
+>   - Click the OK button to confirm to close.
+>   - Wait for the IDE to refresh.
+> - Select **File** > **Open Workspace...** from the menu of the IDE.
+>   - In the **Open Workspace** window, select the ***/home/project/guide-liberty-deep-dive/start/inventory*** directory and click the **Open** button.
+>   - Wait for the IDE to refresh.
 
 ### Building the application
 
@@ -478,6 +482,13 @@ Open another command-line session by selecting **Terminal** > **New Terminal** f
 ```bash
 curl 'http://localhost:9080/inventory/api/systems'
 ```
+
+You can expect to see the following output:
+
+```
+[]
+```
+
 
 ::page{title="Documenting APIs"}
 
