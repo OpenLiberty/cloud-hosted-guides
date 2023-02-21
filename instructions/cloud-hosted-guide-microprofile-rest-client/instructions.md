@@ -76,7 +76,7 @@ The defaultServer server is ready to run a smarter planet.
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-The ***system*** microservice simulates a service that returns the system property information for the host. The ***system*** service is accessible at the http://localhost:9080/system/properties URL. In this case, ***localhost*** is the host name.
+The ***system*** microservice simulates a service that returns the system property information for the host. The ***system*** service is accessible at the ***http\://localhost:9080/system/properties*** URL. In this case, ***localhost*** is the host name.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -88,7 +88,7 @@ curl -s http://localhost:9080/system/properties | jq
 
 
 
-The ***inventory*** microservice makes a request to the ***system*** microservice and stores the system property information.  To fetch and store your system information, visit the http://localhost:9080/inventory/systems/localhost URL.
+The ***inventory*** microservice makes a request to the ***system*** microservice and stores the system property information.  To fetch and store your system information, visit the ***http\://localhost:9080/inventory/systems/localhost*** URL.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -475,7 +475,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 When the server is running, select either approach to fetch your system properties:
 
 
- Visit the http://localhost:9080/inventory/systems/localhost URL. The URL retrieves the system property information for the ***localhost*** host name by making a request to the ***system*** service at ***http://localhost:9080/system/properties***.
+ Visit the ***http\://localhost:9080/inventory/systems/localhost*** URL. The URL retrieves the system property information for the ***localhost*** host name by making a request to the ***system*** service at ***http://localhost:9080/system/properties***.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -597,7 +597,7 @@ public class RestClientIT {
 
 Each test case tests one of the methods for instantiating a RESTful client.
 
-The ***testDefaultLocalhost()*** test fetches and compares system properties from the http://localhost:9080/inventory/systems/localhost URL.
+The ***testDefaultLocalhost()*** test fetches and compares system properties from the ***http\://localhost:9080/inventory/systems/localhost*** URL.
 
 The ***testRestClientBuilder()*** test gets your IP address. Then, use your IP address as the host name to fetch your system properties and compare them.
 
