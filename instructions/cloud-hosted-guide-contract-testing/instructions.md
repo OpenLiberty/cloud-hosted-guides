@@ -794,9 +794,9 @@ If the tests are successful, you'll see a similar output to the following exampl
 Verifying a pact between pact between Inventory (1.0-SNAPSHOT) and System
 
   Notices:
-    1) The pact at http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX is being verified because it matches the following configured selection criterion: latest pact for a consumer version tagged 'open-liberty-pact'
+    1) The pact at ***http\://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX*** is being verified because it matches the following configured selection criterion: latest pact for a consumer version tagged 'open-liberty-pact'
 
-  [from Pact Broker http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX]
+  [from Pact Broker ***http\://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX]***
   Given version is 1.1
   a request for the version
     returns a response which

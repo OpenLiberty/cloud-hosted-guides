@@ -476,7 +476,7 @@ The Jakarta RESTful Web Services API supports a number of ways to marshal JSON. 
 
 Because you started the Liberty server in dev mode at the beginning of this exercise, all the changes were automatically picked up.
 
-Check out the service that you created at the http://localhost:9080/inventory/api/systems URL. If successful, it returns `[]` to you.
+Check out the service that you created at the ***http\://localhost:9080/inventory/api/systems*** URL. If successful, it returns `[]` to you.
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE, and run the following curl command:
 ```bash
@@ -504,7 +504,7 @@ The MicroProfile OpenAPI API is included in the ***microProfile*** dependency th
 
 Because the Jakarta RESTful Web Services framework handles basic API generation for Jakarta RESTful Web Services annotations, a skeleton OpenAPI tree can be generated from the existing inventory service. You can use this tree as a starting point and augment it with annotations and code to produce a complete OpenAPI document.
 
-To see the generated OpenAPI tree, you can either visit the http://localhost:9080/openapi URL or visit the http://localhost:9080/openapi/ui URL for a more interactive view of the APIs. Click the ***interactive UI*** link on the welcome page. Within this UI, you can view each of the endpoints that are available in your application and any schemas. Each endpoint is color coordinated to easily identify the type of each request (for example GET, POST, PUT, DELETE, etc.). Clicking each endpoint within this UI enables you to view further details of each endpoint's parameters and responses. This UI is used for the remainder of this workshop to view and test the application endpoints.
+To see the generated OpenAPI tree, you can either visit the ***http\://localhost:9080/openapi*** URL or visit the ***http\://localhost:9080/openapi/ui*** URL for a more interactive view of the APIs. Click the ***interactive UI*** link on the welcome page. Within this UI, you can view each of the endpoints that are available in your application and any schemas. Each endpoint is color coordinated to easily identify the type of each request (for example GET, POST, PUT, DELETE, etc.). Clicking each endpoint within this UI enables you to view further details of each endpoint's parameters and responses. This UI is used for the remainder of this workshop to view and test the application endpoints.
 
 
 ### Augmenting the existing Jakarta RESTful Web Services annotations with OpenAPI annotations
@@ -774,7 +774,7 @@ Note, the ***@Parameter*** annotation can be placed either ***inline*** or ***ou
 
 Many OpenAPI annotations are available and can be used according to what's best for your application and its classes. You can find all the annotations in the [MicroProfile OpenAPI specification](https://download.eclipse.org/microprofile/microprofile-open-api-3.0/microprofile-openapi-spec-3.0.html#_annotations).
 
-Because the Liberty server was started in dev mode at the beginning of this exercise, your changes were automatically picked up. Go to the http://localhost:9080/openapi/ URL to see the updated endpoint descriptions. The endpoints at which your REST methods are served now more meaningful:
+Because the Liberty server was started in dev mode at the beginning of this exercise, your changes were automatically picked up. Go to the ***http\://localhost:9080/openapi/*** URL to see the updated endpoint descriptions. The endpoints at which your REST methods are served now more meaningful:
 
 ```bash
 curl http://localhost:9080/openapi
@@ -805,7 +805,7 @@ paths:
 ...
 ```
 
-You can also visit the http://localhost:9080/openapi/ui URL to see each endpoint's updated description. Click each of the icons within the UI to see the updated descriptions for each of the endpoints.
+You can also visit the ***http\://localhost:9080/openapi/ui*** URL to see each endpoint's updated description. Click each of the icons within the UI to see the updated descriptions for each of the endpoints.
 In this Skills Network environment, simply click the following button:
 
 ::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
@@ -906,7 +906,7 @@ public class SystemData {
 Add OpenAPI ***@Schema*** annotations to the ***SystemData*** class and the ***hostname*** variable.
 
 
-Refresh the http://localhost:9080/openapi/ URL to see the updated OpenAPI tree. You should see much more meaningful data for the Schema:
+Refresh the ***http\://localhost:9080/openapi/*** URL to see the updated OpenAPI tree. You should see much more meaningful data for the Schema:
 
 ```bash
 curl http://localhost:9080/openapi
@@ -928,7 +928,7 @@ components:
           type: object
 ```
 
-Again, you can also view this at the http://localhost:9080/openapi/ui URL. Scroll down in the UI to the schemas section and open up the SystemData schema icon.
+Again, you can also view this at the ***http\://localhost:9080/openapi/ui*** URL. Scroll down in the UI to the schemas section and open up the SystemData schema icon.
 
 ::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
@@ -3465,7 +3465,7 @@ public class StartupCheck implements HealthCheck {
 
 
 
-The ***@Startup*** annotation indicates that this class is a startup health check procedure. Navigate to the http://localhost:9080/health/started URL to check the status of the startup health check. In this case, you are checking the cpu usage. If more than 95% of the cpu is being used, a status of ***DOWN*** is returned.
+The ***@Startup*** annotation indicates that this class is a startup health check procedure. Navigate to the ***http\://localhost:9080/health/started*** URL to check the status of the startup health check. In this case, you are checking the cpu usage. If more than 95% of the cpu is being used, a status of ***DOWN*** is returned.
 ```bash
 curl -s http://localhost:9080/health/started | jq
 ```
@@ -3515,7 +3515,7 @@ public class LivenessCheck implements HealthCheck {
 
 
 
-The ***@Liveness*** annotation indicates that this class is a liveness health check procedure. Navigate to the http://localhost:9080/health/live URL to check the status of the liveness health check. In this case, you are checking the heap memory usage. If more than 90% of the maximum memory is being used, a status of ***DOWN*** is returned.
+The ***@Liveness*** annotation indicates that this class is a liveness health check procedure. Navigate to the ***http\://localhost:9080/health/live*** URL to check the status of the liveness health check. In this case, you are checking the heap memory usage. If more than 90% of the maximum memory is being used, a status of ***DOWN*** is returned.
 
 ```bash
 curl -s http://localhost:9080/health/live | jq
@@ -3581,13 +3581,13 @@ public class ReadinessCheck implements HealthCheck {
 ```
 
 
-The ***@Readiness*** annotation indicates that this class is a readiness health check procedure. Navigate to the http://localhost:9080/health/ready URL to check the status of the readiness health check. This readiness check tests the connection to the PostgreSQL container that was created earlier in the guide. If the connection is refused, a status of ***DOWN*** is returned.
+The ***@Readiness*** annotation indicates that this class is a readiness health check procedure. Navigate to the ***http\://localhost:9080/health/ready*** URL to check the status of the readiness health check. This readiness check tests the connection to the PostgreSQL container that was created earlier in the guide. If the connection is refused, a status of ***DOWN*** is returned.
 
 ```bash
 curl -s http://localhost:9080/health/ready | jq
 ```
 
-Or, you can visit the http://localhost:9080/health URL to see the overall health status of the application.
+Or, you can visit the ***http\://localhost:9080/health*** URL to see the overall health status of the application.
 
 ```bash
 curl -s http://localhost:9080/health | jq

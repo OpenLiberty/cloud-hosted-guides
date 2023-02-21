@@ -268,7 +268,7 @@ After the tests stop running, the test application is automatically undeployed a
 ...
 [INFO    ] SRVE0169I: Loading Web Module: guide-arquillian-managed.
 [INFO    ] SRVE0250I: Web Module guide-arquillian-managed has been bound to default_host.
-[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/
+[AUDIT   ] CWWKT0016I: Web application available (default_host): ***http\://localhost:9080/***
 [INFO    ] SESN0176I: A new session context will be created for application key default_host/
 [INFO    ] SESN0172I: The session manager is using the Java default SecureRandom implementation for session ID generation.
 [AUDIT   ] CWWKZ0001I: Application guide-arquillian-managed started in 1.126 seconds.
@@ -280,7 +280,7 @@ After the tests stop running, the test application is automatically undeployed a
 ...
 [INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
 [INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
-[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/arquillian-managed/
+[AUDIT   ] CWWKT0016I: Web application available (default_host): ***http\://localhost:9080/arquillian-managed/***
 ...
 [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
 [INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
@@ -294,7 +294,7 @@ After the tests stop running, the test application is automatically undeployed a
 [INFO    ] Setting the server's publish address to be /system/
 [INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.system.SystemApplication]: Initialization successful.
 [INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Initialization successful.
-[AUDIT   ] CWWKT0017I: Web application removed (default_host): http://localhost:9080/arquillian-managed/
+[AUDIT   ] CWWKT0017I: Web application removed (default_host): ***http\://localhost:9080/arquillian-managed/***
 [INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Destroy successful.
 [INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Destroy successful.
 [AUDIT   ] CWWKZ0009I: The application arquillian-managed has stopped successfully.

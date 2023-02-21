@@ -185,7 +185,7 @@ The ***withAppContextRoot(String)*** method indicates the base path of the appli
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-The ***withReadinessPath(String)*** method indicates what path is polled by HTTP to determine application readiness. MicroShed Testing automatically starts the ApplicationContainer application and waits for it to be ready before the tests start running. In this case, you're using the default application readiness check at the http://localhost:9080/health/ready URL, which is enabled by the ***MicroProfile Health*** feature in the server.xml configuration file. When the readiness URL returns the ***HTTP 200*** message, the application is considered ready and the tests begin running.
+The ***withReadinessPath(String)*** method indicates what path is polled by HTTP to determine application readiness. MicroShed Testing automatically starts the ApplicationContainer application and waits for it to be ready before the tests start running. In this case, you're using the default application readiness check at the ***http\://localhost:9080/health/ready*** URL, which is enabled by the ***MicroProfile Health*** feature in the server.xml configuration file. When the readiness URL returns the ***HTTP 200*** message, the application is considered ready and the tests begin running.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -259,7 +259,7 @@ Replace the ***PersonServiceIT*** class to include the ***assertNotNull*** stati
 Save the changes. Then, press the ***enter/return*** key in your console window to run the test. You see that the test ran again and exercised the REST endpoint of your application, including the response of your application's endpoint:
 
 ```
-[INFO] Building rest client for class io.openliberty.guides.testing.PersonService with base path: http://localhost:9080/guide-microshed-testing/ and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
+[INFO] Building rest client for class io.openliberty.guides.testing.PersonService with base path: ***http\://localhost:9080/guide-microshed-testing/*** and providers: [class org.microshed.testing.jaxrs.JsonBProvider]
 [INFO] Response from server: 1809686877352335426
 ```
 
