@@ -75,7 +75,7 @@ After you see the following message in both command-line sessions, both your ser
 The defaultServer is ready to run a smarter planet. 
 ```
 
-Check out the service at the http://localhost:9080 URL. See that the table is being updated for every 10 seconds. 
+Check out the service at the ***http\://localhost:9080*** URL. See that the table is being updated for every 10 seconds. 
 
 After you are finished checking out the application, stop both the ***system*** and ***client*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
 
@@ -588,9 +588,9 @@ The required features for the ***client*** service are enabled for you in the **
 
 Because you are running the ***system*** and ***client*** services in dev mode, the changes that you made are automatically picked up. You're now ready to check out your application in your browser.
 
-Point your browser to the http://localhost:9080 URL to test out the ***client*** service. Notice that the table is updated every 10 seconds.
+Point your browser to the ***http\://localhost:9080*** URL to test out the ***client*** service. Notice that the table is updated every 10 seconds.
 
-Visit the http://localhost:9080 URL again on a different tab or browser and verify that both sessions are updated every 10 seconds.
+Visit the ***http\://localhost:9080*** URL again on a different tab or browser and verify that both sessions are updated every 10 seconds.
 
 
 ::page{title="Testing the application"}
