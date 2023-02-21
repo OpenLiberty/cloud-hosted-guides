@@ -3348,7 +3348,7 @@ Wait until the following message displays on the ***system*** microservice conso
 CWWKF0011I: The defaultServer server is ready to run a smarter planet. ...
 ```
 
-You can check that the ***system*** microservice is secured against unauthenticated requests at the https://localhost:9444/system/api/heapsize URL. You can expect to see the following error in the console of the ***system*** microservice:
+You can check that the ***system*** microservice is secured against unauthenticated requests at the ***https\://localhost:9444/system/api/heapsize*** URL. You can expect to see the following error in the console of the ***system*** microservice:
 
 Open another command-line session and run the following command:
 ```bash
