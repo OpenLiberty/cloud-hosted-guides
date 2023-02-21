@@ -78,7 +78,7 @@ The defaultServer server is ready to run a smarter planet.
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-Point your browser to the http://localhost:9080/inventory/systems URL.
+Point your browser to the ***http\://localhost:9080/inventory/systems*** URL.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -89,7 +89,7 @@ curl -s http://localhost:9080/inventory/systems | jq
 
 
 
-This is the starting point of the ***inventory*** service and it displays the current contents of the inventory. As you might expect, these are empty because nothing is stored in the inventory yet. Next, point your browser to the http://localhost:9080/inventory/systems/localhost URL.
+This is the starting point of the ***inventory*** service and it displays the current contents of the inventory. As you might expect, these are empty because nothing is stored in the inventory yet. Next, point your browser to the ***http\://localhost:9080/inventory/systems/localhost*** URL.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -100,7 +100,7 @@ curl -s http://localhost:9080/inventory/systems/localhost | jq
 
 
 
-You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. Go back to http://localhost:9080/inventory/systems
+You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. Go back to ***http\://localhost:9080/inventory/systems***
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -295,7 +295,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 You can find the ***inventory*** and ***system*** services at the following URLs:
 
 
- http://localhost:9080/inventory/systems
+ ***http\://localhost:9080/inventory/systems***
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -305,7 +305,7 @@ curl -s http://localhost:9080/inventory/systems | jq
 ```
 
 
- http://localhost:9080/system/properties
+ ***http\://localhost:9080/system/properties***
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_

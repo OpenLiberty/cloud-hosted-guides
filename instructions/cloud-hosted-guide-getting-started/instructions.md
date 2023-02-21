@@ -92,7 +92,7 @@ When the server begins starting up, various messages display in your command-lin
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-To access the ***system*** microservice, see the http://localhost:9080/system/properties URL, and you see a list of the various system properties of your JVM:
+To access the ***system*** microservice, see the ***http\://localhost:9080/system/properties*** URL, and you see a list of the various system properties of your JVM:
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -142,7 +142,7 @@ mvn liberty:dev
 Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the ***enter/return*** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the ***enter/return*** key to verify your change.
 
 
-As before, you can see that the application is running by going to the http://localhost:9080/system/properties URL.
+As before, you can see that the application is running by going to the ***http\://localhost:9080/system/properties*** URL.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -154,7 +154,7 @@ curl -s http://localhost:9080/system/properties | jq
 
 
 
-Now try updating the server configuration while the server is running in dev mode. The ***system*** microservice does not currently include health monitoring to report whether the server and the microservice that it runs are healthy. You can add health reports with the MicroProfile Health feature, which adds a ***/health*** endpoint to your application. If you try to access this endpoint now at the http://localhost:9080/health/ URL, you see a 404 error because the ***/health*** endpoint does not yet exist:
+Now try updating the server configuration while the server is running in dev mode. The ***system*** microservice does not currently include health monitoring to report whether the server and the microservice that it runs are healthy. You can add health reports with the MicroProfile Health feature, which adds a ***/health*** endpoint to your application. If you try to access this endpoint now at the ***http\://localhost:9080/health/*** URL, you see a 404 error because the ***/health*** endpoint does not yet exist:
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -226,7 +226,7 @@ After you make the file changes, Open Liberty automatically reloads its configur
 ```
 
 
-Try to access the ***/health*** endpoint again by visiting the http://localhost:9080/health URL. You see the following JSON:
+Try to access the ***/health*** endpoint again by visiting the ***http\://localhost:9080/health*** URL. You see the following JSON:
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -376,7 +376,7 @@ The following messages display in your first command-line session:
 ```
 
 
-Access the ***/health*** endpoint again by going to the http://localhost:9080/health URL. This time you see the overall status of your server and the aggregated data of the liveness and readiness checks for the ***system*** microservice:
+Access the ***/health*** endpoint again by going to the ***http\://localhost:9080/health*** URL. This time you see the overall status of your server and the aggregated data of the liveness and readiness checks for the ***system*** microservice:
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -407,7 +407,7 @@ curl -s http://localhost:9080/health | jq
 
 
 
-You can also access the ***/health/ready*** endpoint by going to the http://localhost:9080/health/ready URL to view the data from the readiness health check. Similarly, access the ***/health/live*** endpoint by going to the http://localhost:9080/health/live URL to view the data from the liveness health check.
+You can also access the ***/health/ready*** endpoint by going to the ***http\://localhost:9080/health/ready*** URL to view the data from the readiness health check. Similarly, access the ***/health/live*** endpoint by going to the ***http\://localhost:9080/health/live*** URL to view the data from the liveness health check.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -558,7 +558,7 @@ CONTAINER ID    IMAGE                         CREATED          STATUS           
 ```
 
 
-To access the application, go to the http://localhost:9080/system/properties URL.
+To access the application, go to the ***http\://localhost:9080/system/properties*** URL.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -612,7 +612,7 @@ CONTAINER ID        IMAGE                                 COMMAND               
 ```
 
 
-To access the application, go to the http://localhost:9080/system/properties URL. 
+To access the application, go to the ***http\://localhost:9080/system/properties*** URL. 
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -808,7 +808,7 @@ Replace the pom.xml file.
 You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode to verify your change.
 
 
-You can access the application at the http://localhost:9080/dev/system/properties URL. Notice that the context root is now ***/dev***.
+You can access the application at the ***http\://localhost:9080/dev/system/properties*** URL. Notice that the context root is now ***/dev***.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -844,7 +844,7 @@ java -jar guide-getting-started.jar
 ```
 
 
-When the server starts, go to the http://localhost:9080/dev/system/properties URL to access your application that is now running out of the minimal runnable JAR file.
+When the server starts, go to the ***http\://localhost:9080/dev/system/properties*** URL to access your application that is now running out of the minimal runnable JAR file.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
