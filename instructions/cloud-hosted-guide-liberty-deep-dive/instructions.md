@@ -4310,8 +4310,7 @@ You need to wait a while to let dev mode start. After you see the following mess
 *    ...
 ```
 
-Open another command-line session and run the following command to make sure that your
-container is running and didn’t crash:
+Open another command-line session and run the following command to make sure that your container is running and didn’t crash:
 
 ```bash
 docker ps 
