@@ -230,7 +230,7 @@ The ***@Traced*** annotation can be configured with the following two parameters
 * The ***value=[true|false]*** parameter indicates whether a particular class or method is traced. For example, while all JAX-RS endpoint methods are traced by default, you can disable their tracing by using the ***@Traced(false)*** annotation. This parameter is set to ***true*** by default.
 * The ***operationName=\<Span name\>*** parameter indicates the name of the span that is assigned to the method that is traced. If you omit this parameter, the span is named with the ***\<package name\>.\<class name\>.\<method name\>*** format. If you use this parameter at a class level, then all methods within that class have the same span name unless they are explicitly overridden by another ***@Traced*** annotation.
 
-Update the ***InventoryManager*** class.
+Replace the ***InventoryManager*** class.
 
 > To open the InventoryManager.java file in your IDE, select
 > **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
@@ -323,7 +323,7 @@ Verify that you see the following spans:
 
 You can use the ***@Traced*** annotation with a value of ***false*** to disable automatic distributed tracing of JAX-RS endpoint methods.
 
-Update the ***InventoryResource*** class.
+Replace the ***InventoryResource*** class.
 
 > To open the InventoryResource.java file in your IDE, select
 > **File** > **Open** > guide-microprofile-opentracing-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
