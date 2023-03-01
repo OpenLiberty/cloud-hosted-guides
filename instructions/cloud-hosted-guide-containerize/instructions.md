@@ -21,7 +21,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 ::page{title="What you'll learn"}
 
 
-You can easily deploy your microservices in different environments in a lightweight and portable manner by using containers. From development to production and across your DevOps environments, you can deploy your microservices consistently and efficiently with containers. You can run a container from a container image. Each container image is a package of what you need to run your microservice or application, from the code to its dependencies and configuration.
+From development to production, and across your DevOps environments, you can deploy your microservices in a lightweight and portable manner by using containers. You can run a container from a container image. Each container image is a package of what you need to run your microservice or application, from the code to its dependencies and configuration. If you're new to the development of applications in containers, you might want to start with the [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html) guide before you work through this guide.
 
 You'll learn how to build container images and run containers using [Docker](https://www.docker.com/) for your microservices. You'll learn about the [Open Liberty container images](https://github.com/OpenLiberty/ci.docker) and how to use them for your containerized applications. You'll construct ***Dockerfile*** files, create Docker images by using the ***docker build*** command, and run the image as Docker containers by using ***docker run*** command.
 
