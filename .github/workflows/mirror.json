@@ -1,5 +1,10 @@
 [
     {
+        "github": "cloud-hosted-demo-instanton",
+        "gitlab": "IBM-GPXX0ZILEN",
+        "gitlab-branch": "main"
+    },
+    {
         "github": "cloud-hosted-guide-cdi-intro",
         "gitlab": "IBM-GPXX0G3KEN",
         "gitlab-branch": "master"
