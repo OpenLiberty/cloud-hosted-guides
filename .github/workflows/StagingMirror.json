@@ -1,5 +1,10 @@
 [
     {
+        "github": "cloud-hosted-demo-instanton",
+        "gitlab": "IBM-GPXX0ZILEN",
+        "gitlab-branch": "lab-4971-instruction"
+    },
+    {
         "github": "cloud-hosted-draft-guide-devlab-1",
         "gitlab": "IBM-GPXX0KRAEN",
         "gitlab-branch": "lab-364-instruction"
