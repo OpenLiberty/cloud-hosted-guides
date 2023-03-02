@@ -270,10 +270,10 @@ public class SystemData {
     public SystemData() {
     }
 
-    public SystemData(String hostname, String osName, String javaVersion, Long heapSize) {
+    public SystemData(String hostname, String osName, String javaVer, Long heapSize) {
         this.hostname = hostname;
         this.osName = osName;
-        this.javaVersion = javaVersion;
+        this.javaVersion = javaVer;
         this.heapSize = heapSize;
     }
 
@@ -1602,11 +1602,11 @@ public class Inventory {
 
     public List<SystemData> getSystems() {
         return em.createNamedQuery("SystemData.findAll", SystemData.class)
-        		 .getResultList();
+                 .getResultList();
     }
 
     public SystemData getSystem(String hostname) {
-        List<SystemData> systems = 
+        List<SystemData> systems =
             em.createNamedQuery("SystemData.findSystem", SystemData.class)
               .setParameter("hostname", hostname)
               .getResultList();
@@ -1618,11 +1618,11 @@ public class Inventory {
     }
 
     public void update(SystemData s) {
-    	em.merge(s);
+        em.merge(s);
     }
 
     public void removeSystem(SystemData s) {
-    	em.remove(s);
+        em.remove(s);
     }
 
 }
@@ -2582,6 +2582,7 @@ You can expect the following response:
 ```
 
 This command calls the ***/systems*** endpoint and adds a system ***localhost*** to the inventory. You can validate that the command worked by calling the ***/systems*** endpoint with a ***GET*** request to retrieve all the systems in the inventory, with the following curl command:
+
 
 ```bash
 curl -s 'http://localhost:9080/inventory/api/systems' | jq
