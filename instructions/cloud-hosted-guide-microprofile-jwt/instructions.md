@@ -396,7 +396,7 @@ mp.jwt.verify.publickey.algorithm=RS256
 
 
 
-The following table breaks down the new properties:
+The following table breaks down some of the properties:
 
 | *Property* |   *Description*
 | ---| ---
@@ -406,6 +406,8 @@ The following table breaks down the new properties:
 | ***mp.jwt.verify.audiences*** |  With this property, you can create a list of allowable audience (aud) values. At least one of these values must be found in the claim. Previously, this configuration was included in the ***server.xml*** file.
 | ***mp.jwt.decrypt.key.location*** | With this property, you can specify the location of the Key Management key. It is a Private key that is used to decrypt the Content Encryption key, which is then used to decrypt the JWE ciphertext. This private key must correspond to the public key that is used to encrypt the Content Encryption key.
 | ***mp.jwt.verify.publickey.algorithm*** | With this property, you can control the Public Key Signature Algorithm that is supported by the MicroProfile JWT endpoint. The default value is RS256. Previously, this configuration was included in the ***server.xml*** file.
+
+For more information about these and other JWT properties, see the [MicroProfile Config properties for MicroProfile JSON Web Token documentation](https://openliberty.io/docs/latest/microprofile-config-properties.html#jwt).
 
 Next, add the MicroProfile JSON Web Token feature to the server configuration file for the ***system*** service.
 
