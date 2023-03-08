@@ -155,6 +155,8 @@ The CORS configuration contains the following attributes:
 |***allowCredentials*** | A boolean that indicates whether the user credentials can be included in the request. The value is set to ***true***.
 |***exposeHeaders*** | Headers that are safe to expose to clients. The value is set to ***MyHeader***.
 
+For more information about these and other CORS attributes, see the [cors element documentation](https://www.openliberty.io/docs/latest/reference/config/cors.html).
+
 Save the changes to the ***server.xml*** file. The ***/configurations/simple*** endpoint is now ready to be tested with a simple CORS request.
 
 The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
