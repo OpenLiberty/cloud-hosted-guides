@@ -443,7 +443,7 @@ In addition to the log files that are generated automatically, you can enable lo
 
 The ***component*** element is a Java package or class, and the ***level*** element is one of the following logging levels: ***off***, ***fatal***, ***severe***, ***warning***, ***audit***, ***info***, ***config***, ***detail***, ***fine***, ***finer***, ***finest***, ***all***.
 
-For more information about logging, see the [Trace log detail levels](https://www.openliberty.io/docs/latest/log-trace-configuration.html#log_details),  [Trace log detail levels](https://www.openliberty.io/docs/latest/log-trace-configuration.html#log_details), and https://www.openliberty.io/docs/latest/log-trace-configuration.html[Log and trace configuration] documentation.
+For more information about logging, see the [Trace log detail levels](https://www.openliberty.io/docs/latest/log-trace-configuration.html#log_details),  [Trace log detail levels](https://www.openliberty.io/docs/latest/log-trace-configuration.html#log_details), and [Trace log detail levels](https://www.openliberty.io/docs/latest/log-trace-configuration.html#log_details) documentation.
 
 Try enabling detailed logging of the MicroProfile Health feature by adding the ***logging*** element to your configuration file.
 
