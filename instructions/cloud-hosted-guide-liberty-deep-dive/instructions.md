@@ -2025,7 +2025,7 @@ Replace the ***server.xml*** configuration file.
 
 
 
-The ***library*** element tells the Liberty server where to find the PostgreSQL library. The ***dataSource*** element points to where the Java Database Connectivity (JDBC) connects, along with some database vendor-specific properties.
+The ***library*** element tells the Liberty server where to find the PostgreSQL library. The ***dataSource*** element points to where the Java Database Connectivity (JDBC) driver connects, along with some database vendor-specific properties. For more information, see the [Data source configuration](https://www.openliberty.io/docs/latest/relational-database-connections-JDBC.html#_data_source_configuration) and [dataSource element](https://www.openliberty.io/docs/latest/reference/config/dataSource.html) documentation.
 
 To use a PostgreSQL database, you need to download its library and store it to the Liberty shared resources directory. Configure the Liberty Maven plug-in in the ***pom.xml*** file.
 
@@ -3211,7 +3211,7 @@ Replace the ***server.xml*** file.
 
 
 
-The ***jwtSso*** feature adds the libraries that are required for JWT SSO implementation. Configure the ***jwtSso*** feature by adding the ***jwtBuilder*** configuration to your ***server.xml***. Also, configure the MicroProfile ***JWT*** with the ***audiences*** and ***issuer*** properties that match the ***microprofile-config.properties*** defined at the ***system/src/main/webapp/META-INF*** directory under the ***system*** project.
+The ***jwtSso*** feature adds the libraries that are required for JWT SSO implementation. Configure the ***jwtSso*** feature by adding the ***jwtBuilder*** configuration to your ***server.xml***. Also, configure the MicroProfile ***JWT*** with the ***audiences*** and ***issuer*** properties that match the ***microprofile-config.properties*** defined at the ***system/src/main/webapp/META-INF*** directory under the ***system*** project. For more information, see the [JSON Web Token Single Sign-On feature], https://www.openliberty.io/docs/latest/reference/config/jwtSso.html](https://www.openliberty.io/docs/latest/reference/feature/jwtSso-1.0.html), [jwtSso element](https://www.openliberty.io/docs/latest/reference/config/jwtSso.html), and [jwtBuilder element](https://www.openliberty.io/docs/latest/reference/config/jwtBuilder.html) documentation.
 
 The ***keyStore*** element is used to define the repository of security certificates used for SSL encryption. The ***id*** attribute is a unique configuration ID that is set to ***defaultKeyStore***. The ***password*** attribute is used to load the keystore file, and its value can be stored in clear text or encoded form. To learn more about other attributes, see the [keyStore](https://openliberty.io/docs/latest/reference/config/keyStore.html#keyStore.html) attribute documentation. 
 
