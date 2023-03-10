@@ -372,7 +372,7 @@ touch /home/project/guide-spring-boot/start/src/main/liberty/config/server.xml
 
 
 
-The ***servlet*** and ***springBoot*** features are required for the Liberty server to run the Spring Boot application. The application port is specified as ***9080*** and the application is configured as a ***springBootApplication*** element.
+The ***servlet*** and ***springBoot*** features are required for the Liberty server to run the Spring Boot application. The application port is specified as ***9080*** and the application is configured as a ***springBootApplication*** element. For more information, see the [springBootApplication element documentation](https://www.openliberty.io/docs/latest/reference/config/springBootApplication.html).
 
 If you didn't build the Spring Boot application, run the ***package*** goal:
 
