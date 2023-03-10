@@ -20,7 +20,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to write integration tests for reactive Java microservices and to run the tests in true-to-production environments by using containers with [MicroShed Testing](https://microshed.org/microshed-testing/). MicroShed Testing tests your containerized application from outside the container so that you are testing the exact same image that runs in production. The reactive application in this guide sends and receives messages between services by using an external message broker, [MicroShed Testing](https://microshed.org/microshed-testing/). Using an external message broker enables asynchronous communications between services so that requests are non-blocking and decoupled from responses. You can learn more about reactive Java services that use an external message broker to manage communications in the [MicroShed Testing](https://microshed.org/microshed-testing/) guide.
+You will learn how to write integration tests for reactive Java microservices and to run the tests in true-to-production environments by using containers with [MicroShed Testing](https://microshed.org/microshed-testing/). MicroShed Testing tests your containerized application from outside the container so that you are testing the exact same image that runs in production. The reactive application in this guide sends and receives messages between services by using an external message broker, [Apache Kafka](https://kafka.apache.org/). Using an external message broker enables asynchronous communications between services so that requests are non-blocking and decoupled from responses. You can learn more about reactive Java services that use an external message broker to manage communications in the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 ![Reactive system inventory application](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-service-testing/prod/assets/reactive-messaging-system-inventory.png)
 
@@ -168,40 +168,6 @@ touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it
 
 
 
-```java
-package it.io.openliberty.guides.system;
-
-import java.time.Duration;
-
-import org.microshed.testing.SharedContainerConfiguration;
-import org.microshed.testing.testcontainers.ApplicationContainer;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.junit.jupiter.Container;
-
-public class AppContainerConfig implements SharedContainerConfiguration {
-
-    private static Network network = Network.newNetwork();
-
-    @Container
-    public static KafkaContainer kafka = new KafkaContainer()
-                    .withNetwork(network);
-
-    @Container
-    public static ApplicationContainer system = new ApplicationContainer()
-                    .withAppContextRoot("/")
-                    .withExposedPorts(9083)
-                    .withReadinessPath("/health/ready")
-                    .withNetwork(network)
-                    .withStartupTimeout(Duration.ofMinutes(3))
-                    .dependsOn(kafka);
-}
-```
-
-
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
 The ***AppContainerConfig*** class externalizes test container setup and configuration, so you can use the same application containers across multiple tests.The ***@Container*** annotation denotes an application container that is started up and used in the tests.
 
 Two containers are used for testing the ***system*** service: the ***system*** container, which you built, and the ***kafka*** container, which receives messages from the ***system*** service.
@@ -225,56 +191,6 @@ touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it
 > **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.system;
-
-import static org.junit.Assert.assertNotNull;
-
-import java.time.Duration;
-
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.junit.jupiter.api.Test;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.kafka.KafkaConsumerClient;
-
-import io.openliberty.guides.models.SystemLoad;
-import io.openliberty.guides.models.SystemLoad.SystemLoadDeserializer;
-
-@MicroShedTest
-@SharedContainerConfig(AppContainerConfig.class)
-public class SystemServiceIT {
-
-    @KafkaConsumerClient(valueDeserializer = SystemLoadDeserializer.class,
-                         groupId = "system-load-status",
-                         topics = "system.load",
-                         properties = ConsumerConfig.AUTO_OFFSET_RESET_CONFIG
-                                      + "=earliest")
-    public static KafkaConsumer<String, SystemLoad> consumer;
-
-    @Test
-    public void testCpuStatus() {
-        ConsumerRecords<String, SystemLoad> records =
-                consumer.poll(Duration.ofMillis(30 * 1000));
-        System.out.println("Polled " + records.count() + " records from Kafka:");
-
-        for (ConsumerRecord<String, SystemLoad> record : records) {
-            SystemLoad sl = record.value();
-            System.out.println(sl);
-            assertNotNull(sl.hostname);
-            assertNotNull(sl.loadAverage);
-        }
-
-        consumer.commitAsync();
-    }
-}
-```
 
 
 
@@ -365,72 +281,6 @@ touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java
 > **File** > **Open** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.inventory;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Properties;
-
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.microshed.testing.SharedContainerConfig;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.kafka.KafkaProducerClient;
-
-import io.openliberty.guides.inventory.InventoryResource;
-import io.openliberty.guides.models.SystemLoad;
-import io.openliberty.guides.models.SystemLoad.SystemLoadSerializer;
-
-@MicroShedTest
-@SharedContainerConfig(AppContainerConfig.class)
-@TestMethodOrder(OrderAnnotation.class)
-public class InventoryServiceIT {
-
-    @RESTClient
-    public static InventoryResource inventoryResource;
-
-    @KafkaProducerClient(valueSerializer = SystemLoadSerializer.class)
-    public static KafkaProducer<String, SystemLoad> producer;
-
-    @AfterAll
-    public static void cleanup() {
-        inventoryResource.resetSystems();
-    }
-
-    @Test
-    public void testCpuUsage() throws InterruptedException {
-        SystemLoad sl = new SystemLoad("localhost", 1.1);
-        producer.send(new ProducerRecord<String, SystemLoad>("system.load", sl));
-        Thread.sleep(5000);
-        Response response = inventoryResource.getSystems();
-        List<Properties> systems =
-                response.readEntity(new GenericType<List<Properties>>() { });
-        Assertions.assertEquals(200, response.getStatus(),
-                "Response should be 200");
-        Assertions.assertEquals(systems.size(), 1);
-        for (Properties system : systems) {
-            Assertions.assertEquals(sl.hostname, system.get("hostname"),
-                    "Hostname doesn't match!");
-            BigDecimal systemLoad = (BigDecimal) system.get("systemLoad");
-            Assertions.assertEquals(sl.loadAverage, systemLoad.doubleValue(),
-                    "CPU load doesn't match!");
-        }
-    }
-}
-```
 
 
 
