@@ -39,7 +39,7 @@ jobs:
   
     steps:
       # Any prerequisite steps
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
         
       - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
