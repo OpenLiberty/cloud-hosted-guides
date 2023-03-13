@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Guide branch pushed to'     
+        description: 'Guide branch pushed to, refs/heads/prod or staging'     
         required: true
         default: 'prod'
       guide_name:
