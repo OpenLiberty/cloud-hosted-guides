@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Guide branch pushed to'     
+        description: 'Guide branch pushed to, refs/heads/prod or staging'     
         required: true
         default: 'prod'
       guide_name:
@@ -18,8 +18,7 @@ on:
         description: 'guides-common branch for staging only'
         required: true
         default: 'prod'
-      
-        
+
 jobs:
   printBranch:
     runs-on: ubuntu-latest
@@ -39,9 +38,8 @@ jobs:
     if: contains(github.event.inputs.branch, 'master') || contains(github.event.inputs.branch, 'main') || contains(github.event.inputs.branch, 'prod')
   
     steps:
-
       # Any prerequisite steps
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
         
       - name: Checkout Guide Converter repo
         uses: actions/checkout@v2
@@ -105,7 +103,6 @@ jobs:
     if: contains(github.event.inputs.branch, 'qa') || contains(github.event.inputs.branch, 'staging')
   
     steps:
-
       - uses: actions/checkout@v2
         with:
           ref: staging
