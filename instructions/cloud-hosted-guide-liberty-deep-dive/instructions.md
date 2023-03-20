@@ -37,7 +37,7 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-Clone the [Git repository](https://github.com/openliberty/guide-liberty-deepdive.git):
+Clone the [Git repository](https://github.com/OpenLiberty/guide-liberty-deep-dive.git):
 
 ```bash
 git clone https://github.com/openliberty/guide-liberty-deep-dive.git
