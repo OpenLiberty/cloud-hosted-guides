@@ -3275,7 +3275,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.3.1</version>
+            <version>42.3.8</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -3307,7 +3307,7 @@ Replace the ***pom.xml*** file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.3.1</version>
+                                <version>42.3.8</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
