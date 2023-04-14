@@ -10,6 +10,16 @@
         "gitlab-branch": "lab-363-instruction"
     },
     {
+        "github": "cloud-hosted-draft-guide-devlab-3",
+        "gitlab": "IBM-GPXX0O10EN",
+        "gitlab-branch": "lab-5932-instruction"
+    },
+    {
+        "github": "cloud-hosted-draft-guide-devlab-4",
+        "gitlab": "IBM-GPXX0HKLEN",
+        "gitlab-branch": "lab-5933-instruction"
+    },
+    {
         "github": "cloud-hosted-guide-arquillian-managed",
         "gitlab": "IBM-GPXX0SDXEN",
         "gitlab-branch": "lab-449-instruction"
