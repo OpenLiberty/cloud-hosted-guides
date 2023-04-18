@@ -66,6 +66,7 @@ To try out the application, go to the ***finish*** directory and run the followi
 
 ```bash
 cd /home/project/guide-microshed-testing/finish
+export TESTCONTAINERS_RYUK_DISABLED=true
 mvn verify
 ```
 
@@ -185,7 +186,7 @@ The ***withAppContextRoot(String)*** method indicates the base path of the appli
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-The ***withReadinessPath(String)*** method indicates what path is polled by HTTP to determine application readiness. MicroShed Testing automatically starts the ApplicationContainer application and waits for it to be ready before the tests start running. In this case, you're using the default application readiness check at the http://localhost:9080/health/ready URL, which is enabled by the ***MicroProfile Health*** feature in the server.xml configuration file. When the readiness URL returns the ***HTTP 200*** message, the application is considered ready and the tests begin running.
+The ***withReadinessPath(String)*** method indicates what path is polled by HTTP to determine application readiness. MicroShed Testing automatically starts the ApplicationContainer application and waits for it to be ready before the tests start running. In this case, you're using the default application readiness check at the ***http\://localhost:9080/health/ready*** URL, which is enabled by the ***MicroProfile Health*** feature in the server.xml configuration file. When the readiness URL returns the ***HTTP 200*** message, the application is considered ready and the tests begin running.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
