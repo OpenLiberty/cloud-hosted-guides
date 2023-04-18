@@ -8,7 +8,7 @@ Create the neccessary Quicklab repository on Gitlab via the SkillsNetwork Author
 
 2. Add the OpenLiberty Guides group
 
-Once your Quicklab repository has been created navigate to it on Gitlab and select the "Members" tab. From here select the "Invite Group" tab and invite the "[OpenLiberty Guides](https://gitlab.com/openliberty-guides)" group as a `maintainer`. If you are not yet a member of the OpenLiberty Guides group then tag @ryan-storey, @jamiecoleman92, or @gkwan-ibm on Github.
+Once your Quicklab repository has been created navigate to it on Gitlab and select the "Members" tab. From here select the "Invite Group" tab and invite the "[OpenLiberty Guides](https://gitlab.com/openliberty-guides)" group as a `maintainer`. If you are not yet a member of the OpenLiberty Guides group then tag @gkwan-ibm, @jamiecoleman92, or @jakub-pomykala on Github.
 
 3. Add the repository names to the `mirror.yml` file
 
