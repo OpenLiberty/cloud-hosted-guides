@@ -2,12 +2,12 @@
 markdown-version: v1
 title: instructions
 branch: lab-5933-instruction
-version-history-start-date: 2022-02-09T14:19:17.000Z
+version-history-start-date: 2023-04-14T18:24:15Z
 tool-type: theia
 ---
-::page{title="Welcome to the Injecting dependencies into microservices guide!"}
+::page{title="Welcome to the Consuming a RESTful web service guide!"}
 
-Learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies into microservices.
+Explore how to access a simple RESTful web service and consume its resources in Java using JSON-B and JSON-P.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,20 +17,20 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You will learn how to use Contexts and Dependency Injection (CDI) to manage scopes and inject dependencies in a simple inventory management application.
+You will learn how to access a REST service, serialize a Java object that contains a list of artists and their albums, and use two different approaches to deserialize the returned JSON resources. The first approach consists of using the Java API for JSON Binding (JSON-B) to directly convert JSON messages into Java objects. The second approach consists of using the Java API for JSON Processing (JSON-P) to process the JSON.
 
-The application that you will be working with is an ***inventory*** service, which stores the information about various JVMs that run on different systems. Whenever a request is made to the ***inventory*** service to retrieve the JVM system properties of a particular host, the ***inventory*** service communicates with the ***system*** service on that host to get these system properties. The system properties are then stored and returned.
+The REST service that provides the artists and albums resources is already written for you. When the server is running, this service is accessible at the ***http://localhost:9080/artists*** endpoint, which responds with the ***artists.json*** file.
 
-You will use scopes to bind objects in this application to their well-defined contexts. CDI provides a variety of scopes for you to work with and while you will not use all of them in this guide, there is one for almost every scenario that you may encounter. Scopes are defined by using CDI annotations. You will also use dependency injection to inject one bean into another to make use of its functionalities. This enables you to inject the bean in its specified context without having to instantiate it yourself.
+You will implement the following two endpoints using the two deserialization approaches:
 
-The implementation of the application and its services are provided for you in the ***start/src*** directory. The ***system*** service can be found in the ***start/src/main/java/io/openliberty/guides/system*** directory, and the ***inventory*** service can be found in the ***start/src/main/java/io/openliberty/guides/inventory*** directory. If you want to learn more about RESTful web services and how to build them, see [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the ***system*** service. The ***inventory*** service is built in a similar way.
+* ***.../artists/total*** to return the total number of artists in the JSON
+* ***.../artists/total/\<artist\>*** to return the total number of albums in the JSON
+for the particular artist
 
-### What is CDI?
-
-Contexts and Dependency Injection (CDI) defines a rich set of complementary services that improve the application structure. The most fundamental services that are provided by CDI are contexts that bind the lifecycle of stateful components to well-defined contexts, and dependency injection that is the ability to inject components into an application in a typesafe way. With CDI, the container does all the daunting work of instantiating dependencies, and controlling exactly when and how these components are instantiated and destroyed.
-
+If you are interested in learning more about REST services and how you can write them, read [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html).
 
 
 ::page{title="Getting started"}
@@ -44,17 +44,18 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-cdi-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-java.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-cdi-intro.git
-cd guide-cdi-intro
+git clone https://github.com/openliberty/guide-rest-client-java.git
+cd guide-rest-client-java
 ```
 
 
 The ***start*** directory contains the starting project that you will build upon.
 
 The ***finish*** directory contains the finished project that you will build.
+
 
 ### Try what you'll build
 
@@ -74,43 +75,22 @@ The defaultServer server is ready to run a smarter planet.
 ```
 
 
+Open another command-line session by selecting ***Terminal*** > ***New Terminal*** from the menu of the IDE.
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-Point your browser to the ***http\://localhost:9080/inventory/systems*** URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+You can find your service at the **http://localhost:9080/artists** endpoint by running the following curl command:
 ```bash
-curl -s http://localhost:9080/inventory/systems | jq
+curl -s http://localhost:9080/artists | jq
 ```
 
-
-
-This is the starting point of the ***inventory*** service and it displays the current contents of the inventory. As you might expect, these are empty because nothing is stored in the inventory yet. Next, point your browser to the ***http\://localhost:9080/inventory/systems/localhost*** URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+Run the following curl command to retrieve the total number of artists:
 ```bash
-curl -s http://localhost:9080/inventory/systems/localhost | jq
+curl http://localhost:9080/artists/total
 ```
 
-
-
-You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. Go back to ***http\://localhost:9080/inventory/systems***
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+You can access the endpoint at ***http://localhost:9080/artists/total/<artist>*** to see a particular artist’s total number of albums. Run the following curl command to retrieve the artist ***bar***'s total number of albums:
 ```bash
-curl -s http://localhost:9080/inventory/systems | jq
+curl http://localhost:9080/artists/total/bar
 ```
-
-
-and you see a new entry for ***localhost***. For simplicity, only the OS name and username are shown here for each host. You can repeat this process for your own hostname or any other machine that is running the ***system*** service.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -118,15 +98,13 @@ After you are finished checking out the application, stop the Open Liberty serve
 mvn liberty:stop
 ```
 
-::page{title="Handling dependencies in the application"}
 
-You will use CDI to inject dependencies into the inventory manager application and learn how to manage the life cycles of your objects.
+::page{title="Starting the service"}
 
-### Managing scopes and contexts
 
-Navigate to the ***start*** directory to begin.
+To begin, run the following command to navigate to the ***start*** directory:
 ```bash
-cd /home/project/guide-cdi-intro/start
+cd /home/project/guide-rest-client-java/start
 ```
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
@@ -144,51 +122,126 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Create the ***InventoryManager*** class.
+
+The application that you'll build upon was created for you. After your server is ready, run the following curl command to access the service:
+```bash
+curl -s http://localhost:9080/artists | jq
+```
+
+::page{title="Creating POJOs"}
+
+
+
+To deserialize a JSON message, start with creating Plain Old Java Objects (POJOs) that represent what is in the JSON and whose instance members map to the keys in the JSON.
+
+For the purpose of this guide, you are given two POJOs. The ***Artist*** object has two instance members ***name*** and ***albums***, which map to the artist name and the collection of the albums they have written. The ***Album*** object represents a single object within the album collection, and contains three instance members ***title***, ***artistName***, and ***totalTracks***, which map to the album title, the artist who wrote the album, and the number of tracks the album contains.
+
+::page{title="Introducing JSON-B and JSON-P"}
+
+JSON-B is a feature introduced with Java EE 8 and strengthens Java support for JSON. With JSON-B you directly serialize and deserialize POJOs. This API gives you a variety of options for working with JSON resources.
+
+In contrast, you need to use helper methods with JSON-P to process a JSON response. This tactic is more straightforward, but it can be cumbersome with more complex classes.
+
+JSON-B is built on top of the existing JSON-P API. JSON-B can do everything that JSON-P can do and allows for more customization for serializing and deserializing.
+
+### Using JSON-B
+
+JSON-B requires a POJO to have a public default no-argument constructor for deserialization and binding to work properly.
+
+The JSON-B engine includes a set of default mapping rules, which can be run without any customization annotations or custom configuration. In some instances, you might find it useful to deserialize a JSON message with only certain fields, specific field names, or classes with custom constructors. In these cases, annotations are necessary and recommended:
+
+* The ***@JsonbProperty*** annotation to map JSON keys to class instance members and vice versa. Without the use of this annotation, JSON-B will attempt to do POJO mapping, matching the keys in the JSON to the class instance members by name. JSON-B will attempt to match the JSON key with a Java field or method annotated with ***@JsonbProperty*** where the value in the annotation exactly matches the JSON key. If no annotation exists with the given JSON key, JSON-B will attempt to find a matching field with the same name. If no match is found, JSON-B attempts to find a matching getter method for serialization or a matching setter method for de-serialization. A match occurs when the property name of the method matches the JSON key. If no matching getter or setter method is found, serialization or de-serialization, respectively, fails with an exception. The Artist POJO does not require this annotation because all instance members match the JSON keys by name.
+
+* The ***@JsonbCreator*** and ***@JsonbProperty*** annotations to annotate a custom constructor. These annotations are required for proper parameter substitution when a custom constructor is used.
+
+* The ***@JsonbTransient*** annotation to define an object property that does not map to a JSON property. While the use of this annotation is good practice, it is only necessary for serialization.
+
+For more information on customization with JSON-B, see the [official JSON-B site](https://javaee.github.io/jsonb-spec).
+
+
+::page{title="Consuming the REST resource"}
+
+
+
+The ***Artist*** and ***Album*** POJOs are ready for deserialization. 
+Next, we'll learn to consume the JSON response from your REST service.
+
+Create the ***Consumer*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java
+touch /home/project/guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java
 ```
 
 
-> Then, to open the InventoryManager.java file in your IDE, select
-> **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+> Then, to open the Consumer.java file in your IDE, select
+> **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java, or click the following button
 
-::openFile{path="/home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
+::openFile{path="/home/project/guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/Consumer.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.consumingrest;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-import jakarta.enterprise.context.ApplicationScoped;
+import java.util.stream.Collectors;
 
-@ApplicationScoped
-public class InventoryManager {
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
 
-  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
+import io.openliberty.guides.consumingrest.model.Album;
+import io.openliberty.guides.consumingrest.model.Artist;
 
-  public void add(String hostname, Properties systemProps) {
-    Properties props = new Properties();
-    props.setProperty("os.name", systemProps.getProperty("os.name"));
-    props.setProperty("user.name", systemProps.getProperty("user.name"));
+public class Consumer {
+    public static Artist[] consumeWithJsonb(String targetUrl) {
+      Client client = ClientBuilder.newClient();
+      Response response = client.target(targetUrl).request().get();
+      Artist[] artists = response.readEntity(Artist[].class);
 
-    SystemData system = new SystemData(hostname, props);
-    if (!systems.contains(system)) {
-      systems.add(system);
+      response.close();
+      client.close();
+
+      return artists;
     }
-  }
 
-  public InventoryList list() {
-    return new InventoryList(systems);
-  }
+    public static Artist[] consumeWithJsonp(String targetUrl) {
+      Client client = ClientBuilder.newClient();
+      Response response = client.target(targetUrl).request().get();
+      JsonArray arr = response.readEntity(JsonArray.class);
+
+      response.close();
+      client.close();
+
+      return Consumer.collectArtists(arr);
+    }
+
+    private static Artist[] collectArtists(JsonArray artistArr) {
+      List<Artist> artists = artistArr.stream().map(artistJson -> {
+        JsonArray albumArr = ((JsonObject) artistJson).getJsonArray("albums");
+        Artist artist = new Artist(
+          ((JsonObject) artistJson).getString("name"),
+          Consumer.collectAlbums(albumArr));
+        return artist;
+      }).collect(Collectors.toList());
+
+      return artists.toArray(new Artist[artists.size()]);
+    }
+
+    private static Album[] collectAlbums(JsonArray albumArr) {
+      List<Album> albums = albumArr.stream().map(albumJson -> {
+        Album album = new Album(
+          ((JsonObject) albumJson).getString("title"),
+          ((JsonObject) albumJson).getString("artist"),
+          ((JsonObject) albumJson).getInt("ntracks"));
+        return album;
+      }).collect(Collectors.toList());
+
+      return albums.toArray(new Album[albums.size()]);
+    }
 }
 ```
 
@@ -196,322 +249,294 @@ public class InventoryManager {
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-This bean contains two simple functions. The ***add()*** function is for adding entries to the inventory. The ***list()*** function is for listing all the entries currently stored in the inventory.
-
-This bean must be persistent between all of the clients, which means multiple clients need to share the same instance. To achieve this by using CDI, you can simply add the ***@ApplicationScoped*** annotation onto the class.
-
-This annotation indicates that this particular bean is to be initialized once per application. By making it application-scoped, the container ensures that the same instance of the bean is used whenever it is injected into the application.
-
-Create the ***InventoryResource*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java
-```
+### Processing JSON using JSON-B
 
 
-> Then, to open the InventoryResource.java file in your IDE, select
-> **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+JSON-B is a Java API that is used to serialize Java objects to JSON messages and vice versa.
 
-::openFile{path="/home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
+Open Liberty's JSON-B feature on Maven Central includes the JSON-B provider through transitive dependencies. The JSON-B APIs are provided by the MicroProfile dependency in your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. 
+
+The ***consumeWithJsonb()*** method in the ***Consumer*** class makes a ***GET*** request to the running artist service and retrieves the JSON. To bind the JSON into an ***Artist*** array, use the ***Artist[]*** entity type in the ***readEntity*** call.
+
+### Processing JSON using JSON-P
+
+The ***consumeWithJsonp()*** method in the ***Consumer*** class makes a ***GET*** request to the running artist service and retrieves the JSON. This method then uses the ***collectArtists*** and ***collectAlbums*** helper methods. These helper methods will parse the JSON and collect its objects into individual POJOs. Notice that you can use the custom constructors to create instances of ***Artist*** and ***Album***.
+
+::page{title="Creating additional REST resources"}
+
+Now that you can consume a JSON resource you can put that data to use.
+
+Replace the ***ArtistResource*** class.
+
+> To open the ArtistResource.java file in your IDE, select
+> **File** > **Open** > guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java, or click the following button
+
+::openFile{path="/home/project/guide-rest-client-java/start/src/main/java/io/openliberty/guides/consumingrest/service/ArtistResource.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.consumingrest.service;
 
-import java.util.Properties;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
+import jakarta.json.JsonArray;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.client.SystemClient;
+import jakarta.ws.rs.core.UriInfo;
 
-@ApplicationScoped
-@Path("/systems")
-public class InventoryResource {
+import io.openliberty.guides.consumingrest.model.Artist;
+import io.openliberty.guides.consumingrest.Consumer;
 
-  @Inject
-  InventoryManager manager;
+@Path("artists")
+public class ArtistResource {
 
-  @Inject
-  SystemClient systemClient;
+    @Context
+    UriInfo uriInfo;
 
-  @GET
-  @Path("/{hostname}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
-    Properties props = systemClient.getProperties(hostname);
-    if (props == null) {
-      return Response.status(Response.Status.NOT_FOUND)
-                     .entity("{ \"error\" : \"Unknown hostname " + hostname
-                             + " or the inventory service may not be running "
-                             + "on the host machine \" }")
-                     .build();
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonArray getArtists() {
+      return Reader.getArtists();
     }
 
-    manager.add(hostname, props);
-    return Response.ok(props).build();
-  }
+    @GET
+    @Path("jsonString")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getJsonString() {
+      Jsonb jsonb = JsonbBuilder.create();
 
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  public InventoryList listContents() {
-    return manager.list();
-  }
+      Artist[] artists = Consumer.consumeWithJsonb(uriInfo.getBaseUri().toString()
+                                                   + "artists");
+      String result = jsonb.toJson(artists);
+
+      return result;
+    }
+
+    @GET
+    @Path("total/{artist}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public int getTotalAlbums(@PathParam("artist") String artist) {
+      Artist[] artists = Consumer.consumeWithJsonb(uriInfo.getBaseUri().toString()
+        + "artists");
+
+      for (int i = 0; i < artists.length; i++) {
+        if (artists[i].name.equals(artist)) {
+          return artists[i].albums.length;
+        }
+      }
+      return -1;
+    }
+
+    @GET
+    @Path("total")
+    @Produces(MediaType.TEXT_PLAIN)
+    public int getTotalArtists() {
+      return Consumer.consumeWithJsonp(uriInfo.getBaseUri().toString()
+                                       + "artists").length;
+    }
 }
 ```
 
 
 
-The inventory resource is a RESTful service that is served at the ***inventory/systems*** endpoint. 
+* The ***getArtists()*** method provides the raw JSON data service that you accessed at the beginning of this guide.
 
-Annotating a class with the ***@ApplicationScoped*** annotation indicates that the bean is initialized once and is shared between all requests while the application runs.
+* The ***getJsonString()*** method uses JSON-B to return the JSON as a string that will be used later for testing.
 
-If you want this bean to be initialized once for every request, you can annotate the class with the ***@RequestScoped*** annotation instead. With the ***@RequestScoped*** annotation, the bean is instantiated when the request is received and destroyed when a response is sent back to the client. A request scope is short-lived.
+* The ***getTotalAlbums()*** method uses JSON-B to return the total number of albums present in the JSON for a particular artist. The method returns -1 if this artist does not exist.
 
-### Injecting a dependency
+* The ***getTotalArtists()*** method uses JSON-P to return the total number of artists present in the JSON.
 
-Refer to the ***InventoryResource*** class you created above.
-
-The ***@Inject*** annotation indicates a dependency injection. You are injecting your ***InventoryManager*** and ***SystemClient*** beans into the ***InventoryResource*** class. This injects the beans in their specified context and makes all of their functionalities available without the need of instantiating them yourself. The injected bean ***InventoryManager*** can then be invoked directly through the ***manager.add(hostname, props)*** and ***manager.list()*** function calls. The injected bean ***SystemClient*** can be invoked through the ***systemClient.getProperties(hostname)*** function call.
-
-Finally, you have a client component ***SystemClient*** that can be found in the ***src/main/java/io/openliberty/guides/inventory/client*** directory. This class communicates with the ***system*** service to retrieve the JVM system properties for a particular host that exposes them. This class also contains detailed Javadocs that you can read for reference.
-
-Your inventory application is now completed.
-
-
+The methods that you wrote in the ***Consumer*** class could be written directly in the ***ArtistResource*** class. However, if you are consuming a REST resource from a third party service, you should separate your ***GET***/***POST*** requests from your data consumption.
 
 
 ::page{title="Running the application"}
 
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-You can find the ***inventory*** and ***system*** services at the following URLs:
+The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
 
 
- ***http\://localhost:9080/inventory/systems***
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
+You can find your service at the ***http://localhost:9080/artists*** endpoint by running the following curl command:
 ```bash
-curl -s http://localhost:9080/inventory/systems | jq
+curl -s http://localhost:9080/artists | jq
+```
+
+Run the following curl command to retrieve the total number of artists:
+```bash
+curl http://localhost:9080/artists/total
+```
+
+You can access the endpoint at ***http://localhost:9080/artists/total/<artist>*** to see a particular artist’s total number of albums.
+Run the following curl command to retrieve the artist **bar**'s total number of albums:
+```bash
+curl http://localhost:9080/artists/total/bar
 ```
 
 
- ***http\://localhost:9080/system/properties***
+::page{title="Testing deserialization"}
 
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-
-
-::page{title="Testing the inventory application"}
-
-While you can test your application manually, you should rely on automated tests because they trigger a failure whenever a code change introduces a defect. Because the application is a RESTful web service application, you can use JUnit and the RESTful web service Client API to write tests. In testing the functionality of the application, the scopes and dependencies are being tested.
-
-Create the ***InventoryEndpointIT*** class.
+Create the ***ConsumingRestIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+touch /home/project/guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java 
 ```
 
 
-> Then, to open the InventoryEndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
+> Then, to open the ConsumingRestIT.java file in your IDE, select
+> **File** > **Open** > guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java, or click the following button
 
-::openFile{path="/home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
+::openFile{path="/home/project/guide-rest-client-java/start/src/test/java/it/io/openliberty/guides/consumingrest/ConsumingRestIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.inventory;
+package it.io.openliberty.guides.consumingrest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 
-@TestMethodOrder(OrderAnnotation.class)
-public class InventoryEndpointIT {
+import io.openliberty.guides.consumingrest.model.Artist;
 
-  private static String port;
-  private static String baseUrl;
+public class ConsumingRestIT {
 
-  private Client client;
+    private static String port;
+    private static String baseUrl;
+    private static String targetUrl;
 
-  private final String SYSTEM_PROPERTIES = "system/properties";
-  private final String INVENTORY_SYSTEMS = "inventory/systems";
+    private Client client;
+    private Response response;
 
-  @BeforeAll
-  public static void oneTimeSetup() {
-    port = System.getProperty("http.port");
-    baseUrl = "http://localhost:" + port + "/";
-  }
+    @BeforeAll
+    public static void oneTimeSetup() {
+      port = System.getProperty("http.port");
+      baseUrl = "http://localhost:" + port + "/artists/";
+      targetUrl = baseUrl + "total/";
+    }
 
-  @BeforeEach
-  public void setup() {
-    client = ClientBuilder.newClient();
-  }
+    @BeforeEach
+    public void setup() {
+      client = ClientBuilder.newClient();
+    }
 
-  @AfterEach
-  public void teardown() {
-    client.close();
-  }
+    @AfterEach
+    public void teardown() {
+      client.close();
+    }
 
-  @Test
-  @Order(1)
-  public void testHostRegistration() {
-    this.visitLocalhost();
+    @Test
+    public void testArtistDeserialization() {
+      response = client.target(baseUrl + "jsonString").request().get();
+      this.assertResponse(baseUrl + "jsonString", response);
 
-    Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
-    this.assertResponse(baseUrl, response);
+      Jsonb jsonb = JsonbBuilder.create();
 
-    JsonObject obj = response.readEntity(JsonObject.class);
+      String expectedString = "{\"name\":\"foo\",\"albums\":"
+        + "[{\"title\":\"album_one\",\"artist\":\"foo\",\"ntracks\":12}]}";
+      Artist expected = jsonb.fromJson(expectedString, Artist.class);
 
-    JsonArray systems = obj.getJsonArray("systems");
+      String actualString = response.readEntity(String.class);
+      Artist[] actual = jsonb.fromJson(actualString, Artist[].class);
 
-    boolean localhostExists = false;
-    for (int n = 0; n < systems.size(); n++) {
-      localhostExists = systems.getJsonObject(n)
-                                .get("hostname").toString()
-                                .contains("localhost");
-      if (localhostExists) {
-          break;
+      assertEquals(expected.name, actual[0].name,
+        "Expected names of artists does not match");
+
+      response.close();
+    }
+
+    @Test
+    public void testJsonBAlbumCount() {
+      String[] artists = {"dj", "bar", "foo"};
+      for (int i = 0; i < artists.length; i++) {
+        response = client.target(targetUrl + artists[i]).request().get();
+        this.assertResponse(targetUrl + artists[i], response);
+
+        int expected = i;
+        int actual = response.readEntity(int.class);
+        assertEquals(expected, actual, "Album count for "
+                      + artists[i] + " does not match");
+
+        response.close();
       }
     }
-    assertTrue(localhostExists,
-              "A host was registered, but it was not localhost");
 
-    response.close();
-  }
+    @Test
+    public void testJsonBAlbumCountForUnknownArtist() {
+      response = client.target(targetUrl + "unknown-artist").request().get();
 
-  @Test
-  @Order(2)
-  public void testSystemPropertiesMatch() {
-    Response invResponse = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
-    Response sysResponse = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
+      int expected = -1;
+      int actual = response.readEntity(int.class);
+      assertEquals(expected, actual, "Unknown artist must have -1 albums");
 
-    this.assertResponse(baseUrl, invResponse);
-    this.assertResponse(baseUrl, sysResponse);
+      response.close();
+    }
 
-    JsonObject jsonFromInventory = (JsonObject) invResponse.readEntity(JsonObject.class)
-                                                           .getJsonArray("systems")
-                                                           .getJsonObject(0)
-                                                           .get("properties");
+    @Test
+    public void testJsonPArtistCount() {
+      response = client.target(targetUrl).request().get();
+      this.assertResponse(targetUrl, response);
 
-    JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
+      int expected = 3;
+      int actual = response.readEntity(int.class);
+      assertEquals(expected, actual, "Expected number of artists does not match");
 
-    String osNameFromInventory = jsonFromInventory.getString("os.name");
-    String osNameFromSystem = jsonFromSystem.getString("os.name");
-    this.assertProperty("os.name", "localhost", osNameFromSystem,
-                        osNameFromInventory);
+      response.close();
+    }
 
-    String userNameFromInventory = jsonFromInventory.getString("user.name");
-    String userNameFromSystem = jsonFromSystem.getString("user.name");
-    this.assertProperty("user.name", "localhost", userNameFromSystem,
-                        userNameFromInventory);
-
-    invResponse.close();
-    sysResponse.close();
-  }
-
-  @Test
-  @Order(3)
-  public void testUnknownHost() {
-    Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
-    this.assertResponse(baseUrl, response);
-
-    Response badResponse = client.target(baseUrl + INVENTORY_SYSTEMS + "/"
-        + "badhostname").request(MediaType.APPLICATION_JSON).get();
-
-    assertEquals(404, badResponse.getStatus(),
-        "BadResponse expected status: 404. Response code not as expected.");
-
-    String obj = badResponse.readEntity(String.class);
-
-    boolean isError = obj.contains("error");
-    assertTrue(isError,
-              "badhostname is not a valid host but it didn't raise an error");
-
-    response.close();
-    badResponse.close();
-  }
-
-  private Response getResponse(String url) {
-    return client.target(url).request().get();
-  }
-
-  private void assertResponse(String url, Response response) {
-    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-  }
-
-  private void assertProperty(String propertyName, String hostname,
-      String expected, String actual) {
-    assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
-        + "in the system service does not match the one stored in "
-        + "the inventory service for " + hostname);
-  }
-
-  private void visitLocalhost() {
-    Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
-    this.assertResponse(baseUrl, response);
-    response.close();
-
-    Response targetResponse = client.target(baseUrl + INVENTORY_SYSTEMS
-        + "/localhost").request().get();
-    targetResponse.close();
-  }
+    /**
+     * Asserts that the given URL has the correct (200) response code.
+     */
+    private void assertResponse(String url, Response response) {
+      assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
 }
 ```
 
 
 
-The ***@BeforeAll*** annotation is placed on a method that runs before any of the test cases. In this case, the ***oneTimeSetup()*** method retrieves the port number for the Open Liberty server and builds a base URL string that is used throughout the tests.
+Maven finds and executes all tests under the ***src/test/java/it/*** directory, and each test method must be marked with the ***@Test*** annotation.
 
-The ***@BeforeEach*** and ***@AfterEach*** annotations are placed on methods that run before and after every test case. These methods are generally used to perform any setup and teardown tasks. In this case, the ***setup()*** method creates a JAX-RS client, which makes HTTP requests to the ***inventory*** service. The ***teardown()*** method simply destroys this client instance.
+You can use the ***@BeforeAll*** and ***@AfterAll*** annotations to perform any one-time setup and teardown tasks before and after all of your tests run. You can also use the ***@BeforeEach*** and ***@AfterEach*** annotations to perform setup and teardown tasks for individual test cases.
 
-See the following descriptions of the test cases:
+### Testing the binding process
 
-* ***testHostRegistration()*** verifies that a host is correctly added to the inventory.
 
-* ***testSystemPropertiesMatch()*** verifies that the JVM system properties returned by the ***system*** service match the ones stored in the ***inventory*** service.
+The ***yasson*** dependency was added in your ***pom.xml*** file so that your test classes have access to JSON-B.
 
-* ***testUnknownHost()*** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled as an error.
+The ***testArtistDeserialization*** test case checks that ***Artist*** instances created from the REST data and those that are hardcoded perform the same.
 
-To force these test cases to run in a particular order, annotate your ***InventoryEndpointIT*** test class with the ***@TestMethodOrder(OrderAnnotation.class)*** annotation. ***OrderAnnotation.class*** runs test methods in numerical order, according to the values specified in the ***@Order*** annotation. You can also create a custom ***MethodOrderer*** class or use built-in ***MethodOrderer*** implementations, such as ***OrderAnnotation.class***, ***Alphanumeric.class***, or ***Random.class***. Label your test cases with the ***@Test*** annotation so that they automatically run when your test class runs.
+The ***assertResponse*** helper method ensures that the response code you receive is valid (200).
 
-Finally, the ***src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java*** file is included for you to test the basic functionality of the ***system*** service. If a test failure occurs, then you might have introduced a bug into the code.
+### Processing with JSON-B test
 
+The ***testJsonBAlbumCount*** and ***testJsonBAlbumCountForUnknownArtist*** tests both use the ***total/{artist}*** endpoint which invokes JSON-B.
+
+The ***testJsonBAlbumCount*** test case checks that deserialization with JSON-B was done correctly and that the correct number of albums is returned for each artist in the JSON.
+
+The ***testJsonBAlbumCountForUnknownArtist*** test case is similar to ***testJsonBAlbumCount*** but instead checks an artist that does not exist in the JSON and ensures that a value of ***-1*** is returned.
+
+### Processing with JSON-P test
+
+The ***testJsonPArtistCount*** test uses the ***total*** endpoint which invokes JSON-P. This test checks that deserialization with JSON-P was done correctly and that the correct number of artists is returned.
 
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+Becayse you started Open Liberty in development mode at the start of the guide, press the ***enter/return*** key to run the tests.
 
 If the tests pass, you see a similar output to the following example:
 
@@ -519,31 +544,32 @@ If the tests pass, you see a similar output to the following example:
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.99 sec - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-[WARNING ] Interceptor for {http://badhostname:9080/system/properties}WebClient has thrown exception, unwinding now
-Could not send Message.
-[err] Runtime exception: java.net.UnknownHostException: UnknownHostException invoking http://badhostname:9080/system/properties: badhostname
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.325 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Running it.io.openliberty.guides.consumingrest.ConsumingRestIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.59 sec - in it.io.openliberty.guides.consumingrest.ConsumingRestIT
 
 Results :
 
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+
 ```
 
-The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
+When you are done checking out the service, exit development mode by typing ***q*** in the command-line session where you ran the server, and then press the ***enter/return*** key.
 
-To see whether the tests detect a failure, change the ***endpoint*** for the ***inventory*** service in the ***src/main/java/io/openliberty/guides/inventory/InventoryResource.java*** file to something else. Then, run the tests again to see that a test failure occurs.
+::page{title="Building the application"}
 
+If you are satisfied with your application, run the Maven ***package*** goal to build the WAR file in the ***target*** directory:
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+```bash
+mvn package
+```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just used CDI services in Open Liberty to build a simple inventory application.
+You just accessed a simple RESTful web service and consumed its resources by using JSON-B and JSON-P in Open Liberty.
+
+
 
 
 
@@ -552,32 +578,33 @@ You just used CDI services in Open Liberty to build a simple inventory applicati
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-cdi-intro*** project by running the following commands:
+Delete the ***guide-rest-client-java*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-cdi-intro
+rm -fr guide-rest-client-java
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Injecting%20dependencies%20into%20microservices&guide-id=cloud-hosted-guide-cdi-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-client-java)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-cdi-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-cdi-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-java/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-java/pulls)
 
 
 
 ### Where to next?
 
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
 ### Log out of the session
