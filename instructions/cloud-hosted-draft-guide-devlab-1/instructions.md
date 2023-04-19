@@ -5,9 +5,9 @@ branch: lab-364-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 tool-type: theia
 ---
-::page{title="Welcome to the Configuring microservices guide!"}
+::page{title="Welcome to the Securing microservices with JSON Web Tokens guide!"}
 
-Learn how to provide external configuration to microservices using MicroProfile Config.
+You'll explore how to control user and role access to microservices with MicroProfile JSON Web Token (MicroProfile JWT).
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -19,12 +19,25 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 ::page{title="What you'll learn"}
-You will learn how to externalize and inject both static and dynamic configuration properties for microservices using MicroProfile Config.
 
-You will learn to aggregate multiple configuration sources, assign prioritization values to these sources, merge configuration values, and create custom configuration sources.
+You will add token-based authentication mechanisms to authenticate, authorize, and verify users by implementing MicroProfile JWT in the ***system*** microservice.
 
-The application that you will be working with is an ***inventory*** service which stores the information about various JVMs running on different hosts. Whenever a request is made to the ***inventory*** service to retrieve the JVM system properties of a particular host, the ***inventory*** service will communicate with the ***system*** service on that host to get these system properties. You will add configuration properties to simulate if a service is down for maintenance.
+A JSON Web Token (JWT) is a self-contained token that is designed to securely transmit information as a JSON object. The information in this JSON object is digitally signed and can be trusted and verified by the recipient.
 
+For microservices, a token-based authentication mechanism offers a lightweight way for security controls and security tokens to propagate user identities across different services. JSON Web Token is becoming the most common token format because it follows well-defined and known standards.
+
+MicroProfile JWT standards define the required format of JWT for authentication and authorization. The standards also map JWT claims to various Jakarta EE container APIs and make the set of claims available through getter methods.
+
+In this guide, the application uses JWTs to authenticate a user, allowing them to make authorized requests to a secure backend service.
+
+You will be working with two services, a ***frontend*** service and a secure ***system*** backend service. The ***frontend*** service logs a user in, builds a JWT, and makes authorized requests to the secure ***system*** service for JVM system properties. The following diagram depicts the application that is used in this guide:
+
+![JWT frontend and system services](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-jwt/prod/assets/JWT_Diagram.png)
+
+
+The user signs in to the ***frontend*** service with a username and a password, at which point a JWT is created. The ***frontend*** service then makes requests, with the JWT included, to the ***system*** backend service. The secure ***system*** service verifies the JWT to ensure that the request came from the authorized ***frontend*** service. After the JWT is validated, the information in the claims, such as the user's role, can be trusted and used to determine which system properties the user has access to.
+
+To learn more about JSON Web Tokens, check out the [jwt.io website](https://jwt.io/introduction/). If you want to learn more about how JWTs can be used for user authentication and authorization, check out the Open Liberty [Single Sign-on documentation](https://openliberty.io/docs/latest/single-sign-on.html).
 
 ::page{title="Getting started"}
 
@@ -37,11 +50,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-config.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-jwt.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-config.git
-cd guide-microprofile-config
+git clone https://github.com/openliberty/guide-microprofile-jwt.git
+cd guide-microprofile-jwt
 ```
 
 
@@ -51,55 +64,82 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+The ***finish*** directory contains the finished JWT security implementation for the services in the application. Try the finished application before you build your own.
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+To try out the application, run the following commands to navigate to the ***finish/frontend*** directory and deploy the ***frontend*** service to Open Liberty:
 
 ```bash
-cd finish
+cd finish/frontend
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+Open another command-line session and run the following commands to navigate to the ***finish/system*** directory and deploy the ***system*** service to Open Liberty:
+
+```bash
+cd finish/system
+mvn liberty:run
+```
+
+After you see the following message in both command-line sessions, both of your services are ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command to test the availability of the ***system*** microservice and retrieve the system information:
+To launch the front-end web application, click the following button. From here, you can log in to the application with the form-based login.
+::startApplication{port="9090" display="external" name="Launch Application" route="/"}
+
+Log in with one of the following usernames and its corresponding password:
+
+| *Username* | *Password* | *Role*
+| --- | --- | ---
+| bob | bobpwd | admin, user
+| alice | alicepwd | user
+| carl | carlpwd | user
+
+You're redirected to a page that displays information that the front end requested from the ***system*** service, such as the system username. If you log in as an ***admin***, you can also see the current OS. Click ***Log Out*** and log in as a ***user***. You'll see the message ***You are not authorized to access this system property*** because the ***user*** role doesn't have sufficient privileges to view current OS information. 
+
+Additionally, the ***groups*** claim of the JWT is read by the ***system*** service and requested by the front end to be displayed.
+
+
+You can try accessing these services without a JWT by going to the ***system*** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command from the terminal in the IDE:
 ```bash
-curl -s http://localhost:9080/system/properties | jq
+curl -k https://localhost:8443/system/properties/os
 ```
 
-Run the following curl command to test the availability of the **inventory** microservice and retrieve the information for a list of all previously registered hosts:
-```bash
-curl -s http://localhost:9080/inventory/systems | jq
+The response is empty because you don't have access. Access is granted if a valid JWT is sent with the request. The following error also appears in the command-line session of the ***system*** service:
+
+```
+[ERROR] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
 ```
 
-In addition, you can run the following curl command to access a third microservice, which retrieves and aggregates all of the configuration properties and sources that are added throughout this guide.
-```bash
-curl -s http://localhost:9080/config | jq
-```
-
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+When you are done with the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
 
 ```bash
-mvn liberty:stop
-```
-
-::page{title="Ordering multiple configuration sources"}
-
-
-To begin, run the following command to navigate to the **start** directory:
-```bash
-cd /home/project/guide-microprofile-config/start
+mvn -pl system liberty:stop
+mvn -pl frontend liberty:stop
 ```
 
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+::page{title="Creating the secure system service"}
+
+
+To begin, run the following command to navigate to the ***start*** directory:
+```bash
+cd /home/project/guide-microprofile-jwt/start
+```
+
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following commands to navigate to the ***frontend*** directory and start the ***frontend*** service in dev mode:
 
 ```bash
+cd frontend
+mvn liberty:dev
+```
+
+Open another command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in dev mode:
+```bash
+cd system
 mvn liberty:dev
 ```
 
@@ -110,73 +150,70 @@ After you see the following message, your application server in dev mode is read
 *    Liberty is running in dev mode.
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+The ***system*** service provides endpoints for the ***frontend*** service to use to request system properties. This service is secure and requires a valid JWT to be included in requests that are made to it. The claims in the JWT are used to determine what properties the user has access to.
 
-MicroProfile Config combines configuration properties from multiple sources, each known as a ConfigSource. Each ConfigSource has a specified priority, defined by its ***config_ordinal*** value.
+Create the secure ***system*** service.
 
-A higher ordinal value means that the values taken from this ConfigSource will override values from ConfigSources with a lower ordinal value.
-
-The following four sources are the default configuration sources:
-
-* A ***\<variable name="..." value="..."/\>*** element in the server.xml file has a default ordinal of 500.
-* System properties has a default ordinal of 400. (e.g. ***bootstrap.properties*** file)
-* Environment variables have a default ordinal of 300. (e.g. ***server.env*** file)
-* The ***META-INF/microprofile-config.properties*** configuration property file on the classpath has a default ordinal of 100.
-
-Access the ***src/main/resources/META-INF/microprofile-config.properties*** local configuration file. This configuration file is the default configuration source for an application that uses MicroProfile Config.
-
-
-::page{title="Injecting static configuration"}
-
-The MicroProfile Config API is included in the MicroProfile dependency that is specified in your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows you to use the MicroProfile Config API to externalize configurations for your microservices. The ***mpConfig*** feature is also enabled in the ***src/main/liberty/config/server.xml*** file.
-
-
-
-Now navigate to the ***src/main/resources/META-INF/microprofile-config.properties*** local configuration file to check some static configuration. This configuration file is the default configuration source for an application that uses MicroProfile Config.
-
-The ***io_openliberty_guides_port_number*** property that has already been defined in this file, determines the port number of the REST service.
-
-
-To use this configuration property,
-create the ***InventoryConfig.java*** class.
+Create the ***SystemResource*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java
+touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
 ```
 
 
-> Then, to open the InventoryConfig.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
+> Then, to open the SystemResource.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java"}
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.system;
 
+import jakarta.json.JsonArray;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import io.openliberty.guides.config.Email;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.annotation.security.RolesAllowed;
+
+import org.eclipse.microprofile.jwt.Claim;
 
 @RequestScoped
-public class InventoryConfig {
+@Path("/properties")
+public class SystemResource {
 
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_port_number")
-  private int portNumber;
+    @Inject
+    @Claim("groups")
+    private JsonArray roles;
 
-  private Provider<Boolean> inMaintenance;
+    @GET
+    @Path("/username")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin", "user" })
+    public String getUsername() {
+        return System.getProperties().getProperty("user.name");
+    }
 
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin" })
+    public String getOS() {
+        return System.getProperties().getProperty("os.name");
+    }
 
-  public int getPortNumber() {
-    return portNumber;
-  }
-
-
+    @GET
+    @Path("/jwtroles")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "admin", "user" })
+    public String getRoles() {
+        return roles.toString();
+    }
 }
 ```
 
@@ -184,685 +221,464 @@ public class InventoryConfig {
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-Inject the ***io_openliberty_guides_port_number*** property, and add the ***getPortNumber()*** class method to the ***InventoryConfig.java*** file.
+This class has role-based access control. The role names that are used in the ***@RolesAllowed*** annotations are mapped to group names in the ***groups*** claim of the JWT, which results in an authorization decision wherever the security constraint is applied.
 
-The ***@Inject*** annotation injects the port number directly, the injection value is static and fixed on application starting.
+The ***/username*** endpoint returns the system's username and is annotated with the ***@RolesAllowed({"admin, "user"})*** annotation. Only authenticated users with the role of ***admin*** or ***user*** can access this endpoint.
 
-The ***getPortNumber()*** method directly returns the value of ***portNumber*** because it has been injected.
+The ***/os*** endpoint returns the system's current OS. Here, the ***@RolesAllowed*** annotation is limited to ***admin***, meaning that only authenticated users with the role of ***admin*** are able to access the endpoint.
 
-::page{title="Injecting dynamic configuration"}
+While the ***@RolesAllowed*** annotation automatically reads from the ***groups*** claim of the JWT to make an authorization decision, you can also manually access the claims of the JWT by using the ***@Claim*** annotation. In this case, the ***groups*** claim is injected into the ***roles*** JSON array. The roles that are parsed from the ***groups*** claim of the JWT are then exposed back to the front end at the ***/jwtroles*** endpoint. To read more about different claims and ways to access them, check out the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
 
-Note that three default config sources mentioned above are static and fixed on application starting, so the properties within them cannot be modified while the server is running. However, you can externalize configuration data out of the application package, through the creation of custom configuration sources, so that the service updates configuration changes dynamically.
 
-### Creating custom configuration sources
+::page{title="Creating a client to access the secure system service"}
 
-Custom configuration sources can be created by implementing the ***org.eclipse.microprofile.config.spi.ConfigSource*** interface and using the ***java.util.ServiceLoader*** mechanism.
+Create a RESTful client interface for the ***frontend*** service.
 
-A ***CustomConfigSource.json*** JSON file has already been created in the ***resources*** directory. This JSON file simulates a remote configuration resource in real life. This file contains 4 custom config properties and has an ordinal of ***150***. To use these properties in the application, the data object needs to be transformed from this JSON file to the configuration for your application.
-
-To link this JSON file to your application and to implement the ***ConfigSource*** interface,
-
-create the ***CustomConfigSource*** class.
+Create the ***SystemClient*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java
+touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
 ```
 
 
-> Then, to open the CustomConfigSource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java, or click the following button
+> Then, to open the SystemClient.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomConfigSource.java"}
+::openFile{path="/home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java"}
 
 
 
 ```java
-package io.openliberty.guides.config;
-
-import jakarta.json.stream.JsonParser;
-import jakarta.json.stream.JsonParser.Event;
-import jakarta.json.Json;
-import java.math.BigDecimal;
-import java.io.StringReader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import org.eclipse.microprofile.config.spi.ConfigSource;
-
-/**
- * User-provided ConfigSources are dynamic.
- * The getProperties() method will be periodically invoked by the runtime
- * to retrieve up-to-date values. The frequency is controlled by
- * the microprofile.config.refresh.rate Java system property,
- * which is in milliseconds and can be customized.
- */
-public class CustomConfigSource implements ConfigSource {
-
-  String fileLocation = System.getProperty("user.dir").split("target")[0]
-      + "resources/CustomConfigSource.json";
-
-  @Override
-  public int getOrdinal() {
-    return Integer.parseInt(getProperties().get("config_ordinal"));
-  }
-
-  @Override
-  public Set<String> getPropertyNames() {
-    return getProperties().keySet();
-  }
-
-  @Override
-  public String getValue(String key) {
-    return getProperties().get(key);
-  }
-
-  @Override
-  public String getName() {
-    return "Custom Config Source: file:" + this.fileLocation;
-  }
-
-  public Map<String, String> getProperties() {
-    Map<String, String> m = new HashMap<String, String>();
-    String jsonData = this.readFile(this.fileLocation);
-    JsonParser parser = Json.createParser(new StringReader(jsonData));
-    String key = null;
-    while (parser.hasNext()) {
-      final Event event = parser.next();
-      switch (event) {
-      case KEY_NAME:
-        key = parser.getString();
-        break;
-      case VALUE_STRING:
-        String string = parser.getString();
-        m.put(key, string);
-        break;
-      case VALUE_NUMBER:
-        BigDecimal number = parser.getBigDecimal();
-        m.put(key, number.toString());
-        break;
-      case VALUE_TRUE:
-        m.put(key, "true");
-        break;
-      case VALUE_FALSE:
-        m.put(key, "false");
-        break;
-      default:
-        break;
-      }
-    }
-    parser.close();
-    return m;
-  }
-
-  public String readFile(String fileName) {
-    String result = "";
-    try {
-      BufferedReader br = new BufferedReader(new FileReader(fileName));
-      StringBuilder sb = new StringBuilder();
-      String line = br.readLine();
-      while (line != null) {
-        sb.append(line);
-        line = br.readLine();
-      }
-      result = sb.toString();
-      br.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return result;
-  }
-}
-```
-
-
-
-The ***getProperties()*** method reads the key value pairs from the ***resources/CustomConfigSource.json*** JSON file and writes the information into a map.
-
-Finally, register the custom configuration source.
-
-Create the configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource
-```
-
-
-> Then, to open the org.eclipse.microprofile.config.spi.ConfigSource file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.ConfigSource"}
-
-
-
-```
-io.openliberty.guides.config.CustomConfigSource
-```
-
-
-
-
-
-### Enabling dynamic configuration injection
-
-Now that the custom configuration source has successfully been set up, you can enable dynamic configuration injection of the properties being set in this ConfigSource. To enable this dynamic injection,
-
-replace the ***InventoryConfig.java*** class.
-
-> To open the InventoryConfig.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.frontend.client;
 
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import io.openliberty.guides.config.Email;
-
-@RequestScoped
-public class InventoryConfig {
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_port_number")
-  private int portNumber;
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_inventory_inMaintenance")
-  private Provider<Boolean> inMaintenance;
-
-
-  public int getPortNumber() {
-    return portNumber;
-  }
-
-  public boolean isInMaintenance() {
-    return inMaintenance.get();
-  }
-
-}
-```
-
-
-Inject the ***io_openliberty_guides_inventory_inMaintenance*** property, and add the ***isInMaintenance()*** class method.
-
-The ***@Inject*** and ***@ConfigProperty*** annotations inject the ***io_openliberty_guides_inventory_inMaintenance*** configuration property from the ***CustomConfigSource.json*** file. The ***Provider\<\>*** interface used, forces the service to retrieve the inMaintenance value just in time. This retrieval of the value just in time makes the config injection dynamic and able to change without having to restart the application.
-
-Every time that you invoke the ***inMaintenance.get()*** method, the ***Provider\<\>*** interface picks up the latest value of the ***io_openliberty_guides_inventory_inMaintenance*** property from configuration sources.
-
-
-::page{title="Creating custom converters"}
-Configuration values are purely Strings. MicroProfile Config API has built-in converters that automatically converts configured Strings into target types such as ***int***, ***Integer***, ***boolean***, ***Boolean***, ***float***, ***Float***, ***double*** and ***Double***. Therefore, in the previous section, it is type-safe to directly set the variable type to ***Provider\<Boolean\>***.
-
-To convert configured Strings to an arbitrary class type, such as the ***Email*** class type,
-replace the ***Email*** Class.
-
-> To open the Email.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/Email.java"}
-
-
-
-```java
-
-package io.openliberty.guides.config;
-
-public class Email {
-  private String name;
-  private String domain;
-
-  public Email(String value) {
-    String[] components = value.split("@");
-    if (components.length == 2) {
-      name = components[0];
-      domain = components[1];
-    }
-  }
-
-  public String getEmailName() {
-    return name;
-  }
-
-  public String getEmailDomain() {
-    return domain;
-  }
-
-  public String toString() {
-    return name + "@" + domain;
-  }
-}
-```
-
-
-
-To use this ***Email*** class type, add a custom converter by implementing the generic interface ***org.eclipse.microprofile.config.spi.Converter\<T\>***. The Type parameter of the interface is the target type the String is converted to.
-
-Create the ***CustomEmailConverter*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java
-```
-
-
-> Then, to open the CustomEmailConverter.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/config/CustomEmailConverter.java"}
-
-
-
-```java
-package io.openliberty.guides.config;
-
-import org.eclipse.microprofile.config.spi.Converter;
-
-public class CustomEmailConverter implements Converter<Email> {
-
-  @Override
-  public Email convert(String value) {
-    return new Email(value);
-  }
-
-}
-```
-
-
-
-This implements the ***Converter\<T\>*** interface.
-
-To register your implementation,
-create the configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter
-```
-
-
-> Then, to open the org.eclipse.microprofile.config.spi.Converter file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/resources/META-INF/services/org.eclipse.microprofile.config.spi.Converter"}
-
-
-
-```
-io.openliberty.guides.config.CustomEmailConverter
-```
-
-
-
-To use the custom ***Email*** converter,
-replace the ***InventoryConfig*** class.
-
-> To open the InventoryConfig.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryConfig.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import io.openliberty.guides.config.Email;
-
-@RequestScoped
-public class InventoryConfig {
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_port_number")
-  private int portNumber;
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_inventory_inMaintenance")
-  private Provider<Boolean> inMaintenance;
-
-  @Inject
-  @ConfigProperty(name = "io_openliberty_guides_email")
-  private Provider<Email> email;
-
-  public int getPortNumber() {
-    return portNumber;
-  }
-
-  public boolean isInMaintenance() {
-    return inMaintenance.get();
-  }
-
-  public Email getEmail() {
-    return email.get();
-  }
-}
-```
-
-
-Inject the ***io_openliberty_guides_email*** property, and add the ***getEmail()*** method.
-
-::page{title="Adding configuration to the microservice"}
-
-To use externalized configuration in the ***inventory*** service,
-replace the ***InventoryResource*** class.
-
-> To open the InventoryResource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-config/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import java.util.Properties;
-
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.HeaderParam;
 
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-
+@RegisterRestClient(baseUri = "https://localhost:8443/system")
+@Path("/properties")
 @RequestScoped
-@Path("systems")
-public class InventoryResource {
+public interface SystemClient extends AutoCloseable {
 
-  @Inject
-  InventoryManager manager;
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    String getOS(@HeaderParam("Authorization") String authHeader);
 
-  @Inject
-  InventoryConfig inventoryConfig;
+    @GET
+    @Path("/username")
+    @Produces(MediaType.APPLICATION_JSON)
+    String getUsername(@HeaderParam("Authorization") String authHeader);
 
-  @GET
-  @Path("{hostname}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
+    @GET
+    @Path("/jwtroles")
+    @Produces(MediaType.APPLICATION_JSON)
+    String getJwtRoles(@HeaderParam("Authorization") String authHeader);
+}
+```
 
-    if (!inventoryConfig.isInMaintenance()) {
-      Properties props = manager.get(hostname, inventoryConfig.getPortNumber());
-      if (props == null) {
-        return Response.status(Response.Status.NOT_FOUND)
-                       .entity("{ \"error\" : \"Unknown hostname or the system service "
-                       + "may not be running on " + hostname + "\" }")
-                       .build();
-      }
 
-      manager.add(hostname, props);
-      return Response.ok(props).build();
-    } else {
-      return Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                     .entity("{ \"error\" : \"Service is currently in maintenance. "
-                     + "Contact: " + inventoryConfig.getEmail().toString() + "\" }")
-                     .build();
+
+This interface declares methods for accessing each of the endpoints that were
+previously set up in the ***system*** service.
+
+The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the ***SystemClient*** interface. You don't need to set up the client and connect with the remote service.
+
+As discussed, the ***system*** service is secured and requests made to it must include a valid JWT in the ***Authorization*** header. The ***@HeaderParam*** annotations include the JWT by specifying that the value of the ***String authHeader*** parameter, which contains the JWT, be used as the value for the ***Authorization*** header. This header is included in all of the requests that are made to the ***system*** service through this client.
+
+Create the application bean that the front-end UI uses to request data.
+
+Create the ***ApplicationBean*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
+```
+
+
+> Then, to open the ApplicationBean.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java"}
+
+
+
+```java
+package io.openliberty.guides.frontend;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+
+import io.openliberty.guides.frontend.client.SystemClient;
+import io.openliberty.guides.frontend.util.SessionUtils;
+
+
+@ApplicationScoped
+@Named
+public class ApplicationBean {
+
+    @Inject
+    @RestClient
+    private SystemClient defaultRestClient;
+
+    public String getJwt() {
+        String jwtTokenString = SessionUtils.getJwtToken();
+        String authHeader = "Bearer " + jwtTokenString;
+        return authHeader;
     }
-  }
 
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response listContents() {
-    if (!inventoryConfig.isInMaintenance()) {
-      return Response.ok(manager.list()).build();
-    } else {
-      return Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                     .entity("{ \"error\" : \"Service is currently in maintenance. "
-                     + "Contact: " + inventoryConfig.getEmail().toString() + "\" }")
-                     .build();
+    public String getOs() {
+        String authHeader = getJwt();
+        String os;
+        try {
+            os = defaultRestClient.getOS(authHeader);
+        } catch (Exception e) {
+            return "You are not authorized to access this system property";
+        }
+        return os;
     }
-  }
+
+    public String getUsername() {
+        String authHeader = getJwt();
+        return defaultRestClient.getUsername(authHeader);
+    }
+
+    public String getJwtRoles() {
+        String authHeader = getJwt();
+        return defaultRestClient.getJwtRoles(authHeader);
+    }
 
 }
-
 ```
 
 
-To add configuration to the ***inventory*** service, the ***InventoryConfig*** object is injected to the existing class.
 
-The port number from the configuration is retrieved by the ***inventoryConfig.getPortNumber()*** method and passed to the ***manager.get()*** method as a parameter.
-
-To determine whether the inventory service is in maintenance or not (according to the configuration value), ***inventoryConfig.isInMaintenance()*** class method is used. If you set the ***io_openliberty_guides_inventory_inMaintenance*** property to ***true*** in the configuration, the inventory service returns the message, ***ERROR: Service is currently in maintenance***, along with the contact email. The email configuration value can be obtained by calling ***inventoryConfig.getEmail()*** method.
+The application bean is used to populate the table in the front end by making requests for data through the ***defaultRestClient***, which is an injected instance of the ***SystemClient*** class that you created. The ***getOs()***, ***getUsername()***, and ***getJwtRoles()*** methods call their associated methods of the ***SystemClient*** class with the ***authHeader*** passed in as a parameter. The ***authHeader*** is a string that consists of the JWT with ***Bearer*** prefixed to it. The ***authHeader*** is included in the ***Authorization*** header of the subsequent requests that are made by the ***defaultRestClient*** instance.
 
 
+The JWT for these requests is retrieved from the session attributes with the ***getJwt()*** method. The JWT is stored in the session attributes by the provided ***LoginBean*** class. When the user logs in to the front end, the ***doLogin()*** method is called and builds the JWT. Then, the ***setAttribute()*** method stores it as an ***HttpSession*** attribute. The JWT is built by using the ***JwtBuilder*** APIs in the ***buildJwt()*** method. You can see that the ***claim()*** method is being used to set the ***groups*** and the ***aud*** claims of the token. The ***groups*** claim is used to provide the role-based access that you implemented. The ***aud*** claim is used to specify the audience that the JWT is intended for.
 
+::page{title="Configuring MicroProfile JWT"}
 
-::page{title="Running the application"}
+Configure the ***mpJwt*** feature in the ***microprofile-config.properties*** file for the ***system*** service.
 
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+Create the microprofile-config.properties file.
 
-
-While the server is running, run the following curl command to access the ***system*** microservice:
+> Run the following touch command in your terminal
 ```bash
-curl -s http://localhost:9080/system/properties | jq
+touch /home/project/guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties
 ```
 
-and run the following curl command to access the ***inventory*** microservice:
+
+> Then, to open the microprofile-config.properties file in your IDE, select
+> **File** > **Open** > guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties"}
+
+
+
+```
+mp.jwt.verify.issuer=http://openliberty.io
+mp.jwt.token.header=Authorization
+mp.jwt.token.cookie=Bearer
+mp.jwt.verify.audiences=systemService, adminServices
+mp.jwt.verify.publickey.algorithm=RS256
+```
+
+
+
+The following table breaks down some of the properties:
+
+| *Property* |   *Description*
+| ---| ---
+| ***mp.jwt.verify.issuer*** | Specifies the expected value of the issuer claim on an incoming JWT. Incoming JWTs with an issuer claim that's different from this expected value aren't considered valid.
+| ***mp.jwt.token.header***  | With this property, you can control the HTTP request header, which is expected to contain a JWT. You can either specify Authorization, by default, or the Cookie values.
+| ***mp.jwt.token.cookie*** | Specifies the name of the cookie, which is expected to contain a JWT token. The default value is Bearer.
+| ***mp.jwt.verify.audiences*** |  With this property, you can create a list of allowable audience (aud) values. At least one of these values must be found in the claim. Previously, this configuration was included in the ***server.xml*** file.
+| ***mp.jwt.decrypt.key.location*** | With this property, you can specify the location of the Key Management key. It is a Private key that is used to decrypt the Content Encryption key, which is then used to decrypt the JWE ciphertext. This private key must correspond to the public key that is used to encrypt the Content Encryption key.
+| ***mp.jwt.verify.publickey.algorithm*** | With this property, you can control the Public Key Signature Algorithm that is supported by the MicroProfile JWT endpoint. The default value is RS256. Previously, this configuration was included in the ***server.xml*** file.
+
+For more information about these and other JWT properties, see the [MicroProfile Config properties for MicroProfile JSON Web Token documentation](https://openliberty.io/docs/latest/microprofile-config-properties.html#jwt).
+
+Next, add the MicroProfile JSON Web Token feature to the server configuration file for the ***system*** service.
+
+Replace the system server configuration file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Sample Liberty server">
+
+  <featureManager>
+    <feature>restfulWS-3.1</feature>
+    <feature>jsonb-3.0</feature>
+    <feature>jsonp-2.1</feature>
+    <feature>cdi-4.0</feature>
+    <feature>mpConfig-3.0</feature>
+    <feature>mpRestClient-3.0</feature>
+    <feature>appSecurity-5.0</feature>
+    <feature>servlet-6.0</feature>
+    <feature>mpJwt-2.1</feature>
+  </featureManager>
+
+  <variable name="default.http.port" defaultValue="8080"/>
+  <variable name="default.https.port" defaultValue="8443"/>
+
+  <keyStore id="defaultKeyStore" password="secret"/>
+
+  <httpEndpoint host="*" httpPort="${default.http.port}" httpsPort="${default.https.port}"
+                id="defaultHttpEndpoint"/>
+                 
+  <webApplication location="system.war" contextRoot="/"/>
+
+</server>
+```
+
+
+
+The ***mpJwt*** feature adds the libraries that are required for MicroProfile JWT implementation.
+
+
+::page{title="Building and running the application"}
+
+Because you are running the ***frontend*** and ***system*** services in dev mode, the changes that you made were automatically picked up. You're now ready to check out your application in your browser.
+
+
+To launch the front-end web application, click the following button:
+::startApplication{port="9090" display="external" name="Launch Application" route="/"}
+
+Log in with one of the following usernames and its corresponding password:
+
+| *Username* | *Password* | *Role*
+| --- | --- | ---
+| bob | bobpwd | admin, user
+| alice | alicepwd | user
+| carl | carlpwd | user
+
+After you log in as an ***admin***, you can see the information that's retrieved from the ***system*** service. Click ***Log Out*** and log in as a ***user***. With successfully implemented role-based access in the application, if you log in as a ***user*** role, you don't have access to the OS property.
+
+You can also see the value of the ***groups*** claim in the row with the ***Roles:*** label. These roles are read from the JWT and sent back to the front end to be displayed.
+
+
+You can check that the ***system*** service is secured against unauthenticated requests by going to the **system** endpoint. Run the following curl command from the terminal in the IDE:
 ```bash
-curl -s http://localhost:9080/inventory/systems | jq
+curl -k https://localhost:8443/system/properties/os
 ```
 
-You can find the service that retrieves configuration information that is specific to this guide by running the following curl command:
-```bash
-curl -s http://localhost:9080/config | jq
+You'll see an empty response because you didn't authenticate with a valid JWT. 
+
+In the front end, you see your JWT displayed in the row with the ***JSON Web Token*** label.
+
+To see the specific information that this JWT holds, you can enter it into the token reader on the [JWT.io website](https://JWT.io). The token reader shows you the header, which contains information about the JWT, as shown in the following example:
+
+```
+{
+  "kid": "NPzyG3ZMzljUwQgbzi44",
+  "typ": "JWT",
+  "alg": "RS256"
+}
 ```
 
-The ***config_ordinal*** value of the custom configuration source is set to ***150***. It overrides configuration values of the default ***microprofile-config.properties*** source, which has a ***config_ordinal*** value of ***100***.
+The token reader also shows you the payload, which contains the claims information:
 
-
-
-
-Play with this application by changing configuration values for each property in the ***resources/CustomConfigSource.json*** file. Your changes are added dynamically, and you do not need to restart the server. Rerun the following curl command to see the dynamic changes:
-```bash
-curl -s http://localhost:9080/config | jq
+```
+{
+  "token_type": "Bearer",
+  "sub": "bob",
+  "upn": "bob",
+  "groups": [ "admin", "user" ],
+  "iss": "http://openliberty.io",
+  "exp": 1596723489,
+  "iat": 1596637089
+}
 ```
 
-For example, change ***io_openliberty_guides_inventory_inMaintenance*** from ***false*** to ***true***, then try to access http://localhost:9080/inventory/systems again by running the following curl command:
-```bash
-curl -s http://localhost:9080/inventory/systems | jq
-```
-
-The following message displays: ***ERROR: Service is currently in maintenance***.
-
+You can learn more about these claims in the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
 
 
 ::page{title="Testing the application"}
 
-Create the ***ConfigurationIT*** class.
+You can manually check that the ***system*** service is secure by making requests to each of the endpoints with and without valid JWTs. However, automated tests are a much better approach because they are more reliable and trigger a failure if a breaking change is introduced.
+
+Create the ***SystemEndpointIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java
+touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 ```
 
 
-> Then, to open the ConfigurationIT.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java, or click the following button
+> Then, to open the SystemEndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-config/start/src/test/java/it/io/openliberty/guides/config/ConfigurationIT.java"}
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.config;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+package it.io.openliberty.guides.system;
 
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.BeforeAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@TestMethodOrder(OrderAnnotation.class)
-public class ConfigurationIT {
+import it.io.openliberty.guides.system.util.JwtBuilder;
 
-  private String port;
-  private String baseUrl;
-  private Client client;
+public class SystemEndpointIT {
 
-  private final String INVENTORY_HOSTS = "inventory/systems";
-  private final String USER_DIR = System.getProperty("user.dir");
-  private final String DEFAULT_CONFIG_FILE = USER_DIR
-      + "/src/main/resources/META-INF/microprofile-config.properties";
-  private final String CUSTOM_CONFIG_FILE = USER_DIR.split("target")[0]
-      + "/resources/CustomConfigSource.json";
-  private final String INV_MAINTENANCE_PROP = "io_openliberty_guides"
-      + "_inventory_inMaintenance";
+    static String authHeaderAdmin;
+    static String authHeaderUser;
+    static String urlOS;
+    static String urlUsername;
+    static String urlRoles;
 
-  @BeforeEach
-  public void setup() {
-    port = System.getProperty("default.http.port");
-    baseUrl = "http://localhost:" + port + "/";
-    ConfigITUtil.setDefaultJsonFile(CUSTOM_CONFIG_FILE);
+    @BeforeAll
+    public static void setup() throws Exception {
+        String urlBase = "http://" + System.getProperty("hostname")
+                 + ":" + System.getProperty("http.port")
+                 + "/system/properties";
+        urlOS = urlBase + "/os";
+        urlUsername = urlBase + "/username";
+        urlRoles = urlBase + "/jwtroles";
 
-    client = ClientBuilder.newClient();
-  }
-
-  @AfterEach
-  public void teardown() {
-    ConfigITUtil.setDefaultJsonFile(CUSTOM_CONFIG_FILE);
-    client.close();
-  }
-
-  @Test
-  @Order(1)
-  public void testInitialServiceStatus() {
-    boolean status = Boolean.valueOf(ConfigITUtil.readPropertyValueInFile(
-        INV_MAINTENANCE_PROP, DEFAULT_CONFIG_FILE));
-    if (!status) {
-      Response response = ConfigITUtil.getResponse(client, baseUrl + INVENTORY_HOSTS);
-
-      int expected = Response.Status.OK.getStatusCode();
-      int actual = response.getStatus();
-      assertEquals(expected, actual);
-    } else {
-      assertEquals(
-         "{ \"error\" : \"Service is currently in maintenance."
-         + "Contact: admin@guides.openliberty.io\" }",
-          ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS),
-          "The Inventory Service should be in maintenance");
+        authHeaderAdmin = "Bearer " + new JwtBuilder().createAdminJwt("testUser");
+        authHeaderUser = "Bearer " + new JwtBuilder().createUserJwt("testUser");
     }
-  }
 
-  @Test
-  @Order(2)
-  public void testPutServiceInMaintenance() {
-    Response response = ConfigITUtil.getResponse(client, baseUrl + INVENTORY_HOSTS);
+    @Test
+    public void testOSEndpoint() {
+        Response response = makeRequest(urlOS, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                    "Incorrect response code from " + urlOS);
+        assertEquals(System.getProperty("os.name"), response.readEntity(String.class),
+                "The system property for the local and remote JVM should match");
 
-    int expected = Response.Status.OK.getStatusCode();
-    int actual = response.getStatus();
-    assertEquals(expected, actual);
+        response = makeRequest(urlOS, authHeaderUser);
+        assertEquals(403, response.getStatus(),
+                    "Incorrect response code from " + urlOS);
 
-    ConfigITUtil.switchInventoryMaintenance(CUSTOM_CONFIG_FILE, true);
+        response = makeRequest(urlOS, null);
+        assertEquals(401, response.getStatus(),
+                    "Incorrect response code from " + urlOS);
 
-    String error = ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS);
+        response.close();
+    }
 
-    assertEquals(
-         "{ \"error\" : \"Service is currently in maintenance. "
-         + "Contact: admin@guides.openliberty.io\" }",
-        error, "The inventory service should be down in the end");
-  }
+    @Test
+    public void testUsernameEndpoint() {
+        Response response = makeRequest(urlUsername, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
 
-  @Test
-  @Order(3)
-  public void testChangeEmail() {
-    ConfigITUtil.switchInventoryMaintenance(CUSTOM_CONFIG_FILE, true);
+        response = makeRequest(urlUsername, authHeaderUser);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
 
-    String error = ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS);
+        response = makeRequest(urlUsername, null);
+        assertEquals(401, response.getStatus(),
+                "Incorrect response code from " + urlUsername);
 
-    assertEquals(
-         "{ \"error\" : \"Service is currently in maintenance. "
-         + "Contact: admin@guides.openliberty.io\" }",
-        error, "The email should be admin@guides.openliberty.io in the beginning");
+        response.close();
+    }
 
-    ConfigITUtil.changeEmail(CUSTOM_CONFIG_FILE, "service@guides.openliberty.io");
+    @Test
+    public void testRolesEndpoint() {
+        Response response = makeRequest(urlRoles, authHeaderAdmin);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+        assertEquals("[\"admin\",\"user\"]", response.readEntity(String.class),
+                "Incorrect groups claim in token " + urlRoles);
 
-    error = ConfigITUtil.getStringFromURL(client, baseUrl + INVENTORY_HOSTS);
+        response = makeRequest(urlRoles, authHeaderUser);
+        assertEquals(200, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+        assertEquals("[\"user\"]", response.readEntity(String.class),
+                "Incorrect groups claim in token " + urlRoles);
 
-    assertEquals(
-         "{ \"error\" : \"Service is currently in maintenance. "
-         + "Contact: service@guides.openliberty.io\" }",
-        error, "The email should be service@guides.openliberty.io in the beginning");
-  }
+        response = makeRequest(urlRoles, null);
+        assertEquals(401, response.getStatus(),
+                "Incorrect response code from " + urlRoles);
+
+        response.close();
+    }
+
+    private Response makeRequest(String url, String authHeader) {
+        try (Client client = ClientBuilder.newClient()) {
+            Builder builder = client.target(url).request();
+            builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+            if (authHeader != null) {
+            builder.header(HttpHeaders.AUTHORIZATION, authHeader);
+            }
+            Response response = builder.get();
+            return response;
+        }
+    }
 
 }
 ```
 
 
 
+The ***testOSEndpoint()***, ***testUsernameEndpoint()***, and ***testRolesEndpoint()*** tests test the ***/os***, ***/username***, and ***/roles*** endpoints.
 
-
-The ***testInitialServiceStatus()*** test case reads the value of the ***io_openliberty_guides_inventory_inMaintenance*** configuration property in the ***META-INF/microprofile-config.properties*** file and checks the HTTP response of the inventory service. If the configuration value is ***false***, the service returns a valid response. Otherwise, the service returns the following message: ***ERROR: Service is currently in maintenance***.
-
-Because the ***io_openliberty_guides_inventory_inMaintenance*** configuration property is set to ***false*** by default, the ***testPutServiceInMaintenance()*** test case first checks that the inventory service is not in maintenance in the beginning. Next, this test switches the value of the ***io_openliberty_guides_inventory_inMaintenance*** configuration property to ***true***. In the end, the inventory service returns the following message: ***ERROR: Service is currently in maintenance***.
-
-The ***testChangeEmail()*** test case first puts the ***inventory*** service in maintenance, then it changes the email address in the configuration file. In the end, the ***inventory*** service should display the error message with the latest email address.
-
-In addition, a few endpoint tests have been provided for you to test the basic functionality of the ***inventory*** and ***system*** services. If a test failure occurs, then you must have introduced a bug into the code. Remember that you must register the custom configuration source and custom converter in the ***src/main/resources/META-INF/services/*** directory. If you don't complete these steps, the tests will fail. These tests run automatically as a part of the integration test suite.
-
+Each test makes three requests to its associated endpoint. The first ***makeRequest()*** call has a JWT with the ***admin*** role. The second ***makeRequest()*** call has a JWT with the ***user*** role. The third ***makeRequest()*** call has no JWT at all. The responses to these requests are checked based on the role-based access rules for the endpoints. The ***admin*** requests should be successful on all endpoints. The ***user*** requests should be denied by the ***/os*** endpoint but successfully access the ***/username*** and ***/jwtroles*** endpoints. The requests that don't include a JWT should be denied access to all endpoints.
 
 ### Running the tests
 
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You see the following output:
+Because you started Open Liberty in dev mode, press the ***enter/return*** key from the command-line session of the ***system*** service to run the tests. You see the following output:
 
 ```
 -------------------------------------------------------
- T E S T S
+  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.config.ConfigurationIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.92 s - in it.io.openliberty.guides.config.ConfigurationIT
 Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s - in it.io.openliberty.guides.system.SystemEndpointIT
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-[WARNING ] Interceptor for {http://client.inventory.guides.openliberty.io/}SystemClient has thrown exception, unwinding now
-Could not send Message.
-[err] The specified host is unknown.
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.077 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.648 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
 Results:
 
-Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
+The three errors in the output are expected and result from the ***system*** service successfully rejecting the requests that didn't include a JWT.
 
-To see whether the tests detect a failure, remove the configuration resetting line in the ***setup()*** method of the ***ConfigurationIT.java*** file. Then, manually change some configuration values in the ***resources/CustomConfigSource.json*** file. Rerun the tests. You will see a test failure occur.
+When you are finished testing the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***start*** directory in another command-line session:
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+```bash
+mvn -pl system liberty:stop
+mvn -pl frontend liberty:stop
+```
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just built and tested a MicroProfile application with MicroProfile Config in Open Liberty.
+You learned how to use MicroProfile JWT to validate JWTs, authenticate and authorize users to secure your microservices in Open Liberty.
 
-
-Feel free to try one of the related guides. They demonstrate new technologies that you can learn and expand on top what you built in this guide.
 
 
 ### Clean up your environment
@@ -870,34 +686,34 @@ Feel free to try one of the related guides. They demonstrate new technologies th
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-config*** project by running the following commands:
+Delete the ***guide-microprofile-jwt*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-config
+rm -fr guide-microprofile-jwt
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Configuring%20microservices&guide-id=cloud-hosted-guide-microprofile-config)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20microservices%20with%20JSON%20Web%20Tokens&guide-id=cloud-hosted-guide-microprofile-jwt)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-config/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-config/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-jwt/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-jwt/pulls)
 
 
 
 ### Where to next?
 
+* [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
 
 
 ### Log out of the session
