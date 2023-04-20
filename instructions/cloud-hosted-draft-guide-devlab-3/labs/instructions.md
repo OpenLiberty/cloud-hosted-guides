@@ -5,9 +5,9 @@ branch: lab-5932-instruction
 version-history-start-date: 2023-04-14T18:24:15Z
 tool-type: theia
 ---
-::page{title="Welcome to the Accessing and persisting data in microservices using Java Persistence API (JPA) guide!"}
+::page{title="Welcome to the Streaming messages between client and server services using gRPC guide!"}
 
-Learn how to use Java Persistence API (JPA) to access and persist data to a database for your microservices.
+Learn how to use gRPC unary calls, server streaming, client streaming, and bidirectional streaming to communicate between Java client and server services with Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -18,16 +18,26 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+::page{title="What is gRPC?"}
+
+The [gRPC](https://grpc.io/) Remote Procedure Call is a technology that implements remote procedure call (RPC) style APIs with HTTP/2. Typically, gRPC uses [protocol buffers](https://developers.google.com/protocol-buffers/docs/reference/overview) to define the format of data to be transferred and the service interfaces to access it, which include service calls and expected messages. For each service defined in a ***.proto*** file, gRPC uses the definition to generate the skeleton code for users to implement and extend. Protocol buffers use a binary format to send and receive messages that is faster and more lightweight than the JSON that is typically used in RESTful APIs.
+
+Protocol buffers allow cross-project support through the ***.proto*** file. As a result, gRPC clients and servers can run and communicate with each other from different environments. For example, a gRPC client running on a Java virtual machine can call a gRPC server developed in any other [supported language](https://grpc.io/docs/languages/). This feature of protocol buffers allows for easier integration between services.
 
 ::page{title="What you'll learn"}
 
-You will learn how to use the Java Persistence API (JPA) to map Java objects to relational database tables and perform create, read, update and delete (CRUD) operations on the data in your microservices. 
+You will learn how to create gRPC services and their clients by using protocol buffers and how to implement them with Open Liberty. You will use Maven to generate the gRPC stubs, deploy the services, and to interact with the running Liberty runtime.
 
-JPA is a Jakarta EE specification for representing relational database table data as Plain Old Java Objects (POJO). JPA simplifies object-relational mapping (ORM) by using annotations to map Java objects to tables in a relational database. In addition to providing an efficient API for performing CRUD operations, JPA also reduces the burden of having to write JDBC and SQL code when performing database operations and takes care of database vendor-specific differences. This capability allows you to focus on the business logic of your application instead of wasting time implementing repetitive CRUD logic.
+The application that you will build in this guide consists of three projects: the ***systemproto*** model project, the ***query*** client service, and the ***system*** server service.
 
-The application that you will be working with is an event manager, which is composed of a UI and an event microservice for creating, retrieving, updating, and deleting events. In this guide, you will be focused on the event microservice. The event microservice consists of a JPA entity class whose fields will be persisted to a database. The database logic is implemented in a Data Access Object (DAO) to isolate the database operations from the rest of the service. This DAO accesses and persists JPA entities to the database and can be injected and consumed by other components in the microservice. An Embedded Derby database is used as a data store for all the events.
+The ***query*** service implements four RESTful APIs by using four different gRPC streaming methods.
 
-You will use JPA annotations to define an entity class whose fields are persisted to the database. The interaction between your service and the database is mediated by the persistence context that is managed by an entity manager. In a Jakarta EE environment, you can use an application-managed entity manager or a container-managed entity manager. In this guide, you will use a container-managed entity manager that is injected into the DAO so the application server manages the opening and closing of the entity manager for you. 
+* Unary RPC: The client sends a single request and receives a single response.
+* Server streaming RPC: The client sends a single request and the server returns a stream of messages.
+* Client streaming RPC: The client sends a stream of messages and the server responds with a single message.
+* Bidirectional RPC: Both client and server send a stream of messages. The client and server can read and write messages in any order.
+
+![Application architecture of the gRPC application covered in guide](https://raw.githubusercontent.com/OpenLiberty/guide-grpc-intro/prod/assets/architecture.png)
 
 
 ::page{title="Getting started"}
@@ -41,11 +51,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-jpa-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-grpc-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-jpa-intro.git
-cd guide-jpa-intro
+git clone https://github.com/openliberty/guide-grpc-intro.git
+cd guide-grpc-intro
 ```
 
 
@@ -57,564 +67,1447 @@ The ***finish*** directory contains the finished project that you will build.
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, run the following commands to navigate to the ***finish/frontendUI*** directory and deploy the ***frontendUI*** service to Open Liberty:
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to generate all the gRPC abstract classes defined in the ***.proto*** file. 
 
 ```bash
-cd finish/frontendUI
-mvn liberty:run
+cd finish
+mvn -pl systemproto install
 ```
 
-Open another command-line session and run the following commands to navigate to the ***finish/backendServices*** directory and deploy the service to Open Liberty:
+Start the ***system*** service by running the following command:
 ```bash
-cd /home/project/guide-jpa-intro/finish/backendServices
-mvn liberty:run
+mvn -pl system liberty:run
 ```
 
-
-After you see the following message in both command-line sessions, both your services are ready.
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-Click the following button to view the Event Manager application:
-::startApplication{port="9090" display="external" name="Visit Event Manager application" route="/"}
-The event application does not display any events because no events are stored in the database. Go ahead and click ***Create Event***, located in the left navigation bar. After entering an event name, location and time, click ***Submit*** to persist your event entity to the database. The event is now stored in the database and is visible in the list of current events.
-
-Notice that if you stop the Open Liberty server and then restart it, the events created are still displayed in the list of current events. Ensure you are in the ***finish/backendServices*** directory and run the following Maven goals to stop and then restart the server:
+Next, open another command-line session, navigate to the ***finish*** directory, and start the ***query*** service by using the following command:
 ```bash
-cd /home/project/guide-jpa-intro/finish/backendServices
-mvn liberty:stop
-mvn liberty:run
+mvn -pl query liberty:run
 ```
 
 
-The events created are still displayed in the list of current events. The ***Update*** action link located beside each event allows you to make modifications to the persisted entity and the ***Delete*** action link allows you to remove entities from the database.
+Click the following button to visit the ***/query/properties/os.name*** endpoint to test out basic unary call. You will see your operating system name.  
 
-After you are finished checking out the application, stop the Open Liberty servers by pressing CTRL+C in the command-line sessions where you ran the ***backendServices*** and ***frontendUI*** services. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another command-line session for the ***frontendUI*** and ***backendServices*** services:
+::startApplication{port="9081" display="external" name="/query/properties/os.name" route="/query/properties/os.name"}
+
+Next, click the following button to visit the ***/query/properties/os*** endpoint to test out server streaming call. The details of your localhost operating system are displayed.
+
+::startApplication{port="9081" display="external" name="/query/properties/os" route="/query/properties/os"}
+
+Visit the ***/query/properties/user*** endpoint to test out client streaming call. The details of your localhost user properties are displayed.  
+
+::startApplication{port="9081" display="external" name="/query/properties/user" route="/query/properties/user"}
+
+Visit the ***/query/properties/java*** endpoint to test out bidirectional streaming. The details of your localhost Java properties are displayed.
+
+::startApplication{port="9081" display="external" name="/query/properties/java" route="/query/properties/java"}
+
+Observe the output from the consoles running the ***system*** and ***query*** services.
+
+After you are finished checking out the application, stop both the ***query*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
 ```bash
-cd /home/project/guide-jpa-intro/finish
-mvn -pl frontendUI liberty:stop
-mvn -pl backendServices liberty:stop
+mvn -pl system liberty:stop
+mvn -pl query liberty:stop
 ```
 
 
-
-::page{title="Defining a JPA entity class"}
+::page{title="Creating and defining the gRPC server service"}
 
 Navigate to the ***start*** directory to begin.
 
-When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
-
-Run the following commands to navigate to the ***frontendUI*** directory and start the ***frontendUI*** service in dev mode:
 ```bash
-cd /home/project/guide-jpa-intro/start/frontendUI
-mvn liberty:dev
+cd /home/project/guide-grpc-intro/start
 ```
 
-Open another command-line session and run the following commands to navigate to the ***backendServices*** directory and start the service in dev mode:
-```bash
-cd /home/project/guide-jpa-intro/start/backendServices
-mvn liberty:dev
-```
+First, create the ***.proto*** file and generate gRPC classes. You will implement the gRPC server service with the generated classes later. The ***.proto*** file defines all the service calls and message types. The message types are used in the service call definition for the parameters and returns.
 
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command line to listen for file changes. Open another command-line session to continue, or open the project in your editor.
-
-To store Java objects in a database, you must define a JPA entity class. A JPA entity is a Java object whose non-transient and non-static fields will be persisted to the database. Any Plain Old Java Object (POJO) class can be designated as a JPA entity. However, the class must be annotated with the ***@Entity*** annotation, must not be declared final and must have a public or protected non-argument constructor. JPA maps an entity type to a database table and persisted instances will be represented as rows in the table.
-
-The ***Event*** class is a data model that represents events in the event microservice and is annotated with JPA annotations.
-
-Create the ***Event*** class.
+Create the ***SystemService.proto*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java
+touch /home/project/guide-grpc-intro/start/systemproto/src/main/proto/SystemService.proto
 ```
 
 
-> Then, to open the Event.java file in your IDE, select
-> **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java, or click the following button
+> Then, to open the SystemService.proto file in your IDE, select
+> **File** > **Open** > guide-grpc-intro/start/systemproto/src/main/proto/SystemService.proto, or click the following button
 
-::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/models/Event.java"}
+::openFile{path="/home/project/guide-grpc-intro/start/systemproto/src/main/proto/SystemService.proto"}
 
 
 
-```java
-package io.openliberty.guides.event.models;
+```
 
-import java.io.Serializable;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.NamedQuery;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Column;
-import jakarta.persistence.GenerationType;
+syntax = "proto3";
+package io.openliberty.guides.systemproto;
+option java_multiple_files = true;
 
-@Entity
-@Table(name = "Event")
-@NamedQuery(name = "Event.findAll", query = "SELECT e FROM Event e")
-@NamedQuery(name = "Event.findEvent", query = "SELECT e FROM Event e WHERE "
-    + "e.name = :name AND e.location = :location AND e.time = :time")
-public class Event implements Serializable {
-    private static final long serialVersionUID = 1L;
+service SystemService {
+  rpc getProperty (SystemPropertyName) returns (SystemPropertyValue) {}
 
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Id
-    @Column(name = "eventId")
-    private int id;
+  rpc getServerStreamingProperties (SystemPropertyPrefix) returns (stream SystemProperty) {}
 
-    @Column(name = "eventLocation")
-    private String location;
-    @Column(name = "eventTime")
-    private String time;
-    @Column(name = "eventName")
-    private String name;
+  rpc getClientStreamingProperties (stream SystemPropertyName) returns (SystemProperties) {}
 
-    public Event() {
-    }
-
-    public Event(String name, String location, String time) {
-        this.name = name;
-        this.location = location;
-        this.time = time;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public String getTime() {
-        return time;
-    }
-
-    public void setTime(String time) {
-        this.time = time;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + id;
-        result = prime * result + ((location == null) ? 0 : location.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result
-                 + (int) (serialVersionUID ^ (serialVersionUID >>> 32));
-        result = prime * result + ((time == null) ? 0 : time.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        Event other = (Event) obj;
-        if (location == null) {
-            if (other.location != null) {
-                return false;
-            }
-        } else if (!location.equals(other.location)) {
-            return false;
-        }
-        if (time == null) {
-            if (other.time != null) {
-                return false;
-            }
-        } else if (!time.equals(other.time)) {
-            return false;
-        }
-        if (name == null) {
-            if (other.name != null) {
-                return false;
-            }
-        } else if (!name.equals(other.name)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "Event [name=" + name + ", location=" + location + ", time=" + time
-                + "]";
-    }
+  rpc getBidirectionalProperties (stream SystemPropertyName) returns (stream SystemProperty) {}
 }
 
+message SystemPropertyName {
+    string propertyName = 1;
+}
+
+message SystemPropertyPrefix {
+    string propertyPrefix = 1;
+}
+
+message SystemPropertyValue {
+    string propertyValue = 1;
+}
+
+message SystemProperty {
+    string propertyName = 1;
+    string propertyValue = 2;
+}
+
+message SystemProperties {
+    map<string, string> properties = 1;
+}
 ```
 
 
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The following table breaks down the new annotations:
 
-| *Annotation*    | *Description*
-| ---| ---
-| ***@Entity*** | Declares the class as an entity
-| ***@Table***  | Specifies details of the table such as name 
-| ***@NamedQuery*** | Specifies a predefined database query that is run by an ***EntityManager*** instance.
-| ***@Id***       |  Declares the primary key of the entity
-| ***@GeneratedValue***    | Specifies the strategy used for generating the value of the primary key. The ***strategy = GenerationType.AUTO*** code indicates that the generation strategy is automatically selected
-| ***@Column***    | Specifies that the field is mapped to a column in the database table. The ***name*** attribute is optional and indicates the name of the column in the table
+The first few lines define the ***syntax***, ***package***, and ***option*** basic configuration of the ***.proto*** file. The ***SystemService*** service contains the four service calls that you will implement in the coming sections.
+
+The ***getProperty*** RPC defines the unary call. In this call, the client service sends a ***SystemPropertyName*** message to the server service, which returns a ***SystemPropertyValue*** message with the property value. The ***SystemPropertyName*** and ***SystemPropertyValue*** message types define that the ***propertyName*** and ***propertyValue*** fields must be string.
+
+The ***getServerStreamingProperties*** RPC defines the server streaming call. The client service sends a ***SystemPropertyPrefix*** message to the server service. The server service returns a stream of ***SystemProperty*** messages. Each ***SystemProperty*** message contains ***propertyName*** and ***propertyValue*** strings.
+
+The ***getClientStreamingProperties*** RPC defines the client streaming call. The client service streams ***SystemPropertyName*** messages to the server service. The server service returns a ***SystemProperties*** message that contains a map of the properties with their respective values.
+
+The ***getBidirectionalProperties*** RPC defines the bidirectional streaming call. In this service, the client service streams ***SystemPropertyName*** messages to the server service. The server service returns a stream of ***SystemProperty*** messages.
 
 
-::page{title="Configuring JPA"}
+To compile the ***.proto*** file, the ***pom.xml*** Maven configuration file needs the ***grpc-protobuf***, ***grpc-stub***, ***javax.annotation-api*** dependencies, and the ***protobuf-maven-plugin*** plugin. To install the correct version of the Protobuf compiler automatically, the ***os-maven-plugin*** extension is required in the ***build*** configuration.
 
-The ***persistence.xml*** file is a configuration file that defines a persistence unit. The persistence unit specifies configuration information for the entity manager.
-
-Create the configuration file.
-
-> Run the following touch command in your terminal
+Run the following command to generate the gRPC classes.
 ```bash
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml
+mvn -pl systemproto install
 ```
 
 
-> Then, to open the persistence.xml file in your IDE, select
-> **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml, or click the following button
+::page{title="Implementing the unary call"}
 
-::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/resources/META-INF/persistence.xml"}
+Navigate to the ***start*** directory.
+
+```bash
+cd /home/project/guide-grpc-intro/start
+```
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
+
+```bash
+mvn -pl system liberty:dev
+```
+
+Open another command-line session, navigate to the ***start*** directory, and run the following command to start the ***query*** service in dev mode:
+
+```bash
+mvn -pl query liberty:dev
+```
+
+After you see the following message, your Liberty instances are ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session and navigate to the ***start*** directory to continue, or open the project in your editor.
+
+Start by implementing the first service call, the unary call. In this service call, the ***query*** client service sends a property to the ***system*** server service, which returns the property value. This type of service call resembles a RESTful API. 
+
+Create the ***SystemService*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java
+```
+
+
+> Then, to open the SystemService.java file in your IDE, select
+> **File** > **Open** > guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+
+::openFile{path="/home/project/guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+
+
+
+```java
+package io.openliberty.guides.system;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import io.grpc.stub.StreamObserver;
+import io.openliberty.guides.systemproto.SystemProperties;
+import io.openliberty.guides.systemproto.SystemProperty;
+import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
+import io.openliberty.guides.systemproto.SystemPropertyValue;
+import io.openliberty.guides.systemproto.SystemServiceGrpc;
+
+public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
+
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
+
+    public SystemService() {
+    }
+
+    @Override
+    public void getProperty(
+        SystemPropertyName request, StreamObserver<SystemPropertyValue> observer) {
+
+        String pName = request.getPropertyName();
+        String pValue = System.getProperty(pName);
+        SystemPropertyValue value = SystemPropertyValue
+                                        .newBuilder()
+                                        .setPropertyValue(pValue)
+                                        .build();
+
+        observer.onNext(value);
+        observer.onCompleted();
+
+    }
+
+
+
+}
+```
+
+
+
+The ***SystemService*** class extends the ***SystemServiceGrpc*** class that is generated by the ***.proto*** file. The four types of services defined in the proto file are implemented in this class.
+
+The ***getProperty()*** method implements the unary RPC call defined in the ***.proto*** file. The ***getPropertyName()*** getter method that is generated by gRPC retrieves the property name from the client, and stores it into the ***pName*** variable. The System property value is stored into the ***pValue*** variable. The gRPC library will create a ***SystemPropertyValue*** message, with its type defined in the ***SystemService.proto*** file. Then, the message is sent to the client service through the ***StreamObserver*** by using its ***onNext()*** and ***onComplete()*** methods.
+
+Replace the ***system*** server configuration file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-grpc-intro/start/system/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-grpc-intro/start/system/src/main/liberty/config/server.xml"}
 
 
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<persistence version="2.2"
-    xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
-                        http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
-    <persistence-unit name="jpa-unit" transaction-type="JTA">
-        <jta-data-source>jdbc/eventjpadatasource</jta-data-source>
-        <properties>
-            <property name="jakarta.persistence.schema-generation.database.action"
-                      value="create"/>
-            <property name="jakarta.persistence.schema-generation.scripts.action"
-                      value="create"/>
-            <property name="jakarta.persistence.schema-generation.scripts.create-target"
-                      value="createDDL.ddl"/>
-        </properties>
-    </persistence-unit>
-</persistence>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<server description="system service">
+
+    <featureManager>
+        <feature>restfulWS-3.1</feature>
+        <feature>grpc-1.0</feature>
+    </featureManager>
+
+    <!-- Due to target="*", this configuration will be applied to every gRPC service 
+         running on the server. This configuration registers a ServerInterceptor -->
+    <grpc target="*"/>
+
+    <applicationManager autoExpand="true"/>
+
+    <webApplication contextRoot="/" location="guide-grpc-intro-system.war"/>
+
+    <logging consoleLogLevel="INFO"/>
+</server>
 ```
 
 
 
-The persistence unit is defined by the ***persistence-unit*** XML element. The ***name*** attribute is required and is used to identify the persistent unit when using the ***@PersistenceContext*** annotation to inject the entity manager later in this guide. The ***transaction-type="JTA"*** attribute specifies to use Java Transaction API (JTA) transaction management. Because of using a container-managed entity manager, JTA transactions must be used. 
-
-A JTA transaction type requires a JTA data source to be provided. The ***jta-data-source*** element specifies the Java Naming and Directory Interface (JNDI) name of the data source that is used. The ***data source*** has already been configured for you in the ***backendServices/src/main/liberty/config/server.xml*** file. This data source configuration is where the Java Database Connectivity (JDBC) connection is defined along with some database vendor-specific properties.
 
 
-The ***jakarta.persistence.schema-generation*** properties are used here so that you aren't required to manually create a database table to run this sample application. To learn more about the JPA schema generation and available properties, see https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a12917[Schema Generation, Section 9.4 of the JPA Specification]
+Next, implement the corresponding REST endpoint in the ***query*** service.
 
-
-::page{title="Performing CRUD operations using JPA"}
-
-The CRUD operations are defined in the DAO. To perform these operations by using JPA, you need an ***EventDao*** class. 
-
-Create the ***EventDao*** class.
+Create the ***PropertiesResource*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java
+touch /home/project/guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java
 ```
 
 
-> Then, to open the EventDao.java file in your IDE, select
-> **File** > **Open** > guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java, or click the following button
+> Then, to open the PropertiesResource.java file in your IDE, select
+> **File** > **Open** > guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java, or click the following button
 
-::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/main/java/io/openliberty/guides/event/dao/EventDao.java"}
+::openFile{path="/home/project/guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java"}
 
 
 
 ```java
-package io.openliberty.guides.event.dao;
+package io.openliberty.guides.query;
 
 import java.util.List;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
-import io.openliberty.guides.event.models.Event;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
-import jakarta.enterprise.context.RequestScoped;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-@RequestScoped
-public class EventDao {
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.stub.StreamObserver;
+import io.openliberty.guides.systemproto.SystemProperties;
+import io.openliberty.guides.systemproto.SystemProperty;
+import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
+import io.openliberty.guides.systemproto.SystemPropertyValue;
+import io.openliberty.guides.systemproto.SystemServiceGrpc;
+import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceBlockingStub;
+import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceStub;
 
-    @PersistenceContext(name = "jpa-unit")
-    private EntityManager em;
+@ApplicationScoped
+@Path("/properties")
+public class PropertiesResource {
 
-    public void createEvent(Event event) {
-        em.persist(event);
+    private static Logger logger = Logger.getLogger(PropertiesResource.class.getName());
+
+    @Inject
+    @ConfigProperty(name = "system.hostname", defaultValue = "localhost")
+    String SYSTEM_HOST;
+
+    @Inject
+    @ConfigProperty(name = "system.port", defaultValue = "9080")
+    int SYSTEM_PORT;
+
+    @GET
+    @Path("/{property}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getPropertiesString(@PathParam("property") String property) {
+
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
+                                     .usePlaintext().build();
+        SystemServiceBlockingStub client = SystemServiceGrpc.newBlockingStub(channel);
+        SystemPropertyName request = SystemPropertyName.newBuilder()
+                                             .setPropertyName(property).build();
+        SystemPropertyValue response = client.getProperty(request);
+        channel.shutdownNow();
+        return response.getPropertyValue();
     }
 
-    public Event readEvent(int eventId) {
-        return em.find(Event.class, eventId);
+
+
+}
+```
+
+
+The ***PropertiesResource*** class provides RESTful endpoints to interact with the ***system*** service. The ***/query/properties/${property}*** endpoint uses the unary service call to get the property value from the ***system*** service. The endpoint creates a ***channel***, which it uses to create a client by the ***SystemServiceGrpc.newBlockingStub()*** API. The endpoint then uses the client to get the property value, shuts down the channel, and immediately returns the value from the ***system*** service response.
+
+Replace the ***query*** server configuration file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-grpc-intro/start/query/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-grpc-intro/start/query/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<server description="query service">
+
+    <featureManager>
+        <feature>restfulWS-3.1</feature>
+        <feature>jsonp-2.1</feature>
+        <feature>jsonb-3.0</feature>
+        <feature>cdi-4.0</feature>
+        <feature>mpConfig-3.0</feature>
+        <feature>grpc-1.0</feature>
+        <feature>grpcClient-1.0</feature>
+    </featureManager>
+
+    <variable defaultValue="9081" name="default.http.port"/>
+    <variable defaultValue="9444" name="default.https.port"/>
+
+    <httpEndpoint id="defaultHttpEndpoint"
+                  httpPort="${default.http.port}"
+                  httpsPort="${default.https.port}"
+                  host="*"/>
+
+    <!-- Due to host="*", this configuration will be applied to every gRPC client call
+         that gets made. This configuration registers a ClientInterceptor, and it directs
+         Cookie headers to get forwarded with any outbound RPC calls, in this case, that
+         enables authorization propagation. -->
+    <grpcClient headersToPropagate="Cookie" host="*"/>
+
+    <applicationManager autoExpand="true"/>
+
+    <webApplication contextRoot="/" location="guide-grpc-intro-query.war"/>
+
+    <logging consoleLogLevel="INFO"/>
+</server>
+```
+
+
+
+
+
+Because you are running the ***system*** and ***query*** services in dev mode, the changes that you made are automatically picked up. You’re now ready to check out your application in your browser.
+
+Click the following button to visit the ***/query/properties/os.name*** endpoint to test out the unary service call. Your operating system name is displayed. 
+
+::startApplication{port="9081" display="external" name="/query/properties/os.name" route="/query/properties/os.name"}
+
+
+::page{title="Implementing the server streaming call"}
+
+In the server streaming call, the ***query*** client service provides the ***/query/properties/os*** endpoint that sends a message to the ***system*** server service. The ***system*** service streams any properties that start with ***os.*** back to the ***query*** service. A channel is created between the ***query*** and the ***system*** services to stream messages. The channel is closed by the ***system*** service only after sending the last message to the ***query*** service. 
+
+Update the ***SystemService*** class to implement the server streaming RPC call.
+Replace the ***SystemService*** class.
+
+> To open the SystemService.java file in your IDE, select
+> **File** > **Open** > guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+
+::openFile{path="/home/project/guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+
+
+
+```java
+package io.openliberty.guides.system;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import io.grpc.stub.StreamObserver;
+import io.openliberty.guides.systemproto.SystemProperties;
+import io.openliberty.guides.systemproto.SystemProperty;
+import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
+import io.openliberty.guides.systemproto.SystemPropertyValue;
+import io.openliberty.guides.systemproto.SystemServiceGrpc;
+
+public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
+
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
+
+    public SystemService() {
     }
 
-    public void updateEvent(Event event) {
-        em.merge(event);
+    @Override
+    public void getProperty(
+        SystemPropertyName request, StreamObserver<SystemPropertyValue> observer) {
+
+        String pName = request.getPropertyName();
+        String pValue = System.getProperty(pName);
+        SystemPropertyValue value = SystemPropertyValue
+                                        .newBuilder()
+                                        .setPropertyValue(pValue)
+                                        .build();
+
+        observer.onNext(value);
+        observer.onCompleted();
+
     }
 
-    public void deleteEvent(Event event) {
-        em.remove(event);
+    @Override
+    public void getServerStreamingProperties(
+        SystemPropertyPrefix request, StreamObserver<SystemProperty> observer) {
+
+        String prefix = request.getPropertyPrefix();
+        System.getProperties()
+              .stringPropertyNames()
+              .stream()
+              .filter(name -> name.startsWith(prefix))
+              .forEach(name -> {
+                  String pValue = System.getProperty(name);
+                  SystemProperty value = SystemProperty
+                      .newBuilder()
+                      .setPropertyName(name)
+                      .setPropertyValue(pValue)
+                      .build();
+                  observer.onNext(value);
+                  logger.info("server streaming sent property: " + name);
+               });
+        observer.onCompleted();
+        logger.info("server streaming was completed!");
     }
 
-    public List<Event> readAllEvents() {
-        return em.createNamedQuery("Event.findAll", Event.class).getResultList();
+
+}
+```
+
+
+
+The ***getServerStreamingProperties()*** method implements the server streaming RPC call. The ***getPropertyPrefix()*** getter method retrieves the property prefix from the client. Properties that start with the ***prefix*** are filtered out. For each property, a ***SystemProperty*** message is built and streamed to the client through the ***StreamObserver*** by using its ***onNext()*** method. When all properties are streamed, the service stops streaming by calling the ***onComplete()*** method.
+
+Update the ***PropertiesResource*** class to implement the ***/query/properties/os*** endpoint of the ***query*** service.
+
+Replace the ***PropertiesResource*** class.
+
+> To open the PropertiesResource.java file in your IDE, select
+> **File** > **Open** > guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java, or click the following button
+
+::openFile{path="/home/project/guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java"}
+
+
+
+```java
+package io.openliberty.guides.query;
+
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.logging.Logger;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.stub.StreamObserver;
+import io.openliberty.guides.systemproto.SystemProperties;
+import io.openliberty.guides.systemproto.SystemProperty;
+import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
+import io.openliberty.guides.systemproto.SystemPropertyValue;
+import io.openliberty.guides.systemproto.SystemServiceGrpc;
+import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceBlockingStub;
+import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceStub;
+
+@ApplicationScoped
+@Path("/properties")
+public class PropertiesResource {
+
+    private static Logger logger = Logger.getLogger(PropertiesResource.class.getName());
+
+    @Inject
+    @ConfigProperty(name = "system.hostname", defaultValue = "localhost")
+    String SYSTEM_HOST;
+
+    @Inject
+    @ConfigProperty(name = "system.port", defaultValue = "9080")
+    int SYSTEM_PORT;
+
+    @GET
+    @Path("/{property}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getPropertiesString(@PathParam("property") String property) {
+
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
+                                     .usePlaintext().build();
+        SystemServiceBlockingStub client = SystemServiceGrpc.newBlockingStub(channel);
+        SystemPropertyName request = SystemPropertyName.newBuilder()
+                                             .setPropertyName(property).build();
+        SystemPropertyValue response = client.getProperty(request);
+        channel.shutdownNow();
+        return response.getPropertyValue();
     }
 
-    public List<Event> findEvent(String name, String location, String time) {
-        return em.createNamedQuery("Event.findEvent", Event.class)
-            .setParameter("name", name)
-            .setParameter("location", location)
-            .setParameter("time", time).getResultList();
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Properties getOSProperties() {
+
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
+                                     .usePlaintext().build();
+        SystemServiceStub client = SystemServiceGrpc.newStub(channel);
+
+        Properties properties = new Properties();
+        CountDownLatch countDown = new CountDownLatch(1);
+        SystemPropertyPrefix request = SystemPropertyPrefix.newBuilder()
+                                         .setPropertyPrefix("os.").build();
+        client.getServerStreamingProperties(
+            request, new StreamObserver<SystemProperty>() {
+
+            @Override
+            public void onNext(SystemProperty value) {
+                logger.info("server streaming received: "
+                   + value.getPropertyName() + "=" + value.getPropertyValue());
+                properties.put(value.getPropertyName(), value.getPropertyValue());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                t.printStackTrace();
+            }
+
+            @Override
+            public void onCompleted() {
+                logger.info("server streaming completed");
+                countDown.countDown();
+            }
+        });
+
+
+        try {
+            countDown.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        channel.shutdownNow();
+
+        return properties;
+    }
+
+
+}
+```
+
+
+
+The endpoint creates a ***channel*** to the ***system*** service and a ***client*** by using the ***SystemServiceGrpc.newStub()*** API. Then, it calls the ***getServerStreamingProperties()*** method with an implementation of the ***StreamObserver*** interface. The ***onNext()*** method receives messages streaming from the server service individually and stores them into the ***properties*** placeholder. After all properties are received, the ***system*** service shuts down the ***channel*** and returns the placeholder. Because the RPC call is asynchronous, a ***CountDownLatch*** instance synchronizes the streaming flow.
+
+Click the following button to visit the ***/query/properties/os*** endpoint to test out the server streaming call. The ***os.*** properties from the ***system*** service are displayed. Observe the output from the consoles running the ***system*** and ***query*** services.
+
+::startApplication{port="9081" display="external" name="/query/properties/os" route="/query/properties/os"}
+
+
+
+::page{title="Implementing the client streaming call"}
+
+In the client streaming call, the ***query*** client service provides the ***/query/properties/user*** endpoint, which streams the user properties to the ***system*** server service. The ***system*** service returns a map of user properties with their values.
+
+Update the ***SystemService*** class to implement the client streaming RPC call.
+
+Replace the ***SystemService*** class.
+
+> To open the SystemService.java file in your IDE, select
+> **File** > **Open** > guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+
+::openFile{path="/home/project/guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+
+
+
+```java
+package io.openliberty.guides.system;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import io.grpc.stub.StreamObserver;
+import io.openliberty.guides.systemproto.SystemProperties;
+import io.openliberty.guides.systemproto.SystemProperty;
+import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
+import io.openliberty.guides.systemproto.SystemPropertyValue;
+import io.openliberty.guides.systemproto.SystemServiceGrpc;
+
+public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
+
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
+
+    public SystemService() {
+    }
+
+    @Override
+    public void getProperty(
+        SystemPropertyName request, StreamObserver<SystemPropertyValue> observer) {
+
+        String pName = request.getPropertyName();
+        String pValue = System.getProperty(pName);
+        SystemPropertyValue value = SystemPropertyValue
+                                        .newBuilder()
+                                        .setPropertyValue(pValue)
+                                        .build();
+
+        observer.onNext(value);
+        observer.onCompleted();
+
+    }
+
+    @Override
+    public void getServerStreamingProperties(
+        SystemPropertyPrefix request, StreamObserver<SystemProperty> observer) {
+
+        String prefix = request.getPropertyPrefix();
+        System.getProperties()
+              .stringPropertyNames()
+              .stream()
+              .filter(name -> name.startsWith(prefix))
+              .forEach(name -> {
+                  String pValue = System.getProperty(name);
+                  SystemProperty value = SystemProperty
+                      .newBuilder()
+                      .setPropertyName(name)
+                      .setPropertyValue(pValue)
+                      .build();
+                  observer.onNext(value);
+                  logger.info("server streaming sent property: " + name);
+               });
+        observer.onCompleted();
+        logger.info("server streaming was completed!");
+    }
+
+    @Override
+    public StreamObserver<SystemPropertyName> getClientStreamingProperties(
+        StreamObserver<SystemProperties> observer) {
+
+        return new StreamObserver<SystemPropertyName>() {
+
+            private Map<String, String> properties = new HashMap<String, String>();
+
+            @Override
+            public void onNext(SystemPropertyName spn) {
+                String pName = spn.getPropertyName();
+                String pValue = System.getProperty(pName);
+                logger.info("client streaming received property: " + pName);
+                properties.put(pName, pValue);
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                t.printStackTrace();
+            }
+
+            @Override
+            public void onCompleted() {
+                SystemProperties value = SystemProperties.newBuilder()
+                                             .putAllProperties(properties)
+                                             .build();
+                observer.onNext(value);
+                observer.onCompleted();
+                logger.info("client streaming was completed!");
+            }
+        };
+    }
+
+}
+```
+
+
+
+The ***getClientStreamingProperties()*** method implements client streaming RPC call. This method returns an instance of the ***StreamObserver*** interface. Its ***onNext()*** method receives the messages from the client individually and stores the property values into the ***properties*** map placeholder. When the streaming is completed, the ***properties*** placeholder is sent back to the client by the ***onCompleted()*** method.
+
+
+Update the ***PropertiesResource*** class to implement the ***/query/properties/user*** endpoint of the query service.
+
+Replace the ***PropertiesResource*** class.
+
+> To open the PropertiesResource.java file in your IDE, select
+> **File** > **Open** > guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java, or click the following button
+
+::openFile{path="/home/project/guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java"}
+
+
+
+```java
+package io.openliberty.guides.query;
+
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.logging.Logger;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.stub.StreamObserver;
+import io.openliberty.guides.systemproto.SystemProperties;
+import io.openliberty.guides.systemproto.SystemProperty;
+import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
+import io.openliberty.guides.systemproto.SystemPropertyValue;
+import io.openliberty.guides.systemproto.SystemServiceGrpc;
+import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceBlockingStub;
+import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceStub;
+
+@ApplicationScoped
+@Path("/properties")
+public class PropertiesResource {
+
+    private static Logger logger = Logger.getLogger(PropertiesResource.class.getName());
+
+    @Inject
+    @ConfigProperty(name = "system.hostname", defaultValue = "localhost")
+    String SYSTEM_HOST;
+
+    @Inject
+    @ConfigProperty(name = "system.port", defaultValue = "9080")
+    int SYSTEM_PORT;
+
+    @GET
+    @Path("/{property}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getPropertiesString(@PathParam("property") String property) {
+
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
+                                     .usePlaintext().build();
+        SystemServiceBlockingStub client = SystemServiceGrpc.newBlockingStub(channel);
+        SystemPropertyName request = SystemPropertyName.newBuilder()
+                                             .setPropertyName(property).build();
+        SystemPropertyValue response = client.getProperty(request);
+        channel.shutdownNow();
+        return response.getPropertyValue();
+    }
+
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Properties getOSProperties() {
+
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
+                                     .usePlaintext().build();
+        SystemServiceStub client = SystemServiceGrpc.newStub(channel);
+
+        Properties properties = new Properties();
+        CountDownLatch countDown = new CountDownLatch(1);
+        SystemPropertyPrefix request = SystemPropertyPrefix.newBuilder()
+                                         .setPropertyPrefix("os.").build();
+        client.getServerStreamingProperties(
+            request, new StreamObserver<SystemProperty>() {
+
+            @Override
+            public void onNext(SystemProperty value) {
+                logger.info("server streaming received: "
+                   + value.getPropertyName() + "=" + value.getPropertyValue());
+                properties.put(value.getPropertyName(), value.getPropertyValue());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                t.printStackTrace();
+            }
+
+            @Override
+            public void onCompleted() {
+                logger.info("server streaming completed");
+                countDown.countDown();
+            }
+        });
+
+
+        try {
+            countDown.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        channel.shutdownNow();
+
+        return properties;
+    }
+
+    @GET
+    @Path("/user")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Properties getUserProperties() {
+
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
+                                     .usePlaintext().build();
+        SystemServiceStub client = SystemServiceGrpc.newStub(channel);
+        CountDownLatch countDown = new CountDownLatch(1);
+        Properties properties = new Properties();
+
+        StreamObserver<SystemPropertyName> stream = client.getClientStreamingProperties(
+            new StreamObserver<SystemProperties>() {
+
+                @Override
+                public void onNext(SystemProperties value) {
+                    logger.info("client streaming received a map that has "
+                        + value.getPropertiesCount() + " properties");
+                    properties.putAll(value.getPropertiesMap());
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    t.printStackTrace();
+                }
+
+                @Override
+                public void onCompleted() {
+                    logger.info("client streaming completed");
+                    countDown.countDown();
+                }
+            });
+
+        List<String> keys = System.getProperties().stringPropertyNames().stream()
+                                  .filter(k -> k.startsWith("user."))
+                                  .collect(Collectors.toList());
+
+        keys.stream()
+            .map(k -> SystemPropertyName.newBuilder().setPropertyName(k).build())
+            .forEach(stream::onNext);
+        stream.onCompleted();
+
+        try {
+            countDown.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        channel.shutdownNow();
+
+        return properties;
+    }
+
+}
+```
+
+
+
+After a connection is created between the two services, the ***client.getClientStreamingProperties()*** method is called to get a ***stream*** and collect the properties with property names that are prefixed by ***user.***. The method creates a ***SystemPropertyName*** message individually and sends the message to the server by the ***stream::onNext*** action. When all property names are sent, the ***onCompleted()*** method is called to finish the streaming. Again, a ***CountDownLatch*** instance synchronizes the streaming flow.
+
+Click the following button to visit the ***/query/properties/user*** endpoint to test the client streaming call. The ***user.*** properties from the ***system*** service are displayed. Observe the output from the consoles running the ***system*** and ***query*** services.
+
+::startApplication{port="9081" display="external" name="/query/properties/user" route="/query/properties/user"}
+
+
+::page{title="Implementing the bidirectional streaming call"}
+
+In the bidirectional streaming call, the ***query*** client service provides the ***/query/properties/java*** endpoint, which streams the property names that start with ***java.*** to the ***system*** server service. The ***system*** service streams the property values back to the ***query*** service.
+
+Update the ***SystemService*** class to implement the bidirectional streaming RPC call.
+
+Replace the ***SystemService*** class.
+
+> To open the SystemService.java file in your IDE, select
+> **File** > **Open** > guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java, or click the following button
+
+::openFile{path="/home/project/guide-grpc-intro/start/system/src/main/java/io/openliberty/guides/system/SystemService.java"}
+
+
+
+```java
+package io.openliberty.guides.system;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import io.grpc.stub.StreamObserver;
+import io.openliberty.guides.systemproto.SystemProperties;
+import io.openliberty.guides.systemproto.SystemProperty;
+import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
+import io.openliberty.guides.systemproto.SystemPropertyValue;
+import io.openliberty.guides.systemproto.SystemServiceGrpc;
+
+public class SystemService extends SystemServiceGrpc.SystemServiceImplBase {
+
+    private static Logger logger = Logger.getLogger(SystemService.class.getName());
+
+    public SystemService() {
+    }
+
+    @Override
+    public void getProperty(
+        SystemPropertyName request, StreamObserver<SystemPropertyValue> observer) {
+
+        String pName = request.getPropertyName();
+        String pValue = System.getProperty(pName);
+        SystemPropertyValue value = SystemPropertyValue
+                                        .newBuilder()
+                                        .setPropertyValue(pValue)
+                                        .build();
+
+        observer.onNext(value);
+        observer.onCompleted();
+
+    }
+
+    @Override
+    public void getServerStreamingProperties(
+        SystemPropertyPrefix request, StreamObserver<SystemProperty> observer) {
+
+        String prefix = request.getPropertyPrefix();
+        System.getProperties()
+              .stringPropertyNames()
+              .stream()
+              .filter(name -> name.startsWith(prefix))
+              .forEach(name -> {
+                  String pValue = System.getProperty(name);
+                  SystemProperty value = SystemProperty
+                      .newBuilder()
+                      .setPropertyName(name)
+                      .setPropertyValue(pValue)
+                      .build();
+                  observer.onNext(value);
+                  logger.info("server streaming sent property: " + name);
+               });
+        observer.onCompleted();
+        logger.info("server streaming was completed!");
+    }
+
+    @Override
+    public StreamObserver<SystemPropertyName> getClientStreamingProperties(
+        StreamObserver<SystemProperties> observer) {
+
+        return new StreamObserver<SystemPropertyName>() {
+
+            private Map<String, String> properties = new HashMap<String, String>();
+
+            @Override
+            public void onNext(SystemPropertyName spn) {
+                String pName = spn.getPropertyName();
+                String pValue = System.getProperty(pName);
+                logger.info("client streaming received property: " + pName);
+                properties.put(pName, pValue);
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                t.printStackTrace();
+            }
+
+            @Override
+            public void onCompleted() {
+                SystemProperties value = SystemProperties.newBuilder()
+                                             .putAllProperties(properties)
+                                             .build();
+                observer.onNext(value);
+                observer.onCompleted();
+                logger.info("client streaming was completed!");
+            }
+        };
+    }
+
+    @Override
+    public StreamObserver<SystemPropertyName> getBidirectionalProperties(
+        StreamObserver<SystemProperty> observer) {
+
+        return new StreamObserver<SystemPropertyName>() {
+            @Override
+            public void onNext(SystemPropertyName spn) {
+                String pName = spn.getPropertyName();
+                String pValue = System.getProperty(pName);
+                logger.info("bi-directional streaming received: " + pName);
+                SystemProperty value = SystemProperty.newBuilder()
+                                           .setPropertyName(pName)
+                                           .setPropertyValue(pValue)
+                                           .build();
+                observer.onNext(value);
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                t.printStackTrace();
+            }
+
+            @Override
+            public void onCompleted() {
+                observer.onCompleted();
+                logger.info("bi-directional streaming was completed!");
+            }
+        };
     }
 }
 ```
 
 
 
-To use the entity manager at runtime, inject it into the CDI bean through the ***@PersistenceContext*** annotation. The entity manager interacts with the persistence context. Every ***EntityManager*** instance is associated with a persistence context. The persistence context manages a set of entities and is aware of the different states that an entity can have. The persistence context synchronizes with the database when a transaction commits.
+The ***getBidirectionalProperties()*** method implements bidirectional streaming RPC call. This method returns an instance of the ***StreamObserver*** interface. Its ***onNext()*** method receives the messages from the client individually, creates a ***SystemProperty*** message with the property name and value, and sends the message back to the client. When the client streaming is completed, the method closes the server streaming by calling the ***onCompleted()*** method.
 
-The ***EventDao*** class has a method for each CRUD operation, so let's break them down:
+Update the ***PropertiesResource*** class to implement of ***/query/properties/java*** endpoint of the query service.
 
-* The ***createEvent()*** method persists an instance of the ***Event*** entity class to the data store by calling the ***persist()*** method on an ***EntityManager*** instance. The entity instance becomes managed and changes to it will be tracked by the entity manager.
+Replace the ***PropertiesResource*** class.
 
-* The ***readEvent()*** method returns an instance of the ***Event*** entity class with the specified primary key by calling the ***find()*** method on an ***EntityManager*** instance. If the event instance is found, it is returned in a managed state, but, if the event instance is not found, ***null*** is returned.
+> To open the PropertiesResource.java file in your IDE, select
+> **File** > **Open** > guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java, or click the following button
 
-* The ***readAllEvents()*** method demonstrates an alternative way to retrieve event objects from the database. This method returns a list of instances of the ***Event*** entity class by using the ***Event.findAll*** query specified in the ***@NamedQuery*** annotation on the ***Event*** class. Similarly, the ***findEvent()*** method uses the ***Event.findEvent*** named query to find an event with the given name, location and time. 
-
-
-* The ***updateEvent()*** method creates a managed instance of a detached entity instance. The entity manager automatically tracks all managed entity objects in its persistence context for changes and synchronizes them with the database. However, if an entity becomes detached, you must merge that entity into the persistence context by calling the ***merge()*** method so that changes to loaded fields of the detached entity are tracked.
-
-* The ***deleteEvent()*** method removes an instance of the ***Event*** entity class from the database by calling the ***remove()*** method on an ***EntityManager*** instance. The state of the entity is changed to removed and is removed from the database upon transaction commit. 
-
-The DAO is injected into the ***backendServices/src/main/java/io/openliberty/guides/event/resources/EventResource.java*** class and used to access and persist data. The ***@Transactional*** annotation is used in the ***EventResource*** class to declaratively control the transaction boundaries on the ***@RequestScoped*** CDI bean. This ensures that the methods run within the boundaries of an active global transaction, which is why it is not necessary to explicitly begin, commit or rollback transactions. At the end of the transactional method invocation, the transaction commits and the persistence context flushes any changes to Event entity instances it is managing to the database.
+::openFile{path="/home/project/guide-grpc-intro/start/query/src/main/java/io/openliberty/guides/query/PropertiesResource.java"}
 
 
 
-::page{title="Running the application"}
+```java
+package io.openliberty.guides.query;
 
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.logging.Logger;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.stub.StreamObserver;
+import io.openliberty.guides.systemproto.SystemProperties;
+import io.openliberty.guides.systemproto.SystemProperty;
+import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
+import io.openliberty.guides.systemproto.SystemPropertyValue;
+import io.openliberty.guides.systemproto.SystemServiceGrpc;
+import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceBlockingStub;
+import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceStub;
+
+@ApplicationScoped
+@Path("/properties")
+public class PropertiesResource {
+
+    private static Logger logger = Logger.getLogger(PropertiesResource.class.getName());
+
+    @Inject
+    @ConfigProperty(name = "system.hostname", defaultValue = "localhost")
+    String SYSTEM_HOST;
+
+    @Inject
+    @ConfigProperty(name = "system.port", defaultValue = "9080")
+    int SYSTEM_PORT;
+
+    @GET
+    @Path("/{property}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getPropertiesString(@PathParam("property") String property) {
+
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
+                                     .usePlaintext().build();
+        SystemServiceBlockingStub client = SystemServiceGrpc.newBlockingStub(channel);
+        SystemPropertyName request = SystemPropertyName.newBuilder()
+                                             .setPropertyName(property).build();
+        SystemPropertyValue response = client.getProperty(request);
+        channel.shutdownNow();
+        return response.getPropertyValue();
+    }
+
+    @GET
+    @Path("/os")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Properties getOSProperties() {
+
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
+                                     .usePlaintext().build();
+        SystemServiceStub client = SystemServiceGrpc.newStub(channel);
+
+        Properties properties = new Properties();
+        CountDownLatch countDown = new CountDownLatch(1);
+        SystemPropertyPrefix request = SystemPropertyPrefix.newBuilder()
+                                         .setPropertyPrefix("os.").build();
+        client.getServerStreamingProperties(
+            request, new StreamObserver<SystemProperty>() {
+
+            @Override
+            public void onNext(SystemProperty value) {
+                logger.info("server streaming received: "
+                   + value.getPropertyName() + "=" + value.getPropertyValue());
+                properties.put(value.getPropertyName(), value.getPropertyValue());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                t.printStackTrace();
+            }
+
+            @Override
+            public void onCompleted() {
+                logger.info("server streaming completed");
+                countDown.countDown();
+            }
+        });
 
 
-When the server is running, click the following button to view the Event Manager application:
-::startApplication{port="9090" display="external" name="Visit Event Manager application" route="/"}
+        try {
+            countDown.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
-Click ***Create Event*** in the left navigation bar to create events that are persisted to the database. After you create an event, it is available to view, update, and delete in the ***Current Events*** section.
+        channel.shutdownNow();
+
+        return properties;
+    }
+
+    @GET
+    @Path("/user")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Properties getUserProperties() {
+
+        ManagedChannel channel = ManagedChannelBuilder
+                                     .forAddress(SYSTEM_HOST, SYSTEM_PORT)
+                                     .usePlaintext().build();
+        SystemServiceStub client = SystemServiceGrpc.newStub(channel);
+        CountDownLatch countDown = new CountDownLatch(1);
+        Properties properties = new Properties();
+
+        StreamObserver<SystemPropertyName> stream = client.getClientStreamingProperties(
+            new StreamObserver<SystemProperties>() {
+
+                @Override
+                public void onNext(SystemProperties value) {
+                    logger.info("client streaming received a map that has "
+                        + value.getPropertiesCount() + " properties");
+                    properties.putAll(value.getPropertiesMap());
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    t.printStackTrace();
+                }
+
+                @Override
+                public void onCompleted() {
+                    logger.info("client streaming completed");
+                    countDown.countDown();
+                }
+            });
+
+        List<String> keys = System.getProperties().stringPropertyNames().stream()
+                                  .filter(k -> k.startsWith("user."))
+                                  .collect(Collectors.toList());
+
+        keys.stream()
+            .map(k -> SystemPropertyName.newBuilder().setPropertyName(k).build())
+            .forEach(stream::onNext);
+        stream.onCompleted();
+
+        try {
+            countDown.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        channel.shutdownNow();
+
+        return properties;
+    }
+
+    @GET
+    @Path("/java")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Properties getJavaProperties() {
+
+        ManagedChannel channel = ManagedChannelBuilder
+                                      .forAddress(SYSTEM_HOST, SYSTEM_PORT)
+                                      .usePlaintext().build();
+        SystemServiceStub client = SystemServiceGrpc.newStub(channel);
+        Properties properties = new Properties();
+        CountDownLatch countDown = new CountDownLatch(1);
+
+        StreamObserver<SystemPropertyName> stream = client.getBidirectionalProperties(
+                new StreamObserver<SystemProperty>() {
+
+                    @Override
+                    public void onNext(SystemProperty value) {
+                        logger.info("bidirectional streaming received: "
+                            + value.getPropertyName() + "=" + value.getPropertyValue());
+                        properties.put(value.getPropertyName(),
+                                       value.getPropertyValue());
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+                        t.printStackTrace();
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        logger.info("bidirectional streaming completed");
+                        countDown.countDown();
+                    }
+                });
+
+        List<String> keys = System.getProperties().stringPropertyNames().stream()
+                                  .filter(k -> k.startsWith("java."))
+                                  .collect(Collectors.toList());
+
+        keys.stream()
+              .map(k -> SystemPropertyName.newBuilder().setPropertyName(k).build())
+              .forEach(stream::onNext);
+        stream.onCompleted();
+
+        try {
+            countDown.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        channel.shutdownNow();
+
+        return properties;
+    }
+}
+```
+
+
+
+After a connection is created between the two services, the ***client.getBidirectionalProperties()*** method is called with an implementation of the ***StreamObserver*** interface. The ***onNext()*** method receives messages that are streaming from the server individually and stores them into the ***properties*** placeholder. Then, collect the properties . For each property name that starts with ***java.***, a ***SystemPropertyName*** message is created and sent to the server by the ***stream::onNext*** action. When all property names are sent, the streaming is ended by calling the ***onCompleted()*** method. Again, a ***CountDownLatch*** instance synchronizes the streaming flow.
+
+Click the following button to visit the ***/query/properties/java*** endpoint to test out the bidirectional streaming call. The ***java.*** properties from the ***system*** service are displayed. Observe the output from the consoles running the ***system*** and ***query*** services.
+
+::startApplication{port="9081" display="external" name="/query/properties/java" route="/query/properties/java"}
 
 
 ::page{title="Testing the application"}
-
-Create the ***EventEntityIT*** class.
+Create the ***QueryIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java 
+touch /home/project/guide-grpc-intro/start/query/src/test/java/it/io/openliberty/guides/query/QueryIT.java
 ```
 
 
-> Then, to open the EventEntityIT.java file in your IDE, select
-> **File** > **Open** > guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java, or click the following button
+> Then, to open the QueryIT.java file in your IDE, select
+> **File** > **Open** > guide-grpc-intro/start/query/src/test/java/it/io/openliberty/guides/query/QueryIT.java, or click the following button
 
-::openFile{path="/home/project/guide-jpa-intro/start/backendServices/src/test/java/it/io/openliberty/guides/event/EventEntityIT.java"}
+::openFile{path="/home/project/guide-grpc-intro/start/query/src/test/java/it/io/openliberty/guides/query/QueryIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.event;
+package it.io.openliberty.guides.query;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import java.util.HashMap;
+import java.net.MalformedURLException;
+
 import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Form;
-import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
 
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Test;
-import io.openliberty.guides.event.models.Event;
 
-public class EventEntityIT extends EventIT {
+public class QueryIT {
 
-    private static final String JSONFIELD_LOCATION = "location";
-    private static final String JSONFIELD_NAME = "name";
-    private static final String JSONFIELD_TIME = "time";
-    private static final String EVENT_TIME = "12:00 PM, January 1 2018";
-    private static final String EVENT_LOCATION = "IBM";
-    private static final String EVENT_NAME = "JPA Guide";
-    private static final String UPDATE_EVENT_TIME = "12:00 PM, February 1 2018";
-    private static final String UPDATE_EVENT_LOCATION = "IBM Updated";
-    private static final String UPDATE_EVENT_NAME = "JPA Guide Updated";
-
-    private static final int NO_CONTENT_CODE = Status.NO_CONTENT.getStatusCode();
-    private static final int NOT_FOUND_CODE = Status.NOT_FOUND.getStatusCode();
+    private static final String PORT = System.getProperty("http.port", "9081");
+    private static final String URL = "http://localhost:" + PORT + "/";
+    private static Client client;
 
     @BeforeAll
-    public static void oneTimeSetup() {
-        port = System.getProperty("backend.http.port");
-        baseUrl = "http://localhost:" + port + "/";
-    }
-
-    @BeforeEach
-    public void setup() {
-        form = new Form();
+    public static void setup() {
         client = ClientBuilder.newClient();
-
-        eventForm = new HashMap<String, String>();
-
-        eventForm.put(JSONFIELD_NAME, EVENT_NAME);
-        eventForm.put(JSONFIELD_LOCATION, EVENT_LOCATION);
-        eventForm.put(JSONFIELD_TIME, EVENT_TIME);
     }
 
-    @Test
-    public void testInvalidRead() {
-        assertEquals(true, getIndividualEvent(-1).isEmpty(),
-          "Reading an event that does not exist should return an empty list");
-    }
-
-    @Test
-    public void testInvalidDelete() {
-        int deleteResponse = deleteRequest(-1);
-        assertEquals(NOT_FOUND_CODE, deleteResponse,
-          "Trying to delete an event that does not exist should return the "
-          + "HTTP response code " + NOT_FOUND_CODE);
-    }
-
-    @Test
-    public void testInvalidUpdate() {
-        int updateResponse = updateRequest(eventForm, -1);
-        assertEquals(NOT_FOUND_CODE, updateResponse,
-          "Trying to update an event that does not exist should return the "
-          + "HTTP response code " + NOT_FOUND_CODE);
-    }
-
-    @Test
-    public void testReadIndividualEvent() {
-        int postResponse = postRequest(eventForm);
-        assertEquals(NO_CONTENT_CODE, postResponse,
-          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
-
-        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-        JsonObject event = findEvent(e);
-        event = getIndividualEvent(event.getInt("id"));
-        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-
-        int deleteResponse = deleteRequest(event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, deleteResponse,
-          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
-    }
-
-    @Test
-    public void testCRUD() {
-        int eventCount = getRequest().size();
-        int postResponse = postRequest(eventForm);
-        assertEquals(NO_CONTENT_CODE, postResponse,
-          "Creating an event should return the HTTP reponse code " + NO_CONTENT_CODE);
-
-        Event e = new Event(EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-        JsonObject event = findEvent(e);
-        assertData(event, EVENT_NAME, EVENT_LOCATION, EVENT_TIME);
-
-        eventForm.put(JSONFIELD_NAME, UPDATE_EVENT_NAME);
-        eventForm.put(JSONFIELD_LOCATION, UPDATE_EVENT_LOCATION);
-        eventForm.put(JSONFIELD_TIME, UPDATE_EVENT_TIME);
-        int updateResponse = updateRequest(eventForm, event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, updateResponse,
-          "Updating an event should return the HTTP response code " + NO_CONTENT_CODE);
-
-        e = new Event(UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
-        event = findEvent(e);
-        assertData(event, UPDATE_EVENT_NAME, UPDATE_EVENT_LOCATION, UPDATE_EVENT_TIME);
-
-        int deleteResponse = deleteRequest(event.getInt("id"));
-        assertEquals(NO_CONTENT_CODE, deleteResponse,
-          "Deleting an event should return the HTTP response code " + NO_CONTENT_CODE);
-        assertEquals(eventCount, getRequest().size(),
-          "Total number of events stored should be the same after testing "
-          + "CRUD operations.");
-    }
-
-    @AfterEach
-    public void teardown() {
-        response.close();
+    @AfterAll
+    public static void teardown() {
         client.close();
     }
 
+    @Test
+    public void testGetPropertiesString() throws MalformedURLException {
+        WebTarget target = client.target(URL + "query/properties/os.name");
+        Response response = target.request().get();
+        assertEquals(200, response.getStatus(),
+                     "Incorrect response code from " + target.getUri().getPath());
+        assertFalse(response.readEntity(String.class).isEmpty(),
+                    "response should not be empty.");
+        response.close();
+    }
+
+    @Test
+    public void testGetOSProperties() throws MalformedURLException {
+        WebTarget target = client.target(URL + "query/properties/os");
+        Response response = target.request().get();
+        assertEquals(200, response.getStatus(),
+                     "Incorrect response code from " + target.getUri().getPath());
+        JsonObject obj = response.readEntity(JsonObject.class);
+        assertFalse(obj.getString("os.name").isEmpty(),
+                    "os.name should not be empty.");
+        response.close();
+    }
+
+    @Test
+    public void testGetUserProperties() throws MalformedURLException {
+        WebTarget target = client.target(URL + "query/properties/user");
+        Response response = target.request().get();
+        assertEquals(200, response.getStatus(),
+                     "Incorrect response code from " + target.getUri().getPath());
+        JsonObject obj = response.readEntity(JsonObject.class);
+        assertFalse(obj.getString("user.name").isEmpty(),
+                    "user.name should not be empty.");
+        response.close();
+    }
+
+    @Test
+    public void testGetJavaProperties() throws MalformedURLException {
+        WebTarget target = client.target(URL + "query/properties/java");
+        Response response = target.request().get();
+        assertEquals(200, response.getStatus(),
+                     "Incorrect response code from " + target.getUri().getPath());
+        JsonObject obj = response.readEntity(JsonObject.class);
+        assertFalse(obj.getString("java.home").isEmpty(),
+                    "java.home should not be empty.");
+        response.close();
+    }
 }
 ```
 
 
+Each test case tests one type of the gRPC calls that you implemented.
 
-The ***testInvalidRead()***, ***testInvalidDelete()*** and ***testInvalidUpdate()*** methods use a primary key that is not in the database to test reading, updating and deleting an event that does not exist, respectively.
+The ***testGetPropertiesString()*** tests the ***/query/properties/os.name*** endpoint and confirms that a response is received. 
 
-The ***testReadIndividualEvent()*** method persists a test event to the database and retrieves the event object from the database using the primary key of the entity.
+The ***testGetOSProperties()*** tests the ***/query/properties/os*** endpoint and confirms that a response is received. 
 
-The ***testCRUD()*** method creates a test event and persists it to the database. The event object is then retrieved from the database to verify that the test event was actually persisted. Next, the name, location, and time of the test event are updated. The event object is retrieved from the database to verify that the updated event is stored. Finally, the updated test event is deleted and one final check is done to ensure that the updated test event is no longer stored in the database.
+The ***testGetUserProperties()*** tests the ***/query/properties/user*** endpoint and confirms that a response is received. 
+
+The ***testGetJavaProperties()*** tests the ***/query/properties/java*** endpoint and confirms that a response is received. 
 
 ### Running the tests
 
-Since you started Open Liberty in dev mode, press the ***enter/return*** key in the command-line session where you started the ***backendServices*** service to run the tests for the ***backendServices***.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started the ***query*** service.
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.event.EventEntityIT
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.703 sec - in it.io.openliberty.guides.event.EventEntityIT
+Running it.io.openliberty.guides.query.QueryIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.247 s - in it.io.openliberty.guides.query.QueryIT
 
-Results :
+Results:
 
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are done checking out the services, exit dev mode by pressing CTRL+C in the command-line sessions where you ran the ***frontendUI*** and ***backendServices*** services,  or by typing ***q*** and then pressing the ***enter/return*** key. Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in another command-line session for the ***frontendUI*** and ***backendServices*** services:
+When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***query*** services,  or by typing ***q*** and then pressing the ***enter/return*** key. Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in another command-line session for the ***system*** and ***query*** services:
 ```bash
-cd /home/project/guide-jpa-intro/start
-mvn -pl frontendUI liberty:stop
-mvn -pl backendServices liberty:stop
+cd /home/project/guide-grpc-intro/start
+mvn -pl system liberty:stop
+mvn -pl query liberty:stop
 ```
 
 
@@ -622,8 +1515,7 @@ mvn -pl backendServices liberty:stop
 
 ### Nice Work!
 
-You learned how to map Java objects to database tables by defining a JPA entity class whose instances are represented as rows in the table. You have injected a container-managed entity manager into a DAO and learned how to perform CRUD operations in your microservice in Open Liberty.
-
+You just developed a Java application that implements four types of gRPC calls with Open Liberty. For more information, see [Provide and consume gRPC services on Open Liberty](https://openliberty.io/docs/latest/grpc-services.html) in the Open Liberty docs.
 
 
 
@@ -632,32 +1524,32 @@ You learned how to map Java objects to database tables by defining a JPA entity 
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-jpa-intro*** project by running the following commands:
+Delete the ***guide-grpc-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-jpa-intro
+rm -fr guide-grpc-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Accessing%20and%20persisting%20data%20in%20microservices%20using%20Java%20Persistence%20API%20(JPA)&guide-id=cloud-hosted-guide-jpa-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Streaming%20messages%20between%20client%20and%20server%20services%20using%20gRPC&guide-id=cloud-hosted-guide-grpc-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-jpa-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-jpa-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-grpc-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-grpc-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 
 ### Log out of the session
