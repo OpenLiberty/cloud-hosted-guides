@@ -5,9 +5,9 @@ branch: lab-364-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 tool-type: theia
 ---
-::page{title="Welcome to the Securing microservices with JSON Web Tokens guide!"}
+::page{title="Welcome to the Configuring microservices running in Kubernetes guide!"}
 
-You'll explore how to control user and role access to microservices with MicroProfile JSON Web Token (MicroProfile JWT).
+Explore how to externalize configuration using MicroProfile Config and configure your microservices using Kubernetes ConfigMaps and Secrets.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -18,26 +18,14 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
+You will learn how and why to externalize your microservice's configuration. Externalized configuration is useful because configuration usually changes depending on your environment. You will also learn how to configure the environment by providing required values to your application using Kubernetes.
 
-You will add token-based authentication mechanisms to authenticate, authorize, and verify users by implementing MicroProfile JWT in the ***system*** microservice.
+MicroProfile Config provides useful annotations that you can use to inject configured values into your code. These values can come from any configuration source, such as environment variables. Using environment variables allows for easier deployment to different environments. To learn more about MicroProfile Config, read the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide.
 
-A JSON Web Token (JWT) is a self-contained token that is designed to securely transmit information as a JSON object. The information in this JSON object is digitally signed and can be trusted and verified by the recipient.
+Furthermore, you'll learn how to set these environment variables with ConfigMaps and Secrets. These resources are provided by Kubernetes and act as a data source for your environment variables. You can use a ConfigMap or Secret to set environment variables for any number of containers.
 
-For microservices, a token-based authentication mechanism offers a lightweight way for security controls and security tokens to propagate user identities across different services. JSON Web Token is becoming the most common token format because it follows well-defined and known standards.
-
-MicroProfile JWT standards define the required format of JWT for authentication and authorization. The standards also map JWT claims to various Jakarta EE container APIs and make the set of claims available through getter methods.
-
-In this guide, the application uses JWTs to authenticate a user, allowing them to make authorized requests to a secure backend service.
-
-You will be working with two services, a ***frontend*** service and a secure ***system*** backend service. The ***frontend*** service logs a user in, builds a JWT, and makes authorized requests to the secure ***system*** service for JVM system properties. The following diagram depicts the application that is used in this guide:
-
-![JWT frontend and system services](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-jwt/prod/assets/JWT_Diagram.png)
-
-
-The user signs in to the ***frontend*** service with a username and a password, at which point a JWT is created. The ***frontend*** service then makes requests, with the JWT included, to the ***system*** backend service. The secure ***system*** service verifies the JWT to ensure that the request came from the authorized ***frontend*** service. After the JWT is validated, the information in the claims, such as the user's role, can be trusted and used to determine which system properties the user has access to.
-
-To learn more about JSON Web Tokens, check out the [jwt.io website](https://jwt.io/introduction/). If you want to learn more about how JWTs can be used for user authentication and authorization, check out the Open Liberty [Single Sign-on documentation](https://openliberty.io/docs/latest/single-sign-on.html).
 
 ::page{title="Getting started"}
 
@@ -50,11 +38,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-jwt.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-config.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-microprofile-jwt.git
-cd guide-microprofile-jwt
+git clone https://github.com/openliberty/guide-kubernetes-microprofile-config.git
+cd guide-kubernetes-microprofile-config
 ```
 
 
@@ -62,361 +50,106 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-### Try what you'll build
 
-The ***finish*** directory contains the finished JWT security implementation for the services in the application. Try the finished application before you build your own.
+::page{title="Deploying the microservices"}
 
-To try out the application, run the following commands to navigate to the ***finish/frontend*** directory and deploy the ***frontend*** service to Open Liberty:
-
-```bash
-cd finish/frontend
-mvn liberty:run
-```
-
-Open another command-line session and run the following commands to navigate to the ***finish/system*** directory and deploy the ***system*** service to Open Liberty:
+The two microservices you will deploy are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster. To build these applications, navigate to the ***start*** directory and run the following command.
 
 ```bash
-cd finish/system
-mvn liberty:run
+cd start
+mvn clean package
 ```
 
-After you see the following message in both command-line sessions, both of your services are ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-
-To launch the front-end web application, click the following button. From here, you can log in to the application with the form-based login.
-::startApplication{port="9090" display="external" name="Launch Application" route="/"}
-
-Log in with one of the following usernames and its corresponding password:
-
-| *Username* | *Password* | *Role*
-| --- | --- | ---
-| bob | bobpwd | admin, user
-| alice | alicepwd | user
-| carl | carlpwd | user
-
-You're redirected to a page that displays information that the front end requested from the ***system*** service, such as the system username. If you log in as an ***admin***, you can also see the current OS. Click ***Log Out*** and log in as a ***user***. You'll see the message ***You are not authorized to access this system property*** because the ***user*** role doesn't have sufficient privileges to view current OS information. 
-
-Additionally, the ***groups*** claim of the JWT is read by the ***system*** service and requested by the front end to be displayed.
-
-
-You can try accessing these services without a JWT by going to the ***system*** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command from the terminal in the IDE:
-```bash
-curl -k https://localhost:8443/system/properties/os
-```
-
-The response is empty because you don't have access. Access is granted if a valid JWT is sent with the request. The following error also appears in the command-line session of the ***system*** service:
-
-```
-[ERROR] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-```
-
-When you are done with the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```bash
-mvn -pl system liberty:stop
-mvn -pl frontend liberty:stop
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 
-
-::page{title="Creating the secure system service"}
-
-
-To begin, run the following command to navigate to the ***start*** directory:
+Next, run the ***docker build*** commands to build container images for your application:
 ```bash
-cd /home/project/guide-microprofile-jwt/start
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following commands to navigate to the ***frontend*** directory and start the ***frontend*** service in dev mode:
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
+
+Push your images to the container registry on IBM Cloud with the following commands:
 
 ```bash
-cd frontend
-mvn liberty:dev
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 ```
 
-Open another command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in dev mode:
+Update the image names and set the image pull policy to **Always** so that the images in your IBM Cloud container registry are used, and remove the **nodePort** fields so that the ports can be automatically generated:
+
 ```bash
-cd system
-mvn liberty:dev
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
 ```
 
-After you see the following message, your application server in dev mode is ready:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-The ***system*** service provides endpoints for the ***frontend*** service to use to request system properties. This service is secure and requires a valid JWT to be included in requests that are made to it. The claims in the JWT are used to determine what properties the user has access to.
-
-Create the secure ***system*** service.
-
-Create the ***SystemResource*** class.
-
-> Run the following touch command in your terminal
+Run the following command to deploy the necessary Kubernetes resources to serve the applications.
 ```bash
-touch /home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java
+kubectl apply -f kubernetes.yaml
 ```
 
-
-> Then, to open the SystemResource.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java"}
-
-
-
-```java
-package io.openliberty.guides.system;
-
-import jakarta.json.JsonArray;
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.annotation.security.RolesAllowed;
-
-import org.eclipse.microprofile.jwt.Claim;
-
-@RequestScoped
-@Path("/properties")
-public class SystemResource {
-
-    @Inject
-    @Claim("groups")
-    private JsonArray roles;
-
-    @GET
-    @Path("/username")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin", "user" })
-    public String getUsername() {
-        return System.getProperties().getProperty("user.name");
-    }
-
-    @GET
-    @Path("/os")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin" })
-    public String getOS() {
-        return System.getProperties().getProperty("os.name");
-    }
-
-    @GET
-    @Path("/jwtroles")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "admin", "user" })
-    public String getRoles() {
-        return roles.toString();
-    }
-}
-```
-
-
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-This class has role-based access control. The role names that are used in the ***@RolesAllowed*** annotations are mapped to group names in the ***groups*** claim of the JWT, which results in an authorization decision wherever the security constraint is applied.
-
-The ***/username*** endpoint returns the system's username and is annotated with the ***@RolesAllowed({"admin, "user"})*** annotation. Only authenticated users with the role of ***admin*** or ***user*** can access this endpoint.
-
-The ***/os*** endpoint returns the system's current OS. Here, the ***@RolesAllowed*** annotation is limited to ***admin***, meaning that only authenticated users with the role of ***admin*** are able to access the endpoint.
-
-While the ***@RolesAllowed*** annotation automatically reads from the ***groups*** claim of the JWT to make an authorization decision, you can also manually access the claims of the JWT by using the ***@Claim*** annotation. In this case, the ***groups*** claim is injected into the ***roles*** JSON array. The roles that are parsed from the ***groups*** claim of the JWT are then exposed back to the front end at the ***/jwtroles*** endpoint. To read more about different claims and ways to access them, check out the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
-
-
-::page{title="Creating a client to access the secure system service"}
-
-Create a RESTful client interface for the ***frontend*** service.
-
-Create the ***SystemClient*** class.
-
-> Run the following touch command in your terminal
+When this command finishes, wait for the pods to be in the Ready state. Run the following command to view the status of the pods.
 ```bash
-touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java
+kubectl get pods
 ```
 
+When the pods are ready, the output shows ***1/1*** for READY and ***Running*** for STATUS.
 
-> Then, to open the SystemClient.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/client/SystemClient.java"}
-
-
-
-```java
-package io.openliberty.guides.frontend.client;
-
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.HeaderParam;
-
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-
-@RegisterRestClient(baseUri = "https://localhost:8443/system")
-@Path("/properties")
-@RequestScoped
-public interface SystemClient extends AutoCloseable {
-
-    @GET
-    @Path("/os")
-    @Produces(MediaType.APPLICATION_JSON)
-    String getOS(@HeaderParam("Authorization") String authHeader);
-
-    @GET
-    @Path("/username")
-    @Produces(MediaType.APPLICATION_JSON)
-    String getUsername(@HeaderParam("Authorization") String authHeader);
-
-    @GET
-    @Path("/jwtroles")
-    @Produces(MediaType.APPLICATION_JSON)
-    String getJwtRoles(@HeaderParam("Authorization") String authHeader);
-}
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-6bd97d9bf6-6d2cj     1/1       Running   0          34s
+inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
 ```
 
+After the pods are ready, you will make requests to your services.
 
 
-This interface declares methods for accessing each of the endpoints that were
-previously set up in the ***system*** service.
-
-The MicroProfile Rest Client feature automatically builds and generates a client implementation based on what is defined in the ***SystemClient*** interface. You don't need to set up the client and connect with the remote service.
-
-As discussed, the ***system*** service is secured and requests made to it must include a valid JWT in the ***Authorization*** header. The ***@HeaderParam*** annotations include the JWT by specifying that the value of the ***String authHeader*** parameter, which contains the JWT, be used as the value for the ***Authorization*** header. This header is included in all of the requests that are made to the ***system*** service through this client.
-
-Create the application bean that the front-end UI uses to request data.
-
-Create the ***ApplicationBean*** class.
-
-> Run the following touch command in your terminal
+In this IBM cloud environment, you need to set up port forwarding to access the services. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to set up port forwarding to access the **system** service.
 ```bash
-touch /home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
 ```
 
-
-> Then, to open the ApplicationBean.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-jwt/start/frontend/src/main/java/io/openliberty/guides/frontend/ApplicationBean.java"}
-
-
-
-```java
-package io.openliberty.guides.frontend;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-
-import org.eclipse.microprofile.rest.client.inject.RestClient;
-
-import io.openliberty.guides.frontend.client.SystemClient;
-import io.openliberty.guides.frontend.util.SessionUtils;
-
-
-@ApplicationScoped
-@Named
-public class ApplicationBean {
-
-    @Inject
-    @RestClient
-    private SystemClient defaultRestClient;
-
-    public String getJwt() {
-        String jwtTokenString = SessionUtils.getJwtToken();
-        String authHeader = "Bearer " + jwtTokenString;
-        return authHeader;
-    }
-
-    public String getOs() {
-        String authHeader = getJwt();
-        String os;
-        try {
-            os = defaultRestClient.getOS(authHeader);
-        } catch (Exception e) {
-            return "You are not authorized to access this system property";
-        }
-        return os;
-    }
-
-    public String getUsername() {
-        String authHeader = getJwt();
-        return defaultRestClient.getUsername(authHeader);
-    }
-
-    public String getJwtRoles() {
-        String authHeader = getJwt();
-        return defaultRestClient.getJwtRoles(authHeader);
-    }
-
-}
-```
-
-
-
-The application bean is used to populate the table in the front end by making requests for data through the ***defaultRestClient***, which is an injected instance of the ***SystemClient*** class that you created. The ***getOs()***, ***getUsername()***, and ***getJwtRoles()*** methods call their associated methods of the ***SystemClient*** class with the ***authHeader*** passed in as a parameter. The ***authHeader*** is a string that consists of the JWT with ***Bearer*** prefixed to it. The ***authHeader*** is included in the ***Authorization*** header of the subsequent requests that are made by the ***defaultRestClient*** instance.
-
-
-The JWT for these requests is retrieved from the session attributes with the ***getJwt()*** method. The JWT is stored in the session attributes by the provided ***LoginBean*** class. When the user logs in to the front end, the ***doLogin()*** method is called and builds the JWT. Then, the ***setAttribute()*** method stores it as an ***HttpSession*** attribute. The JWT is built by using the ***JwtBuilder*** APIs in the ***buildJwt()*** method. You can see that the ***claim()*** method is being used to set the ***groups*** and the ***aud*** claims of the token. The ***groups*** claim is used to provide the role-based access that you implemented. The ***aud*** claim is used to specify the audience that the JWT is intended for.
-
-::page{title="Configuring MicroProfile JWT"}
-
-Configure the ***mpJwt*** feature in the ***microprofile-config.properties*** file for the ***system*** service.
-
-Create the microprofile-config.properties file.
-
-> Run the following touch command in your terminal
+Then, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to set up port forwarding to access the **inventory** service.
 ```bash
-touch /home/project/guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
 ```
 
-
-> Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties"}
-
-
-
-```
-mp.jwt.verify.issuer=http://openliberty.io
-mp.jwt.token.header=Authorization
-mp.jwt.token.cookie=Bearer
-mp.jwt.verify.audiences=systemService, adminServices
-mp.jwt.verify.publickey.algorithm=RS256
+Then use the following commands to access your **system** microservice. The ***-u*** option is used to pass in the username ***bob*** and the password ***bobpwd***.
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u bob:bobpwd | jq
 ```
 
+Use the following commands to access your ***inventory*** microservice.
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
+```
 
+When you're done trying out the microservices, press **CTRL+C** in the command line sessions where you ran the ***kubectl port-forward*** commands to stop the port forwarding.
 
-The following table breaks down some of the properties:
+::page{title="Modifying system microservice"}
 
-| *Property* |   *Description*
-| ---| ---
-| ***mp.jwt.verify.issuer*** | Specifies the expected value of the issuer claim on an incoming JWT. Incoming JWTs with an issuer claim that's different from this expected value aren't considered valid.
-| ***mp.jwt.token.header***  | With this property, you can control the HTTP request header, which is expected to contain a JWT. You can either specify Authorization, by default, or the Cookie values.
-| ***mp.jwt.token.cookie*** | Specifies the name of the cookie, which is expected to contain a JWT token. The default value is Bearer.
-| ***mp.jwt.verify.audiences*** |  With this property, you can create a list of allowable audience (aud) values. At least one of these values must be found in the claim. Previously, this configuration was included in the ***server.xml*** file.
-| ***mp.jwt.decrypt.key.location*** | With this property, you can specify the location of the Key Management key. It is a Private key that is used to decrypt the Content Encryption key, which is then used to decrypt the JWE ciphertext. This private key must correspond to the public key that is used to encrypt the Content Encryption key.
-| ***mp.jwt.verify.publickey.algorithm*** | With this property, you can control the Public Key Signature Algorithm that is supported by the MicroProfile JWT endpoint. The default value is RS256. Previously, this configuration was included in the ***server.xml*** file.
+The ***system*** service is hardcoded to use a single forward slash as the context root. The context root is set in the ***webApplication***
+element, where the ***contextRoot*** attribute is specified as ***"/"***. You'll make the value of the ***contextRoot*** attribute configurable by implementing it as a variable.
 
-For more information about these and other JWT properties, see the [MicroProfile Config properties for MicroProfile JSON Web Token documentation](https://openliberty.io/docs/latest/microprofile-config-properties.html#jwt).
-
-Next, add the MicroProfile JSON Web Token feature to the server configuration file for the ***system*** service.
-
-Replace the system server configuration file.
+Replace the ***server.xml*** file.
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml, or click the following button
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml"}
 
 
 
@@ -426,258 +159,502 @@ Replace the system server configuration file.
   <featureManager>
     <feature>restfulWS-3.1</feature>
     <feature>jsonb-3.0</feature>
-    <feature>jsonp-2.1</feature>
     <feature>cdi-4.0</feature>
+    <feature>jsonp-2.1</feature>
     <feature>mpConfig-3.0</feature>
-    <feature>mpRestClient-3.0</feature>
+    <feature>mpHealth-4.0</feature>
     <feature>appSecurity-5.0</feature>
-    <feature>servlet-6.0</feature>
-    <feature>mpJwt-2.1</feature>
   </featureManager>
 
-  <variable name="default.http.port" defaultValue="8080"/>
-  <variable name="default.https.port" defaultValue="8443"/>
+  <variable name="default.http.port" defaultValue="9080"/>
+  <variable name="default.https.port" defaultValue="9443"/>
+  <variable name="system.app.username" defaultValue="bob"/>
+  <variable name="system.app.password" defaultValue="bobpwd"/>
+  <variable name="context.root" defaultValue="/"/>
 
-  <keyStore id="defaultKeyStore" password="secret"/>
+  <httpEndpoint host="*" httpPort="${default.http.port}" 
+    httpsPort="${default.https.port}" id="defaultHttpEndpoint" />
 
-  <httpEndpoint host="*" httpPort="${default.http.port}" httpsPort="${default.https.port}"
-                id="defaultHttpEndpoint"/>
-                 
-  <webApplication location="system.war" contextRoot="/"/>
+  <webApplication location="guide-kubernetes-microprofile-config-system.war" contextRoot="${context.root}"/>
+
+  <basicRegistry id="basic" realm="BasicRegistry">
+    <user name="${system.app.username}" password="${system.app.password}" />
+  </basicRegistry>
 
 </server>
 ```
 
 
-
-The ***mpJwt*** feature adds the libraries that are required for MicroProfile JWT implementation.
-
-
-::page{title="Building and running the application"}
-
-Because you are running the ***frontend*** and ***system*** services in dev mode, the changes that you made were automatically picked up. You're now ready to check out your application in your browser.
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
-To launch the front-end web application, click the following button:
-::startApplication{port="9090" display="external" name="Launch Application" route="/"}
-
-Log in with one of the following usernames and its corresponding password:
-
-| *Username* | *Password* | *Role*
-| --- | --- | ---
-| bob | bobpwd | admin, user
-| alice | alicepwd | user
-| carl | carlpwd | user
-
-After you log in as an ***admin***, you can see the information that's retrieved from the ***system*** service. Click ***Log Out*** and log in as a ***user***. With successfully implemented role-based access in the application, if you log in as a ***user*** role, you don't have access to the OS property.
-
-You can also see the value of the ***groups*** claim in the row with the ***Roles:*** label. These roles are read from the JWT and sent back to the front end to be displayed.
+The ***contextRoot*** attribute in the ***webApplication*** element now gets its value from the ***context.root*** variable. To find a value for the ***context.root*** variable, Open Liberty looks for the following environment variables, in order:
 
 
-You can check that the ***system*** service is secured against unauthenticated requests by going to the **system** endpoint. Run the following curl command from the terminal in the IDE:
-```bash
-curl -k https://localhost:8443/system/properties/os
-```
+* `context.root`
+* `context_root`
+* `CONTEXT_ROOT`
 
-You'll see an empty response because you didn't authenticate with a valid JWT. 
+::page{title="Modifying inventory microservice"}
 
-In the front end, you see your JWT displayed in the row with the ***JSON Web Token*** label.
+The ***inventory*** service is hardcoded to use ***bob*** and ***bobpwd*** as the credentials to authenticate against the ***system*** service. You'll make these credentials configurable. 
 
-To see the specific information that this JWT holds, you can enter it into the token reader on the [JWT.io website](https://JWT.io). The token reader shows you the header, which contains information about the JWT, as shown in the following example:
+Replace the ***SystemClient*** class.
 
-```
-{
-  "kid": "NPzyG3ZMzljUwQgbzi44",
-  "typ": "JWT",
-  "alg": "RS256"
-}
-```
+> To open the SystemClient.java file in your IDE, select
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java, or click the following button
 
-The token reader also shows you the payload, which contains the claims information:
-
-```
-{
-  "token_type": "Bearer",
-  "sub": "bob",
-  "upn": "bob",
-  "groups": [ "admin", "user" ],
-  "iss": "http://openliberty.io",
-  "exp": 1596723489,
-  "iat": 1596637089
-}
-```
-
-You can learn more about these claims in the [MicroProfile JWT documentation](https://github.com/eclipse/microprofile-jwt-auth/blob/master/spec/src/main/asciidoc/interoperability.asciidoc).
-
-
-::page{title="Testing the application"}
-
-You can manually check that the ***system*** service is secure by making requests to each of the endpoints with and without valid JWTs. However, automated tests are a much better approach because they are more reliable and trigger a failure if a breaking change is introduced.
-
-Create the ***SystemEndpointIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
-```
-
-
-> Then, to open the SystemEndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
-
-::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
+::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.system;
+package io.openliberty.guides.inventory.client;
 
+import java.net.URI;
+import java.util.Base64;
+import java.util.Properties;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Invocation.Builder;
-import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import it.io.openliberty.guides.system.util.JwtBuilder;
+@RequestScoped
+public class SystemClient {
 
-public class SystemEndpointIT {
+  private final String SYSTEM_PROPERTIES = "/system/properties";
+  private final String PROTOCOL = "http";
 
-    static String authHeaderAdmin;
-    static String authHeaderUser;
-    static String urlOS;
-    static String urlUsername;
-    static String urlRoles;
+  @Inject
+  @ConfigProperty(name = "CONTEXT_ROOT", defaultValue = "")
+  String CONTEXT_ROOT;
 
-    @BeforeAll
-    public static void setup() throws Exception {
-        String urlBase = "http://" + System.getProperty("hostname")
-                 + ":" + System.getProperty("http.port")
-                 + "/system/properties";
-        urlOS = urlBase + "/os";
-        urlUsername = urlBase + "/username";
-        urlRoles = urlBase + "/jwtroles";
+  @Inject
+  @ConfigProperty(name = "default.http.port")
+  String DEFAULT_PORT;
 
-        authHeaderAdmin = "Bearer " + new JwtBuilder().createAdminJwt("testUser");
-        authHeaderUser = "Bearer " + new JwtBuilder().createUserJwt("testUser");
+  @Inject
+  @ConfigProperty(name = "SYSTEM_APP_USERNAME")
+  private String username;
+
+  @Inject
+  @ConfigProperty(name = "SYSTEM_APP_PASSWORD")
+  private String password;
+
+  public Properties getProperties(String hostname) {
+    Properties properties = null;
+    Client client = ClientBuilder.newClient();
+    try {
+        Builder builder = getBuilder(hostname, client);
+        properties = getPropertiesHelper(builder);
+    } catch (Exception e) {
+        System.err.println(
+        "Exception thrown while getting properties: " + e.getMessage());
+    } finally {
+        client.close();
     }
+    return properties;
+  }
 
-    @Test
-    public void testOSEndpoint() {
-        Response response = makeRequest(urlOS, authHeaderAdmin);
-        assertEquals(200, response.getStatus(),
-                    "Incorrect response code from " + urlOS);
-        assertEquals(System.getProperty("os.name"), response.readEntity(String.class),
-                "The system property for the local and remote JVM should match");
+  private Builder getBuilder(String hostname, Client client) throws Exception {
+    URI uri = new URI(
+                  PROTOCOL, null, hostname, Integer.valueOf(DEFAULT_PORT),
+                  CONTEXT_ROOT + SYSTEM_PROPERTIES, null, null);
+    String urlString = uri.toString();
+    Builder builder = client.target(urlString).request();
+    builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+           .header(HttpHeaders.AUTHORIZATION, getAuthHeader());
+    return builder;
+  }
 
-        response = makeRequest(urlOS, authHeaderUser);
-        assertEquals(403, response.getStatus(),
-                    "Incorrect response code from " + urlOS);
-
-        response = makeRequest(urlOS, null);
-        assertEquals(401, response.getStatus(),
-                    "Incorrect response code from " + urlOS);
-
-        response.close();
+  private Properties getPropertiesHelper(Builder builder) throws Exception {
+    Response response = builder.get();
+    if (response.getStatus() == Status.OK.getStatusCode()) {
+        return response.readEntity(Properties.class);
+    } else {
+        System.err.println("Response Status is not OK.");
+        return null;
     }
+  }
 
-    @Test
-    public void testUsernameEndpoint() {
-        Response response = makeRequest(urlUsername, authHeaderAdmin);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
-
-        response = makeRequest(urlUsername, authHeaderUser);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
-
-        response = makeRequest(urlUsername, null);
-        assertEquals(401, response.getStatus(),
-                "Incorrect response code from " + urlUsername);
-
-        response.close();
-    }
-
-    @Test
-    public void testRolesEndpoint() {
-        Response response = makeRequest(urlRoles, authHeaderAdmin);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlRoles);
-        assertEquals("[\"admin\",\"user\"]", response.readEntity(String.class),
-                "Incorrect groups claim in token " + urlRoles);
-
-        response = makeRequest(urlRoles, authHeaderUser);
-        assertEquals(200, response.getStatus(),
-                "Incorrect response code from " + urlRoles);
-        assertEquals("[\"user\"]", response.readEntity(String.class),
-                "Incorrect groups claim in token " + urlRoles);
-
-        response = makeRequest(urlRoles, null);
-        assertEquals(401, response.getStatus(),
-                "Incorrect response code from " + urlRoles);
-
-        response.close();
-    }
-
-    private Response makeRequest(String url, String authHeader) {
-        try (Client client = ClientBuilder.newClient()) {
-            Builder builder = client.target(url).request();
-            builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-            if (authHeader != null) {
-            builder.header(HttpHeaders.AUTHORIZATION, authHeader);
-            }
-            Response response = builder.get();
-            return response;
-        }
-    }
-
+  private String getAuthHeader() {
+    String usernamePassword = username + ":" + password;
+    String encoded = Base64.getEncoder().encodeToString(usernamePassword.getBytes());
+    return "Basic " + encoded;
+  }
 }
 ```
 
 
 
-The ***testOSEndpoint()***, ***testUsernameEndpoint()***, and ***testRolesEndpoint()*** tests test the ***/os***, ***/username***, and ***/roles*** endpoints.
+The changes introduced here use MicroProfile Config and CDI to inject the value of the environment variables ***SYSTEM_APP_USERNAME*** and ***SYSTEM_APP_PASSWORD*** into the ***SystemClient*** class.
 
-Each test makes three requests to its associated endpoint. The first ***makeRequest()*** call has a JWT with the ***admin*** role. The second ***makeRequest()*** call has a JWT with the ***user*** role. The third ***makeRequest()*** call has no JWT at all. The responses to these requests are checked based on the role-based access rules for the endpoints. The ***admin*** requests should be successful on all endpoints. The ***user*** requests should be denied by the ***/os*** endpoint but successfully access the ***/username*** and ***/jwtroles*** endpoints. The requests that don't include a JWT should be denied access to all endpoints.
 
-### Running the tests
+::page{title="Creating a ConfigMap and Secret"}
 
-Because you started Open Liberty in dev mode, press the ***enter/return*** key from the command-line session of the ***system*** service to run the tests. You see the following output:
+Several options exist to configure an environment variable in a Docker container. You can set it directly in the ***Dockerfile*** with the ***ENV*** command. You can also set it in your ***kubernetes.yaml*** file by specifying a name and a value for the environment variable that you want to set for a specific container. With these options in mind, you're going to use a ConfigMap and Secret to set these values. These are resources provided by Kubernetes as a way to provide configuration values to your containers. A benefit is that they can be reused across many different containers, even if they all require different environment variables to be set with the same value.
+
+Create a ConfigMap to configure the app name with the following ***kubectl*** command.
+```bash
+kubectl create configmap sys-app-root --from-literal contextRoot=/dev
+```
+
+This command deploys a ConfigMap named ***sys-app-root*** to your cluster. It has a key called ***contextRoot*** with a value of ***/dev***. The ***--from-literal*** flag allows you to specify individual key-value pairs to store in this ConfigMap. Other available options, such as ***--from-file*** and ***--from-env-file***, provide more versatility as to what you want to configure. Details about these options can be found in the [Kubernetes CLI documentation](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-configmap-em-).
+
+Create a Secret to configure the new credentials that ***inventory*** uses to authenticate against ***system*** with the following ***kubectl*** command.
+```bash
+kubectl create secret generic sys-app-credentials --from-literal username=alice --from-literal password=wonderland
+```
+ 
+This command looks similar to the command to create a ConfigMap, but one difference is the word ***generic***. This word creates a Secret that doesn't store information in any specialized way. Different types of secrets are available, such as secrets to store Docker credentials and secrets to store public and private key pairs.
+
+A Secret is similar to a ConfigMap. A key difference is that a Secret is used for confidential information such as credentials. One of the main differences is that you must explicitly tell ***kubectl*** to show you the contents of a Secret. Additionally, when it does show you the information, it only shows you a Base64 encoded version so that a casual onlooker doesn't accidentally see any sensitive data. Secrets don't provide any encryption by default, that is something you'll either need to do yourself or find an alternate option to configure. Encryption is not required for the application to run.
+
+
+
+::page{title="Updating Kubernetes resources"}
+
+Next, you will update your Kubernetes deployments to set the environment variables in your containers based on the values that are configured in the ConfigMap and Secret that you created previously. 
+
+Replace the kubernetes file.
+
+> To open the kubernetes.yaml file in your IDE, select
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/kubernetes.yaml, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/kubernetes.yaml"}
+
+
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  selector:
+    matchLabels:
+      app: system
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        # system probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9080
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+           httpGet:
+            path: /health/ready
+            port: 9080
+           initialDelaySeconds: 30
+           periodSeconds: 10
+           timeoutSeconds: 3
+           failureThreshold: 1
+        # Set the environment variables
+        env:
+        - name: CONTEXT_ROOT
+          valueFrom:
+            configMapKeyRef:
+              name: sys-app-root
+              key: contextRoot
+        - name: SYSTEM_APP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: username
+        - name: SYSTEM_APP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: password
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        # inventory probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9080
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        # Set the environment variables
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+        - name: CONTEXT_ROOT
+          valueFrom:
+            configMapKeyRef:
+              name: sys-app-root
+              key: contextRoot
+        - name: SYSTEM_APP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: username
+        - name: SYSTEM_APP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 31000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 32000
+```
+
+
+
+The ***CONTEXT_ROOT***, ***SYSTEM_APP_USERNAME***, and ***SYSTEM_APP_PASSWORD*** environment variables are set in the ***env*** sections of ***system-container*** and ***inventory-container***.
+
+Using the ***valueFrom*** field, you can specify the value of an environment variable from various sources. These sources include a ConfigMap, a Secret, and information about the cluster. In this example ***configMapKeyRef*** gets the value ***contextRoot*** from the ***sys-app-root*** ConfigMap. Similarly, ***secretKeyRef*** gets the values ***username*** and ***password*** from the ***sys-app-credentials*** Secret.
+
+
+::page{title="Deploying your changes"}
+
+
+Rebuild the application using ***mvn clean package***.
+```bash
+cd /home/project/guide-kubernetes-microprofile-config/start
+mvn clean package
+```
+
+Run the ***docker build*** commands to rebuild container images for your application:
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+
+
+Push your updated images to the container registry on IBM Cloud with the following commands:
+
+```bash
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+```
+
+Update the image names and set the image pull policy to **Always** so that the images in your IBM Cloud container registry are used, and remove the **nodePort** fields so that the ports can be automatically generated:
+
+```bash
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
+
+Run the following command to deploy your changes to the Kubernetes cluster.
+```bash
+kubectl replace --force -f kubernetes.yaml
+```
+
+When this command finishes, wait for the pods to be in the Ready state. Run the following command to view the status of the pods.
+```bash
+kubectl get pods
+```
+
+When the pods are ready, the output shows ***1/1*** for READY and ***Running*** for STATUS.
+
+
+Set up port forwarding to the new services.
+
+Run the following commands to set up port forwarding to access the ***system*** service.
+
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
+```
+
+Then, run the following commands to set up port forwarding to access the **inventory** service.
+
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
+```
+
+You now need to use the new username, ***alice***, and the new password, ***wonderland***, to log in. Access your application with the following commands:
+
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+curl -s http://localhost:$SYSTEM_NODEPORT/dev/system/properties -u alice:wonderland | jq
+```
+
+Notice that the URL you are using to reach the application now has ***/dev*** as the context root. 
+
+
+Verify the inventory service is working as intended by using the following commands:
+
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
+```
+
+If it is not working, then check the configuration of the credentials.
+
+::page{title="Testing the microservices"}
+
+
+
+Update the ***pom.xml*** files so that the ***system.service.root*** and ***inventory.service.root*** properties have the correct ports to access the **system** and **inventory** services.
+
+```bash
+cd /home/project/guide-kubernetes-microprofile-config/start
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' inventory/pom.xml
+sed -i 's=localhost:32000='"localhost:$INVENTORY_NODEPORT"'=g' inventory/pom.xml
+sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' system/pom.xml
+```
+
+Run the integration tests by using the following command:
+
+```bash
+mvn failsafe:integration-test \
+    -Dsystem.service.root=localhost:$SYSTEM_NODEPORT \
+    -Dsystem.context.root=/dev \
+    -Dinventory.service.root=localhost:$INVENTORY_NODEPORT
+```
+
+The tests for ***inventory*** verify that the service can communicate with ***system*** using the configured credentials. If the credentials are misconfigured, then the ***inventory*** test fails, so the ***inventory*** test indirectly verifies that the credentials are correctly configured.
+
+After the tests succeed, you should see output similar to the following in your console.
 
 ```
 -------------------------------------------------------
-  T E S T S
+ T E S T S
 -------------------------------------------------------
 Running it.io.openliberty.guides.system.SystemEndpointIT
-[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-[ERROR   ] CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.648 s - in it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.706 s - in it.io.openliberty.guides.system.SystemEndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+```
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.696 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
 Results:
 
 Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-The three errors in the output are expected and result from the ***system*** service successfully rejecting the requests that didn't include a JWT.
+::page{title="Tearing down the environment"}
 
-When you are finished testing the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***start*** directory in another command-line session:
+Press **CTRL+C** in the command-line sessions where you ran ***kubectl port-forward*** to stop the port forwarding. 
+
+Run the following commands to delete all the resources that you created.
 
 ```bash
-mvn -pl system liberty:stop
-mvn -pl frontend liberty:stop
+kubectl delete -f kubernetes.yaml
+kubectl delete configmap sys-app-root
+kubectl delete secret sys-app-credentials
 ```
+
+
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You learned how to use MicroProfile JWT to validate JWTs, authenticate and authorize users to secure your microservices in Open Liberty.
+You have used MicroProfile Config to externalize the configuration of two microservices, and then you configured them by creating a ConfigMap and Secret in your Kubernetes cluster.
+
 
 
 
@@ -686,34 +663,35 @@ You learned how to use MicroProfile JWT to validate JWTs, authenticate and autho
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-microprofile-jwt*** project by running the following commands:
+Delete the ***guide-kubernetes-microprofile-config*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-microprofile-jwt
+rm -fr guide-kubernetes-microprofile-config
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20microservices%20with%20JSON%20Web%20Tokens&guide-id=cloud-hosted-guide-microprofile-jwt)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Configuring%20microservices%20running%20in%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-config)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-jwt/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-jwt/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/pulls)
 
 
 
 ### Where to next?
 
-* [Authenticating users through social media providers](https://openliberty.io/guides/social-media-login.html)
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
 ### Log out of the session
