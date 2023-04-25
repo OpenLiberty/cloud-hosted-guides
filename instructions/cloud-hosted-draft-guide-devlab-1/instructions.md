@@ -5,9 +5,9 @@ branch: lab-364-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 tool-type: theia
 ---
-::page{title="Welcome to the Checking the health of microservices on Kubernetes guide!"}
+::page{title="Welcome to the Containerizing microservices with Podman guide!"}
 
-Learn how to check the health of microservices on Kubernetes by setting up startup, liveness, and readiness probes to inspect MicroProfile Health Check endpoints.
+Learn how to containerize and run your microservices on Open Liberty using Podman.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -18,20 +18,26 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You will learn how to create health check endpoints for your microservices. Then, you will configure Kubernetes to use these endpoints to keep your microservices running smoothly. 
 
-MicroProfile Health allows services to report their health, and it publishes the overall health status to defined endpoints. If a service reports ***UP***, then it's available. If the service reports ***DOWN***, then it's unavailable. MicroProfile Health reports an individual service status at the endpoint and indicates the overall status as ***UP*** if all the services are ***UP***. A service orchestrator can then use the health statuses to make decisions.
+You can easily deploy your microservices in different environments in a lightweight and portable manner by using containers.
+From development to production and across your DevOps environments, you can deploy your microservices consistently and
+efficiently with containers. You can run a container from a container image, which can be defined by a ***Containerfile*** file or a ***Dockerfile*** file.
+Each container image is a package of what you need to run your microservice or application, from the code to its dependencies and configuration.
 
-Kubernetes provides startup, liveness, and readiness probes that are used to check the health of your containers. These probes can check certain files in your containers, check a TCP socket, or make HTTP requests. MicroProfile Health exposes startup, liveness, and readiness endpoints on your microservices. Kubernetes polls these endpoints as specified by the probes to react appropriately to any change in the microservice's status. Read the [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) guide to learn more about MicroProfile Health.
+You'll learn how to build container images and run containers using the [Pod Manager tool](https://docs.podman.io) (Podman) for your microservices.
+You'll construct ***Containerfile*** files, create container images by using the ***podman build*** command, and run the image as containers 
+by using ***podman run*** command.
 
-The two microservices you will work with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster.
+Podman and [Buildah](https://buildah.io) are related open-source container tools built to run on most Linux platforms and more.
+Buildah is designed specifically for building container images from either a ***Containerfile*** file or the command line. 
+You can use Podman to maintain those images, and to create and run containers. 
+Podman incorporates Buildah functions to create the container image that it uses.
 
-
-
-
+The two microservices that you'll be working with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties 
+of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This guide demonstrates how both microservices can run and communicate
+with each other in different containers. 
 
 ::page{title="Getting started"}
 
@@ -44,11 +50,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-health.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-containerize-podman.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-kubernetes-microprofile-health.git
-cd guide-kubernetes-microprofile-health
+git clone https://github.com/openliberty/guide-containerize-podman.git
+cd guide-containerize-podman
 ```
 
 
@@ -57,587 +63,879 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-::page{title="Adding health checks to the inventory microservice"}
+::page{title="Packaging your microservices"}
 
-Navigate to ***start*** directory to begin.
 
-Create the ***InventoryStartupCheck*** class.
+To begin, run the following command to navigate to the **start** directory:
+```
+cd start
+```
 
-> Run the following touch command in your terminal
+You can find the starting Java project in the ***start*** directory. 
+This project is a multi-module Maven project that is made up of the ***system*** and ***inventory*** microservices. Each microservice is located in its own corresponding directory, ***system*** and ***inventory***.
+
+To try out the microservices by using Maven, run the following Maven goal to build the ***system*** microservice and run it inside Open Liberty:
 ```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+mvn -pl system liberty:run
 ```
 
 
-> Then, to open the InventoryStartupCheck.java file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java, or click the following button
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session and 
+run the following Maven goal to build the **inventory** microservice and run it inside Open Liberty:
+```
+cd /home/project/guide-containerize-podman/start
+mvn -pl inventory liberty:run
+```
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java"}
+Select **Terminal** > **New Terminal** from the menu of the IDE to open a new command-line session.
+To access the **inventory** service, which displays the current contents of the inventory, run the following curl command: 
+```
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+After you see the following message in both command-line sessions, both of your services are ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+The **system** service shows the system properties of the running JVM and can be found by running the following curl command:
+```
+curl -s http://localhost:9080/system/properties | jq
+```
+
+The system properties of your localhost can be added to the **inventory** service at **http://localhost:9081/inventory/systems/localhost**. Run the following curl command:
+```
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
+
+
+After you are finished checking out the microservices, stop the Open Liberty servers by pressing **CTRL+C**
+in the command-line sessions where you ran the servers. Alternatively, you can run the **liberty:stop** goal in another command-line session from the 
+**start** directory:
+```
+cd /home/project/guide-containerize/start
+mvn -pl system liberty:stop
+mvn -pl inventory liberty:stop
+```
+
+To package your microservices, run the Maven package goal to build the application ***.war*** files from the start directory so that the ***.war*** files are in the ***system/target*** and ***inventory/target*** directories.
+```bash
+mvn package
+```
+
+To learn more about RESTful web services and how to build them, see
+[Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the ***system*** service.
+The ***inventory*** service is built in a similar way.
+
+
+::page{title="Building your container images"}
+
+A container image is a binary file. It is made up of multiple layers and is used to run code in a container. Images are built from
+instructions in ***Containerfile*** files to create a containerized version of the application.
+
+***Containerfile*** and ***Dockerfile*** files use the same syntax.
+Podman can build your container image by using either ***Containerfile*** files or ***Dockerfile*** files. ***Containerfile*** files are used in this guide.
+
+A ***Containerfile*** file is a collection of instructions for building a container image that can then be run as a container. These files can be interpreted by Buildah directly or through Podman.
+The ***podman build*** command uses Buildah to build your container image. As each instruction in a ***Containerfile*** file runs, a new image layer is created.
+These layers, which are known as intermediate images, are created when a change is made to your container image.
+
+Learn more about Podman on the [official Podman page](https://podman.io/getting-started/).
+
+### Creating your Containerfile files
+You will be creating two container images to run the ***inventory*** service and ***system*** service. The first step is to create ***Containerfile*** files for both services.
+
+In this guide, you're using an official image from the IBM Container Registry (ICR), ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi***, as your parent image. This image is tagged with the word ***full***, meaning it includes all Liberty features.
+***full*** images include all available features and are recommended for development only because they contain features that may not be required by your application and will significantly expand the image size.
+
+To minimize your image footprint in production, you can use one of the ***kernel-slim*** images, such as ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi***. 
+This image installs the basic runtime. You can then add all the necessary features for your application with the usage pattern that is detailed in the Open Liberty [container image documentation](https://openliberty.io/docs/latest/container-images.html#build).
+To use the default image available for Open Liberty, define the ***FROM*** instruction as ***FROM icr.io/appcafe/open-liberty***. 
+You can find all official images on the Open Liberty [container image repository](https://openliberty.io/docs/latest/container-images.html).
+
+Create the ***Containerfile*** file for the inventory service.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-containerize-podman/start/inventory/Containerfile
+```
+
+
+> Then, to open the Containerfile file in your IDE, select
+> **File** > **Open** > guide-containerize-podman/start/inventory/Containerfile, or click the following button
+
+::openFile{path="/home/project/guide-containerize-podman/start/inventory/Containerfile"}
 
 
 
-```java
-package io.openliberty.guides.inventory;
+```
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 
-import java.lang.management.ManagementFactory;
-import com.sun.management.OperatingSystemMXBean;
-import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.health.Startup;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
 
-@Startup
-@ApplicationScoped
-public class InventoryStartupCheck implements HealthCheck {
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize-podman" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="inventory" \
+  version="$VERSION-$REVISION" \
+  summary="The inventory microservice from the Containerizing microservices with Podman guide" \
+  description="This image contains the inventory microservice running with the Open Liberty runtime."
 
-    @Override
-    public HealthCheckResponse call() {
-        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
-        ManagementFactory.getOperatingSystemMXBean();
-        double cpuUsed = bean.getSystemCpuLoad();
-        String cpuUsage = String.valueOf(cpuUsed);
-        return HealthCheckResponse.named(InventoryResource.class
-                                            .getSimpleName() + " Startup Check")
-                                            .status(cpuUsed < 0.95).build();
-    }
-}
+COPY --chown=1001:0 \
+    src/main/liberty/config \
+    /config/
 
+COPY --chown=1001:0 \
+    target/inventory.war \
+    /config/apps
+
+RUN configure.sh
 ```
 
 
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-A health check for startup allows applications to define startup probes that verify whether deployed application is fully initialized before the liveness probe takes over. This check is useful for applications that require additional startup time on their first initialization. The ***@Startup*** annotation must be applied on a HealthCheck implementation to define a startup check procedure. Otherwise, this annotation is ignored. This startup check verifies that the cpu usage is below 95%. If more than 95% of the cpu is used, a status of ***DOWN*** is returned. 
+The ***FROM*** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use ***FROM scratch***, which makes your image a base image. 
 
-Create the ***InventoryLivenessCheck*** class.
+Furthermore, you can label your container images with the ***LABEL*** command. The label information can help you manage your images.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
-```
+The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. 
+They copy local files into the specified destination within your container image.
+In this case, the ***inventory*** server configuration files that are located at ***src/main/liberty/config*** are copied to the ***/config/*** destination directory.
+The ***inventory*** application WAR file ***inventory.war***, which was created from running ***mvn package***, is copied to the ***/config/apps*** destination directory.
 
-
-> Then, to open the InventoryLivenessCheck.java file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java, or click the following button
-
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java"}
+The ***COPY*** instructions use the ***1001*** user ID  and ***0*** group because all official Open Liberty base images,
+including ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** used in this case, run by default with the ***USER 1001*** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user and a non-root user will be unable to access them.
 
 
+Place the ***RUN configure.sh*** command at the end to get a pre-warmed container image. It improves the startup time of running your container especially for production deployment.
 
-```java
-package io.openliberty.guides.inventory;
+The ***Containerfile*** file for the ***system*** service follows the same instructions as the ***inventory*** service, except that some ***labels*** are updated, and the ***system.war*** archive is copied into ***/config/apps***.
 
-import jakarta.enterprise.context.ApplicationScoped;
-
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
-
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class InventoryLivenessCheck implements HealthCheck {
-
-  @Override
-  public HealthCheckResponse call() {
-      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-      long memUsed = memBean.getHeapMemoryUsage().getUsed();
-      long memMax = memBean.getHeapMemoryUsage().getMax();
-
-      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
-                                      + " Liveness Check")
-                                .status(memUsed < memMax * 0.9).build();
-  }
-}
-```
-
-
-
-A health check for liveness allows third party services to determine whether the application is running. If this procedure fails, the application can be stopped. The ***@Liveness*** annotation must be applied on a HealthCheck implementation to define a Liveness check procedure. Otherwise, this annotation is ignored. This liveness check verifies that the heap memory usage is below 90% of the maximum memory. If more than 90% of the maximum memory is used, a status of ***DOWN*** is returned. 
-
-The ***inventory*** microservice is healthy only when the ***system*** microservice is available. To add this check to the ***/health/ready*** endpoint, create a class that is annotated with the ***@Readiness*** annotation and implements the ***HealthCheck*** interface. A Health Check for readiness allows third party services to know whether the application is ready to process requests. The ***@Readiness*** annotation must be applied on a HealthCheck implementation to define a readiness check procedure. Otherwise, this annotation is ignored.
-
-Create the ***InventoryReadinessCheck*** class.
+Create the ***Containerfile*** file for the system service.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+touch /home/project/guide-containerize-podman/start/system/Containerfile
 ```
 
 
-> Then, to open the InventoryReadinessCheck.java file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java, or click the following button
+> Then, to open the Containerfile file in your IDE, select
+> **File** > **Open** > guide-containerize-podman/start/system/Containerfile, or click the following button
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java"}
+::openFile{path="/home/project/guide-containerize-podman/start/system/Containerfile"}
 
 
 
-```java
-package io.openliberty.guides.inventory;
+```
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize-podman" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Containerizing microservices with Podman guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
 
-@Readiness
-@ApplicationScoped
-public class InventoryReadinessCheck implements HealthCheck {
+COPY --chown=1001:0 src/main/liberty/config /config/
 
-    private static final String READINESS_CHECK = InventoryResource.class
-                                                .getSimpleName()
-                                                + " Readiness Check";
+COPY --chown=1001:0 target/system.war /config/apps
 
-    @Inject
-    @ConfigProperty(name = "SYS_APP_HOSTNAME")
-    private String hostname;
-
-    public HealthCheckResponse call() {
-        if (isSystemServiceReachable()) {
-            return HealthCheckResponse.up(READINESS_CHECK);
-        } else {
-            return HealthCheckResponse.down(READINESS_CHECK);
-        }
-    }
-
-    private boolean isSystemServiceReachable() {
-        try {
-            Client client = ClientBuilder.newClient();
-            client
-                .target("http://" + hostname + ":9080/system/properties")
-                .request()
-                .post(null);
-
-            return true;
-        } catch (Exception ex) {
-            return false;
-        }
-    }
-}
+RUN configure.sh
 ```
 
 
 
-This health check verifies that the ***system*** microservice is available at ***http://system-service:9080/***. The ***system-service*** host name is accessible only from inside the cluster; you can't access it yourself. If it's available, then it returns an ***UP*** status. Similarly, if it's unavailable then it returns a ***DOWN*** status. When the status is ***DOWN***, the microservice is considered to be unhealthy.
 
-The health checks for the ***system*** microservice were already been implemented. The ***system*** microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. This endpoint has been provided for you to observe the results of an unhealthy pod and how Kubernetes reacts.
+### Building your container image
 
-::page{title="Configuring startup, liveness, and readiness probes"}
+Now that your microservices are packaged and your ***Containerfile*** files are written, you will build your container images by using the ***podman build*** command.
 
-You will configure Kubernetes startup, liveness, and readiness probes. Startup probes determine whether your application is fully initialized. Liveness probes determine whether a container needs to be restarted. Readiness probes determine whether your application is ready to accept requests. If it's not ready, no traffic is routed to the container.
-
-Create the kubernetes configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
-```
-
-
-> Then, to open the kubernetes.yaml file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/kubernetes.yaml, or click the following button
-
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml"}
-
-
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: system
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        # system probes
-        startupProbe:
-          httpGet:
-            path: /health/started
-            port: 9080
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        env:
-        - name: SYS_APP_HOSTNAME
-          value: system-service
-        # inventory probes
-        startupProbe:
-          httpGet:
-            path: /health/started
-            port: 9080
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 31000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 32000
-```
-
-
-
-The startup, liveness, and readiness probes are configured for the containers that are running the ***system*** and ***inventory*** microservices.
-
-The startup probes are configured to poll the ***/health/started*** endpoint. The startup probe determines whether a container is started.
-
-The liveness probes are configured to poll the ***/health/live*** endpoint. The liveness probes determine whether a container needs to be restarted. The ***initialDelaySeconds*** field defines the duration that the probe waits before it starts to poll so that it does not make requests before the server is started. The ***periodSeconds*** option defines how often the probe polls the given endpoint. The ***timeoutSeconds*** option defines how many seconds before the probe times out. The ***failureThreshold*** option defines how many times the probe fails before the state changes from ready to not ready.
-
-The readiness probes are configured to poll the ***/health/ready*** endpoint. The readiness probe determines the READY status of the container, as seen in the ***kubectl get pods*** output. Similar to the liveness probes, the readiness probes also define ***initialDelaySeconds***, ***periodSeconds***, ***timeoutSeconds***, and ***failureThreshold***.
-
-::page{title="Deploying the microservices"}
-
-To build these microservices, navigate to the ***start*** directory and run the following command.
+Run the following command to download or update to the latest Open Liberty container image:
 
 ```bash
-mvn package
+podman pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 
-Run the following command to download or update to the latest Open Liberty Docker image:
+Run the following commands to build container images for your application:
 
 ```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+podman build -t system:1.0-SNAPSHOT system/.
+podman build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
-Next, run the ***docker build*** commands to build container images for your application:
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
+The ***-t*** flag in the ***podman build*** command tags the image in the ***name[:tag]*** format.
+The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
 
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
-
-Push your images to the container registry on IBM Cloud with the following commands:
+To verify that the images are built, run the ***podman images*** command to list all local container images:
 
 ```bash
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+podman images
 ```
 
-Update the image names so that the images in your IBM Cloud container registry are used. Set the image pull policy to ***Always*** and remove the ***nodePort*** fields so that the ports can be automatically generated:
+Or, run the ***podman images*** command with ***--filter*** option to list your images:
 ```bash
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
+podman images -f "label=org.opencontainers.image.authors=Your Name"
 ```
 
-When the builds succeed, run the following command to deploy the necessary Kubernetes resources to serve the applications.
+Your ***inventory*** and ***system*** images appear in the list of all container images:
 
-```bash
-kubectl apply -f kubernetes.yaml
+```
+REPOSITORY            TAG           IMAGE ID      CREATED        SIZE
+localhost/inventory   1.0-SNAPSHOT  9d991299725c  4 minutes ago  933 MB
+localhost/system      1.0-SNAPSHOT  a9b29bc94afd  5 minutes ago  931 MB
 ```
 
-Use the following command to view the status of the pods. There will be two ***system*** pods and one ***inventory*** pod, later you'll observe their behavior as the ***system*** pods become unhealthy. 
+
+::page{title="Running your microservices in containers"}
+Now that your two images are built, you will run your microservices in containers:
 
 ```bash
-kubectl get pods
+podman run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
+podman run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
 ```
 
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          59s
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          59s
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          59s
-```
+The following table describes the flags in these commands: 
 
-Wait until the pods are ready. After the pods are ready, you will make requests to your services.
+| *Flag* | *Description*
+| ---| ---
+| -d     | Runs the container in the background.
+| --name | Specifies a name for the container.
+| -p     | Maps the host ports to the container ports. For example: ***-p \<HOST_PORT\>:\<CONTAINER_PORT\>***
 
-
-In this IBM cloud environment, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
+Next, run the ***podman ps*** command to verify that your containers are started:
 
 ```bash
-kubectl proxy
+podman ps
 ```
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
-```bash
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
-```
-
-Run the following echo commands to verify the variables:
-
-```bash
-echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
-```
-
-The output appears as shown in the following example:
+Make sure that your containers are running and show ***Up*** as their status:
 
 ```
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
+CONTAINER ID    IMAGE                             COMMAND                CREATED          STATUS          PORTS                                        NAMES
+2b584282e0f5    localhost/inventory:1.0-SNAPSHOT  /opt/ol/wlp/bin/s...   2 seconds ago    Up 1 second     9080/tcp, 9443/tcp, 0.0.0.0:9081->9081/tcp   inventory
+99a98313705f    localhost/system:1.0-SNAPSHOT     /opt/ol/wlp/bin/s...   3 seconds ago    Up 2 seconds    0.0.0.0:9080->9080/tcp, 9443/tcp             system
 ```
 
-Make a request to the system service to see the JVM system properties with the following ***curl*** command:
-```bash
-curl -s http://$SYSTEM_PROXY/system/properties | jq
+If a problem occurs and your containers exit prematurely, the containers don't appear in the container
+list that the ***podman ps*** command displays. 
+Instead, your containers appear with an ***Exited*** status when you run the ***podman ps -a*** command.
+Run the ***podman logs system*** and ***podman logs inventory*** commands to view the container logs for any potential problems. 
+Run the ***podman stats system*** and ***podman stats inventory*** commands to display a live stream of usage statistics for your containers. 
+You can also double-check that your ***Containerfile*** files are correct. 
+When you find the cause of the issues, remove the faulty containers with the ***podman rm system*** and ***podman rm inventory*** commands. 
+Rebuild your images, and start the containers again.
+
+
+To access the application, run the following curl command. 
+An empty list is expected because no system properties are stored in the inventory yet:
+```
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 
-The readiness probe ensures the READY state won't be ***1/1*** until the container is available to accept requests. Without a readiness probe, you might notice an unsuccessful response from the server. This scenario can occur when the container is started, but the application server isn't fully initialized. With the readiness probe, you can be certain the pod accepts traffic only when the microservice is fully started.
-
-Similarly, access the inventory service and observe the successful request with the following command:
-```bash
-curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
-```
-
-::page{title="Changing the ready state of the system microservice"}
-
-An ***unhealthy*** endpoint has been provided under the ***system*** microservice to set it to an unhealthy state. The unhealthy state causes the readiness probe to fail. A request to the ***unhealthy*** endpoint puts the service in an unhealthy state as a simulation.
-
-
-Run the following ***curl*** command to invoke the unhealthy endpoint:
-```bash
-curl http://$SYSTEM_PROXY/system/unhealthy
-```
-
-Run the following command to view the state of the pods:
+Next, retrieve the ***system*** container's IP address by running the following:
 
 ```bash
-kubectl get pods
+podman inspect -f "{{.NetworkSettings.IPAddress }}" system
 ```
 
+The command returns the system container IP address:
+
 ```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          1m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          1m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
+10.88.0.2
 ```
 
+In this case, the IP address for the ***system*** service is ***10.88.0.2***.
+Take note of this IP address to construct the URL to view the system properties.
 
-You will notice that one of the two ***system*** pods is no longer in the ready state. Make a request to the ***/system/properties*** endpoint with the following command:
+
+Run the following commands to go to the **http://localhost:9081/inventory/systems/[system-ip-address]** by replacing **[system-ip-address]** URL with the IP address that you obtained earlier:
+```
+SYSTEM_IP=`podman inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
+```
+
+You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system
+properties are automatically stored in the inventory. Run the following curl command and 
+you see a new entry for **[system-ip-address]**:
+```
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+::page{title="Externalizing server configuration"}
+
+
+As mentioned at the beginning of this guide, one of the advantages of using
+containers is that they are portable and can be moved and deployed efficiently
+across all of your DevOps environments. Configuration often changes across
+different environments, and by externalizing your server configuration, you
+can simplify the development process.
+
+Imagine a scenario where you are developing an Open Liberty application on
+port ***9081*** but to deploy it to production, it must be available
+on port ***9091***. To manage this scenario, you can keep two different versions of the
+***server.xml*** file; one for production and one for development. However, trying to
+maintain two different versions of a file might lead to mistakes. A better
+solution would be to externalize the configuration of the port number and use the
+value of an environment variable that is stored in each environment. 
+
+In this example, you will use an environment variable to externally configure the
+HTTP port number of the ***inventory*** service. 
+
+In the ***inventory/server.xml*** file, 
+the ***default.http.port*** variable is declared and is used in the
+***httpEndpoint*** element to define the service
+endpoint. The default value of the ***default.http.port***
+variable is ***9081***. However, this value is only used if no other value is specified. 
+You can replace this value in the container by using the -e flag for the podman run command. 
+
+Run the following commands to stop and remove the ***inventory*** container and rerun it with the ***default.http.port*** environment variable set:
+
 ```bash
-curl -s http://$SYSTEM_PROXY/system/properties | jq
+podman stop inventory
+podman rm inventory 
+podman run -d --name inventory -e default.http.port=9091 -p 9091:9091 inventory:1.0-SNAPSHOT
 ```
 
-Your request is successful because you have two replicas and one is still healthy.
+The `-e` flag can be used to create and set the values of environment variables
+in a container. In this case, you are setting the ***default.http.port*** environment
+variable to ***9091*** for the ***inventory*** container. The ***-p*** flag then maps the local port
+to the new container port that was specified via the environment variable.
 
-### Observing the effects on the inventory microservice
+Now, when the service is starting up, Open Liberty finds the
+***default.http.port*** environment variable and uses it to set the value of the
+***default.http.port*** variable to be used in the HTTP
+endpoint.
 
 
-Wait until the ***system-service*** pod is ready again. Make several requests to the ***/system/unhealthy*** endpoint of the ***system*** service until you see two pods are unhealthy.
+The **inventory** service is now available on the new port number that you
+specified. You can see the contents of the inventory at the
+**http://localhost:9091/inventory/systems** URL. Run the following curl command:
+```
+curl -s http://localhost:9091/inventory/systems | jq
+```
+
+You can add your local system properties at the
+**http://localhost:9091/inventory/systems/[system-ip-address]** URL by
+replacing **[system-ip-address]** with the IP address that you obtained in the previous
+section. Run the following commands:
+```
+SYSTEM_IP=`podman inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9091/inventory/systems/{$SYSTEM_IP} | jq
+```
+
+The **system** service remains unchanged and is available at the
+**http://localhost:9080/system/properties** URL. Run the following curl command:
+```
+curl -s http://localhost:9080/system/properties | jq
+```
+
+You can externalize the configuration of more than just the port numbers.
+To learn more about Open Liberty server configuration, check out the
+[Server Configuration Overview](https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html) docs. 
+
+::page{title="Optimizing the image size"}
+
+As mentioned previously, the parent image that is used in each ***Containerfile*** contains the ***full*** tag, which includes all of the Liberty features. This parent image with the ***full*** tag is recommended for development, but while deploying to production it is recommended to use a parent image with the ***kernel-slim*** tag. The ***kernel-slim*** tag provides a bare minimum server with the ability to add the features required by the application.
+
+Replace the ***Containerfile*** for the inventory service.
+
+> To open the Containerfile file in your IDE, select
+> **File** > **Open** > guide-containerize-podman/start/inventory/Containerfile, or click the following button
+
+::openFile{path="/home/project/guide-containerize-podman/start/inventory/Containerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize-podman" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="inventory" \
+  version="$VERSION-$REVISION" \
+  summary="The inventory microservice from the Containerizing microservices with Podman guide" \
+  description="This image contains the inventory microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 \
+    src/main/liberty/config \
+    /config/
+
+RUN features.sh
+
+COPY --chown=1001:0 \
+    target/inventory.war \
+    /config/apps
+
+RUN configure.sh
+```
+
+
+
+Replace the parent image with ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi*** at the top of your ***Containerfile***. This image contains the ***kernel-slim*** tag that is recommended when deploying to production.
+
+Place ***RUN features.sh*** command after the COPY command that the configuration file is copied to the ***/config/*** destination directory. The ***features.sh*** script adds the Liberty features that your application is required to operate.
+
+Ensure that you repeat these instructions for the ***system*** service.
+
+Replace the ***Containerfile*** for the system service.
+
+> To open the Containerfile file in your IDE, select
+> **File** > **Open** > guide-containerize-podman/start/system/Containerfile, or click the following button
+
+::openFile{path="/home/project/guide-containerize-podman/start/system/Containerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize-podman" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Containerizing microservices with Podman guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 src/main/liberty/config /config/
+
+RUN features.sh
+
+COPY --chown=1001:0 target/system.war /config/apps
+
+RUN configure.sh
+```
+
+
+
+Continue by running the following commands to stop and remove your current containers that are using the ***full*** parent image:
+
 ```bash
-curl http://$SYSTEM_PROXY/system/unhealthy
+podman stop inventory system
+podman rm inventory system
 ```
 
-Observe the output of ***kubectl get pods***.
+Next, build your new images with the ***kernel-slim*** parent image:
+
 ```bash
-kubectl get pods
+podman build -t system:1.0-SNAPSHOT system/.
+podman build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
-You will see both pods are no longer ready. During this process, the readiness probe for the ***inventory*** microservice will also fail. Observe that it's no longer in the ready state either.
+Verify that the images have been built by executing the following command to list all the local images:
 
-First, both ***system*** pods will no longer be ready because the readiness probe failed.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          5m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          5m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          5m
+```bash
+podman images
 ```
 
-Next, the ***inventory*** pod is no longer ready because the readiness probe failed. The probe failed because ***system-service*** is now unavailable.
-
+Notice that the images for the ***inventory*** and ***system*** services now have a reduced image size.
 ```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          6m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          6m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          6m
+REPOSITORY            TAG            IMAGE ID       CREATED         SIZE
+localhost/inventory   1.0-SNAPSHOT   eee0d13f0e80   3 minutes ago   674 MB
+localhost/system      1.0-SNAPSHOT   5b8f87d6f0d5   4 minutes ago   726 MB
 ```
 
-Then, the ***system*** pods will start to become healthy again after 60 seconds.
+After confirming that the images have been built, run the following commands to start the containers:
 
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
+```bash
+podman run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
+podman run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
 ```
 
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
+Once your containers are running, run the following command to see the list of the required features installed by ***features.sh***:
+```bash
+podman exec -it inventory /opt/ol/wlp/bin/productInfo featureInfo
 ```
 
-Finally, you will see all of the pods have recovered.
-
+Your list of Liberty features should be similar to the following:
 ```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          8m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          8m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
+jndi-1.0
+servlet-5.0
+cdi-3.0
+concurrent-2.0
+jsonb-2.0
+jsonp-2.0
+mpConfig-3.0
+restfulWS-3.0
+restfulWSClient-3.0
+```
+
+
+The **system** service which shows the system properties of the running JVM, is now available to be accessed at **http://localhost:9080/system/properties**. Run the following curl command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+Next, you can add your local system properties at the **http://localhost:9081/inventory/systems/[system-ip-address]** URL by replacing **[system-ip-address]** with the IP address that you obtained in the previous section. Run the following commands:
+```bash
+SYSTEM_IP=`podmandocker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
+```
+
+Then, verify the addition of your localhost system properties to the **inventory** service at **http://localhost:9081/inventory/systems**. Run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
 ```
 
 ::page{title="Testing the microservices"}
 
+You can test your microservices manually by hitting the endpoints or with automated tests that check your running containers.
 
-Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
+Create the ***SystemEndpointIT*** class.
+
+> Run the following touch command in your terminal
 ```bash
-cd /home/project/guide-kubernetes-microprofile-health/start
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
+touch /home/project/guide-containerize-podman/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 ```
 
-Run the integration tests by using the following command:
-```bash
-mvn failsafe:integration-test \
-    -Dsystem.service.root=$SYSTEM_PROXY \
-    -Dinventory.service.root=$INVENTORY_PROXY
+
+> Then, to open the SystemEndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-containerize-podman/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-containerize-podman/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.system;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class SystemEndpointIT {
+
+    private static String clusterUrl;
+
+    private Client client;
+
+    @BeforeAll
+    public static void oneTimeSetup() {
+        String nodePort = System.getProperty("system.http.port");
+        clusterUrl = "http://localhost:" + nodePort + "/system/properties/";
+    }
+
+    @BeforeEach
+    public void setup() {
+        client = ClientBuilder.newBuilder()
+                    .hostnameVerifier(new HostnameVerifier() {
+                        public boolean verify(String hostname, SSLSession session) {
+                            return true;
+                        }
+                    })
+                    .build();
+    }
+
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
+
+    @Test
+    public void testGetProperties() {
+        Client client = ClientBuilder.newClient();
+
+        WebTarget target = client.target(clusterUrl);
+        Response response = target.request().get();
+
+        assertEquals(200, response.getStatus(),
+            "Incorrect response code from " + clusterUrl);
+        response.close();
+    }
+
+}
 ```
 
-A few tests are included for you to test the basic functions of the microservices. If a test fails, then you might have introduced a bug into the code. Wait for all pods to be in the ready state before you run the tests. 
 
-When the tests succeed, you should see output similar to the following in your console.
+
+The ***testGetProperties()*** method checks for a ***200*** response code from the ***system*** service endpoint.
+
+Create the ***InventoryEndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-containerize-podman/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+```
+
+
+> Then, to open the InventoryEndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-containerize-podman/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-containerize-podman/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import jakarta.json.JsonObject;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+
+@TestMethodOrder(OrderAnnotation.class)
+public class InventoryEndpointIT {
+
+    private static String invUrl;
+    private static String sysUrl;
+    private static String systemServiceIp;
+
+    private static Client client;
+
+    @BeforeAll
+    public static void oneTimeSetup() {
+
+        String invServPort = System.getProperty("inventory.http.port");
+        String sysServPort = System.getProperty("system.http.port");
+
+        systemServiceIp = System.getProperty("system.ip");
+
+        invUrl = "http://localhost" + ":" + invServPort + "/inventory/systems/";
+        sysUrl = "http://localhost" + ":" + sysServPort + "/system/properties/";
+
+        client = ClientBuilder.newBuilder().hostnameVerifier(new HostnameVerifier() {
+            public boolean verify(String hostname, SSLSession session) {
+                return true;
+            }
+        }).build();
+
+        client.target(invUrl + "reset").request().post(null);
+    }
+
+    @AfterAll
+    public static void teardown() {
+        client.close();
+    }
+
+    @Test
+    @Order(1)
+    public void testEmptyInventory() {
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
+
+        JsonObject obj = response.readEntity(JsonObject.class);
+
+        int expected = 0;
+        int actual = obj.getInt("total");
+        assertEquals(expected, actual,
+                "The inventory should be empty on application start but it wasn't");
+
+        response.close();
+    }
+
+    @Test
+    @Order(2)
+    public void testHostRegistration() {
+        this.visitSystemService();
+
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
+
+        JsonObject obj = response.readEntity(JsonObject.class);
+
+        int expected = 1;
+        int actual = obj.getInt("total");
+        assertEquals(expected, actual,
+                        "The inventory should have one entry for " + systemServiceIp);
+
+        boolean serviceExists = obj.getJsonArray("systems").getJsonObject(0)
+                        .get("hostname").toString().contains(systemServiceIp);
+        assertTrue(serviceExists,
+                        "A host was registered, but it was not " + systemServiceIp);
+
+        response.close();
+    }
+
+    @Test
+    @Order(3)
+    public void testSystemPropertiesMatch() {
+        Response invResponse = this.getResponse(invUrl);
+        Response sysResponse = this.getResponse(sysUrl);
+
+        this.assertResponse(invUrl, invResponse);
+        this.assertResponse(sysUrl, sysResponse);
+
+        JsonObject jsonFromInventory = (JsonObject) invResponse
+                        .readEntity(JsonObject.class).getJsonArray("systems")
+                        .getJsonObject(0).get("properties");
+
+        JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
+
+        String osNameFromInventory = jsonFromInventory.getString("os.name");
+        String osNameFromSystem = jsonFromSystem.getString("os.name");
+        this.assertProperty("os.name", systemServiceIp, osNameFromSystem,
+                        osNameFromInventory);
+
+        String userNameFromInventory = jsonFromInventory.getString("user.name");
+        String userNameFromSystem = jsonFromSystem.getString("user.name");
+        this.assertProperty("user.name", systemServiceIp, userNameFromSystem,
+                        userNameFromInventory);
+
+        invResponse.close();
+        sysResponse.close();
+    }
+
+    @Test
+    @Order(4)
+    public void testUnknownHost() {
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
+
+        Response badResponse = client.target(invUrl + "badhostname")
+                        .request(MediaType.APPLICATION_JSON).get();
+
+        String obj = badResponse.readEntity(String.class);
+
+        boolean isError = obj.contains("error");
+        assertTrue(isError,
+                        "badhostname is not a valid host but it didn't raise an error");
+
+        response.close();
+        badResponse.close();
+    }
+
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+
+
+    private void assertResponse(String url, Response response) {
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
+
+    private void assertProperty(String propertyName, String hostname, String expected,
+                    String actual) {
+        assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
+                        + "in the system service does not match the one stored in "
+                        + "the inventory service for " + hostname);
+    }
+
+    private void visitSystemService() {
+        Response response = this.getResponse(sysUrl);
+        this.assertResponse(sysUrl, response);
+        response.close();
+
+        Response targetResponse = client.target(invUrl + systemServiceIp).request()
+                        .get();
+
+        targetResponse.close();
+    }
+}
+```
+
+
+
+* The ***testEmptyInventory()*** method checks that the ***inventory*** service has a total of 0 systems before anything is added to it.
+* The ***testHostRegistration()*** method checks that the ***system*** service was added to ***inventory*** properly.
+* The ***testSystemPropertiesMatch()*** checks that the ***system*** properties match what was added into the ***inventory*** service.
+* The ***testUnknownHost()*** method checks that an error is raised if an unknown host name is being added into the ***inventory*** service.
+* The ***systemServiceIp*** variable has the same value as the IP address that you retrieved in the previous section when you manually added the ***system*** service into the ***inventory*** service. This value of the IP address is passed in when you run the tests.
+
+### Running the tests
+
+Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the containers by setting **-Dsystem.ip** to the IP address that you determined previously.
+
+```
+SYSTEM_IP=`podman inspect -f "{{.NetworkSettings.IPAddress }}" system`
+mvn package
+mvn failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9081 -Dsystem.http.port=9080
+```
+
+If the tests pass, you see output similar to the following example:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
 Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.65 s - in it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.653 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
 Results:
 
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-```
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 
-```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
 Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.935 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
 Results:
 
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-::page{title="Tearing down the environment"}
-
-Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
-
-To remove all of the resources created during this guide, run the following command to delete all of the resources that you created.
+When you are finished with the services, run the following commands to stop and remove your containers:
 
 ```bash
-kubectl delete -f kubernetes.yaml
+podman stop inventory system 
+podman rm inventory system
 ```
-
-
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have used MicroProfile Health and Open Liberty to create endpoints that report on your microservice's status. Then, you observed how Kubernetes uses the **/health/started**, **/health/live**, and **/health/ready** endpoints to keep your microservices running smoothly.
-
+You have just built container images and run two microservices on Open Liberty in containers using Podman. 
 
 
 
@@ -646,32 +944,33 @@ You have used MicroProfile Health and Open Liberty to create endpoints that repo
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-kubernetes-microprofile-health*** project by running the following commands:
+Delete the ***guide-containerize-podman*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-kubernetes-microprofile-health
+rm -fr guide-containerize-podman
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Checking%20the%20health%20of%20microservices%20on%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-health)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Containerizing%20microservices%20with%20Podman&guide-id=cloud-hosted-guide-containerize-podman)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-containerize-podman/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-containerize-podman/pulls)
 
 
 
 ### Where to next?
 
-* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
+* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 * [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
