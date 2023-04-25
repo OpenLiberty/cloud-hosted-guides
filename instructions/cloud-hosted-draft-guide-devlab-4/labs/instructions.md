@@ -5,9 +5,9 @@ branch: lab-5933-instruction
 version-history-start-date: 2023-04-14T18:24:15Z
 tool-type: theia
 ---
-::page{title="Welcome to the Running GraphQL queries and mutations using a GraphQL client guide!"}
+::page{title="Welcome to the Deploying microservices to Kubernetes guide!"}
 
-
+Deploy microservices in Open Liberty Docker containers to Kubernetes and manage them with the Kubernetes CLI, kubectl.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,18 +16,40 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
-Learn how to use the SmallRye GraphQL client's typesafe interface to query and mutate data from multiple microservices.
+
+
+
+::page{title="What is Kubernetes?"}
+
+Kubernetes is an open source container orchestrator that automates many tasks involved in deploying, managing, and scaling containerized applications.
+
+Over the years, Kubernetes has become a major tool in containerized environments as containers are being further leveraged for all steps of a continuous delivery pipeline.
+
+### Why use Kubernetes?
+
+Managing individual containers can be challenging. A small team can easily manage a few containers for development but managing hundreds of containers can be a headache, even for a large team of experienced developers. Kubernetes is a tool for deployment in containerized environments. It handles scheduling, deployment, as well as mass deletion and creation of containers. It provides update rollout abilities on a large scale that would otherwise prove extremely tedious to do. Imagine that you updated a Docker image, which now needs to propagate to a dozen containers. While you could destroy and then re-create these containers, you can also run a short one-line command to have Kubernetes make all those updates for you. Of course, this is just a simple example. Kubernetes has a lot more to offer.
+
+### Architecture
+
+Deploying an application to Kubernetes means deploying an application to a Kubernetes cluster.
+
+A typical Kubernetes cluster is a collection of physical or virtual machines called nodes that run containerized applications. A cluster is made up of one parent node that manages the cluster, and many worker nodes that run the actual application instances inside Kubernetes objects called pods.
+
+A pod is a basic building block in a Kubernetes cluster. It represents a single running process that encapsulates a container or in some scenarios many closely coupled containers. Pods can be replicated to scale applications and handle more traffic. From the perspective of a cluster, a set of replicated pods is still one application instance, although it might be made up of dozens of instances of itself. A single pod or a group of replicated pods are managed by Kubernetes objects called controllers. A controller handles replication, self-healing, rollout of updates, and general management of pods. One example of a controller that you will use in this guide is a deployment.
+
+A pod or a group of replicated pods are abstracted through Kubernetes objects called services that define a set of rules by which the pods can be accessed. In a basic scenario, a Kubernetes service exposes a node port that can be used together with the cluster IP address to access the pods encapsulated by the service.
+
+To learn about the various Kubernetes resources that you can configure, see the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/).
+
 
 ::page{title="What you'll learn"}
 
-GraphQL is an open source data query language. You can use a GraphQL service to obtain data from multiple sources, such as APIs, databases, and other services, by sending a single request to a GraphQL service. GraphQL services require less data fetching than REST services, which results in faster application load times and lower data transfer costs. This guide assumes you have a basic understanding of [GraphQL concepts](https://openliberty.io/docs/latest/microprofile-graphql.html). If you're new to GraphQL, you might want to start with the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide first.
+You will learn how to deploy two microservices in Open Liberty containers to a local Kubernetes cluster. You will then manage your deployed microservices using the ***kubectl*** command line interface for Kubernetes. The ***kubectl*** CLI is your primary tool for communicating with and managing your Kubernetes cluster.
 
-You'll use the [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) to create a ***query*** microservice that will make requests to the ***graphql*** microservice. The ***graphql*** microservice retrieves data from multiple ***system*** microservices and is identical to the one created as part of the [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html) guide. 
+The two microservices you will deploy are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This process demonstrates how communication can be established between pods inside a cluster.
 
-![GraphQL client application architecture where multiple system microservices are integrated behind the graphql service](https://raw.githubusercontent.com/OpenLiberty/guide-graphql-client/prod/assets/architecture.png)
+You will use a local single-node Kubernetes cluster.
 
-
-The results of the requests will be displayed at REST endpoints. OpenAPI will be used to help make the requests and display the data. To learn more about OpenAPI, check out the [Documenting RESTful APIs](https://openliberty.io/guides/microprofile-openapi.html) guide.
 
 ::page{title="Getting started"}
 
@@ -40,11 +62,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-graphql-client.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-graphql-client.git
-cd guide-graphql-client
+git clone https://github.com/openliberty/guide-kubernetes-intro.git
+cd guide-kubernetes-intro
 ```
 
 
@@ -53,363 +75,19 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-::page{title="Implementing a GraphQL client"}
 
-Navigate to the ***start*** directory to begin.
 
+::page{title="Building and containerizing the microservices"}
+
+The first step of deploying to Kubernetes is to build your microservices and containerize them with Docker.
+
+The starting Java project, which you can find in the ***start*** directory, is a multi-module Maven project that's made up of the ***system*** and ***inventory*** microservices. Each microservice resides in its own directory, ***start/system*** and ***start/inventory***. Each of these directories also contains a Dockerfile, which is necessary for building Docker images. If you're unfamiliar with Dockerfiles, check out the [Containerizing Microservices](https://openliberty.io/guides/containerize.html) guide, which covers Dockerfiles in depth.
+
+Navigate to the ***start*** directory and build the applications by running the following commands:
 ```bash
-cd /home/project/guide-graphql-client/start
+cd start
+mvn clean package
 ```
-
-The [SmallRye GraphQL client](https://github.com/smallrye/smallrye-graphql#client) is used to implement the GraphQL client service. The SmallRye GraphQL client supports two types of clients: typesafe and dynamic. A typesafe client is easy to use and provides a high-level approach, while a dynamic client provides a more customizable and low-level approach to handle operations and responses. You will implement a typesafe client microservice. 
-
-The typesafe client interface contains a method for each resolver available in the ***graphql*** microservice. The JSON objects returned by the ***graphql*** microservice are converted to Java objects.
-
-Create the ***GraphQlClient*** interface.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java
-```
-
-
-> Then, to open the GraphQlClient.java file in your IDE, select
-> **File** > **Open** > guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java, or click the following button
-
-::openFile{path="/home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/client/GraphQlClient.java"}
-
-
-
-```java
-package io.openliberty.guides.query.client;
-
-import org.eclipse.microprofile.graphql.Query;
-import org.eclipse.microprofile.graphql.Mutation;
-import org.eclipse.microprofile.graphql.Name;
-
-import io.openliberty.guides.graphql.models.SystemInfo;
-import io.openliberty.guides.graphql.models.SystemLoad;
-import io.smallrye.graphql.client.typesafe.api.GraphQLClientApi;
-
-@GraphQLClientApi
-public interface GraphQlClient {
-    @Query
-    SystemInfo system(@Name("hostname") String hostname);
-
-    @Query("systemLoad")
-    SystemLoad[] getSystemLoad(@Name("hostnames") String[] hostnames);
-
-    @Mutation
-    boolean editNote(@Name("hostname") String host, @Name("note") String note);
-
-}
-```
-
-
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
-The ***GraphQlClient*** interface is annotated with the ***@GraphQlClientApi*** annotation. This annotation denotes that this interface is used to create a typesafe GraphQL client.
-
-Inside the interface, a method header is written for each resolver available in the ***graphql*** microservice. The names of the methods match the names of the resolvers in the GraphQL schema. Resolvers that require input variables have the input variables passed in using the ***@Name*** annotation on the method inputs. The return types of the methods should match those of the GraphQL resolvers.
-
-For example, the ***system()*** method maps to the ***system*** resolver. The resolver returns a ***SystemInfo*** object, which is described by the ***SystemInfo*** class. Thus, the ***system()*** method returns the type ***SystemInfo***.
-
-The name of each resolver is the method name, but it can be overridden with the ***@Query*** or ***@Mutation*** annotations. For example, the name of the method ***getSystemLoad*** is overridden as ***systemLoad***. The GraphQL request that goes over the wire will use the name overridden by the ***@Query*** and ***@Mutation*** annotation. Similarly, the name of the method inputs can be overridden by the ***@Name*** annotation. For example, input ***host*** is overridden as ***hostname*** in the ***editNote()*** method. 
-
-The ***editNote*** ***mutation*** operation has the ***@Mutation*** annotation on it. A ***mutation*** operation allows you to modify data, in this case, it allows you to add and edit a note to the system service. If the ***@Mutation*** annotation were not placed on the method, it would be treated as if it mapped to a ***query*** operation. 
-
-Create the ***QueryResource*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
-```
-
-
-> Then, to open the QueryResource.java file in your IDE, select
-> **File** > **Open** > guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
-
-::openFile{path="/home/project/guide-graphql-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
-
-
-
-```java
-package io.openliberty.guides.query;
-
-import io.openliberty.guides.graphql.models.NoteInfo;
-import io.openliberty.guides.graphql.models.SystemInfo;
-import io.openliberty.guides.graphql.models.SystemLoad;
-import io.openliberty.guides.query.client.GraphQlClient;
-import io.smallrye.graphql.client.typesafe.api.TypesafeGraphQLClientBuilder;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-@ApplicationScoped
-@Path("query")
-public class QueryResource {
-
-    private GraphQlClient gc = TypesafeGraphQLClientBuilder.newBuilder()
-                                                   .build(GraphQlClient.class);
-
-    @GET
-    @Path("system/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public SystemInfo querySystem(@PathParam("hostname") String hostname) {
-        return gc.system(hostname);
-    }
-
-    @GET
-    @Path("systemLoad/{hostnames}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public SystemLoad[] querySystemLoad(@PathParam("hostnames") String hostnames) {
-        String[] hostnameArray = hostnames.split(",");
-        return gc.getSystemLoad(hostnameArray);
-    }
-
-    @POST
-    @Path("mutation/system/note")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response editNote(NoteInfo text) {
-        if (gc.editNote(text.getHostname(), text.getText())) {
-            return Response.ok().build();
-        } else {
-            return Response.serverError().build();
-        }
-    }
-}
-```
-
-
-
-The ***QueryResource*** class uses the ***GraphQlClient*** interface to make requests to the ***graphql*** microservice and display the results. In a real application, you would make requests to an external GraphQL service, and you might do further manipulation of the data after retrieval.
-
-The ***TypesafeGraphQLClientBuilder*** class creates a client object that implements the ***GraphQlClient*** interface and can interact with the ***graphql*** microservice. The ***GraphQlClient*** client can make requests to the URL specified by the ***graphql.server*** variable in the ***server.xml*** file. The client is used in the ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** methods.
-
-
-Replace the Maven project file.
-
-> To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-graphql-client/start/query/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-graphql-client/start/query/pom.xml"}
-
-
-
-```xml
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-graphql-client-query</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
-
-    <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9084</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9447</liberty.var.default.https.port>
-    </properties>
-
-    <dependencies>
-        <!-- Provided dependencies -->
-        <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>6.0</version>
-            <type>pom</type>
-            <scope>provided</scope>
-        </dependency>
-        
-        <!-- Required dependencies -->
-        <dependency>
-           <groupId>io.openliberty.guides</groupId>
-           <artifactId>guide-graphql-client-models</artifactId>
-           <version>1.0-SNAPSHOT</version>
-        </dependency>
-        
-        <!-- GraphQL API dependencies -->
-        <dependency>
-            <groupId>io.smallrye</groupId>
-            <artifactId>smallrye-graphql-client</artifactId>
-            <version>2.1.3</version>
-        </dependency>
-        <dependency>
-            <groupId>io.smallrye</groupId>
-            <artifactId>smallrye-graphql-client-implementation-vertx</artifactId>
-            <version>2.1.3</version>
-        </dependency>
-        <dependency>
-            <groupId>io.smallrye.stork</groupId>
-            <artifactId>stork-core</artifactId>
-            <version>2.1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>2.0.7</version>
-        </dependency>
-             
-        <!-- For tests -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.9.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>6.2.3.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.3.Final</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.json</artifactId>
-            <version>2.0.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-            <version>1.18.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>1.18.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.36</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-            <!-- Enable liberty-maven plugin -->
-            <plugin>
-                <groupId>io.openliberty.tools</groupId>
-                <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.7.1</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
-                    </systemPropertyVariables>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-
-
-The ***smallrye-graphql-client*** dependencies provide the classes that you use to interact with a ***graphql*** microservice.
-
-To run the service, you must correctly configure the Liberty server.
-
-Replace the server configuration file.
-
-> To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-graphql-client/start/query/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-graphql-client/start/query/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Query Service">
-
-  <featureManager>
-    <feature>restfulWS-3.1</feature>
-    <feature>cdi-4.0</feature>
-    <feature>jsonb-3.0</feature>
-    <feature>mpConfig-3.0</feature>
-    <feature>mpOpenAPI-3.1</feature>
-  </featureManager>
-
-  <variable name="default.http.port" defaultValue="9084"/>
-  <variable name="default.https.port" defaultValue="9447"/>
-  <variable name="graphql.server" defaultValue="http://graphql:9082/graphql"/>
-
-  <httpEndpoint host="*" httpPort="${default.http.port}"
-      httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-  <webApplication location="guide-graphql-client-query.war" contextRoot="/"/>
-</server>
-```
-
-
-
-The ***graphql.server*** variable is defined in the ***server.xml*** file. This variable defines where the GraphQL client makes requests to.
-
-
-::page{title="Building and running the application"}
-
-From the ***start*** directory, run the following commands:
-
-```bash
-mvn -pl models install
-mvn package
-```
-
-The ***mvn install*** command compiles and packages the object types you created to a ***.jar*** file. This allows them to be used by the ***system*** and ***graphql*** services. The ***mvn package*** command packages the ***system***, ***graphql***, and ***query*** services to ***.war*** files. 
 
 Run the following command to download or update to the latest Open Liberty Docker image:
 
@@ -417,432 +95,491 @@ Run the following command to download or update to the latest Open Liberty Docke
 docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 
-Dockerfiles are already set up for you. Build your Docker images with the following commands:
+Next, run the ***docker build*** commands to build container images for your application:
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
+
+During the build, you'll see various Docker messages describing what images are being downloaded and built. When the build finishes, run the following command to list all local Docker images:
+```bash
+docker images
+```
+
+
+Verify that the ***system:1.0-SNAPSHOT*** and ***inventory:1.0-SNAPSHOT*** images are listed among them, for example:
+
+```
+REPOSITORY                                TAG                       
+inventory                                 1.0-SNAPSHOT
+system                                    1.0-SNAPSHOT
+openliberty/open-liberty                  full-java11-openj9-ubi
+```
+
+If you don't see the ***system:1.0-SNAPSHOT*** and ***inventory:1.0-SNAPSHOT*** images, then check the Maven build log for any potential errors. If the images built without errors, push them to your container registry on IBM Cloud with the following commands:
 
 ```bash
-docker build -t system:1.0-java11-SNAPSHOT --build-arg JAVA_VERSION=java11 system/.
-docker build -t system:1.0-java17-SNAPSHOT --build-arg JAVA_VERSION=java17 system/.
-docker build -t graphql:1.0-SNAPSHOT graphql/.
-docker build -t query:1.0-SNAPSHOT query/.
-```
-
-Run these Docker images using the provided ***startContainers*** script. The script creates a network for the services to communicate through. It creates the two ***system*** microservices, a ***graphql*** microservice, and a ***query*** microservice that interact with each other.
-
-
-```bash
-./scripts/startContainers.sh
-```
-
-The containers might take some time to become available. 
-
-::page{title="Accessing the application"}
-
-
-
-To access the client service, there are several available REST endpoints that test the API endpoints that you created. 
-
-**Try the query operations**
-
-First, make a GET request to the ***/query/system/{hostname}*** endpoint by the following command. This request retrieves the system properties for the specified ***hostname***.
-
-The ***hostname*** is set to ***system-java11***. You can try out the operations using the hostname ***system-java17*** as well. 
-
-```bash
-curl -s 'http://localhost:9084/query/system/system-java11' | jq
-```
-You can expect a response similar to the following example:
-
-
-```
-{
-  "hostname": "system-java11",
-  "java": {
-    "vendor": "IBM Corporation",
-    "version": "11.0.18"
-  },
-  "osArch": "amd64",
-  "osName": "Linux",
-  "osVersion": "5.15.0-67-generic",
-  "systemMetrics": {
-    "heapSize": 536870912,
-    "nonHeapSize": -1,
-    "processors": 2
-  },
-  "username": "default"
-}
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 ```
 
 
+::page{title="Deploying the microservices"}
 
-You can retrieve the information about the resource usage of any number of system services by making a GET request at ***/query/systemLoad/{hostnames}*** endpoint. 
-The ***hostnames*** are set to ***system-java11,system-java17***.
+Now that your Docker images are built, deploy them using a Kubernetes resource definition.
 
-```bash
-curl -s 'http://localhost:9084/query/systemLoad/system-java11,system-java17' | jq
-```
+A Kubernetes resource definition is a yaml file that contains a description of all your deployments, services, or any other resources that you want to deploy. All resources can also be deleted from the cluster by using the same yaml file that you used to deploy them.
 
-You can expect the following response is similar to the following example:
-
-
-```
-[
-  {
-    "hostname": "system-java11",
-    "loadData": {
-      "heapUsed": 30090920,
-      "loadAverage": 0.08,
-      "nonHeapUsed": 87825316
-    }
-  },
-  {
-    "hostname": "system-java17",
-    "loadData": {
-      "heapUsed": 39842888,
-      "loadAverage": 0.08,
-      "nonHeapUsed": 93098960
-    }
-  }
-]
-```
-
-
-**Try the mutation operation**
-
-You can also make POST requests to add a note to a system service at the ***/query/mutation/system/note*** endpoint.
-To add a note to the system service running on Java 8, run the following command:
-
-```bash
-curl -i -X 'POST' 'http://localhost:9084/query/mutation/system/note' -H 'Content-Type: application/json' -d '{"hostname": "system-java11","text": "I am trying out GraphQL on Open Liberty!"}'
-```
-
-You will recieve a `200` response code, similar to below, if the request is processed succesfully. 
-
-```
-HTTP/1.1 200 OK
-Content-Language: en-US
-Content-Length: 0
-Date: Fri, 21 Apr 2023 14:17:47 GMT
-```
-
-You can see the note you added to the system service at the ***GET /query/system/{hostname}*** endpoint.
-
-::page{title="Tearing down the environment"}
-
-When you're done checking out the application, run the following script to stop the application:
-
-
-```bash
-./scripts/stopContainers.sh
-```
-
-
-::page{title="Testing the application"}
-
-Although you can test your application manually, you should rely on automated tests. In this section, you'll create integration tests using Testcontainers to verify that the basic operations you implemented function correctly. 
-
-First, create a RESTful client interface for the ***query*** microservice.
-
-Create the ***QueryResourceClient.java*** interface.
+Create the Kubernetes configuration file in the ***start*** directory.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java
+touch /home/project/guide-kubernetes-intro/start/kubernetes.yaml
 ```
 
 
-> Then, to open the QueryResourceClient.java file in your IDE, select
-> **File** > **Open** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java, or click the following button
+> Then, to open the kubernetes.yaml file in your IDE, select
+> **File** > **Open** > guide-kubernetes-intro/start/kubernetes.yaml, or click the following button
 
-::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceClient.java"}
+::openFile{path="/home/project/guide-kubernetes-intro/start/kubernetes.yaml"}
 
 
 
-```java
-package it.io.openliberty.guides.query;
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  selector:
+    matchLabels:
+      app: system
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 31000
 
-import java.util.List;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-import io.openliberty.guides.graphql.models.SystemInfo;
-import io.openliberty.guides.graphql.models.SystemLoad;
-import io.openliberty.guides.graphql.models.NoteInfo;
-
-@ApplicationScoped
-@Path("query")
-public interface QueryResourceClient {
-
-    @GET
-    @Path("system/{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    SystemInfo querySystem(@PathParam("hostname") String hostname);
-
-    @GET
-    @Path("systemLoad/{hostnames}")
-    @Produces(MediaType.APPLICATION_JSON)
-    List<SystemLoad> querySystemLoad(@PathParam("hostnames") String hostnames);
-
-    @POST
-    @Path("mutation/system/note")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    Response editNote(NoteInfo text);
-}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 32000
 ```
 
 
-
-This interface declares ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** methods for accessing each of the endpoints that are set up to access the ***query*** microservice.
-
-Create the test container class that accesses the ***query*** image that you built in previous section.
-
-Create the ***LibertyContainer.java*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java
-```
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-> Then, to open the LibertyContainer.java file in your IDE, select
-> **File** > **Open** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java, or click the following button
+This file defines four Kubernetes resources. It defines two deployments and two services. A Kubernetes deployment is a resource that controls the creation and management of pods. A service exposes your deployment so that you can make requests to your containers. Three key items to look at when creating the deployments are the ***labels***, ***image***, and ***containerPort*** fields. The ***labels*** is a way for a Kubernetes service to reference specific deployments. The ***image*** is the name and tag of the Docker image that you want to use for this container. Finally, the ***containerPort*** is the port that your container exposes to access your application. For the services, the key point to understand is that they expose your deployments. The binding between deployments and services is specified by labels -- in this case the ***app*** label. You will also notice the service has a type of ***NodePort***. This means you can access these services from outside of your cluster via a specific port. In this case, the ports are ***31000*** and ***32000***, but port numbers can also be randomized if the ***nodePort*** field is not used.
 
-::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/LibertyContainer.java"}
-
-
-
-```java
-package it.io.openliberty.guides.query;
-
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
-
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.UriBuilder;
-
-public class LibertyContainer extends GenericContainer<LibertyContainer> {
-
-    static final Logger LOGGER = LoggerFactory.getLogger(LibertyContainer.class);
-    private String baseURL;
-
-    public LibertyContainer(final String dockerImageName) {
-        super(dockerImageName);
-        waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
-        this.addExposedPorts(9084);
-        return;
-    }
-
-    public <T> T createRestClient(Class<T> clazz) {
-        String urlPath = getBaseURL();
-        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
-        ResteasyClient client = (ResteasyClient) builder.build();
-        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
-        return target.proxy(clazz);
-    }
-
-    public String getBaseURL() throws IllegalStateException {
-        if (baseURL != null) {
-            return baseURL;
-        }
-        if (!this.isRunning()) {
-            throw new IllegalStateException(
-                "Container must be running to determine hostname and port");
-        }
-        baseURL =  "http://" + this.getContainerIpAddress()
-            + ":" + this.getFirstMappedPort();
-        System.out.println("TEST: " + baseURL);
-        return baseURL;
-    }
-}
-```
-
-
-
-The ***createRestClient()*** method creates a REST client instance with the ***QueryResourceClient*** interface. The ***getBaseURL()*** method constructs the URL that can access the ***query*** image.
-
-Now, create your integration test cases.
-
-Create the ***QueryResourceIT.java*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java
-```
-
-
-> Then, to open the QueryResourceIT.java file in your IDE, select
-> **File** > **Open** > guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java, or click the following button
-
-::openFile{path="/home/project/guide-graphql-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryResourceIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.query;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
-import java.util.List;
-import jakarta.ws.rs.core.Response;
-import io.openliberty.guides.graphql.models.NoteInfo;
-import io.openliberty.guides.graphql.models.SystemLoad;
-import io.openliberty.guides.graphql.models.SystemLoadData;
-import io.openliberty.guides.graphql.models.SystemInfo;
-
-@Testcontainers
-@TestMethodOrder(OrderAnnotation.class)
-public class QueryResourceIT {
-
-    private static Logger logger = LoggerFactory.getLogger(QueryResourceIT.class);
-    private static String system8ImageName = "system:1.0-java11-SNAPSHOT";
-    private static String queryImageName = "query:1.0-SNAPSHOT";
-    private static String graphqlImageName = "graphql:1.0-SNAPSHOT";
-
-    public static QueryResourceClient client;
-    public static Network network = Network.newNetwork();
-
-    @Container
-    public static GenericContainer<?> systemContainer
-        = new GenericContainer<>(system8ImageName)
-              .withNetwork(network)
-              .withExposedPorts(9080)
-              .withNetworkAliases("system-java11")
-              .withLogConsumer(new Slf4jLogConsumer(logger));
-
-    @Container
-    public static LibertyContainer graphqlContainer
-        = new LibertyContainer(graphqlImageName)
-              .withNetwork(network)
-              .withExposedPorts(9082)
-              .withNetworkAliases("graphql")
-              .withLogConsumer(new Slf4jLogConsumer(logger));
-
-    @Container
-    public static LibertyContainer libertyContainer
-        = new LibertyContainer(queryImageName)
-              .withNetwork(network)
-              .withExposedPorts(9084)
-              .withLogConsumer(new Slf4jLogConsumer(logger));
-
-    @BeforeAll
-    public static void setupTestClass() throws Exception {
-        System.out.println("TEST: Starting Liberty Container setup");
-        client = libertyContainer.createRestClient(QueryResourceClient.class);
-    }
-
-    @Test
-    @Order(1)
-    public void testGetSystem() {
-        System.out.println("TEST: Testing get system /system/system-java11");
-        SystemInfo systemInfo = client.querySystem("system-java11");
-        assertEquals(systemInfo.getHostname(), "system-java11");
-        assertNotNull(systemInfo.getOsVersion(), "osVersion is null");
-        assertNotNull(systemInfo.getJava(), "java is null");
-        assertNotNull(systemInfo.getSystemMetrics(), "systemMetrics is null");
-    }
-
-    @Test
-    @Order(2)
-    public void testGetSystemLoad() {
-        System.out.println("TEST: Testing get system load /systemLoad/system-java11");
-        List<SystemLoad> systemLoad = client.querySystemLoad("system-java11");
-        assertEquals(systemLoad.get(0).getHostname(), "system-java11");
-        SystemLoadData systemLoadData = systemLoad.get(0).getLoadData();
-        assertNotNull(systemLoadData.getLoadAverage(), "loadAverage is null");
-        assertNotNull(systemLoadData.getHeapUsed(), "headUsed is null");
-        assertNotNull(systemLoadData.getNonHeapUsed(), "nonHeapUsed is null");
-    }
-
-    @Test
-    @Order(3)
-    public void testEditNote() {
-        System.out.println("TEST: Testing editing note /mutation/system/note");
-        NoteInfo note = new NoteInfo();
-        note.setHostname("system-java11");
-        note.setText("I am trying out GraphQL on Open Liberty!");
-        Response response = client.editNote(note);
-        assertEquals(200, response.getStatus(), "Incorrect response code");
-        SystemInfo systemInfo = client.querySystem("system-java11");
-        assertEquals(systemInfo.getNote(), "I am trying out GraphQL on Open Liberty!");
-    }
-}
-```
-
-
-
-Define the ***systemContainer*** test container to start up the ***system-java11*** image, the ***graphqlContainer*** test container to start up the ***graphql*** image, and the ***libertyContainer*** test container to start up the ***query*** image. Make sure that the containers use the same network.
-
-The ***@Testcontainers*** annotation finds all fields that are annotated with the ***@Container*** annotation and calls their container lifecycle methods. The ***static*** function declaration on each container indicates that this container will be started only once before any test method is executed and stopped after the last test method is executed.
-
-The ***testGetSystem()*** verifies the ***/query/system/{hostname}*** endpoint with ***hostname*** set to ***system-java11***.
-
-The ***testGetSystemLoad()*** verifies the ***/query/systemLoad/{hostnames}*** endpoint with ***hostnames*** set to ***system-java11***.
-
-The ***testEditNote()*** verifies the mutation operation at the ***/query/mutation/system/note*** endpoint.
-
-
-The required ***dependencies*** are already added to the ***pom.xml*** Maven configuration file for you, including JUnit5, JBoss RESTEasy client, Glassfish JSON, Testcontainers, and Log4J libraries.
-
-To enable running the integration test by the Maven ***verify*** goal, the ***maven-failsafe-plugin*** plugin is also required.
-
-### Running the tests
-
-You can run the Maven ***verify*** goal, which compiles the java files, starts the containers, runs the tests, and then stops the containers.
-
+Update the image names so that the images in your IBM Cloud container registry are used, and remove the ***nodePort*** fields so that the ports can be generated automatically:
 
 ```bash
-cd /home/project/guide-graphql-client/start/query
-export TESTCONTAINERS_RYUK_DISABLED=true
-mvn verify
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
 ```
 
-You will see the following output:
+Run the following commands to deploy the resources as defined in kubernetes.yaml:
+```bash
+kubectl apply -f kubernetes.yaml
+```
+
+When the apps are deployed, run the following command to check the status of your pods:
+```bash
+kubectl get pods
+```
+
+You'll see an output similar to the following if all the pods are healthy and running:
+
+```
+NAME                                    READY     STATUS    RESTARTS   AGE
+system-deployment-6bd97d9bf6-4ccds      1/1       Running   0          15s
+inventory-deployment-645767664f-nbtd9   1/1       Running   0          15s
+```
+
+You can also inspect individual pods in more detail by running the following command:
+```bash
+kubectl describe pods
+```
+
+You can also issue the ***kubectl get*** and ***kubectl describe*** commands on other Kubernetes resources, so feel free to inspect all other resources.
+
+
+In this execise, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
+
+```bash
+kubectl proxy
+```
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
+```bash
+SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
+INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
+```
+
+Run the following echo commands to verify the variables:
+
+```bash
+echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
+```
+
+The output appears as shown in the following example:
+
+```
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
+localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
+```
+
+Then, use the following ***curl*** command to access your ***system*** microservice:
+
+```bash
+curl -s http://$SYSTEM_PROXY/system/properties | jq
+```
+
+Also, use the following ***curl*** command to access your ***inventory*** microservice:
+
+```bash
+curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
+```
+
+The ***http://$SYSTEM_PROXY/system/properties*** URL returns system properties and the name of the pod in an HTTP header that is called ***X-Pod-Name***. To view the header, you can use the ***-I*** option in the ***curl*** command when you make a request to the ***http://$SYSTEM_PROXY/system/properties*** URL.
+
+```bash
+curl -I http://$SYSTEM_PROXY/system/properties
+```
+
+The ***http://$INVENTORY_PROXY/inventory/systems/system-service*** URL adds properties from the ***system-service*** endpoint to the inventory Kubernetes Service. Making a request to the ***http://$INVENTORY_PROXY/inventory/systems/[kube-service]*** URL in general adds to the inventory. That result depends on whether the ***kube-service*** endpoint is a valid Kubernetes service that can be accessed.
+
+
+::page{title="Rolling update"}
+
+Without continuous updates, a Kubernetes cluster is susceptible to a denial of a service attack. Rolling updates continually install Kubernetes patches without disrupting the availability of the deployed applications. Update the yaml file as follows to add the ***rollingUpdate*** configuration. 
+
+Replace the Kubernetes configuration file
+
+> To open the kubernetes.yaml file in your IDE, select
+> **File** > **Open** > guide-kubernetes-intro/start/kubernetes.yaml, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-intro/start/kubernetes.yaml"}
+
+
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  selector:
+    matchLabels:
+      app: system
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9080
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 31000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9080
+    targetPort: 9080
+    nodePort: 32000
+```
+
+
+
+The ***rollingUpdate*** configuration has two attributes, ***maxUnavailable*** and ***maxSurge***. The ***maxUnavailable*** attribute specifies the the maximum number of Kubernetes pods that can be unavailable during the update process. Similarly, the ***maxSurge*** attribute specifies the maximum number of additional pods that can be created during the update process.
+
+The ***readinessProbe*** allows Kubernetes to know whether the service is ready to handle requests. The readiness health check classes for the ***/health/ready*** endpoint to the ***inventory*** and ***system*** services are provided for you. If you want to learn more about how to use health checks in Kubernetes, check out the [Kubernetes-microprofile-health](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide. 
+
+Update the image names and remove the ***nodePort*** fields by running the following commands:
+```bash
+cd /home/project/guide-kubernetes-intro/start
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
+
+Run the following command to deploy the ***inventory*** and ***system*** microservices with the new configuration:
+```bash
+kubectl apply -f kubernetes.yaml
+```
+
+Run the following command to check the status of your pods are ready and running:
+```bash
+kubectl get pods
+```
+
+::page{title="Scaling a deployment"}
+
+To use load balancing, you need to scale your deployments. When you scale a deployment, you replicate its pods, creating more running instances of your applications. Scaling is one of the primary advantages of Kubernetes because you can replicate your application to accommodate more traffic, and then descale your deployments to free up resources when the traffic decreases.
+
+As an example, scale the ***system*** deployment to three pods by running the following command:
+```bash
+kubectl scale deployment/system-deployment --replicas=3
+```
+
+Use the following command to verify that two new pods have been created.
+```bash
+kubectl get pods
+```
+
+```
+NAME                                    READY     STATUS    RESTARTS   AGE
+system-deployment-6bd97d9bf6-4ccds      1/1       Running   0          1m
+system-deployment-6bd97d9bf6-jf9rs      1/1       Running   0          25s
+system-deployment-6bd97d9bf6-x4zth      1/1       Running   0          25s
+inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
+```
+
+
+Wait for your two new pods to be in the ready state, then make the following ***curl*** command:
+
+```bash
+curl -I http://$SYSTEM_PROXY/system/properties
+```
+
+Notice that the ***X-Pod-Name*** header has a different value when you call it multiple times. The value changes because three pods that all serve the ***system*** application are now running. Similarly, to descale your deployments you can use the same scale command with fewer replicas.
+
+```bash
+kubectl scale deployment/system-deployment --replicas=1
+```
+
+::page{title="Redeploy microservices"}
+
+When you're building your application, you might want to quickly test a change. To run a quick test, you can rebuild your Docker images then delete and re-create your Kubernetes resources. Note that there is only one ***system*** pod after you redeploy because you're deleting all of the existing pods.
+
+
+```bash
+cd /home/project/guide-kubernetes-intro/start
+kubectl delete -f kubernetes.yaml
+
+mvn clean package
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+
+kubectl apply -f kubernetes.yaml
+```
+
+Updating your applications in this way is fine for development environments, but it is not suitable for production. If you want to deploy an updated image to a production cluster, you can update the container in your deployment with a new image. Once the new container is ready, Kubernetes automates both the creation of a new container and the decommissioning of the old one.
+
+
+::page{title="Testing microservices that are running on Kubernetes"}
+
+A few tests are included for you to test the basic functionality of the microservices. If a test failure occurs, then you might have introduced a bug into the code.  To run the tests, wait for all pods to be in the ready state before proceeding further. The default properties defined in the ***pom.xml*** are:
+
+| *Property*                        | *Description*
+| ---| ---
+| ***system.kube.service***       | Name of the Kubernetes Service wrapping the ***system*** pods, ***system-service*** by default.
+| ***system.service.root***       | The Kubernetes Service ***system-service*** root path, ***localhost:31000*** by default.
+| ***inventory.service.root*** | The Kubernetes Service ***inventory-service*** root path, ***localhost:32000*** by default.
+
+Navigate back to the ***start*** directory.
+
+
+Update the ***pom.xml*** files so that the ***system.service.root*** and ***inventory.service.root*** properties match the values to access the ***system*** and **inventory*** services.
+
+```bash
+sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' inventory/pom.xml
+sed -i 's=localhost:32000='"$INVENTORY_PROXY"'=g' inventory/pom.xml
+sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
+```
+
+Run the integration tests by using the following command:
+
+```bash
+mvn failsafe:integration-test
+```
+
+If the tests pass, you'll see an output similar to the following for each service respectively:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.query.QueryResourceIT
-...
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 11.694 s - in it.io.openliberty.guides.query.QueryResourceIT
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.372 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
-Results :
+Results:
 
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 ```
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.714 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results:
+
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+```
+
+
+::page{title="Tearing down the environment"}
+
+Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
+
+When you no longer need your deployed microservices, you can delete all Kubernetes resources by running the ***kubectl delete*** command:
+```bash
+kubectl delete -f kubernetes.yaml
+```
+
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just learnt how to use a GraphQL client to run GraphQL queries and mutations!
+You have just deployed two microservices that are running in Open Liberty to Kubernetes. You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
 
 
 
@@ -852,32 +589,33 @@ You just learnt how to use a GraphQL client to run GraphQL queries and mutations
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-graphql-client*** project by running the following commands:
+Delete the ***guide-kubernetes-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-graphql-client
+rm -fr guide-kubernetes-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Running%20GraphQL%20queries%20and%20mutations%20using%20a%20GraphQL%20client&guide-id=cloud-hosted-guide-graphql-client)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20microservices%20to%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-graphql-client/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-graphql-client/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Optimizing REST queries for microservices with GraphQL](https://openliberty.io/guides/microprofile-graphql.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Managing microservice traffic using Istio](https://openliberty.io/guides/istio-intro.html)
 
 
 ### Log out of the session
