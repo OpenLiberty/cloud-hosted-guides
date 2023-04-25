@@ -5,9 +5,9 @@ branch: lab-5933-instruction
 version-history-start-date: 2023-04-14T18:24:15Z
 tool-type: theia
 ---
-::page{title="Welcome to the Deploying microservices to Kubernetes guide!"}
+::page{title="Welcome to the Containerizing microservices guide!"}
 
-Deploy microservices in Open Liberty Docker containers to Kubernetes and manage them with the Kubernetes CLI, kubectl.
+Learn how to containerize and run your microservices with Open Liberty using Docker.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -18,38 +18,14 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
-::page{title="What is Kubernetes?"}
-
-Kubernetes is an open source container orchestrator that automates many tasks involved in deploying, managing, and scaling containerized applications.
-
-Over the years, Kubernetes has become a major tool in containerized environments as containers are being further leveraged for all steps of a continuous delivery pipeline.
-
-### Why use Kubernetes?
-
-Managing individual containers can be challenging. A small team can easily manage a few containers for development but managing hundreds of containers can be a headache, even for a large team of experienced developers. Kubernetes is a tool for deployment in containerized environments. It handles scheduling, deployment, as well as mass deletion and creation of containers. It provides update rollout abilities on a large scale that would otherwise prove extremely tedious to do. Imagine that you updated a Docker image, which now needs to propagate to a dozen containers. While you could destroy and then re-create these containers, you can also run a short one-line command to have Kubernetes make all those updates for you. Of course, this is just a simple example. Kubernetes has a lot more to offer.
-
-### Architecture
-
-Deploying an application to Kubernetes means deploying an application to a Kubernetes cluster.
-
-A typical Kubernetes cluster is a collection of physical or virtual machines called nodes that run containerized applications. A cluster is made up of one parent node that manages the cluster, and many worker nodes that run the actual application instances inside Kubernetes objects called pods.
-
-A pod is a basic building block in a Kubernetes cluster. It represents a single running process that encapsulates a container or in some scenarios many closely coupled containers. Pods can be replicated to scale applications and handle more traffic. From the perspective of a cluster, a set of replicated pods is still one application instance, although it might be made up of dozens of instances of itself. A single pod or a group of replicated pods are managed by Kubernetes objects called controllers. A controller handles replication, self-healing, rollout of updates, and general management of pods. One example of a controller that you will use in this guide is a deployment.
-
-A pod or a group of replicated pods are abstracted through Kubernetes objects called services that define a set of rules by which the pods can be accessed. In a basic scenario, a Kubernetes service exposes a node port that can be used together with the cluster IP address to access the pods encapsulated by the service.
-
-To learn about the various Kubernetes resources that you can configure, see the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/).
-
-
 ::page{title="What you'll learn"}
 
-You will learn how to deploy two microservices in Open Liberty containers to a local Kubernetes cluster. You will then manage your deployed microservices using the ***kubectl*** command line interface for Kubernetes. The ***kubectl*** CLI is your primary tool for communicating with and managing your Kubernetes cluster.
 
-The two microservices you will deploy are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This process demonstrates how communication can be established between pods inside a cluster.
+From development to production, and across your DevOps environments, you can deploy your microservices in a lightweight and portable manner by using containers. You can run a container from a container image. Each container image is a package of what you need to run your microservice or application, from the code to its dependencies and configuration. If you're new to the development of applications in containers, you might want to start with the [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html) guide before you work through this guide.
 
-You will use a local single-node Kubernetes cluster.
+You'll learn how to build container images and run containers using [Docker](https://www.docker.com/) for your microservices. You'll learn about the [Open Liberty container images](https://github.com/OpenLiberty/ci.docker) and how to use them for your containerized applications. You'll construct ***Dockerfile*** files, create Docker images by using the ***docker build*** command, and run the image as Docker containers by using ***docker run*** command.
 
+The two microservices that you'll be working with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This guide demonstrates how both microservices can run and communicate with each other in different Docker containers. 
 
 ::page{title="Getting started"}
 
@@ -62,11 +38,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-containerize.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-kubernetes-intro.git
-cd guide-kubernetes-intro
+git clone https://github.com/openliberty/guide-containerize.git
+cd guide-containerize
 ```
 
 
@@ -75,19 +51,191 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
+::page{title="Packaging your microservices"}
 
 
-::page{title="Building and containerizing the microservices"}
-
-The first step of deploying to Kubernetes is to build your microservices and containerize them with Docker.
-
-The starting Java project, which you can find in the ***start*** directory, is a multi-module Maven project that's made up of the ***system*** and ***inventory*** microservices. Each microservice resides in its own directory, ***start/system*** and ***start/inventory***. Each of these directories also contains a Dockerfile, which is necessary for building Docker images. If you're unfamiliar with Dockerfiles, check out the [Containerizing Microservices](https://openliberty.io/guides/containerize.html) guide, which covers Dockerfiles in depth.
-
-Navigate to the ***start*** directory and build the applications by running the following commands:
+To begin, run the following command to navigate to the **start** directory:
 ```bash
 cd start
-mvn clean package
 ```
+
+You can find the starting Java project in the ***start*** directory. This project is a multi-module Maven project that is made up of the ***system*** and ***inventory*** microservices. Each microservice is located in its own corresponding directory, ***system*** and ***inventory***.
+
+To try out the microservices by using Maven, run the following Maven goal to build the ***system*** microservice and run it inside Open Liberty:
+```bash
+mvn -pl system liberty:run
+```
+
+
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session and run the following Maven goal to build the **inventory** microservice and run it inside Open Liberty:
+```bash
+cd /home/project/guide-containerize/start
+mvn -pl inventory liberty:run
+```
+
+Select **Terminal** > **New Terminal** from the menu of the IDE to open a new command-line session. To access the **inventory** service, which displays the current contents of the inventory, run the following curl command: 
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+After you see the following message in both command-line sessions, both of your services are ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+The **system** service shows the system properties of the running JVM and can be found by running the following curl command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+The system properties of your localhost can be added to the **inventory** service at **http://localhost:9081/inventory/systems/localhost**. Run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
+
+
+After you are finished checking out the microservices, stop the Open Liberty servers by pressing **CTRL+C** in the command-line sessions where you ran the servers. Alternatively, you can run the **liberty:stop** goal in another command-line session from the 
+**start** directory:
+```bash
+cd /home/project/guide-containerize/start
+mvn -pl system liberty:stop
+mvn -pl inventory liberty:stop
+```
+
+To package your microservices, run the Maven package goal to build the application ***.war*** files from the start directory so that the ***.war*** files are in the ***system/target*** and ***inventory/target*** directories.
+```bash
+mvn package
+```
+
+To learn more about RESTful web services and how to build them, see [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) for details about how to build the ***system*** service. The ***inventory*** service is built in a similar way.
+
+
+::page{title="Building your Docker images"}
+
+A Docker image is a binary file. It is made up of multiple layers and is used to run code in a Docker container. Images are built from instructions in Dockerfiles to create a containerized version of the application.
+
+A ***Dockerfile*** is a collection of instructions for building a Docker image that can then be run as a container. As each instruction is run in a ***Dockerfile***, a new Docker layer is created. These layers, which are known as intermediate images, are created when a change is made to your Docker image.
+
+Every ***Dockerfile*** begins with a parent or base image over which various commands are run. For example, you can start your image from scratch and run commands that download and install a Java runtime, or you can start from an image that already contains a Java installation.
+
+Learn more about Docker on the [official Docker page](https://www.docker.com/what-docker).
+
+### Creating your Dockerfiles
+You will be creating two Docker images to run the ***inventory*** service and ***system*** service. The first step is to create Dockerfiles for both services.
+
+In this guide, you're using an official image from the IBM Container Registry (ICR), ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi***, as your parent image. This image is tagged with the word ***full***, meaning it includes all Liberty features. ***full*** images are recommended for development only because they significantly expand the image size with features that are not required by the application.
+
+To minimize your image footprint in production, you can use one of the ***kernel-slim*** images, such as ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi***.  This image installs the basic server. You can then add all the necessary features for your application with the usage pattern that is detailed in the Open Liberty [container image documentation](https://openliberty.io/docs/latest/container-images.html#build). To use the default image that comes with the Open Liberty runtime, define the ***FROM*** instruction as ***FROM icr.io/appcafe/open-liberty***. You can find all official images on the Open Liberty [container image repository](https://openliberty.io/docs/latest/container-images.html).
+
+Create the ***Dockerfile*** for the inventory service.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-containerize/start/inventory/Dockerfile
+```
+
+
+> Then, to open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-containerize/start/inventory/Dockerfile, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="inventory" \
+  version="$VERSION-$REVISION" \
+  summary="The inventory microservice from the Containerizing microservices guide" \
+  description="This image contains the inventory microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 \
+    src/main/liberty/config \
+    /config/
+
+COPY --chown=1001:0 \
+    target/guide-containerize-inventory.war \
+    /config/apps
+
+RUN configure.sh
+```
+
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+The ***FROM*** instruction initializes a new build stage, which indicates the parent image of the built image. If you don't need a parent image, then you can use ***FROM scratch***, which makes your image a base image. 
+
+It is also recommended to label your Docker images with the ***LABEL*** command, as the label information can help you manage your images. For more information, see [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#label).
+
+The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the ***inventory*** server configuration files that are located at ***src/main/liberty/config*** are copied to the ***/config/*** destination directory. The ***inventory*** application WAR file ***inventory.war***, which was created from running ***mvn package***, is copied to the ***/config/apps*** destination directory.
+
+The ***COPY*** instructions use the ***1001*** user ID  and ***0*** group because the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image runs by default with the ***USER 1001*** (non-root) user for security purposes. Otherwise, the files and directories that are copied over are owned by the root user.
+
+Place the ***RUN configure.sh*** command at the end to get a pre-warmed Docker image. It improves the startup time of running your Docker container.
+
+The ***Dockerfile*** for the ***system*** service follows the same instructions as the ***inventory*** service, except that some ***labels*** are updated, and the ***system.war*** archive is copied into ***/config/apps***.
+
+Create the ***Dockerfile*** for the system service.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-containerize/start/system/Dockerfile
+```
+
+
+> Then, to open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-containerize/start/system/Dockerfile, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Containerizing microservices guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 src/main/liberty/config /config/
+
+COPY --chown=1001:0 target/guide-containerize-system.war /config/apps
+
+RUN configure.sh
+```
+
+
+
+
+### Building your Docker image
+
+Now that your microservices are packaged and you have written your Dockerfiles, you will build your Docker images by using the ***docker build*** command.
 
 Run the following command to download or update to the latest Open Liberty Docker image:
 
@@ -95,7 +243,8 @@ Run the following command to download or update to the latest Open Liberty Docke
 docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 
-Next, run the ***docker build*** commands to build container images for your application:
+Run the following commands to build container images for your application:
+
 ```bash
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
@@ -103,484 +252,618 @@ docker build -t inventory:1.0-SNAPSHOT inventory/.
 
 The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
 
-During the build, you'll see various Docker messages describing what images are being downloaded and built. When the build finishes, run the following command to list all local Docker images:
+To verify that the images are built, run the ***docker images*** command to list all local Docker images:
+
 ```bash
 docker images
 ```
 
-
-Verify that the ***system:1.0-SNAPSHOT*** and ***inventory:1.0-SNAPSHOT*** images are listed among them, for example:
-
-```
-REPOSITORY                                TAG                       
-inventory                                 1.0-SNAPSHOT
-system                                    1.0-SNAPSHOT
-openliberty/open-liberty                  full-java11-openj9-ubi
+Or, run the ***docker images*** command with ***--filter*** option to list your images:
+```bash
+docker images -f "label=org.opencontainers.image.authors=Your Name"
 ```
 
-If you don't see the ***system:1.0-SNAPSHOT*** and ***inventory:1.0-SNAPSHOT*** images, then check the Maven build log for any potential errors. If the images built without errors, push them to your container registry on IBM Cloud with the following commands:
+Your ***inventory*** and ***system*** images appear in the list of all Docker images:
+
+```
+REPOSITORY    TAG             IMAGE ID        CREATED          SIZE
+inventory     1.0-SNAPSHOT    08fef024e986    4 minutes ago    1GB
+system        1.0-SNAPSHOT    1dff6d0b4f31    5 minutes ago    977MB
+```
+
+
+::page{title="Running your microservices in Docker containers"}
+Now that your two images are built, you will run your microservices in Docker containers:
 
 ```bash
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
+docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
+```
+
+The following table describes the flags in these commands:
+
+| *Flag* | *Description*
+| ---| ---
+| -d     | Runs the container in the background.
+| --name | Specifies a name for the container.
+| -p     | Maps the host ports to the container ports. For example: ***-p \<HOST_PORT\>:\<CONTAINER_PORT\>***
+
+Next, run the ***docker ps*** command to verify that your containers are started:
+
+```bash
+docker ps
+```
+
+Make sure that your containers are running and show ***Up*** as their status:
+
+```
+CONTAINER ID    IMAGE                   COMMAND                  CREATED          STATUS          PORTS                                        NAMES
+2b584282e0f5    inventory:1.0-SNAPSHOT  "/opt/ol/helpers/run…"   2 seconds ago    Up 1 second     9080/tcp, 9443/tcp, 0.0.0.0:9081->9081/tcp   inventory
+99a98313705f    system:1.0-SNAPSHOT     "/opt/ol/helpers/run…"   3 seconds ago    Up 2 seconds    0.0.0.0:9080->9080/tcp, 9443/tcp             system
+```
+
+If a problem occurs and your containers exit prematurely, the containers don't appear in the container list that the ***docker ps*** command displays. Instead, your containers appear with an ***Exited*** status when they run the ***docker ps -a*** command. Run the ***docker logs system*** and ***docker logs inventory*** commands to view the container logs for any potential problems. Run the ***docker stats system*** and ***docker stats inventory*** commands to display a live stream of usage statistics for your containers. You can also double-check that your Dockerfiles are correct. When you find the cause of the issues, remove the faulty containers with the ***docker rm system*** and ***docker rm inventory*** commands. Rebuild your images, and start the containers again.
+
+
+To access the application, run the following curl command. An empty list is expected because no system properties are stored in the inventory yet:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+Next, retrieve the ***system*** container's IP address by running the following:
+
+```bash
+docker inspect -f "{{.NetworkSettings.IPAddress }}" system
+```
+
+The command returns the system container IP address:
+
+```
+172.17.0.2
+```
+
+In this case, the IP address for the ***system*** service is ***172.17.0.2***. Take note of this IP address to construct the URL to view the system properties. 
+
+
+Run the following commands to go to the **http://localhost:9081/inventory/systems/[system-ip-address]** by replacing **[system-ip-address]** URL with the IP address that you obtained earlier:
+```bash
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
+```
+
+You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. Run the following curl command and you see a new entry for **[system-ip-address]**:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+::page{title="Externalizing server configuration"}
+
+
+As mentioned at the beginning of this guide, one of the advantages of using containers is that they are portable and can be moved and deployed efficiently across all of your DevOps environments. Configuration often changes across different environments, and by externalizing your server configuration, you can simplify the development process.
+
+Imagine a scenario where you are developing an Open Liberty application on port ***9081*** but to deploy it to production, it must be available on port ***9091***. To manage this scenario, you can keep two different versions of the ***server.xml*** file; one for production and one for development. However, trying to maintain two different versions of a file might lead to mistakes. A better solution would be to externalize the configuration of the port number and use the value of an environment variable that is stored in each environment. 
+
+In this example, you will use an environment variable to externally configure the HTTP port number of the ***inventory*** service. 
+
+In the ***inventory/server.xml*** file, the ***default.http.port*** variable is declared and is used in the ***httpEndpoint*** element to define the service endpoint. The default value of the ***default.http.port*** variable is ***9081***. However, this value is only used if no other value is specified. You can replace this value in the container by using the -e flag for the podman run command. 
+
+Run the following commands to stop and remove the ***inventory*** container and rerun it with the ***default.http.port*** environment variable set:
+
+```bash
+docker stop inventory
+docker rm inventory 
+docker run -d --name inventory -e default.http.port=9091 -p 9091:9091 inventory:1.0-SNAPSHOT
+```
+
+The ***-e*** flag can be used to create and set the values of environment variables in a Docker container. In this case, you are setting the ***default.http.port*** environment variable to ***9091*** for the ***inventory*** container.
+
+Now, when the service is starting up, Open Liberty finds the ***default.http.port*** environment variable and uses it to set the value of the ***default.http.port*** variable to be used in the HTTP endpoint.
+
+
+The **inventory** service is now available on the new port number that you specified. You can see the contents of the inventory at the **http://localhost:9091/inventory/systems** URL. Run the following curl command:
+```bash
+curl -s http://localhost:9091/inventory/systems | jq
+```
+
+You can add your local system properties at the **http://localhost:9091/inventory/systems/[system-ip-address]** URL by replacing **[system-ip-address]** with the IP address that you obtained in the previous section. Run the following commands:
+```bash
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9091/inventory/systems/{$SYSTEM_IP} | jq
+```
+
+The **system** service remains unchanged and is available at the **http://localhost:9080/system/properties** URL. Run the following curl command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+You can externalize the configuration of more than just the port numbers. To learn more about Open Liberty server configuration, check out the [Server Configuration Overview](https://openliberty.io/docs/latest/reference/config/server-configuration-overview.html) docs. 
+
+::page{title="Optimizing the image size"}
+
+As mentioned previously, the parent image that is used in each ***Dockerfile*** contains the ***full*** tag, which includes all of the Liberty features. This parent image with the ***full*** tag is recommended for development, but while deploying to production it is recommended to use a parent image with the ***kernel-slim*** tag. The ***kernel-slim*** tag provides a bare minimum server with the ability to add the features required by the application.
+
+Replace the ***Dockerfile*** for the inventory service.
+
+> To open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-containerize/start/inventory/Dockerfile, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/inventory/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="inventory" \
+  version="$VERSION-$REVISION" \
+  summary="The inventory microservice from the Containerizing microservices guide" \
+  description="This image contains the inventory microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 \
+    src/main/liberty/config \
+    /config/
+
+RUN features.sh
+
+COPY --chown=1001:0 \
+    target/guide-containerize-inventory.war \
+    /config/apps
+
+RUN configure.sh
 ```
 
 
-::page{title="Deploying the microservices"}
 
-Now that your Docker images are built, deploy them using a Kubernetes resource definition.
+Replace the parent image with ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi*** at the top of your ***Dockerfile***. This image contains the ***kernel-slim*** tag that is recommended when deploying to production.
 
-A Kubernetes resource definition is a yaml file that contains a description of all your deployments, services, or any other resources that you want to deploy. All resources can also be deleted from the cluster by using the same yaml file that you used to deploy them.
+Place ***RUN features.sh*** command after the ***COPY*** command that copies the local ***/config/*** directory into the ***Docker*** image. The ***features.sh*** script adds the Liberty features that your application is required to operate.
 
-Create the Kubernetes configuration file in the ***start*** directory.
+Ensure that you repeat these instructions for the ***system*** service.
+
+Replace the ***Dockerfile*** for the system service.
+
+> To open the Dockerfile file in your IDE, select
+> **File** > **Open** > guide-containerize/start/system/Dockerfile, or click the following button
+
+::openFile{path="/home/project/guide-containerize/start/system/Dockerfile"}
+
+
+
+```
+FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
+
+ARG VERSION=1.0
+ARG REVISION=SNAPSHOT
+
+LABEL \
+  org.opencontainers.image.authors="Your Name" \
+  org.opencontainers.image.vendor="Open Liberty" \
+  org.opencontainers.image.url="local" \
+  org.opencontainers.image.source="https://github.com/OpenLiberty/guide-containerize" \
+  org.opencontainers.image.version="$VERSION" \
+  org.opencontainers.image.revision="$REVISION" \
+  vendor="Open Liberty" \
+  name="system" \
+  version="$VERSION-$REVISION" \
+  summary="The system microservice from the Containerizing microservices guide" \
+  description="This image contains the system microservice running with the Open Liberty runtime."
+
+COPY --chown=1001:0 src/main/liberty/config /config/
+
+RUN features.sh
+
+COPY --chown=1001:0 target/guide-containerize-system.war /config/apps
+
+RUN configure.sh
+```
+
+
+
+Continue by running the following commands to stop and remove your current ***Docker*** containers that are using the ***full*** parent image:
+
+```bash
+docker stop inventory system
+docker rm inventory system
+```
+
+Next, build your new ***Docker*** images with the ***kernel-slim*** parent image:
+
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+
+Verify that the images have been built by executing the following command to list all the local ***Docker*** images:
+
+```bash
+docker images
+```
+
+Notice that the images for the ***inventory*** and ***system*** services now have a reduced image size.
+```
+REPOSITORY      TAG             IMAGE ID        CREATED         SIZE
+inventory       1.0-SNAPSHOT	d5a3d1b2c20e    4 minutes ago	682MB
+system          1.0-SNAPSHOT	6346cf87eae0	5 minutes ago	694MB
+```
+
+After confirming that the images have been built, run the following commands to start the ***Docker*** containers:
+
+```bash
+docker run -d --name system -p 9080:9080 system:1.0-SNAPSHOT
+docker run -d --name inventory -p 9081:9081 inventory:1.0-SNAPSHOT
+```
+
+Once your ***Docker*** containers are running, run the following command to see the list of required features installed by ***features.sh***:
+
+```bash
+docker exec -it inventory /opt/ol/wlp/bin/productInfo featureInfo
+```
+
+Your list of Liberty features should be similar to the following:
+```
+jndi-1.0
+servlet-5.0
+cdi-3.0
+concurrent-2.0
+jsonb-2.0
+jsonp-2.0
+mpConfig-3.0
+restfulWS-3.0
+restfulWSClient-3.0
+```
+
+
+The **system** service which shows the system properties of the running JVM is now available to be accessed at **http://localhost:9080/system/properties**. Run the following curl command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+Next, you can add your local system properties at the **http://localhost:9081/inventory/systems/[system-ip-address]** URL by replacing **[system-ip-address]** with the IP address that you obtained in the previous section. Run the following commands:
+```bash
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+curl -s http://localhost:9081/inventory/systems/{$SYSTEM_IP} | jq
+```
+
+Then, verify the addition of your localhost system properties to the **inventory** service at **http://localhost:9081/inventory/systems**. Run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+::page{title="Testing the microservices"}
+
+You can test your microservices manually by hitting the endpoints or with automated tests that check your running Docker containers.
+
+Create the ***SystemEndpointIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-kubernetes-intro/start/kubernetes.yaml
+touch /home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java
 ```
 
 
-> Then, to open the kubernetes.yaml file in your IDE, select
-> **File** > **Open** > guide-kubernetes-intro/start/kubernetes.yaml, or click the following button
+> Then, to open the SystemEndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-kubernetes-intro/start/kubernetes.yaml"}
+::openFile{path="/home/project/guide-containerize/start/system/src/test/java/it/io/openliberty/guides/system/SystemEndpointIT.java"}
 
 
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  selector:
-    matchLabels:
-      app: system
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        env:
-        - name: SYS_APP_HOSTNAME
-          value: system-service
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 31000
+```java
+package it.io.openliberty.guides.system;
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 32000
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class SystemEndpointIT {
+
+    private static String clusterUrl;
+
+    private Client client;
+
+    @BeforeAll
+    public static void oneTimeSetup() {
+        String nodePort = System.getProperty("system.http.port");
+        clusterUrl = "http://localhost:" + nodePort + "/system/properties/";
+    }
+
+    @BeforeEach
+    public void setup() {
+        client = ClientBuilder.newBuilder()
+                    .hostnameVerifier(new HostnameVerifier() {
+                        public boolean verify(String hostname, SSLSession session) {
+                            return true;
+                        }
+                    })
+                    .build();
+    }
+
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
+
+    @Test
+    public void testGetProperties() {
+        Client client = ClientBuilder.newClient();
+
+        WebTarget target = client.target(clusterUrl);
+        Response response = target.request().get();
+
+        assertEquals(200, response.getStatus(),
+            "Incorrect response code from " + clusterUrl);
+        response.close();
+    }
+
+}
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+The ***testGetProperties()*** method checks for a ***200*** response code from the ***system*** service endpoint.
+
+Create the ***InventoryEndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java
+```
 
 
-This file defines four Kubernetes resources. It defines two deployments and two services. A Kubernetes deployment is a resource that controls the creation and management of pods. A service exposes your deployment so that you can make requests to your containers. Three key items to look at when creating the deployments are the ***labels***, ***image***, and ***containerPort*** fields. The ***labels*** is a way for a Kubernetes service to reference specific deployments. The ***image*** is the name and tag of the Docker image that you want to use for this container. Finally, the ***containerPort*** is the port that your container exposes to access your application. For the services, the key point to understand is that they expose your deployments. The binding between deployments and services is specified by labels -- in this case the ***app*** label. You will also notice the service has a type of ***NodePort***. This means you can access these services from outside of your cluster via a specific port. In this case, the ports are ***31000*** and ***32000***, but port numbers can also be randomized if the ***nodePort*** field is not used.
+> Then, to open the InventoryEndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
 
-Update the image names so that the images in your IBM Cloud container registry are used, and remove the ***nodePort*** fields so that the ports can be generated automatically:
+::openFile{path="/home/project/guide-containerize/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import jakarta.json.JsonObject;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+
+@TestMethodOrder(OrderAnnotation.class)
+public class InventoryEndpointIT {
+
+    private static String invUrl;
+    private static String sysUrl;
+    private static String systemServiceIp;
+
+    private static Client client;
+
+    @BeforeAll
+    public static void oneTimeSetup() {
+
+        String invServPort = System.getProperty("inventory.http.port");
+        String sysServPort = System.getProperty("system.http.port");
+
+        systemServiceIp = System.getProperty("system.ip");
+
+        invUrl = "http://localhost" + ":" + invServPort + "/inventory/systems/";
+        sysUrl = "http://localhost" + ":" + sysServPort + "/system/properties/";
+
+        client = ClientBuilder.newBuilder().hostnameVerifier(new HostnameVerifier() {
+            public boolean verify(String hostname, SSLSession session) {
+                return true;
+            }
+        }).build();
+
+        client.target(invUrl + "reset").request().post(null);
+    }
+
+    @AfterAll
+    public static void teardown() {
+        client.close();
+    }
+
+    @Test
+    @Order(1)
+    public void testEmptyInventory() {
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
+
+        JsonObject obj = response.readEntity(JsonObject.class);
+
+        int expected = 0;
+        int actual = obj.getInt("total");
+        assertEquals(expected, actual,
+                    "The inventory should be empty on application start but it wasn't");
+
+        response.close();
+    }
+
+    @Test
+    @Order(2)
+    public void testHostRegistration() {
+        this.visitSystemService();
+
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
+
+        JsonObject obj = response.readEntity(JsonObject.class);
+
+        int expected = 1;
+        int actual = obj.getInt("total");
+        assertEquals(expected, actual,
+                        "The inventory should have one entry for " + systemServiceIp);
+
+        boolean serviceExists = obj.getJsonArray("systems").getJsonObject(0)
+                        .get("hostname").toString().contains(systemServiceIp);
+        assertTrue(serviceExists,
+                        "A host was registered, but it was not " + systemServiceIp);
+
+        response.close();
+    }
+
+    @Test
+    @Order(3)
+    public void testSystemPropertiesMatch() {
+        Response invResponse = this.getResponse(invUrl);
+        Response sysResponse = this.getResponse(sysUrl);
+
+        this.assertResponse(invUrl, invResponse);
+        this.assertResponse(sysUrl, sysResponse);
+
+        JsonObject jsonFromInventory = (JsonObject) invResponse
+                        .readEntity(JsonObject.class).getJsonArray("systems")
+                        .getJsonObject(0).get("properties");
+
+        JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
+
+        String osNameFromInventory = jsonFromInventory.getString("os.name");
+        String osNameFromSystem = jsonFromSystem.getString("os.name");
+        this.assertProperty("os.name", systemServiceIp, osNameFromSystem,
+                        osNameFromInventory);
+
+        String userNameFromInventory = jsonFromInventory.getString("user.name");
+        String userNameFromSystem = jsonFromSystem.getString("user.name");
+        this.assertProperty("user.name", systemServiceIp, userNameFromSystem,
+                        userNameFromInventory);
+
+        invResponse.close();
+        sysResponse.close();
+    }
+
+    @Test
+    @Order(4)
+    public void testUnknownHost() {
+        Response response = this.getResponse(invUrl);
+        this.assertResponse(invUrl, response);
+
+        Response badResponse = client.target(invUrl + "badhostname")
+                        .request(MediaType.APPLICATION_JSON).get();
+
+        String obj = badResponse.readEntity(String.class);
+
+        boolean isError = obj.contains("error");
+        assertTrue(isError,
+                        "badhostname is not a valid host but it didn't raise an error");
+
+        response.close();
+        badResponse.close();
+    }
+
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+
+
+    private void assertResponse(String url, Response response) {
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
+
+    private void assertProperty(String propertyName, String hostname, String expected,
+                    String actual) {
+        assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
+                        + "in the system service does not match the one stored in "
+                        + "the inventory service for " + hostname);
+    }
+
+    private void visitSystemService() {
+        Response response = this.getResponse(sysUrl);
+        this.assertResponse(sysUrl, response);
+        response.close();
+
+        Response targetResponse = client.target(invUrl + systemServiceIp).request()
+                        .get();
+
+        targetResponse.close();
+    }
+}
+```
+
+
+
+* The ***testEmptyInventory()*** method checks that the ***inventory*** service has a total of 0 systems before anything is added to it.
+* The ***testHostRegistration()*** method checks that the ***system*** service was added to ***inventory*** properly.
+* The ***testSystemPropertiesMatch()*** checks that the ***system*** properties match what was added into the ***inventory*** service.
+* The ***testUnknownHost()*** method checks that an error is raised if an unknown host name is being added into the ***inventory*** service.
+* The ***systemServiceIp*** variable has the same value as the IP address that you retrieved in the previous section when you manually added the ***system*** service into the ***inventory*** service. This value of the IP address is passed in when you run the tests.
+
+### Running the tests
+
+Run the Maven **package** goal to compile the test classes. Run the Maven **failsafe** goal to test the services that are running in the Docker containers by setting **-Dsystem.ip** to the IP address that you determined previously.
 
 ```bash
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
+SYSTEM_IP=`docker inspect -f "{{.NetworkSettings.IPAddress }}" system`
+mvn package
+mvn failsafe:integration-test -Dsystem.ip="$SYSTEM_IP" -Dinventory.http.port=9081 -Dsystem.http.port=9080
 ```
 
-Run the following commands to deploy the resources as defined in kubernetes.yaml:
-```bash
-kubectl apply -f kubernetes.yaml
-```
-
-When the apps are deployed, run the following command to check the status of your pods:
-```bash
-kubectl get pods
-```
-
-You'll see an output similar to the following if all the pods are healthy and running:
-
-```
-NAME                                    READY     STATUS    RESTARTS   AGE
-system-deployment-6bd97d9bf6-4ccds      1/1       Running   0          15s
-inventory-deployment-645767664f-nbtd9   1/1       Running   0          15s
-```
-
-You can also inspect individual pods in more detail by running the following command:
-```bash
-kubectl describe pods
-```
-
-You can also issue the ***kubectl get*** and ***kubectl describe*** commands on other Kubernetes resources, so feel free to inspect all other resources.
-
-
-In this execise, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
-
-```bash
-kubectl proxy
-```
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
-```bash
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
-```
-
-Run the following echo commands to verify the variables:
-
-```bash
-echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
-```
-
-The output appears as shown in the following example:
-
-```
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
-```
-
-Then, use the following ***curl*** command to access your ***system*** microservice:
-
-```bash
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-
-Also, use the following ***curl*** command to access your ***inventory*** microservice:
-
-```bash
-curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
-```
-
-The ***http://$SYSTEM_PROXY/system/properties*** URL returns system properties and the name of the pod in an HTTP header that is called ***X-Pod-Name***. To view the header, you can use the ***-I*** option in the ***curl*** command when you make a request to the ***http://$SYSTEM_PROXY/system/properties*** URL.
-
-```bash
-curl -I http://$SYSTEM_PROXY/system/properties
-```
-
-The ***http://$INVENTORY_PROXY/inventory/systems/system-service*** URL adds properties from the ***system-service*** endpoint to the inventory Kubernetes Service. Making a request to the ***http://$INVENTORY_PROXY/inventory/systems/[kube-service]*** URL in general adds to the inventory. That result depends on whether the ***kube-service*** endpoint is a valid Kubernetes service that can be accessed.
-
-
-::page{title="Rolling update"}
-
-Without continuous updates, a Kubernetes cluster is susceptible to a denial of a service attack. Rolling updates continually install Kubernetes patches without disrupting the availability of the deployed applications. Update the yaml file as follows to add the ***rollingUpdate*** configuration. 
-
-Replace the Kubernetes configuration file
-
-> To open the kubernetes.yaml file in your IDE, select
-> **File** > **Open** > guide-kubernetes-intro/start/kubernetes.yaml, or click the following button
-
-::openFile{path="/home/project/guide-kubernetes-intro/start/kubernetes.yaml"}
-
-
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  selector:
-    matchLabels:
-      app: system
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        env:
-        - name: SYS_APP_HOSTNAME
-          value: system-service
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 31000
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 32000
-```
-
-
-
-The ***rollingUpdate*** configuration has two attributes, ***maxUnavailable*** and ***maxSurge***. The ***maxUnavailable*** attribute specifies the the maximum number of Kubernetes pods that can be unavailable during the update process. Similarly, the ***maxSurge*** attribute specifies the maximum number of additional pods that can be created during the update process.
-
-The ***readinessProbe*** allows Kubernetes to know whether the service is ready to handle requests. The readiness health check classes for the ***/health/ready*** endpoint to the ***inventory*** and ***system*** services are provided for you. If you want to learn more about how to use health checks in Kubernetes, check out the [Kubernetes-microprofile-health](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide. 
-
-Update the image names and remove the ***nodePort*** fields by running the following commands:
-```bash
-cd /home/project/guide-kubernetes-intro/start
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
-```
-
-Run the following command to deploy the ***inventory*** and ***system*** microservices with the new configuration:
-```bash
-kubectl apply -f kubernetes.yaml
-```
-
-Run the following command to check the status of your pods are ready and running:
-```bash
-kubectl get pods
-```
-
-::page{title="Scaling a deployment"}
-
-To use load balancing, you need to scale your deployments. When you scale a deployment, you replicate its pods, creating more running instances of your applications. Scaling is one of the primary advantages of Kubernetes because you can replicate your application to accommodate more traffic, and then descale your deployments to free up resources when the traffic decreases.
-
-As an example, scale the ***system*** deployment to three pods by running the following command:
-```bash
-kubectl scale deployment/system-deployment --replicas=3
-```
-
-Use the following command to verify that two new pods have been created.
-```bash
-kubectl get pods
-```
-
-```
-NAME                                    READY     STATUS    RESTARTS   AGE
-system-deployment-6bd97d9bf6-4ccds      1/1       Running   0          1m
-system-deployment-6bd97d9bf6-jf9rs      1/1       Running   0          25s
-system-deployment-6bd97d9bf6-x4zth      1/1       Running   0          25s
-inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
-```
-
-
-Wait for your two new pods to be in the ready state, then make the following ***curl*** command:
-
-```bash
-curl -I http://$SYSTEM_PROXY/system/properties
-```
-
-Notice that the ***X-Pod-Name*** header has a different value when you call it multiple times. The value changes because three pods that all serve the ***system*** application are now running. Similarly, to descale your deployments you can use the same scale command with fewer replicas.
-
-```bash
-kubectl scale deployment/system-deployment --replicas=1
-```
-
-::page{title="Redeploy microservices"}
-
-When you're building your application, you might want to quickly test a change. To run a quick test, you can rebuild your Docker images then delete and re-create your Kubernetes resources. Note that there is only one ***system*** pod after you redeploy because you're deleting all of the existing pods.
-
-
-```bash
-cd /home/project/guide-kubernetes-intro/start
-kubectl delete -f kubernetes.yaml
-
-mvn clean package
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-
-kubectl apply -f kubernetes.yaml
-```
-
-Updating your applications in this way is fine for development environments, but it is not suitable for production. If you want to deploy an updated image to a production cluster, you can update the container in your deployment with a new image. Once the new container is ready, Kubernetes automates both the creation of a new container and the decommissioning of the old one.
-
-
-::page{title="Testing microservices that are running on Kubernetes"}
-
-A few tests are included for you to test the basic functionality of the microservices. If a test failure occurs, then you might have introduced a bug into the code.  To run the tests, wait for all pods to be in the ready state before proceeding further. The default properties defined in the ***pom.xml*** are:
-
-| *Property*                        | *Description*
-| ---| ---
-| ***system.kube.service***       | Name of the Kubernetes Service wrapping the ***system*** pods, ***system-service*** by default.
-| ***system.service.root***       | The Kubernetes Service ***system-service*** root path, ***localhost:31000*** by default.
-| ***inventory.service.root*** | The Kubernetes Service ***inventory-service*** root path, ***localhost:32000*** by default.
-
-Navigate back to the ***start*** directory.
-
-
-Update the ***pom.xml*** files so that the ***system.service.root*** and ***inventory.service.root*** properties match the values to access the ***system*** and **inventory*** services.
-
-```bash
-sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' inventory/pom.xml
-sed -i 's=localhost:32000='"$INVENTORY_PROXY"'=g' inventory/pom.xml
-sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
-```
-
-Run the integration tests by using the following command:
-
-```bash
-mvn failsafe:integration-test
-```
-
-If the tests pass, you'll see an output similar to the following for each service respectively:
+If the tests pass, you see output similar to the following example:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
 Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.372 s - in it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.653 s - in it.io.openliberty.guides.system.SystemEndpointIT
 
 Results:
 
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-```
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 
-```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
 Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.714 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.935 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
 Results:
 
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
+When you are finished with the services, run the following commands to stop and remove your containers:
 
-::page{title="Tearing down the environment"}
-
-Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
-
-When you no longer need your deployed microservices, you can delete all Kubernetes resources by running the ***kubectl delete*** command:
 ```bash
-kubectl delete -f kubernetes.yaml
+docker stop inventory system 
+docker rm inventory system
 ```
-
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have just deployed two microservices that are running in Open Liberty to Kubernetes. You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
-
+You have just built Docker images and run two microservices on Open Liberty in containers. 
 
 
 
@@ -589,33 +872,33 @@ You have just deployed two microservices that are running in Open Liberty to Kub
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-kubernetes-intro*** project by running the following commands:
+Delete the ***guide-containerize*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-kubernetes-intro
+rm -fr guide-containerize
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20microservices%20to%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Containerizing%20microservices&guide-id=cloud-hosted-guide-containerize)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-containerize/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-containerize/pulls)
 
 
 
 ### Where to next?
 
 * [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-* [Managing microservice traffic using Istio](https://openliberty.io/guides/istio-intro.html)
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
 
 
 ### Log out of the session
