@@ -5,9 +5,9 @@ branch: lab-5932-instruction
 version-history-start-date: 2023-04-14T18:24:15Z
 tool-type: theia
 ---
-::page{title="Welcome to the Getting started with Open Liberty guide!"}
+::page{title="Welcome to the Optimizing REST queries for microservices with GraphQL guide!"}
 
-Learn how to develop a Java application on Open Liberty with Maven and Docker.
+
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -16,18 +16,29 @@ This panel contains the step-by-step guide instructions. You can customize these
 The other panel displays the IDE that you will use to create files, edit the code, and run commands. This IDE is based on Visual Studio Code. It includes pre-installed tools and a built-in terminal.
 
 
+Learn how to use MicroProfile GraphQL to query and update data from multiple services, and how to test GraphQL queries and mutations using an interactive GraphQL tool (GraphiQL).
+
 
 ::page{title="What you'll learn"}
 
-You will learn how to run and update a simple REST microservice on Open Liberty. You will use Maven throughout the guide to build and deploy the microservice as well as to interact with the running Liberty instance.
+You will learn how to build and use a simple GraphQL service with [MicroProfile GraphQL](https://openliberty.io/docs/latest/reference/feature/mpGraphQL-2.0.html). 
 
-Open Liberty is an open application framework designed for the cloud. It's small, lightweight, and designed with modern cloud-native application development in mind. It supports the full MicroProfile and Jakarta EE APIs and is composable, meaning that you can use only the features that you need, keeping everything lightweight, which is great for microservices. It also deploys to every major cloud platform, including Docker, Kubernetes, and Cloud Foundry.
+GraphQL is an open source data query language. Unlike REST APIs, each HTTP request that is sent to a GraphQL service goes to a single HTTP endpoint. Create, read, update, and delete operations and their details are differentiated by the contents of the request. If the operation returns data, the user specifies what properties of the data that they want returned. For read operations, a JSON object is returned that contains only the data and properties that are specified. For other operations, a JSON object might be returned containing information such as a success message. 
 
-Maven is an automation build tool that provides an efficient way to develop Java applications. Using Maven, you will build a simple microservice, called ***system***, that collects basic system properties from your laptop and displays them on an endpoint that you can access in your web browser. 
+Returning only the specified properties in a read operation has two benefits. If you're dealing with large amounts of data or large resources, it reduces the size of the responses. If you have properties that are expensive to calculate or retrieve (such as nested objects), it also saves processing time. GraphQL calculates these properties only if they are requested. 
 
-You'll also explore how to package your application with Open Liberty so that it can be deployed anywhere in one go. You will then make Liberty configuration and code changes and see how they are immediately picked up by a running instance.
+A GraphQL service can also be used to obtain data from multiple sources such as APIs, databases, and other services. It can then collate this data into a single object for the user, simplifying the data retrieval. The user makes only a single request to the GraphQL service, instead of multiple requests to the individual data sources. GraphQL services require less data fetching than REST services, which results in lower application load times and lower data transfer costs. GraphQL also enables clients to better customize requests to the server.
 
-Finally, you will package the application along with the server configuration into a Docker image and run that image as a container.
+All of the available operations to retrieve or modify data are available in a single GraphQL schema. The GraphQL schema describes all the data types that are used in the GraphQL service. The schema also describes all of the available operations. As well, you can add names and text descriptions to the various object types and operations in the schema.
+
+You can learn more about GraphQL at the [GraphQL website](https://graphql.org/).
+
+You'll create a GraphQL application that retrieves data from multiple ***system*** services. Users make requests to the GraphQL service, which then makes requests to the ***system*** services. The GraphQL service returns a single JSON object containing all the system information from the ***system*** services.
+
+![GraphQL architecture where multiple system microservices are integrated behind one GraphQL service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-graphql/prod/assets/architecture.png)
+
+
+You'll enable the interactive [GraphiQL](https://github.com/graphql/graphiql/tree/main/packages/graphiql) tool in the Open Liberty runtime. GraphiQL helps you make queries to a GraphQL service. In the GraphiQL UI, you need to type only the body of the query for the purposes of manual tests and examples. 
 
 
 ::page{title="Getting started"}
@@ -41,11 +52,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-getting-started.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-graphql.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-getting-started.git
-cd guide-getting-started
+git clone https://github.com/openliberty/guide-microprofile-graphql.git
+cd guide-microprofile-graphql
 ```
 
 
@@ -54,654 +65,588 @@ The ***start*** directory contains the starting project that you will build upon
 The ***finish*** directory contains the finished project that you will build.
 
 
-In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
+
+::page{title="Creating GraphQL object types"}
+
+Navigate to the ***start*** directory to begin.
 ```bash
-sudo usermod -d /home/project theia
+cd /home/project/guide-microprofile-graphql/start
 ```
 
+Object types determine the structure of the data that GraphQL returns. These object types are defined by annotations that are applied to the declaration and properties of Java classes. 
 
+You will define ***java***, ***systemMetrics***, and ***systemInfo*** object types by creating and applying annotations to the ***JavaInfo***, ***SystemMetrics***, and ***SystemInfo*** classes respectively. 
 
-::page{title="Building and running the application"}
-
-Your application is configured to be built with Maven. Every Maven-configured project contains a ***pom.xml*** file, which defines the project configuration, dependencies, plug-ins, and so on.
-
-Your ***pom.xml*** file is located in the ***start*** directory and is configured to include the ***liberty-maven-plugin***, which allows you to install applications into Open Liberty and manage the server instances.
-
-
-To begin, navigate to the ***start*** directory. Build the ***system*** microservice that is provided and deploy it to Open Liberty by running the Maven ***liberty:run*** goal:
-
-```bash
-cd start
-mvn liberty:run
-```
-
-The ***mvn*** command initiates a Maven build, during which the ***target*** directory is created to store all build-related files.
-
-The ***liberty:run*** argument specifies the Open Liberty ***run*** goal, which starts an Open Liberty server instance in the foreground. As part of this phase, an Open Liberty server runtime is downloaded and installed into the ***target/liberty/wlp*** directory, a server instance is created and configured in the ***target/liberty/wlp/usr/servers/defaultServer*** directory, and the application is installed into that server via [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
-
-For more information about the Liberty Maven plug-in, see its [GitHub repository](https://github.com/WASdev/ci.maven).
-
-When the server begins starting up, various messages display in your command-line session. Wait for the following message, which indicates that the server startup is complete:
-
-```
-[INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
-```
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-To access the ***system*** microservice, see the ***http\://localhost:9080/system/properties*** URL, and you see a list of the various system properties of your JVM:
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-
-```
-{
-    "os.name": "Mac OS X",
-    "java.version": "1.8.0_151",
-    ...
-}
-```
-
-When you need to stop the server, press `Ctrl+C` in the command-line session where you ran the server, or run the ***liberty:stop*** goal from the ***start*** directory in another command-line session:
-
-```bash
-mvn liberty:stop
-```
-
-
-
-::page{title="Starting and stopping the Open Liberty server in the background"}
-
-Although you can start and stop the server in the foreground by using the Maven ***liberty:run*** goal, you can also start and stop the server in the background with the Maven ***liberty:start*** and ***liberty:stop*** goals:
-
-```bash
-mvn liberty:start
-mvn liberty:stop
-```
-
-
-
-::page{title="Updating the server configuration without restarting the server"}
-
-The Open Liberty Maven plug-in includes a ***dev*** goal that listens for any changes in the project, including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
-
-Stop the Open Liberty server if it is running, and start it in dev mode by running the ***liberty:dev*** goal in the ***start*** directory:
-
-```bash
-mvn liberty:dev
-```
-
-Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the ***enter/return*** key in the active command-line session. When you’re working on your application, rather than rerunning Maven commands, press the ***enter/return*** key to verify your change.
-
-
-As before, you can see that the application is running by going to the ***http\://localhost:9080/system/properties*** URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-
-
-
-Now try updating the server configuration while the server is running in dev mode. The ***system*** microservice does not currently include health monitoring to report whether the server and the microservice that it runs are healthy. You can add health reports with the MicroProfile Health feature, which adds a ***/health*** endpoint to your application. If you try to access this endpoint now at the ***http\://localhost:9080/health/*** URL, you see a 404 error because the ***/health*** endpoint does not yet exist:
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl http://localhost:9080/health/
-```
-
-
-
-```
-Error 404: java.io.FileNotFoundException: SRVE0190E: File not found: /health
-```
-
-To add the MicroProfile Health feature to the server, include the ***mpHealth*** feature in the ***server.xml***.
-
-Replace the server configuration file.
-
-> To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Sample Liberty server">
-    <featureManager>
-        <feature>restfulWS-3.1</feature>
-        <feature>jsonp-2.1</feature>
-        <feature>jsonb-3.0</feature>
-        <feature>cdi-4.0</feature>
-        <feature>mpMetrics-5.0</feature>
-        <feature>mpHealth-4.0</feature>
-        <feature>mpConfig-3.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/" />
-    
-    <mpMetrics authentication="false"/>
-
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-
-
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
-
-
-After you make the file changes, Open Liberty automatically reloads its configuration. When enabled, the ***mpHealth*** feature automatically adds a ***/health*** endpoint to the application. You can see the server being updated in the server log displayed in your command-line session:
-
-```
-[INFO] [AUDIT] CWWKG0016I: Starting server configuration update.
-[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
-[INFO] [AUDIT] CWWKG0017I: The server configuration was successfully updated in 0.284 seconds.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/health/
-[INFO] [AUDIT] CWWKF0012I: The server installed the following features: [mpHealth-3.0].
-[INFO] [AUDIT] CWWKF0008I: Feature update completed in 0.285 seconds.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.173 seconds.
-```
-
-
-Try to access the ***/health*** endpoint again by visiting the ***http\://localhost:9080/health*** URL. You see the following JSON:
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/health | jq
-```
-
-
-
-```
-{
-    "checks":[],
-    "status":"UP"
-}
-```
-
-Now you can verify whether your server is up and running.
-
-
-
-::page{title="Updating the source code without restarting the server"}
-
-The RESTful application that contains your ***system*** microservice runs in a server from its ***.class*** file and other artifacts. Open Liberty automatically monitors these artifacts, and whenever they are updated, it updates the running server without the need for the server to be restarted.
-
-Look at your ***pom.xml*** file.
-
-
-Try updating the source code while the server is running in dev mode. At the moment, the ***/health*** endpoint reports whether the server is running, but the endpoint doesn't provide any details on the microservices that are running inside of the server.
-
-MicroProfile Health offers health checks for both readiness and liveness. A readiness check allows third-party services, such as Kubernetes, to know if the microservice is ready to process requests. A liveness check allows third-party services to determine if the microservice is running.
-
-Create the ***SystemReadinessCheck*** class.
+Create the ***JavaInfo*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java
+touch /home/project/guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/JavaInfo.java
 ```
 
 
-> Then, to open the SystemReadinessCheck.java file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java, or click the following button
+> Then, to open the JavaInfo.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/JavaInfo.java, or click the following button
 
-::openFile{path="/home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemReadinessCheck.java"}
+::openFile{path="/home/project/guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/JavaInfo.java"}
 
 
 
 ```java
-package io.openliberty.sample.system;
+package io.openliberty.guides.graphql.models;
+
+import org.eclipse.microprofile.graphql.Description;
+import org.eclipse.microprofile.graphql.Name;
+import org.eclipse.microprofile.graphql.NonNull;
+import org.eclipse.microprofile.graphql.Type;
+
+@Type("java")
+@Description("Information about a Java installation")
+public class JavaInfo {
+
+    @Name("vendorName")
+    private String vendor;
+
+    @NonNull
+    private String version;
+
+    public String getVendor() {
+        return this.vendor;
+    }
+
+    public void setVendor(String vendor) {
+        this.vendor = vendor;
+    }
+
+    public String getVersion() {
+        return this.version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+}
+```
+
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+The ***JavaInfo*** class is annotated with a ***@Type*** annotation. The ***@Type("java")*** annotation maps this class to define the ***java*** object type in GraphQL. The ***java*** object type gives information on the Java installation of the system. 
+
+The ***@Description*** annotation gives a description to the ***java*** object type in GraphQL. This description is what appears in the schema and the documentation. Descriptions aren't required, but it's good practice to include them. 
+
+The ***@Name*** annotation maps the ***vendor*** property to the ***vendorName*** name of the ***java*** object type in GraphQL. The ***@Name*** annotation can be used to change the name of the property used in the schema. Without a ***@Name*** annotation, the Java object property is automatically mapped to a GraphQL object type property of the same name. In this case, without the ***@Name*** annotation, the property would be displayed as ***vendor*** in the schema.
+
+All data types in GraphQL are nullable by default. Non-nullable properties are annotated with the ***@NonNull*** annotation. The ***@NonNull*** annotation on the ***version*** field ensures that, when queried, a non-null value is returned by the GraphQL service. The ***getVendor()*** and ***getVersion()*** getter functions are automatically mapped to retrieve their respective properties in GraphQL. If needed, setter functions are also supported and automatically mapped. 
+
+Create the ***SystemMetrics*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemMetrics.java
+```
+
+
+> Then, to open the SystemMetrics.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemMetrics.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemMetrics.java"}
+
+
+
+```java
+package io.openliberty.guides.graphql.models;
+
+import org.eclipse.microprofile.graphql.Description;
+import org.eclipse.microprofile.graphql.NonNull;
+import org.eclipse.microprofile.graphql.Type;
+
+@Type("systemMetrics")
+@Description("System metrics")
+public class SystemMetrics {
+
+    @NonNull
+    private Integer processors;
+
+    @NonNull
+    private Long heapSize;
+
+    @NonNull
+    private Long nonHeapSize;
+
+    public Integer getProcessors() {
+        return processors;
+    }
+
+    public void setProcessors(int processors) {
+        this.processors = processors;
+    }
+
+    public Long getHeapSize() {
+        return heapSize;
+    }
+
+    public void setHeapSize(long heapSize) {
+        this.heapSize = heapSize;
+    }
+
+    public Long getNonHeapSize() {
+        return nonHeapSize;
+    }
+
+    public void setNonHeapSize(Long nonHeapSize) {
+        this.nonHeapSize = nonHeapSize;
+    }
+
+}
+```
+
+
+
+The ***SystemMetrics*** class is set up similarly. It maps to the ***systemMetrics*** object type, which describes system information such as the number of processor cores and the heap size.
+
+Create the ***SystemInfo*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemInfo.java
+```
+
+
+> Then, to open the SystemInfo.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemInfo.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-graphql/start/models/src/main/java/io/openliberty/guides/graphql/models/SystemInfo.java"}
+
+
+
+```java
+package io.openliberty.guides.graphql.models;
+
+import org.eclipse.microprofile.graphql.Description;
+import org.eclipse.microprofile.graphql.NonNull;
+import org.eclipse.microprofile.graphql.Type;
+
+@Type("system")
+@Description("Information about a single system")
+public class SystemInfo {
+
+    @NonNull
+    private String hostname;
+
+    @NonNull
+    private String username;
+
+    private String osName;
+    private String osArch;
+    private String osVersion;
+    private String note;
+
+    private JavaInfo java;
+
+    private SystemMetrics systemMetrics;
+
+    public String getHostname() {
+        return this.hostname;
+    }
+
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
+
+    public String getUsername() {
+        return this.username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getOsName() {
+        return osName;
+    }
+
+    public void setOsName(String osName) {
+        this.osName = osName;
+    }
+
+    public String getOsArch() {
+        return osArch;
+    }
+
+    public void setOsArch(String osarch) {
+        this.osArch = osarch;
+    }
+
+    public String getOsVersion() {
+        return osVersion;
+    }
+
+    public void setOsVersion(String osVersion) {
+        this.osVersion = osVersion;
+    }
+
+    public String getNote() {
+        return this.note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public JavaInfo getJava() {
+        return java;
+    }
+
+    public void setJava(JavaInfo java) {
+        this.java = java;
+    }
+
+    public SystemMetrics getSystemMetrics() {
+        return systemMetrics;
+    }
+
+    public void setSystemMetrics(SystemMetrics systemMetrics) {
+        this.systemMetrics = systemMetrics;
+    }
+
+}
+```
+
+
+
+The ***SystemInfo*** class is similar to the previous two classes. It maps to the ***system*** object type, which describes other information Java can retrieve from the system properties.
+
+The ***java*** and ***systemMetrics*** object types are used as nested objects within the ***system*** object type. However, nested objects and other properties that are expensive to calculate or retrieve are not included in the class of an object type. Instead, expensive properties are added as part of implementing GraphQL resolvers. 
+
+
+
+To save time, the ***SystemLoad*** class and ***SystemLoadData*** class are provided for you. The ***SystemLoad*** class maps to the ***systemLoad*** object type, which describes the resource usage of a ***system*** service. The ***SystemLoadData*** class maps to the ***loadData*** object type. The ***loadData*** object will be a nested object inside the ***systemLoad*** object type. Together, these objects will contain the details of the resource usage of a ***system*** service.
+
+
+::page{title="Implementing system service"}
+
+The ***system*** microservices are backend services that use Jakarta Restful Web Services. For more details on using Jakarta Restful Web Services, see the [Creating a RESTful web service guide](https://www.openliberty.io/guides/rest-intro.html). These ***system*** microservices report system properties. GraphQL can access multiple instances of these ***system*** microservices and collate their information. In a real scenario, GraphQL might access multiple databases or other services.
+
+Create the ***SystemPropertiesResource*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemPropertiesResource.java
+```
+
+
+> Then, to open the SystemPropertiesResource.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemPropertiesResource.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemPropertiesResource.java"}
+
+
+
+```java
+package io.openliberty.guides.system;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import io.openliberty.guides.graphql.models.JavaInfo;
+
+@ApplicationScoped
+@Path("/")
+public class SystemPropertiesResource {
+
+    @GET
+    @Path("properties/{property}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String queryProperty(@PathParam("property") String property) {
+        return System.getProperty(property);
+    }
+
+    @GET
+    @Path("properties/java")
+    @Produces(MediaType.APPLICATION_JSON)
+    public JavaInfo java() {
+        JavaInfo javaInfo = new JavaInfo();
+        javaInfo.setVersion(System.getProperty("java.version"));
+        javaInfo.setVendor(System.getProperty("java.vendor"));
+        return javaInfo;
+    }
+
+    @POST
+    @Path("note")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response editNote(String text) {
+        System.setProperty("note", text);
+        return Response.ok().build();
+    }
+
+}
+```
+
+
+
+The ***SystemPropertiesResource*** class provides endpoints to interact with the system properties. The ***properties/{property}*** endpoint accesses system properties. The ***properties/java*** endpoint assembles and returns an object describing the system's Java installation. The ***note*** endpoint is used to write a note into the system properties.
+
+Create the ***SystemMetricsResource*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemMetricsResource.java
+```
+
+
+> Then, to open the SystemMetricsResource.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemMetricsResource.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-graphql/start/system/src/main/java/io/openliberty/guides/system/SystemMetricsResource.java"}
+
+
+
+```java
+package io.openliberty.guides.system;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.OperatingSystemMXBean;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+import io.openliberty.guides.graphql.models.SystemLoadData;
+import io.openliberty.guides.graphql.models.SystemMetrics;
+
+@ApplicationScoped
+@Path("metrics")
+public class SystemMetricsResource {
+
+    private static final OperatingSystemMXBean OS_MEAN =
+                             ManagementFactory.getOperatingSystemMXBean();
+
+    private static final MemoryMXBean MEM_BEAN = ManagementFactory.getMemoryMXBean();
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public SystemMetrics getSystemMetrics() {
+        SystemMetrics metrics = new SystemMetrics();
+        metrics.setProcessors(OS_MEAN.getAvailableProcessors());
+        metrics.setHeapSize(MEM_BEAN.getHeapMemoryUsage().getMax());
+        metrics.setNonHeapSize(MEM_BEAN.getNonHeapMemoryUsage().getMax());
+        return metrics;
+    }
+
+    @GET
+    @Path("/systemLoad")
+    @Produces(MediaType.APPLICATION_JSON)
+    public SystemLoadData getSystemLoad() {
+        SystemLoadData systemLoadData = new SystemLoadData();
+        systemLoadData.setLoadAverage(OS_MEAN.getSystemLoadAverage());
+        systemLoadData.setHeapUsed(MEM_BEAN.getHeapMemoryUsage().getUsed());
+        systemLoadData.setNonHeapUsed(MEM_BEAN.getNonHeapMemoryUsage().getUsed());
+        return systemLoadData;
+    }
+}
+```
+
+
+
+The ***SystemMetricsResource*** class provides information on the system resources and their usage. The ***systemLoad*** endpoint assembles and returns an object that describes the system load. It includes the JVM heap load and processor load.
+
+
+::page{title="Implementing GraphQL resolvers"}
+
+Resolvers are functions that provide instructions for GraphQL operations. Each operation requires a corresponding resolver. The ***query*** operation type is read-only and fetches data. The ***mutation*** operation type can create, delete, or modify data. 
+
+Create the ***GraphQLService*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-microprofile-graphql/start/graphql/src/main/java/io/openliberty/guides/graphql/GraphQLService.java
+```
+
+
+> Then, to open the GraphQLService.java file in your IDE, select
+> **File** > **Open** > guide-microprofile-graphql/start/graphql/src/main/java/io/openliberty/guides/graphql/GraphQLService.java, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-graphql/start/graphql/src/main/java/io/openliberty/guides/graphql/GraphQLService.java"}
+
+
+
+```java
+package io.openliberty.guides.graphql;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
+import jakarta.ws.rs.ProcessingException;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+import org.eclipse.microprofile.graphql.Description;
+import org.eclipse.microprofile.graphql.GraphQLApi;
+import org.eclipse.microprofile.graphql.Mutation;
+import org.eclipse.microprofile.graphql.Name;
+import org.eclipse.microprofile.graphql.NonNull;
+import org.eclipse.microprofile.graphql.Query;
+import org.eclipse.microprofile.graphql.Source;
+import org.eclipse.microprofile.rest.client.RestClientBuilder;
 
-@Readiness
-@ApplicationScoped
-public class SystemReadinessCheck implements HealthCheck {
+import io.openliberty.guides.graphql.client.SystemClient;
+import io.openliberty.guides.graphql.client.UnknownUriException;
+import io.openliberty.guides.graphql.client.UnknownUriExceptionMapper;
+import io.openliberty.guides.graphql.models.JavaInfo;
+import io.openliberty.guides.graphql.models.SystemInfo;
+import io.openliberty.guides.graphql.models.SystemLoad;
+import io.openliberty.guides.graphql.models.SystemLoadData;
+import io.openliberty.guides.graphql.models.SystemMetrics;
 
-    private static final String READINESS_CHECK = SystemResource.class.getSimpleName()
-                                                 + " Readiness Check";
+@GraphQLApi
+public class GraphQLService {
+
+    private static Map<String, SystemClient> clients =
+            Collections.synchronizedMap(new HashMap<String, SystemClient>());
 
     @Inject
-    @ConfigProperty(name = "io_openliberty_guides_system_inMaintenance")
-    Provider<String> inMaintenance;
+    @ConfigProperty(name = "system.http.port", defaultValue = "9080")
+    String SYSTEM_PORT;
 
-    @Override
-    public HealthCheckResponse call() {
-        if (inMaintenance != null && inMaintenance.get().equalsIgnoreCase("true")) {
-            return HealthCheckResponse.down(READINESS_CHECK);
+    @Query("system")
+    @NonNull
+    @Description("Gets information about the system")
+    public SystemInfo getSystemInfo(@Name("hostname") String hostname)
+        throws ProcessingException, UnknownUriException {
+        SystemClient systemClient = getSystemClient(hostname);
+        SystemInfo systemInfo = new SystemInfo();
+        systemInfo.setHostname(hostname);
+        systemInfo.setUsername(systemClient.queryProperty("user.name"));
+        systemInfo.setOsName(systemClient.queryProperty("os.name"));
+        systemInfo.setOsArch(systemClient.queryProperty("os.arch"));
+        systemInfo.setOsVersion(systemClient.queryProperty("os.version"));
+        systemInfo.setNote(systemClient.queryProperty("note"));
+
+        return systemInfo;
+    }
+
+    @Mutation("editNote")
+    @Description("Changes the note set for the system")
+    public boolean editNote(@Name("hostname") String hostname,
+                            @Name("note") String note)
+        throws ProcessingException, UnknownUriException {
+        SystemClient systemClient = getSystemClient(hostname);
+        systemClient.editNote(note);
+        return true;
+    }
+
+    @Query("systemLoad")
+    @Description("Gets system load data from the systems")
+    public SystemLoad[] getSystemLoad(@Name("hostnames") String[] hostnames)
+        throws ProcessingException, UnknownUriException {
+        if (hostnames == null || hostnames.length == 0) {
+            return new SystemLoad[0];
         }
-        return HealthCheckResponse.up(READINESS_CHECK);
+
+        List<SystemLoad> systemLoads = new ArrayList<SystemLoad>(hostnames.length);
+
+        for (String hostname : hostnames) {
+            SystemLoad systemLoad = new SystemLoad();
+            systemLoad.setHostname(hostname);
+            systemLoads.add(systemLoad);
+        }
+
+        return systemLoads.toArray(new SystemLoad[systemLoads.size()]);
     }
 
-}
-```
-
-
-
-The ***SystemReadinessCheck*** class verifies that the 
-***system*** microservice is not in maintenance by checking a config property.
-
-Create the ***SystemLivenessCheck*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java
-```
-
-
-> Then, to open the SystemLivenessCheck.java file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/java/io/openliberty/sample/system/SystemLivenessCheck.java"}
-
-
-
-```java
-package io.openliberty.sample.system;
-
-import jakarta.enterprise.context.ApplicationScoped;
-
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
-
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
-
-@Liveness
-@ApplicationScoped
-public class SystemLivenessCheck implements HealthCheck {
-
-    @Override
-    public HealthCheckResponse call() {
-        MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-        long memUsed = memBean.getHeapMemoryUsage().getUsed();
-        long memMax = memBean.getHeapMemoryUsage().getMax();
-
-        return HealthCheckResponse.named(
-            SystemResource.class.getSimpleName() + " Liveness Check")
-                                  .status(memUsed < memMax * 0.9).build();
+    @NonNull
+    public SystemMetrics systemMetrics(
+        @Source @Name("system") SystemInfo systemInfo)
+        throws ProcessingException, UnknownUriException {
+        String hostname = systemInfo.getHostname();
+        SystemClient systemClient = getSystemClient(hostname);
+        return systemClient.getSystemMetrics();
     }
 
+    @NonNull
+    public JavaInfo java(@Source @Name("system") SystemInfo systemInfo)
+        throws ProcessingException, UnknownUriException {
+        String hostname = systemInfo.getHostname();
+        SystemClient systemClient = getSystemClient(hostname);
+        return systemClient.java();
+    }
+
+    public SystemLoadData loadData(@Source @Name("systemLoad") SystemLoad systemLoad)
+        throws ProcessingException, UnknownUriException {
+        String hostname = systemLoad.getHostname();
+        SystemClient systemClient = getSystemClient(hostname);
+        return systemClient.getSystemLoad();
+    }
+
+    private SystemClient getSystemClient(String hostname) {
+        SystemClient sc = clients.get(hostname);
+        if (sc == null) {
+            String customURIString = "http://" + hostname + ":"
+                                      + SYSTEM_PORT + "/system";
+            URI customURI = URI.create(customURIString);
+            sc = RestClientBuilder
+                   .newBuilder()
+                   .baseUri(customURI)
+                   .register(UnknownUriExceptionMapper.class)
+                   .build(SystemClient.class);
+            clients.put(hostname, sc);
+        }
+        return sc;
+    }
 }
 ```
 
 
 
-The ***SystemLivenessCheck*** class reports a status of 
-***DOWN*** if the microservice uses over 90% of the maximum amount of memory.
+The resolvers are defined in the ***GraphQLService.java*** file. The ***@GraphQLApi*** annotation enables GraphQL to use the methods that are defined in this class as resolvers.
 
-After you make the file changes, Open Liberty automatically reloads its configuration and the ***system*** application.
+Operations of the ***query*** type are read-only operations that retrieve data. They're defined by using the ***@Query*** annotation.
 
-The following messages display in your first command-line session:
+One of the ***query*** requests in this application is the ***system*** request. This request is handled by the ***getSystemInfo()*** function. It retrieves and bundles system information into a ***SystemInfo*** object that is returned.
 
-```
-[INFO] [AUDIT] CWWKT0017I: Web application removed (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0009I: The application io.openliberty.guides.getting-started has stopped successfully.
-[INFO] [AUDIT] CWWKT0016I: Web application available (default_host): http://foo:9080/
-[INFO] [AUDIT] CWWKZ0003I: The application io.openliberty.guides.getting-started updated in 0.136 seconds.
-```
+It uses a ***@Name*** on one of its input parameters. The ***@Name*** annotation has different functions depending on the context in which it's used. In this context, it denotes input parameters for GraphQL operations. For the ***getSystemInfo()*** function, it's used to input the ***hostname*** for the system you want to look up information for.
 
+Recall that the ***SystemInfo*** class contained nested objects. It contained a ***JavaInfo*** and an ***SystemMetrics*** object. The ***@Source*** annotation is used to add these nested objects as properties to the ***SystemInfo*** object.
 
-Access the ***/health*** endpoint again by going to the ***http\://localhost:9080/health*** URL. This time you see the overall status of your server and the aggregated data of the liveness and readiness checks for the ***system*** microservice:
+The ***@Name*** appears again here. In this context alongside the ***@Source*** annotation, it's used to connect the ***java*** and ***systemMetrics*** object types to ***system*** requests and the ***system*** object type.
 
+The other ***query*** request is the ***systemLoad*** request, which is handled by the ***getSystemLoad()*** function. The ***systemLoad*** request retrieves information about the resource usage of any number of system services. It accepts an array of ***hostnames*** as the input for the systems to look up. It's set up similarly to the ***system*** request, with the ***loadData*** function used for the nested ***SystemLoadData*** object.
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+Operations of the ***mutation*** type are used to edit data. They can create, update, or delete data. They're defined by using the ***@Mutation*** annotation.
 
-```bash
-curl -s http://localhost:9080/health | jq
-```
+There's one ***mutation*** operation in this application - the ***editNote*** request. This request is handled by the ***editNote()*** function. This request is used to write a note into the properties of a given system. There are inputs for the system you want to write into, and the note you want to write.
 
+Each resolver function has a ***@Description*** annotation, which provides a description that is used for the schema. Descriptions aren't required, but it's good practice to include them. 
 
 
-```
-{  
-   "checks":[  
-      {  
-         "data":{},
-         "name":"SystemResource Readiness Check",
-         "status":"UP"
-      },
-      {  
-         "data":{},
-         "name":"SystemResource Liveness Check",
-         "status":"UP"
-      }
-   ],
-   "status":"UP"
-}
-```
+::page{title="Enabling GraphQL"}
 
+To use GraphQL, the MicroProfile GraphQL dependencies and features need to be included. 
 
-
-You can also access the ***/health/ready*** endpoint by going to the ***http\://localhost:9080/health/ready*** URL to view the data from the readiness health check. Similarly, access the ***/health/live*** endpoint by going to the ***http\://localhost:9080/health/live*** URL to view the data from the liveness health check.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/health/ready | jq
-```
-
-
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/health/live | jq
-```
-
-
-
-Making code changes and recompiling is fast and straightforward. Open Liberty dev mode automatically picks up changes in the ***.class*** files and artifacts, without needing to be restarted. Alternatively, you can run the ***run*** goal and manually repackage or recompile the application by using the ***mvn package*** command or the ***mvn compile*** command while the server is running. Dev mode was added to further improve the developer experience by minimizing turnaround times.
-
-
-
-::page{title="Checking the Open Liberty server logs"}
-
-While the server is running in the foreground, it displays various console messages in the command-line session. These messages are also logged to the ***target/liberty/wlp/usr/servers/defaultServer/logs/console.log*** file. You can find the complete server logs in the ***target/liberty/wlp/usr/servers/defaultServer/logs*** directory. The ***console.log*** and ***messages.log*** files are the primary log files that contain console output of the running application and the server. More logs are created when runtime errors occur or whenever tracing is enabled. You can find the error logs in the ***ffdc*** directory and the tracing logs in the ***trace.log*** file.
-
-In addition to the log files that are generated automatically, you can enable logging of specific Java packages or classes by using the ***logging*** element:
-
-```
-<logging traceSpecification="<component_1>=<level>:<component_2>=<level>:..."/>
-```
-
-The ***component*** element is a Java package or class, and the ***level*** element is one of the following logging levels: ***off***, ***fatal***, ***severe***, ***warning***, ***audit***, ***info***, ***config***, ***detail***, ***fine***, ***finer***, ***finest***, ***all***.
-
-For more information about logging, see the [Trace log detail levels](https://www.openliberty.io/docs/latest/log-trace-configuration.html#log_details),  [logging element](https://www.openliberty.io/docs/latest/reference/config/logging.html), and [Log and trace configuration](https://www.openliberty.io/docs/latest/log-trace-configuration.html) documentation.
-
-Try enabling detailed logging of the MicroProfile Health feature by adding the ***logging*** element to your configuration file.
-
-Replace the server configuration file.
-
-> To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Sample Liberty server">
-    <featureManager>
-        <feature>restfulWS-3.1</feature>
-        <feature>jsonp-2.1</feature>
-        <feature>jsonb-3.0</feature>
-        <feature>cdi-4.0</feature>
-        <feature>mpMetrics-5.0</feature>
-        <feature>mpHealth-4.0</feature>
-        <feature>mpConfig-3.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/" />
-    
-    <mpMetrics authentication="false"/>
-
-    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-
-
-
-After you change the file, Open Liberty automatically reloads its configuration.
-
-Now, when you visit the ***/health*** endpoint, additional traces are logged in the ***trace.log*** file.
-
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
-
-
-::page{title="Running the application in a Docker container"}
-
-To run the application in a container, Docker needs to be installed. For installation instructions, see the [Official Docker Docs](https://docs.docker.com/install/).
-
-Make sure to start your Docker daemon before you proceed.
-
-To containerize the application, you need a ***Dockerfile***. This file contains a collection of instructions that define how a Docker image is built, what files are packaged into it, what commands run when the image runs as a container, and other information. You can find a complete ***Dockerfile*** in the ***start*** directory. This ***Dockerfile*** copies the ***.war*** file into a Docker image that contains the Java runtime and a preconfigured Open Liberty server.
-
-Run the ***mvn package*** command from the ***start*** directory so that the ***.war*** file resides in the ***target*** directory.
-
-```bash
-mvn package
-```
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-
-To build and containerize the application, run the following Docker build command in the ***start*** directory:
-
-```bash
-docker build -t openliberty-getting-started:1.0-SNAPSHOT .
-```
-
-The Docker ***openliberty-getting-started:1.0-SNAPSHOT*** image is also built from the ***Dockerfile***. To verify that the image is built, run the ***docker images*** command to list all local Docker images:
-
-```bash
-docker images
-```
-
-Your image should appear in the list of all Docker images:
-
-```
-REPOSITORY                     TAG             IMAGE ID        CREATED         SIZE
-openliberty-getting-started    1.0-SNAPSHOT    85085141269b    21 hours ago    487MB
-```
-
-Next, run the image as a container:
-```bash
-docker run -d --name gettingstarted-app -p 9080:9080 openliberty-getting-started:1.0-SNAPSHOT
-```
-
-There is a bit going on here, so here's a breakdown of the command:
-
-| *Flag* | *Description*
-| ---| ---
-| -d     | Runs the container in the background.
-| --name | Specifies a name for the container.
-| -p     | Maps the container ports to the host ports.
-
-The final argument in the ***docker run*** command is the Docker image name.
-
-Next, run the ***docker ps*** command to verify that your container started:
-```bash
-docker ps
-```
-
-Make sure that your container is running and does not have ***Exited*** as its status:
-
-```
-CONTAINER ID    IMAGE                         CREATED          STATUS           NAMES
-4294a6bdf41b    openliberty-getting-started   9 seconds ago    Up 11 seconds    gettingstarted-app
-```
-
-
-To access the application, go to the ***http\://localhost:9080/system/properties*** URL.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-
-
-To stop and remove the container, run the following commands:
-```bash
-docker stop gettingstarted-app && docker rm gettingstarted-app
-```
-
-To remove the image, run the following command:
-```bash
-docker rmi openliberty-getting-started:1.0-SNAPSHOT
-```
-
-
-::page{title="Developing the application in a Docker container"}
-
-The Open Liberty Maven plug-in includes a ***devc*** goal that simplifies developing your application in a Docker container by starting dev mode with container support. This goal builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. Dev mode also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
-
-Build and run the container by running the devc goal from the ***start*** directory:
-
-
-```bash
-chmod 777 /home/project/guide-getting-started/start/target/liberty/wlp/usr/servers/defaultServer/logs
-mvn liberty:devc -DserverStartTimeout=300
-```
-
-When you see the following message, Open Liberty is ready to run in dev mode:
-
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Open another command-line session and run the ***docker ps*** command to verify that your container started:
-```bash
-docker ps
-```
-
-Your container should be running and have ***Up*** as its status:
-
-```
-CONTAINER ID        IMAGE                                 COMMAND                  CREATED             STATUS                         PORTS                                                                    NAMES
-17af26af0539        guide-getting-started-dev-mode        "/opt/ol/helpers/run…"   3 minutes ago       Up 3 minutes                   0.0.0.0:7777->7777/tcp, 0.0.0.0:9080->9080/tcp, 0.0.0.0:9443->9443/tcp   liberty-dev
-```
-
-
-To access the application, go to the ***http\://localhost:9080/system/properties*** URL. 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
-
-```bash
-curl -s http://localhost:9080/system/properties | jq
-```
-
-
-
-Dev mode automatically picks up changes that you make to your application and allows you to run tests by pressing the ***enter/return*** key in the active command-line session.
-
-Update the ***server.xml*** file to change the context root from ***/*** to ***/dev***.
-
-Replace the server configuration file.
-
-> To open the server.xml file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/liberty/config/server.xml"}
-
-
-
-```xml
-<server description="Sample Liberty server">
-    <featureManager>
-        <feature>restfulWS-3.1</feature>
-        <feature>jsonp-2.1</feature>
-        <feature>jsonb-3.0</feature>
-        <feature>cdi-4.0</feature>
-        <feature>mpMetrics-5.0</feature>
-        <feature>mpHealth-4.0</feature>
-        <feature>mpConfig-3.0</feature>
-    </featureManager>
-
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
-
-    <webApplication location="guide-getting-started.war" contextRoot="/dev" />
-    <mpMetrics authentication="false"/>
-
-    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
-</server>
-```
-
-
-
-After you make the file changes, Open Liberty automatically reloads its configuration. When you see the following message in your command-line session, Open Liberty is ready to run again:
-
-```
-The server has been restarted.
-************************************************************************
-*    Liberty is running in dev mode.
-```
-
-Update the ***mpData.js*** file to change the ***url*** in the ***getSystemPropertiesRequest*** method to reflect the new context root.
-
-
-Update the mpData.js file.
-
-> From the menu of the IDE, select 
-> **File** > **Open** > guide-getting-started/start/src/main/webapp/js/mpData.js, or click the following button
-
-::openFile{path="/home/project/guide-getting-started/start/src/main/webapp/js/mpData.js"}
-
-```
-function getSystemPropertiesRequest() {
-    var propToDisplay = ["java.vendor", "java.version", "user.name", "os.name", "wlp.install.dir", "wlp.server.name" ];
-    var url = "http://localhost:9080/dev/system/properties";
-    var req = new XMLHttpRequest();
-    var table = document.getElementById("systemPropertiesTable");
-    ...
-```
-
-Update the ***pom.xml*** file to change the context root from ***/*** to ***/dev*** in the ***maven-failsafe-plugin*** to reflect the new context root when you run functional tests.
-
-Replace the pom.xml file.
+Replace the Maven project file.
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > guide-getting-started/start/pom.xml, or click the following button
+> **File** > **Open** > guide-microprofile-graphql/start/graphql/pom.xml, or click the following button
 
-::openFile{path="/home/project/guide-getting-started/start/pom.xml"}
+::openFile{path="/home/project/guide-microprofile-graphql/start/graphql/pom.xml"}
 
 
 
@@ -713,7 +658,7 @@ Replace the pom.xml file.
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.openliberty.guides</groupId>
-    <artifactId>guide-getting-started</artifactId>
+    <artifactId>guide-microprofile-graphql-graphql</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>war</packaging>
 
@@ -723,8 +668,8 @@ Replace the pom.xml file.
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.default.http.port>9082</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9445</liberty.var.default.https.port>
     </properties>
 
     <dependencies>
@@ -740,6 +685,21 @@ Replace the pom.xml file.
             <artifactId>microprofile</artifactId>
             <version>6.0</version>
             <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!-- Required dependencies -->
+        <dependency>
+           <groupId>io.openliberty.guides</groupId>
+           <artifactId>guide-microprofile-graphql-models</artifactId>
+           <version>1.0-SNAPSHOT</version>
+        </dependency>
+        
+        <!-- GraphQL API dependencies -->
+        <dependency>
+            <groupId>org.eclipse.microprofile.graphql</groupId>
+            <artifactId>microprofile-graphql-api</artifactId>
+            <version>2.0</version>
             <scope>provided</scope>
         </dependency>
         <!-- For tests -->
@@ -777,6 +737,9 @@ Replace the pom.xml file.
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
                 <version>3.7.1</version>
+                <configuration>
+                    <looseApplication>false</looseApplication>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -796,7 +759,6 @@ Replace the pom.xml file.
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.default.http.port}</http.port>
-                        <context.root>/dev</context.root>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -807,67 +769,238 @@ Replace the pom.xml file.
 
 
 
-You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode to verify your change.
+Adding the ***microprofile-graphql-api*** dependency to the ***pom.xml*** enables the GraphQL annotations that are used to develop the application. 
+
+The Open Liberty server needs to be configured to support the GraphQL query language. 
+
+Replace the server configuration file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-microprofile-graphql/start/graphql/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-microprofile-graphql/start/graphql/src/main/liberty/config/server.xml"}
 
 
-You can access the application at the ***http\://localhost:9080/dev/system/properties*** URL. Notice that the context root is now ***/dev***.
 
+```xml
+<server description="GraphQL service">
+    <featureManager>
+        <feature>restfulWS-3.1</feature>
+        <feature>jsonb-3.0</feature>
+        <feature>jsonp-2.1</feature>
+        <feature>cdi-4.0</feature>
+        <feature>mpConfig-3.0</feature>
+        <feature>mpRestClient-3.0</feature>
+        <feature>mpGraphQL-2.0</feature>
+    </featureManager>
 
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+    <variable name="default.http.port" defaultValue="9082"/>
+    <variable name="default.https.port" defaultValue="9445"/>
 
-```bash
-curl -s http://localhost:9080/dev/system/properties | jq
+    <variable name="io.openliberty.enableGraphQLUI" value="true" />
+
+    <webApplication location="guide-microprofile-graphql-graphql.war" contextRoot="/" />
+    <httpEndpoint host="*" httpPort="${default.http.port}" 
+        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+</server>
 ```
 
 
 
-When you are finished, exit dev mode by pressing `Ctrl+C` in the command-line session that the container was started from, or by typing ***q*** and then pressing the ***enter/return*** key. Either of these options stops and removes the container. To check that the container was stopped, run the ***docker ps*** command.
+The ***mpGraphQL*** feature that is added to the ***server.xml*** enables the use of the [MicroProfile GraphQL](https://openliberty.io/docs/latest/reference/feature/mpGraphQL-2.0.html) feature in Open Liberty. Open Liberty's MicroProfile GraphQL feature includes GraphiQL. Enable it by setting the ***io.openliberty.enableGraphQLUI*** variable to ***true***.
 
 
-::page{title="Running the application from a minimal runnable JAR"}
+::page{title="Building and running the application"}
 
-So far, Open Liberty was running out of the ***target/liberty/wlp*** directory, which effectively contains an Open Liberty server installation and the deployed application. The final product of the Maven build is a server package for use in a continuous integration pipeline and, ultimately, a production deployment.
-
-Open Liberty supports a number of different server packages. The sample application currently generates a ***usr*** package that contains the servers and application to be extracted onto an Open Liberty installation.
-
-Instead of creating a server package, you can generate a runnable JAR file that contains the application along with a server runtime. This JAR file can then be run anywhere and deploy your application and server at the same time. To generate a runnable JAR file, override the  ***include*** property: 
-```bash
-mvn liberty:package -Dinclude=runnable
-```
-
-The packaging type is overridden from the ***usr*** package to the ***runnable*** package. This property then propagates to the ***liberty-maven-plugin*** plug-in, which generates the server package based on the ***openliberty-kernel*** package.
-
-When the build completes, you can find the minimal runnable ***guide-getting-started.jar*** file in the ***target*** directory. This JAR file contains only the ***features*** that you explicitly enabled in your ***server.xml*** file. As a result, the generated JAR file is only about 50 MB.
-
-To run the JAR file, first stop the server if it's running. Then, navigate to the ***target*** directory and run the ***java -jar*** command:
+From the ***start*** directory, run the following commands:
 
 ```bash
-java -jar guide-getting-started.jar
+mvn -pl models install
+mvn package
 ```
 
+The ***mvn install*** command compiles and packages the object types you created to a ***.jar*** file. This allows them to be used by the ***system*** and ***graphql*** services. The ***mvn package*** command packages the ***system*** and ***graphql*** services to ***.war*** files.
 
-When the server starts, go to the ***http\://localhost:9080/dev/system/properties*** URL to access your application that is now running out of the minimal runnable JAR file.
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+Run the following command to download or update to the latest Open Liberty Docker image:
 
 ```bash
-curl -s http://localhost:9080/dev/system/properties | jq
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+```
+
+Dockerfiles have already been set up for you. Build your Docker images with the following commands:
+
+```bash
+docker build -t system:1.0-java11-SNAPSHOT --build-arg JAVA_VERSION=java11 system/.
+docker build -t system:1.0-java17-SNAPSHOT --build-arg JAVA_VERSION=java17 system/.
+docker build -t graphql:1.0-SNAPSHOT graphql/.
+```
+
+The ***--build-arg*** parameter is used to create two different ***system*** services. One uses Java 11, while the other uses Java 17. Run these Docker images using the provided ***startContainers*** script. The script creates a network for the services to communicate through. It creates two ***system*** services and a GraphQL service.
+
+
+```bash
+./scripts/startContainers.sh
+```
+
+The containers may take some time to become available.
+
+
+::page{title="Running GraphQL queries"}
+Before you make any requests, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following command to get the schema that describes the GraphQL service:
+```bash
+curl -s http://localhost:9082/graphql/schema.graphql
+```
+
+To access the GraphQL service, GraphiQL has already been set up and included for you.
+Click the following button to access GraphiQL:
+
+::startApplication{port="9082" display="external" name="Launch GraphiQL" route="/graphql-ui"}
+
+Queries that are made through GraphiQL are the same as queries that are made through HTTP requests. You can also view the schema through GraphiQL by clicking the ***Docs*** button on the menu bar.
+
+Run the following ***query*** operation in GraphiQL to get every system property from the container running on Java 11:
+
+
+```
+query {
+  system(hostname: "system-java11") {
+    hostname
+    username
+    osArch
+    osName
+    osVersion
+    systemMetrics {
+      processors
+      heapSize
+      nonHeapSize
+    }
+    java {
+      vendorName
+      version
+    }
+  }
+}
 ```
 
 
+The output is similar to the following example:
 
-You can stop the server by pressing `Ctrl+C` in the command-line session that the server runs in.
+```
+{
+  "data": {
+    "system": {
+      "hostname": "system-java11",
+      "username": "default",
+      "osArch": "amd64",
+      "osName": "Linux",
+      "osVersion": "5.10.25-linuxkit",
+      "systemMetrics": {
+        "processors": 4,
+        "heapSize": 1031864320,
+        "nonHeapSize": -1
+      },
+      "java": {
+        "vendorName": "AdoptOpenJDK",
+        "version": "11.0.18"
+      }
+    }
+  }
+}
+```
+
+Run the following ***mutation*** operation to add a note to the ***system*** service running on Java 11:
 
 
+```
+mutation {
+  editNote(
+    hostname: "system-java11"
+    note: "I'm trying out GraphQL on Open Liberty!"
+  )
+}
+```
+
+You receive a response containing the Boolean ***true*** to let you know that the request was successfully processed. You can see the note that you added by running the following query operation. Notice that there's no need to run a full query, as you only want the ***note*** property. Thus, the request only contains the ***note*** property. 
 
 
+```bash
+query {
+  system(hostname: "system-java11") {
+    note
+  }
+}
+```
+
+The response is similar to the following example:
+
+```
+{
+  "data": {
+    "system": {
+      "note": "I'm trying out GraphQL on Open Liberty!"
+    }
+  }
+}
+```
+
+GraphQL returns only the ***note*** property, as it was the only property in the request. You can try out the operations using the hostname ***system-java17*** as well. To see an example of using an array as an input for an operation, try the following operation to get system loads:
+
+
+```
+query {
+  systemLoad(hostnames: ["system-java11", "system-java17"]) {
+    hostname
+    loadData {
+      heapUsed
+      nonHeapUsed
+      loadAverage
+    }
+  }
+}
+```
+
+The response is similar to the following example:
+
+```
+{
+  "data": {
+    "systemLoad": [
+      {
+        "hostname": "system-java11",
+        "loadData": {
+          "heapUsed": 32432048,
+          "nonHeapUsed": 85147084,
+          "loadAverage": 0.36
+        }
+      },
+      {
+        "hostname": "system-java17",
+        "loadData": {
+          "heapUsed": 39373688,
+          "nonHeapUsed": 90736300,
+          "loadAverage": 0.36
+        }
+      }
+    ]
+  }
+}
+```
+
+
+::page{title="Tearing down the environment"}
+
+When you're done checking out the application, run the following script to stop the application:
+
+
+```bash
+./scripts/stopContainers.sh
+```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You've learned the basics of deploying and updating an application on an Open Liberty server.
+You just created a basic GraphQL service using MicroProfile GraphQL in Open Liberty!
 
 
 
@@ -877,34 +1010,35 @@ You've learned the basics of deploying and updating an application on an Open Li
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-getting-started*** project by running the following commands:
+Delete the ***guide-microprofile-graphql*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-getting-started
+rm -fr guide-microprofile-graphql
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Getting%20started%20with%20Open%20Liberty&guide-id=cloud-hosted-guide-getting-started)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Optimizing%20REST%20queries%20for%20microservices%20with%20GraphQL&guide-id=cloud-hosted-guide-microprofile-graphql)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-getting-started/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-getting-started/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-graphql/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-graphql/pulls)
 
 
 
 ### Where to next?
 
-* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
+* [Running GraphQL queries and mutations using a GraphQL client](https://openliberty.io/guides/graphql-client.html)
+* [Accessing and persisting data in microservices using Java Persistence API (JPA)](https://openliberty.io/guides/jpa-intro.html)
+* [Persisting data with MongoDB](https://openliberty.io/guides/mongodb-intro.html)
 
 
 ### Log out of the session
