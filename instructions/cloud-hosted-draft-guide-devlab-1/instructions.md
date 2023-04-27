@@ -5,9 +5,9 @@ branch: lab-364-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 tool-type: theia
 ---
-::page{title="Welcome to the Checking the health of microservices on Kubernetes guide!"}
+::page{title="Welcome to the Testing microservices with consumer-driven contracts guide!"}
 
-Learn how to check the health of microservices on Kubernetes by setting up startup, liveness, and readiness probes to inspect MicroProfile Health Check endpoints.
+Learn how to test Java microservices with consumer-driven contracts in Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,21 +17,25 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
-
 ::page{title="What you'll learn"}
 
-You will learn how to create health check endpoints for your microservices. Then, you will configure Kubernetes to use these endpoints to keep your microservices running smoothly. 
+With a microservices-based architecture, you need robust testing to ensure that microservices that depend on one another are able to communicate effectively.  Typically, to prevent multiple points of failure at different integration points, a combination of unit, integration, and end-to-end tests are used. While unit tests are fast, they are less trustworthy because they run in isolation and usually rely on mock data.
 
-MicroProfile Health allows services to report their health, and it publishes the overall health status to defined endpoints. If a service reports ***UP***, then it's available. If the service reports ***DOWN***, then it's unavailable. MicroProfile Health reports an individual service status at the endpoint and indicates the overall status as ***UP*** if all the services are ***UP***. A service orchestrator can then use the health statuses to make decisions.
+Integration tests address this issue by testing against real running services. However, they tend to be slow as the tests depend on other microservices and are less reliable because they are prone to external changes.
 
-Kubernetes provides startup, liveness, and readiness probes that are used to check the health of your containers. These probes can check certain files in your containers, check a TCP socket, or make HTTP requests. MicroProfile Health exposes startup, liveness, and readiness endpoints on your microservices. Kubernetes polls these endpoints as specified by the probes to react appropriately to any change in the microservice's status. Read the [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html) guide to learn more about MicroProfile Health.
+Usually, end-to-end tests are more trustworthy because they verify functionality from the perspective of a user. However, a graphical user interface (GUI) component is often required to perform end-to-end tests, and GUI components rely on third-party software, such as Selenium, which requires heavy computation time and resources.
 
-The two microservices you will work with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster.
+*What is contract testing?*
 
+Contract testing bridges the gaps among the shortcomings of these different testing methodologies. Contract testing is a technique for testing an integration point by isolating each microservice and checking whether the HTTP requests and responses that the microservice transmits conform to a shared understanding that is documented in a contract. This way, contract testing ensures that microservices can communicate with each other.
 
+[Pact](https://docs.pact.io/) is an open source contract testing tool for testing HTTP requests, responses, and message integrations by using contract tests.
 
+The [Pact Broker](https://docs.pact.io/pact_broker/docker_images) is an application for sharing Pact contracts and verification results. The Pact Broker is also an important piece for integrating Pact into continuous integration and continuous delivery (CI/CD) pipelines.
 
+The two microservices you will interact with are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of its host. The ***inventory*** microservice retrieves specific properties from the ***system*** microservice.
+
+You will learn how to use the Pact framework to write contract tests for the ***inventory*** microservice that will then be verified by the ***system*** microservice.
 
 ::page{title="Getting started"}
 
@@ -44,11 +48,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-health.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-contract-testing.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-kubernetes-microprofile-health.git
-cd guide-kubernetes-microprofile-health
+git clone https://github.com/openliberty/guide-contract-testing.git
+cd guide-contract-testing
 ```
 
 
@@ -56,588 +60,790 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+### Starting the Pact Broker
 
-::page{title="Adding health checks to the inventory microservice"}
-
-Navigate to ***start*** directory to begin.
-
-Create the ***InventoryStartupCheck*** class.
-
-> Run the following touch command in your terminal
+Run the following command to start the Pact Broker:
 ```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java
+docker-compose -f "pact-broker/docker-compose.yml" up -d --build
+```
+
+When the Pact Broker is running, you'll see the following output:
+```
+Creating pact-broker_postgres_1 ... done
+Creating pact-broker_pact-broker_1 ... done
 ```
 
 
-> Then, to open the InventoryStartupCheck.java file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java, or click the following button
+Click the following button to visit the Pact Broker to confirm that it is working. The Pact Broker can be found at the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai` URL, where ***accountname*** is your account name.
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryStartupCheck.java"}
+::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
+
+Confirm that you can access the user interface of the Pact Broker. The Pact Broker interface is similar to the following image:
+
+![Pact Broker webpage](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage.png)
+
+
+
+
+
+You can refer to the [official Pact Broker documentation](https://docs.pact.io/pact_broker/docker_images/pactfoundation) for more information about the components of the Docker Compose file.
+
+::page{title="Implementing pact testing in the inventory service"}
+
+Navigate to the ***start/inventory*** directory to begin.
+
+```bash
+cd /home/project/guide-contract-testing/start/inventory
+```
+
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```bash
+mvn liberty:dev
+```
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+Open a new command-line session.
+
+Create the InventoryPactIT class file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java
+```
+
+
+> Then, to open the InventoryPactIT.java file in your IDE, select
+> **File** > **Open** > guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java, or click the following button
+
+::openFile{path="/home/project/guide-contract-testing/start/inventory/src/test/java/io/openliberty/guides/inventory/InventoryPactIT.java"}
 
 
 
 ```java
+
 package io.openliberty.guides.inventory;
 
-import java.lang.management.ManagementFactory;
-import com.sun.management.OperatingSystemMXBean;
-import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.health.Startup;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+import au.com.dius.pact.consumer.dsl.PactDslJsonArray;
+import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
+import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
+import au.com.dius.pact.consumer.junit.PactProviderRule;
+import au.com.dius.pact.consumer.junit.PactVerification;
+import au.com.dius.pact.core.model.RequestResponsePact;
+import au.com.dius.pact.core.model.annotations.Pact;
 
-@Startup
-@ApplicationScoped
-public class InventoryStartupCheck implements HealthCheck {
+import org.junit.Rule;
+import org.junit.Test;
 
-    @Override
-    public HealthCheckResponse call() {
-        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean)
-        ManagementFactory.getOperatingSystemMXBean();
-        double cpuUsed = bean.getSystemCpuLoad();
-        String cpuUsage = String.valueOf(cpuUsed);
-        return HealthCheckResponse.named(InventoryResource.class
-                                            .getSimpleName() + " Startup Check")
-                                            .status(cpuUsed < 0.95).build();
-    }
+import static org.junit.Assert.assertEquals;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class InventoryPactIT {
+  @Rule
+  public PactProviderRule mockProvider = new PactProviderRule("System", this);
+
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactServer(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
+
+    return builder
+      .given("wlp.server.name is defaultServer")
+      .uponReceiving("a request for server name")
+      .path("/system/properties/key/wlp.server.name")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonArray().object()
+        .stringValue("wlp.server.name", "defaultServer"))
+      .toPact();
+  }
+
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactEdition(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
+
+    return builder
+      .given("Default directory is true")
+      .uponReceiving("a request to check for the default directory")
+      .path("/system/properties/key/wlp.user.dir.isDefault")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonArray().object()
+        .stringValue("wlp.user.dir.isDefault", "true"))
+      .toPact();
+  }
+
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactVersion(PactDslWithProvider builder) {
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("Content-Type", "application/json");
+
+    return builder
+      .given("version is 1.1")
+      .uponReceiving("a request for the version")
+      .path("/system/properties/version")
+      .method("GET")
+      .willRespondWith()
+      .headers(headers)
+      .status(200)
+      .body(new PactDslJsonBody()
+        .decimalType("system.properties.version", 1.1))
+      .toPact();
+  }
+
+  @Pact(consumer = "Inventory")
+  public RequestResponsePact createPactInvalid(PactDslWithProvider builder) {
+
+    return builder
+      .given("invalid property")
+      .uponReceiving("a request with an invalid property")
+      .path("/system/properties/invalidProperty")
+      .method("GET")
+      .willRespondWith()
+      .status(404)
+      .toPact();
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactServer")
+  public void runServerTest() {
+    String serverName = new Inventory(mockProvider.getUrl()).getServerName();
+    assertEquals("Expected server name does not match",
+      "[{\"wlp.server.name\":\"defaultServer\"}]", serverName);
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactEdition")
+  public void runEditionTest() {
+    String edition = new Inventory(mockProvider.getUrl()).getEdition();
+    assertEquals("Expected edition does not match",
+      "[{\"wlp.user.dir.isDefault\":\"true\"}]", edition);
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactVersion")
+  public void runVersionTest() {
+    String version = new Inventory(mockProvider.getUrl()).getVersion();
+    assertEquals("Expected version does not match",
+      "{\"system.properties.version\":1.1}", version);
+  }
+
+  @Test
+  @PactVerification(value = "System", fragment = "createPactInvalid")
+  public void runInvalidTest() {
+    String invalid = new Inventory(mockProvider.getUrl()).getInvalidProperty();
+    assertEquals("Expected invalid property response does not match",
+      "", invalid);
+  }
 }
-
 ```
 
 
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-A health check for startup allows applications to define startup probes that verify whether deployed application is fully initialized before the liveness probe takes over. This check is useful for applications that require additional startup time on their first initialization. The ***@Startup*** annotation must be applied on a HealthCheck implementation to define a startup check procedure. Otherwise, this annotation is ignored. This startup check verifies that the cpu usage is below 95%. If more than 95% of the cpu is used, a status of ***DOWN*** is returned. 
+The ***InventoryPactIT*** class contains a ***PactProviderRule*** mock provider that mimics the HTTP responses from the ***system*** microservice. The ***@Pact*** annotation takes the name of the microservice as a parameter, which makes it easier to differentiate microservices from each other when you have multiple applications.
 
-Create the ***InventoryLivenessCheck*** class.
+The ***createPactServer()*** method defines the minimal expected responsezfor a specific endpoint, which is known as an interaction. For each interaction, the expected request and the response are registered with the mock service by using the ***@PactVerification*** annotation.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java
+The test sends a real request with the ***getUrl()*** method of the mock provider. The mock provider compares the actual request with the expected request and confirms whether the comparison is successful. Finally, the ***assertEquals()*** method confirms that the response is correct.
+
+Replace the inventory Maven project file.
+
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-contract-testing/start/inventory/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-contract-testing/start/inventory/pom.xml"}
+
+
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-contract-testing-inventory</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <!-- Liberty configuration -->
+        <liberty.var.default.http.port>9081</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>6.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>au.com.dius</groupId>
+            <artifactId>pact-jvm-consumer-junit</artifactId>
+            <version>4.0.10</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.2.3.Final</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>au.com.dius.pact.provider</groupId>
+                <artifactId>maven</artifactId>
+                <version>4.5.6</version>
+                <configuration>
+                    <serviceProviders>
+                        <serviceProvider>
+                            <name>System</name>
+                            <protocol>http</protocol>
+                            <host>localhost</host>
+                            <port>9080</port>
+                            <path>/</path>
+                            <pactFileDirectory>target/pacts</pactFileDirectory>
+                        </serviceProvider>
+                    </serviceProviders>
+                    <projectVersion>${project.version}</projectVersion>
+                    <skipPactPublish>false</skipPactPublish>
+                    <pactBrokerUrl>http://localhost:9292</pactBrokerUrl>
+                    <tags>
+                        <tag>open-liberty-pact</tag>
+                    </tags>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.2</version>
+            </plugin>
+            <!-- Plugin to run functional tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.default.http.port}</http.port>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <!-- Enable liberty-maven plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.7.1</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>
 ```
 
 
-> Then, to open the InventoryLivenessCheck.java file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java, or click the following button
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryLivenessCheck.java"}
+The Pact framework provides a ***Maven*** plugin that can be added to the build section of the ***pom.xml*** file. The ***serviceProvider*** element defines the endpoint URL for the ***system*** microservice and the ***pactFileDirectory*** directory where you want to store the pact file. The ***pact-jvm-consumer-junit*** dependency provides the base test class that you can use with JUnit to build unit tests.
+
+After you create the ***InventoryPactIT.java*** class and replace the ***pom.xml*** file, Open Liberty automatically reloads its configuration.
+
+The contract between the ***inventory*** and ***system*** microservices is known as a pact. Each pact is a collection of interactions. In this guide, those interactions are defined in the ***InventoryPactIT*** class.
+
+Press the ***enter/return*** key to run the tests and generate the pact file from the command-line session where you started the ***inventory*** microservice.
+
+When completed, you'll see a similar output to the following example:
+```
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running io.openliberty.guides.inventory.InventoryPactIT
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.631 s - in io.openliberty.guides.inventory.InventoryPactIT
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+```
+
+When you integrate the Pact framework in a CI/CD build pipeline, you can use the ***mvn failsafe:integration-test*** goal to generate the pact file. The Maven failsafe plug-in provides a lifecycle phase for running integration tests that run after unit tests. By default, it looks for classes that are suffixed with ***IT***, which stands for Integration Test. You can refer to the [Maven failsafe plug-in documentation](https://maven.apache.org/surefire/maven-failsafe-plugin/) for more information.
+
+The generated pact file is named ***Inventory-System.json*** and is located in the ***inventory/target/pacts*** directory. The pact file contains the defined interactions in JSON format:
+
+```
+{
+...
+"interactions": [
+{
+      "description": "a request for server name",
+      "request": {
+        "method": "GET",
+        "path": "/system/properties/key/wlp.server.name"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": [
+          {
+            "wlp.server.name": "defaultServer"
+          }
+        ]
+      },
+      "providerStates": [
+        {
+          "name": "wlp.server.name is defaultServer"
+        }
+      ]
+    }
+...
+  ]
+}
+```
+
+Open a new command-line session and navigate to the ***start/inventory*** directory.
+
+```bash
+cd /home/project/guide-contract-testing/start/inventory
+```
+
+Publish the generated pact file to the Pact Broker by running the following command:
+```bash
+mvn pact:publish
+```
+
+After the file is published, you'll see a similar output to the following example:
+```
+--- maven:4.1.21:publish (default-cli) @ inventory ---
+Publishing 'Inventory-System.json' with tags 'open-liberty-pact' ... OK
+```
+
+::page{title="Verifying the pact in the Pact Broker"}
+
+
+Refresh the Pact Broker at the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai` URL, where ***accountname*** is your account name.
+
+::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
+
+The last verified column doesn't show a timestamp because the ***system*** microservice hasn't verified the pact yet.
+
+![Pact Broker webpage for new entry](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage-refresh.png)
+
+
+
+
+
+
+You can see detailed insights about each interaction by clicking the following button or going to the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai/pacts/provider/System/consumer/Inventory/latest` URL, where ***accountname*** is your account name.
+
+::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/pacts/provider/System/consumer/Inventory/latest"}
+
+The insights look similar to the following image:
+
+![Pact Broker webpage for Interactions](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-interactions.png)
+
+
+::page{title="Implementing pact testing in the system service"}
+
+
+Open another command-line session and navigate to the ***start/system*** directory.
+
+```bash
+cd /home/project/guide-contract-testing/start/system
+```
+
+Start Open Liberty in dev mode for the ***system*** microservice:
+```bash
+mvn liberty:dev
+```
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+
+
+Open a new command-line session.
+
+Create the SystemBrokerIT class file.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java
+```
+
+
+> Then, to open the SystemBrokerIT.java file in your IDE, select
+> **File** > **Open** > guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java, or click the following button
+
+::openFile{path="/home/project/guide-contract-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemBrokerIT.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory;
+package it.io.openliberty.guides.system;
 
-import jakarta.enterprise.context.ApplicationScoped;
+import au.com.dius.pact.provider.junit5.HttpTestTarget;
+import au.com.dius.pact.provider.junit5.PactVerificationContext;
+import au.com.dius.pact.provider.junit5.PactVerificationInvocationContextProvider;
+import au.com.dius.pact.provider.junitsupport.Consumer;
+import au.com.dius.pact.provider.junitsupport.Provider;
+import au.com.dius.pact.provider.junitsupport.State;
+import au.com.dius.pact.provider.junitsupport.loader.PactBroker;
+import au.com.dius.pact.provider.junitsupport.loader.VersionSelector;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestTemplate;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
+@Provider("System")
+@Consumer("Inventory")
+@PactBroker(
+  host = "localhost",
+  port = "9292",
+  consumerVersionSelectors = {
+    @VersionSelector(tag = "open-liberty-pact")
+  })
+public class SystemBrokerIT {
+  @TestTemplate
+  @ExtendWith(PactVerificationInvocationContextProvider.class)
+  void pactVerificationTestTemplate(PactVerificationContext context) {
+    context.verifyInteraction();
+  }
 
-import org.eclipse.microprofile.health.Liveness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+  @BeforeAll
+  static void enablePublishingPact() {
+    System.setProperty("pact.verifier.publishResults", "true");
+  }
 
-@Liveness
-@ApplicationScoped
-public class InventoryLivenessCheck implements HealthCheck {
+  @BeforeEach
+  void before(PactVerificationContext context) {
+    int port = Integer.parseInt(System.getProperty("http.port"));
+    context.setTarget(new HttpTestTarget("localhost", port));
+  }
 
-  @Override
-  public HealthCheckResponse call() {
-      MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-      long memUsed = memBean.getHeapMemoryUsage().getUsed();
-      long memMax = memBean.getHeapMemoryUsage().getMax();
+  @State("wlp.server.name is defaultServer")
+  public void validServerName() {
+  }
 
-      return HealthCheckResponse.named(InventoryResource.class.getSimpleName()
-                                      + " Liveness Check")
-                                .status(memUsed < memMax * 0.9).build();
+  @State("Default directory is true")
+  public void validEdition() {
+  }
+
+  @State("version is 1.1")
+  public void validVersion() {
+  }
+
+  @State("invalid property")
+  public void invalidProperty() {
   }
 }
 ```
 
 
 
-A health check for liveness allows third party services to determine whether the application is running. If this procedure fails, the application can be stopped. The ***@Liveness*** annotation must be applied on a HealthCheck implementation to define a Liveness check procedure. Otherwise, this annotation is ignored. This liveness check verifies that the heap memory usage is below 90% of the maximum memory. If more than 90% of the maximum memory is used, a status of ***DOWN*** is returned. 
 
-The ***inventory*** microservice is healthy only when the ***system*** microservice is available. To add this check to the ***/health/ready*** endpoint, create a class that is annotated with the ***@Readiness*** annotation and implements the ***HealthCheck*** interface. A Health Check for readiness allows third party services to know whether the application is ready to process requests. The ***@Readiness*** annotation must be applied on a HealthCheck implementation to define a readiness check procedure. Otherwise, this annotation is ignored.
+The connection information for the Pact Broker is provided with the ***@PactBroker*** annotation. The dependency also provides a JUnit5 Invocation Context Provider with the ***pactVerificationTestTemplate()*** method to generate a test for each of the interactions.
 
-Create the ***InventoryReadinessCheck*** class.
+The ***pact.verifier.publishResults*** property is set to ***true*** so that the results are sent to the Pact Broker after the tests are completed.
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java
+The test target is defined in the ***PactVerificationContext*** context to point to the running endpoint of the ***system*** microservice.
+
+The ***@State*** annotation must match the ***given()*** parameter that was provided in the ***inventory*** test class so that Pact can identify which test case to run against which endpoint.
+
+Replace the system Maven project file.
+
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-contract-testing/start/system/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-contract-testing/start/system/pom.xml"}
+
+
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>guide-contract-testing-system</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Liberty configuration -->
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <debugPort>8787</debugPort>
+    </properties>
+
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>6.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>au.com.dius.pact.provider</groupId>
+            <artifactId>junit5</artifactId>
+            <version>4.5.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.2.3.Final</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <!-- Enable liberty-maven plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.7.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.2</version>
+            </plugin>
+            <!-- Plugin to run functional tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.default.http.port}</http.port>
+                        <pact.provider.version>${project.version}</pact.provider.version>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
 ```
 
 
-> Then, to open the InventoryReadinessCheck.java file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java, or click the following button
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryReadinessCheck.java"}
+The ***system*** microservice uses the ***junit5*** pact provider dependency to connect to the Pact Broker and verify the pact file. Ideally, in a CI/CD build pipeline, the ***pact.provider.version*** element is dynamically set to the build number so that you can identify where a breaking change is introduced.
+
+After you create the ***SystemBrokerIT.java*** class and replace the ***pom.xml*** file, Open Liberty automatically reloads its configuration.
+
+::page{title="Verifying the contract"}
+
+In the command-line session where you started the ***system*** microservice, press the ***enter/return*** key to run the tests to verify the pact file. When you integrate the Pact framework into a CI/CD build pipeline, you can use the ***mvn failsafe:integration-test*** goal to verify the pact file from the Pact Broker.
+
+The tests fail with the following errors:
+```
+[ERROR] Failures: 
+[ERROR]   SystemBrokerIT.pactVerificationTestTemplate:28 Pact between Inventory (1.0-SNAPSHOT) and System - Upon a request for the version 
+Failures:
+
+1) Verifying a pact between Inventory and System - a request for the version has a matching body
+
+    1.1) body: $.system.properties.version Expected "1.1" (String) to be a decimal number
+
+
+[INFO] 
+[ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0
+```
+
+The test from the ***system*** microservice fails because the ***inventory*** microservice was expecting a decimal, ***1.1***, for the value of the ***system.properties.version*** property, but it received a string, ***"1.1"***.
+
+Correct the value of the ***system.properties.version*** property to a decimal.
+Replace the SystemResource class file.
+
+> To open the SystemResource.java file in your IDE, select
+> **File** > **Open** > guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java, or click the following button
+
+::openFile{path="/home/project/guide-contract-testing/start/system/src/main/java/io/openliberty/guides/system/SystemResource.java"}
 
 
 
 ```java
-package io.openliberty.guides.inventory;
+package io.openliberty.guides.system;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.core.Response;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.health.Readiness;
-import org.eclipse.microprofile.health.HealthCheck;
-import org.eclipse.microprofile.health.HealthCheckResponse;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
-@Readiness
-@ApplicationScoped
-public class InventoryReadinessCheck implements HealthCheck {
+import org.eclipse.microprofile.metrics.annotation.Counted;
+import org.eclipse.microprofile.metrics.annotation.Timed;
 
-    private static final String READINESS_CHECK = InventoryResource.class
-                                                .getSimpleName()
-                                                + " Readiness Check";
+@RequestScoped
+@Path("/properties")
+public class SystemResource {
 
-    @Inject
-    @ConfigProperty(name = "SYS_APP_HOSTNAME")
-    private String hostname;
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Timed(name = "getPropertiesTime",
+    description = "Time needed to get the JVM system properties")
+  @Counted(absolute = true,
+    description = "Number of times the JVM system properties are requested")
 
-    public HealthCheckResponse call() {
-        if (isSystemServiceReachable()) {
-            return HealthCheckResponse.up(READINESS_CHECK);
-        } else {
-            return HealthCheckResponse.down(READINESS_CHECK);
-        }
+  public Response getProperties() {
+    return Response.ok(System.getProperties()).build();
+  }
+
+  @GET
+  @Path("/key/{key}")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getPropertiesByKey(@PathParam("key") String key) {
+    try {
+      JsonArray response = Json.createArrayBuilder()
+        .add(Json.createObjectBuilder()
+          .add(key, System.getProperties().get(key).toString()))
+        .build();
+      return Response.ok(response, MediaType.APPLICATION_JSON).build();
+    } catch (java.lang.NullPointerException exception) {
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
+  }
 
-    private boolean isSystemServiceReachable() {
-        try {
-            Client client = ClientBuilder.newClient();
-            client
-                .target("http://" + hostname + ":9080/system/properties")
-                .request()
-                .post(null);
-
-            return true;
-        } catch (Exception ex) {
-            return false;
-        }
-    }
+  @GET
+  @Path("/version")
+  @Produces(MediaType.APPLICATION_JSON)
+  public JsonObject getVersion() {
+    JsonObject response = Json.createObjectBuilder()
+                          .add("system.properties.version", 1.1)
+                          .build();
+    return response;
+  }
 }
 ```
 
 
 
-This health check verifies that the ***system*** microservice is available at ***http://system-service:9080/***. The ***system-service*** host name is accessible only from inside the cluster; you can't access it yourself. If it's available, then it returns an ***UP*** status. Similarly, if it's unavailable then it returns a ***DOWN*** status. When the status is ***DOWN***, the microservice is considered to be unhealthy.
+Press the ***enter/return*** key to rerun the tests from the command-line session where you started the ***system*** microservice.
 
-The health checks for the ***system*** microservice were already been implemented. The ***system*** microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. This endpoint has been provided for you to observe the results of an unhealthy pod and how Kubernetes reacts.
+If the tests are successful, you'll see a similar output to the following example:
+```
+...
+Verifying a pact between pact between Inventory (1.0-SNAPSHOT) and System
 
-::page{title="Configuring startup, liveness, and readiness probes"}
+  Notices:
+    1) The pact at http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX is being verified because it matches the following configured selection criterion: latest pact for a consumer version tagged 'open-liberty-pact'
 
-You will configure Kubernetes startup, liveness, and readiness probes. Startup probes determine whether your application is fully initialized. Liveness probes determine whether a container needs to be restarted. Readiness probes determine whether your application is ready to accept requests. If it's not ready, no traffic is routed to the container.
-
-Create the kubernetes configuration file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml
+  [from Pact Broker http://localhost:9292/pacts/provider/System/consumer/Inventory/pact-version/XXX]
+  Given version is 1.1
+  a request for the version
+    returns a response which
+      has status code 200 (OK)
+      has a matching body (OK)
+[main] INFO au.com.dius.pact.provider.DefaultVerificationReporter - Published verification result of 'au.com.dius.pact.core.pactbroker.TestResult$Ok@4d84dfe7' for consumer 'Consumer(name=Inventory)'
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.835 s - in it.io.openliberty.guides.system.SystemBrokerIT
+...
 ```
 
 
-> Then, to open the kubernetes.yaml file in your IDE, select
-> **File** > **Open** > guide-kubernetes-microprofile-health/start/kubernetes.yaml, or click the following button
+After the tests are complete, refresh the Pact Broker at the `https://accountname-9292.theiadocker-4.proxy.cognitiveclass.ai` URL, where ***accountname*** is your account name.
 
-::openFile{path="/home/project/guide-kubernetes-microprofile-health/start/kubernetes.yaml"}
+::startApplication{port="9292" display="external" name="Visit Pact Broker" route="/"}
 
+Confirm that the last verified column now shows a timestamp:
 
+![Pact Broker webpage for verified](https://raw.githubusercontent.com/OpenLiberty/guide-contract-testing/prod/assets/pact-broker-webpage-verified.png)
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: system
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        # system probes
-        startupProbe:
-          httpGet:
-            path: /health/started
-            port: 9080
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9080
-        env:
-        - name: SYS_APP_HOSTNAME
-          value: system-service
-        # inventory probes
-        startupProbe:
-          httpGet:
-            path: /health/started
-            port: 9080
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 9080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 31000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9080
-    targetPort: 9080
-    nodePort: 32000
-```
 
 
 
-The startup, liveness, and readiness probes are configured for the containers that are running the ***system*** and ***inventory*** microservices.
 
-The startup probes are configured to poll the ***/health/started*** endpoint. The startup probe determines whether a container is started.
-
-The liveness probes are configured to poll the ***/health/live*** endpoint. The liveness probes determine whether a container needs to be restarted. The ***initialDelaySeconds*** field defines the duration that the probe waits before it starts to poll so that it does not make requests before the server is started. The ***periodSeconds*** option defines how often the probe polls the given endpoint. The ***timeoutSeconds*** option defines how many seconds before the probe times out. The ***failureThreshold*** option defines how many times the probe fails before the state changes from ready to not ready.
-
-The readiness probes are configured to poll the ***/health/ready*** endpoint. The readiness probe determines the READY status of the container, as seen in the ***kubectl get pods*** output. Similar to the liveness probes, the readiness probes also define ***initialDelaySeconds***, ***periodSeconds***, ***timeoutSeconds***, and ***failureThreshold***.
-
-::page{title="Deploying the microservices"}
-
-To build these microservices, navigate to the ***start*** directory and run the following command.
-
-```bash
-mvn package
-```
-
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-
-Next, run the ***docker build*** commands to build container images for your application:
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
-
-Push your images to the container registry on IBM Cloud with the following commands:
-
-```bash
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-```
-
-Update the image names so that the images in your IBM Cloud container registry are used. Set the image pull policy to ***Always*** and remove the ***nodePort*** fields so that the ports can be automatically generated:
-```bash
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
-```
-
-When the builds succeed, run the following command to deploy the necessary Kubernetes resources to serve the applications.
-
-```bash
-kubectl apply -f kubernetes.yaml
-```
-
-Use the following command to view the status of the pods. There will be two ***system*** pods and one ***inventory*** pod, later you'll observe their behavior as the ***system*** pods become unhealthy. 
-
-```bash
-kubectl get pods
-```
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          59s
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          59s
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          59s
-```
-
-Wait until the pods are ready. After the pods are ready, you will make requests to your services.
-
-
-In this IBM cloud environment, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
-
-```bash
-kubectl proxy
-```
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
-```bash
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
-```
-
-Run the following echo commands to verify the variables:
-
-```bash
-echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
-```
-
-The output appears as shown in the following example:
-
-```
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
-```
-
-Make a request to the system service to see the JVM system properties with the following ***curl*** command:
-```bash
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-
-The readiness probe ensures the READY state won't be ***1/1*** until the container is available to accept requests. Without a readiness probe, you might notice an unsuccessful response from the server. This scenario can occur when the container is started, but the application server isn't fully initialized. With the readiness probe, you can be certain the pod accepts traffic only when the microservice is fully started.
-
-Similarly, access the inventory service and observe the successful request with the following command:
-```bash
-curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
-```
-
-::page{title="Changing the ready state of the system microservice"}
-
-An ***unhealthy*** endpoint has been provided under the ***system*** microservice to set it to an unhealthy state. The unhealthy state causes the readiness probe to fail. A request to the ***unhealthy*** endpoint puts the service in an unhealthy state as a simulation.
-
-
-Run the following ***curl*** command to invoke the unhealthy endpoint:
-```bash
-curl http://$SYSTEM_PROXY/system/unhealthy
-```
-
-Run the following command to view the state of the pods:
-
-```bash
-kubectl get pods
-```
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          1m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          1m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          1m
-```
-
-
-You will notice that one of the two ***system*** pods is no longer in the ready state. Make a request to the ***/system/properties*** endpoint with the following command:
-```bash
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-
-Your request is successful because you have two replicas and one is still healthy.
-
-### Observing the effects on the inventory microservice
-
-
-Wait until the ***system-service*** pod is ready again. Make several requests to the ***/system/unhealthy*** endpoint of the ***system*** service until you see two pods are unhealthy.
-```bash
-curl http://$SYSTEM_PROXY/system/unhealthy
-```
-
-Observe the output of ***kubectl get pods***.
-```bash
-kubectl get pods
-```
-
-You will see both pods are no longer ready. During this process, the readiness probe for the ***inventory*** microservice will also fail. Observe that it's no longer in the ready state either.
-
-First, both ***system*** pods will no longer be ready because the readiness probe failed.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          5m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          5m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          5m
-```
-
-Next, the ***inventory*** pod is no longer ready because the readiness probe failed. The probe failed because ***system-service*** is now unavailable.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     0/1       Running   0          6m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          6m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          6m
-```
-
-Then, the ***system*** pods will start to become healthy again after 60 seconds.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     0/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
-```
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          7m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          7m
-inventory-deployment-cf8f564c6-nctcr   0/1       Running   0          7m
-```
-
-Finally, you will see all of the pods have recovered.
-
-```
-NAME                                   READY     STATUS    RESTARTS   AGE
-system-deployment-694c7b74f7-hcf4q     1/1       Running   0          8m
-system-deployment-694c7b74f7-lrlf7     1/1       Running   0          8m
-inventory-deployment-cf8f564c6-nctcr   1/1       Running   0          8m
-```
-
-::page{title="Testing the microservices"}
-
-
-Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
-```bash
-cd /home/project/guide-kubernetes-microprofile-health/start
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
-```
-
-Run the integration tests by using the following command:
-```bash
-mvn failsafe:integration-test \
-    -Dsystem.service.root=$SYSTEM_PROXY \
-    -Dinventory.service.root=$INVENTORY_PROXY
-```
-
-A few tests are included for you to test the basic functions of the microservices. If a test fails, then you might have introduced a bug into the code. Wait for all pods to be in the ready state before you run the tests. 
-
-When the tests succeed, you should see output similar to the following in your console.
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.65 s - in it.io.openliberty.guides.system.SystemEndpointIT
-
-Results:
-
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-```
-
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.542 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
-
-Results:
-
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
-```
+The pact file that's created by the ***inventory*** microservice was successfully verified by the ***system*** microservice through the Pact Broker. This ensures that responses from the ***system*** microservice meet the expectations of the ***inventory*** microservice.
 
 ::page{title="Tearing down the environment"}
 
-Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the servers for the ***system*** and ***inventory*** microservices, or by typing ***q*** and then pressing the ***enter/return*** key.
 
-To remove all of the resources created during this guide, run the following command to delete all of the resources that you created.
+Navigate back to the ***/guide-contract-testing*** directory and run the following commands to remove the Pact Broker:
 
 ```bash
-kubectl delete -f kubernetes.yaml
+cd /home/project/guide-contract-testing
 ```
 
-
-
+```bash
+docker-compose -f "pact-broker/docker-compose.yml" down
+docker rmi postgres:12
+docker rmi pactfoundation/pact-broker:2.62.0.0
+docker volume rm pact-broker_postgres-volume
+```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have used MicroProfile Health and Open Liberty to create endpoints that report on your microservice's status. Then, you observed how Kubernetes uses the **/health/started**, **/health/live**, and **/health/ready** endpoints to keep your microservices running smoothly.
-
+You implemented contract testing in Java microservices by using Pact and verified the contract with the Pact Broker.
 
 
 
@@ -646,33 +852,37 @@ You have used MicroProfile Health and Open Liberty to create endpoints that repo
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-kubernetes-microprofile-health*** project by running the following commands:
+Delete the ***guide-contract-testing*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-kubernetes-microprofile-health
+rm -fr guide-contract-testing
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Checking%20the%20health%20of%20microservices%20on%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-health)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20consumer-driven%20contracts&guide-id=cloud-hosted-guide-contract-testing)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-health/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-contract-testing/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-contract-testing/pulls)
 
 
 
 ### Where to next?
 
-* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
-* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
+* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
+* [Testing microservices with the Arquillian managed container](https://openliberty.io/guides/arquillian-managed.html)
+
+**Learn more about the Pact framework**
+* [Go to the Pact website.](https://pact.io/)
 
 
 ### Log out of the session
