@@ -5,9 +5,9 @@ branch: lab-5932-instruction
 version-history-start-date: 2023-04-14T18:24:15Z
 tool-type: theia
 ---
-::page{title="Welcome to the Testing microservices with the Arquillian managed container guide!"}
+::page{title="Welcome to the Creating a hypermedia-driven RESTful web service guide!"}
 
-Learn how to develop tests for your microservices with the Arquillian managed container and run the tests on Open Liberty.
+You'll explore how to use Hypermedia As The Engine Of Application State (HATEOAS) to drive your RESTful web service on Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -19,11 +19,84 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to develop tests for your microservices by using the [Arquillian Liberty Managed container](https://github.com/OpenLiberty/liberty-arquillian/tree/master/liberty-managed) and JUnit with Maven on Open Liberty. [Arquillian](http://arquillian.org/) is a testing framework to develop automated functional, integration and acceptance tests for your Java applications. Arquillian sets up the test environment and handles the application server lifecycle for you so you can focus on writing tests.
+You will learn how to use hypermedia to create a specific style of a response JSON, which has contents that you can use to navigate your REST service. You'll build on top of a simple inventory REST service that you can develop with MicroProfile technologies. You can find the service at the following URL:
 
-You will develop Arquillian tests that use JUnit as the runner and build your tests with Maven using the Liberty Maven plug-in. This technique simplifies the process of managing Arquillian dependencies and the setup of your Arquillian managed container.
+```
+http://localhost:9080/inventory/hosts
+```
 
-You will work with an ***inventory*** microservice, which stores information about various systems. The ***inventory*** service communicates with the ***system*** service on a particular host to retrieve its system properties and store them. You will develop functional and integration tests for the microservices. You will also learn about the Maven and server configurations so that you can run your tests on Open Liberty with the Arquillian Liberty Managed container.
+The service responds with a JSON file that contains all of the registered hosts. Each host has a collection of HATEOAS links:
+
+```
+{
+  "foo": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/foo",
+      "rel": "self"
+    }
+  ],
+  "bar": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/bar",
+      "rel": "self"
+    }
+  ],
+  "*": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/*",
+      "rel": "self"
+    }
+  ]
+}
+```
+
+### What is HATEOAS?
+
+HATEOAS is a constraint of REST application architectures. With HATEOAS, the client receives information about the available resources from the REST application. The client does not need to be hardcoded to a fixed set of resources, and the application and client can evolve independently. In other words, the application tells the client where it can go and what it can access by providing it with a simple collection of links to other available resources.
+
+### Response JSON
+
+In the context of HATEOAS, each resource must contain a link reference to itself, which is commonly referred to as ***self***. In this guide, the JSON structure features a mapping between the hostname and its corresponding list of HATEOAS links:
+
+```
+  "*": [
+    {
+      "href": "http://localhost:9080/inventory/hosts/*",
+      "rel": "self"
+    }
+  ]
+```
+
+#### Link types
+
+The following example shows two different links. The first link has a ***self*** relationship with the resource object and is generated whenever you register a host. The link points to that host entry in the inventory:
+
+```
+  {
+    "href": "http://localhost:9080/inventory/hosts/<hostname>",
+    "rel": "self"
+  }
+```
+
+The second link has a ***properties*** relationship with the resource object and is generated if the host ***system*** service is running. The link points to the properties resource on the host:
+
+```
+  {
+    "href": "http://<hostname>:9080/system/properties",
+    "rel": "properties"
+  }
+```
+
+#### Other formats
+
+Although you should stick to the previous format for the purpose of this guide, another common convention has the link as the value of the relationship:
+
+```
+  "_links": {
+      "self": "http://localhost:9080/inventory/hosts/<hostname>",
+      "properties": "http://<hostname>:9080/system/properties"
+  }
+```
 
 ::page{title="Getting started"}
 
@@ -36,11 +109,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-arquillian-managed.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-hateoas.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-arquillian-managed.git
-cd guide-arquillian-managed
+git clone https://github.com/openliberty/guide-rest-hateoas.git
+cd guide-rest-hateoas
 ```
 
 
@@ -48,283 +121,545 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+### Try what you'll build
 
-::page{title="Developing Arquillian tests"}
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-Navigate to the ***start*** directory to begin.
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+
 ```bash
-cd /home/project/guide-arquillian-managed/start
+cd finish
+mvn liberty:run
 ```
 
-You'll develop tests that use Arquillian and JUnit to verify the ***inventory*** microservice as an endpoint and the functions of the ***InventoryResource*** class. The code for the microservices is in the ***src/main/java/io/openliberty/guides*** directory.
+After you see the following message, your application server is ready:
 
-Create the ***InventoryArquillianIT*** test class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java
+```
+The defaultServer server is ready to run a smarter planet.
 ```
 
 
-> Then, to open the InventoryArquillianIT.java file in your IDE, select
-> **File** > **Open** > guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java, or click the following button
+After the server runs, you can find your hypermedia-driven ***inventory*** service at the ***/inventory/hosts*** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command:
+```bash
+curl -s http://localhost:9080/inventory/hosts | jq
+```
 
-::openFile{path="/home/project/guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java"}
+After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+```bash
+mvn liberty:stop
+```
+
+
+
+::page{title="Creating the response JSON"}
+
+Navigate to the ***start*** directory.
+```bash
+cd /home/project/guide-rest-hateoas/start
+```
+
+When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```bash
+mvn liberty:dev
+```
+
+After you see the following message, your application server in dev mode is ready:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+Begin by building your response JSON, which is composed of the name of the host machine and its list of HATEOAS links.
+
+### Linking to inventory contents
+
+As mentioned before, your starting point is an existing simple inventory REST service. 
+
+Look at the request handlers in the ***InventoryResource.java*** file.
+
+The ***.../inventory/hosts/*** URL will no longer respond with a JSON representation of your inventory contents, so you can discard the ***listContents*** method and integrate it into the ***getPropertiesForHost*** method.
+
+Replace the ***InventoryResource*** class.
+
+> To open the InventoryResource.java file in your IDE, select
+> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java, or click the following button
+
+::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.inventory;
+package io.openliberty.guides.microprofile;
 
-import java.net.URL;
-import java.util.List;
-
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriInfo;
 
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.junit.InSequence;
-import org.jboss.arquillian.test.api.ArquillianResource;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import io.openliberty.guides.inventory.InventoryResource;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-
-@RunWith(Arquillian.class)
-public class InventoryArquillianIT {
-
-    private static final String WARNAME = System.getProperty("arquillian.war.name");
-    private final String INVENTORY_SYSTEMS = "inventory/systems";
-    private Client client = ClientBuilder.newClient();
-
-    @Deployment(testable = true)
-    public static WebArchive createDeployment() {
-        WebArchive archive = ShrinkWrap.create(WebArchive.class, WARNAME)
-                                       .addPackages(true, "io.openliberty.guides");
-        return archive;
-    }
-
-    @ArquillianResource
-    private URL baseURL;
+@ApplicationScoped
+@Path("hosts")
+public class InventoryResource {
 
     @Inject
-    InventoryResource invSrv;
+    InventoryManager manager;
 
-    @Test
-    @RunAsClient
-    @InSequence(1)
-    public void testInventoryEndpoints() throws Exception {
-        String localhosturl = baseURL + INVENTORY_SYSTEMS + "/localhost";
+    @Context
+    UriInfo uriInfo;
 
-        WebTarget localhosttarget = client.target(localhosturl);
-        Response localhostresponse = localhosttarget.request().get();
-
-        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
-                            localhostresponse.getStatus());
-
-        JsonObject localhostobj = localhostresponse.readEntity(JsonObject.class);
-        Assert.assertEquals("The system property for the local and remote JVM "
-                        + "should match", System.getProperty("os.name"),
-                            localhostobj.getString("os.name"));
-
-        String invsystemsurl = baseURL + INVENTORY_SYSTEMS;
-
-        WebTarget invsystemstarget = client.target(invsystemsurl);
-        Response invsystemsresponse = invsystemstarget.request().get();
-
-        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
-                            invsystemsresponse.getStatus());
-
-        JsonObject invsystemsobj = invsystemsresponse.readEntity(JsonObject.class);
-
-        int expected = 1;
-        int actual = invsystemsobj.getInt("total");
-        Assert.assertEquals("The inventory should have one entry for localhost",
-                            expected, actual);
-        localhostresponse.close();
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject handler() {
+        return manager.getSystems(uriInfo.getAbsolutePath().toString());
     }
 
-    @Test
-    @InSequence(2)
-    public void testInventoryResourceFunctions() {
-        InventoryList invList = invSrv.listContents();
-        Assert.assertEquals(1, invList.getTotal());
-
-        List<SystemData> systemDataList = invList.getSystems();
-        Assert.assertTrue(systemDataList.get(0).getHostname().equals("localhost"));
-
-        Assert.assertTrue(systemDataList.get(0).getProperties().get("os.name")
-                                        .equals(System.getProperty("os.name")));
+    @GET
+    @Path("{hostname}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject getPropertiesForHost(@PathParam("hostname") String hostname) {
+        return (hostname.equals("*")) ? manager.list() : manager.get(hostname);
     }
 }
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
-Notice that the JUnit Arquillian runner runs the tests instead of the standard JUnit runner. The ***@RunWith*** annotation preceding the class tells JUnit to run the tests by using Arquillian.
 
-The method annotated by ***@Deployment*** defines the content of the web archive, which is going to be deployed onto the Open Liberty server. The tests are either run on or against the server. The ***testable = true*** attribute enables the deployment to run the tests "in container", that is the tests are run on the server.
+The contents of your inventory are now under the asterisk (`*`) wildcard and reside at the `http://localhost:9080/inventory/hosts/*` URL.
 
+The ***GET*** request handler is responsible for handling all ***GET*** requests that are made to the target URL. This method responds with a JSON that contains HATEOAS links.
 
-The ***WARNAME*** variable is used to name the web archive and is defined in the ***pom.xml*** file. This name is necessary if you don't want a randomly generated web archive name.
+The ***UriInfo*** object is what will be used to build your HATEOAS links.
 
-The ShrinkWrap API is used to create the web archive. All of the packages in the ***inventory*** service must be added to the web archive; otherwise, the code compiles successfully but fails at runtime when the injection of the ***InventoryResource*** class takes place. You can learn about the ShrinkWrap archive configuration in this [Arquillian guide](http://arquillian.org/guides/shrinkwrap_introduction/).
+The ***@Context*** annotation is a part of CDI and indicates that the ***UriInfo*** will be injected when the resource is instantiated.
 
-The ***@ArquillianResource*** annotation is used to retrieve the ***http://localhost:9080/arquillian-managed/*** base URL for this web service. The annotation provides the host name, port number and web archive information for this service, so you don't need to hardcode these values in the test case. The ***arquillian-managed*** path in the URL comes from the WAR name you specified when you created the web archive in the ***@Deployment*** annotated method. It's needed when the ***inventory*** service communicates with the ***system*** service to get the system properties.
-
-The ***testInventoryEndpoints*** method is an integration test to test the ***inventory*** service endpoints. The ***@RunAsClient*** annotation added in this test case indicates that this test case is to be run on the client side. By running the tests on the client side, the tests are run against the managed container. The endpoint test case first calls the ***http://localhost:9080/{WARNAME}/inventory/systems/{hostname}*** endpoint with the ***localhost*** host name to add its system properties to the inventory. The test verifies that the system property for the local and service JVM match. Then, the test method calls the ***http://localhost:9080/{WARNAME}/inventory/systems*** endpoint. The test checks that the inventory has one host and that the host is ***localhost***. The test also verifies that the system property stored in the inventory for the local and service JVM match.
-
-Contexts and Dependency Injection (CDI) is used to inject an instance of the ***InventoryResource*** class into this test class. You can learn more about CDI in the [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
-
-The injected ***InventoryResource*** instance is then tested by the ***testInventoryResourceFunctions*** method. This test case calls the ***listContents()*** method to get all systems that are stored in this inventory and verifies that ***localhost*** is the only system being found. Notice the functional test case doesn't store any system in the inventory, the ***localhost*** system is from the endpoint test case that ran before this test case. The ***@InSequence*** Arquillian annotation guarantees the test sequence. The sequence is important for the two tests, as the results in the first test impact the second one.
-
-The test cases are ready to run. You will configure the Maven build and the Liberty application server to run them.
-
-::page{title="Configuring Arquillian with Liberty"}
-
-Configure your build to use the Arquillian Liberty Managed container and set up your Open Liberty server to run your test cases by configuring the ***server.xml*** file.
-
-### Configuring your test build
-
-First, configure your test build with Maven. All of the Maven configuration takes place in the ***pom.xml*** file, which is provided for you.
+Your new ***InventoryResource*** class is now replaced. Next, you will implement the ***getSystems*** method and build the response JSON object.
 
 
-> From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/pom.xml, or click the following button
+### Linking to each available resource
 
-::openFile{path="/home/project/guide-arquillian-managed/start/pom.xml"}
+Take a look at your ***InventoryManager*** and ***InventoryUtil*** files.
 
-Let's look into each of the required elements for this configuration.
+Replace the ***InventoryManager*** class.
 
-You need the ***arquillian-bom*** Bill of Materials. It's a Maven artifact that defines the versions of Arquillian dependencies to make dependency management easier.
+> To open the InventoryManager.java file in your IDE, select
+> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java, or click the following button
 
-The ***arquillian-liberty-managed-junit*** dependency bundle, which includes all the core dependencies, is required to run the Arquillian tests on a managed Liberty container that uses JUnit. You can learn more about the [Arquillian Liberty dependency bundles](https://github.com/OpenLiberty/arquillian-liberty-dependencies). The ***shrinkwrap-api*** dependency allows you to create your test archive, which is packaged into a WAR file and deployed to the Open Liberty server.
-
-The ***maven-failsafe-plugin*** artifact runs your Arquillian integration tests by using JUnit.
-
-Lastly, specify the ***liberty-maven-plugin*** configuration that defines your Open Liberty runtime configuration. When the application runs in an Arquillian Liberty managed container, the name of the war file is used as the context root of the application. You can pass context root information to the application and customize the container by using the ***arquillianProperties*** configuration. To learn more about the ***arquillianProperties*** configuration, see the [Arquillian Liberty Managed documentation](https://github.com/OpenLiberty/liberty-arquillian/blob/main/liberty-managed/README.md#configuration).
+::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java"}
 
 
-### Configuring the server.xml file
 
-Now that you're done configuring your Maven build, set up your Open Liberty server to run your test cases by configuring the ***server.xml*** file.
+```java
+package io.openliberty.guides.microprofile;
 
-Take a look at the ***server.xml*** file.
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+
+import io.openliberty.guides.microprofile.util.ReadyJson;
+import io.openliberty.guides.microprofile.util.InventoryUtil;
+
+@ApplicationScoped
+public class InventoryManager {
+
+    private ConcurrentMap<String, JsonObject> inv = new ConcurrentHashMap<>();
+
+    public JsonObject get(String hostname) {
+        JsonObject properties = inv.get(hostname);
+        if (properties == null) {
+            if (InventoryUtil.responseOk(hostname)) {
+                properties = InventoryUtil.getProperties(hostname);
+                this.add(hostname, properties);
+            } else {
+                return ReadyJson.SERVICE_UNREACHABLE.getJson();
+            }
+        }
+        return properties;
+    }
+
+    public void add(String hostname, JsonObject systemProps) {
+        inv.putIfAbsent(hostname, systemProps);
+    }
+
+    public JsonObject list() {
+        JsonObjectBuilder systems = Json.createObjectBuilder();
+        inv.forEach((host, props) -> {
+            JsonObject systemProps = Json.createObjectBuilder()
+                                         .add("os.name", props.getString("os.name"))
+                                         .add("user.name", props.getString("user.name"))
+                                         .build();
+            systems.add(host, systemProps);
+        });
+        systems.add("hosts", systems);
+        systems.add("total", inv.size());
+        return systems.build();
+    }
+
+    public JsonObject getSystems(String url) {
+        JsonObjectBuilder systems = Json.createObjectBuilder();
+        systems.add("*", InventoryUtil.buildLinksForHost("*", url));
+
+        for (String host : inv.keySet()) {
+            systems.add(host, InventoryUtil.buildLinksForHost(host, url));
+        }
+
+        return systems.build();
+    }
+
+}
+```
 
 
-> From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/guide-arquillian-managed/start/src/main/liberty/config/server.xml"}
+The ***getSystems*** method accepts a target URL as an argument and returns a JSON object that contains HATEOAS links.
 
-The ***localConnector*** feature is required by the Arquillian Liberty Managed container to connect to and communicate with the Open Liberty runtime. The ***servlet*** feature is required during the deployment of the Arquillian tests in which servlets are created to perform the in-container testing.
+Replace the ***InventoryUtil*** class.
+
+> To open the InventoryUtil.java file in your IDE, select
+> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java, or click the following button
+
+::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java"}
 
 
-::page{title="Running the tests"}
 
-It's now time to build and run your Arquillian tests. Navigate to the ***start*** directory. First, run the Maven command to package the application. Then, run the ***liberty-maven-plugin*** goals to create the application server, install the features, and deploy the application to the server. The ***configure-arquillian*** goal configures your Arquillian container. You can learn more about this goal in the [configure-arquillian goal documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/configure-arquillian.md).
+```java
+package io.openliberty.guides.microprofile.util;
+
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriBuilder;
+
+import org.apache.commons.lang3.StringUtils;
+
+public class InventoryUtil {
+
+    private static final int PORT = 9080;
+    private static final String PROTOCOL = "http";
+    private static final String SYSTEM_PROPERTIES = "/system/properties";
+
+    public static JsonObject getProperties(String hostname) {
+        Client client = ClientBuilder.newClient();
+        URI propURI = InventoryUtil.buildUri(hostname);
+        return client.target(propURI)
+                     .request(MediaType.APPLICATION_JSON)
+                     .get(JsonObject.class);
+    }
+
+    public static JsonArray buildLinksForHost(String hostname, String invUri) {
+
+        JsonArrayBuilder links = Json.createArrayBuilder();
+
+        links.add(Json.createObjectBuilder()
+                      .add("href", StringUtils.appendIfMissing(invUri, "/") + hostname)
+                      .add("rel", "self"));
+
+        if (!hostname.equals("*")) {
+            links.add(Json.createObjectBuilder()
+                 .add("href", InventoryUtil.buildUri(hostname).toString())
+                 .add("rel", "properties"));
+        }
+
+        return links.build();
+    }
+
+    public static boolean responseOk(String hostname) {
+        try {
+            URL target = new URL(buildUri(hostname).toString());
+            HttpURLConnection http = (HttpURLConnection) target.openConnection();
+            http.setConnectTimeout(50);
+            int response = http.getResponseCode();
+            return (response != 200) ? false : true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static URI buildUri(String hostname) {
+        return UriBuilder.fromUri(SYSTEM_PROPERTIES)
+                .host(hostname)
+                .port(PORT)
+                .scheme(PROTOCOL)
+                .build();
+    }
+
+}
+```
+
+
+
+The helper builds a link that points to the inventory entry with a ***self*** relationship. The helper also builds a link that points to the ***system*** service with a ***properties*** relationship:
+
+
+* `http://localhost:9080/inventory/hosts/<hostname>`
+* `http://<hostname>:9080/system/properties`
+
+### Linking to inactive services or unavailable resources
+
+Consider what happens when one of the return links does not work or when a link should be available for one object but not for another. In other words, it is important that a resource or service is available and running before it is added in the HATEOAS links array of the hostname.
+
+Although this guide does not cover this case, always make sure that you receive a good response code from a service before you link that service. Similarly, make sure that it makes sense for a particular object to access a resource it is linked to. For instance, it doesn't make sense for an account holder to be able to withdraw money from their account when their balance is 0. Hence, the account holder should not be linked to a resource that provides money withdrawal.
+
+::page{title="Running the application"}
+
+You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+After the server updates, you can find your new hypermedia-driven ***inventory*** service at the ***/inventory/hosts*** endpoint. Run the following curl command by another command-line session:
+```bash
+curl -s http://localhost:9080/inventory/hosts | jq
+```
+
+
+::page{title="Testing the hypermedia-driven RESTful web service"}
+
+If the servers are running, you can test the application manually by running the following curl commands to access the **inventory** service that is now driven by hypermedia: 
+```bash
+curl -s http://localhost:9080/inventory/hosts | jq
+```
 
 ```bash
-cd /home/project/guide-arquillian-managed/start
-mvn clean package
-mvn liberty:create liberty:install-feature
-mvn liberty:configure-arquillian
+curl -s http://localhost:9080/inventory/hosts/localhost| jq
 ```
 
-Now, you can run your Arquillian tests with the Maven ***integration-test*** goal:
+Nevertheless, you should rely on automated tests because they are more reliable and trigger a failure if a change introduces a defect.
 
+### Setting up your tests
+
+Create the ***EndpointIT*** class.
+
+> Run the following touch command in your terminal
 ```bash
-mvn failsafe:integration-test
+touch /home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java
 ```
 
-In the test output, you can see that the application server launched, and that the web archive, ***arquillian-managed***, started as an application in the server. You can also see that the tests are running and that the results are reported.
 
-After the tests stop running, the test application is automatically undeployed and the server shuts down. You should then get a message indicating that the build and tests are successful.
+> Then, to open the EndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.hateoas;
+
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestMethodOrder(OrderAnnotation.class)
+public class EndpointIT {
+    private String port;
+    private String baseUrl;
+
+    private Client client;
+
+    private final String SYSTEM_PROPERTIES = "system/properties";
+    private final String INVENTORY_HOSTS = "inventory/hosts";
+
+    @BeforeEach
+    public void setup() {
+        port = System.getProperty("http.port");
+        baseUrl = "http://localhost:" + port + "/";
+
+        client = ClientBuilder.newClient();
+    }
+
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
+
+    /**
+     * Checks if the HATEOAS link for the inventory contents (hostname=*)
+     * is as expected.
+     */
+    @Test
+    @Order(1)
+    public void testLinkForInventoryContents() {
+        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
+        assertEquals(200, response.getStatus(),
+                    "Incorrect response code from " + baseUrl);
+
+        JsonObject systems = response.readEntity(JsonObject.class);
+
+        String expected;
+        String actual;
+        boolean isFound = false;
+
+
+        if (!systems.isNull("*")) {
+            isFound = true;
+            JsonArray links = systems.getJsonArray("*");
+
+            expected = baseUrl + INVENTORY_HOSTS + "/*";
+            actual = links.getJsonObject(0).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "self";
+            actual = links.getJsonObject(0).getString("rel");
+            assertEquals(expected, actual, "Incorrect rel");
+        }
+
+
+        assertTrue(isFound, "Could not find system with hostname *");
+
+        response.close();
+    }
+
+    /**
+     * Checks that the HATEOAS links, with relationships 'self' and 'properties' for
+     * a simple localhost system is as expected.
+     */
+    @Test
+    @Order(2)
+    public void testLinksForSystem() {
+        this.visitLocalhost();
+
+        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
+        assertEquals(200, response.getStatus(),
+                     "Incorrect response code from " + baseUrl);
+
+        JsonObject systems = response.readEntity(JsonObject.class);
+
+        String expected;
+        String actual;
+        boolean isHostnameFound = false;
+
+
+        if (!systems.isNull("localhost")) {
+            isHostnameFound = true;
+            JsonArray links = systems.getJsonArray("localhost");
+
+            expected = baseUrl + INVENTORY_HOSTS + "/localhost";
+            actual = links.getJsonObject(0).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "self";
+            actual = links.getJsonObject(0).getString("rel");
+            assertEquals(expected, actual, "Incorrect rel");
+
+            expected = baseUrl + SYSTEM_PROPERTIES;
+            actual = links.getJsonObject(1).getString("href");
+            assertEquals(expected, actual, "Incorrect href");
+
+            expected = "properties";
+            actual = links.getJsonObject(1).getString("rel");
+
+            assertEquals(expected, actual, "Incorrect rel");
+        }
+
+
+        assertTrue(isHostnameFound, "Could not find system with hostname *");
+        response.close();
+
+    }
+
+    /**
+     * Returns a Response object for the specified URL.
+     */
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+
+    /**
+     * Makes a GET request to localhost at the Inventory service.
+     */
+    private void visitLocalhost() {
+        Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
+        assertEquals(200, response.getStatus(),
+                     "Incorrect response code from " + baseUrl);
+        response.close();
+        Response targetResponse =
+        client.target(baseUrl + INVENTORY_HOSTS + "/localhost")
+                                        .request()
+                                        .get();
+        targetResponse.close();
+    }
+}
+```
+
+
+
+The ***@BeforeEach*** and ***@AfterEach*** annotations are placed on setup and teardown tasks that are run for each individual test.
+
+### Writing the tests
+
+Each test method must be marked with the ***@Test*** annotation. The execution order of test methods is controlled by marking them with the ***@Order*** annotation. The value that is passed into the annotation denotes the order in which the methods are run.
+
+The ***testLinkForInventoryContents*** test is responsible for asserting that the correct HATEOAS link is created for the inventory contents.
+
+Finally, the ***testLinksForSystem*** test is responsible for asserting that the correct HATEOAS links are created for the ***localhost*** system. This method checks for both the ***self*** link that points to the ***inventory*** service and the ***properties*** link that points to the ***system*** service, which is running on the ***localhost*** system.
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+You will see the following output:
 
 ```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
-...
-[AUDIT   ] CWWKE0001I: The server defaultServer has been launched.
-[AUDIT   ] CWWKG0093A: Processing configuration drop-ins resource: guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/configDropins/overrides/liberty-plugin-variable-config.xml
-[INFO    ] CWWKE0002I: The kernel started after 0.854 seconds
-[INFO    ] CWWKF0007I: Feature update started.
-[AUDIT   ] CWWKZ0058I: Monitoring dropins for applications.
-[INFO    ] Aries Blueprint packages not available. So namespaces will not be registered
-[INFO    ] CWWKZ0018I: Starting application guide-arquillian-managed.
-...
-[INFO    ] SRVE0169I: Loading Web Module: guide-arquillian-managed.
-[INFO    ] SRVE0250I: Web Module guide-arquillian-managed has been bound to default_host.
-[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/
-[INFO    ] SESN0176I: A new session context will be created for application key default_host/
-[INFO    ] SESN0172I: The session manager is using the Java default SecureRandom implementation for session ID generation.
-[AUDIT   ] CWWKZ0001I: Application guide-arquillian-managed started in 1.126 seconds.
-[INFO    ] CWWKO0219I: TCP Channel defaultHttpEndpoint has been started and is now listening for requests on host localhost  (IPv4: 127.0.0.1) port 9080.
-[AUDIT   ] CWWKF0012I: The server installed the following features: [cdi-2.0, jaxrs-2.1, jaxrsClient-2.1, jndi-1.0, jsonp-1.1, localConnector-1.0, mpConfig-1.3, servlet-4.0].
-[INFO    ] CWWKF0008I: Feature update completed in 2.321 seconds.
-[AUDIT   ] CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 3.175 seconds.
-[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
-...
-[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
-[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
-[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/arquillian-managed/
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
-[INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
-[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
-[INFO    ] CWWKZ0136I: The arquillian-managed application is using the archive file at the guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/dropins/arquillian-managed.war location.
-[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
-[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
-...
-[INFO    ] Setting the server's publish address to be /inventory/
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Initialization successful.
-[INFO    ] Setting the server's publish address to be /system/
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.system.SystemApplication]: Initialization successful.
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Initialization successful.
-[AUDIT   ] CWWKT0017I: Web application removed (default_host): http://localhost:9080/arquillian-managed/
-[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Destroy successful.
-[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Destroy successful.
-[AUDIT   ] CWWKZ0009I: The application arquillian-managed has stopped successfully.
-[INFO    ] SRVE9103I: A configuration file for a web server plugin was automatically generated for this server at guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/logs/state/plugin-cfg.xml.
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.inventory.InventoryArquillianIT
-...
-Stopping server defaultServer.
-...
-Server defaultServer stopped.
-[INFO]
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-[INFO]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  12.018 s
-[INFO] Finished at: 2020-06-23T12:40:32-04:00
-[INFO] ------------------------------------------------------------------------
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.hateoas.EndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.951 s - in it.io.openliberty.guides.hateoas.EndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+
+Integration tests finished.
 ```
+
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just built some functional and integration tests with the Arquillian managed container and ran the tests for your microservices on Open Liberty.
+You've just built and tested a hypermedia-driven RESTful web service on top of Open Liberty.
 
 
-Try one of the related guides to learn more about the technologies that you come across in this guide.
 
 
 ### Clean up your environment
@@ -332,33 +667,33 @@ Try one of the related guides to learn more about the technologies that you come
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-arquillian-managed*** project by running the following commands:
+Delete the ***guide-rest-hateoas*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-arquillian-managed
+rm -fr guide-rest-hateoas
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20the%20Arquillian%20managed%20container&guide-id=cloud-hosted-guide-arquillian-managed)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20hypermedia-driven%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-hateoas)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-arquillian-managed/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-arquillian-managed/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-hateoas/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-hateoas/pulls)
 
 
 
 ### Where to next?
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
 * [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Creating a MicroProfile application](https://openliberty.io/guides/microprofile-intro.html)
 
 
 ### Log out of the session
