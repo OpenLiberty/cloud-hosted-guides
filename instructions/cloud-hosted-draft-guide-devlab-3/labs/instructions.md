@@ -5,9 +5,9 @@ branch: lab-5932-instruction
 version-history-start-date: 2023-04-14T18:24:15Z
 tool-type: theia
 ---
-::page{title="Welcome to the Creating a hypermedia-driven RESTful web service guide!"}
+::page{title="Welcome to the Building a web application with Maven guide!"}
 
-You'll explore how to use Hypermedia As The Engine Of Application State (HATEOAS) to drive your RESTful web service on Open Liberty.
+Learn how to build and test a simple web application using Maven and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,85 +17,35 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You will learn how to use hypermedia to create a specific style of a response JSON, which has contents that you can use to navigate your REST service. You'll build on top of a simple inventory REST service that you can develop with MicroProfile technologies. You can find the service at the following URL:
+You will learn how to configure a simple web servlet application using [Maven](https://maven.apache.org/what-is-maven.html) and the [Liberty Maven plugin](https://github.com/OpenLiberty/ci.maven/blob/main/README.md). When you compile and build the application code, Maven downloads and installs Open Liberty. If you run the application, Maven creates an Open Liberty server and runs the application on it. The application displays a simple web page with a link that, when clicked, calls the servlet to return a simple response of ***Hello! How are you today?***.
 
-```
-http://localhost:9080/inventory/hosts
-```
+One benefit of using a build tool like Maven is that you can define the details of the project and any dependencies it has, and Maven automatically downloads and installs the dependencies. Another benefit of using Maven is that it can run repeatable, automated tests on the application. You can, of course, test your application manually by starting a server and pointing a web browser at the application URL. However, automated tests are a much better approach because you can easily rerun the same tests each time the application is built. If the tests don't pass after you change the application, the build fails, and you know that you introduced a regression that requires a fix to your code. 
 
-The service responds with a JSON file that contains all of the registered hosts. Each host has a collection of HATEOAS links:
+Choosing a build tool often comes down to personal or organizational preference, but you might choose to use Maven for several reasons. Maven defines its builds by using XML, which is probably familiar to you already. As a mature, commonly used build tool, Maven probably integrates with whichever IDE you prefer to use. Maven also has an extensive plug-in library that offers various ways to quickly customize your build. Maven can be a good choice if your team is already familiar with it. 
 
-```
-{
-  "foo": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/foo",
-      "rel": "self"
-    }
-  ],
-  "bar": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/bar",
-      "rel": "self"
-    }
-  ],
-  "*": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/*",
-      "rel": "self"
-    }
-  ]
-}
+You will create a Maven build definition file that's called a ***pom.xml*** file, which stands for Project Object Model, and use it to build your web application. You will then create a simple, automated test and configure Maven to automatically run the test.
+
+
+::page{title="Installing Maven"}
+
+
+Run the following command to test that Maven is installed:
+
+```bash
+mvn -v
 ```
 
-### What is HATEOAS?
-
-HATEOAS is a constraint of REST application architectures. With HATEOAS, the client receives information about the available resources from the REST application. The client does not need to be hardcoded to a fixed set of resources, and the application and client can evolve independently. In other words, the application tells the client where it can go and what it can access by providing it with a simple collection of links to other available resources.
-
-### Response JSON
-
-In the context of HATEOAS, each resource must contain a link reference to itself, which is commonly referred to as ***self***. In this guide, the JSON structure features a mapping between the hostname and its corresponding list of HATEOAS links:
+If Maven is installed properly, you see information about the Maven installation similar to the following example:
 
 ```
-  "*": [
-    {
-      "href": "http://localhost:9080/inventory/hosts/*",
-      "rel": "self"
-    }
-  ]
-```
-
-#### Link types
-
-The following example shows two different links. The first link has a ***self*** relationship with the resource object and is generated whenever you register a host. The link points to that host entry in the inventory:
-
-```
-  {
-    "href": "http://localhost:9080/inventory/hosts/<hostname>",
-    "rel": "self"
-  }
-```
-
-The second link has a ***properties*** relationship with the resource object and is generated if the host ***system*** service is running. The link points to the properties resource on the host:
-
-```
-  {
-    "href": "http://<hostname>:9080/system/properties",
-    "rel": "properties"
-  }
-```
-
-#### Other formats
-
-Although you should stick to the previous format for the purpose of this guide, another common convention has the link as the value of the relationship:
-
-```
-  "_links": {
-      "self": "http://localhost:9080/inventory/hosts/<hostname>",
-      "properties": "http://<hostname>:9080/system/properties"
-  }
+Apache Maven 3.8.1 (05c21c65bdfed0f71a2f2ada8b84da59348c4c5d)
+Maven home: /Applications/Maven/apache-maven-3.8.1
+Java version: 11.0.12, vendor: International Business Machines Corporation, runtime: /Library/Java/JavaVirtualMachines/ibm-semeru-open-11.jdk/Contents/Home
+Default locale: en_US, platform encoding: UTF-8
+OS name: "mac os x", version: "11.6", arch: "x86_64", family: "mac"
 ```
 
 ::page{title="Getting started"}
@@ -109,11 +59,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-hateoas.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-maven-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-rest-hateoas.git
-cd guide-rest-hateoas
+git clone https://github.com/openliberty/guide-maven-intro.git
+cd guide-maven-intro
 ```
 
 
@@ -121,28 +71,31 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+
 ### Try what you'll build
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
+To try out the application, first go to the ***finish*** directory and run Maven with the ***liberty:run*** goal to build the application and deploy it to Open Liberty:
 
 ```bash
 cd finish
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your application server is ready.
 
 ```
-The defaultServer server is ready to run a smarter planet.
+The guideServer server is ready to run a smarter planet.
 ```
 
 
-After the server runs, you can find your hypermedia-driven ***inventory*** service at the ***/inventory/hosts*** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command:
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following curl command to view the output of the application: 
 ```bash
-curl -s http://localhost:9080/inventory/hosts | jq
+curl -s http://localhost:9080/ServletSample/servlet
 ```
+
+The servlet returns a simple response of ***Hello! How are you today?***.
 
 After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
@@ -151,13 +104,161 @@ mvn liberty:stop
 ```
 
 
+::page{title="Creating a simple application"}
 
-::page{title="Creating the response JSON"}
+The simple web application that you will build using Maven and Open Liberty is provided for you in the ***start*** directory so that you can focus on learning about Maven. This application uses a standard Maven directory structure, eliminating the need to customize the ***pom.xml*** file so that Maven understands your project layout.
 
-Navigate to the ***start*** directory.
-```bash
-cd /home/project/guide-rest-hateoas/start
+All the application source code, including the Open Liberty server configuration (***server.xml***), is in the ***src/main/liberty/config*** directory:
+
 ```
+    └── src
+        └── main
+           └── java
+           └── resources
+           └── webapp
+           └── liberty
+                  └── config
+```
+
+
+::page{title="Creating the project POM file"}
+Navigate to the ***start*** directory to begin.
+```bash
+cd /home/project/guide-maven-intro/start
+```
+
+Before you can build the project, define the Maven Project Object Model (POM) file, the ***pom.xml***. 
+
+Create the pom.xml file in the ***start*** directory.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-maven-intro/start/pom.xml
+```
+
+
+> Then, to open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-maven-intro/start/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-maven-intro/start/pom.xml"}
+
+
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>ServletSample</artifactId>
+    <packaging>war</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <!-- Liberty configuration -->
+        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.app.context.root>${project.artifactId}</liberty.var.app.context.root>
+    </properties>
+
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>9.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>5.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <!-- For testing -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.8.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.2</version>
+            </plugin>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.7.1</version>
+                <configuration>
+                    <serverName>guideServer</serverName>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <http.port>${liberty.var.default.http.port}</http.port>
+                        <war.name>${liberty.var.app.context.root}</war.name>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+The ***pom.xml*** file starts with a root ***project*** element and a ***modelversion*** element, which is always set to ***4.0.0***. 
+
+A typical POM for a Liberty application contains the following sections:
+
+* **Project coordinates**: The identifiers for this application.
+* **Properties** (***properties***): Any properties for the project go here, including compilation details and any values that are referenced during compilation of the Java source code and generating the application.
+* **Dependencies** (***dependencies***): Any Java dependencies that are required for compiling, testing, and running the application are listed here.
+* **Build plugins** (***build***): Maven is modular and each of its capabilities is provided by a separate plugin. This is where you specify which Maven plugins should be used to build this project and any configuration information needed by those plugins.
+
+The project coordinates describe the name and version of the application. The ***artifactId*** gives a name to the web application project, which is used to name the output files that are generated by the build (e.g. the WAR file) and the Open Liberty server that is created. You'll notice that other fields in the ***pom.xml*** file use variables that are resolved by the ***artifactId*** field. This is so that you can update the name of the sample application, including files generated by Maven, in a single place in the ***pom.xml*** file. The value of the ***packaging*** field is ***war*** so that the project output artifact is a WAR file.
+
+The first four properties in the properties section of the project, just define the encoding (***UTF-8***) and version of Java (***Java 8***) that Maven uses to compile the application source code.
+
+Open Liberty configuration properties provide you with a single place to specify values that are used in multiple places throughout the application. For example, the ***default.http.port*** value is used in both the server configuration (***server.xml***) file and will be used in the test class that you will add (***EndpointIT.java***) to the application. Because the ***default.http.port*** value is specified in the ***pom.xml*** file, you can easily change the port number that the server runs on without updating the application code in multiple places.
+
+
+The ***HelloServlet.java*** class depends on ***javax.servlet-api*** to compile. Maven will download this dependency from the Maven Central repository using the ***groupId***, ***artifactId***, and ***version*** details that you provide here. The dependency is set to ***provided***, which means that the API is in the server runtime and doesn't need to be packaged by the application.
+
+The ***build*** section gives details of the two plugins that Maven uses to build this project.
+
+* The Maven plugin for generating a WAR file as one of the output files.
+* The Liberty Maven plug-in, which allows you to install applications into Open Liberty and manage the server instances.
+
+In the ***liberty-maven-plugin*** plug-in section, you can add a ***configuration*** element to specify Open Liberty configuration details. For example, the ***serverName*** field defines the name of the Open Liberty server that Maven creates. You specified ***guideServer*** as the value for ***serverName***. If the ***serverName*** field is not included, the default value is ***defaultServer***.
+
+
+
+::page{title="Running the application"}
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -174,482 +275,145 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Begin by building your response JSON, which is composed of the name of the host machine and its list of HATEOAS links.
 
-### Linking to inventory contents
-
-As mentioned before, your starting point is an existing simple inventory REST service. 
-
-Look at the request handlers in the ***InventoryResource.java*** file.
-
-The ***.../inventory/hosts/*** URL will no longer respond with a JSON representation of your inventory contents, so you can discard the ***listContents*** method and integrate it into the ***getPropertiesForHost*** method.
-
-Replace the ***InventoryResource*** class.
-
-> To open the InventoryResource.java file in your IDE, select
-> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java, or click the following button
-
-::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryResource.java"}
-
-
-
-```java
-package io.openliberty.guides.microprofile;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.UriInfo;
-
-@ApplicationScoped
-@Path("hosts")
-public class InventoryResource {
-
-    @Inject
-    InventoryManager manager;
-
-    @Context
-    UriInfo uriInfo;
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject handler() {
-        return manager.getSystems(uriInfo.getAbsolutePath().toString());
-    }
-
-    @GET
-    @Path("{hostname}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject getPropertiesForHost(@PathParam("hostname") String hostname) {
-        return (hostname.equals("*")) ? manager.list() : manager.get(hostname);
-    }
-}
-```
-
-
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
-
-
-
-The contents of your inventory are now under the asterisk (`*`) wildcard and reside at the `http://localhost:9080/inventory/hosts/*` URL.
-
-The ***GET*** request handler is responsible for handling all ***GET*** requests that are made to the target URL. This method responds with a JSON that contains HATEOAS links.
-
-The ***UriInfo*** object is what will be used to build your HATEOAS links.
-
-The ***@Context*** annotation is a part of CDI and indicates that the ***UriInfo*** will be injected when the resource is instantiated.
-
-Your new ***InventoryResource*** class is now replaced. Next, you will implement the ***getSystems*** method and build the response JSON object.
-
-
-### Linking to each available resource
-
-Take a look at your ***InventoryManager*** and ***InventoryUtil*** files.
-
-Replace the ***InventoryManager*** class.
-
-> To open the InventoryManager.java file in your IDE, select
-> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java, or click the following button
-
-::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/InventoryManager.java"}
-
-
-
-```java
-package io.openliberty.guides.microprofile;
-
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-
-import io.openliberty.guides.microprofile.util.ReadyJson;
-import io.openliberty.guides.microprofile.util.InventoryUtil;
-
-@ApplicationScoped
-public class InventoryManager {
-
-    private ConcurrentMap<String, JsonObject> inv = new ConcurrentHashMap<>();
-
-    public JsonObject get(String hostname) {
-        JsonObject properties = inv.get(hostname);
-        if (properties == null) {
-            if (InventoryUtil.responseOk(hostname)) {
-                properties = InventoryUtil.getProperties(hostname);
-                this.add(hostname, properties);
-            } else {
-                return ReadyJson.SERVICE_UNREACHABLE.getJson();
-            }
-        }
-        return properties;
-    }
-
-    public void add(String hostname, JsonObject systemProps) {
-        inv.putIfAbsent(hostname, systemProps);
-    }
-
-    public JsonObject list() {
-        JsonObjectBuilder systems = Json.createObjectBuilder();
-        inv.forEach((host, props) -> {
-            JsonObject systemProps = Json.createObjectBuilder()
-                                         .add("os.name", props.getString("os.name"))
-                                         .add("user.name", props.getString("user.name"))
-                                         .build();
-            systems.add(host, systemProps);
-        });
-        systems.add("hosts", systems);
-        systems.add("total", inv.size());
-        return systems.build();
-    }
-
-    public JsonObject getSystems(String url) {
-        JsonObjectBuilder systems = Json.createObjectBuilder();
-        systems.add("*", InventoryUtil.buildLinksForHost("*", url));
-
-        for (String host : inv.keySet()) {
-            systems.add(host, InventoryUtil.buildLinksForHost(host, url));
-        }
-
-        return systems.build();
-    }
-
-}
-```
-
-
-
-The ***getSystems*** method accepts a target URL as an argument and returns a JSON object that contains HATEOAS links.
-
-Replace the ***InventoryUtil*** class.
-
-> To open the InventoryUtil.java file in your IDE, select
-> **File** > **Open** > guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java, or click the following button
-
-::openFile{path="/home/project/guide-rest-hateoas/start/src/main/java/io/openliberty/guides/microprofile/util/InventoryUtil.java"}
-
-
-
-```java
-package io.openliberty.guides.microprofile.util;
-
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
-
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.UriBuilder;
-
-import org.apache.commons.lang3.StringUtils;
-
-public class InventoryUtil {
-
-    private static final int PORT = 9080;
-    private static final String PROTOCOL = "http";
-    private static final String SYSTEM_PROPERTIES = "/system/properties";
-
-    public static JsonObject getProperties(String hostname) {
-        Client client = ClientBuilder.newClient();
-        URI propURI = InventoryUtil.buildUri(hostname);
-        return client.target(propURI)
-                     .request(MediaType.APPLICATION_JSON)
-                     .get(JsonObject.class);
-    }
-
-    public static JsonArray buildLinksForHost(String hostname, String invUri) {
-
-        JsonArrayBuilder links = Json.createArrayBuilder();
-
-        links.add(Json.createObjectBuilder()
-                      .add("href", StringUtils.appendIfMissing(invUri, "/") + hostname)
-                      .add("rel", "self"));
-
-        if (!hostname.equals("*")) {
-            links.add(Json.createObjectBuilder()
-                 .add("href", InventoryUtil.buildUri(hostname).toString())
-                 .add("rel", "properties"));
-        }
-
-        return links.build();
-    }
-
-    public static boolean responseOk(String hostname) {
-        try {
-            URL target = new URL(buildUri(hostname).toString());
-            HttpURLConnection http = (HttpURLConnection) target.openConnection();
-            http.setConnectTimeout(50);
-            int response = http.getResponseCode();
-            return (response != 200) ? false : true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private static URI buildUri(String hostname) {
-        return UriBuilder.fromUri(SYSTEM_PROPERTIES)
-                .host(hostname)
-                .port(PORT)
-                .scheme(PROTOCOL)
-                .build();
-    }
-
-}
-```
-
-
-
-The helper builds a link that points to the inventory entry with a ***self*** relationship. The helper also builds a link that points to the ***system*** service with a ***properties*** relationship:
-
-
-* `http://localhost:9080/inventory/hosts/<hostname>`
-* `http://<hostname>:9080/system/properties`
-
-### Linking to inactive services or unavailable resources
-
-Consider what happens when one of the return links does not work or when a link should be available for one object but not for another. In other words, it is important that a resource or service is available and running before it is added in the HATEOAS links array of the hostname.
-
-Although this guide does not cover this case, always make sure that you receive a good response code from a service before you link that service. Similarly, make sure that it makes sense for a particular object to access a resource it is linked to. For instance, it doesn't make sense for an account holder to be able to withdraw money from their account when their balance is 0. Hence, the account holder should not be linked to a resource that provides money withdrawal.
-
-::page{title="Running the application"}
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-After the server updates, you can find your new hypermedia-driven ***inventory*** service at the ***/inventory/hosts*** endpoint. Run the following curl command by another command-line session:
+Select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Run the following curl command to view the output of the application: 
 ```bash
-curl -s http://localhost:9080/inventory/hosts | jq
+curl -s http://localhost:9080/ServletSample/servlet
 ```
 
+The servlet returns a simple response of ***Hello! How are you today?***.
 
-::page{title="Testing the hypermedia-driven RESTful web service"}
+::page{title="Testing the web application"}
 
-If the servers are running, you can test the application manually by running the following curl commands to access the **inventory** service that is now driven by hypermedia: 
-```bash
-curl -s http://localhost:9080/inventory/hosts | jq
-```
-
-```bash
-curl -s http://localhost:9080/inventory/hosts/localhost| jq
-```
-
-Nevertheless, you should rely on automated tests because they are more reliable and trigger a failure if a change introduces a defect.
-
-### Setting up your tests
+One of the benefits of building an application with Maven is that Maven can be configured to run a set of tests. You can write tests for the individual units of code outside of a running application server (unit tests), or you can write them to call the application server directly (integration tests). In this example you will create a simple integration test that checks that the web page opens and that the correct response is returned when the link is clicked.
 
 Create the ***EndpointIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java
+touch /home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java  
 ```
 
 
 > Then, to open the EndpointIT.java file in your IDE, select
-> **File** > **Open** > guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java, or click the following button
+> **File** > **Open** > guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java, or click the following button
 
-::openFile{path="/home/project/guide-rest-hateoas/start/src/test/java/it/io/openliberty/guides/hateoas/EndpointIT.java"}
+::openFile{path="/home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.hateoas;
-
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonValue;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+package io.openliberty.guides.hello.it;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@TestMethodOrder(OrderAnnotation.class)
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 public class EndpointIT {
-    private String port;
-    private String baseUrl;
+    private static String siteURL;
 
-    private Client client;
-
-    private final String SYSTEM_PROPERTIES = "system/properties";
-    private final String INVENTORY_HOSTS = "inventory/hosts";
-
-    @BeforeEach
-    public void setup() {
-        port = System.getProperty("http.port");
-        baseUrl = "http://localhost:" + port + "/";
-
-        client = ClientBuilder.newClient();
+    @BeforeAll
+    public static void init() {
+        String port = System.getProperty("http.port");
+        String war = System.getProperty("war.name");
+        siteURL = "http://localhost:" + port + "/" + war + "/" + "servlet";
     }
 
-    @AfterEach
-    public void teardown() {
-        client.close();
-    }
-
-    /**
-     * Checks if the HATEOAS link for the inventory contents (hostname=*)
-     * is as expected.
-     */
     @Test
-    @Order(1)
-    public void testLinkForInventoryContents() {
-        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
-        assertEquals(200, response.getStatus(),
-                    "Incorrect response code from " + baseUrl);
+    public void testServlet() throws Exception {
 
-        JsonObject systems = response.readEntity(JsonObject.class);
+        CloseableHttpClient client = HttpClientBuilder.create().build();
+        HttpGet httpGet = new HttpGet(siteURL);
+        CloseableHttpResponse response = null;
 
-        String expected;
-        String actual;
-        boolean isFound = false;
+        try {
+            response = client.execute(httpGet);
 
+            int statusCode = response.getStatusLine().getStatusCode();
+            assertEquals(HttpStatus.SC_OK, statusCode, "HTTP GET failed");
 
-        if (!systems.isNull("*")) {
-            isFound = true;
-            JsonArray links = systems.getJsonArray("*");
-
-            expected = baseUrl + INVENTORY_HOSTS + "/*";
-            actual = links.getJsonObject(0).getString("href");
-            assertEquals(expected, actual, "Incorrect href");
-
-            expected = "self";
-            actual = links.getJsonObject(0).getString("rel");
-            assertEquals(expected, actual, "Incorrect rel");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(
+                                        response.getEntity().getContent()));
+            String line;
+            StringBuffer buffer = new StringBuffer();
+            while ((line = reader.readLine()) != null) {
+                buffer.append(line);
+            }
+            reader.close();
+            assertTrue(buffer.toString().contains("Hello! How are you today?"),
+                "Unexpected response body: " + buffer.toString());
+        } finally {
+            response.close();
+            httpGet.releaseConnection();
         }
-
-
-        assertTrue(isFound, "Could not find system with hostname *");
-
-        response.close();
-    }
-
-    /**
-     * Checks that the HATEOAS links, with relationships 'self' and 'properties' for
-     * a simple localhost system is as expected.
-     */
-    @Test
-    @Order(2)
-    public void testLinksForSystem() {
-        this.visitLocalhost();
-
-        Response response = this.getResponse(baseUrl + INVENTORY_HOSTS);
-        assertEquals(200, response.getStatus(),
-                     "Incorrect response code from " + baseUrl);
-
-        JsonObject systems = response.readEntity(JsonObject.class);
-
-        String expected;
-        String actual;
-        boolean isHostnameFound = false;
-
-
-        if (!systems.isNull("localhost")) {
-            isHostnameFound = true;
-            JsonArray links = systems.getJsonArray("localhost");
-
-            expected = baseUrl + INVENTORY_HOSTS + "/localhost";
-            actual = links.getJsonObject(0).getString("href");
-            assertEquals(expected, actual, "Incorrect href");
-
-            expected = "self";
-            actual = links.getJsonObject(0).getString("rel");
-            assertEquals(expected, actual, "Incorrect rel");
-
-            expected = baseUrl + SYSTEM_PROPERTIES;
-            actual = links.getJsonObject(1).getString("href");
-            assertEquals(expected, actual, "Incorrect href");
-
-            expected = "properties";
-            actual = links.getJsonObject(1).getString("rel");
-
-            assertEquals(expected, actual, "Incorrect rel");
-        }
-
-
-        assertTrue(isHostnameFound, "Could not find system with hostname *");
-        response.close();
-
-    }
-
-    /**
-     * Returns a Response object for the specified URL.
-     */
-    private Response getResponse(String url) {
-        return client.target(url).request().get();
-    }
-
-    /**
-     * Makes a GET request to localhost at the Inventory service.
-     */
-    private void visitLocalhost() {
-        Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
-        assertEquals(200, response.getStatus(),
-                     "Incorrect response code from " + baseUrl);
-        response.close();
-        Response targetResponse =
-        client.target(baseUrl + INVENTORY_HOSTS + "/localhost")
-                                        .request()
-                                        .get();
-        targetResponse.close();
     }
 }
 ```
 
 
 
-The ***@BeforeEach*** and ***@AfterEach*** annotations are placed on setup and teardown tasks that are run for each individual test.
+The test class name ends in ***IT*** to indicate that it contains an integration test. 
 
-### Writing the tests
+Maven is configured to run the integration test using the ***maven-failsafe-plugin***. The ***systemPropertyVariables*** section defines some variables that the test class uses. The test code needs to know where to find the application that it is testing. While the port number and context root information can be hardcoded in the test class, it is better to specify it in a single place like the Maven ***pom.xml*** file because this information is also used by other files in the project. The ***systemPropertyVariables*** section passes these details to the Java test program as a series of system properties, resolving the ***http.port*** and ***war.name*** variables.
 
-Each test method must be marked with the ***@Test*** annotation. The execution order of test methods is controlled by marking them with the ***@Order*** annotation. The value that is passed into the annotation denotes the order in which the methods are run.
 
-The ***testLinkForInventoryContents*** test is responsible for asserting that the correct HATEOAS link is created for the inventory contents.
+The following lines in the ***EndpointIT*** test class uses these system variables to build up the URL of the application.
 
-Finally, the ***testLinksForSystem*** test is responsible for asserting that the correct HATEOAS links are created for the ***localhost*** system. This method checks for both the ***self*** link that points to the ***inventory*** service and the ***properties*** link that points to the ***system*** service, which is running on the ***localhost*** system.
+In the test class, after defining how to build the application URL, the ***@Test*** annotation indicates the start of the test method.
+
+In the ***try block*** of the test method, an HTTP ***GET*** request to the URL of the application returns a status code. If the response to the request includes the string ***Hello! How are you today?***, the test passes. If that string is not in the response, the test fails.  The HTTP client then disconnects from the application.
+
+In the ***import*** statements of this test class, you'll notice that the test has some new dependencies. Before the test can be compiled by Maven, you need to update the ***pom.xml*** to include these dependencies.
+
+The Apache ***httpclient*** and ***junit-jupiter-engine*** dependencies are needed to compile and run the integration test ***EndpointIT*** class. The scope for each of the dependencies is set to ***test*** because the libraries are needed only during the Maven build and do not needed to be packaged with the application.
+
+Now, the created WAR file contains the web application, and development mode can run any integration test classes that it finds. Integration test classes are classes with names that end in ***IT***.
+
+The directory structure of the project should now look like this:
+
+```
+    └── src
+        ├── main
+        │  └── java
+        │  └── resources
+        │  └── webapp
+        │  └── liberty
+        │         └── config
+        └── test
+            └── java
+```
+
 
 ### Running the tests
 
 Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-You will see the following output:
+
+You see the following output:
 
 ```
 -------------------------------------------------------
  T E S T S
 -------------------------------------------------------
-Running it.io.openliberty.guides.hateoas.EndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.951 s - in it.io.openliberty.guides.hateoas.EndpointIT
+Running io.openliberty.guides.hello.it.EndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.255 sec - in io.openliberty.guides.hello.it.EndpointIT
 
-Results:
+Results :
 
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-
-Integration tests finished.
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
+
+To see whether the test detects a failure, change the ***response string*** in the servlet ***src/main/java/io/openliberty/guides/hello/HelloServlet.java*** so that it doesn't match the string that the test is looking for. Then re-run the tests and check that the test fails.
+
 
 When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
@@ -657,8 +421,7 @@ When you are done checking out the service, exit dev mode by pressing `Ctrl+C` i
 
 ### Nice Work!
 
-You've just built and tested a hypermedia-driven RESTful web service on top of Open Liberty.
-
+You built and tested a web application project with an Open Liberty server using Maven.
 
 
 
@@ -667,33 +430,33 @@ You've just built and tested a hypermedia-driven RESTful web service on top of O
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-rest-hateoas*** project by running the following commands:
+Delete the ***guide-maven-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-rest-hateoas
+rm -fr guide-maven-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20hypermedia-driven%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-hateoas)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20web%20application%20with%20Maven&guide-id=cloud-hosted-guide-maven-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-hateoas/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-hateoas/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-maven-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-maven-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
-* [Creating a MicroProfile application](https://openliberty.io/guides/microprofile-intro.html)
+* [Creating a multi-module application](https://openliberty.io/guides/maven-multimodules.html)
+* [Building a web application with Gradle](https://openliberty.io/guides/gradle-intro.html)
 
 
 ### Log out of the session
