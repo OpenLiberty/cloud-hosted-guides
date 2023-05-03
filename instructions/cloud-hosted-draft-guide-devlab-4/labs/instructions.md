@@ -75,10 +75,10 @@ oc api-resources --api-group=apps.openliberty.io
 Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
 
 ```
-NAME                     SHORTNAMES        APIGROUP                     NAMESPACED  KIND
-openlibertyapplications  olapp,olapps      apps.openliberty.io/v1beta2  true        OpenLibertyApplication
-openlibertydumps         oldump,oldumps    apps.openliberty.io/v1beta2  true        OpenLibertyDump
-openlibertytraces        oltrace,oltraces  apps.openliberty.io/v1beta2  true        OpenLibertyTrace
+NAME                     SHORTNAMES        APIGROUP                NAMESPACED  KIND
+openlibertyapplications  olapp,olapps      apps.openliberty.io/v1  true        OpenLibertyApplication
+openlibertydumps         oldump,oldumps    apps.openliberty.io/v1  true        OpenLibertyDump
+openlibertytraces        oltrace,oltraces  apps.openliberty.io/v1  true        OpenLibertyTrace
 ```
 
 Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
@@ -291,6 +291,7 @@ Additionally, the microservice includes the ***service*** and ***expose*** param
 Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
 ```bash
 sed -i 's=v1=v1beta2=g' deploy.yaml
+sed -i 's=9443=9080=g' deploy.yaml
 sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullSecret: icr=g' deploy.yaml
 oc apply -f deploy.yaml
 ```
@@ -324,7 +325,7 @@ Namespace:    guide
 Labels:       app.kubernetes.io/part-of=system
               name=system
 Annotations:  <none>
-API Version:  apps.openliberty.io/v1beta2
+API Version:  apps.openliberty.io/v1
 Kind:         OpenLibertyApplication
 
 ...
@@ -342,14 +343,14 @@ Look for an output that is similar to the following example:
 
 ```
 NAME     HOST/PORT                                                     PATH   SERVICES   PORT       TERMINATION   WILDCARD
-system   system-guide.2886795274-80-kota02.environments.katacoda.com          system     9080-tcp                 None
+system   system-guide.2886795274-80-kota02.environments.katacoda.com          system     9443-tcp                 None
 ```
 
 
 Visit the microservice by going to the following URL: 
-***http://[HOST]/system/properties***
+***https://[HOST]/system/properties***
 
-Make sure to substitute the appropriate ***[HOST]*** value. For example, using the output from the command above, ***system-guide.2886795274-80-kota02.environments.katacoda.com*** is the ***HOST***. The following example shows this value substituted for ***HOST*** in the URL: ***http://system-guide.2886795274-80-kota02.environments.katacoda.com/system/properties***.
+Make sure to substitute the appropriate ***[HOST]*** value. For example, using the output from the command above, ***system-guide.2886795274-80-kota02.environments.katacoda.com*** is the ***HOST***. The following example shows this value substituted for ***HOST*** in the URL: ***https://system-guide.2886795274-80-kota02.environments.katacoda.com/system/properties***.
 
 Or, you can run the following command to get the URL:
 ```bash
@@ -365,7 +366,7 @@ oc delete -f deploy.yaml
 
 ::page{title="Specifying optional parameters"}
 
-You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1beta2.adoc#configuration) to find all of the supported optional CRDs.
+You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#configuration) to find all of the supported optional CRDs.
 
 To configure the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator, specify the ***probes*** in your ***deploy.yaml*** file. The ***startup*** probe verifies whether deployed application is fully initialized before the liveness probe takes over. Then, the ***liveness*** probe determines whether the application is running and the ***readiness*** probe determines whether the application is ready to process requests. For more information about application health checks, see the [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide.
 
@@ -434,6 +435,7 @@ The ***/health/started***, ***/health/live***, and ***/health/ready*** health ch
 Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the new configuration:
 ```bash
 sed -i 's=v1=v1beta2=g' deploy.yaml
+sed -i 's=9443=9080=g' deploy.yaml
 sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullSecret: icr=g' deploy.yaml
 oc apply -f deploy.yaml
 ```
