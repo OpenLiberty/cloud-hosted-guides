@@ -5,9 +5,9 @@ branch: lab-5933-instruction
 version-history-start-date: 2023-04-14T18:24:15Z
 tool-type: theia
 ---
-::page{title="Welcome to the Securing a web application guide!"}
+::page{title="Welcome to the Deploying a microservice to OpenShift 4 by using Open Liberty Operator guide!"}
 
-Learn how to secure a web application through authentication and authorization.
+Explore how to deploy a microservice to Red Hat OpenShift 4 by using Open Liberty Operator.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,14 +17,19 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
 ::page{title="What you'll learn"}
 
-You'll learn how to secure a web application by performing authentication and authorization using Jakarta EE Security. Authentication confirms the identity of the user by verifying a user's credentials while authorization determines whether a user has access to restricted resources.
+You will learn how to deploy a cloud-native application with a microservice to Red Hat OpenShift 4 by using the Open Liberty Operator. 
 
-Jakarta EE Security provides capability to configure the basic authentication, form authentication, or custom form authentication mechanism by using annotations in servlets. It also provides the SecurityContext API for programmatic security checks in application code.
+[OpenShift](https://www.openshift.com/) is a Kubernetes-based platform with added functions. It streamlines the DevOps process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the deployment and management of cloud applications easier. You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
 
-You’ll implement form authentication for a simple web front end. You'll also learn to specify security constraints for a servlet and use the SecurityContext API to determine the role of a logged-in user.
+[Kubernetes operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management. To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
+
+The application in this guide consists of one microservice, ***system***. The system microservice returns the JVM system properties of its host.
+
+You will deploy the ***system*** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) provides a method of packaging, deploying, and managing Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including ***Deployments***, ***Services***, and ***Routes***, depending on the configurations. The Operator then continuously compares the current state of the resources with the desired state of application deployment and reconciles them when necessary.
+
+
 
 ::page{title="Getting started"}
 
@@ -37,11 +42,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-security-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-openliberty-operator-openshift.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-security-intro.git
-cd guide-security-intro
+git clone https://github.com/openliberty/guide-openliberty-operator-openshift.git
+cd guide-openliberty-operator-openshift
 ```
 
 
@@ -49,427 +54,425 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-### Try what you'll build
 
-The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
-
-To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
-
-```bash
-cd finish
-mvn liberty:run
-```
-
-After you see the following message, your application server is ready:
-
-```
-The defaultServer server is ready to run a smarter planet.
-```
-
-The finished application is secured with form authentication.
+::page{title="Installing the Operator"}
 
 
-Click the following button to visit the application:
-
-::startApplication{port="9080" display="external" name="Visit application" route="/"}
-
-The application automatically switches from an HTTP connection to a secure HTTPS connection and forwards you to a login page. If the browser gives you a certificate warning, it's because the Open Liberty server created a self-signed SSL certificate by default. You can follow your browser's provided instructions to accept the certificate and continue.
-
-Sign in to the application with one of the following user credentials from the user registry, which are provided to you:
-
-| *Username* | *Password* | *Role* | *Group*
-| --- | --- | --- | ---
-| alice | alicepwd | user | Employee
-| bob | bobpwd | admin, user | Manager, Employee
-| carl | carlpwd | admin, user | TeamLead, Employee
-| dave | davepwd | N/A | PartTime
-
-Notice that when you sign in as Bob or Carl, the browser redirects to the ***admin*** page and you can view their names and roles. When you sign in as Alice, you can only view Alice's name. When you sign in as Dave, you are blocked and see an ***Error 403: Authorization failed*** message because Dave doesn't have a role that is supported by the application.
-
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+A project is created for you to use in this exercise. Run the following command to see your project name:
 
 ```bash
-mvn liberty:stop
+oc projects
 ```
 
+In this Skill Network enviornment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/blob/master/deploy/releases/0.7.1/readme.adoc).
 
-::page{title="Adding authentication and authorization"}
-
-For this application, users are asked to log in with a form when they access the application. Users are authenticated and depending on their roles, they are redirected to the pages that they are authorized to access. If authentication or authorization fails, users are sent to an error page. The application supports two roles, ***admin*** and ***user***.
-
-Navigate to the ***start*** directory to begin.
-```bash
-cd /home/project/guide-security-intro/start
-```
-
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+Run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 
 ```bash
-mvn liberty:dev
+oc api-resources --api-group=apps.openliberty.io
 ```
 
-After you see the following message, your application server in dev mode is ready:
+Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
 
 ```
-**************************************************************
-*    Liberty is running in dev mode.
+NAME                     SHORTNAMES        APIGROUP                     NAMESPACED  KIND
+openlibertyapplications  olapp,olapps      apps.openliberty.io/v1beta2  true        OpenLibertyApplication
+openlibertydumps         oldump,oldumps    apps.openliberty.io/v1beta2  true        OpenLibertyDump
+openlibertytraces        oltrace,oltraces  apps.openliberty.io/v1beta2  true        OpenLibertyTrace
 ```
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
 
-Create the ***HomeServlet*** class.
+The ***openlibertyapplications*** CRD defines a set of configurations for deploying an Open Liberty-based application, including the application image, number of instances, and storage settings. The Open Liberty Operator watches for changes to instances of the ***OpenLibertyApplication*** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
+
+
+::page{title="Deploying the system microservice to OpenShift"}
+
+To deploy the ***system*** microservice, you must first package the microservice, then create and run an OpenShift build to produce runnable container images of the packaged microservice.
+
+### Packaging the microservice
+
+Ensure that you are in the ***start*** directory and run the following command to package the ***system*** microservice:
+
+
+```bash
+cd /home/project/guide-openliberty-operator-openshift/start
+mvn clean package
+```
+
+### Building and pushing the image
+
+Create a build template to configure how to build your container image.
+
+Create the ***build.yaml*** template file in the ***start*** directory.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java
+touch /home/project/guide-openliberty-operator-openshift/start/build.yaml
 ```
 
 
-> Then, to open the HomeServlet.java file in your IDE, select
-> **File** > **Open** > guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java, or click the following button
+> Then, to open the build.yaml file in your IDE, select
+> **File** > **Open** > guide-openliberty-operator-openshift/start/build.yaml, or click the following button
 
-::openFile{path="/home/project/guide-security-intro/start/src/main/java/io/openliberty/guides/ui/HomeServlet.java"}
+::openFile{path="/home/project/guide-openliberty-operator-openshift/start/build.yaml"}
 
 
 
-```java
-package io.openliberty.guides.ui;
-
-import java.io.IOException;
-import jakarta.inject.Inject;
-import jakarta.security.enterprise.SecurityContext;
-import jakarta.security.enterprise.authentication.mechanism.http.FormAuthenticationMechanismDefinition;
-import jakarta.security.enterprise.authentication.mechanism.http.LoginToContinue;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.HttpConstraint;
-import jakarta.servlet.annotation.ServletSecurity;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
-@WebServlet(urlPatterns = "/home")
-@FormAuthenticationMechanismDefinition(
-    loginToContinue = @LoginToContinue(errorPage = "/error.html",
-                                       loginPage = "/welcome.html"))
-@ServletSecurity(value = @HttpConstraint(rolesAllowed = { "user", "admin" },
-  transportGuarantee = ServletSecurity.TransportGuarantee.CONFIDENTIAL))
-public class HomeServlet extends HttpServlet {
-
-    private static final long serialVersionUID = 1L;
-
-    @Inject
-    private SecurityContext securityContext;
-
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-        if (securityContext.isCallerInRole(Utils.ADMIN)) {
-            response.sendRedirect("/admin.jsf");
-        } else if  (securityContext.isCallerInRole(Utils.USER)) {
-            response.sendRedirect("/user.jsf");
-        }
-    }
-
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-        doGet(request, response);
-    }
-}
+```yaml
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: "build-template"
+  annotations:
+    description: "Build template for the system service"
+    tags: "build"
+objects:
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      name: "system-imagestream"
+      labels:
+        name: "system"
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      name: "system-buildconfig"
+      labels:
+        name: "system"
+    spec:
+      source:
+        type: Binary
+      strategy:
+        type: Docker
+      output:
+        to:
+          kind: ImageStreamTag
+          name: "system-imagestream:1.0-SNAPSHOT"
 ```
 
 
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-The ***HomeServlet*** servlet is the entry point of the application. To enable form authentication for the ***HomeServlet*** class, define the ***@FormAuthenticationMechanismDefinition*** annotation and set its ***loginToContinue*** attribute with a ***@LoginToContinue*** annotation. This ***@FormAuthenticationMechanismDefinition*** annotation defines ***welcome.html*** as the login page and ***error.html*** as the error page.
+The ***build.yaml*** template includes two objects. The ***ImageStream*** object provides an abstraction from the image in the image registry, which allows you to reference and tag the image. The image registry is the integrated internal OpenShift Container Registry.
 
-The ***welcome.html*** page implements the login form, and the ***error.html*** page implements the error page. Both pages are provided for you under the ***src/main/webapp*** directory. The login form in the ***welcome.html*** page uses the ***j_security_check*** action, which is defined by Jakarta EE and available by default.
+The ***BuildConfig*** object defines a single build definition and any triggers that kickstart the build. The ***source*** spec defines the build input. In this case, the build inputs are your ***binary*** (local) files, which are streamed to OpenShift for the build. The uploaded files need to include the packaged ***WAR*** application binaries, which is why you needed to run the Maven commands. The template specifies a ***Docker*** strategy build, which invokes the ***docker build*** command, and creates a runnable container image of the microservice from the build input.
 
-Authorization determines whether a user can access a resource. To restrict access to authenticated users with ***user*** and ***admin*** roles, define the ***@ServletSecurity*** annotation with the ***@HttpConstraint*** annotation and set the ***rolesAllowed*** attribute to these two roles.
+Run the following command to create the objects for the ***system*** microservice:
 
-The ***transportGuarantee*** attribute defines the constraint on the traffic between the client and the application. Set it to ***CONFIDENTIAL*** to enforce that all user data must be encrypted, which is why an HTTP connection from a browser switches to HTTPS.
+```bash
+oc process -f build.yaml | oc create -f -
+```
 
-The SecurityContext interface provides programmatic access to the Jakarta EE Security API. Inject a SecurityContext instance into the ***HomeServlet*** class. The ***doGet()*** method uses the ***isCallerInRole()*** method from the SecurityContext API to check a user's role and then forwards the response to the appropriate page.
+Next, run the following command to view the newly created ***ImageStream*** objects and the build configurations for the microservice:
 
-The ***src/main/webapp/WEB-INF/web.xml*** file contains the rest of the security declaration for the application.
+```bash
+oc get all -l name=system
+```
 
+Look for the following similar resources:
 
-::openFile{path="/home/project/guide-security-intro/start/src/main/webapp/WEB-INF/web.xml"}
+```
+NAME                                                TYPE     FROM     LATEST
+buildconfig.build.openshift.io/system-buildconfig   Docker   Binary   0
 
-The ***security-role*** elements define the roles that are supported by the application, which are ***user*** and ***admin***. The ***security-constraint*** elements specify that JSF resources like the ***user.jsf*** and ***admin.jsf*** pages can be accessed only by users with ***user*** and ***admin*** roles.
+NAME                                                IMAGE REPOSITORY                                                                   TAGS           UPDATED
+imagestream.image.openshift.io/system-imagestream   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
+```   
 
+Ensure that you are in the ***start*** directory and trigger the build by running the following command:
 
-::page{title="Configuring the user registry"}
+```bash
+oc start-build system-buildconfig --from-dir=system/.
+```
 
-User registries store user account information, such as username and password, for use by applications to perform security-related operations. Typically, application servers would be configured to use an external registry like a Lightweight Directory Access Protocol (LDAP) registry. Applications would access information in the registry for authentication and authorization by using APIs like the Jakarta EE Security API.
+The local ***system*** directory is uploaded to OpenShift to be built into the Docker image. Run the following command to list the build and track its status:
 
-Open Liberty provides an easy-to-use basic user registry for developers, which you will configure.
+```bash
+oc get builds
+```
 
-Create the ***userRegistry*** configuration file.
+Look for the output that is similar to the following example:
+
+```
+NAME                    TYPE     FROM             STATUS     STARTED
+system-buildconfig-1    Docker   Binary@f24cb58   Running    45 seconds ago
+```
+
+You might need to wait some time until the build is complete. To check whether the build is complete, run the following command to view the build log until the ***Push successful*** message appears:
+
+```bash
+oc logs build/system-buildconfig-1
+```
+
+### Checking the image
+
+During the build process, the image associated with the ***ImageStream*** object that you created earlier was pushed to the image registry and tagged. Run the following command to view the newly updated ***ImageStream*** object:
+
+```bash
+oc get imagestreams
+```
+
+Run the following command to get more details on the newly pushed image within the stream:
+
+```bash
+oc describe imagestream/system-imagestream
+```
+
+The following example shows part of the ***system-imagestream*** output:
+
+```
+Name:               system-imagestream
+Namespace:          guide
+Created:            2 minutes ago
+Labels:             name=system
+Annotations:        <none>
+Image Repository:   default-route-openshift-image-registry.apps-crc.testing/guide/system-imagestream
+Image Lookup:       local=false
+Unique Images:      1
+Tags:               1
+
+...
+```
+
+Now you're ready to deploy the image.
+
+### Deploying the image
+
+You can configure the specifics of the Open Liberty Operator-controlled deployment with a YAML configuration file.
+
+Create the ***deploy.yaml*** configuration file in the ***start*** directory.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-security-intro/start/src/main/liberty/config/userRegistry.xml 
+touch /home/project/guide-openliberty-operator-openshift/start/deploy.yaml
 ```
 
 
-> Then, to open the userRegistry.xml file in your IDE, select
-> **File** > **Open** > guide-security-intro/start/src/main/liberty/config/userRegistry.xml, or click the following button
+> Then, to open the deploy.yaml file in your IDE, select
+> **File** > **Open** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
 
-::openFile{path="/home/project/guide-security-intro/start/src/main/liberty/config/userRegistry.xml"}
+::openFile{path="/home/project/guide-openliberty-operator-openshift/start/deploy.yaml"}
 
 
 
-```xml
-<server description="Sample Liberty server">
-  <basicRegistry id="basic" realm="WebRealm">
-    <user name="bob"
-      password="{xor}PTA9Lyg7" /> <!-- bobpwd -->
-    <user name="alice"
-      password="{xor}PjM2PDovKDs=" />  <!-- alicepwd -->
-    <user name="carl"
-      password="{xor}PD4tMy8oOw==" />  <!-- carlpwd -->
-    <user name="dave"
-      password="{xor}Oz4pOi8oOw==" />  <!-- davepwd -->
-
-    <group name="Manager">
-      <member name="bob" />
-    </group>
-
-    <group name="TeamLead">
-      <member name="carl" />
-    </group>
-    
-    <group name="Employee">
-      <member name="alice" />
-      <member name="bob" />
-      <member name="carl" />
-    </group>
-
-    <group name="PartTime">
-      <member name="dave" />
-    </group>
-  </basicRegistry>
-</server>
+```yaml
+apiVersion: apps.openliberty.io/v1
+kind: OpenLibertyApplication
+metadata:
+  name: system
+  labels:
+    name: system
+spec:
+  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
+  pullPolicy: Always
+  service:
+    port: 9443
+  expose: true
+  env:
+    - name: WLP_LOGGING_MESSAGE_FORMAT
+      value: "json"
+    - name: WLP_LOGGING_MESSAGE_SOURCE
+      value: "message,trace,accessLog,ffdc,audit"
 ```
 
 
 
-The registry has four users, ***bob***, ***alice***, ***carl***, and ***dave***. It also has four groups: ***Manager***, ***TeamLead***, ***Employee***, and ***PartTime***. Each user belongs to one or more groups.
+The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication*** resource, ***system***, which is controlled by the Open Liberty Operator.
 
-It is not recommended to store passwords in plain text. The passwords in the ***userRegistry.xml*** file are encoded by using the Liberty ***securityUtility*** command with XOR encoding.
+The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\<project-name\>/\<image-stream-name\>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
 
+One of the benefits of using ***ImageStream*** objects is that the operator redeploys the application when it detects that a new image is pushed. The ***env*** parameter is used to specify environment variables that are passed to the container at runtime.
 
-See the server configuration file.
-
-::openFile{path="/home/project/guide-security-intro/start/src/main/liberty/config/server.xml"}
-
-Use the ***include*** element to add the basic user registry configuration to your server configuration. Open Liberty includes configuration information from the specified XML file in its server configuration.
-
-The ***server.xml*** file contains the security configuration of the server under the ***application-bnd*** element. Use the ***security-role*** and ***group*** elements to map the groups in the ***userRegistry.xml*** file to the appropriate user roles supported by the application for proper user authorization. The ***Manager*** and ***TeamLead*** groups are mapped to the ***admin*** role while the ***Employee*** group is mapped to the ***user*** role.
+Additionally, the microservice includes the ***service*** and ***expose*** parameters. The ***service.port*** parameter specifies which port is exposed by the container, allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster, it must be exposed by setting the ***expose*** parameter to ***true***. After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
 
 
-::page{title="Running the application"}
-
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
-
-
-
-Click the following button to visit the application:
-
-::startApplication{port="9080" display="external" name="Visit application" route="/"}
-
-As you can see, the browser gets automatically redirected from an HTTP connection to an HTTPS connection because the transport guarantee is defined in the ***HomeServlet*** class.
-
-You will see a login form because form authentication is implemented and configured. Sign in to the application by using one of the credentials from the following table. The credentials are defined in the configured user registry.
-
-| *Username* | *Password* | *Role* | *Group*
-| --- | --- | --- | ---
-| alice | alicepwd | user | Employee
-| bob | bobpwd | admin, user | Manager, Employee
-| carl | carlpwd | admin, user | TeamLead, Employee
-| dave | davepwd | N/A | PartTime
-
-Notice that when you sign in as Bob or Carl, the browser redirects to the ***admin*** page and you can view their names and roles. When you sign in as Alice, you can only view Alice's name. When you sign in as Dave, you are blocked and see an ***Error 403: Authorization failed*** message because Dave doesn't have a role that is supported by the application.
-
-
-
-::page{title="Testing the application"}
-
-Write the ***SecurityIT*** class to test the authentication and authorization of the application.
-
-Create the ***SecurityIT*** class.
-
-> Run the following touch command in your terminal
+Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
 ```bash
-touch /home/project/guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java
+sed -i 's=v1=v1beta2=g' deploy.yaml
+sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullSecret: icr=g' deploy.yaml
+oc apply -f deploy.yaml
+```
+
+Next, run the following command to view your newly created ***OpenLibertyApplications*** resources:
+
+```bash
+oc get OpenLibertyApplications
+```
+
+You can also replace ***OpenLibertyApplications*** with the shortname ***olapps***.
+
+Look for output that is similar to the following example:
+
+```
+NAME      IMAGE                                    EXPOSED   RECONCILED   AGE
+system    guide/system-imagestream:1.0-SNAPSHOT    true      True         10s
+```
+
+A ***RECONCILED*** state value of ***True*** indicates that the operator was able to successfully process the ***OpenLibertyApplications*** instances. Run the following command to view details of your microservice:
+
+```bash
+oc describe olapps/system
+```
+
+This example shows part of the ***olapps/system*** output:
+
+```
+Name:         system
+Namespace:    guide
+Labels:       app.kubernetes.io/part-of=system
+              name=system
+Annotations:  <none>
+API Version:  apps.openliberty.io/v1beta2
+Kind:         OpenLibertyApplication
+
+...
+```
+
+::page{title="Accessing the microservice"}
+
+To access the exposed ***system*** microservice, run the following command and make note of the ***HOST***:
+
+```bash
+oc get routes
+```
+
+Look for an output that is similar to the following example:
+
+```
+NAME     HOST/PORT                                                     PATH   SERVICES   PORT       TERMINATION   WILDCARD
+system   system-guide.2886795274-80-kota02.environments.katacoda.com          system     9080-tcp                 None
 ```
 
 
-> Then, to open the SecurityIT.java file in your IDE, select
-> **File** > **Open** > guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java, or click the following button
+Visit the microservice by going to the following URL: 
+***http://[HOST]/system/properties***
 
-::openFile{path="/home/project/guide-security-intro/start/src/test/java/it/io/openliberty/guides/security/SecurityIT.java"}
+Make sure to substitute the appropriate ***[HOST]*** value. For example, using the output from the command above, ***system-guide.2886795274-80-kota02.environments.katacoda.com*** is the ***HOST***. The following example shows this value substituted for ***HOST*** in the URL: ***http://system-guide.2886795274-80-kota02.environments.katacoda.com/system/properties***.
+
+Or, you can run the following command to get the URL:
+```bash
+echo http://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
+```
+
+Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
+
+When you’re done trying out the microservice, run following command to stop the microservice:
+```bash
+oc delete -f deploy.yaml
+```
+
+::page{title="Specifying optional parameters"}
+
+You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1beta2.adoc#configuration) to find all of the supported optional CRDs.
+
+To configure the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator, specify the ***probes*** in your ***deploy.yaml*** file. The ***startup*** probe verifies whether deployed application is fully initialized before the liveness probe takes over. Then, the ***liveness*** probe determines whether the application is running and the ***readiness*** probe determines whether the application is ready to process requests. For more information about application health checks, see the [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide.
+
+Replace the ***deploy.yaml*** configuration file.
+
+> To open the deploy.yaml file in your IDE, select
+> **File** > **Open** > guide-openliberty-operator-openshift/start/deploy.yaml, or click the following button
+
+::openFile{path="/home/project/guide-openliberty-operator-openshift/start/deploy.yaml"}
 
 
 
-```java
-package it.io.openliberty.guides.security;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.net.ssl.SSLContext;
-import jakarta.servlet.http.HttpServletResponse;
-
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.CookieSpecs;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-public class SecurityIT {
-
-    private static String urlHttp;
-    private static String urlHttps;
-
-    @BeforeEach
-    public void setup() throws Exception {
-        urlHttp = "http://localhost:" + System.getProperty("http.port");
-        urlHttps = "https://localhost:" + System.getProperty("https.port");
-        ITUtils.trustAll();
-    }
-
-    @Test
-    public void testAuthenticationFail() throws Exception {
-        executeURL("/", "bob", "wrongpassword", true, -1, "Don't care");
-    }
-
-    @Test
-    public void testAuthorizationForAdmin() throws Exception {
-        executeURL("/", "bob", "bobpwd", false,
-            HttpServletResponse.SC_OK, "admin, user");
-    }
-
-    @Test
-    public void testAuthorizationForUser() throws Exception {
-        executeURL("/", "alice", "alicepwd", false,
-            HttpServletResponse.SC_OK, "<title>User</title>");
-    }
-
-    @Test
-    public void testAuthorizationFail() throws Exception {
-        executeURL("/", "dave", "davepwd", false,
-            HttpServletResponse.SC_FORBIDDEN, "Error 403: Authorization failed");
-    }
-
-    private void executeURL(
-        String testUrl, String userid, String password,
-        boolean expectLoginFail, int expectedCode, String expectedContent)
-        throws Exception {
-
-        URI url = new URI(urlHttp + testUrl);
-        HttpGet getMethod = new HttpGet(url);
-        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
-        SSLContext sslContext = SSLContext.getDefault();
-        clientBuilder.setSSLContext(sslContext);
-        clientBuilder.setDefaultRequestConfig(
-            RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
-        HttpClient client = clientBuilder.build();
-        HttpResponse response = client.execute(getMethod);
-
-        String loginBody = EntityUtils.toString(response.getEntity(), "UTF-8");
-        assertTrue(loginBody.contains("window.location.assign"),
-            "Not redirected to home.html");
-        String[] redirect = loginBody.split("'");
-
-        HttpPost postMethod = new HttpPost(urlHttps + "/j_security_check");
-        List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-        nvps.add(new BasicNameValuePair("j_username", userid));
-        nvps.add(new BasicNameValuePair("j_password", password));
-        postMethod.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
-        response = client.execute(postMethod);
-        assertEquals(HttpServletResponse.SC_FOUND,
-            response.getStatusLine().getStatusCode(),
-            "Expected " + HttpServletResponse.SC_FOUND + " status code for login");
-
-        if (expectLoginFail) {
-            String location = response.getFirstHeader("Location").getValue();
-            assertTrue(location.contains("error.html"),
-                "Error.html was not returned");
-            return;
-        }
-
-        url = new URI(urlHttps + redirect[1]);
-        getMethod = new HttpGet(url);
-        response = client.execute(getMethod);
-        assertEquals(expectedCode, response.getStatusLine().getStatusCode(),
-            "Expected " + expectedCode + " status code for login");
-
-        if (expectedCode != HttpServletResponse.SC_OK) {
-            return;
-        }
-
-        String actual = EntityUtils.toString(response.getEntity(), "UTF-8");
-        assertTrue(actual.contains(userid),
-            "The actual content did not contain the userid \"" + userid
-            + "\". It was:\n" + actual);
-        assertTrue(actual.contains(expectedContent),
-            "The url " + testUrl + " did not return the expected content \""
-            + expectedContent + "\"" + "The actual content was:\n" + actual);
-    }
-
-}
+```yaml
+apiVersion: apps.openliberty.io/v1
+kind: OpenLibertyApplication
+metadata:
+  name: system
+  labels:
+    name: system
+spec:
+  applicationImage: guide/system-imagestream:1.0-SNAPSHOT
+  pullPolicy: Always
+  service:
+    port: 9443
+  expose: true
+  env:
+    - name: WLP_LOGGING_MESSAGE_FORMAT
+      value: "json"
+    - name: WLP_LOGGING_MESSAGE_SOURCE
+      value: "message,trace,accessLog,ffdc,audit"
+  probes:
+    startup:
+      failureThreshold: 12
+      httpGet:
+        path: /health/started
+        port: 9443
+        scheme: HTTPS
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
+    liveness:
+      failureThreshold: 12
+      httpGet:
+        path: /health/live
+        port: 9443
+        scheme: HTTPS
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
+    readiness:
+      failureThreshold: 12
+      httpGet:
+        path: /health/ready
+        port: 9443
+        scheme: HTTPS
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
 ```
 
 
 
-The ***testAuthenticationFail()*** method tests an invalid user authentication while the ***testAuthorizationFail()*** method tests unauthorized access to the application.
+The ***/health/started***, ***/health/live***, and ***/health/ready*** health check endpoints are already created for you. 
 
-The ***testAuthorizationForAdmin()*** and ***testAuthorizationForUser()*** methods verify that users with ***admin*** or ***user*** roles are properly authenticated and can access authorized resource.
 
-### Running the tests
-
-Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
-
-You see the following output:
-
+Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the new configuration:
+```bash
+sed -i 's=v1=v1beta2=g' deploy.yaml
+sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullSecret: icr=g' deploy.yaml
+oc apply -f deploy.yaml
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.security.SecurityIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.78 sec - in it.io.openliberty.guides.security.SecurityIT
-
-Results :
-
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-
+Run the following command to check status of the pods:
+```bash
+oc describe pods | grep health
 ```
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+Look for the following output to confirm that the health checks are successfully applied and working:
 
+```
+Liveness:   http-get http://:9080/health/live delay=30s timeout=10s period=2s #success=1 #failure=12
+Readiness:  http-get http://:9080/health/ready delay=30s timeout=10s period=2s #success=1 #failure=12
+Startup:    http-get http://:9080/health/started delay=30s timeout=10s period=2s #success=1 #failure=12
+```
+
+Run the following command to get the URL:
+```bash
+echo http://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
+```
+
+Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
+
+::page{title="Tearing down the environment"}
+
+
+When you no longer need your deployed microservice, you can delete all resources by running the following commands:
+
+```bash
+oc delete -f deploy.yaml
+oc delete imagestream.image.openshift.io/system-imagestream
+oc delete bc system-buildconfig
+```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You learned how to use Jakarta EE Security in Open Liberty to authenticate and authorize users to secure your web application.
-
-
-Next, you can try the related [MicroProfile JWT](https://openliberty.io/guides/microprofile-jwt.html) guide. It demonstrates technologies to secure backend services.
+You just deployed a microservice running in Open Liberty to OpenShift 4 and configured the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator.
 
 
 
@@ -478,33 +481,34 @@ Next, you can try the related [MicroProfile JWT](https://openliberty.io/guides/m
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-security-intro*** project by running the following commands:
+Delete the ***guide-openliberty-operator-openshift*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-security-intro
+rm -fr guide-openliberty-operator-openshift
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Securing%20a%20web%20application&guide-id=cloud-hosted-guide-security-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20OpenShift%204%20by%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-openshift)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-security-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-security-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-openliberty-operator-openshift/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-openliberty-operator-openshift/pulls)
 
 
 
 ### Where to next?
 
-* [Securing microservices with JSON Web Tokens](https://openliberty.io/guides/microprofile-jwt.html)
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Deploying microservices to OpenShift 3](https://openliberty.io/guides/cloud-openshift.html)
+* [Deploying microservices to OpenShift 4 using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
+* [Deploying microservices to an OKD cluster using Minishift](https://openliberty.io/guides/okd.html)
 
 
 ### Log out of the session
