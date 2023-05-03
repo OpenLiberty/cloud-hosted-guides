@@ -5,9 +5,9 @@ branch: lab-5932-instruction
 version-history-start-date: 2023-04-14T18:24:15Z
 tool-type: theia
 ---
-::page{title="Welcome to the Building a web application with Gradle guide!"}
+::page{title="Welcome to the Deploying a microservice to Kubernetes using Open Liberty Operator guide!"}
 
-Learn how to build and test a simple web application using Gradle and Open Liberty.
+Explore how to deploy a microservice to Kubernetes using Open Liberty Operator.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,31 +17,20 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
 ::page{title="What you'll learn"}
 
-You will learn how to build and test a simple web servlet application using the Gradle ***war*** 
-plug-in and the Liberty Gradle plug-in. The ***war*** plug-in compiles and builds the application 
-code. The [***liberty*** Gradle plug-in](https://github.com/WASdev/ci.gradle/blob/main/README.md) 
-installs the Open Liberty runtime, creates a server, and installs the application to run and test.
-The application displays a simple web page with a link. When you click that link, the application 
-calls the servlet to return a simple response of ***Hello! Is Gradle working for you?***.
+You will learn how to deploy a cloud-native application with a microservice to Kubernetes using the Open Liberty Operator. 
 
-One benefit of using a build tool like Gradle is that you can define the details of the project and any dependencies it has, and Gradle automatically downloads and installs the dependencies.
-Another benefit of using Gradle is that it can run repeatable, automated tests on the application. 
-You can, of course, test your application manually by starting a server and pointing a web browser at the application URL. 
-However, automated tests are a much better approach because you can easily rerun the same tests each time the application is built.
-If the tests don't pass after you change the application, the build fails, and you know that you introduced a regression that requires a fix to your code.
+[Kubernetes](https://www.kubernetes.io/) is a container orchestration system. It streamlines the DevOps process by providing an intuitive development pipeline. It also provides integration with multiple tools to make the deployment and management of cloud applications easier. You can learn more about Kubernetes by checking out the [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html) guide.
 
-Choosing a build tool often comes down to personal or organizational preference, but you might choose to use Gradle for several reasons. 
-Gradle defines its builds by using [Groovy build scripts](https://docs.gradle.org/current/userguide/writing_build_scripts.html), which gives you a lot of control and customization in your builds. 
-Gradle also uses a build cache that rebuilds only the parts of your application that changed, which saves build time in larger projects.
-So Gradle can be a good choice in larger, more complex projects.
+[Kubernetes operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/#operators-in-kubernetes) provide an easy way to automate the management and updating of applications by abstracting away some of the details of cloud application management. To learn more about operators, check out this [Operators tech topic article](https://www.openshift.com/learn/topics/operators). 
 
-Using this guide, you will create a Gradle build definition file (***build.gradle***) for the 
-web application project, and use it to build the application. You will then create a simple, 
-automated test, and configure Gradle to run it after building the application.
+The application in this guide consists of one microservice, ***system***. The system microservice returns the JVM system properties of its host.
 
-Learn more about Gradle on the [official Gradle website](https://docs.gradle.org/current/userguide/userguide.html).
+You will deploy the ***system*** microservice by using the Open Liberty Operator. The [Open Liberty Operator](https://github.com/OpenLiberty/open-liberty-operator) packages, deploys, and manages Open Liberty applications on Kubernetes-based clusters. The Open Liberty Operator watches Open Liberty resources and creates various Kubernetes resources, including ***Deployments***, ***Services***, and ***Routes***, depending on the configurations. The Operator then continuously compares the current state of the resources, the desired state of application deployment, and reconciles them when necessary.
+
+
 
 ::page{title="Getting started"}
 
@@ -54,11 +43,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-gradle-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-openliberty-operator-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-gradle-intro.git
-cd guide-gradle-intro
+git clone https://github.com/openliberty/guide-openliberty-operator-intro.git
+cd guide-openliberty-operator-intro
 ```
 
 
@@ -66,299 +55,313 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-::page{title="Creating the application"}
 
-The web application that you will build using Gradle and Open Liberty is provided for you 
-in the ***start*** directory so that you can focus on learning about Gradle. The application uses 
-the standard Gradle directory structure. Using this directory structure saves you from 
-customizing the ***build.gradle*** file later.
 
-All the application source code, including the Open Liberty server configuration (***server.xml***), 
-is in the ***start/src*** directory:
+::page{title="Installing the Operator"}
 
+
+In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/tree/main/deploy/releases/0.8.2#readme).
+
+To check that the Open Liberty Operator has been installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
+```bash
+kubectl api-resources --api-group=apps.openliberty.io
 ```
 
-└── src
-    └── main
-        └── java
-        └── liberty
-            └── config
-        └── webapp
-            └── WEB-INF
+Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
+
+```
+NAME                      SHORTNAMES         APIGROUP              NAMESPACED   KIND
+openlibertyapplications   olapp,olapps       apps.openliberty.io   true         OpenLibertyApplication
+openlibertydumps          oldump,oldumps     apps.openliberty.io   true         OpenLibertyDump
+openlibertytraces         oltrace,oltraces   apps.openliberty.io   true         OpenLibertyTrace
 ```
 
-::page{title="Testing Gradle"}
+Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
 
-If you do not have Gradle installed, make sure that the ***JAVA_HOME*** environment variable is set, or that the Java application can run. Running the Gradle Wrapper automatically installs Gradle. To learn more about the Gradle Wrapper, see the [Gradle Wrapper documentation](https://docs.gradle.org/current/userguide/gradle_wrapper.html).
+The ***openlibertyapplications*** CRD defines a set of configurations for deploying an Open Liberty-based application, including the application image, number of instances, and storage settings. The Open Liberty Operator watches for changes to instances of the ***OpenLibertyApplication*** object kind and creates Kubernetes resources that are based on the configuration that is defined in the CRD.
 
-Run the following commands to navigate to the ***start*** directory and verify that Gradle was installed correctly:
+::page{title="Deploying the system microservice to Kubernetes"}
+
+To deploy the ***system*** microservice, you must first package the microservice, then create and build a runnable container image of the packaged microservice.
+
+### Packaging the microservice
+
+Ensure that you are in the ***start*** directory and run the following command to package the ***system*** microservice:
 
 
 ```bash
-cd start
-./gradlew -v
+cd /home/project/guide-openliberty-operator-intro/start
+mvn clean package
 ```
 
-You should see information about the Gradle installation similar to this example:
+### Building the image
 
-```
-------------------------------------------------------------
-Gradle 7.6
-------------------------------------------------------------
+Run the following command to download or update to the latest Open Liberty Docker image:
 
-Build time:   2022-11-25 13:35:10 UTC
-Revision:     daece9dbc5b79370cc8e4fd6fe4b2cd400e150a8
-
-Kotlin:       1.7.10
-Groovy:       3.0.13
-Ant:          Apache Ant(TM) version 1.10.11 compiled on July 10 2021
-JVM:          11.0.12 (Eclipse OpenJ9 openj9-0.27.0)
-OS:           Mac OS X 12.6.3 x86_64
-
+```bash
+docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 
+Next, run the ***docker build*** command to build the container image for your application:
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+```
 
-::page{title="Configure your project"}
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
 
 
+Next, push your image to the container registry on IBM Cloud with the following commands:
 
-The project configuration is defined in the Gradle settings and build files.
-You will create these project configurations one section at a time. 
+```bash
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+```
 
-Gradle [settings](https://docs.gradle.org/current/dsl/org.gradle.api.initialization.Settings.html) 
-are used to instantiate and configure the project. This sample uses the ***settings.gradle*** 
-to name the project ***GradleSample***.
+Run the following command to check the docker images:
+```bash
+docker images
+```
 
-Create the Gradle settings file in the ***start*** directory.
+The output is similar to the following example:
+```
+REPOSITORY                          TAG                      IMAGE ID       CREATED         SIZE
+us.icr.io/sn-labs-yourname/system   1.0-SNAPSHOT             5c5890296d6e   2 minutes ago   1.23GB
+system                              1.0-SNAPSHOT             5c5890296d6e   2 minutes ago   1.23GB
+icr.io/appcafe/open-liberty         full-java11-openj9-ubi   e959985784c2   2 days ago      1.2GB
+```
+
+Now you're ready to deploy the image.
+
+### Deploying the image
+
+You can configure the specifics of the Open Liberty Operator-controlled deployment with a YAML configuration file.
+
+Create the ***deploy.yaml*** configuration file in the ***start*** directory.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-gradle-intro/start/settings.gradle
+touch /home/project/guide-openliberty-operator-intro/start/deploy.yaml
 ```
 
 
-> Then, to open the unknown file in your IDE, select
-> **File** > **Open** > guide-gradle-intro/start/unknown, or click the following button
+> Then, to open the deploy.yaml file in your IDE, select
+> **File** > **Open** > guide-openliberty-operator-intro/start/deploy.yaml, or click the following button
 
-::openFile{path="/home/project/guide-gradle-intro/start/unknown"}
-
-
-This ***settings.gradle*** file isn't required for a single-module Gradle project. 
-Without this definition, by default, the project name is set as the name of the folder in 
-which it is contained (***start*** for this example).
-
-Let's go through the ***build.gradle*** 
-file so that you understand each part.
-
-| *Configuration*       |   *Purpose*
-| ---| ---
-| Plug-ins used         |   The first part of the build file specifies the plug-ins required to 
-                            build the project and some basic project configuration.
-| buildscript           |   Where to find plug-ins for download.
-| repositories          |   Where to find dependencies for download.
-| dependencies          |   Java dependencies that are required for compiling, testing, 
-                            and running the application are included here.
-| ext                   |   Gradle extra properties extension for project level properties.
-| test                  |   Unit test and integration test configuration.
+::openFile{path="/home/project/guide-openliberty-operator-intro/start/deploy.yaml"}
 
 
-Create the build file in the ***start*** directory.
 
-> Run the following touch command in your terminal
+```yaml
+apiVersion: apps.openliberty.io/v1beta2
+kind: OpenLibertyApplication
+metadata:
+  name: system
+  labels:
+    name: system
+spec:
+  applicationImage: system:1.0-SNAPSHOT
+  service:
+    port: 9080
+  expose: true
+  route:
+    pathType: ImplementationSpecific
+  env:
+    - name: WLP_LOGGING_MESSAGE_FORMAT
+      value: "json"
+    - name: WLP_LOGGING_MESSAGE_SOURCE
+      value: "message,trace,accessLog,ffdc,audit"
+```
+
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+
+The ***deploy.yaml*** file is configured to deploy one ***OpenLibertyApplication*** resource, ***system***, which is controlled by the Open Liberty Operator.
+
+The ***applicationImage*** parameter defines what container image is deployed as part of the ***OpenLibertyApplication*** CRD. This parameter follows the ***\\<image-name\\>[:tag]*** format. The parameter can also point to an image hosted on an external registry, such as Docker Hub. The ***system*** microservice is configured to use the ***image*** created from the earlier build. 
+
+The ***env*** parameter is used to specify environment variables that are passed to the container at runtime.
+
+Additionally, the microservice includes the ***service*** and ***expose*** parameters. The ***service.port*** parameter specifies which port is exposed by the container, allowing the microservice to be accessed from outside the container. To access the microservice from outside of the cluster, it must be exposed by setting the ***expose*** parameter to ***true***. After you expose the microservice, the Operator automatically creates and configures routes for external access to your microservice.
+
+
+Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
 ```bash
-touch /home/project/guide-gradle-intro/start/build.gradle
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
+kubectl apply -f deploy.yaml
 ```
 
-
-> Then, to open the unknown file in your IDE, select
-> **File** > **Open** > guide-gradle-intro/start/unknown, or click the following button
-
-::openFile{path="/home/project/guide-gradle-intro/start/unknown"}
-
-
-The first section of code defines the ***war*** and ***liberty*** plug-ins 
-that you want to use. The ***war*** plug-in contains all the tasks to compile 
-Java files, build the WAR file structure, and assemble the archive. The ***liberty*** 
-plug-in contains the tasks used to install the Liberty runtime and create and manage 
-servers. The compatibility and encoding settings are for Java.
-
-The ***buildscript*** section defines plug-in versions to use in the 
-build and where to find them. This guide uses the ***liberty*** plug-in, 
-which is available from the ***Maven Central Repository***.
-
-The ***repositories*** section defines where to find the dependencies 
-that you are using in the build. For this build, everything you need is in ***Maven Central***.
-
-The ***dependencies*** section defines what is needed to compile and 
-test the code. This section also defines how to run the application. The 
-***providedCompile*** dependencies are APIs that are needed to compile the 
-application, but they do not need to be packaged with the application because Open Liberty 
-provides their implementation at run time. The ***testImplementation*** dependencies 
-are needed to compile and run tests.
-
-The Gradle ***extra properties*** extension allows you to add properties to a Gradle project.
-If you use a value more than once in your build file, you can simplify updates by defining 
-it as a variable here and referring to the variable later in the build file.
-This project defines variables for the application ports and the context-root.
-
-You can view the default and Liberty tasks available by running the following command:
-
-
-```
-./gradlew tasks
-```
-
-::page{title="Running the application"}
-
-Start Open Liberty in development mode, which starts the Open Liberty server and listens for file changes:
+Next, run the following command to view your newly created ***OpenLibertyApplications*** resources:
 
 ```bash
-./gradlew libertyDev
+kubectl get OpenLibertyApplications
 ```
 
-After you see the following message, your application server in development mode is ready.
+You can also replace ***OpenLibertyApplications*** with the shortname ***olapps***.
+
+Look for output that is similar to the following example:
 
 ```
-**********************************************
-*    Liberty is running in dev mode.
+NAME      IMAGE                  EXPOSED   RECONCILED   AGE
+system    system:1.0-SNAPSHOT    true      True         10s
 ```
 
-The development mode holds your command prompt to listen for file changes.
-You need to open another command prompt to continue, or simply open the project in your editor.
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-
-Navigate your browser to the ***http\://localhost:9080/GradleSample/servlet*** URL to access the application. 
-
-
-_To see the output for this URL in the IDE, run the following command at a terminal:_
+A ***RECONCILED*** state value of ***True*** indicates that the operator was able to successfully process the ***OpenLibertyApplications*** instances. Run the following command to view details of your microservice:
 
 ```bash
-curl http://localhost:9080/GradleSample/servlet
+kubectl describe olapps/system
 ```
 
+This example shows part of the ***olapps/system*** output:
 
-The servlet returns a simple response of ***Hello! Is Gradle working for you?***.
+```
+Name:         system
+Namespace:    default
+Labels:       app.kubernetes.io/part-of=system
+              name=system
+Annotations:  <none>
+API Version:  apps.openliberty.io/v1beta2
+Kind:         OpenLibertyApplication
 
-::page{title="Testing the web application"}
+...
+```
 
+::page{title="Accessing the microservice"}
 
+To access the exposed ***system*** microservice, the service must be port-forwarded. Run the following command to set up port forwarding to access the ***system*** service:
 
-
-One of the benefits of building an application with a build system like Gradle is that 
-it can be configured to run a set of automated tests. The ***war*** 
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-plug-in extends the [Java plug-in](https://docs.gradle.org/current/userguide/java_plugin.html), 
-which provides test tasks. You can write tests for the individual units of code outside 
-of a running application server (unit tests), or you can write them to call the application 
-that runs on the server (integration tests). In this example, you will create a simple 
-integration test that checks that the web page opens and that the correct response is 
-returned when the link is clicked.
-
-Create the ***EndpointIT*** test class.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-gradle-intro/start/src/test/java/io/openliberty/guides/hello/it/EndpointIT.java
+kubectl port-forward svc/system 9080
 ```
 
 
-> Then, to open the unknown file in your IDE, select
-> **File** > **Open** > guide-gradle-intro/start/unknown, or click the following button
-
-::openFile{path="/home/project/guide-gradle-intro/start/unknown"}
-
-
-The test class name ends in ***IT*** to indicate that it contains an integration test.
-The integration tests are put in the ***it*** folder by convention.
-
-The ***test*** section in your build file is added by the Java plug-in, and the 
-***useJUnitPlatform()*** line configures Gradle to add JUnit 5 support.
-
-The ***systemProperty*** configuration  defines some variables needed by 
-the test class. While the port number and context-root information can be 
-hardcoded in the test class, it is better to specify it in a single place like the Gradle 
-***build.gradle*** file, in case they need to change.
-The ***systemProperty*** lines passes these details to the test JVMs 
-as a series of system properties, resolving the ***http.port*** 
-and ***context.root*** variables.
-
-The ***init()*** method in the ***EndpointIT.java*** test class uses these 
-system variables to build the URL of the application.
-
-In the test class, after defining how to build the application URL, the ***@Test*** 
-annotation indicates the start of the test method.
-
-In the ***try*** block of the test method, an HTTP ***GET*** request to the 
-URL of the application returns a status code. If the response to the request includes the 
-string ***Hello! Is Gradle working for you?***, the test passes. If that string is not in the 
-response, the test fails. The HTTP client then disconnects from the application.
-
-In the ***import*** statements of this test class, you'll notice that the 
-test has some new dependencies. Earlier you added some ***testImplementation*** 
-dependencies. The Apache ***httpclient*** and ***org.junit.jupiter*** 
-dependencies are needed to compile and run the integration test ***EndpointIT*** 
-class.
-
-The scope for each of the dependencies is set to ***testImplementation*** 
-because the libraries are needed only during the Gradle test phase and do not need to be 
-packaged with the application.
-
-Now, the created WAR file contains the web application, and development mode can run any integration 
-test classes that it finds. Integration test classes are classes with names that end in ***IT***.
-
-The directory structure of the project in the ***start*** folder should now look like this 
-example:
-
-```
-└── build.gradle
-├── settings.gradle
-└── src
-    ├── main
-    │    ├── java
-    │    ├── liberty
-    │    │    └── config
-    │    └── webapp
-    │         └── WEB_INF
-    └── test
-         └── java
-
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Access the microservice by running the following command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
 ```
 
-### A few more pieces
+When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
 
-We show a few more Gradle tricks in this example with the ***openBrowser*** task. 
-This task displays your application and the test report in the default browser.
+Run the following command to remove the deployed ***system*** microservice:
+```bash
+kubectl delete -f deploy.yaml
+```
 
-The final Gradle magic to add is the task dependency directives.
-The ***dependency directives*** organizes task execution. 
-In this case, the test task is set to run after the server is started, and the
-***openBrowser*** task is executed after the test task is finalized.
+::page{title="Specifying optional parameters"}
 
-### Running the tests
+You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1beta2.adoc#configuration) to find all of the supported optional CRDs.
 
-Because you started Open Liberty in development mode at the start of the guide, press the ***enter/return*** 
-key from the command-line session where you started dev mode to run the tests.
-You will see that the browser opened up the test summary page, which ran one successful test.
+To configure the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator, specify the ***probes*** in your ***deploy.yaml*** file. The ***startup*** probe verifies whether deployed application is fully initialized before the liveness probe takes over. Then, the ***liveness*** probe determines whether the application is running and the ***readiness*** probe determines whether the application is ready to process requests. For more information about application health checks, see the [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide.
 
-To see whether the test detects a failure, change the ***response string*** in the 
-***src/main/java/io/openliberty/guides/hello/HelloServlet.java*** file 
-so that it doesn't match the string that the test is looking for. Then rerun the Gradle 
-test to automatically restart and retest your application to check to see if the test fails.
+Replace the ***deploy.yaml*** configuration file.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+> To open the deploy.yaml file in your IDE, select
+> **File** > **Open** > guide-openliberty-operator-intro/start/deploy.yaml, or click the following button
+
+::openFile{path="/home/project/guide-openliberty-operator-intro/start/deploy.yaml"}
+
+
+
+```yaml
+apiVersion: apps.openliberty.io/v1beta2
+kind: OpenLibertyApplication
+metadata:
+  name: system
+  labels:
+    name: system
+spec:
+  applicationImage: system:1.0-SNAPSHOT
+  service:
+    port: 9080
+  expose: true
+  route:
+    pathType: ImplementationSpecific
+  env:
+    - name: WLP_LOGGING_MESSAGE_FORMAT
+      value: "json"
+    - name: WLP_LOGGING_MESSAGE_SOURCE
+      value: "message,trace,accessLog,ffdc,audit"
+  probes:
+    startup:
+      failureThreshold: 12
+      httpGet:
+        path: /health/started
+        port: 9080
+        scheme: HTTP
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
+    liveness:
+      failureThreshold: 12
+      httpGet:
+        path: /health/live
+        port: 9080
+        scheme: HTTP
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
+    readiness:
+      failureThreshold: 12
+      httpGet:
+        path: /health/ready
+        port: 9080
+        scheme: HTTP
+      initialDelaySeconds: 30
+      periodSeconds: 2
+      timeoutSeconds: 10
+```
+
+
+
+The health check endpoints ***/health/started***, ***/health/live*** and ***/health/ready*** are already created for you. 
+
+
+Run the following commands to update the **applicationImage** with the **pullSecret** and redeploy the **system** microservice with the new configuration:
+```bash
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
+kubectl apply -f deploy.yaml
+```
+Run the following command to check status of the pods:
+```bash
+kubectl describe pods | grep health
+```
+
+Look for the following output to confirm that the health checks are successfully applied and working:
+
+```
+Liveness:   http-get http://:9080/health/live delay=30s timeout=10s period=2s #success=1 #failure=12
+Readiness:  http-get http://:9080/health/ready delay=30s timeout=10s period=2s #success=1 #failure=12
+Startup:    http-get http://:9080/health/started delay=30s timeout=10s period=2s #success=1 #failure=12
+```
+
+Run the following command to set up port forwarding to access the ***system*** service:
+
+```bash
+kubectl port-forward svc/system 9080
+```
+
+
+Access the microservice by running the following command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
+
+::page{title="Tearing down the environment"}
+
+
+When you no longer need your deployed microservice, you can delete all resources by running the following command:
+
+```bash
+kubectl delete -f deploy.yaml
+```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You built and tested a web application project running on an Open Liberty server using Gradle.
+You just deployed a microservice running in Open Liberty to Kubernetes and configured the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator.
 
 
 
@@ -367,32 +370,34 @@ You built and tested a web application project running on an Open Liberty server
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-gradle-intro*** project by running the following commands:
+Delete the ***guide-openliberty-operator-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-gradle-intro
+rm -fr guide-openliberty-operator-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Building%20a%20web%20application%20with%20Gradle&guide-id=cloud-hosted-guide-gradle-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20Kubernetes%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-gradle-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-gradle-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-openliberty-operator-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-openliberty-operator-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Building a web application with Maven](https://openliberty.io/guides/maven-intro.html)
+* [Deploying microservices to OpenShift 3](https://openliberty.io/guides/cloud-openshift.html)
+* [Deploying microservices to OpenShift 4 using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html)
+* [Deploying microservices to an OKD cluster using Minishift](https://openliberty.io/guides/okd.html)
 
 
 ### Log out of the session
