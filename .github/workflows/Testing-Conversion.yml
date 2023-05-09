@@ -102,7 +102,7 @@ jobs:
           echo $removeEnd
           echo $instructionsMD
           cd GuideConverter
-          if [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions.md" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"; elif [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}"; else mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/cloud-hosted-$removeEnd"; fi
+          if [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions.md" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"; elif [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}"; else mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/cloud-hosted-*.md"; fi
 
 
   testingConversionAllGuides:
