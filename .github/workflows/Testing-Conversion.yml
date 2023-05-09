@@ -94,6 +94,7 @@ jobs:
         run: |
           echo ${{ github.event.pull_request.body }}
           prText="${{ github.event.pull_request.body }}"
+          removeStart="${prText:44}"
           removeEnd="${removeStart% *}"
           echo $removeEnd
           removeEnd=`echo "${removeEnd}" | sed -e 's/ repo for//g'`
