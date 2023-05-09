@@ -96,7 +96,7 @@ jobs:
           prText="${{ github.event.pull_request.body }}"
           removeStart="${prText:44}"
           removeEnd="${removeStart% *}"
-          guideName="${prText:77}"
+          guideName="${prText:87}"
           echo $guideName
           removeEnd=`echo "${removeEnd}" | sed -e 's/ repo for//g'`
           removeEnd=`echo "${removeEnd}" | sed -e 's/cloud-hosted-//g'`
