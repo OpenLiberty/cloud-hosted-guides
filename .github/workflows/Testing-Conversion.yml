@@ -96,13 +96,21 @@ jobs:
           prText="${{ github.event.pull_request.body }}"
           removeStart="${prText:44}"
           removeEnd="${removeStart% *}"
+          # get all files in cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs
+          for file in cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/*; do
+          # get the file starting with "cloud-hosted-"
+            if [[ $file == *"cloud-hosted-"* ]]; then
+            cloud-hosted = $file
+            fi
+          echo $cloud-hosted
+          done
           removeEnd=`echo "${removeEnd}" | sed -e 's/ repo for//g'`
           removeEnd=`echo "${removeEnd}" | sed -e 's/cloud-hosted-//g'`
           instructionsMD=`echo "cloud_hosted_${removeEnd}" | sed -e 's/-/_/g'`
           echo $removeEnd
           echo $instructionsMD
           cd GuideConverter
-          if [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions.md" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"; elif [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}"; else mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/cloud-hosted-*.md"; fi
+          if [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions.md" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"; elif [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}"; else mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/cloud-hosted-"; fi
 
 
   testingConversionAllGuides:
