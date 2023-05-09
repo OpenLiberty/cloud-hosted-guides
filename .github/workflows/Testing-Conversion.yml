@@ -97,6 +97,8 @@ jobs:
           removeStart="${prText:44}"
           removeEnd="${removeStart% *}"
           guideName="${prText:87}"
+          # remove the last character
+          guideName="${guideName%?}"
           echo $guideName
           removeEnd=`echo "${removeEnd}" | sed -e 's/ repo for//g'`
           removeEnd=`echo "${removeEnd}" | sed -e 's/cloud-hosted-//g'`
