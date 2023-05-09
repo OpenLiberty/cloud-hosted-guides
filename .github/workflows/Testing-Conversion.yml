@@ -96,17 +96,13 @@ jobs:
           prText="${{ github.event.pull_request.body }}"
           removeStart="${prText:44}"
           removeEnd="${removeStart% *}"
-          guideName="${prText:87}"
-          # remove the last character
-          guideName="${guideName%?}"
-          echo $guideName
           removeEnd=`echo "${removeEnd}" | sed -e 's/ repo for//g'`
           removeEnd=`echo "${removeEnd}" | sed -e 's/cloud-hosted-//g'`
           instructionsMD=`echo "cloud_hosted_${removeEnd}" | sed -e 's/-/_/g'`
           echo $removeEnd
           echo $instructionsMD
           cd GuideConverter
-          if [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions.md" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"; elif [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}"; else mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/instructions.md"; fi
+          if [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions.md" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"; elif [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}"; else mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/instructions"; fi
 
 
   testingConversionAllGuides:
