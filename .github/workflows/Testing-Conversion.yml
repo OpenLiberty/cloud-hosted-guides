@@ -95,17 +95,16 @@ jobs:
           echo ${{ github.event.pull_request.body }}
           prText="${{ github.event.pull_request.body }}"
           removeStart="${prText:44}"
-          startRemove="${44:prText}"
           removeEnd="${removeStart% *}"
-          echo $startRemove
-          echo $removeEnd
+          guideName="${prText:77}"
+          echo $guideName
           removeEnd=`echo "${removeEnd}" | sed -e 's/ repo for//g'`
           removeEnd=`echo "${removeEnd}" | sed -e 's/cloud-hosted-//g'`
           instructionsMD=`echo "cloud_hosted_${removeEnd}" | sed -e 's/-/_/g'`
           echo $removeEnd
           echo $instructionsMD
           cd GuideConverter
-          if [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions.md" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"; elif [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}"; else mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/cloud-hosted-"; fi
+          if [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions.md" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"; elif [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}"; else mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/cloud-hosted-${guideName}"; fi
 
 
   testingConversionAllGuides:
