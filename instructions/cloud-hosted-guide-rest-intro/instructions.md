@@ -79,7 +79,7 @@ The defaultServer server is ready to run a smarter planet.
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-Check out the service at the http://localhost:9080/LibertyProject/system/properties URL. 
+Check out the service at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -219,8 +219,8 @@ Replace the server configuration file.
 ```xml
 <server description="Intro REST Guide Liberty server">
   <featureManager>
-      <feature>restfulWS-3.0</feature>
-      <feature>jsonb-2.0</feature>
+      <feature>restfulWS-3.1</feature>
+      <feature>jsonb-3.0</feature>
   </featureManager>
 
   <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
@@ -247,7 +247,7 @@ The variables that are being used in the ***server.xml*** file are provided by t
 You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-Check out the service that you created at the http://localhost:9080/LibertyProject/system/properties URL. 
+Check out the service that you created at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
