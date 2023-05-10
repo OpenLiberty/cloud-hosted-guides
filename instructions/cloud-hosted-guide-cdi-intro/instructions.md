@@ -78,7 +78,7 @@ The defaultServer server is ready to run a smarter planet.
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-Point your browser to the http://localhost:9080/inventory/systems URL.
+Point your browser to the ***http\://localhost:9080/inventory/systems*** URL.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -89,7 +89,7 @@ curl -s http://localhost:9080/inventory/systems | jq
 
 
 
-This is the starting point of the ***inventory*** service and it displays the current contents of the inventory. As you might expect, these are empty because nothing is stored in the inventory yet. Next, point your browser to the http://localhost:9080/inventory/systems/localhost URL.
+This is the starting point of the ***inventory*** service and it displays the current contents of the inventory. As you might expect, these are empty because nothing is stored in the inventory yet. Next, point your browser to the ***http\://localhost:9080/inventory/systems/localhost*** URL.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -100,7 +100,7 @@ curl -s http://localhost:9080/inventory/systems/localhost | jq
 
 
 
-You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. Go back to http://localhost:9080/inventory/systems
+You see a result in JSON format with the system properties of your local JVM. When you visit this URL, these system properties are automatically stored in the inventory. Go back to ***http\://localhost:9080/inventory/systems***
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -295,7 +295,7 @@ You started the Open Liberty server in dev mode at the beginning of the guide, s
 You can find the ***inventory*** and ***system*** services at the following URLs:
 
 
- http://localhost:9080/inventory/systems
+ ***http\://localhost:9080/inventory/systems***
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -305,7 +305,7 @@ curl -s http://localhost:9080/inventory/systems | jq
 ```
 
 
- http://localhost:9080/system/properties
+ ***http\://localhost:9080/system/properties***
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -522,9 +522,7 @@ If the tests pass, you see a similar output to the following example:
 Running it.io.openliberty.guides.system.SystemEndpointIT
 Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.99 sec - in it.io.openliberty.guides.system.SystemEndpointIT
 Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-[WARNING ] Interceptor for {http://badhostname:9080/system/properties}WebClient has thrown exception, unwinding now
-Could not send Message.
-[err] Runtime exception: java.net.UnknownHostException: UnknownHostException invoking http://badhostname:9080/system/properties: badhostname
+[err] Runtime exception: RESTEASY004655: Unable to invoke request: java.net.UnknownHostException: badhostname: nodename nor servname provided, or not known
 Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.325 sec - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
 Results :
@@ -532,7 +530,7 @@ Results :
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-The warning and error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
+The error messages are expected and result from a request to a bad or an unknown hostname. This request is made in the ***testUnknownHost()*** test from the ***InventoryEndpointIT*** integration test.
 
 To see whether the tests detect a failure, change the ***endpoint*** for the ***inventory*** service in the ***src/main/java/io/openliberty/guides/inventory/InventoryResource.java*** file to something else. Then, run the tests again to see that a test failure occurs.
 
