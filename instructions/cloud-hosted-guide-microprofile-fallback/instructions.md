@@ -295,7 +295,7 @@ Notice that the results from the two URLs are identical because the **inventory*
 
 To see the application metrics, run the following curl commmand. This command will Log in using **admin** user, and you will have to enter **adminpwd** as the password.
 ```bash
-curl -k -u admin https://localhost:9443/metrics/base | grep _ft_
+curl -k -u admin https://localhost:9443/metrics?scope=base | grep _ft_
 ```
 
 See the following sample outputs for the **@Fallback** annotated method and the fallback method before a fallback occurs:
@@ -344,7 +344,7 @@ You see that the service displays a 503 HTTP response code.
 
 Run the following curl command again and enter ***adminpwd*** as the password:
 ```bash
-curl -k -u admin https://localhost:9443/metrics/base | grep _ft_
+curl -k -u admin https://localhost:9443/metrics?scope=base | grep _ft_
 ```
 
 See the following sample outputs for the ***@Fallback*** annotated method and the fallback method after a fallback occurs:
