@@ -424,15 +424,15 @@ Replace the system server configuration file.
 <server description="Sample Liberty server">
 
   <featureManager>
-    <feature>restfulWS-3.0</feature>
-    <feature>jsonb-2.0</feature>
-    <feature>jsonp-2.0</feature>
-    <feature>cdi-3.0</feature>
+    <feature>restfulWS-3.1</feature>
+    <feature>jsonb-3.0</feature>
+    <feature>jsonp-2.1</feature>
+    <feature>cdi-4.0</feature>
     <feature>mpConfig-3.0</feature>
     <feature>mpRestClient-3.0</feature>
-    <feature>appSecurity-4.0</feature>
-    <feature>servlet-5.0</feature>
-    <feature>mpJwt-2.0</feature>
+    <feature>appSecurity-5.0</feature>
+    <feature>servlet-6.0</feature>
+    <feature>mpJwt-2.1</feature>
   </featureManager>
 
   <variable name="default.http.port" defaultValue="8080"/>
@@ -554,7 +554,7 @@ public class SystemEndpointIT {
     static String urlRoles;
 
     @BeforeAll
-    private static void setup() throws Exception {
+    public static void setup() throws Exception {
         String urlBase = "http://" + System.getProperty("hostname")
                  + ":" + System.getProperty("http.port")
                  + "/system/properties";
@@ -624,14 +624,15 @@ public class SystemEndpointIT {
     }
 
     private Response makeRequest(String url, String authHeader) {
-        Client client = ClientBuilder.newClient();
-        Builder builder = client.target(url).request();
-        builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-        if (authHeader != null) {
+        try (Client client = ClientBuilder.newClient()) {
+            Builder builder = client.target(url).request();
+            builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+            if (authHeader != null) {
             builder.header(HttpHeaders.AUTHORIZATION, authHeader);
+            }
+            Response response = builder.get();
+            return response;
         }
-        Response response = builder.get();
-        return response;
     }
 
 }
