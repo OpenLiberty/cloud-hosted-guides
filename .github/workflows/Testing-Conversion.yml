@@ -56,7 +56,7 @@ jobs:
           prText="${{ github.event.pull_request.body }}"
           removeStart="${prText:44}"
           removeEnd="${removeStart% *}"
-          instructionsMD=`echo "cloud_hosted_${removeEnd}" | sed -e 's/-/_/g'`
+          instructionsMD=`echo "cloud_hosted_${removeEnd}.md" | sed -e 's/-/_/g'`
           echo $removeEnd
           echo $instructionsMD
           cd GuideConverter
