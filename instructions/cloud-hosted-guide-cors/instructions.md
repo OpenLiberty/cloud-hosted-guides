@@ -120,8 +120,8 @@ Replace the server configuration file.
 <server description="Sample Liberty server">
 
 <featureManager>
-    <feature>restfulWS-3.0</feature>
-    <feature>jsonb-2.0</feature>
+    <feature>restfulWS-3.1</feature>
+    <feature>jsonb-3.0</feature>
 </featureManager>
 
 <variable name="default.http.port" defaultValue="9080"/>
@@ -281,8 +281,8 @@ Replace the server configuration file.
 <server description="Sample Liberty server">
 
 <featureManager>
-    <feature>restfulWS-3.0</feature>
-    <feature>jsonb-2.0</feature>
+    <feature>restfulWS-3.1</feature>
+    <feature>jsonb-3.0</feature>
 </featureManager>
 
 <variable name="default.http.port" defaultValue="9080"/>
