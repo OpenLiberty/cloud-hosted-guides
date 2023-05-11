@@ -137,8 +137,8 @@ Replace the war/POM file.
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -152,13 +152,13 @@ Replace the war/POM file.
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
+            <version>10.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>5.0</version>
+            <version>6.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -217,8 +217,8 @@ Replace the ear/POM file.
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <!-- Liberty configuration -->
         <liberty.var.default.http.port>9080</liberty.var.default.http.port>
         <liberty.var.default.https.port>9443</liberty.var.default.https.port>
@@ -243,7 +243,7 @@ Replace the ear/POM file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.8.2</version>
+            <version>5.9.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -254,7 +254,7 @@ Replace the ear/POM file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-ear-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.0</version>
                 <configuration>
                     <modules>
                         <jarModule>
@@ -292,7 +292,7 @@ Replace the ear/POM file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>3.0.0</version>
                 <configuration>
                     <systemPropertyVariables>
                         <default.http.port>
@@ -340,7 +340,7 @@ touch /home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/s
 <server description="Sample Liberty server">
 
     <featureManager>
-        <feature>pages-3.0</feature>
+        <feature>pages-3.1</feature>
     </featureManager>
 
     <variable name="default.http.port" defaultValue="9080" />
@@ -404,7 +404,7 @@ Replace the start/POM file.
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.10.1</version>
+                    <version>3.11.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
