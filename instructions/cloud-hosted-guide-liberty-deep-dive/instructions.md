@@ -58,7 +58,7 @@ sudo usermod -d /home/project theia
 
 Liberty now offers an easier way to get started with developing your application: the Open Liberty Starter. This tool provides a simple and quick way to get the necessary files to start building an application on Liberty. Through this tool, you can specify your application and project name. You can also choose a build tool from either Maven or Gradle, and pick the Java SE, Jakarta EE, and MicroProfile versions for your application.
 
-In this workshop, the Open Liberty Starter is used to create the starting point of the application. Maven is used as the selected build tool and the application uses of Jakarta EE 9.1 and MicroProfile 5.
+In this workshop, the Open Liberty Starter is used to create the starting point of the application. Maven is used as the selected build tool and the application uses of Jakarta EE 10 and MicroProfile 6.
 
 To get started with this tool, see the Getting Started page: [https://openliberty.io/start/](https://openliberty.io/start/)
 
@@ -68,14 +68,14 @@ On that page, enter the following properties in the **Create a starter applicati
 * Under Artifact specify: ***inventory***
 * Under Build Tool select: ***Maven***
 * Under Java SE Version select: ***your version***
-* Under Java EE/Jakarta EE Version select: ***9.1***
-* Under MicroProfile Version select: `5` 
+* Under Java EE/Jakarta EE Version select: ***10***
+* Under MicroProfile Version select: ***6.0***
 
 
 In this Skills Network environment, instead of manually downloading and extracting the project, run the following commands:
 ```bash
 cd /home/project/guide-liberty-deep-dive/start
-curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=9.1&g=io.openliberty.deepdive&j=11&m=5.0'
+curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=10&g=io.openliberty.deepdive&j=11&m=6.0'
 unzip inventory.zip -d inventory
 ```
 
@@ -965,8 +965,8 @@ Replace the ***server.xml*** file.
 
     <!-- Enable features -->
     <featureManager>
-        <feature>jakartaee-9.1</feature>
-        <feature>microProfile-5.0</feature>
+        <feature>jakartaee-10.0</feature>
+        <feature>microProfile-6.0</feature>
     </featureManager>
 
     <variable name="default.http.port" defaultValue="9080" />
@@ -1021,22 +1021,22 @@ Replace the ***pom.xml*** file.
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-        <liberty.var.default.context.root>/inventory</liberty.var.default.context.root>
+        <liberty.var.default.http.port>9081</liberty.var.default.http.port>
+        <liberty.var.default.https.port>9445</liberty.var.default.https.port>
+        <liberty.var.default.context.root>/trial</liberty.var.default.context.root>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
+            <version>10.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>5.0</version>
+            <version>6.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -1074,14 +1074,11 @@ Replace the ***pom.xml*** file.
 
 Add properties for the ***HTTP*** port, ***HTTPS*** port, and the ***context root*** to the ***pom.xml*** file. 
 
-You can try changing the value of these variables in the ***pom.xml*** file:
-
-* update ***liberty.var.default.http.port*** to ***9081***
-* update ***liberty.var.default.https.port*** to ***9445***
-* update ***liberty.var.default.context.root*** to ***/trial***.
+* ***liberty.var.default.http.port*** to ***9081***
+* ***liberty.var.default.https.port*** to ***9445***
+* ***liberty.var.default.context.root*** to ***/trial***.
 
 Because you are using dev mode, these changes are automatically picked up by the server.
-
 
 
 Now, you can access the application by running the following command:
@@ -1983,8 +1980,8 @@ Replace the ***server.xml*** configuration file.
 <server description="inventory">
 
     <featureManager>
-        <feature>jakartaee-9.1</feature>
-        <feature>microProfile-5.0</feature>
+        <feature>jakartaee-10.0</feature>
+        <feature>microProfile-6.0</feature>
     </featureManager>
 
     <variable name="default.http.port" defaultValue="9080" />
@@ -2063,20 +2060,20 @@ Replace the ***pom.xml*** configuration file.
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
+            <version>10.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>5.0</version>
+            <version>6.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.3.8</version>
+            <version>42.6.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -2210,8 +2207,8 @@ Replace the ***server.xml*** file.
 <server description="inventory">
 
     <featureManager>
-        <feature>jakartaee-9.1</feature>
-        <feature>microProfile-5.0</feature>
+        <feature>jakartaee-10.0</feature>
+        <feature>microProfile-6.0</feature>
     </featureManager>
 
     <variable name="default.http.port" defaultValue="9080" />
@@ -3133,8 +3130,8 @@ Replace the ***server.xml*** file.
 <server description="inventory">
 
     <featureManager>
-        <feature>jakartaee-9.1</feature>
-        <feature>microProfile-5.0</feature>
+        <feature>jakartaee-10.0</feature>
+        <feature>microProfile-6.0</feature>
         <feature>jwtSso-1.0</feature>
     </featureManager>
 
@@ -3262,13 +3259,13 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
+            <version>10.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>5.0</version>
+            <version>6.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -3621,8 +3618,8 @@ Replace the ***server.xml*** file.
 <server description="inventory">
 
     <featureManager>
-        <feature>jakartaee-9.1</feature>
-        <feature>microProfile-5.0</feature>
+        <feature>jakartaee-10.0</feature>
+        <feature>microProfile-6.0</feature>
         <feature>jwtSso-1.0</feature>
     </featureManager>
 
@@ -4033,7 +4030,7 @@ public class SystemResource {
 
 Import the ***Counted*** annotation and apply it to the ***POST /api/systems***, ***PUT /api/systems/{hostname}***, ***DELETE /api/systems/{hostname}***, and ***POST /api/systems/client/{hostname}*** endpoints to monotonically count how many times that the endpoints are accessed. 
 
-Additional information about the annotations that MicroProfile metrics provides, relevant metadata fields, and more are available at the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/22.0.0.4/reference/javadoc/microprofile-5.0-javadoc.html?package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=overview-summary.html).
+Additional information about the annotations that MicroProfile metrics provides, relevant metadata fields, and more are available at the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-6.0-javadoc.html?package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=overview-summary.html).
 
 
 Run the following commands to call some of the endpoints that you annotated:
@@ -4059,41 +4056,41 @@ curl -s 'http://localhost:9080/inventory/api/systems' | jq
 MicroProfile Metrics provides 4 different REST endpoints.
 
 * The ***/metrics*** endpoint provides you with all the metrics in text format. 
-* The ***/metrics/application*** endpoint provides you with application-specific metrics.
-* The ***/metrics/base*** endpoint provides you with metrics that are defined in MicroProfile specifications. Metrics in the base scope are intended to be portable between different MicroProfile-compatible runtimes.
-* The ***/metrics/vendor*** endpoint provides you with metrics that are specific to the runtime.
+* The ***/metrics?scope=application*** endpoint provides you with application-specific metrics.
+* The ***/metrics?scope=base*** endpoint provides you with metrics that are defined in MicroProfile specifications. Metrics in the base scope are intended to be portable between different MicroProfile-compatible runtimes.
+* The ***/metrics?scope=vendor*** endpoint provides you with metrics that are specific to the runtime.
 
 
 Run the following curl command to see the application metrics that are enabled through MicroProfile Metrics:
 ```bash
-curl -k --user bob:bobpwd https://localhost:9443/metrics/application
+curl -k --user bob:bobpwd https://localhost:9443/metrics?scope=application
 ```
 
 You can expect to see your application metrics in text format as the following output:
 
 ```
-# TYPE application_addSystemClient_total counter
-# HELP application_addSystemClient_total Number of times adding a system by client is called
-application_addSystemClient_total 0
-# TYPE application_addSystem_total counter
-# HELP application_addSystem_total Number of times adding system endpoint is called
-application_addSystem_total 1
-# TYPE application_updateSystem_total counter
-# HELP application_updateSystem_total Number of times updating a system endpoint is called
-application_updateSystem_total 1
-# TYPE application_removeSystem_total counter
-# HELP application_removeSystem_total Number of times removing a system endpoint is called
-application_removeSystem_total 1
+# HELP updateSystem_total Number of times updating a system endpoint is called
+# TYPE updateSystem_total counter
+updateSystem_total{mp_scope="application",} 1.0
+# HELP removeSystem_total Number of times removing a system endpoint is called
+# TYPE removeSystem_total counter
+removeSystem_total{mp_scope="application",} 1.0
+# HELP addSystemClient_total Number of times adding a system by client is called
+# TYPE addSystemClient_total counter
+addSystemClient_total{mp_scope="application",} 0.0
+# HELP addSystem_total Number of times adding system endpoint is called
+# TYPE addSystem_total counter
+addSystem_total{mp_scope="application",} 1.0
 ```
 
 To see the system metrics, run the following curl command:
 ```bash
-curl -k --user bob:bobpwd https://localhost:9443/metrics/base
+curl -k --user bob:bobpwd https://localhost:9443/metrics\?scope=base
 ```
 
 To see the vendor metrics, run the following curl command:
 ```bash
-curl -k --user bob:bobpwd https://localhost:9443/metrics/vendor
+curl -k --user bob:bobpwd https://localhost:9443/metrics\?scope=vendor
 ```
 
 To review all the metrics, run the following curl command:
@@ -4191,8 +4188,8 @@ Replace the ***server.xml*** file.
 <server description="inventory">
 
     <featureManager>
-        <feature>jakartaee-9.1</feature>
-        <feature>microProfile-5.0</feature>
+        <feature>jakartaee-10.0</feature>
+        <feature>microProfile-6.0</feature>
         <feature>jwtSso-1.0</feature>
     </featureManager>
 
@@ -4903,13 +4900,13 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
+            <version>10.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>5.0</version>
+            <version>6.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -4924,24 +4921,24 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.8.2</version>
+            <version>5.9.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.16.3</version>
+            <version>1.17.6</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.16.3</version>
+            <version>1.17.6</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <artifactId>slf4j-reload4j</artifactId>
             <version>1.7.36</version>
             <scope>test</scope>
         </dependency>
