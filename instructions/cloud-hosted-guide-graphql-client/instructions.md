@@ -217,8 +217,8 @@ Replace the Maven project file.
     <packaging>war</packaging>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Liberty configuration -->
@@ -231,13 +231,13 @@ Replace the Maven project file.
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
+            <version>10.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>5.0</version>
+            <version>6.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -253,41 +253,41 @@ Replace the Maven project file.
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client</artifactId>
-            <version>2.0.0.RC4</version>
+            <version>2.1.3</version>
         </dependency>
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client-implementation-vertx</artifactId>
-            <version>2.0.0.RC4</version>
+            <version>2.1.3</version>
         </dependency>
         <dependency>
             <groupId>io.smallrye.stork</groupId>
             <artifactId>stork-core</artifactId>
-            <version>1.1.2</version>
+            <version>2.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>1.7.30</version>
+            <version>2.0.7</version>
         </dependency>
              
         <!-- For tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.8.2</version>
+            <version>5.9.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.0.0.Final</version>
+            <version>6.2.3.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.0.0.Final</version>
+            <version>6.2.3.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -299,13 +299,13 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.16.3</version>
+            <version>1.18.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.16.3</version>
+            <version>1.18.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -333,12 +333,12 @@ Replace the Maven project file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>3.0.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.0</version>
+                <version>3.0.0</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.default.http.port}</http.port>
@@ -377,11 +377,11 @@ Replace the server configuration file.
 <server description="Query Service">
 
   <featureManager>
-    <feature>restfulWS-3.0</feature>
-    <feature>cdi-3.0</feature>
-    <feature>jsonb-2.0</feature>
+    <feature>restfulWS-3.1</feature>
+    <feature>cdi-4.0</feature>
+    <feature>jsonb-3.0</feature>
     <feature>mpConfig-3.0</feature>
-    <feature>mpOpenAPI-3.0</feature>
+    <feature>mpOpenAPI-3.1</feature>
   </featureManager>
 
   <variable name="default.http.port" defaultValue="9084"/>
@@ -420,8 +420,8 @@ docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 Dockerfiles are already set up for you. Build your Docker images with the following commands:
 
 ```bash
-docker build -t system:1.0-java8-SNAPSHOT --build-arg JAVA_VERSION=java8 system/.
 docker build -t system:1.0-java11-SNAPSHOT --build-arg JAVA_VERSION=java11 system/.
+docker build -t system:1.0-java17-SNAPSHOT --build-arg JAVA_VERSION=java17 system/.
 docker build -t graphql:1.0-SNAPSHOT graphql/.
 docker build -t query:1.0-SNAPSHOT query/.
 ```
@@ -445,28 +445,28 @@ To access the client service, there are several available REST endpoints that te
 
 First, make a GET request to the ***/query/system/{hostname}*** endpoint by the following command. This request retrieves the system properties for the specified ***hostname***.
 
-The ***hostname*** is set to ***system-java8***. You can try out the operations using the hostname ***system-java11*** as well. 
+The ***hostname*** is set to ***system-java11***. You can try out the operations using the hostname ***system-java17*** as well. 
 
 ```bash
-curl -s 'http://localhost:9084/query/system/system-java8' | jq
+curl -s 'http://localhost:9084/query/system/system-java11' | jq
 ```
 You can expect a response similar to the following example:
 
 
 ```
 {
-  "hostname": "system-java8",
+  "hostname": "system-java11",
   "java": {
-    "vendor": "International Business Machines Corporation",
-    "version": "1.8.0_312"
+    "vendor": "IBM Corporation",
+    "version": "11.0.18"
   },
   "osArch": "amd64",
   "osName": "Linux",
-  "osVersion": "5.10.25-linuxkit",
+  "osVersion": "5.15.0-67-generic",
   "systemMetrics": {
-    "heapSize": 2086993920,
+    "heapSize": 536870912,
     "nonHeapSize": -1,
-    "processors": 8
+    "processors": 2
   },
   "username": "default"
 }
@@ -475,10 +475,10 @@ You can expect a response similar to the following example:
 
 
 You can retrieve the information about the resource usage of any number of system services by making a GET request at ***/query/systemLoad/{hostnames}*** endpoint. 
-The ***hostnames*** are set to ***system-java8,system-java11***.
+The ***hostnames*** are set to ***system-java11,system-java17***.
 
 ```bash
-curl -s 'http://localhost:9084/query/systemLoad/system-java8,system-java11' | jq
+curl -s 'http://localhost:9084/query/systemLoad/system-java11,system-java17' | jq
 ```
 
 You can expect the following response is similar to the following example:
@@ -487,19 +487,19 @@ You can expect the following response is similar to the following example:
 ```
 [
   {
-    "hostname": "system-java8",
+    "hostname": "system-java11",
     "loadData": {
-      "heapUsed": 34251904,
-      "loadAverage": 0.11,
-      "nonHeapUsed": 84034688
+      "heapUsed": 30090920,
+      "loadAverage": 0.08,
+      "nonHeapUsed": 87825316
     }
   },
   {
-    "hostname": "system-java11",
+    "hostname": "system-java17",
     "loadData": {
-      "heapUsed": 41953280,
-      "loadAverage": 0.11,
-      "nonHeapUsed": 112506520
+      "heapUsed": 39842888,
+      "loadAverage": 0.08,
+      "nonHeapUsed": 93098960
     }
   }
 ]
@@ -512,17 +512,16 @@ You can also make POST requests to add a note to a system service at the ***/que
 To add a note to the system service running on Java 8, run the following command:
 
 ```bash
-curl -i -X 'POST' 'http://localhost:9084/query/mutation/system/note' -H 'Content-Type: application/json' -d '{"hostname": "system-java8","text": "I am trying out GraphQL on Open Liberty!"}'
+curl -i -X 'POST' 'http://localhost:9084/query/mutation/system/note' -H 'Content-Type: application/json' -d '{"hostname": "system-java11","text": "I am trying out GraphQL on Open Liberty!"}'
 ```
 
 You will recieve a `200` response code, similar to below, if the request is processed succesfully. 
 
 ```
 HTTP/1.1 200 OK
-X-Powered-By: Servlet/4.0
-Date: Fri, 20 May 2022 19:11:46 GMT
-Content-Length: 0
 Content-Language: en-US
+Content-Length: 0
+Date: Fri, 21 Apr 2023 14:17:47 GMT
 ```
 
 You can see the note you added to the system service at the ***GET /query/system/{hostname}*** endpoint.
@@ -721,7 +720,7 @@ import io.openliberty.guides.graphql.models.SystemInfo;
 public class QueryResourceIT {
 
     private static Logger logger = LoggerFactory.getLogger(QueryResourceIT.class);
-    private static String system8ImageName = "system:1.0-java8-SNAPSHOT";
+    private static String system8ImageName = "system:1.0-java11-SNAPSHOT";
     private static String queryImageName = "query:1.0-SNAPSHOT";
     private static String graphqlImageName = "graphql:1.0-SNAPSHOT";
 
@@ -733,7 +732,7 @@ public class QueryResourceIT {
         = new GenericContainer<>(system8ImageName)
               .withNetwork(network)
               .withExposedPorts(9080)
-              .withNetworkAliases("system-java8")
+              .withNetworkAliases("system-java11")
               .withLogConsumer(new Slf4jLogConsumer(logger));
 
     @Container
@@ -760,9 +759,9 @@ public class QueryResourceIT {
     @Test
     @Order(1)
     public void testGetSystem() {
-        System.out.println("TEST: Testing get system /system/system-java8");
-        SystemInfo systemInfo = client.querySystem("system-java8");
-        assertEquals(systemInfo.getHostname(), "system-java8");
+        System.out.println("TEST: Testing get system /system/system-java11");
+        SystemInfo systemInfo = client.querySystem("system-java11");
+        assertEquals(systemInfo.getHostname(), "system-java11");
         assertNotNull(systemInfo.getOsVersion(), "osVersion is null");
         assertNotNull(systemInfo.getJava(), "java is null");
         assertNotNull(systemInfo.getSystemMetrics(), "systemMetrics is null");
@@ -771,9 +770,9 @@ public class QueryResourceIT {
     @Test
     @Order(2)
     public void testGetSystemLoad() {
-        System.out.println("TEST: Testing get system load /systemLoad/system-java8");
-        List<SystemLoad> systemLoad = client.querySystemLoad("system-java8");
-        assertEquals(systemLoad.get(0).getHostname(), "system-java8");
+        System.out.println("TEST: Testing get system load /systemLoad/system-java11");
+        List<SystemLoad> systemLoad = client.querySystemLoad("system-java11");
+        assertEquals(systemLoad.get(0).getHostname(), "system-java11");
         SystemLoadData systemLoadData = systemLoad.get(0).getLoadData();
         assertNotNull(systemLoadData.getLoadAverage(), "loadAverage is null");
         assertNotNull(systemLoadData.getHeapUsed(), "headUsed is null");
@@ -785,11 +784,11 @@ public class QueryResourceIT {
     public void testEditNote() {
         System.out.println("TEST: Testing editing note /mutation/system/note");
         NoteInfo note = new NoteInfo();
-        note.setHostname("system-java8");
+        note.setHostname("system-java11");
         note.setText("I am trying out GraphQL on Open Liberty!");
         Response response = client.editNote(note);
         assertEquals(200, response.getStatus(), "Incorrect response code");
-        SystemInfo systemInfo = client.querySystem("system-java8");
+        SystemInfo systemInfo = client.querySystem("system-java11");
         assertEquals(systemInfo.getNote(), "I am trying out GraphQL on Open Liberty!");
     }
 }
@@ -797,13 +796,13 @@ public class QueryResourceIT {
 
 
 
-Define the ***systemContainer*** test container to start up the ***system-java8*** image, the ***graphqlContainer*** test container to start up the ***graphql*** image, and the ***libertyContainer*** test container to start up the ***query*** image. Make sure that the containers use the same network.
+Define the ***systemContainer*** test container to start up the ***system-java11*** image, the ***graphqlContainer*** test container to start up the ***graphql*** image, and the ***libertyContainer*** test container to start up the ***query*** image. Make sure that the containers use the same network.
 
 The ***@Testcontainers*** annotation finds all fields that are annotated with the ***@Container*** annotation and calls their container lifecycle methods. The ***static*** function declaration on each container indicates that this container will be started only once before any test method is executed and stopped after the last test method is executed.
 
-The ***testGetSystem()*** verifies the ***/query/system/{hostname}*** endpoint with ***hostname*** set to ***system-java8***.
+The ***testGetSystem()*** verifies the ***/query/system/{hostname}*** endpoint with ***hostname*** set to ***system-java11***.
 
-The ***testGetSystemLoad()*** verifies the ***/query/systemLoad/{hostnames}*** endpoint with ***hostnames*** set to ***system-java8***.
+The ***testGetSystemLoad()*** verifies the ***/query/systemLoad/{hostnames}*** endpoint with ***hostnames*** set to ***system-java11***.
 
 The ***testEditNote()*** verifies the mutation operation at the ***/query/mutation/system/note*** endpoint.
 
