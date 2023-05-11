@@ -157,8 +157,8 @@ touch /home/project/guide-maven-intro/start/pom.xml
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <!-- Liberty configuration -->
         <liberty.var.default.http.port>9080</liberty.var.default.http.port>
         <liberty.var.default.https.port>9443</liberty.var.default.https.port>
@@ -182,9 +182,9 @@ touch /home/project/guide-maven-intro/start/pom.xml
         </dependency>
         <!-- For testing -->
         <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-            <version>3.1</version>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -305,15 +305,19 @@ touch /home/project/guide-maven-intro/start/src/test/java/io/openliberty/guides/
 ```java
 package io.openliberty.guides.hello.it;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.GetMethod;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class EndpointIT {
     private static String siteURL;
@@ -327,20 +331,30 @@ public class EndpointIT {
 
     @Test
     public void testServlet() throws Exception {
-        HttpClient client = new HttpClient();
 
-        GetMethod method = new GetMethod(siteURL);
+        CloseableHttpClient client = HttpClientBuilder.create().build();
+        HttpGet httpGet = new HttpGet(siteURL);
+        CloseableHttpResponse response = null;
+
         try {
-            int statusCode = client.executeMethod(method);
+            response = client.execute(httpGet);
 
+            int statusCode = response.getStatusLine().getStatusCode();
             assertEquals(HttpStatus.SC_OK, statusCode, "HTTP GET failed");
 
-            String response = method.getResponseBodyAsString(1000);
-
-            assertTrue(response.contains("Hello! How are you today?"),
-                "Unexpected response body");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(
+                                        response.getEntity().getContent()));
+            String line;
+            StringBuffer buffer = new StringBuffer();
+            while ((line = reader.readLine()) != null) {
+                buffer.append(line);
+            }
+            reader.close();
+            assertTrue(buffer.toString().contains("Hello! How are you today?"),
+                "Unexpected response body: " + buffer.toString());
         } finally {
-            method.releaseConnection();
+            response.close();
+            httpGet.releaseConnection();
         }
     }
 }
@@ -361,7 +375,7 @@ In the ***try block*** of the test method, an HTTP ***GET*** request to the URL 
 
 In the ***import*** statements of this test class, you'll notice that the test has some new dependencies. Before the test can be compiled by Maven, you need to update the ***pom.xml*** to include these dependencies.
 
-The Apache ***commons-httpclient*** and ***junit-jupiter-engine*** dependencies are needed to compile and run the integration test ***EndpointIT*** class. The scope for each of the dependencies is set to ***test*** because the libraries are needed only during the Maven build and do not needed to be packaged with the application.
+The Apache ***httpclient*** and ***junit-jupiter-engine*** dependencies are needed to compile and run the integration test ***EndpointIT*** class. The scope for each of the dependencies is set to ***test*** because the libraries are needed only during the Maven build and do not needed to be packaged with the application.
 
 Now, the created WAR file contains the web application, and development mode can run any integration test classes that it finds. Integration test classes are classes with names that end in ***IT***.
 
