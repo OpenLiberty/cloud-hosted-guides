@@ -56,11 +56,11 @@ jobs:
           prText="${{ github.event.pull_request.body }}"
           removeStart="${prText:44}"
           removeEnd="${removeStart% *}"
-          instructionsMD=`echo "cloud_hosted_${removeEnd}.md" | sed -e 's/-/_/g'`
+          instructionsMD=`echo "cloud_hosted_${removeEnd}" | sed -e 's/-/_/g'`
           echo $removeEnd
           echo $instructionsMD
           cd GuideConverter
-          if [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions.md" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"; elif [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}"; else mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/cloud-hosted-$removeEnd"; fi
+          if [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions.md" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/instructions"; elif [ -f "cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}.md" ]; then mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/${instructionsMD}"; else mvn -ntp -Dtest=TestConversion test -DguideName="cloud-hosted-guides/instructions/cloud-hosted-$removeEnd/labs/cloud-hosted-$removeEnd"; fi
 
   testingDevConversion:
     runs-on: ubuntu-latest
