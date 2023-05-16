@@ -306,7 +306,7 @@ Replace the ***system*** server configuration file.
 <server description="system service">
 
     <featureManager>
-        <feature>restfulWS-3.0</feature>
+        <feature>restfulWS-3.1</feature>
         <feature>grpc-1.0</feature>
     </featureManager>
 
@@ -427,10 +427,10 @@ Replace the ***query*** server configuration file.
 <server description="query service">
 
     <featureManager>
-        <feature>restfulWS-3.0</feature>
-        <feature>jsonp-2.0</feature>
-        <feature>jsonb-2.0</feature>
-        <feature>cdi-3.0</feature>
+        <feature>restfulWS-3.1</feature>
+        <feature>jsonp-2.1</feature>
+        <feature>jsonb-3.0</feature>
+        <feature>cdi-4.0</feature>
         <feature>mpConfig-3.0</feature>
         <feature>grpc-1.0</feature>
         <feature>grpcClient-1.0</feature>
@@ -1378,6 +1378,246 @@ Click the following button to visit the ***/query/properties/java*** endpoint to
 
 
 ::page{title="Testing the application"}
+
+Although you can test your application manually, automated tests ensure consistent code quality by triggering a failure whenever a code change introduces a defect. In this section, you'll create unit tests for the gRPC server service and integration tests for the ***query*** service.
+
+### Implementing unit tests for the gRPC server service
+
+
+The ***pom.xml*** Maven configuration file already specifies the required dependencies, including ***JUnit5***, ***grpc-testing***, and ***mockito-core*** libraries. The ***grpc-testing*** dependency provides utilities for testing gRPC services and creates a mock gRPC server that simulates client-server communication during testing. The ***mockito-core*** dependency enables the Mockito mocking framework.
+
+Create the ***SystemServiceTest*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-grpc-intro/start/system/src/test/java/io/openliberty/guides/system/SystemServiceTest.java
+```
+
+
+> Then, to open the SystemServiceTest.java file in your IDE, select
+> **File** > **Open** > guide-grpc-intro/start/system/src/test/java/io/openliberty/guides/system/SystemServiceTest.java, or click the following button
+
+::openFile{path="/home/project/guide-grpc-intro/start/system/src/test/java/io/openliberty/guides/system/SystemServiceTest.java"}
+
+
+
+```java
+package io.openliberty.guides.system;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
+import io.grpc.ManagedChannel;
+import io.grpc.Server;
+import io.grpc.inprocess.InProcessChannelBuilder;
+import io.grpc.inprocess.InProcessServerBuilder;
+import io.grpc.stub.StreamObserver;
+import io.openliberty.guides.systemproto.SystemProperties;
+import io.openliberty.guides.systemproto.SystemProperty;
+import io.openliberty.guides.systemproto.SystemPropertyName;
+import io.openliberty.guides.systemproto.SystemPropertyPrefix;
+import io.openliberty.guides.systemproto.SystemPropertyValue;
+import io.openliberty.guides.systemproto.SystemServiceGrpc;
+import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceBlockingStub;
+import io.openliberty.guides.systemproto.SystemServiceGrpc.SystemServiceStub;
+
+public class SystemServiceTest {
+
+    private static final String SERVER_NAME = "system";
+
+    private static Server inProcessServer;
+    private static ManagedChannel inProcessChannel;
+    private static SystemServiceBlockingStub blockingStub;
+    private static SystemServiceStub asyncStub;
+
+    @BeforeAll
+    public static void setUp() throws Exception {
+        inProcessServer = InProcessServerBuilder.forName(SERVER_NAME)
+                              .addService(new SystemService())
+                              .directExecutor()
+                              .build();
+        inProcessServer.start();
+        inProcessChannel = InProcessChannelBuilder.forName(SERVER_NAME)
+                               .directExecutor()
+                               .build();
+        blockingStub = SystemServiceGrpc.newBlockingStub(inProcessChannel);
+        asyncStub = SystemServiceGrpc.newStub(inProcessChannel);
+    }
+
+    @AfterAll
+    public static void tearDown() {
+        inProcessChannel.shutdownNow();
+        inProcessServer.shutdownNow();
+    }
+
+    @Test
+    public void testGetProperty() throws Exception {
+        SystemPropertyName request = SystemPropertyName.newBuilder()
+                                         .setPropertyName("os.name")
+                                         .build();
+        SystemPropertyValue response = blockingStub.getProperty(request);
+        assertEquals(System.getProperty("os.name"), response.getPropertyValue());
+    }
+
+    @Test
+    public void testGetServerStreamingProperties() throws Exception {
+
+        SystemPropertyPrefix request = SystemPropertyPrefix.newBuilder()
+                                           .setPropertyPrefix("os.")
+                                           .build();
+        final CountDownLatch countDown = new CountDownLatch(1);
+        List<SystemProperty> properties = new ArrayList<SystemProperty>();
+        StreamObserver<SystemProperty> responseObserver =
+            new StreamObserver<SystemProperty>() {
+                @Override
+                public void onNext(SystemProperty property) {
+                    properties.add(property);
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    fail(t.getMessage());
+                }
+
+                @Override
+                public void onCompleted() {
+                    countDown.countDown();
+                }
+            };
+
+        asyncStub.getServerStreamingProperties(request, responseObserver);
+        assertTrue(countDown.await(10, TimeUnit.SECONDS));
+
+        for (SystemProperty property : properties) {
+            String propertName = property.getPropertyName();
+            assertEquals(System.getProperty(propertName),
+                property.getPropertyValue(), propertName + " is incorrect");
+        }
+    }
+
+    @Test
+    public void testGetClientStreamingProperties() {
+
+        @SuppressWarnings("unchecked")
+        StreamObserver<SystemProperties> responseObserver =
+            (StreamObserver<SystemProperties>) mock(StreamObserver.class);
+        ArgumentCaptor<SystemProperties> systemPropertiesCaptor =
+            ArgumentCaptor.forClass(SystemProperties.class);
+
+        StreamObserver<SystemPropertyName> requestObserver =
+            asyncStub.getClientStreamingProperties(responseObserver);
+        List<String> keys = System.getProperties().stringPropertyNames().stream()
+                                  .filter(k -> k.startsWith("user."))
+                                  .collect(Collectors.toList());
+        keys.stream()
+            .map(k -> SystemPropertyName.newBuilder().setPropertyName(k).build())
+            .forEach(requestObserver::onNext);
+        requestObserver.onCompleted();
+        verify(responseObserver, timeout(100)).onNext(systemPropertiesCaptor.capture());
+
+        SystemProperties systemProperties = systemPropertiesCaptor.getValue();
+        systemProperties.getPropertiesMap()
+            .forEach((propertyName, propertyValue) ->
+            assertEquals(System.getProperty(propertyName), propertyValue));
+        verify(responseObserver, timeout(100)).onCompleted();
+        verify(responseObserver, never()).onError(any(Throwable.class));
+    }
+
+    @Test
+    public void testGetBidirectionalProperties() {
+
+        int timesOnNext = 0;
+
+        @SuppressWarnings("unchecked")
+        StreamObserver<SystemProperty> responseObserver =
+            (StreamObserver<SystemProperty>) mock(StreamObserver.class);
+        StreamObserver<SystemPropertyName> requestObserver =
+            asyncStub.getBidirectionalProperties(responseObserver);
+
+        verify(responseObserver, never()).onNext(any(SystemProperty.class));
+
+        List<String> keys = System.getProperties().stringPropertyNames().stream()
+                                  .filter(k -> k.startsWith("java."))
+                                  .collect(Collectors.toList());
+
+        for (int i = 0; i < keys.size(); i++) {
+            SystemPropertyName spn = SystemPropertyName.newBuilder()
+                                         .setPropertyName(keys.get(i))
+                                         .build();
+            requestObserver.onNext(spn);
+            ArgumentCaptor<SystemProperty> systemPropertyCaptor =
+                ArgumentCaptor.forClass(SystemProperty.class);
+            verify(responseObserver, timeout(100).times(++timesOnNext))
+                .onNext(systemPropertyCaptor.capture());
+            SystemProperty systemProperty = systemPropertyCaptor.getValue();
+            assertEquals(System.getProperty(systemProperty.getPropertyName()),
+                         systemProperty.getPropertyValue());
+        }
+
+        requestObserver.onCompleted();
+        verify(responseObserver, timeout(100)).onCompleted();
+        verify(responseObserver, never()).onError(any(Throwable.class));
+    }
+}
+```
+
+
+
+
+In the ***setUp()*** static method, create and start the ***inProcessServer*** in-process gRPC server. Then, create the ***inProcessChannel*** in-process channel that connects to the ***inProcessServer*** server running in the same JVM process. The unit tests can make calls to the gRPC server by using the same method signatures and functionalities as the gRPC client, even though they use different ***blockingStub*** or ***asyncStub*** stubs through the same channel.
+
+In the ***tearDown()*** static method, shut down the ***inProcessChannel*** in-process channel and the ***inProcessServer*** in-process gRPC server.
+
+The ***testGetProperty()*** tests the unary call to retrieve a single system property value.
+
+The ***testGetServerStreamingProperties()*** tests the server streaming call to retrieve multiple system property values with a given property prefix.
+
+The ***testGetClientStreamingProperties()*** tests the client streaming call to retrieve multiple system property values with given property names.
+
+The ***testGetBidirectionalProperties()*** tests the bidirectional streaming call to retrieve multiple system property values with given property names.
+
+
+### Running unit tests for the gRPC server service
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started the ***system*** service.
+
+If the tests pass, you see output similar to the following example:
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running io.openliberty.guides.system.SystemServiceTest
+
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.527 s - in io.openliberty.guides.system.SystemServiceTest
+
+Results:
+
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+```
+
+
+### Implementing integration tests for the query service
+
+In this section, you'll write integration tests using Jakarta Restful Web Services Client APIs to test the ***query*** service.
+
 Create the ***QueryIT*** class.
 
 > Run the following touch command in your terminal
@@ -1418,12 +1658,12 @@ public class QueryIT {
     private static Client client;
 
     @BeforeAll
-    private static void setup() {
+    public static void setup() {
         client = ClientBuilder.newClient();
     }
 
     @AfterAll
-    private static void teardown() {
+    public static void teardown() {
         client.close();
     }
 
@@ -1477,7 +1717,6 @@ public class QueryIT {
 ```
 
 
-Each test case tests one type of the gRPC calls that you implemented.
 
 The ***testGetPropertiesString()*** tests the ***/query/properties/os.name*** endpoint and confirms that a response is received. 
 
@@ -1487,9 +1726,12 @@ The ***testGetUserProperties()*** tests the ***/query/properties/user*** endpoin
 
 The ***testGetJavaProperties()*** tests the ***/query/properties/java*** endpoint and confirms that a response is received. 
 
-### Running the tests
+
+### Running integration tests for the query service
 
 Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started the ***query*** service.
+
+If the tests pass, you see output similar to the following example:
 
 ```
 -------------------------------------------------------
