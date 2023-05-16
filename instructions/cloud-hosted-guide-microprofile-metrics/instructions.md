@@ -91,7 +91,7 @@ curl -k --user admin:adminpwd https://localhost:9443/metrics
 
 To see only the application metrics, run the following curl command:
 ```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics/application
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=application
 ```
 
 See the following sample outputs for the ***@Timed***, ***@Gauge***, and ***@Counted*** metrics:
@@ -128,7 +128,7 @@ application_inventoryAccessCount_total 1
 
 To see only the system metrics, run the following curl command:
 ```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics/base
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=base
 ```
 
 See the following sample output:
@@ -147,7 +147,7 @@ base_classloader_loadedClasses_count 11231
 
 To see only the vendor metrics, run the following curl command:
 ```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=vendor
 ```
 
 See the following sample output:
@@ -209,12 +209,12 @@ Replace the server configuration file.
 <server description="Sample Liberty server">
 
   <featureManager>
-    <feature>restfulWS-3.0</feature>
-    <feature>jsonp-2.0</feature>
-    <feature>jsonb-2.0</feature>
-    <feature>cdi-3.0</feature>
+    <feature>restfulWS-3.1</feature>
+    <feature>jsonp-2.1</feature>
+    <feature>jsonb-3.0</feature>
+    <feature>cdi-4.0</feature>
     <feature>mpConfig-3.0</feature>
-   <feature>mpMetrics-4.0</feature>
+   <feature>mpMetrics-5.0</feature>
    <feature>mpRestClient-3.0</feature>
  </featureManager>
 
@@ -346,7 +346,7 @@ Apply the ***@Gauge*** annotation to the ***getTotal()*** method to track the nu
 | ---| ---
 
 Additional information about these annotations, relevant metadata fields, and more are available at
-the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-4.0-javadoc.html#package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=org/eclipse/microprofile/metrics/annotation/package-summary.html).
+the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-5.0-javadoc.html#package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=org/eclipse/microprofile/metrics/annotation/package-summary.html).
 
 
 ::page{title="Enabling vendor metrics for the microservices"}
@@ -354,7 +354,7 @@ the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest
 
 MicroProfile Metrics API implementers can provide vendor metrics in the same forms as the base and application metrics do. Open Liberty as a vendor supplies server component metrics when the ***mpMetrics*** feature is enabled in the ***server.xml*** configuration file.
 
-You can see the vendor-only metrics in the ***metrics/vendor*** endpoint. You see metrics from the runtime components, such as Web Application, ThreadPool and Session Management. Note that these metrics are specific to the Liberty application server. Different vendors may provide other metrics. Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metrics-list.html) for more information.
+You can see the vendor-only metrics in the ***metrics?scope=vendor*** endpoint. You see metrics from the runtime components, such as Web Application, ThreadPool and Session Management. Note that these metrics are specific to the Liberty application server. Different vendors may provide other metrics. Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metrics-list.html) for more information.
 
 
 ::page{title="Building and running the application"}
@@ -379,17 +379,17 @@ curl -k --user admin:adminpwd https://localhost:9443/metrics
 
 or access only the application metrics by running following curl command:
 ```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics/application
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=application
 ```
 
 You can see the system metrics by running following curl command:
 ```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics/base
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=base
 ```
 
 as well as see the vendor metrics by running following curl command:
 ```bash
-curl -k --user admin:adminpwd https://localhost:9443/metrics/vendor
+curl -k --user admin:adminpwd https://localhost:9443/metrics?scope=vendor
 ```
 
 
@@ -466,7 +466,7 @@ public class MetricsIT {
 
   private final String INVENTORY_HOSTS = "inventory/systems";
   private final String INVENTORY_HOSTNAME = "inventory/systems/localhost";
-  private final String METRICS_APPLICATION = "metrics/application";
+  private final String METRICS_APPLICATION = "metrics?scope=application";
 
   @BeforeAll
   public static void oneTimeSetup() throws Exception {
@@ -545,7 +545,7 @@ public class MetricsIT {
     boolean checkMetric = false;
     for (String metric : metrics) {
       if (metric.startsWith(
-          "application_inventoryAddingTime_seconds_count")) {
+          "inventoryAddingTime_seconds_count")) {
             checkMetric = true;
       }
     }
@@ -613,13 +613,13 @@ public class MetricsIT {
 
 
 
-* The ***testPropertiesRequestTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics/application*** URL to retrieve application metrics as plain text. Then, it asserts whether the time that is needed to retrieve the system properties for localhost is less than 4 seconds.
+* The ***testPropertiesRequestTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics?scope=application*** URL to retrieve application metrics as plain text. Then, it asserts whether the time that is needed to retrieve the system properties for localhost is less than 4 seconds.
 
 * The ***testInventoryAccessCountMetric()*** test case validates the ***@Counted*** metric. The test case obtains metric data before and after a request to the ***http://localhost:9080/inventory/systems*** URL. It then asserts that the metric was increased after the URL was accessed.
 
 * The ***testInventorySizeGaugeMetric()*** test case validates the ***@Gauge*** metric. The test case first ensures that the localhost is in the inventory, then looks for the ***@Gauge*** metric and asserts that the inventory size is greater or equal to 1.
 
-* The ***testPropertiesAddTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics/application*** URL to retrieve application metrics as plain text. Then, it looks for the ***@Timed*** metric and asserts true if the metric exists.
+* The ***testPropertiesAddTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics?scope=application*** URL to retrieve application metrics as plain text. Then, it looks for the ***@Timed*** metric and asserts true if the metric exists.
 
 The ***oneTimeSetup()*** method retrieves the port number for the server and builds a base URL string to set up the tests. Apply the ***@BeforeAll*** annotation to this method to run it before any of the test cases.
 
