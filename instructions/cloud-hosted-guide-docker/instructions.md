@@ -343,7 +343,7 @@ Another useful feature of dev mode with a container is the ability to pass addit
 ```
 <groupId>io.openliberty.tools</groupId>
 <artifactId>liberty-maven-plugin</artifactId>
-<version>3.3.4</version>
+<version>3.7.1</version>
 <configuration>
     <dockerRunOpts>-e ENV_VAR=exampleValue</dockerRunOpts>
 </configuration>
