@@ -111,6 +111,7 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
+
 Open a new command-line session.
 
 Create the InventoryPactIT class file.
@@ -286,8 +287,8 @@ Replace the inventory Maven project file.
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <!-- Liberty configuration -->
         <liberty.var.default.http.port>9081</liberty.var.default.http.port>
         <liberty.var.default.https.port>9443</liberty.var.default.https.port>
@@ -297,14 +298,14 @@ Replace the inventory Maven project file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>5.0</version>
+            <version>6.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
+            <version>10.0.0</version>
             <scope>provided</scope>
         </dependency>
         <!-- For tests -->
@@ -316,12 +317,12 @@ Replace the inventory Maven project file.
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>1.7.33</version>
+            <version>2.0.7</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.0.0.Final</version>
+            <version>6.2.3.Final</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -332,7 +333,7 @@ Replace the inventory Maven project file.
             <plugin>
                 <groupId>au.com.dius.pact.provider</groupId>
                 <artifactId>maven</artifactId>
-                <version>4.3.4</version>
+                <version>4.5.6</version>
                 <configuration>
                     <serviceProviders>
                         <serviceProvider>
@@ -361,7 +362,7 @@ Replace the inventory Maven project file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>3.0.0</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.default.http.port}</http.port>
@@ -438,7 +439,8 @@ The generated pact file is named ***Inventory-System.json*** and is located in t
 }
 ```
 
-Open a new command-line session and navigate to the ***start/inventory*** directory.
+
+Open a new command-line session and navigate to the `start/inventory` directory.
 
 ```bash
 cd /home/project/guide-contract-testing/start/inventory
@@ -500,6 +502,7 @@ After you see the following message, your application server in dev mode is read
 **************************************************************
 *    Liberty is running in dev mode.
 ```
+
 
 
 
@@ -613,8 +616,8 @@ Replace the system Maven project file.
     <packaging>war</packaging>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Liberty configuration -->
@@ -628,30 +631,30 @@ Replace the system Maven project file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>5.0</version>
+            <version>6.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
+            <version>10.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>au.com.dius.pact.provider</groupId>
             <artifactId>junit5</artifactId>
-            <version>4.3.4</version>
+            <version>4.5.6</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>1.7.33</version>
+            <version>2.0.7</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.0.0.Final</version>
+            <version>6.2.3.Final</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -674,7 +677,7 @@ Replace the system Maven project file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M5</version>
+                <version>3.0.0</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.default.http.port}</http.port>
@@ -834,8 +837,8 @@ cd /home/project/guide-contract-testing
 
 ```bash
 docker-compose -f "pact-broker/docker-compose.yml" down
-docker rmi postgres:12
-docker rmi pactfoundation/pact-broker:2.62.0.0
+docker rmi postgres:15
+docker rmi pactfoundation/pact-broker:2.106.0.1
 docker volume rm pact-broker_postgres-volume
 ```
 
