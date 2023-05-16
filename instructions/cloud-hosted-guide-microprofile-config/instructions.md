@@ -466,7 +466,6 @@ touch /home/project/guide-microprofile-config/start/src/main/java/io/openliberty
 package io.openliberty.guides.config;
 
 import org.eclipse.microprofile.config.spi.Converter;
-import io.openliberty.guides.config.Email;
 
 public class CustomEmailConverter implements Converter<Email> {
 
