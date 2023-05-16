@@ -663,8 +663,8 @@ Replace the Maven project file.
     <packaging>war</packaging>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Liberty configuration -->
@@ -677,13 +677,13 @@ Replace the Maven project file.
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>9.1.0</version>
+            <version>10.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>5.0</version>
+            <version>6.0</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -706,19 +706,19 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.9.1</version>
+            <version>5.9.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.0.0.Final</version>
+            <version>6.2.3.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.0.0.Final</version>
+            <version>6.2.3.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -749,13 +749,13 @@ Replace the Maven project file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>3.0.0</version>
             </plugin>
             <!-- Plugin to run functional tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>3.0.0</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.default.http.port}</http.port>
@@ -785,10 +785,10 @@ Replace the server configuration file.
 ```xml
 <server description="GraphQL service">
     <featureManager>
-        <feature>restfulWS-3.0</feature>
-        <feature>jsonb-2.0</feature>
-        <feature>jsonp-2.0</feature>
-        <feature>cdi-3.0</feature>
+        <feature>restfulWS-3.1</feature>
+        <feature>jsonb-3.0</feature>
+        <feature>jsonp-2.1</feature>
+        <feature>cdi-4.0</feature>
         <feature>mpConfig-3.0</feature>
         <feature>mpRestClient-3.0</feature>
         <feature>mpGraphQL-2.0</feature>
@@ -830,12 +830,12 @@ docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 Dockerfiles have already been set up for you. Build your Docker images with the following commands:
 
 ```bash
-docker build -t system:1.0-java8-SNAPSHOT --build-arg JAVA_VERSION=java8 system/.
 docker build -t system:1.0-java11-SNAPSHOT --build-arg JAVA_VERSION=java11 system/.
+docker build -t system:1.0-java17-SNAPSHOT --build-arg JAVA_VERSION=java17 system/.
 docker build -t graphql:1.0-SNAPSHOT graphql/.
 ```
 
-The ***--build-arg*** parameter is used to create two different ***system*** services. One uses Java 8, while the other uses Java 11. Run these Docker images using the provided ***startContainers*** script. The script creates a network for the services to communicate through. It creates two ***system*** services and a GraphQL service.
+The ***--build-arg*** parameter is used to create two different ***system*** services. One uses Java 11, while the other uses Java 17. Run these Docker images using the provided ***startContainers*** script. The script creates a network for the services to communicate through. It creates two ***system*** services and a GraphQL service.
 
 
 ```bash
@@ -858,12 +858,12 @@ Click the following button to access GraphiQL:
 
 Queries that are made through GraphiQL are the same as queries that are made through HTTP requests. You can also view the schema through GraphiQL by clicking the ***Docs*** button on the menu bar.
 
-Run the following ***query*** operation in GraphiQL to get every system property from the container running on Java 8:
+Run the following ***query*** operation in GraphiQL to get every system property from the container running on Java 11:
 
 
 ```
 query {
-  system(hostname: "system-java8") {
+  system(hostname: "system-java11") {
     hostname
     username
     osArch
@@ -889,7 +889,7 @@ The output is similar to the following example:
 {
   "data": {
     "system": {
-      "hostname": "system-java8",
+      "hostname": "system-java11",
       "username": "default",
       "osArch": "amd64",
       "osName": "Linux",
@@ -901,20 +901,20 @@ The output is similar to the following example:
       },
       "java": {
         "vendorName": "AdoptOpenJDK",
-        "version": "1.8.0_292"
+        "version": "11.0.18"
       }
     }
   }
 }
 ```
 
-Run the following ***mutation*** operation to add a note to the ***system*** service running on Java 8:
+Run the following ***mutation*** operation to add a note to the ***system*** service running on Java 11:
 
 
 ```
 mutation {
   editNote(
-    hostname: "system-java8"
+    hostname: "system-java11"
     note: "I'm trying out GraphQL on Open Liberty!"
   )
 }
@@ -925,7 +925,7 @@ You receive a response containing the Boolean ***true*** to let you know that th
 
 ```bash
 query {
-  system(hostname: "system-java8") {
+  system(hostname: "system-java11") {
     note
   }
 }
@@ -943,12 +943,12 @@ The response is similar to the following example:
 }
 ```
 
-GraphQL returns only the ***note*** property, as it was the only property in the request. You can try out the operations using the hostname ***system-java11*** as well. To see an example of using an array as an input for an operation, try the following operation to get system loads:
+GraphQL returns only the ***note*** property, as it was the only property in the request. You can try out the operations using the hostname ***system-java17*** as well. To see an example of using an array as an input for an operation, try the following operation to get system loads:
 
 
 ```
 query {
-  systemLoad(hostnames: ["system-java8", "system-java11"]) {
+  systemLoad(hostnames: ["system-java11", "system-java17"]) {
     hostname
     loadData {
       heapUsed
@@ -966,7 +966,7 @@ The response is similar to the following example:
   "data": {
     "systemLoad": [
       {
-        "hostname": "system-java8",
+        "hostname": "system-java11",
         "loadData": {
           "heapUsed": 32432048,
           "nonHeapUsed": 85147084,
@@ -974,7 +974,7 @@ The response is similar to the following example:
         }
       },
       {
-        "hostname": "system-java11",
+        "hostname": "system-java17",
         "loadData": {
           "heapUsed": 39373688,
           "nonHeapUsed": 90736300,
