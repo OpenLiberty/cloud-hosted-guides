@@ -253,5 +253,10 @@
         "github": "cloud-hosted-guide-jakarta-websocket",
         "gitlab": "IBM-GPXX0SGBEN",
         "gitlab-branch": "main"
+    },
+    {
+        "github": "cloud-hosted-guide-microprofile-telemetry-jaeger",
+        "gitlab": "IBM-GPXX0SXIEN",
+        "gitlab-branch": "main"
     }
 ]
