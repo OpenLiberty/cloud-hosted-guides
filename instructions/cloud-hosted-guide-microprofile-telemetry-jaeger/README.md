@@ -29,7 +29,6 @@ jobs:
           ...
 ```
 
-
 4. Apply Gitlab deploy key
 
 Once the Gitlab repository has been created the owner/maintainer must assign the correct deploy key.
