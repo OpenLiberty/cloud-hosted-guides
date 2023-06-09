@@ -91,7 +91,7 @@ jobs:
     
       - uses: peter-evans/create-pull-request@v3
         with:
-            title: "Change to ${{ github.event.inputs.cloud_hosted_name }}"
+            title: "To Staging: Change to ${{ github.event.inputs.cloud_hosted_name }}"
             body: "Updated by github actions, triggered by the ${{ github.event.inputs.guide_name }} repo."
             branch: "${{ github.event.inputs.guide_name }}/staging"
             base: "staging" 
