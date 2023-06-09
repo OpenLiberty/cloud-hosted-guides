@@ -19,7 +19,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 ::page{title="What you'll learn"}
-The use of microservices architecture may increase difficultly to see how services depend on or affect other services. Consequently, making it harder to find the source of latency or inaccuracy.
+The use of microservices architecture can increase difficulty to see how services depend on or affect other services. Consequently, making it harder to find the source of latency or inaccuracy.
 
 One way to increase observability of an application is by emitting traces. [OpenTelemetry](https://opentelemetry.io/) is a set of APIs, SDKs, tooling, and integrations that are designed for the creation and management of telemetry data such as traces, metrics, and logs. MicroProfile Telemetry adopts OpenTelemetry so your applications can benefit from both manual and automatic traces.
 
@@ -106,9 +106,9 @@ Make sure that your Jaeger server is running and point your browser to the ***ht
 
 When you visit this endpoint, you make two GET HTTP requests, one to the system service and one to the inventory service. Both of these requests are configured to be traced, so a new trace is recorded in Jaeger.
 
-To view the traces, go to the ***http\://localhost:16686*** URL. You can view the traces for the ***inventory*** or ***system*** services under the **Search** tab. If you see only the **jaeger-query** option that is listed in the dropdown, you need to wait a little longer and refresh the page to see the application services.
+To view the traces, go to the ***http\://localhost:16686*** URL. You can view the traces for the ***inventory*** or ***system*** services under the **Search** tab. If you see only the **jaeger-query** option that is listed in the dropdown, wait a little longer and refresh the page to see the application services.
 
-Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You'll see the result as the following:
+Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You'll see the result as:
 
 ![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_spans.png)
 
@@ -234,7 +234,6 @@ Replace the ***server.xml*** file of the inventory service.
 
     <webApplication location="guide-microprofile-telemetry-inventory.war"
                     contextRoot="/">
-        <!-- enable visibility to third party apis -->
     </webApplication>
 
 </server>
@@ -300,7 +299,7 @@ For more information about these and other Telemetry properties, see the [MicroP
 
 To run the ***system*** and ***inventory*** services, simply navigate your browser to the ***http\://localhost:9081/inventory/systems/localhost*** URL.
 
-To view the traces, go to the ***http\://localhost:16686*** URL. You can view the traces for the ***inventory*** or ***system*** services under the **Search** tab. Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You'll see the result as the following:
+To view the traces, go to the ***http\://localhost:16686*** URL. You can view the traces for the ***inventory*** or ***system*** services under the **Search** tab. Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You'll see the result as:
 
 ![Default spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/default_spans.png)
 
@@ -317,7 +316,7 @@ Automatic instrumentation only instruments Jakarta RESTful web services and Micr
 
 ### Enabling OpenTelemetry APIs
 
-The MicroProfile Telemetry feature has been enabled tracing of all REST endpoints by default in the previous section. To further control and customize traces, you inject a custom ***Tracer*** object to create and customize spans.
+The MicroProfile Telemetry feature has been enabled to trace all REST endpoints by default in the previous section. To further control and customize traces, use the ***@WithSpan*** annotation to enable particular methods. You can also inject a ***Tracer*** object to create and customize spans.
 
 Replace the ***pom.xml*** Maven project file of the inventory service.
 
@@ -524,7 +523,7 @@ public class InventoryManager {
 
     @Inject
     @ConfigProperty(name = "system.http.port")
-    int SYSTEM_PORT;
+    private int SYSTEM_PORT;
 
     private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
     private SystemClient systemClient = new SystemClient();
@@ -566,6 +565,35 @@ public class InventoryManager {
 Annotate the ***add()*** and ***list()*** methods with the ***@WithSpan*** annotation. You can annotate the ***host*** parameter with the ***@SpanAttribute*** annotation with a customized value to indicate that it is part of the trace.
 
 
+Now, you can check out the traces. Visit the ***http\://localhost:9081/inventory/systems*** URL and then your Jaeger server at the ***http\://localhost:16686*** URL. Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
+
+![Inventory Manager span](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_manager_span.png)
+
+
+
+Verify that there are two spans from the ***inventory*** service. Click the trace to view its details. You'll see the  ***InventoryManager.list*** span that is created by the ***@WithSpan*** annotation.
+
+![Inventory Manager list span](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_manager_list_span.png)
+
+
+
+Visit the ***http\://localhost:9081/inventory/systems/localhost*** URL and then your Jaeger server at the ***http\://localhost:16686*** URL. Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
+
+![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_4_spans.png)
+
+
+
+Verify that there are three spans from ***inventory*** service and one span from ***system*** service. Click the trace to view its details.
+
+![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_details_4_spans.png)
+
+
+
+Click the ***InventoryManager.add*** span and its ***Tags***. You can see the ***hostname*** tag with the ***localhost*** value that is created by the ***@SpanAttribute*** annotation.
+
+![Inventory Manager add span](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_manager_add_span.png)
+
+
 
 ### Injecting a custom Tracer object
 
@@ -604,18 +632,20 @@ import jakarta.ws.rs.core.Response;
 @Path("/systems")
 public class InventoryResource {
 
-    @Inject InventoryManager manager;
+    @Inject
+    private InventoryManager manager;
 
     @Inject
-    Tracer tracer;
+    private Tracer tracer;
 
     @GET
     @Path("/{hostname}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
         Span getPropertiesSpan = tracer.spanBuilder("GettingProperties").startSpan();
-        Properties props = manager.get(hostname);
+        Properties props = null;
         try (Scope scope = getPropertiesSpan.makeCurrent()) {
+            props = manager.get(hostname);
             if (props == null) {
                 getPropertiesSpan.addEvent("Cannot get properties");
                 return Response.status(Response.Status.NOT_FOUND)
@@ -665,39 +695,36 @@ The ***try*** block is called a ***try-with-resources*** statement that the ***s
 Use the ***addEvent()*** Span API to create an event when the properties are received and an event when fails to get the properties from the ***system*** service. Use the ***end()*** Span API to mark the ***GettingProperties*** span completed.
 
 
-Now, you can check out the traces. Visit the ***http\://localhost:9081/inventory/systems*** URL and then your Jaeger server at the ***http\://localhost:16686*** URL. Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as the following:
-
-![Inventory Manager span](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_manager_span.png)
-
-
-Verify that there are two spans from the ***inventory*** service. Click the trace to view its details that contain a ***InventoryManager.list*** span.
-
-![Inventory Manager list span](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_manager_list_span.png)
-
-
-Visit the ***http\://localhost:9081/inventory/systems/localhost*** URL and then your Jaeger server at the ***http\://localhost:16686*** URL. Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as the following:
+Visit the ***http\://localhost:9081/inventory/systems/localhost*** URL and then your Jaeger server at the ***http\://localhost:16686*** URL. Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result:
 
 ![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_spans.png)
 
 
-Verify that there are four spans from ***inventory*** service and one span from ***system*** service. Click the trace to view its details.
+
+Verify that there are four spans from ***inventory*** service and one span from ***system*** service. Click the trace to view its details. You'll see the ***GettingProperties*** span.
 
 ![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_details_spans.png)
 
 
-Click the ***InventoryManager.add*** span and its ***Tags***. You can see the ***hostname*** tag with the ***localhost*** value.
 
-![Inventory Manager add span](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_manager_add_span.png)
+Visit the ***http\://localhost:9081/inventory/systems/unknown*** URL and then your Jaeger server at the ***http\://localhost:16686*** URL. Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
+
+![Get traces for unknown hostname](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_unknown_spans.png)
+
+
+
+There are two spans from ***inventory*** service. Click the trace to view its details. You'll see the ***GettingProperties*** span. Click the ***GettingProperties*** span and its ***Logs***. You can see the ***Cannot get properties*** message.
+
+![Logs at GettingProperties span](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/logs_at_gettingProperties.png)
 
 
 
 To learn more how to use OpenTelemetry APIs to instrument code, see the https://opentelemetry.io/docs/instrumentation/java/manual/[OpenTelemetry Manual Instrumentation] documentation.
 
+
 ::page{title="Testing the application "}
 
-No automated tests are provided to verify the correctness of the traces. Manually verify these traces by viewing them on the Jaeger server.
-
-A few tests are included for you to test the basic functionality of the services. If a test failure occurs, then you might have introduced a bug into the code.
+Manually verify the traces by viewing them on the Jaeger server. A few tests are included for you to test the basic functionality of the services. If a test failure occurs, then you might have introduced a bug into the code.
 
 ### Running the tests
 
