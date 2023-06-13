@@ -80,6 +80,7 @@ docker run -d --name jaeger \
 You can find information about the Jaeger server and instructions for starting the all-in-one executable file in the [Jaeger documentation](https://www.jaegertracing.io/docs/1.22/getting-started/#all-in-one).
 
 Before you proceed, make sure that your Jaeger server is up and running. Click the following button to visit the Jaeger service:
+
 ::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
@@ -112,6 +113,7 @@ curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 
 When you visit this endpoint, you make two GET HTTP requests, one to the ***system*** service and one to the ***inventory*** service. Both of these requests are configured to be traced, so a new trace is recorded in Jaeger. To view the traces, click the following button to visit the Jaeger service:
+
 ::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
 You can view the traces for the ***inventory*** or ***system*** services under the **Search** tab. If you see only the **jaeger-query** option that is listed in the dropdown, wait a little longer and refresh the page to see the application services.
@@ -318,6 +320,7 @@ curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 
 To view the traces, click the following button to visit the Jaeger service:
+
 ::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
 You can view the traces for the ***inventory*** or ***system*** services under the **Search** tab. Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You'll see the result as:
@@ -593,6 +596,7 @@ curl -s http://localhost:9081/inventory/systems | jq
 ```
 
 and click the following button to visit the Jaeger service:
+
 ::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
 Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
@@ -613,6 +617,7 @@ curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 
 Click the following button to visit the Jaeger service:
+
 ::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
 
@@ -741,6 +746,7 @@ curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 
 Click the following button to visit the Jaeger service:
+
 ::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
 Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result:
@@ -761,6 +767,7 @@ curl -s http://localhost:9081/inventory/systems/unknown | jq
 ```
 
 Click the following button to visit the Jaeger service:
+
 ::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
 Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
