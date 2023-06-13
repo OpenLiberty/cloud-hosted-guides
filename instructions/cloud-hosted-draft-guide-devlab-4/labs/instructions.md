@@ -735,7 +735,16 @@ The ***try*** block is called a ***try-with-resources*** statement that the ***s
 Use the ***addEvent()*** Span API to create an event when the properties are received and an event when fails to get the properties from the ***system*** service. Use the ***end()*** Span API to mark the ***GettingProperties*** span completed.
 
 
-Visit the ***http\://localhost:9081/inventory/systems/localhost*** URL and then your Jaeger server at the ***http\://localhost:16686*** URL. Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result:
+
+Run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
+
+Click the following button to visit the Jaeger service:
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result:
 
 ![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_spans.png)
 
@@ -747,7 +756,16 @@ Verify that there are four spans from ***inventory*** service and one span from 
 
 
 
-Visit the ***http\://localhost:9081/inventory/systems/unknown*** URL and then your Jaeger server at the ***http\://localhost:16686*** URL. Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
+
+Run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
+
+Click the following button to visit the Jaeger service:
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
 
 ![Get traces for unknown hostname](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_unknown_spans.png)
 
