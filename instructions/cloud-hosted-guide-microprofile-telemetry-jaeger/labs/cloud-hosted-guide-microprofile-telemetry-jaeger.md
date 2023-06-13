@@ -27,7 +27,7 @@ Traces represent requests and consist of multiple spans. Spans are representativ
 
 Context is an immutable object that is contained in the span data to identify the unique request that each span is a part of. This data is required for moving trace information across service boundaries, allowing developers to follow a single request through a potentially complex distributed system. Exporters are components that send data to a backend service so you can visualize and monitor the generated spans.
 
-You'll configure the provided ***inventory*** and ***system*** services to use https://www.jaegertracing.io/[Jaeger] for distributed tracing with MicroProfile Telemetry. You'll run these services in two separate JVMs made of two server instances to demonstrate tracing in a distributed environment. If all the components were run on a single server, then any logging software would be sufficient.
+You'll configure the provided ***system*** and ***inventory*** services to use [Jaeger](https://www.jaegertracing.io/) for distributed tracing with MicroProfile Telemetry. You'll run these services in two separate JVMs made of two server instances to demonstrate tracing in a distributed environment. If all the components were run on a single server, then any logging software would be sufficient.
 
 ![Application architecture](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/architecture_diagram.png)
 
@@ -60,16 +60,19 @@ The ***finish*** directory contains the finished project that you will build.
 ### Try what you'll build
 
 Run the following docker command to start Jaeger server:
-```bash
+```bash 
 docker run -d --name jaeger \
-  -e COLLECTOR_ZIPKIN_HTTP_PORT=9411 \
-  -p 5775:5775/udp \
+  -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
+  -e COLLECTOR_OTLP_ENABLED=true \
   -p 6831:6831/udp \
   -p 6832:6832/udp \
   -p 5778:5778 \
   -p 16686:16686 \
-  -p 14268:14268 \
+  -p 4317:4317 \
+  -p 4318:4318 \
   -p 14250:14250 \
+  -p 14268:14268 \
+  -p 14269:14269 \
   -p 9411:9411 \
   jaegertracing/all-in-one:1.46
 ```
@@ -77,6 +80,7 @@ docker run -d --name jaeger \
 You can find information about the Jaeger server and instructions for starting the all-in-one executable file in the [Jaeger documentation](https://www.jaegertracing.io/docs/1.22/getting-started/#all-in-one).
 
 Before you proceed, make sure that your Jaeger server is up and running. Click the following button to visit the Jaeger service:
+
 ::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
@@ -102,11 +106,17 @@ After you see the following message in both command-line sessions, both of your 
 The defaultServer server is ready to run a smarter planet.
 ```
 
-Make sure that your Jaeger server is running and point your browser to the ***http\://localhost:9081/inventory/systems/localhost*** URL. 
 
-When you visit this endpoint, you make two GET HTTP requests, one to the system service and one to the inventory service. Both of these requests are configured to be traced, so a new trace is recorded in Jaeger.
+Open another command-line session and run the following curl command from the terminal:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
 
-To view the traces, go to the ***http\://localhost:16686*** URL. You can view the traces for the ***inventory*** or ***system*** services under the **Search** tab. If you see only the **jaeger-query** option that is listed in the dropdown, wait a little longer and refresh the page to see the application services.
+When you visit this endpoint, you make two GET HTTP requests, one to the ***system*** service and one to the ***inventory*** service. Both of these requests are configured to be traced, so a new trace is recorded in Jaeger. To view the traces, click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+You can view the traces for the ***system*** or ***inventory*** services under the **Search** tab. If you see only the **jaeger-query** option that is listed in the dropdown, wait a little longer and refresh the page to see the application services.
 
 Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You'll see the result as:
 
@@ -135,19 +145,19 @@ You need to start the services to see basic traces appear in Jaeger.
 
 When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
 
-Open a command-line session and navigate to the ***start/inventory*** directory. Run the following Maven goal to start the ***inventory*** service in dev mode:
-
-
-```bash
-cd /home/project/draft-guide-microprofile-telemetry-jaeger/start/inventory
-mvn liberty:dev
-```
-
 Open a command-line session and navigate to the ***start/system*** directory. Run the following Maven goal to start the ***system*** service in dev mode:
 
 
 ```bash
 cd /home/project/draft-guide-microprofile-telemetry-jaeger/start/system
+mvn liberty:dev
+```
+
+Open a command-line session and navigate to the ***start/inventory*** directory. Run the following Maven goal to start the ***inventory*** service in dev mode:
+
+
+```bash
+cd /home/project/draft-guide-microprofile-telemetry-jaeger/start/inventory
 mvn liberty:dev
 ```
 
@@ -160,10 +170,16 @@ After you see the following message, your application server in dev mode is read
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-When the servers start, you can find the system and inventory services at the following URLs:
 
-* ***http\://localhost:9080/system/properties***
-* ***http\://localhost:9081/inventory/systems***
+When the servers start, you can find the ***system*** service by running the following curl command:
+```bash
+curl -s http://localhost:9080/system/properties | jq
+```
+
+and the ***inventory*** service by running the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
 
 ::page{title="Enabling Telemetry implementation "}
 
@@ -297,9 +313,17 @@ Similarly, specify the ***otel*** properties for the ***inventory*** service.
 
 For more information about these and other Telemetry properties, see the [MicroProfile Config properties for MicroProfile Telemetry](https://openliberty.io/docs/latest/microprofile-config-properties.html#telemetry) documentation.
 
-To run the ***system*** and ***inventory*** services, simply navigate your browser to the ***http\://localhost:9081/inventory/systems/localhost*** URL.
 
-To view the traces, go to the ***http\://localhost:16686*** URL. You can view the traces for the ***inventory*** or ***system*** services under the **Search** tab. Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You'll see the result as:
+To run the ***system*** and ***inventory*** services, run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
+
+To view the traces, click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+You can view the traces for the ***system*** or ***inventory*** services under the **Search** tab. Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You'll see the result as:
 
 ![Default spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/default_spans.png)
 
@@ -423,7 +447,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.8.2</version>
             </plugin>
 
             <plugin>
@@ -565,7 +589,17 @@ public class InventoryManager {
 Annotate the ***add()*** and ***list()*** methods with the ***@WithSpan*** annotation. You can annotate the ***host*** parameter with the ***@SpanAttribute*** annotation with a customized value to indicate that it is part of the trace.
 
 
-Now, you can check out the traces. Visit the ***http\://localhost:9081/inventory/systems*** URL and then your Jaeger server at the ***http\://localhost:16686*** URL. Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
+
+Now, you can check out the traces that are generated by the ***@WithSpan*** annotation. Run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems | jq
+```
+
+and click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
 
 ![Inventory Manager span](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_manager_span.png)
 
@@ -577,7 +611,17 @@ Verify that there are two spans from the ***inventory*** service. Click the trac
 
 
 
-Visit the ***http\://localhost:9081/inventory/systems/localhost*** URL and then your Jaeger server at the ***http\://localhost:16686*** URL. Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
+To check out the information generated by the ***@SpanAttribute*** annotation, run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
+
+Click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
 
 ![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_4_spans.png)
 
@@ -695,7 +739,17 @@ The ***try*** block is called a ***try-with-resources*** statement that the ***s
 Use the ***addEvent()*** Span API to create an event when the properties are received and an event when fails to get the properties from the ***system*** service. Use the ***end()*** Span API to mark the ***GettingProperties*** span completed.
 
 
-Visit the ***http\://localhost:9081/inventory/systems/localhost*** URL and then your Jaeger server at the ***http\://localhost:16686*** URL. Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result:
+
+To check out the traces that contain the ***GettingProperties*** span, run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems/localhost | jq
+```
+
+Click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result:
 
 ![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_spans.png)
 
@@ -707,7 +761,16 @@ Verify that there are four spans from ***inventory*** service and one span from 
 
 
 
-Visit the ***http\://localhost:9081/inventory/systems/unknown*** URL and then your Jaeger server at the ***http\://localhost:16686*** URL. Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
+To check out the event adding to the ***GettingProperties*** span, run the following curl command:
+```bash
+curl -s http://localhost:9081/inventory/systems/unknown | jq
+```
+
+Click the following button to visit the Jaeger service:
+
+::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
+
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
 
 ![Get traces for unknown hostname](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_unknown_spans.png)
 
@@ -719,7 +782,7 @@ There are two spans from ***inventory*** service. Click the trace to view its de
 
 
 
-To learn more how to use OpenTelemetry APIs to instrument code, see the https://opentelemetry.io/docs/instrumentation/java/manual/[OpenTelemetry Manual Instrumentation] documentation.
+To learn more how to use OpenTelemetry APIs to instrument code, see the [OpenTelemetry Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/) documentation.
 
 
 ::page{title="Testing the application "}
@@ -728,9 +791,9 @@ Manually verify the traces by viewing them on the Jaeger server. A few tests are
 
 ### Running the tests
 
-Since you started Open Liberty in dev mode, run the tests for the system and inventory services by pressing the ***enter/return*** key in the command-line sessions where you started the services.
+Since you started Open Liberty in dev mode, run the tests for the ***system*** and ***inventory*** services by pressing the ***enter/return*** key in the command-line sessions where you started the services.
 
-When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the shell sessions where you ran the system and inventory services, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the shell sessions where you ran the ***system*** and ***inventory*** services, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 Finally, stop the ***Jaeger*** service that you started in the previous step.
@@ -781,6 +844,8 @@ You can also provide feedback or contribute to this guide from GitHub.
 ### Where to next?
 
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
 
 
 ### Log out of the session
