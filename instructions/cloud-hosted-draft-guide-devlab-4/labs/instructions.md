@@ -761,7 +761,7 @@ Verify that there are four spans from ***inventory*** service and one span from 
 
 
 
-To check out the event adding to the `GettingProperties` span, run the following curl command:
+To check out the event adding to the ***GettingProperties*** span, run the following curl command:
 ```bash
 curl -s http://localhost:9081/inventory/systems/unknown | jq
 ```
@@ -844,6 +844,8 @@ You can also provide feedback or contribute to this guide from GitHub.
 ### Where to next?
 
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
+* [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html)
+* [Adding health reports to microservices](https://openliberty.io/guides/microprofile-health.html)
 
 
 ### Log out of the session
