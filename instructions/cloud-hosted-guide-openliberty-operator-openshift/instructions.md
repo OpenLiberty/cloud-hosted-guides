@@ -5,9 +5,9 @@ branch: lab-388-instruction
 version-history-start-date: 2021-10-22 16:29:01 UTC
 tool-type: theia
 ---
-::page{title="Welcome to the Deploying a microservice to OpenShift 4 by using Open Liberty Operator guide!"}
+::page{title="Welcome to the Deploying a microservice to OpenShift 4 using Open Liberty Operator guide!"}
 
-Explore how to deploy a microservice to Red Hat OpenShift 4 by using Open Liberty Operator.
+Explore how to deploy a microservice to Red Hat OpenShift 4 using Open Liberty Operator.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -495,7 +495,7 @@ rm -fr guide-openliberty-operator-openshift
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20OpenShift%204%20by%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-openshift)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20a%20microservice%20to%20OpenShift%204%20using%20Open%20Liberty%20Operator&guide-id=cloud-hosted-guide-openliberty-operator-openshift)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
