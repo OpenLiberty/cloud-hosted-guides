@@ -7,7 +7,7 @@ tool-type: theia
 ---
 ::page{title="Welcome to the Enabling distributed tracing in microservices using OpenTelemetry observability framework guide!"}
 
-Distributed tracing helps DevOps teams to keep track of requests between microservices. MicroProfile Telemetry adopts OpenTelemetry tracing to allow developers to observe requests across their distributed systems.
+Distributed tracing helps teams to keep track of requests between microservices. MicroProfile Telemetry adopts OpenTelemetry tracing to allow developers to observe requests across their distributed systems.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -23,9 +23,7 @@ The use of microservices architecture can increase difficulty to see how service
 
 One way to increase observability of an application is by emitting traces. [OpenTelemetry](https://opentelemetry.io/) is a set of APIs, SDKs, tooling, and integrations that are designed for the creation and management of telemetry data such as traces, metrics, and logs. MicroProfile Telemetry adopts OpenTelemetry so your applications can benefit from both manual and automatic traces.
 
-Traces represent requests and consist of multiple spans. Spans are representative of single operations in a request and contain a name, time-related data, log messages and metadata to give information about what occurs during a transaction.
-
-Context is an immutable object that is contained in the span data to identify the unique request that each span is a part of. This data is required for moving trace information across service boundaries, allowing developers to follow a single request through a potentially complex distributed system. Exporters are components that send data to a backend service so you can visualize and monitor the generated spans.
+Traces represent requests, which can contain multiple operations, or spans. Each span comprises a name, time-related data, log messages, and metadata that describe what occurred during a transaction. Spans are associated with a context, which identifies the request within which the span occurred. Developers can then follow a single request between services through a potentially complex distributed system. Exporters send the data that MicroProfile Telemetry 1.0 collects to Jaeger so you can visualize and monitor the generated spans.
 
 You'll configure the provided ***system*** and ***inventory*** services to use [Jaeger](https://www.jaegertracing.io/) for distributed tracing with MicroProfile Telemetry. You'll run these services in two separate JVMs made of two server instances to demonstrate tracing in a distributed environment. If all the components were run on a single server, then any logging software would be sufficient.
 
@@ -187,7 +185,7 @@ Navigate to the ***start*** directory to begin.
 
 MicroProfile Telemetry allows you to observe traces without modifying source code in your Jakarta RESTful applications. You can enable ***mpTelemetry*** feature in the ***server.xml*** configuration file.
 
-Replace the ***server.xml*** file of the system service.
+Replace the ***server.xml*** file of the system service:
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > draft-guide-microprofile-telemetry-jaeger/start/system/src/main/liberty/config/server.xml, or click the following button
@@ -221,9 +219,9 @@ Replace the ***server.xml*** file of the system service.
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
-Enable ***mpTelemetry*** feature in the ***server.xml*** of the ***system*** service.
+The ***mpTelemetry*** feature is now enabled in the ***server.xml*** of the ***system*** service.
 
-Replace the ***server.xml*** file of the inventory service.
+Replace the ***server.xml*** file of the inventory service:
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
@@ -257,12 +255,12 @@ Replace the ***server.xml*** file of the inventory service.
 
 
 
-Enable ***mpTelemetry*** feature in the ***server.xml*** of the ***inventory*** service.
+The ***mpTelemetry*** feature is now enabled in the ***server.xml*** of the ***inventory*** service.
 
 
 By default, MicroProfile Telemetry tracing is off. To enable any tracing aspects, specify the ***otel*** properties in the MicroProfile configuration file. 
 
-Create the ***microprofile-config.properties*** file  of the system service.
+Create the ***microprofile-config.properties*** file  of the system service:
 
 > Run the following touch command in your terminal
 ```bash
@@ -284,10 +282,10 @@ otel.sdk.disabled=false
 
 
 
-Specify the ***otel.service.name*** property with the ***system*** service name and set the ***otel.sdk.disabled*** property with ***false*** to enable tracing.
+The MicroProfile properties file sets the ***otel.service.name*** property with the ***system*** service name and sets the ***otel.sdk.disabled*** property to ***false*** to enable tracing.
 
 
-Create the ***microprofile-config.properties*** file of the inventory service.
+Create the ***microprofile-config.properties*** file of the inventory service:
 
 > Run the following touch command in your terminal
 ```bash
@@ -342,7 +340,7 @@ Automatic instrumentation only instruments Jakarta RESTful web services and Micr
 
 The MicroProfile Telemetry feature has been enabled to trace all REST endpoints by default in the previous section. To further control and customize traces, use the ***@WithSpan*** annotation to enable particular methods. You can also inject a ***Tracer*** object to create and customize spans.
 
-Replace the ***pom.xml*** Maven project file of the inventory service.
+Replace the ***pom.xml*** Maven project file of the inventory service:
 
 > To open the pom.xml file in your IDE, select
 > **File** > **Open** > draft-guide-microprofile-telemetry-jaeger/start/inventory/pom.xml, or click the following button
@@ -470,7 +468,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 The OpenTelemetry API and OpenTelemetry Instrumentation Annotations must be provided as dependencies to your build path. Add two ***io.opentelemetry*** dependencies in your ***pom.xml*** Maven project file.
 
-Replace the ***server.xml*** file of the inventory service.
+Replace the ***server.xml*** file of the inventory service:
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
@@ -513,7 +511,7 @@ The OpenTelemetry APIs are exposed as third-party APIs in Open Liberty. To add t
 
 You can trace your Jakarta CDI beans by annotating their methods with a ***@WithSpan*** annotation.
 
-Replace the ***InventoryManager*** class.
+Replace the ***InventoryManager*** class:
 
 > To open the InventoryManager.java file in your IDE, select
 > **File** > **Open** > draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
@@ -643,7 +641,7 @@ Click the ***InventoryManager.add*** span and its ***Tags***. You can see the **
 
 The MicroProfile Telemetry specification makes the underlying OpenTelemetry Tracer instance available. The configured Tracer is accessed by injecting it into a bean. You can use it to instrument your code to create traces.
 
-Replace the ***InventoryResource*** class.
+Replace the ***InventoryResource*** class:
 
 > To open the InventoryResource.java file in your IDE, select
 > **File** > **Open** > draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
@@ -730,9 +728,9 @@ public class InventoryResource {
 
 
 
-To access the Tracer, inject it into a bean by using the ***@Inject*** annotation from the Contexts and Dependency Injections API.
+In order to access the Tracer, the ***@Inject*** annotation from the Contexts and Dependency Injections API injects the Tracer into a bean. 
 
-Before the ***InventoryManager*** to call the ***system*** service, create and start a span called ***GettingProperties*** by using the ***spanBuilder()*** and ***startSpan()*** Tracer APIs.
+Before the ***InventoryManager*** calls the ***system*** service, the ***spanBuilder()*** and ***startSpan()*** Tracer APIs create and start a span called ***GettingProperties***.
 
 The ***try*** block is called a ***try-with-resources*** statement that the ***scope*** object is closed at the end of the statement. It’s good practice to define custom spans inside such statements. Otherwise, any exceptions that are thrown before the span closes will leak the active span.
 
