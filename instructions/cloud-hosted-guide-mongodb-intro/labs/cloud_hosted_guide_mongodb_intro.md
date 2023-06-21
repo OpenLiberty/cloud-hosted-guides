@@ -130,7 +130,7 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-mongodb-intro/start
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
@@ -658,7 +658,7 @@ Replace the server configuration file.
 
 
 
-The features that are required to create the CDI producer for MongoDB are [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi-2.0.html) (***cdi-2.0***), [Secure Socket Layer](https://openliberty.io/docs/latest/reference/feature/ssl-1.0.html) (***ssl-1.0***), [MicroProfile Config](https://openliberty.io/docs/latest/reference/feature/mpConfig-1.4.html) (***mpConfig-1.4***), and [Password Utilities](https://openliberty.io/docs/latest/reference/feature/passwordUtilities-1.0.html) (***passwordUtilities-1.0***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
+The features that are required to create the CDI producer for MongoDB are [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi-4.0.html) (***cdi-4.0***), [Secure Socket Layer](https://openliberty.io/docs/latest/reference/feature/ssl-1.0.html) (***ssl-1.0***), [MicroProfile Config](https://openliberty.io/docs/latest/reference/feature/mpConfig-3.0.html) (***mpConfig-3.0***), and [Password Utilities](https://openliberty.io/docs/latest/reference/feature/passwordUtilities-1.1.html) (***passwordUtilities-1.1***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
 
 After you replace the ***server.xml*** file, the Open Liberty configuration is automatically reloaded.
 
