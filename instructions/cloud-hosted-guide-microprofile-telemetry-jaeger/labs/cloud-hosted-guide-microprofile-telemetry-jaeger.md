@@ -75,7 +75,7 @@ docker run -d --name jaeger \
   jaegertracing/all-in-one:1.46
 ```
 
-You can find information about the Jaeger server and instructions for starting the all-in-one executable file in the [Jaeger documentation](https://www.jaegertracing.io/docs/1.22/getting-started/#all-in-one).
+You can find information about the Jaeger server and instructions for starting the all-in-one executable file in the [Jaeger documentation](https://www.jaegertracing.io/docs/1.46/getting-started/#all-in-one).
 
 Before you proceed, make sure that your Jaeger server is up and running. Click the following button to visit the Jaeger service:
 
@@ -730,9 +730,13 @@ public class InventoryResource {
 
 In order to access the Tracer, the ***@Inject*** annotation from the Contexts and Dependency Injections API injects the Tracer into a bean. 
 
-Before the ***InventoryManager*** calls the ***system*** service, the ***spanBuilder()*** and ***startSpan()*** Tracer APIs create and start a span called ***GettingProperties***.
+Before the ***InventoryManager*** calls the ***system*** service, it creates and starts a span called ***GettingProperties*** by using the ***spanBuilder()*** and ***startSpan()*** Tracer APIs.
 
-The ***try*** block is called a ***try-with-resources*** statement that the ***scope*** object is closed at the end of the statement. It’s good practice to define custom spans inside such statements. Otherwise, any exceptions that are thrown before the span closes will leak the active span.
+When starting a span, you also need to end it by calling ***end()*** on the span. If you don't end a span, it won't be recorded at all and won't show up in Jaeger. This code ensures that ***end()*** is always called by including it in a ***finally*** block.
+
+After starting the span, you make it current with the ***makeCurrent()*** call. Making a span current means that any new spans created in the same thread (either automatically by open liberty, or manually by calling the API) will use this span as their parent span.
+
+The ***makeCurrent()*** call returns a ***Scope***. It's very important to always close the ***Scope***, which stops the span being current and makes the previous span current again. The recommended way to do this is to use a ***try-with-resources*** block, which makes sure that the ***Scope*** is automatically closed at the end of the block.
 
 Use the ***addEvent()*** Span API to create an event when the properties are received and an event when fails to get the properties from the ***system*** service. Use the ***end()*** Span API to mark the ***GettingProperties*** span completed.
 
