@@ -133,7 +133,11 @@ mvn liberty:stop
 
 The Open Liberty Maven plug-in includes a ***dev*** goal that listens for any changes in the project, including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
 
-Stop the Open Liberty server if it is running, and start it in dev mode by running the ***liberty:dev*** goal in the ***start*** directory:
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+Stop the Open Liberty server if it is running, and start it in [dev mode](https://openliberty.io/docs/latest/development-mode.html) by running the ***liberty:dev*** goal in the ***start*** directory:
 
 ```bash
 mvn liberty:dev
