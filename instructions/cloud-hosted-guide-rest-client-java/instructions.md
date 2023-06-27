@@ -107,7 +107,7 @@ To begin, run the following command to navigate to the ***start*** directory:
 cd /home/project/guide-rest-client-java/start
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
@@ -357,7 +357,7 @@ The methods that you wrote in the ***Consumer*** class could be written directly
 
 ::page{title="Running the application"}
 
-The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
+The Open Liberty server was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
 
 
 You can find your service at the ***http://localhost:9080/artists*** endpoint by running the following curl command:
@@ -536,7 +536,7 @@ The ***testJsonPArtistCount*** test uses the ***total*** endpoint which invokes 
 
 ### Running the tests
 
-Becayse you started Open Liberty in development mode at the start of the guide, press the ***enter/return*** key to run the tests.
+Becayse you started Open Liberty in dev mode at the start of the guide, press the ***enter/return*** key to run the tests.
 
 If the tests pass, you see a similar output to the following example:
 
@@ -553,7 +553,7 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 
 ```
 
-When you are done checking out the service, exit development mode by typing ***q*** in the command-line session where you ran the server, and then press the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by typing ***q*** in the command-line session where you ran the server, and then press the ***enter/return*** key.
 
 ::page{title="Building the application"}
 
