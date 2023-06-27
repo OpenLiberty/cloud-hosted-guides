@@ -104,7 +104,7 @@ mvn -pl backendServices liberty:stop
 
 Navigate to the ***start*** directory to begin.
 
-When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
 
 Run the following commands to navigate to the ***frontendUI*** directory and start the ***frontendUI*** service in dev mode:
 ```bash
