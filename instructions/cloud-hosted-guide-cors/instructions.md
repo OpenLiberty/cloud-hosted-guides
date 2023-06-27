@@ -84,7 +84,7 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-cors/start
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
@@ -159,7 +159,7 @@ For more information about these and other CORS attributes, see the [cors elemen
 
 Save the changes to the ***server.xml*** file. The ***/configurations/simple*** endpoint is now ready to be tested with a simple CORS request.
 
-The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
+The Open Liberty server was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
 
 Now, test the simple CORS configuration that you added. Add the ***testSimpleCorsRequest*** method to the ***CorsIT*** class.
 
