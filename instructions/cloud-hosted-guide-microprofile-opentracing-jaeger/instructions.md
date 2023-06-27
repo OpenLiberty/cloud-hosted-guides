@@ -142,7 +142,7 @@ mvn -pl inventory liberty:stop
 
 You need to start the services to see basic traces appear in Jaeger.
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
 
 Open a command-line session and navigate to the ***start/inventory*** directory.
 Run the following Maven goal to start the ***inventory*** service in dev mode:
