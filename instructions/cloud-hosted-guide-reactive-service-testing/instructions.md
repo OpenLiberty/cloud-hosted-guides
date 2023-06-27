@@ -124,7 +124,7 @@ If you don't have the latest Docker image, pull it by running the following comm
 docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 
-With Open Liberty [dev mode](https://openliberty.io/docs/latest/development-mode.html), you can use MicroShed Testing to run tests on an already running Open Liberty server. Navigate to the ***start/system*** directory.
+With Open Liberty dev mode, you can use MicroShed Testing to run tests on an already running Open Liberty server. Navigate to the ***start/system*** directory.
 
 ```bash
 cd /home/project/guide-reactive-service-testing/start/system
