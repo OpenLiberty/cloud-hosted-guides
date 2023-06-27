@@ -129,7 +129,7 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-cdi-intro/start
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
@@ -159,43 +159,6 @@ touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/in
 
 
 
-```java
-package io.openliberty.guides.inventory;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-import jakarta.enterprise.context.ApplicationScoped;
-
-@ApplicationScoped
-public class InventoryManager {
-
-  private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
-
-  public void add(String hostname, Properties systemProps) {
-    Properties props = new Properties();
-    props.setProperty("os.name", systemProps.getProperty("os.name"));
-    props.setProperty("user.name", systemProps.getProperty("user.name"));
-
-    SystemData system = new SystemData(hostname, props);
-    if (!systems.contains(system)) {
-      systems.add(system);
-    }
-  }
-
-  public InventoryList list() {
-    return new InventoryList(systems);
-  }
-}
-```
-
-
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
-
-
 This bean contains two simple functions. The ***add()*** function is for adding entries to the inventory. The ***list()*** function is for listing all the entries currently stored in the inventory.
 
 This bean must be persistent between all of the clients, which means multiple clients need to share the same instance. To achieve this by using CDI, you can simply add the ***@ApplicationScoped*** annotation onto the class.
@@ -214,58 +177,6 @@ touch /home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/in
 > **File** > **Open** > guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
 
 ::openFile{path="/home/project/guide-cdi-intro/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
-
-
-
-```java
-package io.openliberty.guides.inventory;
-
-import java.util.Properties;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.client.SystemClient;
-
-@ApplicationScoped
-@Path("/systems")
-public class InventoryResource {
-
-  @Inject
-  InventoryManager manager;
-
-  @Inject
-  SystemClient systemClient;
-
-  @GET
-  @Path("/{hostname}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response getPropertiesForHost(@PathParam("hostname") String hostname) {
-    Properties props = systemClient.getProperties(hostname);
-    if (props == null) {
-      return Response.status(Response.Status.NOT_FOUND)
-                     .entity("{ \"error\" : \"Unknown hostname " + hostname
-                             + " or the inventory service may not be running "
-                             + "on the host machine \" }")
-                     .build();
-    }
-
-    manager.add(hostname, props);
-    return Response.ok(props).build();
-  }
-
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  public InventoryList listContents() {
-    return manager.list();
-  }
-}
-```
 
 
 
@@ -332,162 +243,6 @@ touch /home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides
 > **File** > **Open** > guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java, or click the following button
 
 ::openFile{path="/home/project/guide-cdi-intro/start/src/test/java/it/io/openliberty/guides/inventory/InventoryEndpointIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.inventory;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-
-@TestMethodOrder(OrderAnnotation.class)
-public class InventoryEndpointIT {
-
-  private static String port;
-  private static String baseUrl;
-
-  private Client client;
-
-  private final String SYSTEM_PROPERTIES = "system/properties";
-  private final String INVENTORY_SYSTEMS = "inventory/systems";
-
-  @BeforeAll
-  public static void oneTimeSetup() {
-    port = System.getProperty("http.port");
-    baseUrl = "http://localhost:" + port + "/";
-  }
-
-  @BeforeEach
-  public void setup() {
-    client = ClientBuilder.newClient();
-  }
-
-  @AfterEach
-  public void teardown() {
-    client.close();
-  }
-
-  @Test
-  @Order(1)
-  public void testHostRegistration() {
-    this.visitLocalhost();
-
-    Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
-    this.assertResponse(baseUrl, response);
-
-    JsonObject obj = response.readEntity(JsonObject.class);
-
-    JsonArray systems = obj.getJsonArray("systems");
-
-    boolean localhostExists = false;
-    for (int n = 0; n < systems.size(); n++) {
-      localhostExists = systems.getJsonObject(n)
-                                .get("hostname").toString()
-                                .contains("localhost");
-      if (localhostExists) {
-          break;
-      }
-    }
-    assertTrue(localhostExists,
-              "A host was registered, but it was not localhost");
-
-    response.close();
-  }
-
-  @Test
-  @Order(2)
-  public void testSystemPropertiesMatch() {
-    Response invResponse = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
-    Response sysResponse = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
-
-    this.assertResponse(baseUrl, invResponse);
-    this.assertResponse(baseUrl, sysResponse);
-
-    JsonObject jsonFromInventory = (JsonObject) invResponse.readEntity(JsonObject.class)
-                                                           .getJsonArray("systems")
-                                                           .getJsonObject(0)
-                                                           .get("properties");
-
-    JsonObject jsonFromSystem = sysResponse.readEntity(JsonObject.class);
-
-    String osNameFromInventory = jsonFromInventory.getString("os.name");
-    String osNameFromSystem = jsonFromSystem.getString("os.name");
-    this.assertProperty("os.name", "localhost", osNameFromSystem,
-                        osNameFromInventory);
-
-    String userNameFromInventory = jsonFromInventory.getString("user.name");
-    String userNameFromSystem = jsonFromSystem.getString("user.name");
-    this.assertProperty("user.name", "localhost", userNameFromSystem,
-                        userNameFromInventory);
-
-    invResponse.close();
-    sysResponse.close();
-  }
-
-  @Test
-  @Order(3)
-  public void testUnknownHost() {
-    Response response = this.getResponse(baseUrl + INVENTORY_SYSTEMS);
-    this.assertResponse(baseUrl, response);
-
-    Response badResponse = client.target(baseUrl + INVENTORY_SYSTEMS + "/"
-        + "badhostname").request(MediaType.APPLICATION_JSON).get();
-
-    assertEquals(404, badResponse.getStatus(),
-        "BadResponse expected status: 404. Response code not as expected.");
-
-    String obj = badResponse.readEntity(String.class);
-
-    boolean isError = obj.contains("error");
-    assertTrue(isError,
-              "badhostname is not a valid host but it didn't raise an error");
-
-    response.close();
-    badResponse.close();
-  }
-
-  private Response getResponse(String url) {
-    return client.target(url).request().get();
-  }
-
-  private void assertResponse(String url, Response response) {
-    assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-  }
-
-  private void assertProperty(String propertyName, String hostname,
-      String expected, String actual) {
-    assertEquals(expected, actual, "JVM system property [" + propertyName + "] "
-        + "in the system service does not match the one stored in "
-        + "the inventory service for " + hostname);
-  }
-
-  private void visitLocalhost() {
-    Response response = this.getResponse(baseUrl + SYSTEM_PROPERTIES);
-    this.assertResponse(baseUrl, response);
-    response.close();
-
-    Response targetResponse = client.target(baseUrl + INVENTORY_SYSTEMS
-        + "/localhost").request().get();
-    targetResponse.close();
-  }
-}
-```
 
 
 
