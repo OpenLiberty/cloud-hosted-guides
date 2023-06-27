@@ -99,7 +99,7 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-microprofile-openapi/start
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
@@ -238,7 +238,7 @@ Clearly, there are many more OpenAPI annotations now, so let’s break them down
 | ***@Parameter***    | Describes a single operation parameter.
 
 
-Since the Open Liberty server was started in development mode at the beginning of the guide, your changes were automatically picked up. Run the following curl command to see the updated OpenAPI tree:
+Since the Open Liberty server was started in dev mode at the beginning of the guide, your changes were automatically picked up. Run the following curl command to see the updated OpenAPI tree:
 ```bash
 curl http://localhost:9080/openapi
 ```
