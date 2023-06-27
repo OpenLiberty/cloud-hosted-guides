@@ -95,7 +95,7 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-jakarta-websocket/start
 ```
 
-When you run Open Liberty in dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
 
 ```bash
 mvn -pl system liberty:dev
