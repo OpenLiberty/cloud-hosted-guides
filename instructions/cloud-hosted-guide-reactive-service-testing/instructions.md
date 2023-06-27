@@ -124,13 +124,13 @@ If you don't have the latest Docker image, pull it by running the following comm
 docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 
-With Open Liberty development mode, known as dev mode, you can use MicroShed Testing to run tests on an already running Open Liberty server. Navigate to the ***start/system*** directory.
+With Open Liberty [dev mode](https://openliberty.io/docs/latest/development-mode.html), you can use MicroShed Testing to run tests on an already running Open Liberty server. Navigate to the ***start/system*** directory.
 
 ```bash
 cd /home/project/guide-reactive-service-testing/start/system
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
