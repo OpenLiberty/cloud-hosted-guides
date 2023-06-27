@@ -72,7 +72,7 @@ mvn verify
 
 This command might take some time to run initially because the dependencies and the Docker image for Open Liberty must download. If you run the same command again, it will be faster.
 
-The previous example shows how you can run integration tests from a cold start. With Open Liberty development mode, you can use MicroShed Testing to run tests on an active Open Liberty server. Run the following Maven goal to start Open Liberty in development mode:
+The previous example shows how you can run integration tests from a cold start. With Open Liberty dev mode, you can use MicroShed Testing to run tests on an active Open Liberty server. Run the following Maven goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
@@ -85,9 +85,9 @@ After you see the following message, your application server in dev mode is read
 *    Liberty is running in dev mode.
 ```
 
-After the Open Liberty server starts and you see the ***To run tests on demand, press Enter.*** message, you can press the ***enter/return*** key to run the integration tests. After the tests finish, you can press the ***enter/return*** key to run the tests again, or you can make code changes to the application or tests. Development mode automatically recompiles and updates any application or test code changes that you make.
+After the Open Liberty server starts and you see the ***To run tests on demand, press Enter.*** message, you can press the ***enter/return*** key to run the integration tests. After the tests finish, you can press the ***enter/return*** key to run the tests again, or you can make code changes to the application or tests. Dev mode automatically recompiles and updates any application or test code changes that you make.
 
-After you're finished running tests, exit development mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+After you're finished running tests, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Bootstrapping your application for testing"}
@@ -98,7 +98,7 @@ To begin, run the following command to navigate to the ***start*** directory:
 cd /home/project/guide-microshed-testing/start
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
@@ -375,18 +375,18 @@ The following tests are added: ***testMinSizeName()***, ***testMinAge()***, ***t
 Save the changes, and  press the ***enter/return*** key in your console window to run the tests.
 
 
-::page{title="Testing outside of development mode"}
+::page{title="Testing outside of dev mode"}
 
-Running tests in development mode is convenient for local development, but it can be tedious to test against a running Open Liberty server in non-development scenarios such as CI/CD pipelines. For this reason, MicroShed Testing can start and stop the application runtime before and after the tests are run. This process is primarily accomplished by using Docker and Testcontainers.
+Running tests in dev mode is convenient for local development, but it can be tedious to test against a running Open Liberty server in non-development scenarios such as CI/CD pipelines. For this reason, MicroShed Testing can start and stop the application runtime before and after the tests are run. This process is primarily accomplished by using Docker and Testcontainers.
 
-To test outside of development mode, exit development mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+To test outside of dev mode, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 Next, use the following Maven goal to run the tests from a cold start:
 ```bash
 mvn verify
 ```
 
-Running tests from a cold start takes a little longer than running tests from development mode because the application runtime needs to start each time. However, tests that are run from a cold start use a clean instance on each run to ensure consistent results. These tests also automatically hook into existing build pipelines that are set up to run the ***integration-test*** phase.
+Running tests from a cold start takes a little longer than running tests from dev mode because the application runtime needs to start each time. However, tests that are run from a cold start use a clean instance on each run to ensure consistent results. These tests also automatically hook into existing build pipelines that are set up to run the ***integration-test*** phase.
 
 
 ::page{title="Sharing configuration across multiple classes"}
@@ -464,7 +464,7 @@ public class ErrorPathIT {
 
 The ***ErrorPathIT*** test class has the same ***@Container*** configuration and ***PersonService*** REST client as the ***PersonServiceIT*** class.
 
-Now, run the tests again outside of development mode:
+Now, run the tests again outside of dev mode:
 ```bash
 mvn verify
 ```
@@ -693,7 +693,7 @@ mvn verify
 
 ### Nice Work!
 
-You developed automated tests for a REST service in Open Liberty by using MicroShed Testing and Open Liberty development mode.
+You developed automated tests for a REST service in Open Liberty by using MicroShed Testing and Open Liberty dev mode.
 
 
 
