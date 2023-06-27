@@ -26,7 +26,7 @@ In this guide, you will learn how to:
 
 * establish a dependency between a web module and a Java library module,
 * use Maven to package the WAR file and the JAR file into an EAR file so that you can run and test the application on Open Liberty, and
-* use Liberty Maven plug-in to develop a multi-module application in development mode without having to prebuild the JAR and WAR files. In development mode, your changes are automatically picked up by the running server.
+ use Liberty Maven plug-in to develop a multi-module application in [dev mode](https://openliberty.io/docs/latest/development-mode.html#_run_multi_module_maven_projects_in_dev_mode) without having to prebuild the JAR and WAR files. In dev mode, your changes are automatically picked up by the running server.
 
 You will build a unit converter application that converts heights from centimeters into feet and inches. The application will request the user to enter a height value in centimeters. Then, the application processes the input by using functions that are found in the JAR file to return the height value in imperial units.
 
@@ -431,14 +431,14 @@ Adding the ***maven-war-plugin***, ***maven-compiler-plugin***, and ***liberty-m
 
 ::page{title="Developing the application"}
 
-You can now develop the application and the different modules together in dev mode by using the Liberty Maven plug-in. To learn more about how to use development mode with multiple modules, check out the [Documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#multiple-modules).
+You can now develop the application and the different modules together in dev mode by using the Liberty Maven plug-in. To learn more about how to use dev mode with multiple modules, check out the [Documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/dev.md#multiple-modules).
 
 Navigate to the ***start*** directory to begin.
 ```bash
 cd /home/project/guide-maven-multimodules/start
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
@@ -666,7 +666,7 @@ The ***testHeightsPage*** tests to check that the application can process the in
 
 ### Running the tests
 
-Because you started Open Liberty in development mode, press the *enter/return* key to run the tests.
+Because you started Open Liberty in dev mode, press the *enter/return* key to run the tests.
 
 You will see the following output:
 
@@ -684,7 +684,7 @@ Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 
-When you are done checking out the service, exit development mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing *q* and then pressing the *enter/return* key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing *q* and then pressing the *enter/return* key.
 
 
 ::page{title="Building the multi-module application"}
