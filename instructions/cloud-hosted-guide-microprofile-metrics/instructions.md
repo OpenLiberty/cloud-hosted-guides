@@ -179,7 +179,7 @@ To begin, run the following command to navigate to the **start** directory:
 cd /home/project/guide-microprofile-metrics/start
 ```
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
@@ -359,7 +359,7 @@ You can see the vendor-only metrics in the ***metrics?scope=vendor*** endpoint. 
 
 ::page{title="Building and running the application"}
 
-The Open Liberty server was started in development mode at the beginning of the guide and all the changes were automatically picked up.
+The Open Liberty server was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
 
 
 Run the following curl command to review all the metrics that are enabled through MicroProfile Metrics. You see only the system and vendor metrics because the server just started, and the ***inventory*** service has not been accessed.
@@ -632,7 +632,7 @@ In addition, the endpoint tests ***src/test/java/it/io/openliberty/guides/invent
 
 ### Running the tests
 
-Because you started Open Liberty in development mode at the start of the guide, press the ***enter/return*** key to run the tests and see the following output:
+Because you started Open Liberty in dev mode at the start of the guide, press the ***enter/return*** key to run the tests and see the following output:
 
 ```
 -------------------------------------------------------
