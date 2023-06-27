@@ -260,7 +260,7 @@ In the ***liberty-maven-plugin*** plug-in section, you can add a ***configuratio
 
 ::page{title="Running the application"}
 
-When you run Open Liberty in development mode, known as dev mode, the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
@@ -377,7 +377,7 @@ In the ***import*** statements of this test class, you'll notice that the test h
 
 The Apache ***httpclient*** and ***junit-jupiter-engine*** dependencies are needed to compile and run the integration test ***EndpointIT*** class. The scope for each of the dependencies is set to ***test*** because the libraries are needed only during the Maven build and do not needed to be packaged with the application.
 
-Now, the created WAR file contains the web application, and development mode can run any integration test classes that it finds. Integration test classes are classes with names that end in ***IT***.
+Now, the created WAR file contains the web application, and dev mode can run any integration test classes that it finds. Integration test classes are classes with names that end in ***IT***.
 
 The directory structure of the project should now look like this:
 
