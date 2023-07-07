@@ -507,11 +507,7 @@ Run the ***mvn package*** command from the ***start*** directory so that the ***
 mvn package
 ```
 
-Run the following command to download or update to the latest Open Liberty Docker image:
 
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
 
 To build and containerize the application, run the following Docker build command in the ***start*** directory:
 
@@ -776,7 +772,7 @@ Replace the pom.xml file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.7.1</version>
+                <version>3.8.2</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
