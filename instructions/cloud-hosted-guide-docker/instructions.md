@@ -101,7 +101,7 @@ touch /home/project/guide-docker/start/Dockerfile
 
 
 ```
-FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
@@ -122,7 +122,9 @@ LABEL \
 USER root
 
 COPY --chown=1001:0 src/main/liberty/config/server.xml /config/
+RUN features.sh
 COPY --chown=1001:0 target/*.war /config/apps/
+RUN configure.sh
 USER 1001
 ```
 
@@ -132,7 +134,7 @@ Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Comm
 
 The ***FROM*** instruction initializes a new build stage and indicates the parent image from which your image is built. If you don't need a parent image, then use ***FROM scratch***, which makes your image a base image. 
 
-In this case, you’re using the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image as your parent image, which comes with the latest Open Liberty runtime.
+In this case, you’re using the ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi*** image as your parent image, which comes with the latest Open Liberty runtime.
 
 The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the server configuration file that is located at ***src/main/liberty/config/server.xml*** is copied to the ***/config/*** destination directory.
 
