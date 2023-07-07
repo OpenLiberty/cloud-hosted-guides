@@ -64,11 +64,7 @@ cd finish
 mvn -pl models install
 ```
 
-Run the following command to download or update to the latest Open Liberty Docker image:
 
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
 
 Next, navigate to the ***finish/system*** directory and run the following Maven goal to build the ***system*** service and run the integration tests on an Open Liberty server in a container:
 
@@ -116,12 +112,6 @@ The ***start*** directory contains three directories: the ***system*** service d
 
 ```bash
 mvn -pl models install
-```
-
-If you don't have the latest Docker image, pull it by running the following command:
-
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
 ```
 
 With Open Liberty dev mode, you can use MicroShed Testing to run tests on an already running Open Liberty server. Navigate to the ***start/system*** directory.
