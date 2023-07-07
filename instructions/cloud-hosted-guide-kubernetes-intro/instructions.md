@@ -89,11 +89,7 @@ cd start
 mvn clean package
 ```
 
-Run the following command to download or update to the latest Open Liberty Docker image:
 
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
 
 Next, run the ***docker build*** commands to build container images for your application:
 ```bash
@@ -115,7 +111,7 @@ Verify that the ***system:1.0-SNAPSHOT*** and ***inventory:1.0-SNAPSHOT*** image
 REPOSITORY                                TAG                       
 inventory                                 1.0-SNAPSHOT
 system                                    1.0-SNAPSHOT
-openliberty/open-liberty                  full-java11-openj9-ubi
+openliberty/open-liberty                  kernel-slim-java11-openj9-ubi
 ```
 
 If you don't see the ***system:1.0-SNAPSHOT*** and ***inventory:1.0-SNAPSHOT*** images, then check the Maven build log for any potential errors. If the images built without errors, push them to your container registry on IBM Cloud with the following commands:
