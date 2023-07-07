@@ -360,11 +360,7 @@ mvn -pl models install
 mvn package
 ```
 
-Run the following command to download or update to the latest Open Liberty Docker image:
 
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
 
 Run the following commands to containerize the microservices:
 
