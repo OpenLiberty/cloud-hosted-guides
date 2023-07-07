@@ -736,7 +736,7 @@ Replace the Maven project file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.7.1</version>
+                <version>3.8.2</version>
                 <configuration>
                     <looseApplication>false</looseApplication>
                 </configuration>
@@ -821,11 +821,7 @@ mvn package
 
 The ***mvn install*** command compiles and packages the object types you created to a ***.jar*** file. This allows them to be used by the ***system*** and ***graphql*** services. The ***mvn package*** command packages the ***system*** and ***graphql*** services to ***.war*** files.
 
-Run the following command to download or update to the latest Open Liberty Docker image:
 
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
 
 Dockerfiles have already been set up for you. Build your Docker images with the following commands:
 
