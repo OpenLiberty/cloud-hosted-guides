@@ -479,7 +479,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.7.1</version>
+                <version>3.8.2</version>
             </plugin>
 
             <!-- Plugin to run unit tests -->
@@ -532,11 +532,7 @@ mvn -pl models install
 mvn package
 ```
 
-Run the following command to download or update to the latest Open Liberty Docker image:
 
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
 
 Run the following commands to containerize the microservices:
 
@@ -561,7 +557,7 @@ The application might take some time to become available. After the application 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 
-Visit the http://localhost:9085/health URL to confirm that the ***inventory*** microservice is up and running.
+Visit the ***http\://localhost:9085/health*** URL to confirm that the ***inventory*** microservice is up and running.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -573,7 +569,7 @@ curl -s http://localhost:9085/health | jq
 
 
 
-When both the liveness and readiness health checks are up, go to the http://localhost:9085/inventory/systems URL to access the ***inventory*** microservice.
+When both the liveness and readiness health checks are up, go to the ***http\://localhost:9085/inventory/systems*** URL to access the ***inventory*** microservice.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -593,7 +589,7 @@ You see the CPU ***systemLoad*** property for all the systems:
 ```
 
 
-You can revisit the http://localhost:9085/inventory/systems URL after a while, and you will notice the CPU ***systemLoad*** property for the systems changed.
+You can revisit the ***http\://localhost:9085/inventory/systems*** URL after a while, and you will notice the CPU ***systemLoad*** property for the systems changed.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
