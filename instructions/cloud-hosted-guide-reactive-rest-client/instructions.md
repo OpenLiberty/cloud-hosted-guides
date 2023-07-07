@@ -268,11 +268,7 @@ mvn -pl models install
 mvn package
 ```
 
-Run the following command to download or update to the latest Open Liberty Docker image:
 
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
 
 Run the following commands to containerize the microservices:
 
@@ -455,7 +451,7 @@ Replace the Maven configuration file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.7.1</version>
+                <version>3.8.2</version>
             </plugin>
 
             <!-- Plugin to run unit tests -->
