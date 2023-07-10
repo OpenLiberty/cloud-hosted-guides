@@ -109,7 +109,7 @@ touch /home/project/guide-spring-boot/start/Dockerfile
 
 
 ```
-FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi as staging
+FROM icr.io/appcafe/open-liberty:full-java8-openj9-ubi as staging
 
 COPY --chown=1001:0 target/guide-spring-boot-0.1.0.jar \
                     /staging/fat-guide-spring-boot-0.1.0.jar
@@ -119,7 +119,7 @@ RUN springBootUtility thin \
  --targetThinAppPath=/staging/thin-guide-spring-boot-0.1.0.jar \
  --targetLibCachePath=/staging/lib.index.cache
 
-FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi
+FROM icr.io/appcafe/open-liberty:kernel-slim-java8-openj9-ubi
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
@@ -175,7 +175,7 @@ docker images
 Your ***springboot*** image appears in the list of Docker images:
 ```
 REPOSITORY    TAG       IMAGE ID         CREATED           SIZE
-springboot    latest    d3ffdaa81854     27 seconds ago    486MB
+springboot    latest    d3ffdaa81854     27 seconds ago    596MB
 ```
 
 Now, you can run the Spring Boot application in a Docker container:
