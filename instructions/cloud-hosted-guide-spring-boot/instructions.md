@@ -109,7 +109,7 @@ touch /home/project/guide-spring-boot/start/Dockerfile
 
 
 ```
-FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi as staging
+FROM icr.io/appcafe/open-liberty:full-java8-openj9-ubi as staging
 
 COPY --chown=1001:0 target/guide-spring-boot-0.1.0.jar \
                     /staging/fat-guide-spring-boot-0.1.0.jar
@@ -119,7 +119,7 @@ RUN springBootUtility thin \
  --targetThinAppPath=/staging/thin-guide-spring-boot-0.1.0.jar \
  --targetLibCachePath=/staging/lib.index.cache
 
-FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+FROM icr.io/appcafe/open-liberty:kernel-slim-java8-openj9-ubi
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
@@ -139,6 +139,8 @@ LABEL \
 
 RUN cp /opt/ol/wlp/templates/servers/springBoot2/server.xml /config/server.xml
 
+RUN features.sh
+
 COPY --chown=1001:0 --from=staging /staging/lib.index.cache /lib.index.cache
 COPY --chown=1001:0 --from=staging /staging/thin-guide-spring-boot-0.1.0.jar \
                     /config/dropins/spring/thin-guide-spring-boot-0.1.0.jar
@@ -157,11 +159,7 @@ and then uses the Open Liberty ***springBootUtility*** command to thin the appli
 
 The second stage begins with the ***Open Liberty Docker image***. The Dockerfile copies the ***server.xml*** file from the ***/opt/ol/wlp/templates*** directory, which enables Spring Boot and TLS support. Then, the Dockerfile copies the Spring Boot dependent library JAR files that are at the ***lib.index.cache*** directory and the ***thin-guide-spring-boot-0.1.0.jar*** file. The ***lib.index.cache*** directory and the ***thin-guide-spring-boot-0.1.0.jar*** file were both generated in the first stage.
 
-Run the following command to download or update to the latest Open Liberty Docker image:
 
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
 
 Use the following command to build the Docker image:
 ```bash
@@ -177,7 +175,7 @@ docker images
 Your ***springboot*** image appears in the list of Docker images:
 ```
 REPOSITORY    TAG       IMAGE ID         CREATED           SIZE
-springboot    latest    d3ffdaa81854     27 seconds ago    486MB
+springboot    latest    d3ffdaa81854     27 seconds ago    596MB
 ```
 
 Now, you can run the Spring Boot application in a Docker container:
@@ -302,7 +300,7 @@ Update the ***Maven POM*** file in the ***start*** directory.
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.7.1</version>
+        <version>3.8.2</version>
         <configuration>
           <appsDirectory>apps</appsDirectory>
           <installAppPackages>spring-boot-project</installAppPackages>
@@ -386,6 +384,11 @@ Next, run the ***liberty:run*** goal. This goal creates the Open Liberty server,
 
 ```bash
 ./mvnw liberty:run
+```
+
+After you see the following message, your application server is ready:
+```
+The defaultServer server is ready to run a smarter planet.
 ```
 
 
@@ -484,7 +487,7 @@ Update the Maven POM file in the ***start*** directory.
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.7.1</version>
+        <version>3.8.2</version>
         <configuration>
           <appsDirectory>apps</appsDirectory>
           <installAppPackages>spring-boot-project</installAppPackages>
@@ -531,6 +534,12 @@ Run the repackaged Spring Boot application. This JAR file was defined previously
 
 ```bash
 java -jar target/GSSpringBootApp.jar
+```
+
+After you see the following message, your application server is ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
 ```
 
 
