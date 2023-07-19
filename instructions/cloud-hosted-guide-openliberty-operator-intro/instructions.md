@@ -60,7 +60,7 @@ The ***finish*** directory contains the finished project that you will build.
 ::page{title="Installing the Operator"}
 
 
-The Open Liberty Operator is already installed in this Skills Network environment. To learn how to install the Open Liberty Operator yourself, see the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the [Open Liberty Operator documentation](https://github.com/OpenLiberty/open-liberty-operator/tree/main/deploy/releases/1.2.0#readme).
+The Open Liberty Operator is already installed in this Skills Network environment. To learn how to install the Open Liberty Operator yourself, see the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the [Open Liberty Operator documentation](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#operator-installation).
 
 To check that the Open Liberty Operator has been installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 ```bash
@@ -216,7 +216,7 @@ Namespace:    default
 Labels:       app.kubernetes.io/part-of=system
               name=system
 Annotations:  <none>
-API Version:  apps.openliberty.io/v1beta2
+API Version:  apps.openliberty.io/v1
 Kind:         OpenLibertyApplication
 
 ...
@@ -245,7 +245,7 @@ kubectl delete -f deploy.yaml
 
 ::page{title="Specifying optional parameters"}
 
-You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1beta2.adoc#configuration) to find all of the supported optional CRDs.
+You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#configuration) to find all of the supported optional CRDs.
 
 To configure the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator, specify the ***probes*** in your ***deploy.yaml*** file. The ***startup*** probe verifies whether deployed application is fully initialized before the liveness probe takes over. Then, the ***liveness*** probe determines whether the application is running and the ***readiness*** probe determines whether the application is ready to process requests. For more information about application health checks, see the [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide.
 
