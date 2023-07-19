@@ -60,7 +60,7 @@ The ***finish*** directory contains the finished project that you will build.
 ::page{title="Installing the Operator"}
 
 
-In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/tree/main/deploy/releases/0.8.2#readme).
+The Open Liberty Operator is already installed in this Skills Network environment. To learn how to install the Open Liberty Operator yourself, see the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the [Open Liberty Operator documentation](https://github.com/OpenLiberty/open-liberty-operator/tree/main/deploy/releases/1.2.0#readme).
 
 To check that the Open Liberty Operator has been installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 ```bash
@@ -96,13 +96,7 @@ mvn clean package
 
 ### Building the image
 
-Run the following command to download or update to the latest Open Liberty Docker image:
-
-```bash
-docker pull icr.io/appcafe/open-liberty:full-java11-openj9-ubi
-```
-
-Next, run the ***docker build*** command to build the container image for your application:
+Run the ***docker build*** command to build the container image for your application:
 ```bash
 docker build -t system:1.0-SNAPSHOT system/.
 ```
@@ -124,10 +118,10 @@ docker images
 
 The output is similar to the following example:
 ```
-REPOSITORY                          TAG                      IMAGE ID       CREATED         SIZE
-us.icr.io/sn-labs-yourname/system   1.0-SNAPSHOT             5c5890296d6e   2 minutes ago   1.23GB
-system                              1.0-SNAPSHOT             5c5890296d6e   2 minutes ago   1.23GB
-icr.io/appcafe/open-liberty         full-java11-openj9-ubi   e959985784c2   2 days ago      1.2GB
+REPOSITORY                          TAG                             IMAGE ID       CREATED         SIZE
+us.icr.io/sn-labs-yourname/system   1.0-SNAPSHOT                    5c5890296d6e   2 minutes ago   723MB
+system                              1.0-SNAPSHOT                    5c5890296d6e   2 minutes ago   723MB
+icr.io/appcafe/open-liberty         kernel-slim-java11-openj9-ubi   e959985784c2   2 days ago      659MB
 ```
 
 Now you're ready to deploy the image.
@@ -152,7 +146,7 @@ touch /home/project/guide-openliberty-operator-intro/start/deploy.yaml
 
 
 ```yaml
-apiVersion: apps.openliberty.io/v1beta2
+apiVersion: apps.openliberty.io/v1
 kind: OpenLibertyApplication
 metadata:
   name: system
@@ -161,7 +155,7 @@ metadata:
 spec:
   applicationImage: system:1.0-SNAPSHOT
   service:
-    port: 9080
+    port: 9443
   expose: true
   route:
     pathType: ImplementationSpecific
@@ -187,6 +181,8 @@ Additionally, the microservice includes the ***service*** and ***expose*** param
 
 Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
 ```bash
+sed -i 's=v1=v1beta2=g' deploy.yaml
+sed -i 's=9443=9080=g' deploy.yaml
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
@@ -230,10 +226,10 @@ Kind:         OpenLibertyApplication
 
 To access the exposed ***system*** microservice, the service must be port-forwarded. Run the following command to set up port forwarding to access the ***system*** service:
 
+
 ```bash
 kubectl port-forward svc/system 9080
 ```
-
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Access the microservice by running the following command:
 ```bash
@@ -263,7 +259,7 @@ Replace the ***deploy.yaml*** configuration file.
 
 
 ```yaml
-apiVersion: apps.openliberty.io/v1beta2
+apiVersion: apps.openliberty.io/v1
 kind: OpenLibertyApplication
 metadata:
   name: system
@@ -272,7 +268,7 @@ metadata:
 spec:
   applicationImage: system:1.0-SNAPSHOT
   service:
-    port: 9080
+    port: 9443
   expose: true
   route:
     pathType: ImplementationSpecific
@@ -286,8 +282,8 @@ spec:
       failureThreshold: 12
       httpGet:
         path: /health/started
-        port: 9080
-        scheme: HTTP
+        port: 9443
+        scheme: HTTPS
       initialDelaySeconds: 30
       periodSeconds: 2
       timeoutSeconds: 10
@@ -295,8 +291,8 @@ spec:
       failureThreshold: 12
       httpGet:
         path: /health/live
-        port: 9080
-        scheme: HTTP
+        port: 9443
+        scheme: HTTPS
       initialDelaySeconds: 30
       periodSeconds: 2
       timeoutSeconds: 10
@@ -304,8 +300,8 @@ spec:
       failureThreshold: 12
       httpGet:
         path: /health/ready
-        port: 9080
-        scheme: HTTP
+        port: 9443
+        scheme: HTTPS
       initialDelaySeconds: 30
       periodSeconds: 2
       timeoutSeconds: 10
@@ -318,6 +314,8 @@ The health check endpoints ***/health/started***, ***/health/live*** and ***/hea
 
 Run the following commands to update the **applicationImage** with the **pullSecret** and redeploy the **system** microservice with the new configuration:
 ```bash
+sed -i 's=v1=v1beta2=g' deploy.yaml
+sed -i 's=9443=9080=g' deploy.yaml
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
@@ -336,10 +334,10 @@ Startup:    http-get http://:9080/health/started delay=30s timeout=10s period=2s
 
 Run the following command to set up port forwarding to access the ***system*** service:
 
+
 ```bash
 kubectl port-forward svc/system 9080
 ```
-
 
 Access the microservice by running the following command:
 ```bash
