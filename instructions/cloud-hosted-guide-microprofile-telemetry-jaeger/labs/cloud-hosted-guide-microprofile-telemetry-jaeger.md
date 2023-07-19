@@ -19,13 +19,13 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 ::page{title="What you'll learn"}
-The use of microservices architecture can increase difficulty to see how services depend on or affect other services. Consequently, making it harder to find the source of latency or inaccuracy.
+The use of a microservices architecture can increase the difficulty of understanding how services depend on or affect other services. Consequently, this makes it harder to identify the source of latency or inaccuracies.
 
 One way to increase observability of an application is by emitting traces. [OpenTelemetry](https://opentelemetry.io/) is a set of APIs, SDKs, tooling, and integrations that are designed for the creation and management of telemetry data such as traces, metrics, and logs. MicroProfile Telemetry adopts OpenTelemetry so your applications can benefit from both manual and automatic traces.
 
 Traces represent requests, which can contain multiple operations, or spans. Each span comprises a name, time-related data, log messages, and metadata that describe what occurred during a transaction. Spans are associated with a context, which identifies the request within which the span occurred. Developers can then follow a single request between services through a potentially complex distributed system. Exporters send the data that MicroProfile Telemetry 1.0 collects to Jaeger so you can visualize and monitor the generated spans.
 
-You'll configure the provided ***system*** and ***inventory*** services to use [Jaeger](https://www.jaegertracing.io/) for distributed tracing with MicroProfile Telemetry. You'll run these services in two separate JVMs made of two server instances to demonstrate tracing in a distributed environment. If all the components were run on a single server, then any logging software would be sufficient.
+The diagram shows multiple services, which is where distributed tracing is really valuable. However, for simplicity, in this guide you'll configure only the ***system*** and ***inventory*** services to use [Jaeger](https://www.jaegertracing.io/) for distributed tracing with MicroProfile Telemetry. You'll run these services in two separate JVMs made of two server instances to demonstrate tracing in a distributed environment.
 
 ![Application architecture](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/architecture_diagram.png)
 
@@ -466,7 +466,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 
 
-The OpenTelemetry API and OpenTelemetry Instrumentation Annotations must be provided as dependencies to your build path. Add two ***io.opentelemetry*** dependencies in your ***pom.xml*** Maven project file.
+The OpenTelemetry API and OpenTelemetry Instrumentation Annotations must be provided as dependencies to your build path. The ***pom.xml*** now includes two ***io.opentelemetry*** dependencies.
 
 Replace the ***server.xml*** file of the inventory service:
 
@@ -557,7 +557,7 @@ public class InventoryManager {
     }
 
     @WithSpan
-    public void add(@SpanAttribute(value = "hostname") String host,
+    public void add(@SpanAttribute("hostname") String host,
                     Properties systemProps) {
         Properties props = new Properties();
         props.setProperty("os.name", systemProps.getProperty("os.name"));
@@ -584,7 +584,9 @@ public class InventoryManager {
 
 
 
-Annotate the ***add()*** and ***list()*** methods with the ***@WithSpan*** annotation. You can annotate the ***host*** parameter with the ***@SpanAttribute*** annotation with a customized value to indicate that it is part of the trace.
+The ***add()*** and ***list()*** methods are annotated with the ***@WithSpan*** annotation. The OpenTelemetry instrumentation provides a new span for each method. You can now collect and trace the spans across different services. After creating a span, you have the option to include desired parameters with their values in the span by using the ***@SpanAttribute*** annotation. For example, the ***host*** parameter is assigned ***hostname*** as its attribute name using the ***@SpanAttribute*** annotation, which gives the benefit of tracing the parameters within the ***add*** span.
+
+To learn more about how to use OpenTelemetry annotations to instrument code, see the [OpenTelemetry Annotations](https://opentelemetry.io/docs/instrumentation/java/automatic/annotations/) documentation.
 
 
 
@@ -784,7 +786,7 @@ There are two spans from ***inventory*** service. Click the trace to view its de
 
 
 
-To learn more how to use OpenTelemetry APIs to instrument code, see the [OpenTelemetry Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/) documentation.
+To learn more about how to use OpenTelemetry APIs to instrument code, see the [OpenTelemetry Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/) documentation.
 
 
 ::page{title="Testing the application "}
