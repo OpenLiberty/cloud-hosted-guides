@@ -5,9 +5,9 @@ branch: lab-7221-instruction
 version-history-start-date: 2023-06-06T12:58:02Z
 tool-type: theia
 ---
-::page{title="Welcome to the Enabling distributed tracing in microservices using OpenTelemetry observability framework guide!"}
+::page{title="Welcome to the Enabling distributed tracing in microservices with OpenTelemetry and Jaeger guide!"}
 
-Distributed tracing helps teams to keep track of requests between microservices. MicroProfile Telemetry adopts OpenTelemetry tracing to allow developers to observe requests across their distributed systems.
+Distributed tracing helps teams keep track of requests between microservices. MicroProfile Telemetry adopts OpenTelemetry tracing, so you can observe requests across your distributed systems.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -19,13 +19,13 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 ::page{title="What you'll learn"}
-The use of a microservices architecture can increase the difficulty of understanding how services depend on or affect other services. Consequently, this makes it harder to identify the source of latency or inaccuracies.
+The complexity of microservices architecture can make it more difficult to understand how services depend on or affect each other and to identify sources of latency or inaccuracies.
 
-One way to increase observability of an application is by emitting traces. [OpenTelemetry](https://opentelemetry.io/) is a set of APIs, SDKs, tooling, and integrations that are designed for the creation and management of telemetry data such as traces, metrics, and logs. MicroProfile Telemetry adopts OpenTelemetry so your applications can benefit from both manual and automatic traces.
+One way to increase the observability of an application is by emitting traces. [OpenTelemetry](https://opentelemetry.io/) is a set of APIs, SDKs, tooling, and integrations designed to create and manage telemetry data such as traces, metrics, and logs. MicroProfile Telemetry adopts OpenTelemetry so your applications can benefit from both manual and automatic traces.
 
-Traces represent requests, which can contain multiple operations, or spans. Each span comprises a name, time-related data, log messages, and metadata that describe what occurred during a transaction. Spans are associated with a context, which identifies the request within which the span occurred. Developers can then follow a single request between services through a potentially complex distributed system. Exporters send the data that MicroProfile Telemetry 1.0 collects to Jaeger so you can visualize and monitor the generated spans.
+Traces represent requests, which can contain multiple operations or spans. Each span comprises a name, time-related data, log messages, and metadata that describe what occurred during a transaction. Spans are associated with a context, which identifies the request within which the span occurred. Developers can then follow a single request between services through a potentially complex distributed system. Exporters send the data that MicroProfile Telemetry collects to Jaeger so you can visualize and monitor the generated spans.
 
-The diagram shows multiple services, which is where distributed tracing is really valuable. However, for simplicity, in this guide you'll configure only the ***system*** and ***inventory*** services to use [Jaeger](https://www.jaegertracing.io/) for distributed tracing with MicroProfile Telemetry. You'll run these services in two separate JVMs made of two server instances to demonstrate tracing in a distributed environment.
+The diagram shows multiple services, which is where distributed tracing is valuable. However, for simplicity, in this guide, you'll configure only the ***system*** and ***inventory*** services to use [Jaeger](https://www.jaegertracing.io/) for distributed tracing with MicroProfile Telemetry. You'll run these services in two separate JVMs made of two server instances to demonstrate tracing in a distributed environment.
 
 ![Application architecture](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/architecture_diagram.png)
 
@@ -57,7 +57,7 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-Run the following docker command to start Jaeger server:
+Run the following `docker` command to start the Jaeger server:
 ```bash 
 docker run -d --name jaeger \
   -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
@@ -110,19 +110,19 @@ Open another command-line session and run the following curl command from the te
 curl -s http://localhost:9081/inventory/systems/localhost | jq
 ```
 
-When you visit this endpoint, you make two GET HTTP requests, one to the ***system*** service and one to the ***inventory*** service. Both of these requests are configured to be traced, so a new trace is recorded in Jaeger. To view the traces, click the following button to visit the Jaeger service:
+When you visit this endpoint, you make two GET HTTP requests, one to the ***system*** service and another to the ***inventory*** service. Both of these requests are configured to be traced, so a new trace is recorded in Jaeger. To view the traces, click the following button to visit the Jaeger service:
 
 ::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
-You can view the traces for the ***system*** or ***inventory*** services under the **Search** tab. If you see only the **jaeger-query** option that is listed in the dropdown, wait a little longer and refresh the page to see the application services.
+You can view the traces for the ***system*** or ***inventory*** services under the **Search** tab. If you see only the **jaeger-query** option in the drop-down menu, wait a little longer and refresh the page to see the application services.
 
-Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You'll see the result as:
+Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You will see the following result:
 
 ![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_spans.png)
 
 
 
-The trace has five spans, four from ***inventory*** service and one from ***system*** service. Click the trace to view its details. Under **Service & Operation**, you see the spans in this trace. You can inspect each span by clicking it to reveal more detailed information, such as the time at which a request was received and the time at which a response was sent back.
+The trace has five spans, four from the ***inventory*** service and one from the ***system*** service. Click the trace to view its details. Under **Service & Operation**, you see the spans in this trace. You can inspect each span by clicking it to reveal more detailed information, such as the times that a request was received and a response was sent.
 
 ![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_details_spans.png)
 
@@ -183,7 +183,7 @@ curl -s http://localhost:9081/inventory/systems | jq
 
 Navigate to the ***start*** directory to begin.
 
-MicroProfile Telemetry allows you to observe traces without modifying source code in your Jakarta RESTful applications. You can enable ***mpTelemetry*** feature in the ***server.xml*** configuration file.
+MicroProfile Telemetry allows you to observe traces without modifying the source code in your Jakarta RESTful applications. You can enable the ***mpTelemetry*** feature in the ***server.xml*** configuration file.
 
 Replace the ***server.xml*** file of the system service:
 
@@ -260,7 +260,7 @@ The ***mpTelemetry*** feature is now enabled in the ***server.xml*** of the ***i
 
 By default, MicroProfile Telemetry tracing is off. To enable any tracing aspects, specify the ***otel*** properties in the MicroProfile configuration file. 
 
-Create the ***microprofile-config.properties*** file  of the system service:
+Create the ***microprofile-config.properties*** file of the system service:
 
 > Run the following touch command in your terminal
 ```bash
@@ -327,7 +327,7 @@ You can view the traces for the ***system*** or ***inventory*** services under t
 
 
 
-Verify that there are two spans from ***inventory*** service and one span from ***system*** service. Click the trace to view its details.
+Verify that there are two spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details.
 
 ![Details default spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/details_default_spans.png)
 
@@ -605,7 +605,7 @@ Select the ***inventory*** service and click the **Find Traces** button at the e
 
 
 
-Verify that there are two spans from the ***inventory*** service. Click the trace to view its details. You'll see the  ***InventoryManager.list*** span that is created by the ***@WithSpan*** annotation.
+Verify that there are two spans from the ***inventory*** service. Click the trace to view its details. You'll see the ***InventoryManager.list*** span that is created by the ***@WithSpan*** annotation.
 
 ![Inventory Manager list span](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_manager_list_span.png)
 
@@ -621,13 +621,13 @@ Click the following button to visit the Jaeger service:
 ::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
 
-Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You will see the following result:
 
 ![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_4_spans.png)
 
 
 
-Verify that there are three spans from ***inventory*** service and one span from ***system*** service. Click the trace to view its details.
+Verify that there are three spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details.
 
 ![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_details_4_spans.png)
 
@@ -730,17 +730,17 @@ public class InventoryResource {
 
 
 
-In order to access the Tracer, the ***@Inject*** annotation from the Contexts and Dependency Injections API injects the Tracer into a bean. 
+To access the Tracer, the ***@Inject*** annotation from the Contexts and Dependency Injections API injects the Tracer into a bean. 
 
-Before the ***InventoryManager*** calls the ***system*** service, it creates and starts a span called ***GettingProperties*** by using the ***spanBuilder()*** and ***startSpan()*** Tracer APIs.
+Before the ***InventoryManager*** calls the ***system*** service, it creates and starts a span called the ***GettingProperties*** by using the ***spanBuilder()*** and ***startSpan()*** Tracer APIs.
 
-When starting a span, you also need to end it by calling ***end()*** on the span. If you don't end a span, it won't be recorded at all and won't show up in Jaeger. This code ensures that ***end()*** is always called by including it in a ***finally*** block.
+When you start a span, you must also end it by calling ***end()*** on the span. If you don't end a span, it won't be recorded at all and won't show up in Jaeger. This code ensures that ***end()*** is always called by including it in a ***finally*** block.
 
-After starting the span, you make it current with the ***makeCurrent()*** call. Making a span current means that any new spans created in the same thread (either automatically by open liberty, or manually by calling the API) will use this span as their parent span.
+After you start the span, make it current with the ***makeCurrent()*** call. Making a span current means that any new spans created in the same thread, either automatically by open liberty or manually by calling the API, will use this span as their parent span.
 
-The ***makeCurrent()*** call returns a ***Scope***. It's very important to always close the ***Scope***, which stops the span being current and makes the previous span current again. The recommended way to do this is to use a ***try-with-resources*** block, which makes sure that the ***Scope*** is automatically closed at the end of the block.
+The ***makeCurrent()*** call returns a ***Scope***. Make sure to always close the ***Scope***, which stops the span from being current and makes the previous span current again. Use a ***try-with-resources*** block, which automatically closes the ***Scope*** at the end of the block.
 
-Use the ***addEvent()*** Span API to create an event when the properties are received and an event when fails to get the properties from the ***system*** service. Use the ***end()*** Span API to mark the ***GettingProperties*** span completed.
+Use the ***addEvent()*** Span API to create an event when the properties are received and an event when it fails to get the properties from the ***system*** service. Use the ***end()*** Span API to mark the ***GettingProperties*** span as completed.
 
 
 
@@ -759,7 +759,7 @@ Select the ***inventory*** service and click the **Find Traces** button at the e
 
 
 
-Verify that there are four spans from ***inventory*** service and one span from ***system*** service. Click the trace to view its details. You'll see the ***GettingProperties*** span.
+Verify that there are four spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details. You'll see the ***GettingProperties*** span.
 
 ![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_details_spans.png)
 
@@ -774,13 +774,13 @@ Click the following button to visit the Jaeger service:
 
 ::startApplication{port="16686" display="external" name="Visit Jaeger service" route="/"}
 
-Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
+Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You will see the following result:
 
 ![Get traces for unknown hostname](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_unknown_spans.png)
 
 
 
-There are two spans from ***inventory*** service. Click the trace to view its details. You'll see the ***GettingProperties*** span. Click the ***GettingProperties*** span and its ***Logs***. You can see the ***Cannot get properties*** message.
+There are two spans from the ***inventory*** service. Click the trace to view its details. You'll see the ***GettingProperties*** span. Click the ***GettingProperties*** span and its ***Logs***. You can see the ***Cannot get properties*** message.
 
 ![Logs at GettingProperties span](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/logs_at_gettingProperties.png)
 
@@ -791,7 +791,7 @@ To learn more about how to use OpenTelemetry APIs to instrument code, see the [O
 
 ::page{title="Testing the application "}
 
-Manually verify the traces by viewing them on the Jaeger server. A few tests are included for you to test the basic functionality of the services. If a test failure occurs, then you might have introduced a bug into the code.
+Manually verify the traces by inspecting them on the Jaeger server. You will find some tests included to test the basic functionality of the services. If any of the tests fail, you might have introduced a bug into the code.
 
 ### Running the tests
 
@@ -833,7 +833,7 @@ rm -fr draft-guide-microprofile-telemetry-jaeger
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20distributed%20tracing%20in%20microservices%20using%20OpenTelemetry%20observability%20framework%20&guide-id=cloud-hosted-draft-guide-microprofile-telemetry-jaeger)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20distributed%20tracing%20in%20microservices%20with%20OpenTelemetry%20and%20Jaeger&guide-id=cloud-hosted-draft-guide-microprofile-telemetry-jaeger)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
