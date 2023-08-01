@@ -27,7 +27,7 @@ Traces represent requests, which can contain multiple operations or spans. Each 
 
 The diagram shows multiple services, which is where distributed tracing is valuable. However, for simplicity, in this guide, you'll configure only the ***system*** and ***inventory*** services to use [Jaeger](https://www.jaegertracing.io/) for distributed tracing with MicroProfile Telemetry. You'll run these services in two separate JVMs made of two Open Liberty instances to demonstrate tracing in a distributed environment.
 
-![Application architecture](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/architecture_diagram.png)
+![Application architecture](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/architecture_diagram.png)
 
 
 
@@ -43,11 +43,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/draft-guide-microprofile-telemetry-jaeger.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-telemetry-jaeger.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/draft-guide-microprofile-telemetry-jaeger.git
-cd draft-guide-microprofile-telemetry-jaeger
+git clone https://github.com/openliberty/guide-microprofile-telemetry-jaeger.git
+cd guide-microprofile-telemetry-jaeger
 ```
 
 
@@ -118,13 +118,13 @@ You can view the traces for the ***system*** or ***inventory*** services under t
 
 Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You will see the following result:
 
-![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_spans.png)
+![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_spans.png)
 
 
 
 The trace has five spans, four from the ***inventory*** service and one from the ***system*** service. Click the trace to view its details. Under **Service & Operation**, you see the spans in this trace. You can inspect each span by clicking it to reveal more detailed information, such as the times that a request was received and a response was sent.
 
-![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_details_spans.png)
+![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_details_spans.png)
 
 
 
@@ -188,9 +188,9 @@ MicroProfile Telemetry allows you to observe traces without modifying the source
 Replace the ***server.xml*** file of the system service:
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-telemetry-jaeger/start/system/src/main/liberty/config/server.xml, or click the following button
+> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/system/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/draft-guide-microprofile-telemetry-jaeger/start/system/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/liberty/config/server.xml"}
 
 
 
@@ -224,9 +224,9 @@ The ***mpTelemetry*** feature is now enabled in the ***server.xml*** of the ***s
 Replace the ***server.xml*** file of the inventory service:
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
+> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml"}
 
 
 
@@ -264,14 +264,14 @@ Create the ***microprofile-config.properties*** file of the system service:
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/draft-guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties
+touch /home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties
 ```
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-::openFile{path="/home/project/draft-guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties"}
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/system/src/main/resources/META-INF/microprofile-config.properties"}
 
 
 
@@ -289,14 +289,14 @@ Create the ***microprofile-config.properties*** file of the inventory service:
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties
+touch /home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties
 ```
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-::openFile{path="/home/project/draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties"}
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties"}
 
 
 
@@ -323,13 +323,13 @@ To view the traces, click the following button to visit the Jaeger service:
 
 You can view the traces for the ***system*** or ***inventory*** services under the **Search** tab. Select the services in the **Select A Service** menu and click the **Find Traces** button at the end of the section. You'll see the result as:
 
-![Default spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/default_spans.png)
+![Default spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/default_spans.png)
 
 
 
 Verify that there are two spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details.
 
-![Details default spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/details_default_spans.png)
+![Details default spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/details_default_spans.png)
 
 
 ::page{title="Enabling explicit distributed tracing"}
@@ -343,9 +343,9 @@ The MicroProfile Telemetry feature has been enabled to trace all REST endpoints 
 Replace the ***pom.xml*** Maven project file of the inventory service:
 
 > To open the pom.xml file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-telemetry-jaeger/start/inventory/pom.xml, or click the following button
+> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/inventory/pom.xml, or click the following button
 
-::openFile{path="/home/project/draft-guide-microprofile-telemetry-jaeger/start/inventory/pom.xml"}
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/pom.xml"}
 
 
 
@@ -471,9 +471,9 @@ The OpenTelemetry API and OpenTelemetry Instrumentation Annotations must be prov
 Replace the ***server.xml*** file of the inventory service:
 
 > To open the server.xml file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
+> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml, or click the following button
 
-::openFile{path="/home/project/draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml"}
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/liberty/config/server.xml"}
 
 
 
@@ -514,9 +514,9 @@ You can trace your Jakarta CDI beans by annotating their methods with a ***@With
 Replace the ***InventoryManager*** class:
 
 > To open the InventoryManager.java file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
+> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java, or click the following button
 
-::openFile{path="/home/project/draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryManager.java"}
 
 
 
@@ -601,13 +601,13 @@ and click the following button to visit the Jaeger service:
 
 Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result as:
 
-![Inventory Manager span](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_manager_span.png)
+![Inventory Manager span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_manager_span.png)
 
 
 
 Verify that there are two spans from the ***inventory*** service. Click the trace to view its details. You'll see the ***InventoryManager.list*** span that is created by the ***@WithSpan*** annotation.
 
-![Inventory Manager list span](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_manager_list_span.png)
+![Inventory Manager list span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_manager_list_span.png)
 
 
 
@@ -623,19 +623,19 @@ Click the following button to visit the Jaeger service:
 
 Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You will see the following result:
 
-![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_4_spans.png)
+![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_4_spans.png)
 
 
 
 Verify that there are three spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details.
 
-![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_details_4_spans.png)
+![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_details_4_spans.png)
 
 
 
 Click the ***InventoryManager.add*** span and its ***Tags***. You can see the ***hostname*** tag with the ***localhost*** value that is created by the ***@SpanAttribute*** annotation.
 
-![Inventory Manager add span](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_manager_add_span.png)
+![Inventory Manager add span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_manager_add_span.png)
 
 
 
@@ -646,9 +646,9 @@ The MicroProfile Telemetry specification makes the underlying OpenTelemetry Trac
 Replace the ***InventoryResource*** class:
 
 > To open the InventoryResource.java file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
+> **File** > **Open** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
 
-::openFile{path="/home/project/draft-guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
+::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/java/io/openliberty/guides/inventory/InventoryResource.java"}
 
 
 
@@ -755,13 +755,13 @@ Click the following button to visit the Jaeger service:
 
 Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You'll see the result:
 
-![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_spans.png)
+![Get traces for the inventory service](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_spans.png)
 
 
 
 Verify that there are four spans from the ***inventory*** service and one span from the ***system*** service. Click the trace to view its details. You'll see the ***GettingProperties*** span.
 
-![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_details_spans.png)
+![Inventory details spans](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_details_spans.png)
 
 
 
@@ -776,13 +776,13 @@ Click the following button to visit the Jaeger service:
 
 Select the ***inventory*** service and click the **Find Traces** button at the end of the section. You will see the following result:
 
-![Get traces for unknown hostname](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/inventory_service_unknown_spans.png)
+![Get traces for unknown hostname](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_service_unknown_spans.png)
 
 
 
 There are two spans from the ***inventory*** service. Click the trace to view its details. You'll see the ***GettingProperties*** span. Click the ***GettingProperties*** span and its ***Logs***. You can see the ***Cannot get properties*** message.
 
-![Logs at GettingProperties span](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/logs_at_gettingProperties.png)
+![Logs at GettingProperties span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/logs_at_gettingProperties.png)
 
 
 
@@ -822,26 +822,26 @@ Try out one of the related MicroProfile guides. These guides demonstrate more te
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***draft-guide-microprofile-telemetry-jaeger*** project by running the following commands:
+Delete the ***guide-microprofile-telemetry-jaeger*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr draft-guide-microprofile-telemetry-jaeger
+rm -fr guide-microprofile-telemetry-jaeger
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20distributed%20tracing%20in%20microservices%20with%20OpenTelemetry%20and%20Jaeger&guide-id=cloud-hosted-draft-guide-microprofile-telemetry-jaeger)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Enabling%20distributed%20tracing%20in%20microservices%20with%20OpenTelemetry%20and%20Jaeger&guide-id=cloud-hosted-guide-microprofile-telemetry-jaeger)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-telemetry-jaeger/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-telemetry-jaeger/pulls)
 
 
 
