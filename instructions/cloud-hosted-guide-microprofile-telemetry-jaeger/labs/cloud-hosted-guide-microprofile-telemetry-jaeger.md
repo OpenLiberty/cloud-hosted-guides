@@ -21,11 +21,11 @@ The other panel displays the IDE that you will use to create files, edit the cod
 ::page{title="What you'll learn"}
 The complexity of microservices architecture can make it more difficult to understand how services depend on or affect each other and to identify sources of latency or inaccuracies.
 
-One way to increase the observability of an application is by emitting traces. [OpenTelemetry](https://opentelemetry.io/) is a set of APIs, SDKs, tooling, and integrations designed to create and manage telemetry data such as traces, metrics, and logs. MicroProfile Telemetry adopts OpenTelemetry so your applications can benefit from both manual and automatic traces.
+One way to increase the observability of an application is by emitting traces. [OpenTelemetry](https://opentelemetry.io/) is a set of APIs, SDKs, tooling, and integrations designed to create and manage telemetry data such as traces, metrics, and logs. MicroProfile Telemetry adopts OpenTelemetry so your Java applications can benefit from both manual and automatic traces.
 
 Traces represent requests, which can contain multiple operations or spans. Each span comprises a name, time-related data, log messages, and metadata that describe what occurred during a transaction. Spans are associated with a context, which identifies the request within which the span occurred. Developers can then follow a single request between services through a potentially complex distributed system. Exporters send the data that MicroProfile Telemetry collects to Jaeger so you can visualize and monitor the generated spans.
 
-The diagram shows multiple services, which is where distributed tracing is valuable. However, for simplicity, in this guide, you'll configure only the ***system*** and ***inventory*** services to use [Jaeger](https://www.jaegertracing.io/) for distributed tracing with MicroProfile Telemetry. You'll run these services in two separate JVMs made of two server instances to demonstrate tracing in a distributed environment.
+The diagram shows multiple services, which is where distributed tracing is valuable. However, for simplicity, in this guide, you'll configure only the ***system*** and ***inventory*** services to use [Jaeger](https://www.jaegertracing.io/) for distributed tracing with MicroProfile Telemetry. You'll run these services in two separate JVMs made of two Open Liberty instances to demonstrate tracing in a distributed environment.
 
 ![Application architecture](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-telemetry-jaeger/draft/assets/architecture_diagram.png)
 
@@ -87,13 +87,13 @@ The ***finish*** directory in the root of this guide contains the finished appli
 
 Navigate to the ***finish/system*** directory. Run the following Maven goal to build the ***system*** service and deploy it to Open Liberty:
 ```bash
-cd /home/project/draft-guide-microprofile-telemetry-jaeger/finish/system
+cd /home/project/guide-microprofile-telemetry-jaeger/finish/system
 mvn liberty:run
 ```
 
 Open another command-line session and navigate to the ***finish/inventory*** directory. Run the following Maven goal to build the ***inventory*** service and deploy it to Open Liberty:
 ```bash
-cd /home/project/draft-guide-microprofile-telemetry-jaeger/finish/inventory
+cd /home/project/guide-microprofile-telemetry-jaeger/finish/inventory
 mvn liberty:run
 ```
 
@@ -128,11 +128,11 @@ The trace has five spans, four from the ***inventory*** service and one from the
 
 
 
-After you’re finished reviewing the application, stop the Open Liberty servers by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***inventory*** services. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
+After you’re finished reviewing the application, stop the Open Liberty instances by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***inventory*** services. Alternatively, you can run the following goals from the ***finish*** directory in another command-line session:
 
 
 ```bash
-cd /home/project/draft-guide-microprofile-telemetry-jaeger/finish
+cd /home/project/guide-microprofile-telemetry-jaeger/finish
 mvn -pl system liberty:stop
 mvn -pl inventory liberty:stop
 ```
@@ -141,13 +141,13 @@ mvn -pl inventory liberty:stop
 
 You need to start the services to see basic traces appear in Jaeger.
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
 
 Open a command-line session and navigate to the ***start/system*** directory. Run the following Maven goal to start the ***system*** service in dev mode:
 
 
 ```bash
-cd /home/project/draft-guide-microprofile-telemetry-jaeger/start/system
+cd /home/project/guide-microprofile-telemetry-jaeger/start/system
 mvn liberty:dev
 ```
 
@@ -155,11 +155,11 @@ Open a command-line session and navigate to the ***start/inventory*** directory.
 
 
 ```bash
-cd /home/project/draft-guide-microprofile-telemetry-jaeger/start/inventory
+cd /home/project/guide-microprofile-telemetry-jaeger/start/inventory
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -169,7 +169,7 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 
-When the servers start, you can find the ***system*** service by running the following curl command:
+When the runtime instances start, you can find the ***system*** service by running the following curl command:
 ```bash
 curl -s http://localhost:9080/system/properties | jq
 ```
@@ -736,7 +736,7 @@ Before the ***InventoryManager*** calls the ***system*** service, it creates and
 
 When you start a span, you must also end it by calling ***end()*** on the span. If you don't end a span, it won't be recorded at all and won't show up in Jaeger. This code ensures that ***end()*** is always called by including it in a ***finally*** block.
 
-After you start the span, make it current with the ***makeCurrent()*** call. Making a span current means that any new spans created in the same thread, either automatically by open liberty or manually by calling the API, will use this span as their parent span.
+After you start the span, make it current with the ***makeCurrent()*** call. Making a span current means that any new spans created in the same thread, either automatically by Open Liberty or manually by calling the API, will use this span as their parent span.
 
 The ***makeCurrent()*** call returns a ***Scope***. Make sure to always close the ***Scope***, which stops the span from being current and makes the previous span current again. Use a ***try-with-resources*** block, which automatically closes the ***Scope*** at the end of the block.
 
