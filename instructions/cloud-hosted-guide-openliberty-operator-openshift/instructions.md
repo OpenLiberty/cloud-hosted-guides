@@ -75,10 +75,10 @@ oc api-resources --api-group=apps.openliberty.io
 Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
 
 ```
-NAME                     SHORTNAMES        APIGROUP                NAMESPACED  KIND
-openlibertyapplications  olapp,olapps      apps.openliberty.io/v1  true        OpenLibertyApplication
-openlibertydumps         oldump,oldumps    apps.openliberty.io/v1  true        OpenLibertyDump
-openlibertytraces        oltrace,oltraces  apps.openliberty.io/v1  true        OpenLibertyTrace
+NAME                      SHORTNAMES         APIVERSION               NAMESPACED   KIND
+openlibertyapplications   olapp,olapps       apps.openliberty.io/v1   true         OpenLibertyApplication
+openlibertydumps          oldump,oldumps     apps.openliberty.io/v1   true         OpenLibertyDump
+openlibertytraces         oltrace,oltraces   apps.openliberty.io/v1   true         OpenLibertyTrace
 ```
 
 Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
@@ -290,8 +290,6 @@ Additionally, the microservice includes the ***service*** and ***expose*** param
 
 Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
 ```bash
-sed -i 's=v1=v1beta2=g' deploy.yaml
-sed -i 's=9443=9080=g' deploy.yaml
 sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullSecret: icr=g' deploy.yaml
 oc apply -f deploy.yaml
 ```
@@ -354,7 +352,7 @@ Make sure to substitute the appropriate ***[HOST]*** value. For example, using t
 
 Or, you can run the following command to get the URL:
 ```bash
-echo http://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
+echo https://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
 ```
 
 Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
@@ -434,9 +432,6 @@ The ***/health/started***, ***/health/live***, and ***/health/ready*** health ch
 
 Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the new configuration:
 ```bash
-sed -i 's=v1=v1beta2=g' deploy.yaml
-sed -i 's=9443=9080=g' deploy.yaml
-sed -i 's=HTTPS=HTTP=g' deploy.yaml
 sed -i 's=guide/system-imagestream:1.0-SNAPSHOT='"$SN_ICR_NAMESPACE"'/system-imagestream:1.0-SNAPSHOT\n  pullSecret: icr=g' deploy.yaml
 oc apply -f deploy.yaml
 ```
@@ -455,7 +450,7 @@ Startup:    http-get http://:9080/health/started delay=30s timeout=10s period=2s
 
 Run the following command to get the URL:
 ```bash
-echo http://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
+echo https://`oc get routes system -o jsonpath='{.spec.host}'`/system/properties
 ```
 
 Then, hold the **CTRL** key and click on the URL in the terminal to visit the microservice.
