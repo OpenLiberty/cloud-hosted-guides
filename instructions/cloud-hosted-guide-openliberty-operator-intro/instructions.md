@@ -70,10 +70,10 @@ kubectl api-resources --api-group=apps.openliberty.io
 Look for the following output, which shows the [custom resource definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs) that can be used by the Open Liberty Operator:
 
 ```
-NAME                      SHORTNAMES         APIGROUP              NAMESPACED   KIND
-openlibertyapplications   olapp,olapps       apps.openliberty.io   true         OpenLibertyApplication
-openlibertydumps          oldump,oldumps     apps.openliberty.io   true         OpenLibertyDump
-openlibertytraces         oltrace,oltraces   apps.openliberty.io   true         OpenLibertyTrace
+NAME                      SHORTNAMES         APIVERSION               NAMESPACED   KIND
+openlibertyapplications   olapp,olapps       apps.openliberty.io/v1   true         OpenLibertyApplication
+openlibertydumps          oldump,oldumps     apps.openliberty.io/v1   true         OpenLibertyDump
+openlibertytraces         oltrace,oltraces   apps.openliberty.io/v1   true         OpenLibertyTrace
 ```
 
 Each CRD defines a kind of object that can be used, which is specified in the previous example by the ***KIND*** value. The ***SHORTNAME*** value specifies alternative names that you can substitute in the configuration to refer to an object kind. For example, you can refer to the ***OpenLibertyApplication*** object kind by one of its specified shortnames, such as ***olapps***. 
@@ -181,8 +181,6 @@ Additionally, the microservice includes the ***service*** and ***expose*** param
 
 Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
 ```bash
-sed -i 's=v1=v1beta2=g' deploy.yaml
-sed -i 's=9443=9080=g' deploy.yaml
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
@@ -228,12 +226,12 @@ To access the exposed ***system*** microservice, the service must be port-forwar
 
 
 ```bash
-kubectl port-forward svc/system 9080
+kubectl port-forward svc/system 9443
 ```
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Access the microservice by running the following command:
 ```bash
-curl -s http://localhost:9080/system/properties | jq
+curl -k -s https://localhost:9443/system/properties | jq
 ```
 
 When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
@@ -314,8 +312,6 @@ The health check endpoints ***/health/started***, ***/health/live*** and ***/hea
 
 Run the following commands to update the **applicationImage** with the **pullSecret** and redeploy the **system** microservice with the new configuration:
 ```bash
-sed -i 's=v1=v1beta2=g' deploy.yaml
-sed -i 's=9443=9080=g' deploy.yaml
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
@@ -336,12 +332,12 @@ Run the following command to set up port forwarding to access the ***system*** s
 
 
 ```bash
-kubectl port-forward svc/system 9080
+kubectl port-forward svc/system 9443
 ```
 
 Access the microservice by running the following command:
 ```bash
-curl -s http://localhost:9080/system/properties | jq
+curl -k -s https://localhost:9443/system/properties | jq
 ```
 
 When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
