@@ -60,7 +60,7 @@ The ***finish*** directory contains the finished project that you will build.
 ::page{title="Installing the Operator"}
 
 
-In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you like to learn how to install the Open Liberty Operator, you can learn from the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the Open Liberty Operator [document](https://github.com/OpenLiberty/open-liberty-operator/tree/main/deploy/releases/1.2.0#readme).
+The Open Liberty Operator is already installed in this Skills Network environment. To learn how to install the Open Liberty Operator yourself, see the [Deploying microservices to OpenShift by using Kubernetes Operators](https://openliberty.io/guides/cloud-openshift-operator.html#installing-the-operators) guide or the [Open Liberty Operator documentation](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#operator-installation).
 
 To check that the Open Liberty Operator has been installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 ```bash
@@ -181,8 +181,6 @@ Additionally, the microservice includes the ***service*** and ***expose*** param
 
 Run the following commands to update the **applicationImage** with the **pullSecret** and deploy the **system** microservice with the previously explained configuration:
 ```bash
-sed -i 's=v1=v1beta2=g' deploy.yaml
-sed -i 's=9443=9080=g' deploy.yaml
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
@@ -216,7 +214,7 @@ Namespace:    default
 Labels:       app.kubernetes.io/part-of=system
               name=system
 Annotations:  <none>
-API Version:  apps.openliberty.io/v1beta2
+API Version:  apps.openliberty.io/v1
 Kind:         OpenLibertyApplication
 
 ...
@@ -228,12 +226,12 @@ To access the exposed ***system*** microservice, the service must be port-forwar
 
 
 ```bash
-kubectl port-forward svc/system 9080
+kubectl port-forward svc/system 9443
 ```
 
 Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Access the microservice by running the following command:
 ```bash
-curl -s http://localhost:9080/system/properties | jq
+curl -k -s https://localhost:9443/system/properties | jq
 ```
 
 When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
@@ -245,7 +243,7 @@ kubectl delete -f deploy.yaml
 
 ::page{title="Specifying optional parameters"}
 
-You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1beta2.adoc#configuration) to find all of the supported optional CRDs.
+You can also use the Open Liberty Operator to implement optional parameters in your application deployment by specifying the associated CRDs in your ***deploy.yaml*** file. For example, you can configure the [Kubernetes liveness, readiness and startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). Visit the [Open Liberty Operator user guide](https://github.com/OpenLiberty/open-liberty-operator/blob/main/doc/user-guide-v1.adoc#configuration) to find all of the supported optional CRDs.
 
 To configure the Kubernetes liveness, readiness and startup probes by using the Open Liberty Operator, specify the ***probes*** in your ***deploy.yaml*** file. The ***startup*** probe verifies whether deployed application is fully initialized before the liveness probe takes over. Then, the ***liveness*** probe determines whether the application is running and the ***readiness*** probe determines whether the application is ready to process requests. For more information about application health checks, see the [Checking the health of microservices on Kubernetes](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide.
 
@@ -314,8 +312,6 @@ The health check endpoints ***/health/started***, ***/health/live*** and ***/hea
 
 Run the following commands to update the **applicationImage** with the **pullSecret** and redeploy the **system** microservice with the new configuration:
 ```bash
-sed -i 's=v1=v1beta2=g' deploy.yaml
-sed -i 's=9443=9080=g' deploy.yaml
 sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
 kubectl apply -f deploy.yaml
 ```
@@ -336,12 +332,12 @@ Run the following command to set up port forwarding to access the ***system*** s
 
 
 ```bash
-kubectl port-forward svc/system 9080
+kubectl port-forward svc/system 9443
 ```
 
 Access the microservice by running the following command:
 ```bash
-curl -s http://localhost:9080/system/properties | jq
+curl -k -s https://localhost:9443/system/properties | jq
 ```
 
 When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding.
