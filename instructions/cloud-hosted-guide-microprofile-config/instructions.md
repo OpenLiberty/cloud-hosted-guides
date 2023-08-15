@@ -60,7 +60,7 @@ cd finish
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
@@ -82,7 +82,7 @@ In addition, you can run the following curl command to access a third microservi
 curl -s http://localhost:9080/config | jq
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -97,13 +97,13 @@ cd /home/project/guide-microprofile-config/start
 ```
 
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -192,7 +192,7 @@ The ***getPortNumber()*** method directly returns the value of ***portNumber*** 
 
 ::page{title="Injecting dynamic configuration"}
 
-Note that three default config sources mentioned above are static and fixed on application starting, so the properties within them cannot be modified while the server is running. However, you can externalize configuration data out of the application package, through the creation of custom configuration sources, so that the service updates configuration changes dynamically.
+Note that three default config sources mentioned above are static and fixed on application starting, so the properties within them cannot be modified while the Liberty is running. However, you can externalize configuration data out of the application package, through the creation of custom configuration sources, so that the service updates configuration changes dynamically.
 
 ### Creating custom configuration sources
 
@@ -645,10 +645,10 @@ To determine whether the inventory service is in maintenance or not (according t
 
 ::page{title="Running the application"}
 
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-While the server is running, run the following curl command to access the ***system*** microservice:
+While the Liberty is running, run the following curl command to access the ***system*** microservice:
 ```bash
 curl -s http://localhost:9080/system/properties | jq
 ```
@@ -668,7 +668,7 @@ The ***config_ordinal*** value of the custom configuration source is set to ***1
 
 
 
-Play with this application by changing configuration values for each property in the ***resources/CustomConfigSource.json*** file. Your changes are added dynamically, and you do not need to restart the server. Rerun the following curl command to see the dynamic changes:
+Play with this application by changing configuration values for each property in the ***resources/CustomConfigSource.json*** file. Your changes are added dynamically, and you do not need to restart the Liberty. Rerun the following curl command to see the dynamic changes:
 ```bash
 curl -s http://localhost:9080/config | jq
 ```
@@ -852,7 +852,7 @@ The warning and error messages are expected and result from a request to a bad o
 
 To see whether the tests detect a failure, remove the configuration resetting line in the ***setup()*** method of the ***ConfigurationIT.java*** file. Then, manually change some configuration values in the ***resources/CustomConfigSource.json*** file. Rerun the tests. You will see a test failure occur.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
