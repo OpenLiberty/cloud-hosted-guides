@@ -130,7 +130,7 @@ To begin, run the following command to navigate to the ***start*** directory:
 cd /home/project/guide-microprofile-jwt/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following commands to navigate to the ***frontend*** directory and start the ***frontend*** service in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following commands to navigate to the ***frontend*** directory and start the ***frontend*** service in dev mode:
 
 ```bash
 cd frontend
@@ -143,7 +143,7 @@ cd system
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -409,9 +409,9 @@ The following table breaks down some of the properties:
 
 For more information about these and other JWT properties, see the [MicroProfile Config properties for MicroProfile JSON Web Token documentation](https://openliberty.io/docs/latest/microprofile-config-properties.html#jwt).
 
-Next, add the MicroProfile JSON Web Token feature to the server configuration file for the ***system*** service.
+Next, add the MicroProfile JSON Web Token feature to the Liberty ***server.xml*** configuration file for the ***system*** service.
 
-Replace the system server configuration file.
+Replace the system ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > guide-microprofile-jwt/start/system/src/main/liberty/config/server.xml, or click the following button
