@@ -63,7 +63,7 @@ cd finish
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
@@ -163,7 +163,7 @@ vendor_threadpool_size{pool="Default_Executor"} 32
 vendor_servlet_request_total{servlet="microprofile_metrics_io_openliberty_guides_inventory_InventoryApplication"} 1
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -179,13 +179,13 @@ To begin, run the following command to navigate to the **start** directory:
 cd /home/project/guide-microprofile-metrics/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -196,7 +196,7 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 
 The MicroProfile Metrics API is included in the MicroProfile dependency specified by your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows you to use the MicroProfile Metrics API in your code to provide metrics from your microservices.
 
-Replace the server configuration file.
+Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > guide-microprofile-metrics/start/src/main/liberty/config/server.xml, or click the following button
@@ -235,7 +235,7 @@ Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Comm
 
 The ***mpMetrics*** feature enables MicroProfile Metrics support in Open Liberty. Note that this feature requires SSL and the configuration has been provided for you.
 
-The ***quickStartSecurity*** configuration element provides basic security to secure the server. When you visit the ***/metrics*** endpoint, use the credentials defined in the server configuration to log in and view the data.
+The ***quickStartSecurity*** configuration element provides basic security to secure the Liberty. When you visit the ***/metrics*** endpoint, use the credentials defined in the Liberty's configuration to log in and view the data.
 
 
 ### Adding the annotations
@@ -354,15 +354,15 @@ the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest
 
 MicroProfile Metrics API implementers can provide vendor metrics in the same forms as the base and application metrics do. Open Liberty as a vendor supplies server component metrics when the ***mpMetrics*** feature is enabled in the ***server.xml*** configuration file.
 
-You can see the vendor-only metrics in the ***metrics?scope=vendor*** endpoint. You see metrics from the runtime components, such as Web Application, ThreadPool and Session Management. Note that these metrics are specific to the Liberty application server. Different vendors may provide other metrics. Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metrics-list.html) for more information.
+You can see the vendor-only metrics in the ***metrics?scope=vendor*** endpoint. You see metrics from the runtime components, such as Web Application, ThreadPool and Session Management. Note that these metrics are specific to the Liberty instance. Different vendors may provide other metrics. Visit the [Metrics reference list](https://openliberty.io/docs/ref/general/#metrics-list.html) for more information.
 
 
 ::page{title="Building and running the application"}
 
-The Open Liberty server was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
+The Open Liberty instance was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
 
 
-Run the following curl command to review all the metrics that are enabled through MicroProfile Metrics. You see only the system and vendor metrics because the server just started, and the ***inventory*** service has not been accessed.
+Run the following curl command to review all the metrics that are enabled through MicroProfile Metrics. You see only the system and vendor metrics because the Liberty instance just started, and the ***inventory*** service has not been accessed.
 ```bash
 curl -k --user admin:adminpwd https://localhost:9443/metrics
 ```
@@ -621,7 +621,7 @@ public class MetricsIT {
 
 * The ***testPropertiesAddTimeMetric()*** test case validates the ***@Timed*** metric. The test case sends a request to the ***http://localhost:9080/inventory/systems/localhost*** URL to access the ***inventory*** service, which adds the ***localhost*** host to the inventory. Next, the test case makes a connection to the ***https://localhost:9443/metrics?scope=application*** URL to retrieve application metrics as plain text. Then, it looks for the ***@Timed*** metric and asserts true if the metric exists.
 
-The ***oneTimeSetup()*** method retrieves the port number for the server and builds a base URL string to set up the tests. Apply the ***@BeforeAll*** annotation to this method to run it before any of the test cases.
+The ***oneTimeSetup()*** method retrieves the port number for the Liberty and builds a base URL string to set up the tests. Apply the ***@BeforeAll*** annotation to this method to run it before any of the test cases.
 
 The ***setup()*** method creates a JAX-RS client that makes HTTP requests to the ***inventory*** service. The ***teardown()*** method destroys this client instance. Apply the ***@BeforeEach*** annotation so that a method runs before a test case and apply the ***@AfterEach*** annotation so that a method runs after a test case. Apply these annotations to methods that are generally used to perform any setup and teardown tasks before and after a test.
 
@@ -657,7 +657,7 @@ The warning and error messages are expected and result from a request to a bad o
 
 To determine whether the tests detect a failure, go to the ***MetricsIT.java*** file and change any of the assertions in the test methods. Then re-run the tests to see a test failure occur.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
