@@ -22,7 +22,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 You will learn how to access a REST service, serialize a Java object that contains a list of artists and their albums, and use two different approaches to deserialize the returned JSON resources. The first approach consists of using the Java API for JSON Binding (JSON-B) to directly convert JSON messages into Java objects. The second approach consists of using the Java API for JSON Processing (JSON-P) to process the JSON.
 
-The REST service that provides the artists and albums resources is already written for you. When the server is running, this service is accessible at the ***http://localhost:9080/artists*** endpoint, which responds with the ***artists.json*** file.
+The REST service that provides the artists and albums resources is already written for you. When the Liberty is running, this service is accessible at the ***http://localhost:9080/artists*** endpoint, which responds with the ***artists.json*** file.
 
 You will implement the following two endpoints using the two deserialization approaches:
 
@@ -68,7 +68,7 @@ cd finish
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
@@ -92,7 +92,7 @@ You can access the endpoint at ***http://localhost:9080/artists/total/<artist>**
 curl http://localhost:9080/artists/total/bar
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -107,13 +107,13 @@ To begin, run the following command to navigate to the ***start*** directory:
 cd /home/project/guide-rest-client-java/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -123,7 +123,7 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 
-The application that you'll build upon was created for you. After your server is ready, run the following curl command to access the service:
+The application that you'll build upon was created for you. After your Liberty instance is ready, run the following curl command to access the service:
 ```bash
 curl -s http://localhost:9080/artists | jq
 ```
@@ -357,7 +357,7 @@ The methods that you wrote in the ***Consumer*** class could be written directly
 
 ::page{title="Running the application"}
 
-The Open Liberty server was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
+The Open Liberty was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
 
 
 You can find your service at the ***http://localhost:9080/artists*** endpoint by running the following curl command:
@@ -553,7 +553,7 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 
 ```
 
-When you are done checking out the service, exit dev mode by typing ***q*** in the command-line session where you ran the server, and then press the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by typing ***q*** in the command-line session where you ran Liberty, and then press the ***enter/return*** key.
 
 ::page{title="Building the application"}
 
