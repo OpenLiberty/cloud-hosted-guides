@@ -68,7 +68,7 @@ cd finish
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
@@ -90,7 +90,7 @@ curl -s http://localhost:9080/LibertyProject/system/properties | jq
 
 
 
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -104,13 +104,13 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-rest-intro/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -203,11 +203,11 @@ The ***@GET*** annotation on the method indicates that this method is called for
 Jakarta Restful Web Services supports a number of ways to marshal JSON. The Jakarta Restful Web Services specification mandates JSON-Binding (JSON-B). The method body returns the result of ***System.getProperties()***, which is of type ***java.util.Properties***. The method is annotated with ***@Produces(MediaType.APPLICATION_JSON)*** so Jakarta Restful Web Services uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
 
 
-::page{title="Configuring the server"}
+::page{title="Configuring Liberty"}
 
-To get the service running, the Liberty server needs to be correctly configured.
+To get the service running, the Liberty ***server.xml*** configuration file needs to be correctly configured.
 
-Replace the server configuration file.
+Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > guide-rest-intro/start/src/main/liberty/config/server.xml, or click the following button
@@ -234,9 +234,9 @@ Replace the server configuration file.
 
 The configuration does the following actions:
 
-* Configures the server to enable Jakarta Restful Web Services. This is specified in the ***featureManager*** element.
-* Configures the server to resolve the HTTP port numbers from variables, which are then specified in the Maven ***pom.xml*** file. This is specified in the ***httpEndpoint*** element. Variables use the ***${variableName}*** syntax.
-* Configures the server to run the produced web application on a context root specified in the ***pom.xml*** file. This is specified in the ***webApplication*** element.
+* Configures Liberty to enable Jakarta Restful Web Services. This is specified in the ***featureManager*** element.
+* Configures Liberty to resolve the HTTP port numbers from variables, which are then specified in the Maven ***pom.xml*** file. This is specified in the ***httpEndpoint*** element. Variables use the ***${variableName}*** syntax.
+* Configures Liberty to run the produced web application on a context root specified in the ***pom.xml*** file. This is specified in the ***webApplication*** element.
 
 
 The variables that are being used in the ***server.xml*** file are provided by the properties set in the Maven ***pom.xml*** file. The properties must be formatted as ***liberty.var.variableName***.
@@ -244,7 +244,7 @@ The variables that are being used in the ***server.xml*** file are provided by t
 
 ::page{title="Running the application"}
 
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
 Check out the service that you created at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
@@ -262,9 +262,9 @@ curl -s http://localhost:9080/LibertyProject/system/properties | jq
 ::page{title="Testing the service"}
 
 
-You can test this service manually by starting a server and visiting the http://localhost:9080/LibertyProject/system/properties URL. However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the Jakarta Restful Web Services Client API provide a simple environment to test the application.
+You can test this service manually by starting Liberty and visiting the http://localhost:9080/LibertyProject/system/properties URL. However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the Jakarta Restful Web Services Client API provide a simple environment to test the application.
 
-You can write tests for the individual units of code outside of a running application server, or they can be written to call the application server directly. In this example, you will create a test that does the latter.
+You can write tests for the individual units of code outside of a running Liberty instance, or they can be written to call the Liberty instance directly. In this example, you will create a test that does the latter.
 
 Create the ***EndpointIT*** class.
 
@@ -329,7 +329,7 @@ public class EndpointIT {
 This test class has more lines of code than the resource implementation. This situation is common. The test method is indicated with the ***@Test*** annotation.
 
 
-The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the server configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven ***pom.xml*** file. Refer to the ***pom.xml*** file to see how the application information such as the ***default.http.port***, ***default.https.port*** and ***app.context.root*** elements are provided in the file.
+The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the Liberty's configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven ***pom.xml*** file. Refer to the ***pom.xml*** file to see how the application information such as the ***default.http.port***, ***default.https.port*** and ***app.context.root*** elements are provided in the file.
 
 
 These Maven properties are then passed to the Java test program as the ***systemPropertyVariables*** element in the ***pom.xml*** file.
@@ -362,7 +362,7 @@ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 
 To see whether the tests detect a failure, add an assertion that you know fails, or change the existing assertion to a constant value that doesn't match the ***os.name*** system property.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
