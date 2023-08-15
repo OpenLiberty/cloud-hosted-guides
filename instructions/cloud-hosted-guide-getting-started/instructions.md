@@ -27,7 +27,7 @@ Maven is an automation build tool that provides an efficient way to develop Java
 
 You'll also explore how to package your application with Open Liberty so that it can be deployed anywhere in one go. You will then make Liberty configuration and code changes and see how they are immediately picked up by a running instance.
 
-Finally, you will package the application along with the server configuration into a Docker image and run that image as a container.
+Finally, you will package the application along with Liberty's configuration into a Docker image and run that image as a container.
 
 
 ::page{title="Getting started"}
@@ -65,7 +65,7 @@ sudo usermod -d /home/project theia
 
 Your application is configured to be built with Maven. Every Maven-configured project contains a ***pom.xml*** file, which defines the project configuration, dependencies, plug-ins, and so on.
 
-Your ***pom.xml*** file is located in the ***start*** directory and is configured to include the ***liberty-maven-plugin***, which allows you to install applications into Open Liberty and manage the server instances.
+Your ***pom.xml*** file is located in the ***start*** directory and is configured to include the ***liberty-maven-plugin***, which allows you to install applications into Open Liberty and manage the associated Liberty instances.
 
 
 To begin, navigate to the ***start*** directory. Build the ***system*** microservice that is provided and deploy it to Open Liberty by running the Maven ***liberty:run*** goal:
@@ -77,11 +77,11 @@ mvn liberty:run
 
 The ***mvn*** command initiates a Maven build, during which the ***target*** directory is created to store all build-related files.
 
-The ***liberty:run*** argument specifies the Open Liberty ***run*** goal, which starts an Open Liberty server instance in the foreground. As part of this phase, an Open Liberty server runtime is downloaded and installed into the ***target/liberty/wlp*** directory, a server instance is created and configured in the ***target/liberty/wlp/usr/servers/defaultServer*** directory, and the application is installed into that server via [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
+The ***liberty:run*** argument specifies the Open Liberty ***run*** goal, which starts an Open Liberty instance in the foreground. As part of this phase, an Open Liberty runtime is downloaded and installed into the ***target/liberty/wlp*** directory, an instance of Liberty is created and configured in the ***target/liberty/wlp/usr/servers/defaultServer*** directory, and the application is installed into that instance using [loose config](https://www.ibm.com/support/knowledgecenter/en/SSEQTP_liberty/com.ibm.websphere.wlp.doc/ae/rwlp_loose_applications.html).
 
 For more information about the Liberty Maven plug-in, see its [GitHub repository](https://github.com/WASdev/ci.maven).
 
-When the server begins starting up, various messages display in your command-line session. Wait for the following message, which indicates that the server startup is complete:
+When the Liberty instance begins starting up, various messages display in your command-line session. Wait for the following message, which indicates that Liberty's startup is complete:
 
 ```
 [INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
@@ -110,7 +110,7 @@ curl -s http://localhost:9080/system/properties | jq
 }
 ```
 
-When you need to stop the server, press `Ctrl+C` in the command-line session where you ran the server, or run the ***liberty:stop*** goal from the ***start*** directory in another command-line session:
+When you need to stop the Liberty instance, press `Ctrl+C` in the command-line session where you ran Liberty, or run the ***liberty:stop*** goal from the ***start*** directory in another command-line session:
 
 ```bash
 mvn liberty:stop
@@ -118,9 +118,9 @@ mvn liberty:stop
 
 
 
-::page{title="Starting and stopping the Open Liberty server in the background"}
+::page{title="Starting and stopping Open Liberty in the background"}
 
-Although you can start and stop the server in the foreground by using the Maven ***liberty:run*** goal, you can also start and stop the server in the background with the Maven ***liberty:start*** and ***liberty:stop*** goals:
+Although you can start and stop Liberty in the foreground by using the Maven ***liberty:run*** goal, you can also start and stop the Liberty instance in the background with the Maven ***liberty:start*** and ***liberty:stop*** goals:
 
 ```bash
 mvn liberty:start
@@ -129,11 +129,11 @@ mvn liberty:stop
 
 
 
-::page{title="Updating the server configuration without restarting the server"}
+::page{title="Updating Liberty's configuration without restarting"}
 
-The Open Liberty Maven plug-in includes a ***dev*** goal that listens for any changes in the project, including application source code or configuration. The Open Liberty server automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
+The Open Liberty Maven plug-in includes a ***dev*** goal that listens for any changes in the project, including application source code or configuration. The Open Liberty instance automatically reloads the configuration without restarting. This goal allows for quicker turnarounds and an improved developer experience.
 
-Stop the Open Liberty server if it is running, and start it in [dev mode](https://openliberty.io/docs/latest/development-mode.html) by running the ***liberty:dev*** goal in the ***start*** directory:
+Stop the Open Liberty instance if it is running, and start it in [dev mode](https://openliberty.io/docs/latest/development-mode.html) by running the ***liberty:dev*** goal in the ***start*** directory:
 
 ```bash
 mvn liberty:dev
@@ -154,7 +154,7 @@ curl -s http://localhost:9080/system/properties | jq
 
 
 
-Now try updating the server configuration while the server is running in dev mode. The ***system*** microservice does not currently include health monitoring to report whether the server and the microservice that it runs are healthy. You can add health reports with the MicroProfile Health feature, which adds a ***/health*** endpoint to your application. If you try to access this endpoint now at the ***http\://localhost:9080/health/*** URL, you see a 404 error because the ***/health*** endpoint does not yet exist:
+Now try updating Liberty's ***server.xml*** configuration file while the instance is running in dev mode. The ***system*** microservice does not currently include health monitoring to report whether the Liberty instance and the microservice that it runs are healthy. You can add health reports with the MicroProfile Health feature, which adds a ***/health*** endpoint to your application. If you try to access this endpoint now at the ***http\://localhost:9080/health/*** URL, you see a 404 error because the ***/health*** endpoint does not yet exist:
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -169,9 +169,9 @@ curl http://localhost:9080/health/
 Error 404: java.io.FileNotFoundException: SRVE0190E: File not found: /health
 ```
 
-To add the MicroProfile Health feature to the server, include the ***mpHealth*** feature in the ***server.xml***.
+To add the MicroProfile Health feature to the Liberty instance, include the ***mpHealth*** feature in the ***server.xml***.
 
-Replace the server configuration file.
+Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
@@ -211,7 +211,7 @@ Replace the server configuration file.
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
-After you make the file changes, Open Liberty automatically reloads its configuration. When enabled, the ***mpHealth*** feature automatically adds a ***/health*** endpoint to the application. You can see the server being updated in the server log displayed in your command-line session:
+After you make the file changes, Open Liberty automatically reloads its configuration. When enabled, the ***mpHealth*** feature automatically adds a ***/health*** endpoint to the application. You can see the instance being updated in the Liberty log displayed in your command-line session:
 
 ```
 [INFO] [AUDIT] CWWKG0016I: Starting server configuration update.
@@ -244,18 +244,18 @@ curl -s http://localhost:9080/health | jq
 }
 ```
 
-Now you can verify whether your server is up and running.
+Now you can verify whether your Liberty instance is up and running.
 
 
 
-::page{title="Updating the source code without restarting the server"}
+::page{title="Updating the source code without restarting Liberty"}
 
-The RESTful application that contains your ***system*** microservice runs in a server from its ***.class*** file and other artifacts. Open Liberty automatically monitors these artifacts, and whenever they are updated, it updates the running server without the need for the server to be restarted.
+The RESTful application that contains your ***system*** microservice runs in a Liberty instance from its ***.class*** file and other artifacts. Open Liberty automatically monitors these artifacts, and whenever they are updated, it updates the running instance without the need for the instance to be restarted.
 
 Look at your ***pom.xml*** file.
 
 
-Try updating the source code while the server is running in dev mode. At the moment, the ***/health*** endpoint reports whether the server is running, but the endpoint doesn't provide any details on the microservices that are running inside of the server.
+Try updating the source code while Liberty is running in dev mode. At the moment, the ***/health*** endpoint reports whether the Liberty instance is running, but the endpoint doesn't provide any details on the microservices that are running inside of the instance.
 
 MicroProfile Health offers health checks for both readiness and liveness. A readiness check allows third-party services, such as Kubernetes, to know if the microservice is ready to process requests. A liveness check allows third-party services to determine if the microservice is running.
 
@@ -376,7 +376,7 @@ The following messages display in your first command-line session:
 ```
 
 
-Access the ***/health*** endpoint again by going to the ***http\://localhost:9080/health*** URL. This time you see the overall status of your server and the aggregated data of the liveness and readiness checks for the ***system*** microservice:
+Access the ***/health*** endpoint again by going to the ***http\://localhost:9080/health*** URL. This time you see the overall status of your Liberty instance and the aggregated data of the liveness and readiness checks for the ***system*** microservice:
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -427,13 +427,13 @@ curl -s http://localhost:9080/health/live | jq
 
 
 
-Making code changes and recompiling is fast and straightforward. Open Liberty dev mode automatically picks up changes in the ***.class*** files and artifacts, without needing to be restarted. Alternatively, you can run the ***run*** goal and manually repackage or recompile the application by using the ***mvn package*** command or the ***mvn compile*** command while the server is running. Dev mode was added to further improve the developer experience by minimizing turnaround times.
+Making code changes and recompiling is fast and straightforward. Open Liberty dev mode automatically picks up changes in the ***.class*** files and artifacts, without needing to be restarted. Alternatively, you can run the ***run*** goal and manually repackage or recompile the application by using the ***mvn package*** command or the ***mvn compile*** command while Liberty is running. Dev mode was added to further improve the developer experience by minimizing turnaround times.
 
 
 
-::page{title="Checking the Open Liberty server logs"}
+::page{title="Checking the Open Liberty logs"}
 
-While the server is running in the foreground, it displays various console messages in the command-line session. These messages are also logged to the ***target/liberty/wlp/usr/servers/defaultServer/logs/console.log*** file. You can find the complete server logs in the ***target/liberty/wlp/usr/servers/defaultServer/logs*** directory. The ***console.log*** and ***messages.log*** files are the primary log files that contain console output of the running application and the server. More logs are created when runtime errors occur or whenever tracing is enabled. You can find the error logs in the ***ffdc*** directory and the tracing logs in the ***trace.log*** file.
+While Liberty is running in the foreground, it displays various console messages in the command-line session. These messages are also logged to the ***target/liberty/wlp/usr/servers/defaultServer/logs/console.log*** file. You can find the complete Liberty logs in the ***target/liberty/wlp/usr/servers/defaultServer/logs*** directory. The ***console.log*** and ***messages.log*** files are the primary log files that contain console output of the running application and the Liberty instance. More logs are created when runtime errors occur or whenever tracing is enabled. You can find the error logs in the ***ffdc*** directory and the tracing logs in the ***trace.log*** file.
 
 In addition to the log files that are generated automatically, you can enable logging of specific Java packages or classes by using the ***logging*** element:
 
@@ -447,7 +447,7 @@ For more information about logging, see the [Trace log detail levels](https://ww
 
 Try enabling detailed logging of the MicroProfile Health feature by adding the ***logging*** element to your configuration file.
 
-Replace the server configuration file.
+Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
@@ -490,7 +490,7 @@ After you change the file, Open Liberty automatically reloads its configuration.
 
 Now, when you visit the ***/health*** endpoint, additional traces are logged in the ***trace.log*** file.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Running the application in a Docker container"}
@@ -499,7 +499,7 @@ To run the application in a container, Docker needs to be installed. For install
 
 Make sure to start your Docker daemon before you proceed.
 
-To containerize the application, you need a ***Dockerfile***. This file contains a collection of instructions that define how a Docker image is built, what files are packaged into it, what commands run when the image runs as a container, and other information. You can find a complete ***Dockerfile*** in the ***start*** directory. This ***Dockerfile*** copies the ***.war*** file into a Docker image that contains the Java runtime and a preconfigured Open Liberty server.
+To containerize the application, you need a ***Dockerfile***. This file contains a collection of instructions that define how a Docker image is built, what files are packaged into it, what commands run when the image runs as a container, and other information. You can find a complete ***Dockerfile*** in the ***start*** directory. This ***Dockerfile*** copies the ***.war*** file into a Docker image that contains the Java runtime and a preconfigured Open Liberty runtime.
 
 Run the ***mvn package*** command from the ***start*** directory so that the ***.war*** file resides in the ***target*** directory.
 
@@ -625,7 +625,7 @@ Dev mode automatically picks up changes that you make to your application and al
 
 Update the ***server.xml*** file to change the context root from ***/*** to ***/dev***.
 
-Replace the server configuration file.
+Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > guide-getting-started/start/src/main/liberty/config/server.xml, or click the following button
@@ -822,11 +822,11 @@ When you are finished, exit dev mode by pressing `Ctrl+C` in the command-line se
 
 ::page{title="Running the application from a minimal runnable JAR"}
 
-So far, Open Liberty was running out of the ***target/liberty/wlp*** directory, which effectively contains an Open Liberty server installation and the deployed application. The final product of the Maven build is a server package for use in a continuous integration pipeline and, ultimately, a production deployment.
+So far, Open Liberty was running out of the ***target/liberty/wlp*** directory, which effectively contains an Open Liberty installation and the deployed application. The final product of the Maven build is a server package for use in a continuous integration pipeline and, ultimately, a production deployment.
 
-Open Liberty supports a number of different server packages. The sample application currently generates a ***usr*** package that contains the servers and application to be extracted onto an Open Liberty installation.
+Open Liberty supports a number of different server packages. The sample application currently generates a ***usr*** package that contains the Liberty runtime and application to be extracted onto an Open Liberty installation.
 
-Instead of creating a server package, you can generate a runnable JAR file that contains the application along with a server runtime. This JAR file can then be run anywhere and deploy your application and server at the same time. To generate a runnable JAR file, override the  ***include*** property: 
+Instead of creating a server package, you can generate a runnable JAR file that contains the application along with a Liberty runtime. This JAR file can then be run anywhere and deploy your application and runtime at the same time. To generate a runnable JAR file, override the  ***include*** property: 
 ```bash
 mvn liberty:package -Dinclude=runnable
 ```
@@ -835,14 +835,14 @@ The packaging type is overridden from the ***usr*** package to the ***runnable**
 
 When the build completes, you can find the minimal runnable ***guide-getting-started.jar*** file in the ***target*** directory. This JAR file contains only the ***features*** that you explicitly enabled in your ***server.xml*** file. As a result, the generated JAR file is only about 50 MB.
 
-To run the JAR file, first stop the server if it's running. Then, navigate to the ***target*** directory and run the ***java -jar*** command:
+To run the JAR file, first stop the Liberty instance if it's running. Then, navigate to the ***target*** directory and run the ***java -jar*** command:
 
 ```bash
 java -jar guide-getting-started.jar
 ```
 
 
-When the server starts, go to the ***http\://localhost:9080/dev/system/properties*** URL to access your application that is now running out of the minimal runnable JAR file.
+When Liberty starts, go to the ***http\://localhost:9080/dev/system/properties*** URL to access your application that is now running out of the minimal runnable JAR file.
 
 
 _To see the output for this URL in the IDE, run the following command at a terminal:_
@@ -853,7 +853,7 @@ curl -s http://localhost:9080/dev/system/properties | jq
 
 
 
-You can stop the server by pressing `Ctrl+C` in the command-line session that the server runs in.
+You can stop the Liberty instance by pressing `Ctrl+C` in the command-line session that the instance runs in.
 
 
 
@@ -863,7 +863,7 @@ You can stop the server by pressing `Ctrl+C` in the command-line session that th
 
 ### Nice Work!
 
-You've learned the basics of deploying and updating an application on an Open Liberty server.
+You've learned the basics of deploying and updating an application on Open Liberty.
 
 
 
