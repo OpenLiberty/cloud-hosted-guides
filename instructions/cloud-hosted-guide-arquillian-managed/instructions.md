@@ -23,7 +23,7 @@ You will learn how to develop tests for your microservices by using the [Arquill
 
 You will develop Arquillian tests that use JUnit as the runner and build your tests with Maven using the Liberty Maven plug-in. This technique simplifies the process of managing Arquillian dependencies and the setup of your Arquillian managed container.
 
-You will work with an ***inventory*** microservice, which stores information about various systems. The ***inventory*** service communicates with the ***system*** service on a particular host to retrieve its system properties and store them. You will develop functional and integration tests for the microservices. You will also learn about the Maven and server configurations so that you can run your tests on Open Liberty with the Arquillian Liberty Managed container.
+You will work with an ***inventory*** microservice, which stores information about various systems. The ***inventory*** service communicates with the ***system*** service on a particular host to retrieve its system properties and store them. You will develop functional and integration tests for the microservices. You will also learn about the Maven and Liberty configurations so that you can run your tests on Open Liberty with the Arquillian Liberty Managed container.
 
 ::page{title="Getting started"}
 
@@ -176,7 +176,7 @@ Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Comm
 
 Notice that the JUnit Arquillian runner runs the tests instead of the standard JUnit runner. The ***@RunWith*** annotation preceding the class tells JUnit to run the tests by using Arquillian.
 
-The method annotated by ***@Deployment*** defines the content of the web archive, which is going to be deployed onto the Open Liberty server. The tests are either run on or against the server. The ***testable = true*** attribute enables the deployment to run the tests "in container", that is the tests are run on the server.
+The method annotated by ***@Deployment*** defines the content of the web archive, which is going to be deployed onto the Open Liberty. The tests are either run on or against the Liberty instance. The ***testable = true*** attribute enables the deployment to run the tests "in container", that is the tests are run on the Liberty instance.
 
 
 The ***WARNAME*** variable is used to name the web archive and is defined in the ***pom.xml*** file. This name is necessary if you don't want a randomly generated web archive name.
@@ -191,11 +191,11 @@ Contexts and Dependency Injection (CDI) is used to inject an instance of the ***
 
 The injected ***InventoryResource*** instance is then tested by the ***testInventoryResourceFunctions*** method. This test case calls the ***listContents()*** method to get all systems that are stored in this inventory and verifies that ***localhost*** is the only system being found. Notice the functional test case doesn't store any system in the inventory, the ***localhost*** system is from the endpoint test case that ran before this test case. The ***@InSequence*** Arquillian annotation guarantees the test sequence. The sequence is important for the two tests, as the results in the first test impact the second one.
 
-The test cases are ready to run. You will configure the Maven build and the Liberty application server to run them.
+The test cases are ready to run. You will configure the Maven build and the Liberty configuration to run them.
 
 ::page{title="Configuring Arquillian with Liberty"}
 
-Configure your build to use the Arquillian Liberty Managed container and set up your Open Liberty server to run your test cases by configuring the ***server.xml*** file.
+Configure your build to use the Arquillian Liberty Managed container and set up your Open Liberty to run your test cases by configuring the ***server.xml*** file.
 
 ### Configuring your test build
 
@@ -210,16 +210,16 @@ Let's look into each of the required elements for this configuration.
 
 You need the ***arquillian-bom*** Bill of Materials. It's a Maven artifact that defines the versions of Arquillian dependencies to make dependency management easier.
 
-The ***arquillian-liberty-managed-junit*** dependency bundle, which includes all the core dependencies, is required to run the Arquillian tests on a managed Liberty container that uses JUnit. You can learn more about the [Arquillian Liberty dependency bundles](https://github.com/OpenLiberty/arquillian-liberty-dependencies). The ***shrinkwrap-api*** dependency allows you to create your test archive, which is packaged into a WAR file and deployed to the Open Liberty server.
+The ***arquillian-liberty-managed-junit*** dependency bundle, which includes all the core dependencies, is required to run the Arquillian tests on a managed Liberty container that uses JUnit. You can learn more about the [Arquillian Liberty dependency bundles](https://github.com/OpenLiberty/arquillian-liberty-dependencies). The ***shrinkwrap-api*** dependency allows you to create your test archive, which is packaged into a WAR file and deployed to the Open Liberty.
 
 The ***maven-failsafe-plugin*** artifact runs your Arquillian integration tests by using JUnit.
 
 Lastly, specify the ***liberty-maven-plugin*** configuration that defines your Open Liberty runtime configuration. When the application runs in an Arquillian Liberty managed container, the name of the war file is used as the context root of the application. You can pass context root information to the application and customize the container by using the ***arquillianProperties*** configuration. To learn more about the ***arquillianProperties*** configuration, see the [Arquillian Liberty Managed documentation](https://github.com/OpenLiberty/liberty-arquillian/blob/main/liberty-managed/README.md#configuration).
 
 
-### Configuring the server.xml file
+### Configuring Liberty's ***server.xml*** configuration file
 
-Now that you're done configuring your Maven build, set up your Open Liberty server to run your test cases by configuring the ***server.xml*** file.
+Now that you're done configuring your Maven build, set up your Open Liberty to run your test cases by configuring the ***server.xml*** configuration file.
 
 Take a look at the ***server.xml*** file.
 
@@ -233,7 +233,7 @@ The ***localConnector*** feature is required by the Arquillian Liberty Managed c
 
 ::page{title="Running the tests"}
 
-It's now time to build and run your Arquillian tests. Navigate to the ***start*** directory. First, run the Maven command to package the application. Then, run the ***liberty-maven-plugin*** goals to create the application server, install the features, and deploy the application to the server. The ***configure-arquillian*** goal configures your Arquillian container. You can learn more about this goal in the [configure-arquillian goal documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/configure-arquillian.md).
+It's now time to build and run your Arquillian tests. Navigate to the ***start*** directory. First, run the Maven command to package the application. Then, run the ***liberty-maven-plugin*** goals to create the Liberty instance, install the features, and deploy the application to the instance. The ***configure-arquillian*** goal configures your Arquillian container. You can learn more about this goal in the [configure-arquillian goal documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/configure-arquillian.md).
 
 ```bash
 cd /home/project/guide-arquillian-managed/start
@@ -248,9 +248,9 @@ Now, you can run your Arquillian tests with the Maven ***integration-test*** goa
 mvn failsafe:integration-test
 ```
 
-In the test output, you can see that the application server launched, and that the web archive, ***arquillian-managed***, started as an application in the server. You can also see that the tests are running and that the results are reported.
+In the test output, you can see that the Liberty instance launched, and that the web archive, ***arquillian-managed***, started as an application in the instance. You can also see that the tests are running and that the results are reported.
 
-After the tests stop running, the test application is automatically undeployed and the server shuts down. You should then get a message indicating that the build and tests are successful.
+After the tests stop running, the test application is automatically undeployed and the instance shuts down. You should then get a message indicating that the build and tests are successful.
 
 ```
 [INFO] -------------------------------------------------------
