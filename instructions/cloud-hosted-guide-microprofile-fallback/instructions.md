@@ -28,7 +28,7 @@ The application that you will be working with is an ***inventory*** service, whi
 
 You will use the ***@Fallback*** annotations from the MicroProfile Fault Tolerance specification to define criteria for when to provide an alternative solution for a failed execution.
 
-You will also see the application metrics for the fault tolerance methods that are automatically enabled when you add the MicroProfile Metrics feature to the server.
+You will also see the application metrics for the fault tolerance methods that are automatically enabled when you add the MicroProfile Metrics feature to your Open Liberty.
 
 
 
@@ -67,7 +67,7 @@ cd finish
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
@@ -95,7 +95,7 @@ Update the ***CustomConfigSource*** configuration file. Change the ***io_openlib
 ```
 
 
-You do not need to restart the server. Next, run the following curl command:
+You do not need to restart the Liberty instance. Next, run the following curl command:
 ```bash
 curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
@@ -117,7 +117,7 @@ Update the ***CustomConfigSource*** configuration file. Change the ***io_openlib
 "io_openliberty_guides_system_inMaintenance":false}
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -132,13 +132,13 @@ To begin, run the following command to navigate to the ***start*** directory:
 cd /home/project/guide-microprofile-fallback/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -149,15 +149,15 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 
 The MicroProfile Fault Tolerance API is included in the MicroProfile dependency that is specified in your ***pom.xml*** file. Look for the dependency with the ***microprofile*** artifact ID. This dependency provides a library that allows you to use fault tolerance policies in your microservices.
 
-You can also find the ***mpFaultTolerance*** feature in your ***src/main/liberty/config/server.xml*** server configuration, which turns on MicroProfile Fault Tolerance capabilities in Open Liberty.
+You can also find the ***mpFaultTolerance*** feature in your ***src/main/liberty/config/server.xml*** configuration file, which turns on MicroProfile Fault Tolerance capabilities in Open Liberty.
 
-To easily work through this guide, the two provided microservices are set up to run on the same server. To simulate the availability of the services and then to enable fault tolerance, dynamic configuration with MicroProfile Configuration is used so that you can easily take one service or the other down for maintenance. If you want to learn more about setting up dynamic configuration, see [Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
+To easily work through this guide, the two provided microservices are set up to run on the same Liberty instance. To simulate the availability of the services and then to enable fault tolerance, dynamic configuration with MicroProfile Configuration is used so that you can easily take one service or the other down for maintenance. If you want to learn more about setting up dynamic configuration, see [Configuring microservices](https://openliberty.io/guides/microprofile-config.html).
 
 The following two steps set up the dynamic configuration on the ***system*** service and its client. You can move on to the next section, which adds the fallback mechanism on the ***inventory*** service.
 
 First, the ***src/main/java/io/openliberty/guides/system/SystemResource.java*** file has the ***isInMaintenance()*** condition, which determines that the system properties are returned only if you set the ***io_openliberty_guides_system_inMaintenance*** configuration property to ***false*** in the ***CustomConfigSource*** file. Otherwise, the service returns a ***Status.SERVICE_UNAVAILABLE*** message, which makes it unavailable.
 
-Next, the ***src/main/java/io/openliberty/guides/inventory/client/SystemClient.java*** file makes a request to the ***system*** service through the MicroProfile Rest Client API. If you want to learn more about MicroProfile Rest Client, you can follow the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html) guide. The ***system*** service as described in the ***SystemResource.java*** file may return a ***Status.SERVICE_UNAVAILABLE*** message, which is a 503 status code. This code indicates that the server being called is unable to handle the request because of a temporary overload or scheduled maintenance, which would likely be alleviated after some delay. To simulate that the system is unavailable, an ***IOException*** is thrown.
+Next, the ***src/main/java/io/openliberty/guides/inventory/client/SystemClient.java*** file makes a request to the ***system*** service through the MicroProfile Rest Client API. If you want to learn more about MicroProfile Rest Client, you can follow the [Consuming RESTful services with template interfaces](https://openliberty.io/guides/microprofile-rest-client.html) guide. The ***system*** service as described in the ***SystemResource.java*** file may return a ***Status.SERVICE_UNAVAILABLE*** message, which is a 503 status code. This code indicates that the Liberty instance being called is unable to handle the request because of a temporary overload or scheduled maintenance, which would likely be alleviated after some delay. To simulate that the system is unavailable, an ***IOException*** is thrown.
 
 The ***InventoryManager*** class calls the ***getProperties()*** method in the ***SystemClient.java*** class. You will look into the ***InventoryManager*** class in more detail in the next section.
 
@@ -269,17 +269,17 @@ You successfully set up your microservice to have fault tolerance capability.
 
 MicroProfile Fault Tolerance integrates with MicroProfile Metrics to provide metrics for the annotated fault tolerance methods. When both the ***mpFaultTolerance*** and the ***mpMetrics*** features are included in the ***server.xml*** configuration file, the ***@Fallback*** fault tolerance annotation provides metrics that count the following things: the total number of annotated method invocations, the total number of failed annotated method invocations, and the total number of the fallback method calls.
 
-The ***mpMetrics*** feature requires SSL and the configuration is provided for you. The ***quickStartSecurity*** configuration element provides basic security to secure the server. When you go to the ***/metrics*** endpoint, use the credentials that are defined in the server configuration to log in to view the data for the fault tolerance methods.
+The ***mpMetrics*** feature requires SSL and the configuration is provided for you. The ***quickStartSecurity*** configuration element provides basic security to secure the Liberty. When you go to the ***/metrics*** endpoint, use the credentials that are defined in the Liberty's configuration to log in to view the data for the fault tolerance methods.
 
 You can learn more about MicroProfile Metrics in the [Providing metrics from a microservice](https://openliberty.io/guides/microprofile-metrics.html) guide. You can also learn more about the MicroProfile Fault Tolerance and MicroProfile Metrics integration in the [MicroProfile Fault Tolerance specification](https://github.com/eclipse/microprofile-fault-tolerance/releases).
 
 
 ::page{title="Running the application"}
 
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-When the server is running, run the following curl command:
+When the Liberty instance is running, run the following curl command:
 ```bash
 curl -s http://localhost:9080/inventory/systems/localhost | jq
 ```
@@ -505,7 +505,7 @@ Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
 
 To see if the tests detect a failure, comment out the ***changeSystemProperty()*** methods in the ***FaultToleranceIT.java*** file. Rerun the tests to see that a test failure occurs for the ***testFallbackForGet()*** and ***testFallbackSkipForGet()*** test cases.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
