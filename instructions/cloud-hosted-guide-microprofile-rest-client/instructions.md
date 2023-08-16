@@ -65,7 +65,7 @@ cd finish
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
@@ -103,7 +103,7 @@ curl -s http://localhost:9080/inventory/systems/localhost | jq
 You can also use the ***http://localhost:9080/inventory/systems/{your-hostname}*** URL. In Windows, MacOS, and Linux, get your fully qualified domain name (FQDN) by entering **hostname** into your command-line. Visit the URL by replacing ***{your-hostname}*** with your FQDN.
 
 
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -113,13 +113,13 @@ mvn liberty:stop
 
 Now, navigate to the ***start*** directory to begin.
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -133,7 +133,7 @@ The MicroProfile Rest Client API is included in the MicroProfile dependency spec
 
 This dependency provides a library that is required to implement the MicroProfile Rest Client interface.
 
-The ***mpRestClient*** feature is also enabled in the ***src/main/liberty/config/server.xml*** file. This feature enables your Open Liberty server to use MicroProfile Rest Client to invoke RESTful microservices.
+The ***mpRestClient*** feature is also enabled in the ***src/main/liberty/config/server.xml*** file. This feature enables your Open Liberty to use MicroProfile Rest Client to invoke RESTful microservices.
 
 
 The code for the ***system*** service in the ***src/main/java/io/openliberty/guides/system*** directory is provided for you. It simulates a remote RESTful service that the ***inventory*** service invokes.
@@ -470,9 +470,9 @@ Similarly, call the ***customRestClient.getProperties()*** method to invoke the 
 
 ::page{title="Running the application"}
 
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
-When the server is running, select either approach to fetch your system properties:
+When the Liberty instance is running, select either approach to fetch your system properties:
 
 
  Visit the ***http\://localhost:9080/inventory/systems/localhost*** URL. The URL retrieves the system property information for the ***localhost*** host name by making a request to the ***system*** service at ***http://localhost:9080/system/properties***.
@@ -631,7 +631,7 @@ The warning and error messages are expected and result from a request to a bad o
 
 To see whether the tests detect a failure, change the base URL in the configuration file so that when the ***inventory*** service tries to access the invalid URL, an ***UnknownUriException*** is thrown. Rerun the tests to see a test failure occur.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 ::page{title="Summary"}
 
