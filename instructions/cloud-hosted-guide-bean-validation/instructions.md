@@ -63,7 +63,7 @@ cd finish
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
@@ -105,7 +105,7 @@ Click ***Execute*** and you receive the response ***No Constraint Violations*** 
 
 This time you receive ***Constraint Violation Found: must be greater than or equal to 18*** as a response because the age specified was under the minimum age of 18. Try other combinations of values to get a feel for the constraints that will be defined in this guide.
 
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -118,13 +118,13 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-bean-validation/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -516,9 +516,9 @@ The method level validation occurs in the ***launchSpacecraft()*** method. A cal
 
 ::page{title="Enabling the Bean Validation feature"}
 
-Finally, add the Bean Validation feature in the application by updating the ***server.xml*** configuration file.
+Finally, add the Bean Validation feature in the application by updating the Liberty ***server.xml*** configuration file.
 
-Replace the ***server*** configuration file.
+Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > guide-bean-validation/start/src/main/liberty/config/server.xml, or click the following button
@@ -556,7 +556,7 @@ You can now use the ***beanValidation*** feature to validate that the supplied J
 
 ::page{title="Running the application"}
 
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 Click the following button to check out your service by visiting the ***/openapi/ui*** endpoint:
 ::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
@@ -757,7 +757,7 @@ public class BeanValidationIT {
 
 
 
-The ***@BeforeEach*** annotation causes the ***setup()*** method to execute before the test cases. The ***setup()*** method retrieves the port number for the Open Liberty server and creates a ***Client*** that is used throughout the tests, which are described as follows:
+The ***@BeforeEach*** annotation causes the ***setup()*** method to execute before the test cases. The ***setup()*** method retrieves the port number for the Open Liberty and creates a ***Client*** that is used throughout the tests, which are described as follows:
 
 * The ***testNoFieldLevelConstraintViolations()*** test case verifies that constraint violations do not occur when valid data is supplied to the ***Astronaut*** and ***Spacecraft*** bean attributes.
 
@@ -785,7 +785,7 @@ Results :
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 ::page{title="Summary"}
 
