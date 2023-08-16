@@ -96,13 +96,13 @@ Navigate to the ***start/inventory*** directory to begin.
 cd /home/project/guide-contract-testing/start/inventory
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -373,7 +373,7 @@ Replace the inventory Maven project file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.7.1</version>
+                <version>3.8.2</version>
             </plugin>
         </plugins>
     </build>
@@ -496,7 +496,7 @@ Start Open Liberty in dev mode for the ***system*** microservice:
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -666,7 +666,7 @@ Replace the system Maven project file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.7.1</version>
+                <version>3.8.2</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -827,7 +827,7 @@ The pact file that's created by the ***inventory*** microservice was successfull
 
 ::page{title="Tearing down the environment"}
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the servers for the ***system*** and ***inventory*** microservices, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the Liberty instances for the ***system*** and ***inventory*** microservices, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 Navigate back to the ***/guide-contract-testing*** directory and run the following commands to remove the Pact Broker:
 
