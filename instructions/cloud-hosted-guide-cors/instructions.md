@@ -20,7 +20,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to add two server configurations to enable CORS. Next, you will write and run tests to validate that the CORS configurations work. These tests send two different CORS requests to a REST service that has two different endpoints.
+You will learn how to add two Liberty configurations to enable CORS. Next, you will write and run tests to validate that the CORS configurations work. These tests send two different CORS requests to a REST service that has two different endpoints.
 
 ### CORS and its purpose
 
@@ -84,13 +84,13 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-cors/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -105,9 +105,9 @@ You will send a simple request to the ***/configurations/simple*** endpoint and 
 
 
 ### Enabling a simple CORS configuration
-Configure the server to allow the ***/configurations/simple*** endpoint to accept a ***simple*** CORS request. Add a simple CORS configuration to the ***server.xml*** file:
+Configure the Liberty to allow the ***/configurations/simple*** endpoint to accept a ***simple*** CORS request. Add a simple CORS configuration to the Liberty ***server.xml*** configuration file:
 
-Replace the server configuration file.
+Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > guide-cors/start/src/main/liberty/config/server.xml, or click the following button
@@ -157,9 +157,9 @@ The CORS configuration contains the following attributes:
 
 For more information about these and other CORS attributes, see the [cors element documentation](https://www.openliberty.io/docs/latest/reference/config/cors.html).
 
-Save the changes to the ***server.xml*** file. The ***/configurations/simple*** endpoint is now ready to be tested with a simple CORS request.
+Save the changes to the ***server.xml*** configuration file. The ***/configurations/simple*** endpoint is now ready to be tested with a simple CORS request.
 
-The Open Liberty server was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
+The Open Liberty instance was started in dev mode at the beginning of the guide and all the changes were automatically picked up.
 
 Now, test the simple CORS configuration that you added. Add the ***testSimpleCorsRequest*** method to the ***CorsIT*** class.
 
@@ -238,7 +238,7 @@ The request is a ***GET*** HTTP request with the following header:
 | ---| ---
 | Origin | The value is set to ***openliberty.io***. Indicates that the request originates from ***openliberty.io***.
 
-Expect the following response headers and values if the simple CORS request is successful, and the server is correctly configured:
+Expect the following response headers and values if the simple CORS request is successful, and the Liberty instance is correctly configured:
 
 | *Response Header* | *Response Value*
 | ---| ---
@@ -266,9 +266,9 @@ Header X-Powered-By = [Servlet/4.0]
 
 ### Enabling a preflight CORS configuration
 
-Configure the server to allow the ***/configurations/preflight*** endpoint to accept a ***preflight*** CORS request. Add another CORS configuration in the ***server.xml*** file:
+Configure the Liberty to allow the ***/configurations/preflight*** endpoint to accept a ***preflight*** CORS request. Add another CORS configuration in the Liberty ***server.xml*** configuration file:
 
-Replace the server configuration file.
+Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > guide-cors/start/src/main/liberty/config/server.xml, or click the following button
@@ -324,7 +324,7 @@ The following attributes were added:
 * ***allowedHeaders***: Headers that a client can use in requests. Set the value to ***MyOwnHeader1, MyOwnHeader2***.
 * ***maxAge***: The number of seconds that a client can cache a response to a preflight request. Set the value to ***10***.
 
-Save the changes to the ***server.xml*** file. The ***/configurations/preflight*** endpoint is now ready to be tested with a preflight CORS request.
+Save the changes to the ***server.xml*** configuration file. The ***/configurations/preflight*** endpoint is now ready to be tested with a preflight CORS request.
 
 Add another test to the ***CorsIT.java*** file to test the preflight CORS configuration that you just added:
 
@@ -414,7 +414,7 @@ The request is an ***OPTIONS*** HTTP request with the following headers:
 | Access-Control-Request-Method | The value is set to ***DELETE***. Indicates that the HTTP DELETE method will be used in the actual request.
 | Access-Control-Request-Headers | The value is set to ***MyOwnHeader2***. Indicates the header ***MyOwnHeader2*** will be used in the actual request.
 
-Expect the following response headers and values if the preflight CORS request is successful, and the server is correctly configured:
+Expect the following response headers and values if the preflight CORS request is successful, and the Liberty instance is correctly configured:
 
 | *Response Header* | *Response Value*
 | ---| ---
@@ -424,7 +424,7 @@ Expect the following response headers and values if the preflight CORS request i
 | Access-Control-Allow-Credentials | The expected value is ***true***. Indicates that the user credentials can be included in the request.
 | Access-Control-Allow-Headers | The expected value is ***MyOwnHeader1, MyOwnHeader2***. Indicates that the header ***MyOwnHeader1*** and ***MyOwnHeader2*** are safe to expose.
 
-The ***Access-Control-Allow-Origin*** header has a value of ***anywebsiteyoulike.com*** because the server is configured to allow all origins, and the request came with an origin of ***anywebsiteyoulike.com***.
+The ***Access-Control-Allow-Origin*** header has a value of ***anywebsiteyoulike.com*** because the Liberty is configured to allow all origins, and the request came with an origin of ***anywebsiteyoulike.com***.
 
 Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
@@ -445,16 +445,16 @@ Header Access-Control-Allow-Headers = [MyOwnHeader1, MyOwnHeader2]
 Header X-Powered-By = [Servlet/4.0]
 ```
 
-You can modify the server configuration and the test code to experiment with the various CORS configuration attributes.
+You can modify the Liberty configuration and the test code to experiment with the various CORS configuration attributes.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You enabled CORS support in Open Liberty. You added two different CORS configurations to allow two kinds of CORS requests in the **server.xml** file.
+You enabled CORS support in Open Liberty. You added two different CORS configurations to allow two kinds of CORS requests in the Liberty **server.xml** configuration file.
 
 
 
