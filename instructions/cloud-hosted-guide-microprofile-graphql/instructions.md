@@ -771,9 +771,9 @@ Replace the Maven project file.
 
 Adding the ***microprofile-graphql-api*** dependency to the ***pom.xml*** enables the GraphQL annotations that are used to develop the application. 
 
-The Open Liberty server needs to be configured to support the GraphQL query language. 
+The Open Liberty needs to be configured to support the GraphQL query language. 
 
-Replace the server configuration file.
+Replace the Liberty server.xml configuration file.
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > guide-microprofile-graphql/start/graphql/src/main/liberty/config/server.xml, or click the following button
