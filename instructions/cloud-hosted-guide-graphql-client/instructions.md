@@ -362,9 +362,9 @@ Replace the Maven project file.
 
 The ***smallrye-graphql-client*** dependencies provide the classes that you use to interact with a ***graphql*** microservice.
 
-To run the service, you must correctly configure the Liberty server.
+To run the service, you must correctly configure the Liberty.
 
-Replace the server configuration file.
+Replace the Liberty server.xml configuration file.
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > guide-graphql-client/start/query/src/main/liberty/config/server.xml, or click the following button
