@@ -60,7 +60,7 @@ cd finish
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
@@ -73,7 +73,7 @@ Click the following button to visit the application:
 
 ::startApplication{port="9080" display="external" name="Visit application" route="/"}
 
-The application automatically switches from an HTTP connection to a secure HTTPS connection and forwards you to a login page. If the browser gives you a certificate warning, it's because the Open Liberty server created a self-signed SSL certificate by default. You can follow your browser's provided instructions to accept the certificate and continue.
+The application automatically switches from an HTTP connection to a secure HTTPS connection and forwards you to a login page. If the browser gives you a certificate warning, it's because the Open Liberty instance created a self-signed SSL certificate by default. You can follow your browser's provided instructions to accept the certificate and continue.
 
 Sign in to the application with one of the following user credentials from the user registry, which are provided to you:
 
@@ -86,7 +86,7 @@ Sign in to the application with one of the following user credentials from the u
 
 Notice that when you sign in as Bob or Carl, the browser redirects to the ***admin*** page and you can view their names and roles. When you sign in as Alice, you can only view Alice's name. When you sign in as Dave, you are blocked and see an ***Error 403: Authorization failed*** message because Dave doesn't have a role that is supported by the application.
 
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -102,13 +102,13 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-security-intro/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -201,7 +201,7 @@ The ***security-role*** elements define the roles that are supported by the appl
 
 ::page{title="Configuring the user registry"}
 
-User registries store user account information, such as username and password, for use by applications to perform security-related operations. Typically, application servers would be configured to use an external registry like a Lightweight Directory Access Protocol (LDAP) registry. Applications would access information in the registry for authentication and authorization by using APIs like the Jakarta EE Security API.
+User registries store user account information, such as username and password, for use by applications to perform security-related operations. Typically, Open Liberty would be configured to use an external registry like a Lightweight Directory Access Protocol (LDAP) registry. Applications would access information in the registry for authentication and authorization by using APIs like the Jakarta EE Security API.
 
 Open Liberty provides an easy-to-use basic user registry for developers, which you will configure.
 
@@ -260,18 +260,18 @@ The registry has four users, ***bob***, ***alice***, ***carl***, and ***dave***.
 It is not recommended to store passwords in plain text. The passwords in the ***userRegistry.xml*** file are encoded by using the Liberty ***securityUtility*** command with XOR encoding.
 
 
-See the server configuration file.
+See the Liberty ***server.xml*** configuration file.
 
 ::openFile{path="/home/project/guide-security-intro/start/src/main/liberty/config/server.xml"}
 
-Use the ***include*** element to add the basic user registry configuration to your server configuration. Open Liberty includes configuration information from the specified XML file in its server configuration.
+Use the ***include*** element to add the basic user registry configuration to your Liberty configuration. Open Liberty includes configuration information from the specified XML file in its configuration.
 
-The ***server.xml*** file contains the security configuration of the server under the ***application-bnd*** element. Use the ***security-role*** and ***group*** elements to map the groups in the ***userRegistry.xml*** file to the appropriate user roles supported by the application for proper user authorization. The ***Manager*** and ***TeamLead*** groups are mapped to the ***admin*** role while the ***Employee*** group is mapped to the ***user*** role.
+The ***server.xml*** configuration file contains the security configuration of the Liberty under the ***application-bnd*** element. Use the ***security-role*** and ***group*** elements to map the groups in the ***userRegistry.xml*** file to the appropriate user roles supported by the application for proper user authorization. The ***Manager*** and ***TeamLead*** groups are mapped to the ***admin*** role while the ***Employee*** group is mapped to the ***user*** role.
 
 
 ::page{title="Running the application"}
 
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
 
@@ -459,7 +459,7 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 
 ```
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 
 ::page{title="Summary"}
