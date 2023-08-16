@@ -65,7 +65,7 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Setting up MongoDB
 
-This guide uses Docker to run an instance of MongoDB. A multi-stage Dockerfile is provided for you. This Dockerfile uses the ***mongo*** image as the base image of the final stage and gathers the required configuration files. The resulting ***mongo*** image runs in a Docker container, and you must set up a new database for the microservice. Lastly, the truststore that's generated in the Docker image is copied from the container and placed into the Open Liberty server.
+This guide uses Docker to run an instance of MongoDB. A multi-stage Dockerfile is provided for you. This Dockerfile uses the ***mongo*** image as the base image of the final stage and gathers the required configuration files. The resulting ***mongo*** image runs in a Docker container, and you must set up a new database for the microservice. Lastly, the truststore that's generated in the Docker image is copied from the container and placed into the Open Liberty configuration.
 
 You can find more details and configuration options on the [MongoDB website](https://docs.mongodb.com/manual/reference/configuration-options/). For more information about the ***mongo*** image, see [mongo](https://hub.docker.com/_/mongo) in Docker Hub.
 
@@ -78,9 +78,9 @@ docker build -t mongo-sample -f assets/Dockerfile .
 docker run --name mongo-guide -p 27017:27017 -d mongo-sample
 ```
 
-**Adding the truststore to the Open Liberty server**
+**Adding the truststore to the Open Liberty configuration**
 
-The truststore that's created in the container needs to be added to the Open Liberty server so that the server can trust the certificate that MongoDB presents when they connect. Run the following command to copy the ***truststore.p12*** file from the container to the ***start*** and ***finish*** directories:
+The truststore that's created in the container needs to be added to the Open Liberty configuration so that the Liberty can trust the certificate that MongoDB presents when they connect. Run the following command to copy the ***truststore.p12*** file from the container to the ***start*** and ***finish*** directories:
 
 
 ```bash
@@ -104,7 +104,7 @@ cd finish
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
@@ -115,7 +115,7 @@ You can now check out the service by clicking the following button:
 
 ::startApplication{port="9080" display="external" name="Launch application" route="/mongo"}
 
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -130,13 +130,13 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-mongodb-intro/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -254,7 +254,7 @@ Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Comm
 
 The values from the ***microprofile-config.properties*** file are injected into the ***MongoProducer*** class. The ***MongoProducer*** class requires the following methods for the ***MongoClient***:
 
-* The ***createMongo()*** producer method returns an instance of ***MongoClient***. In this method, the username, database name, and decoded password are passed into the ***MongoCredential.createCredential()*** method to get an instance of ***MongoCredential***. The ***JSSEHelper*** gets the ***SSLContext*** from the ***outboundSSLContext*** in the ***server.xml*** file. Then, a ***MongoClient*** instance is created.
+* The ***createMongo()*** producer method returns an instance of ***MongoClient***. In this method, the username, database name, and decoded password are passed into the ***MongoCredential.createCredential()*** method to get an instance of ***MongoCredential***. The ***JSSEHelper*** gets the ***SSLContext*** from the ***outboundSSLContext*** in the ***server.xml*** configuration file. Then, a ***MongoClient*** instance is created.
 
 * The ***createDB()*** producer method returns an instance of ***MongoDatabase*** that depends on the ***MongoClient***. This method injects the ***MongoClient*** in its parameters and passes the database name into the ***MongoClient.getDatabase()*** method to get a ***MongoDatabase*** instance.
 
@@ -571,7 +571,7 @@ The ***remove()*** method handles the implementation of the delete operation. Af
 
 
 
-::page{title="Configuring the MongoDB driver and the server"}
+::page{title="Configuring the MongoDB driver and the Liberty"}
 
 MicroProfile Config makes configuring the MongoDB driver simple because all of the configuration can be set in one place and injected into the CDI producer.
 
@@ -602,9 +602,9 @@ mongo.pass.encoded={aes}APtt+/vYxxPa0jE1rhmZue9wBm3JGqFK3JR4oJdSDGWM1wLr1ckvqkqK
 
 Values such as the hostname, port, and database name for the running MongoDB instance are set in this file. The user’s username and password are also set here. For added security, the password was encoded by using the [securityUtility encode command](https://openliberty.io/docs/latest/reference/command/securityUtility-encode.html).
 
-To create a CDI producer for MongoDB and connect over TLS, the Open Liberty server needs to be correctly configured.
+To create a CDI producer for MongoDB and connect over TLS, the Open Liberty needs to be correctly configured.
 
-Replace the server configuration file.
+Replace the Liberty ***server.xml*** configuration file.
 
 > To open the server.xml file in your IDE, select
 > **File** > **Open** > guide-mongodb-intro/start/src/main/liberty/config/server.xml, or click the following button
@@ -658,14 +658,14 @@ Replace the server configuration file.
 
 
 
-The features that are required to create the CDI producer for MongoDB are [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi-4.0.html) (***cdi-4.0***), [Secure Socket Layer](https://openliberty.io/docs/latest/reference/feature/ssl-1.0.html) (***ssl-1.0***), [MicroProfile Config](https://openliberty.io/docs/latest/reference/feature/mpConfig-3.0.html) (***mpConfig-3.0***), and [Password Utilities](https://openliberty.io/docs/latest/reference/feature/passwordUtilities-1.1.html) (***passwordUtilities-1.1***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
+The features that are required to create the CDI producer for MongoDB are [Contexts and Dependency Injection](https://openliberty.io/docs/latest/reference/feature/cdi-4.0.html) (***cdi-4.0***), [Secure Socket Layer](https://openliberty.io/docs/latest/reference/feature/ssl-1.0.html) (***ssl-1.0***), [MicroProfile Config](https://openliberty.io/docs/latest/reference/feature/mpConfig-3.0.html) (***mpConfig-3.0***), and [Password Utilities](https://openliberty.io/docs/latest/reference/feature/passwordUtilities-1.1.html) (***passwordUtilities-1.1***). These features are specified in the ***featureManager*** element. The Secure Socket Layer (SSL) context is configured in the ***server.xml*** configuration file so that the application can connect to MongoDB with TLS. The ***keyStore*** element points to the ***truststore.p12*** keystore file that was created in one of the previous sections. The ***ssl*** element specifies the ***defaultKeyStore*** as the keystore and ***outboundTrustStore*** as the truststore.
 
 After you replace the ***server.xml*** file, the Open Liberty configuration is automatically reloaded.
 
 
 ::page{title="Running the application"}
 
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
 Wait until you see a message similar to the following example:
@@ -996,7 +996,7 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 
 ::page{title="Tearing down the environment"}
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 Then, run the following commands to stop and remove the ***mongo-guide*** container and to remove the ***mongo-sample*** and ***mongo*** images.
 
