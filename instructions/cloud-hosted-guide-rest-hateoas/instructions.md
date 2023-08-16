@@ -132,19 +132,19 @@ cd finish
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
 
-After the server runs, you can find your hypermedia-driven ***inventory*** service at the ***/inventory/hosts*** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command:
+After the Liberty instance runs, you can find your hypermedia-driven ***inventory*** service at the ***/inventory/hosts*** endpoint. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following curl command:
 ```bash
 curl -s http://localhost:9080/inventory/hosts | jq
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -159,13 +159,13 @@ Navigate to the ***start*** directory.
 cd /home/project/guide-rest-hateoas/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -429,10 +429,10 @@ Although this guide does not cover this case, always make sure that you receive 
 
 ::page{title="Running the application"}
 
-You started the Open Liberty server in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
 
 
-After the server updates, you can find your new hypermedia-driven ***inventory*** service at the ***/inventory/hosts*** endpoint. Run the following curl command by another command-line session:
+After the Liberty instance updates, you can find your new hypermedia-driven ***inventory*** service at the ***/inventory/hosts*** endpoint. Run the following curl command by another command-line session:
 ```bash
 curl -s http://localhost:9080/inventory/hosts | jq
 ```
@@ -440,7 +440,7 @@ curl -s http://localhost:9080/inventory/hosts | jq
 
 ::page{title="Testing the hypermedia-driven RESTful web service"}
 
-If the servers are running, you can test the application manually by running the following curl commands to access the **inventory** service that is now driven by hypermedia: 
+If the Liberty instances are running, you can test the application manually by running the following curl commands to access the **inventory** service that is now driven by hypermedia: 
 ```bash
 curl -s http://localhost:9080/inventory/hosts | jq
 ```
@@ -651,7 +651,7 @@ Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 Integration tests finished.
 ```
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 ::page{title="Summary"}
 
