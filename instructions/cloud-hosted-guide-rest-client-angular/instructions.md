@@ -72,7 +72,7 @@ cd finish
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
@@ -95,7 +95,7 @@ bar wrote 1 albums:
 dj wrote 0 albums:
 ```
 
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -112,13 +112,13 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-rest-client-angular/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -375,7 +375,7 @@ The template contains a ***div*** element that is enumerated by using the ***ngF
 
 ::page{title="Building the front end"}
 
-The Open Liberty server is already started, and the REST service is running. In a new command-line session, build the front end by running the following command in the ***start*** directory:
+The Open Liberty instance is already started, and the REST service is running. In a new command-line session, build the front end by running the following command in the ***start*** directory:
 
 ```bash
 cd /home/project/guide-rest-client-angular/start
@@ -409,7 +409,7 @@ No explicit code directly uses the consumed artist JSON, so you don't need to wr
 
 Whenever you change and build your Angular implementation, the changes are automatically reflected at the URL for the launched application.
 
-When you are done checking the application root, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking the application root, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 Although the Angular application that this guide shows you how to build is simple, when you build more complex Angular applications, testing becomes a crucial part of your development lifecycle. If you need to write test cases, follow the official unit testing and end-to-end testing documentation on the [official Angular page](https://angular.io/guide/testing).
 
