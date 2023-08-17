@@ -7,7 +7,7 @@ tool-type: theia
 ---
 ::page{title="Welcome to the Containerizing, packaging, and running a Spring Boot application guide!"}
 
-Learn how to containerize, package, and run a Spring Boot application on an Open Liberty server without modification.
+Learn how to containerize, package, and run a Spring Boot application on Open Liberty without modification.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -21,9 +21,9 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 The starting point of this guide is the finished application from the [Building an Application with Spring Boot](https://spring.io/guides/gs/spring-boot/) guide. If you are not familiar with Spring Boot, complete that guide first. Java 8 is required to run this project.
 
-You will learn how to use the ***springBootUtility*** command to deploy a Spring Boot application in Docker on an Open Liberty server without modification. This command stores the dependent library JAR files of the application to the target library cache, and packages the remaining application artifacts into a thin application JAR file.
+You will learn how to use the ***springBootUtility*** command to deploy a Spring Boot application in Docker on Open Liberty without modification. This command stores the dependent library JAR files of the application to the target library cache, and packages the remaining application artifacts into a thin application JAR file.
 
-You will also learn how to run the Spring Boot application locally with an Open Liberty server, and how to package it so that it is embedded with an Open Liberty server.
+You will also learn how to run the Spring Boot application locally with Open Liberty, and how to package it so that it is embedded with an Open Liberty server package.
 
 ::page{title="Getting started"}
 
@@ -157,7 +157,7 @@ This Dockerfile is written in two main stages. For more information about multi-
 The first stage copies the ***guide-spring-boot-0.1.0.jar*** Spring Boot application to the ***/staging*** temporary directory, 
 and then uses the Open Liberty ***springBootUtility*** command to thin the application. For more information about the ***springBootUtility*** command, see the [springBootUtility documentation](https://openliberty.io/docs/latest/reference/command/springbootUtility-thin.html).
 
-The second stage begins with the ***Open Liberty Docker image***. The Dockerfile copies the ***server.xml*** file from the ***/opt/ol/wlp/templates*** directory, which enables Spring Boot and TLS support. Then, the Dockerfile copies the Spring Boot dependent library JAR files that are at the ***lib.index.cache*** directory and the ***thin-guide-spring-boot-0.1.0.jar*** file. The ***lib.index.cache*** directory and the ***thin-guide-spring-boot-0.1.0.jar*** file were both generated in the first stage.
+The second stage begins with the ***Open Liberty Docker image***. The Dockerfile copies the Liberty ***server.xml*** configuration file from the ***/opt/ol/wlp/templates*** directory, which enables Spring Boot and TLS support. Then, the Dockerfile copies the Spring Boot dependent library JAR files that are at the ***lib.index.cache*** directory and the ***thin-guide-spring-boot-0.1.0.jar*** file. The ***lib.index.cache*** directory and the ***thin-guide-spring-boot-0.1.0.jar*** file were both generated in the first stage.
 
 
 
@@ -330,9 +330,9 @@ Update the ***Maven POM*** file in the ***start*** directory.
 
 The ***liberty-maven-plugin*** downloads and installs Open Liberty to the ***target/liberty*** directory. The ***installAppPackages*** configuration element in the ***pom.xml*** file typically takes in the following parameters: ***dependencies***, ***project***, or ***all***. The default value is ***dependencies***, but to install the Spring Boot application to Open Liberty, the value must be ***spring-boot-project***. This value allows Maven to package, thin, and copy the ***guide-spring-boot-0.1.0.jar*** application to the Open Liberty runtime ***applications*** directory and shared library directory.
 
-To run the Spring Boot application, the Open Liberty server needs to be correctly configured. By default, the ***liberty-maven-plugin*** picks up the server configuration file from the ***src/main/liberty/config*** directory.
+To run the Spring Boot application, the Open Liberty instance needs to be correctly configured. By default, the ***liberty-maven-plugin*** picks up the Liberty ***server.xml*** configuration file from the ***src/main/liberty/config*** directory.
 
-Create the ***server.xml***.
+Create the Liberty ***server.xml*** configuration file.
 
 > Run the following touch command in your terminal
 ```bash
@@ -370,7 +370,7 @@ touch /home/project/guide-spring-boot/start/src/main/liberty/config/server.xml
 
 
 
-The ***servlet*** and ***springBoot*** features are required for the Liberty server to run the Spring Boot application. The application port is specified as ***9080*** and the application is configured as a ***springBootApplication*** element. For more information, see the [springBootApplication element documentation](https://www.openliberty.io/docs/latest/reference/config/springBootApplication.html).
+The ***servlet*** and ***springBoot*** features are required for the Liberty instance to run the Spring Boot application. The application port is specified as ***9080*** and the application is configured as a ***springBootApplication*** element. For more information, see the [springBootApplication element documentation](https://www.openliberty.io/docs/latest/reference/config/springBootApplication.html).
 
 If you didn't build the Spring Boot application, run the ***package*** goal:
 
@@ -379,14 +379,14 @@ If you didn't build the Spring Boot application, run the ***package*** goal:
 ./mvnw package
 ```
 
-Next, run the ***liberty:run*** goal. This goal creates the Open Liberty server, installs required features, deploys the Spring Boot application to the Open Liberty server, and starts the application.
+Next, run the ***liberty:run*** goal. This goal creates the Open Liberty instance, installs required features, deploys the Spring Boot application to the Open Liberty instance, and starts the application.
 
 
 ```bash
 ./mvnw liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your Liberty instance is ready:
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
@@ -398,7 +398,7 @@ In another command-line sesssion, run the following command to access the applic
 curl http://localhost:9080/hello
 ```
 
-After you finish exploring the application, press `Ctrl+C` to stop the Open Liberty server. Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in a separate command-line session:
+After you finish exploring the application, press `Ctrl+C` to stop the Open Liberty instance. Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in a separate command-line session:
 
 
 ```bash
@@ -536,7 +536,7 @@ Run the repackaged Spring Boot application. This JAR file was defined previously
 java -jar target/GSSpringBootApp.jar
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
