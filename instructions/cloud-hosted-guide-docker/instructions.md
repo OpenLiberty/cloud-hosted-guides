@@ -23,7 +23,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 You will learn how to set up, run, and iteratively develop a simple REST application in a container with Open Liberty and Docker.
 
-Open Liberty is an application server designed for the cloud. It’s small, lightweight, and designed with modern cloud-native application development in mind. Open Liberty simplifies the development process for these applications by automating the repetitive actions associated with running applications inside containers, like rebuilding the image and stopping and starting the container. 
+Open Liberty is a lightweight open framework for building fast and efficient cloud-native Java microservices. It’s small, lightweight, and designed with modern cloud-native application development in mind. Open Liberty simplifies the development process for these applications by automating the repetitive actions associated with running applications inside containers, like rebuilding the image and stopping and starting the container. 
 
 You'll also learn how to create and run automated tests for your application and container.
 
@@ -136,7 +136,7 @@ The ***FROM*** instruction initializes a new build stage and indicates the paren
 
 In this case, you’re using the ***icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi*** image as your parent image, which comes with the latest Open Liberty runtime.
 
-The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the server configuration file that is located at ***src/main/liberty/config/server.xml*** is copied to the ***/config/*** destination directory.
+The ***COPY*** instructions are structured as ***COPY*** ***[--chown=\<user\>:\<group\>]*** ***\<source\>*** ***\<destination\>***. They copy local files into the specified destination within your Docker image. In this case, the Liberty configuration file that is located at ***src/main/liberty/config/server.xml*** is copied to the ***/config/*** destination directory.
 
 ### Writing a .dockerignore file
 
@@ -164,7 +164,7 @@ Build and run the container by running the ***devc*** goal from the ***start*** 
 mvn liberty:devc
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 ```
 **************************************************************
 *    Liberty is running in dev mode.
@@ -254,8 +254,8 @@ curl -s http://localhost:9080/system/properties-new | jq
 ::page{title="Testing the container"}
 
 
-You can test this service manually by starting a server and going to the ***http://localhost:9080/system/properties-new*** URL.
-However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS Client API provide a simple environment to test the application. You can write tests for the individual units of code outside of a running application server, or you can write them to call the application server directly. In this example, you will create a test that calls the application server directly.
+You can test this service manually by starting a Liberty instance and going to the ***http://localhost:9080/system/properties-new*** URL.
+However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the JAX-RS Client API provide a simple environment to test the application. You can write tests for the individual units of code outside of a running Liberty instance, or you can write them to call the instance directly. In this example, you will create a test that calls the instance directly.
 
 Create the ***EndpointIT*** test class.
 
