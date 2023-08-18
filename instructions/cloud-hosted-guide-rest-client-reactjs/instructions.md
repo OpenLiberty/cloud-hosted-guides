@@ -72,14 +72,14 @@ To try out the application, run the following Maven goal to build the applicatio
 mvn liberty:run
 ```
 
-After you see the following message, your application server is ready:
+After you see the following message, your application Liberty instance is ready:
 
 ```
 The defaultServer server is ready to run a smarter planet.
 ```
 
 
-When the server is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Open your browser and check out the application by going to the URL that the following command returns:
+When the Liberty instance is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Open your browser and check out the application by going to the URL that the following command returns:
 ```bash
 echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
@@ -89,7 +89,7 @@ See the following output:
 ![React Paginated Table](https://raw.githubusercontent.com/OpenLiberty/guide-rest-client-reactjs/prod/assets/react-table.png)
 
 
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
 mvn liberty:stop
@@ -105,13 +105,13 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-rest-client-reactjs/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -121,7 +121,7 @@ After you see the following message, your application server in dev mode is read
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 
-After the server is started, run the following curl command to view your artist JSON.
+After the Liberty instance is started, run the following curl command to view your artist JSON.
 ```bash
 curl -s http://localhost:9080/artists | jq
 ```
@@ -693,7 +693,7 @@ Update the ***pom.xml*** file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.7.1</version>            
+                <version>3.8.2</version>            
             </plugin>
             <!-- Frontend resources -->
             <plugin>
@@ -785,7 +785,7 @@ To run the default test, you can add the ***testing*** configuration to the ***f
 
 Although the React application in this guide is simple, when you build more complex React applications, testing becomes a crucial part of your development lifecycle. If you need to write application-oriented test cases, follow the official [React testing documentation](https://reactjs.org/docs/testing.html).
 
-When you are done checking the application root, exit dev mode by pressing CTRL+C in the shell session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking the application root, exit dev mode by pressing CTRL+C in the shell session where you ran the Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
 
 ::page{title="Summary"}
 
