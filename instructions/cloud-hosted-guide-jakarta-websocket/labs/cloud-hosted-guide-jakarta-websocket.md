@@ -95,13 +95,13 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-jakarta-websocket/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following command to start the ***system*** service in dev mode:
 
 ```bash
 mvn -pl system liberty:dev
 ```
 
-After you see the following message, your runtime in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************
@@ -321,7 +321,7 @@ The ***SystemLoadDecoder*** class implements the ***Decoder.Text*** interface.
 Override the ***decode()*** method that accepts string message and decodes the string back into a ***JsonObject***. The ***willDecode()*** override method checks out whether the string can be decoded into a JSON object and returns a Boolean value.
 
 
-The required ***websocket*** and ***jsonb*** features for the ***system*** service have been enabled for you in the ***server.xml*** configuration file.
+The required ***websocket*** and ***jsonb*** features for the ***system*** service have been enabled for you in the Liberty ***server.xml*** configuration file.
 
 
 ::page{title="Creating the client service"}
@@ -334,7 +334,7 @@ On another command-line session, navigate to the ***start*** directory and run t
 mvn -pl client liberty:dev
 ```
 
-After you see the following message, your runtime in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************
@@ -581,7 +581,7 @@ touch /home/project/guide-jakarta-websocket/start/client/src/main/webapp/index.h
 The ***index.html*** front-end UI displays a table in which each row contains a time, system load, and the memory usage of the ***system*** service. Use a JavaScript ***WebSocket*** object to establish a connection to the server by the ***ws://localhost:9081/systemLoad*** URI. The ***webSocket.onopen*** event is triggered when the connection is established. The ***webSocket.onmessage*** event receives messages from the server and inserts a row with the data from the message into the table. The ***webSocket.onerror*** event defines how to tackle errors.
 
 
-The required features for the ***client*** service are enabled for you in the ***server.xml*** configuration file.
+The required features for the ***client*** service are enabled for you in the Liberty ***server.xml*** configuration file.
 
 
 ::page{title="Running the application"}
