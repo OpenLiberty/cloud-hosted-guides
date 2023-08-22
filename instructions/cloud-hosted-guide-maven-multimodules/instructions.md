@@ -26,7 +26,7 @@ In this guide, you will learn how to:
 
 * establish a dependency between a web module and a Java library module,
 * use Maven to package the WAR file and the JAR file into an EAR file so that you can run and test the application on Open Liberty, and
- use Liberty Maven plug-in to develop a multi-module application in [dev mode](https://openliberty.io/docs/latest/development-mode.html#_run_multi_module_maven_projects_in_dev_mode) without having to prebuild the JAR and WAR files. In dev mode, your changes are automatically picked up by the running server.
+ use Liberty Maven plug-in to develop a multi-module application in [dev mode](https://openliberty.io/docs/latest/development-mode.html#_run_multi_module_maven_projects_in_dev_mode) without having to prebuild the JAR and WAR files. In dev mode, your changes are automatically picked up by the running Liberty instance.
 
 You will build a unit converter application that converts heights from centimeters into feet and inches. The application will request the user to enter a height value in centimeters. Then, the application processes the input by using functions that are found in the JAR file to return the height value in imperial units.
 
@@ -76,16 +76,16 @@ cd finish
 mvn install
 ```
 
-To deploy your EAR application on an Open Liberty server, run the Maven ***liberty:run*** goal from the finish directory using the ***-pl*** flag to specify the ***ear*** project. The ***-pl*** flag specifies the project where the Maven goal runs.
+To deploy your EAR application on Open Liberty, run the Maven ***liberty:run*** goal from the finish directory using the ***-pl*** flag to specify the ***ear*** project. The ***-pl*** flag specifies the project where the Maven goal runs.
 
 ```bash
 mvn -pl ear liberty:run
 ```
 
-After the server is running, click the following button to check out your service by visiting the ***/converter*** endpoint.
+Once the Liberty instance is running, click the following button to check out your service by visiting the ***/converter*** endpoint.
 ::startApplication{port="9080" display="external" name="Visit application" route="/converter"}
 
-After you are finished checking out the application, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server. Alternatively, you can run the ***liberty:stop*** goal using the ***-pl ear*** flag from the ***finish*** directory in another command-line session:
+After you are finished checking out the application, stop the Open Liberty instance by pressing `Ctrl+C` in the command-line session where you ran the Liberty. Alternatively, you can run the ***liberty:stop*** goal using the ***-pl ear*** flag from the ***finish*** directory in another command-line session:
 
 ```bash
 mvn -pl ear liberty:stop
@@ -184,7 +184,7 @@ Although the ***parent/child*** structure is not normally needed for multi-modul
 
 ::page{title="Assembling multiple modules into an EAR file"}
 
-To deploy the entire application on the Open Liberty server, first package the application. Use the EAR project to assemble multiple modules into an EAR file.
+To deploy the entire application on Open Liberty, first package the application. Use the EAR project to assemble multiple modules into an EAR file.
 
 Navigate to the ***ear*** folder and find a template ***pom.xml*** file.
 Replace the ear/POM file.
@@ -319,9 +319,9 @@ The ***Java library module*** and the ***web module*** were added as dependencie
 
 The definition and configuration of the ***maven-ear-plugin*** plug-in were added to create an EAR file. Define the ***jarModule*** and ***webModule*** modules to be packaged into the EAR file. To customize the context root of the application, set the ***contextRoot*** element to ***/converter*** in the ***webModule***. Otherwise, Maven automatically uses the WAR file ***artifactId*** ID as the context root for the application while generating the ***application.xml*** file.
 
-To deploy and run an EAR application on an Open Liberty server, you need to provide a server configuration file.
+To deploy and run an EAR application on an Open Liberty instance, you need to provide a Liberty's ***server.xml*** configuration file.
 
-Create the server configuration file.
+Create the Liberty ***server.xml*** configuration file.
 
 > Run the following touch command in your terminal
 ```bash
@@ -357,7 +357,7 @@ touch /home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/s
 
 
 
-You must configure the ***server.xml*** file with the ***enterpriseApplication*** element to specify the location of your EAR application.
+You must configure the ***server.xml*** configuration file with the ***enterpriseApplication*** element to specify the location of your EAR application.
 
 
 ::page{title="Aggregating the entire build"}
@@ -413,7 +413,7 @@ Replace the start/POM file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.7.1</version>
+                <version>3.8.2</version>
             </plugin>
         </plugins>
     </build>
@@ -438,13 +438,13 @@ Navigate to the ***start*** directory to begin.
 cd /home/project/guide-maven-multimodules/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -684,7 +684,7 @@ Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 ```
 
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing *q* and then pressing the *enter/return* key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the Liberty, or by typing *q* and then pressing the *enter/return* key.
 
 
 ::page{title="Building the multi-module application"}
