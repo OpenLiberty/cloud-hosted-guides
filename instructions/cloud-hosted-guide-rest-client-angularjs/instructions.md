@@ -64,7 +64,7 @@ The ***finish*** directory in the root of this guide contains the finished appli
 In this IBM cloud environment, you need to update the URL to access the ***artists.json*** in the ***consume-rest.js*** file. Run the following commands to go to the ***finish*** directory and update the ***consume-rest.js*** file:
 ```bash
 cd finish
-sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/js/consume-rest.js
+sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/js/consume-rest.js
 ```
 
 To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
@@ -82,7 +82,7 @@ The defaultServer server is ready to run a smarter planet.
 When the Liberty instance is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session.
 Open your browser and check out the application by going to the URL that the following command returns:
 ```bash
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+echo https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
 
 See the following output:
@@ -178,7 +178,7 @@ Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Comm
 
 Run the following command to update the URL to access the ***artists.json*** in the ***consume-rest.js*** file:
 ```bash
-sed -i 's=http://localhost:9080/artists='"http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js
+sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-angularjs/start/src/main/webapp/js/consume-rest.js
 ```
 
 The application module is defined by ***consumeRestApp***.
@@ -256,7 +256,7 @@ Once the controller is attached, the ***artists*** property can be data-bounded 
 
 After everything is set up, open your browser and check out the application by going to the URL that the following command returns:
 ```bash
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+echo https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
 
 See the following output:
