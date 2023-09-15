@@ -310,9 +310,7 @@ Replace the system's ***server.xml*** configuration file.
         <feature>grpc-1.0</feature>
     </featureManager>
 
-    <!-- Due to target="*", this configuration will be applied to every gRPC service 
-         running on the server. This configuration registers a ServerInterceptor -->
-    <grpc target="*"/>
+    <grpc target="*" maxInboundMessageSize="1024"/>
 
     <applicationManager autoExpand="true"/>
 
@@ -432,7 +430,6 @@ Replace the query's ***server.xml*** configuration file.
         <feature>jsonb-3.0</feature>
         <feature>cdi-4.0</feature>
         <feature>mpConfig-3.0</feature>
-        <feature>grpc-1.0</feature>
         <feature>grpcClient-1.0</feature>
     </featureManager>
 
@@ -444,11 +441,7 @@ Replace the query's ***server.xml*** configuration file.
                   httpsPort="${default.https.port}"
                   host="*"/>
 
-    <!-- Due to host="*", this configuration will be applied to every gRPC client call
-         that gets made. This configuration registers a ClientInterceptor, and it directs
-         Cookie headers to get forwarded with any outbound RPC calls, in this case, that
-         enables authorization propagation. -->
-    <grpcClient headersToPropagate="Cookie" host="*"/>
+    <grpcClient host="*" headersToPropagate="Cookie"/>
 
     <applicationManager autoExpand="true"/>
 
