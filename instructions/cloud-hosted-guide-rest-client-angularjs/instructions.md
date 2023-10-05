@@ -278,7 +278,7 @@ No explicit code directly uses the consumed artist JSON, so you do not need to w
 
 Whenever you change your AngularJS implementation, the application root at `http://accountname-9080.theiadocker-4.proxy.cognitiveclass.ai` will reflect the changes automatically. You can visit the root to manually check whether the artist JSON was consumed correctly.
 
-When you are done checking the application root, exit dev mode by pressing CTRL+C in the command-line session where you ran the Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking the application root, exit dev mode by pressing CTRL+C in the command-line session where you ran the Liberty.
 
 When you develop your own applications, testing becomes a crucial part of your development lifecycle. If you need to write test cases, follow the official unit testing and end-to-end testing documentation on the [official AngularJS website](https://docs.angularjs.org/guide/unit-testing).
 
