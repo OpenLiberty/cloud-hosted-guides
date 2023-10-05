@@ -1738,12 +1738,7 @@ Results:
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***query*** services,  or by typing ***q*** and then pressing the ***enter/return*** key. Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in another command-line session for the ***system*** and ***query*** services:
-```bash
-cd /home/project/guide-grpc-intro/start
-mvn -pl system liberty:stop
-mvn -pl query liberty:stop
-```
+When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***query*** services.
 
 
 ::page{title="Summary"}
