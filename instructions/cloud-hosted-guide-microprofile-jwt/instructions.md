@@ -665,12 +665,7 @@ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 
 The three errors in the output are expected and result from the ***system*** service successfully rejecting the requests that didn't include a JWT.
 
-When you are finished testing the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. Alternatively, you can run the following goals from the ***start*** directory in another command-line session:
-
-```bash
-mvn -pl system liberty:stop
-mvn -pl frontend liberty:stop
-```
+When you are finished testing the application, stop both the ***frontend*** and ***system*** services by pressing `Ctrl+C` in the command-line sessions where you ran them. 
 
 
 ::page{title="Summary"}
