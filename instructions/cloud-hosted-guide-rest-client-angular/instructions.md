@@ -409,7 +409,7 @@ No explicit code directly uses the consumed artist JSON, so you don't need to wr
 
 Whenever you change and build your Angular implementation, the changes are automatically reflected at the URL for the launched application.
 
-When you are done checking the application root, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking the application root, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the Liberty.
 
 Although the Angular application that this guide shows you how to build is simple, when you build more complex Angular applications, testing becomes a crucial part of your development lifecycle. If you need to write test cases, follow the official unit testing and end-to-end testing documentation on the [official Angular page](https://angular.io/guide/testing).
 
