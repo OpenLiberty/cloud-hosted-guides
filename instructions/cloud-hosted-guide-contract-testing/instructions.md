@@ -827,7 +827,7 @@ The pact file that's created by the ***inventory*** microservice was successfull
 
 ::page{title="Tearing down the environment"}
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the Liberty instances for the ***system*** and ***inventory*** microservices, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the Liberty instances for the ***system*** and ***inventory*** microservices.
 
 Navigate back to the ***/guide-contract-testing*** directory and run the following commands to remove the Pact Broker:
 
