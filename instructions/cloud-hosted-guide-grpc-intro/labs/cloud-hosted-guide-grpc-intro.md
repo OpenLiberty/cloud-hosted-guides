@@ -310,9 +310,7 @@ Replace the system's ***server.xml*** configuration file.
         <feature>grpc-1.0</feature>
     </featureManager>
 
-    <!-- Due to target="*", this configuration will be applied to every gRPC service 
-         running on the server. This configuration registers a ServerInterceptor -->
-    <grpc target="*"/>
+    <grpc target="*" maxInboundMessageSize="1024"/>
 
     <applicationManager autoExpand="true"/>
 
@@ -325,6 +323,7 @@ Replace the system's ***server.xml*** configuration file.
 
 
 
+Add the ***grpc*** feature to the Liberty ***server.xml*** configuration file. This feature enables applications running on Liberty to provide gRPC services. Configure the ***grpc*** element with the ***maxInboundMessageSize*** attribute to restrict inbound messages to 1024 bytes. This configuration applies universally to all gRPC services running on the server, as indicated by the wildcard (`*`) in the ***target*** attribute. If you want to learn more about configuration for the ***grpc*** element, see the [GRPC Server Properties](https://openliberty.io/docs/latest/reference/config/grpc.html).
 
 Next, implement the corresponding REST endpoint in the ***query*** service.
 
@@ -432,7 +431,6 @@ Replace the query's ***server.xml*** configuration file.
         <feature>jsonb-3.0</feature>
         <feature>cdi-4.0</feature>
         <feature>mpConfig-3.0</feature>
-        <feature>grpc-1.0</feature>
         <feature>grpcClient-1.0</feature>
     </featureManager>
 
@@ -444,11 +442,7 @@ Replace the query's ***server.xml*** configuration file.
                   httpsPort="${default.https.port}"
                   host="*"/>
 
-    <!-- Due to host="*", this configuration will be applied to every gRPC client call
-         that gets made. This configuration registers a ClientInterceptor, and it directs
-         Cookie headers to get forwarded with any outbound RPC calls, in this case, that
-         enables authorization propagation. -->
-    <grpcClient headersToPropagate="Cookie" host="*"/>
+    <grpcClient host="*" headersToPropagate="Cookie"/>
 
     <applicationManager autoExpand="true"/>
 
@@ -461,6 +455,7 @@ Replace the query's ***server.xml*** configuration file.
 
 
 
+Add the ***grpcClient*** feature to the Liberty ***server.xml*** configuration file for the ***query*** service. This feature enables gRPC client support on Liberty. Configure the ***grpcClient*** element with the ***headersToPropagate*** attribute to propagate cookies. This configuration applies universally to all gRPC client calls, as indicated by the wildcard (`*`) in the ***host*** attribute. If you want to learn more about ***grpcClient*** element configuration, see the [GRPC Client Properties](https://openliberty.io/docs/latest/reference/config/grpcClient.html).
 
 Because you are running the ***system*** and ***query*** services in dev mode, the changes that you made are automatically picked up. You’re now ready to check out your application in your browser.
 
@@ -1745,12 +1740,7 @@ Results:
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
-When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***query*** services,  or by typing ***q*** and then pressing the ***enter/return*** key. Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in another command-line session for the ***system*** and ***query*** services:
-```bash
-cd /home/project/guide-grpc-intro/start
-mvn -pl system liberty:stop
-mvn -pl query liberty:stop
-```
+When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***query*** services.
 
 
 ::page{title="Summary"}
