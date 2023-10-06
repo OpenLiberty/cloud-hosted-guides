@@ -194,6 +194,7 @@ The ***QueryResource*** class uses the ***GraphQlClient*** interface to make req
 
 The ***TypesafeGraphQLClientBuilder*** class creates a client object that implements the ***GraphQlClient*** interface and can interact with the ***graphql*** microservice. The ***GraphQlClient*** client can make requests to the URL specified by the ***graphql.server*** variable in the ***server.xml*** file. The client is used in the ***querySystem()***, ***querySystemLoad()***, and ***editNote()*** methods.
 
+Add the SmallRye GraphQL client dependency to the project configuration file.
 
 Replace the Maven project file.
 
