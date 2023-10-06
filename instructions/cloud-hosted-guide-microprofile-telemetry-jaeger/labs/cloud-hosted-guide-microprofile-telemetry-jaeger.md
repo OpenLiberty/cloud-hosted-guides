@@ -557,6 +557,11 @@ public class InventoryManager {
     }
 
     @WithSpan
+    public InventoryList list() {
+        return new InventoryList(systems);
+    }
+
+    @WithSpan("Inventory Manager Add")
     public void add(@SpanAttribute("hostname") String host,
                     Properties systemProps) {
         Properties props = new Properties();
@@ -566,11 +571,6 @@ public class InventoryManager {
         if (!systems.contains(system)) {
             systems.add(system);
         }
-    }
-
-    @WithSpan
-    public InventoryList list() {
-        return new InventoryList(systems);
     }
 
     int clear() {
@@ -584,7 +584,9 @@ public class InventoryManager {
 
 
 
-The ***add()*** and ***list()*** methods are annotated with the ***@WithSpan*** annotation. The OpenTelemetry instrumentation provides a new span for each method. You can now collect and trace the spans across different services. After creating a span, you have the option to include desired parameters with their values in the span by using the ***@SpanAttribute*** annotation. For example, the ***host*** parameter is assigned ***hostname*** as its attribute name using the ***@SpanAttribute*** annotation, which gives the benefit of tracing the parameters within the ***add*** span.
+The ***list()*** and ***add()*** methods are annotated with the ***@WithSpan*** annotation, which can accept an optional parameter that functions as the span name. In this example, the default span name assigned to the ***list()*** method is automatically generated through the instrumentation. You can also specify a custom span name. For example, ***Inventory Manager Add*** is specified as the span name for the ***add()*** method. The OpenTelemetry instrumentation provides a new span for each method. You can now collect and trace the spans across different services. 
+
+Optionally, you can include parameters and their values in the span by using the ***@SpanAttribute*** annotation. For example, the ***@SpanAttribute*** annotation specifies ***hostname*** as the attribute name for the ***host*** parameter , which helps trace the parameter within the ***add*** span.
 
 To learn more about how to use OpenTelemetry annotations to instrument code, see the [OpenTelemetry Annotations](https://opentelemetry.io/docs/instrumentation/java/automatic/annotations/) documentation.
 
@@ -633,7 +635,7 @@ Verify that there are three spans from the ***inventory*** service and one span 
 
 
 
-Click the ***InventoryManager.add*** span and its ***Tags***. You can see the ***hostname*** tag with the ***localhost*** value that is created by the ***@SpanAttribute*** annotation.
+Click the ***Inventory Manager Add*** span and its ***Tags***. You can see the ***hostname*** tag with the ***localhost*** value that is created by the ***@SpanAttribute*** annotation.
 
 ![Inventory Manager add span](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-telemetry-jaeger/prod/assets/inventory_manager_add_span.png)
 
@@ -797,7 +799,7 @@ Manually verify the traces by inspecting them on the Jaeger server. You will fin
 
 Since you started Open Liberty in dev mode, run the tests for the ***system*** and ***inventory*** services by pressing the ***enter/return*** key in the command-line sessions where you started the services.
 
-When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the shell sessions where you ran the ***system*** and ***inventory*** services, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the shell sessions where you ran the ***system*** and ***inventory*** services.
 
 
 Finally, stop the ***Jaeger*** service that you started in the previous step.
