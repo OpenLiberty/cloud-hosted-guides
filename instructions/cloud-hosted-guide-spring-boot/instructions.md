@@ -327,6 +327,7 @@ Update the ***Maven POM*** file in the ***start*** directory.
 
 
 
+Add the ***liberty-maven-plugin*** to the ***pom.xml*** file.
 
 The ***liberty-maven-plugin*** downloads and installs Open Liberty to the ***target/liberty*** directory. The ***installAppPackages*** configuration element in the ***pom.xml*** file typically takes in the following parameters: ***dependencies***, ***project***, or ***all***. The default value is ***dependencies***, but to install the Spring Boot application to Open Liberty, the value must be ***spring-boot-project***. This value allows Maven to package, thin, and copy the ***guide-spring-boot-0.1.0.jar*** application to the Open Liberty runtime ***applications*** directory and shared library directory.
 
@@ -516,6 +517,7 @@ Update the Maven POM file in the ***start*** directory.
 
 
 
+Add the ***include*** and ***packageName*** configuration elements, and the ***executions*** element to the ***pom.xml*** file. 
 
 The ***include*** configuration element specifies the ***minify, runnable*** values. The ***runnable*** value allows the application to be generated as a runnable JAR file. The ***minify*** value packages only what you need from your configuration files without bundling the entire Open Liberty install.
 

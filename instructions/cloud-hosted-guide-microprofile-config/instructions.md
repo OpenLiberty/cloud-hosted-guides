@@ -345,6 +345,7 @@ io.openliberty.guides.config.CustomConfigSource
 
 
 
+Add the fully qualified class name of the configuration source into it.
 
 
 ### Enabling dynamic configuration injection
@@ -502,6 +503,7 @@ io.openliberty.guides.config.CustomEmailConverter
 ```
 
 
+Add the fully qualified class name of the custom converter into it.
 
 To use the custom ***Email*** converter,
 replace the ***InventoryConfig*** class.
