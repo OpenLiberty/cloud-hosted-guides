@@ -323,6 +323,7 @@ Replace the system's ***server.xml*** configuration file.
 
 
 
+Add the ***grpc*** feature to the Liberty ***server.xml*** configuration file. This feature enables applications running on Liberty to provide gRPC services. Configure the ***grpc*** element with the ***maxInboundMessageSize*** attribute to restrict inbound messages to 1024 bytes. This configuration applies universally to all gRPC services running on the server, as indicated by the wildcard (`*`) in the ***target*** attribute. If you want to learn more about configuration for the ***grpc*** element, see the [GRPC Server Properties](https://openliberty.io/docs/latest/reference/config/grpc.html).
 
 Next, implement the corresponding REST endpoint in the ***query*** service.
 
@@ -454,6 +455,7 @@ Replace the query's ***server.xml*** configuration file.
 
 
 
+Add the ***grpcClient*** feature to the Liberty ***server.xml*** configuration file for the ***query*** service. This feature enables gRPC client support on Liberty. Configure the ***grpcClient*** element with the ***headersToPropagate*** attribute to propagate cookies. This configuration applies universally to all gRPC client calls, as indicated by the wildcard (`*`) in the ***host*** attribute. If you want to learn more about ***grpcClient*** element configuration, see the [GRPC Client Properties](https://openliberty.io/docs/latest/reference/config/grpcClient.html).
 
 Because you are running the ***system*** and ***query*** services in dev mode, the changes that you made are automatically picked up. You’re now ready to check out your application in your browser.
 
