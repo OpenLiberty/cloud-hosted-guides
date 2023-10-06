@@ -785,7 +785,7 @@ To run the default test, you can add the ***testing*** configuration to the ***f
 
 Although the React application in this guide is simple, when you build more complex React applications, testing becomes a crucial part of your development lifecycle. If you need to write application-oriented test cases, follow the official [React testing documentation](https://reactjs.org/docs/testing.html).
 
-When you are done checking the application root, exit dev mode by pressing CTRL+C in the shell session where you ran the Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking the application root, exit dev mode by pressing `Ctrl+C` in the shell session where you ran the Liberty.
 
 ::page{title="Summary"}
 
