@@ -87,7 +87,7 @@ After you see the following message, your application server in dev mode is read
 
 After the Open Liberty server starts and you see the ***To run tests on demand, press Enter.*** message, you can press the ***enter/return*** key to run the integration tests. After the tests finish, you can press the ***enter/return*** key to run the tests again, or you can make code changes to the application or tests. Dev mode automatically recompiles and updates any application or test code changes that you make.
 
-After you're finished running tests, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+After you're finished running tests, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server.
 
 
 ::page{title="Bootstrapping your application for testing"}
@@ -98,13 +98,13 @@ To begin, run the following command to navigate to the ***start*** directory:
 cd /home/project/guide-microshed-testing/start
 ```
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the server listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
 
-After you see the following message, your application server in dev mode is ready:
+After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -379,7 +379,7 @@ Save the changes, and  press the ***enter/return*** key in your console window t
 
 Running tests in dev mode is convenient for local development, but it can be tedious to test against a running Open Liberty server in non-development scenarios such as CI/CD pipelines. For this reason, MicroShed Testing can start and stop the application runtime before and after the tests are run. This process is primarily accomplished by using Docker and Testcontainers.
 
-To test outside of dev mode, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server, or by typing ***q*** and then pressing the ***enter/return*** key.
+To test outside of dev mode, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the server.
 
 Next, use the following Maven goal to run the tests from a cold start:
 ```bash
