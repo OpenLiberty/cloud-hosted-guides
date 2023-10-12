@@ -91,7 +91,7 @@ mvn liberty:run
 
 The events created are still displayed in the list of current events. The ***Update*** action link located beside each event allows you to make modifications to the persisted entity and the ***Delete*** action link allows you to remove entities from the database.
 
-After you are finished checking out the application, stop the Open Liberty instances by pressing CTRL+C in the command-line sessions where you ran the ***backendServices*** and ***frontendUI*** services. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another command-line session for the ***frontendUI*** and ***backendServices*** services:
+After you are finished checking out the application, stop the Open Liberty instances by pressing `Ctrl+C` in the command-line sessions where you ran the ***backendServices*** and ***frontendUI*** services. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another command-line session for the ***frontendUI*** and ***backendServices*** services:
 ```bash
 cd /home/project/guide-jpa-intro/finish
 mvn -pl frontendUI liberty:stop
@@ -610,12 +610,7 @@ Results :
 Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 
 ```
 
-When you are done checking out the services, exit dev mode by pressing CTRL+C in the command-line sessions where you ran the ***frontendUI*** and ***backendServices*** services,  or by typing ***q*** and then pressing the ***enter/return*** key. Alternatively, you can run the ***liberty:stop*** goal from the ***start*** directory in another command-line session for the ***frontendUI*** and ***backendServices*** services:
-```bash
-cd /home/project/guide-jpa-intro/start
-mvn -pl frontendUI liberty:stop
-mvn -pl backendServices liberty:stop
-```
+When you are done checking out the services, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***frontendUI*** and ***backendServices*** services.
 
 
 ::page{title="Summary"}
