@@ -686,7 +686,7 @@ The tests might fail if your system CPU or memory use is high. The status of the
 
 To see whether the tests detect a failure, manually change the configuration of ***io_openliberty_guides_inventory_inMaintenance*** from ***false*** to ***true*** in the ***resources/CustomConfigSource.json*** file. Rerun the tests to see a test failure occur. The test failure occurs because the initial status of the ***inventory*** service is ***DOWN***.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
 
 ::page{title="Summary"}
