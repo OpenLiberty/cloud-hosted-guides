@@ -117,7 +117,6 @@ mvn liberty:stop
 ```
 
 
-
 ::page{title="Starting and stopping Open Liberty in the background"}
 
 Although you can start and stop Liberty in the foreground by using the Maven ***liberty:run*** goal, you can also start and stop the Liberty instance in the background with the Maven ***liberty:start*** and ***liberty:stop*** goals:
@@ -490,7 +489,7 @@ After you change the file, Open Liberty automatically reloads its configuration.
 
 Now, when you visit the ***/health*** endpoint, additional traces are logged in the ***trace.log*** file.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
 
 ::page{title="Running the application in a Docker container"}
@@ -817,7 +816,7 @@ curl -s http://localhost:9080/dev/system/properties | jq
 
 
 
-When you are finished, exit dev mode by pressing `Ctrl+C` in the command-line session that the container was started from, or by typing ***q*** and then pressing the ***enter/return*** key. Either of these options stops and removes the container. To check that the container was stopped, run the ***docker ps*** command.
+When you are finished, exit dev mode by pressing `Ctrl+C` in the command-line session that the container was started from. Exiting dev mode stops and removes the container. To check that the container was stopped, run the ***docker ps*** command.
 
 
 ::page{title="Running the application from a minimal runnable JAR"}
