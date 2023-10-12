@@ -345,6 +345,7 @@ io.openliberty.guides.config.CustomConfigSource
 
 
 
+Add the fully qualified class name of the configuration source into it.
 
 
 ### Enabling dynamic configuration injection
@@ -502,6 +503,7 @@ io.openliberty.guides.config.CustomEmailConverter
 ```
 
 
+Add the fully qualified class name of the custom converter into it.
 
 To use the custom ***Email*** converter,
 replace the ***InventoryConfig*** class.
@@ -852,8 +854,7 @@ The warning and error messages are expected and result from a request to a bad o
 
 To see whether the tests detect a failure, remove the configuration resetting line in the ***setup()*** method of the ***ConfigurationIT.java*** file. Then, manually change some configuration values in the ***resources/CustomConfigSource.json*** file. Rerun the tests. You will see a test failure occur.
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
-
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
 ::page{title="Summary"}
 
