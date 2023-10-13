@@ -651,7 +651,7 @@ Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 Integration tests finished.
 ```
 
-When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty, or by typing ***q*** and then pressing the ***enter/return*** key.
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
 ::page{title="Summary"}
 
