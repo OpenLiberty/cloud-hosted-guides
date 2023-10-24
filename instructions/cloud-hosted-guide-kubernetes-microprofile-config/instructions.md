@@ -291,7 +291,7 @@ public class SystemClient {
 
 
 
-The changes introduced here use MicroProfile Config and CDI to inject the value of the environment variables ***SYSTEM_APP_USERNAME*** and ***SYSTEM_APP_PASSWORD*** into the ***SystemClient*** class.
+The changes introduced here use MicroProfile Config and CDI to inject the value of the environment variables ***CONTEXT_ROOT***, ***SYSTEM_APP_USERNAME*** and ***SYSTEM_APP_PASSWORD*** into the ***SystemClient*** class.
 
 
 ::page{title="Creating a ConfigMap and Secret"}
