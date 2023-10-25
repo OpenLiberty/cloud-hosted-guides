@@ -5,9 +5,9 @@ branch: lab-364-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 tool-type: theia
 ---
-::page{title="Welcome to the Testing microservices with the Arquillian managed container guide!"}
+::page{title="Welcome to the Creating a RESTful web service guide!"}
 
-Learn how to develop tests for your microservices with the Arquillian managed container and run the tests on Open Liberty.
+Learn how to create a RESTful service with Jakarta Restful Web Services, JSON-B, and Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,13 +17,22 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
+
 ::page{title="What you'll learn"}
 
-You will learn how to develop tests for your microservices by using the [Arquillian Liberty Managed container](https://github.com/OpenLiberty/liberty-arquillian/tree/master/liberty-managed) and JUnit with Maven on Open Liberty. [Arquillian](http://arquillian.org/) is a testing framework to develop automated functional, integration and acceptance tests for your Java applications. Arquillian sets up the test environment and handles the application server lifecycle for you so you can focus on writing tests.
+You will learn how to build and test a simple RESTful service with Jakarta Restful Web Services and JSON-B, which will expose the JVM's system properties. The RESTful service responds to ***GET*** requests made to the ***http://localhost:9080/LibertyProject/system/properties*** URL.
 
-You will develop Arquillian tests that use JUnit as the runner and build your tests with Maven using the Liberty Maven plug-in. This technique simplifies the process of managing Arquillian dependencies and the setup of your Arquillian managed container.
+The service responds to a ***GET*** request with a JSON representation of the system properties, where each property is a field in a JSON object, like this:
 
-You will work with an ***inventory*** microservice, which stores information about various systems. The ***inventory*** service communicates with the ***system*** service on a particular host to retrieve its system properties and store them. You will develop functional and integration tests for the microservices. You will also learn about the Maven and Liberty configurations so that you can run your tests on Open Liberty with the Arquillian Liberty Managed container.
+```
+{
+  "os.name":"Mac",
+  "java.version": "1.8"
+}
+```
+
+The design of an HTTP API is an essential part of creating a web application. The REST API is the go-to architectural style for building an HTTP API. The Jakarta Restful Web Services API offers functions to create, read, update, and delete exposed resources. The Jakarta Restful Web Services API supports the creation of RESTful web services that are performant, scalable, and modifiable.
 
 ::page{title="Getting started"}
 
@@ -36,11 +45,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-arquillian-managed.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-intro.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-arquillian-managed.git
-cd guide-arquillian-managed
+git clone https://github.com/openliberty/guide-rest-intro.git
+cd guide-rest-intro
 ```
 
 
@@ -50,46 +59,50 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-To try out the application, navigate to the ***finish*** directory and run the following commands:
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
+
+To try out the application, first go to the ***finish*** directory and run the following Maven goal to build the application and deploy it to Open Liberty:
 
 ```bash
 cd finish
-mvn clean package
-mvn liberty:create liberty:install-feature
-mvn liberty:configure-arquillian
-mvn failsafe:integration-test
+mvn liberty:run
 ```
 
-You will see the following output:
+After you see the following message, your Liberty instance is ready:
 
 ```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.
-...
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-...
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-...
+The defaultServer server is ready to run a smarter planet.
 ```
 
-::page{title="Developing Arquillian tests"}
+
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
+
+Check out the service at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/LibertyProject/system/properties | jq
+```
+
+
+
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
+
+```bash
+mvn liberty:stop
+```
+
+
+::page{title="Creating a RESTful application"}
 
 Navigate to the ***start*** directory to begin.
 ```bash
-cd /home/project/guide-arquillian-managed/start
+cd /home/project/guide-rest-intro/start
 ```
-
-You'll develop tests that use Arquillian and JUnit to verify the ***inventory*** microservice as an endpoint and the functions of the ***InventoryResource*** class. The code for the microservices is in the ***src/main/java/io/openliberty/guides*** directory.
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
 
@@ -106,302 +119,258 @@ After you see the following message, your Liberty instance is ready in dev mode:
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
-Create the ***InventoryArquillianIT*** test class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java
-```
+Jakarta Restful Web Services defines two key concepts for creating REST APIs. The most obvious one is the resource itself, which is modelled as a class. The second is a RESTful application, which groups all exposed resources under a common path. You can think of the RESTful application as a wrapper for all of your resources.
 
 
-> Then, to open the InventoryArquillianIT.java file in your IDE, select
-> **File** > **Open** > guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java, or click the following button
+Replace the ***SystemApplication*** class.
 
-::openFile{path="/home/project/guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java"}
+> To open the SystemApplication.java file in your IDE, select
+> **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java, or click the following button
+
+::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/SystemApplication.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.inventory;
+package io.openliberty.guides.rest;
 
-import java.net.URL;
-import java.util.List;
+import jakarta.ws.rs.core.Application;
+import jakarta.ws.rs.ApplicationPath;
 
-import jakarta.inject.Inject;
-import jakarta.json.JsonObject;
+@ApplicationPath("system")
+public class SystemApplication extends Application {
+
+}
+```
+
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
+
+
+The ***SystemApplication*** class extends the ***Application*** class, which associates all RESTful resource classes in the WAR file with this RESTful application. These resources become available under the common path that's specified with the ***@ApplicationPath*** annotation. The ***@ApplicationPath*** annotation has a value that indicates the path in the WAR file that the RESTful application accepts requests from.
+
+
+::page{title="Creating the RESTful resource"}
+
+In a RESTful application, a single class represents a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. A single class can easily handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability in the long run.
+
+Create the ***PropertiesResource*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java
+```
+
+
+> Then, to open the PropertiesResource.java file in your IDE, select
+> **File** > **Open** > guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java, or click the following button
+
+::openFile{path="/home/project/guide-rest-intro/start/src/main/java/io/openliberty/guides/rest/PropertiesResource.java"}
+
+
+
+```java
+package io.openliberty.guides.rest;
+
+import java.util.Properties;
+
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+@Path("properties")
+public class PropertiesResource {
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Properties getProperties() {
+        return System.getProperties();
+    }
+
+}
+```
+
+
+
+
+The ***@Path*** annotation on the class indicates that this resource responds to the ***properties*** path in the RESTful Web Services application. The ***@ApplicationPath*** annotation in the ***SystemApplication*** class together with the ***@Path*** annotation in this class indicates that the resource is available at the ***system/properties*** path.
+
+Jakarta Restful Web Services maps the HTTP methods on the URL to the methods of the class by using annotations. Your application uses the ***GET*** annotation to map an HTTP ***GET*** request to the ***system/properties*** path.
+
+The ***@GET*** annotation on the method indicates that this method is called for the HTTP ***GET*** method. The ***@Produces*** annotation indicates the format of the content that is returned. The value of the ***@Produces*** annotation is specified in the HTTP ***Content-Type*** response header. This application returns a JSON structured. The desired ***Content-Type*** for a JSON response is ***application/json***, with ***MediaType.APPLICATION_JSON*** instead of the ***String*** content type. Using a constant such as ***MediaType.APPLICATION_JSON*** is better because a spelling error results in a compile failure.
+
+Jakarta Restful Web Services supports a number of ways to marshal JSON. The Jakarta Restful Web Services specification mandates JSON-Binding (JSON-B). The method body returns the result of ***System.getProperties()***, which is of type ***java.util.Properties***. The method is annotated with ***@Produces(MediaType.APPLICATION_JSON)*** so Jakarta Restful Web Services uses JSON-B to automatically convert the returned object to JSON data in the HTTP response.
+
+
+::page{title="Configuring Liberty"}
+
+To get the service running, the Liberty ***server.xml*** configuration file needs to be correctly configured.
+
+Replace the Liberty ***server.xml*** configuration file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-rest-intro/start/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-rest-intro/start/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Intro REST Guide Liberty server">
+  <featureManager>
+      <feature>restfulWS-3.1</feature>
+      <feature>jsonb-3.0</feature>
+  </featureManager>
+
+  <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
+                id="defaultHttpEndpoint" host="*" />
+
+  <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
+</server>
+```
+
+
+
+The configuration does the following actions:
+
+* Configures Liberty to enable Jakarta Restful Web Services. This is specified in the ***featureManager*** element.
+* Configures Liberty to resolve the HTTP port numbers from variables, which are then specified in the Maven ***pom.xml*** file. This is specified in the ***httpEndpoint*** element. Variables use the ***${variableName}*** syntax.
+* Configures Liberty to run the produced web application on a context root specified in the ***pom.xml*** file. This is specified in the ***webApplication*** element.
+
+
+The variables that are being used in the ***server.xml*** file are provided by the properties set in the Maven ***pom.xml*** file. The properties must be formatted as ***liberty.var.variableName***.
+
+
+::page{title="Running the application"}
+
+You started the Open Liberty in dev mode at the beginning of the guide, so all the changes were automatically picked up.
+
+
+Check out the service that you created at the ***http\://localhost:9080/LibertyProject/system/properties*** URL. 
+
+
+_To see the output for this URL in the IDE, run the following command at a terminal:_
+
+```bash
+curl -s http://localhost:9080/LibertyProject/system/properties | jq
+```
+
+
+
+
+::page{title="Testing the service"}
+
+
+You can test this service manually by starting Liberty and visiting the http://localhost:9080/LibertyProject/system/properties URL. However, automated tests are a much better approach because they trigger a failure if a change introduces a bug. JUnit and the Jakarta Restful Web Services Client API provide a simple environment to test the application.
+
+You can write tests for the individual units of code outside of a running Liberty instance, or they can be written to call the Liberty instance directly. In this example, you will create a test that does the latter.
+
+Create the ***EndpointIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java
+```
+
+
+> Then, to open the EndpointIT.java file in your IDE, select
+> **File** > **Open** > guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java, or click the following button
+
+::openFile{path="/home/project/guide-rest-intro/start/src/test/java/it/io/openliberty/guides/rest/EndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.rest;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.Properties;
+
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
 
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.junit.InSequence;
-import org.jboss.arquillian.test.api.ArquillianResource;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 
-import io.openliberty.guides.inventory.InventoryResource;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
-
-@RunWith(Arquillian.class)
-public class InventoryArquillianIT {
-
-    private static final String WARNAME = System.getProperty("arquillian.war.name");
-    private final String INVENTORY_SYSTEMS = "inventory/systems";
-    private Client client = ClientBuilder.newClient();
-
-    @Deployment(testable = true)
-    public static WebArchive createDeployment() {
-        WebArchive archive = ShrinkWrap.create(WebArchive.class, WARNAME)
-                                       .addPackages(true, "io.openliberty.guides");
-        return archive;
-    }
-
-    @ArquillianResource
-    private URL baseURL;
-
-    @Inject
-    InventoryResource invSrv;
-
+public class EndpointIT {
+    private static final Jsonb JSONB = JsonbBuilder.create();
     @Test
-    @RunAsClient
-    @InSequence(1)
-    public void testInventoryEndpoints() throws Exception {
-        String localhosturl = baseURL + INVENTORY_SYSTEMS + "/localhost";
+    public void testGetProperties() {
+        String port = System.getProperty("http.port");
+        String context = System.getProperty("context.root");
+        String url = "http://localhost:" + port + "/" + context + "/";
 
-        WebTarget localhosttarget = client.target(localhosturl);
-        Response localhostresponse = localhosttarget.request().get();
+        Client client = ClientBuilder.newClient();
 
-        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
-                            localhostresponse.getStatus());
+        WebTarget target = client.target(url + "system/properties");
+        Response response = target.request().get();
 
-        JsonObject localhostobj = localhostresponse.readEntity(JsonObject.class);
-        Assert.assertEquals("The system property for the local and remote JVM "
-                        + "should match", System.getProperty("os.name"),
-                            localhostobj.getString("os.name"));
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
+                     "Incorrect response code from " + url);
 
-        String invsystemsurl = baseURL + INVENTORY_SYSTEMS;
+        String json = response.readEntity(String.class);
+        Properties sysProps = JSONB.fromJson(json, Properties.class);
 
-        WebTarget invsystemstarget = client.target(invsystemsurl);
-        Response invsystemsresponse = invsystemstarget.request().get();
-
-        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
-                            invsystemsresponse.getStatus());
-
-        JsonObject invsystemsobj = invsystemsresponse.readEntity(JsonObject.class);
-
-        int expected = 1;
-        int actual = invsystemsobj.getInt("total");
-        Assert.assertEquals("The inventory should have one entry for localhost",
-                            expected, actual);
-        localhostresponse.close();
-    }
-
-    @Test
-    @InSequence(2)
-    public void testInventoryResourceFunctions() {
-        InventoryList invList = invSrv.listContents();
-        Assert.assertEquals(1, invList.getTotal());
-
-        List<SystemData> systemDataList = invList.getSystems();
-        Assert.assertTrue(systemDataList.get(0).getHostname().equals("localhost"));
-
-        Assert.assertTrue(systemDataList.get(0).getProperties().get("os.name")
-                                        .equals(System.getProperty("os.name")));
+        assertEquals(System.getProperty("os.name"), sysProps.getProperty("os.name"),
+                     "The system property for the local and remote JVM should match");
+        response.close();
+        client.close();
     }
 }
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+This test class has more lines of code than the resource implementation. This situation is common. The test method is indicated with the ***@Test*** annotation.
 
 
-Notice that the JUnit Arquillian runner runs the tests instead of the standard JUnit runner. The ***@RunWith*** annotation preceding the class tells JUnit to run the tests by using Arquillian.
-
-The method annotated by ***@Deployment*** defines the content of the web archive, which is going to be deployed onto the Open Liberty. The tests are either run on or against the Liberty instance. The ***testable = true*** attribute enables the deployment to run the tests "in container", that is the tests are run on the Liberty instance.
+The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the Liberty's configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven ***pom.xml*** file. Refer to the ***pom.xml*** file to see how the application information such as the ***default.http.port***, ***default.https.port*** and ***app.context.root*** elements are provided in the file.
 
 
-The ***WARNAME*** variable is used to name the web archive and is defined in the ***pom.xml*** file. This name is necessary if you don't want a randomly generated web archive name.
+These Maven properties are then passed to the Java test program as the ***systemPropertyVariables*** element in the ***pom.xml*** file.
 
-The ShrinkWrap API is used to create the web archive. All of the packages in the ***inventory*** service must be added to the web archive; otherwise, the code compiles successfully but fails at runtime when the injection of the ***InventoryResource*** class takes place. You can learn about the ShrinkWrap archive configuration in this [Arquillian guide](http://arquillian.org/guides/shrinkwrap_introduction/).
+Getting the values to create a representation of the URL is simple. The test class uses the ***getProperty*** method to get the application details.
 
-The ***@ArquillianResource*** annotation is used to retrieve the ***http://localhost:9080/arquillian-managed/*** base URL for this web service. The annotation provides the host name, port number and web archive information for this service, so you don't need to hardcode these values in the test case. The ***arquillian-managed*** path in the URL comes from the WAR name you specified when you created the web archive in the ***@Deployment*** annotated method. It's needed when the ***inventory*** service communicates with the ***system*** service to get the system properties.
+To call the RESTful service using the Jakarta Restful Web Services client, first create a ***WebTarget*** object by calling the ***target*** method that provides the URL. To cause the HTTP request to occur, the ***request().get()*** method is called on the ***WebTarget*** object. The ***get*** method call is a synchronous call that blocks until a response is received. This call returns a ***Response*** object, which can be inspected to determine whether the request was successful.
 
-The ***testInventoryEndpoints*** method is an integration test to test the ***inventory*** service endpoints. The ***@RunAsClient*** annotation added in this test case indicates that this test case is to be run on the client side. By running the tests on the client side, the tests are run against the managed container. The endpoint test case first calls the ***http://localhost:9080/{WARNAME}/inventory/systems/{hostname}*** endpoint with the ***localhost*** host name to add its system properties to the inventory. The test verifies that the system property for the local and service JVM match. Then, the test method calls the ***http://localhost:9080/{WARNAME}/inventory/systems*** endpoint. The test checks that the inventory has one host and that the host is ***localhost***. The test also verifies that the system property stored in the inventory for the local and service JVM match.
+The first thing to check is that a ***200*** response was received. The JUnit ***assertEquals*** method can be used for this check.
 
-Contexts and Dependency Injection (CDI) is used to inject an instance of the ***InventoryResource*** class into this test class. You can learn more about CDI in the [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
+Check the response body to ensure it returned the right information. The client and the server are running on the same machine so it is reasonable to expect that the system properties for the local and remote JVM would be the same. In this case, an ***assertEquals*** assertion is made so that the ***os.name*** system property for both JVMs is the same. You can write additional assertions to check for more values.
 
-The injected ***InventoryResource*** instance is then tested by the ***testInventoryResourceFunctions*** method. This test case calls the ***listContents()*** method to get all systems that are stored in this inventory and verifies that ***localhost*** is the only system being found. Notice the functional test case doesn't store any system in the inventory, the ***localhost*** system is from the endpoint test case that ran before this test case. The ***@InSequence*** Arquillian annotation guarantees the test sequence. The sequence is important for the two tests, as the results in the first test impact the second one.
+### Running the tests
 
-The test cases are ready to run. You will configure the Maven build and the Liberty configuration to run them.
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
 
-::page{title="Configuring Arquillian with Liberty"}
-
-Configure your build to use the Arquillian Liberty Managed container and set up your Open Liberty to run your test cases by configuring the ***server.xml*** file.
-
-### Configuring your test build
-
-First, configure your test build with Maven. All of the Maven configuration takes place in the ***pom.xml*** file, which is provided for you.
-
-
-> From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-arquillian-managed/start/pom.xml"}
-
-Let's look into each of the required elements for this configuration.
-
-You need the ***arquillian-bom*** Bill of Materials. It's a Maven artifact that defines the versions of Arquillian dependencies to make dependency management easier.
-
-The ***arquillian-liberty-managed-junit*** dependency bundle, which includes all the core dependencies, is required to run the Arquillian tests on a managed Liberty container that uses JUnit. You can learn more about the [Arquillian Liberty dependency bundles](https://github.com/OpenLiberty/arquillian-liberty-dependencies). The ***shrinkwrap-api*** dependency allows you to create your test archive, which is packaged into a WAR file and deployed to the Open Liberty.
-
-The ***maven-failsafe-plugin*** artifact runs your Arquillian integration tests by using JUnit.
-
-Lastly, specify the ***liberty-maven-plugin*** configuration that defines your Open Liberty runtime configuration. When the application runs in an Arquillian Liberty managed container, the name of the war file is used as the context root of the application. You can pass context root information to the application and customize the container by using the ***arquillianProperties*** configuration. To allow connecting to the running Liberty in dev mode, set ***allowConnectingToRunningServer*** to ***true***.
-
-
-To learn more about the ***arquillianProperties*** configuration, see the [Arquillian Liberty Managed documentation](https://github.com/OpenLiberty/liberty-arquillian/blob/main/liberty-managed/README.md#configuration).
-
-
-### Configuring Liberty's ***server.xml*** configuration file
-
-Now that you're done configuring your Maven build, set up your Open Liberty to run your test cases by configuring the ***server.xml*** configuration file.
-
-Take a look at the ***server.xml*** file.
-
-
-> From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-arquillian-managed/start/src/main/liberty/config/server.xml"}
-
-The ***localConnector*** feature is required by the Arquillian Liberty Managed container to connect to and communicate with the Open Liberty runtime. The ***servlet*** feature is required during the deployment of the Arquillian tests in which servlets are created to perform the in-container testing.
-
-Open another command-line session and run the following commands at the ***start*** directory to set up the arquillian configuration.
-
-```bash
-mvn liberty:configure-arquillian
-```
-
-Because you started Open Liberty in dev mode, all the changes were automatically picked up. You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode. You will see the following output:
+You will see the following output:
 
 ```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.
-...
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-...
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.rest.EndpointIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.884 sec - in it.io.openliberty.guides.rest.EndpointIT
+
+Results :
+
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ```
 
+To see whether the tests detect a failure, add an assertion that you know fails, or change the existing assertion to a constant value that doesn't match the ***os.name*** system property.
 
-::page{title="Running the tests"}
+When you are done checking out the service, exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty.
 
-It's now time to build and run your Arquillian tests outside of dev mode. Exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the Liberty in the previous section.
-
-Run the Maven command to package the application. Then, run the ***liberty-maven-plugin*** goals to create the Liberty instance, install the features, and deploy the application to the instance. The ***configure-arquillian*** goal configures your Arquillian container. You can learn more about this goal in the [configure-arquillian goal documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/configure-arquillian.md).
-
-```bash
-cd /home/project/guide-arquillian-managed/start
-mvn clean package
-mvn liberty:create liberty:install-feature
-mvn liberty:configure-arquillian
-```
-
-Now, you can run your Arquillian tests with the Maven ***integration-test*** goal:
-
-```bash
-mvn failsafe:integration-test
-```
-
-In the test output, you can see that the Liberty instance launched, and that the web archive, ***arquillian-managed***, started as an application in the instance. You can also see that the tests are running and that the results are reported.
-
-After the tests stop running, the test application is automatically undeployed and the instance shuts down. You should then get a message indicating that the build and tests are successful.
-
-```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
-...
-[AUDIT   ] CWWKE0001I: The server defaultServer has been launched.
-[AUDIT   ] CWWKG0093A: Processing configuration drop-ins resource: guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/configDropins/overrides/liberty-plugin-variable-config.xml
-[INFO    ] CWWKE0002I: The kernel started after 0.854 seconds
-[INFO    ] CWWKF0007I: Feature update started.
-[AUDIT   ] CWWKZ0058I: Monitoring dropins for applications.
-[INFO    ] Aries Blueprint packages not available. So namespaces will not be registered
-[INFO    ] CWWKZ0018I: Starting application guide-arquillian-managed.
-...
-[INFO    ] SRVE0169I: Loading Web Module: guide-arquillian-managed.
-[INFO    ] SRVE0250I: Web Module guide-arquillian-managed has been bound to default_host.
-[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/
-[INFO    ] SESN0176I: A new session context will be created for application key default_host/
-[INFO    ] SESN0172I: The session manager is using the Java default SecureRandom implementation for session ID generation.
-[AUDIT   ] CWWKZ0001I: Application guide-arquillian-managed started in 1.126 seconds.
-[INFO    ] CWWKO0219I: TCP Channel defaultHttpEndpoint has been started and is now listening for requests on host localhost  (IPv4: 127.0.0.1) port 9080.
-[AUDIT   ] CWWKF0012I: The server installed the following features: [cdi-2.0, jaxrs-2.1, jaxrsClient-2.1, jndi-1.0, jsonp-1.1, localConnector-1.0, mpConfig-1.3, servlet-4.0].
-[INFO    ] CWWKF0008I: Feature update completed in 2.321 seconds.
-[AUDIT   ] CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 3.175 seconds.
-[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
-...
-[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
-[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
-[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/arquillian-managed/
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
-[INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
-[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
-[INFO    ] CWWKZ0136I: The arquillian-managed application is using the archive file at the guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/dropins/arquillian-managed.war location.
-[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
-[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
-...
-[INFO    ] Setting the server's publish address to be /inventory/
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Initialization successful.
-[INFO    ] Setting the server's publish address to be /system/
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.system.SystemApplication]: Initialization successful.
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Initialization successful.
-[AUDIT   ] CWWKT0017I: Web application removed (default_host): http://localhost:9080/arquillian-managed/
-[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Destroy successful.
-[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Destroy successful.
-[AUDIT   ] CWWKZ0009I: The application arquillian-managed has stopped successfully.
-[INFO    ] SRVE9103I: A configuration file for a web server plugin was automatically generated for this server at guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/logs/state/plugin-cfg.xml.
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.inventory.InventoryArquillianIT
-...
-Stopping server defaultServer.
-...
-Server defaultServer stopped.
-[INFO]
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-[INFO]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  12.018 s
-[INFO] Finished at: 2020-06-23T12:40:32-04:00
-[INFO] ------------------------------------------------------------------------
-```
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just built some functional and integration tests with the Arquillian managed container and ran the tests for your microservices on Open Liberty.
+You just developed a RESTful service in Open Liberty by using Jakarta Restful Web Services and JSON-B.
 
-
-Try one of the related guides to learn more about the technologies that you come across in this guide.
 
 
 ### Clean up your environment
@@ -409,33 +378,33 @@ Try one of the related guides to learn more about the technologies that you come
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-arquillian-managed*** project by running the following commands:
+Delete the ***guide-rest-intro*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-arquillian-managed
+rm -fr guide-rest-intro
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20the%20Arquillian%20managed%20container&guide-id=cloud-hosted-guide-arquillian-managed)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Creating%20a%20RESTful%20web%20service&guide-id=cloud-hosted-guide-rest-intro)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-arquillian-managed/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-arquillian-managed/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-intro/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-intro/pulls)
 
 
 
 ### Where to next?
 
-* [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
+* [Consuming a RESTful web service with AngularJS](https://openliberty.io/guides/rest-client-angularjs.html)
 
 
 ### Log out of the session
