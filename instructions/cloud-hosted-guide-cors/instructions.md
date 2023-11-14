@@ -133,7 +133,7 @@ Replace the Liberty ***server.xml*** configuration file.
 <webApplication location="guide-cors.war" contextRoot="/"/>
 
 <cors domain="/configurations/simple"
-    allowedOrigins="openliberty.io"
+    allowedOrigins="http://openliberty.io"
     allowedMethods="GET"
     allowCredentials="true"
     exposeHeaders="MyHeader"/>
@@ -150,7 +150,7 @@ The CORS configuration contains the following attributes:
 | *Configuration Attribute* | *Value*
 | ---| ---
 |***domain*** | The endpoint to be configured for CORS requests. The value is set to ***/configurations/simple***.
-|***allowedOrigins*** | Origins that are allowed to access the endpoint. The value is set to ***openliberty.io***.
+|***allowedOrigins*** | Origins that are allowed to access the endpoint. The value is set to ***http://openliberty.io***.
 |***allowedMethods*** | HTTP methods that a client is allowed to use when it makes requests to the endpoint. The value is set to ***GET***.
 |***allowCredentials*** | A boolean that indicates whether the user credentials can be included in the request. The value is set to ***true***.
 |***exposeHeaders*** | Headers that are safe to expose to clients. The value is set to ***MyHeader***.
@@ -236,13 +236,13 @@ The request is a ***GET*** HTTP request with the following header:
 
 | *Request Header* | *Request Value*
 | ---| ---
-| Origin | The value is set to ***openliberty.io***. Indicates that the request originates from ***openliberty.io***.
+| Origin | The value is set to ***http://openliberty.io***. Indicates that the request originates from ***http://openliberty.io***.
 
 Expect the following response headers and values if the simple CORS request is successful, and the Liberty instance is correctly configured:
 
 | *Response Header* | *Response Value*
 | ---| ---
-| Access-Control-Allow-Origin | The expected value is ***openliberty.io***. Indicates whether a resource can be shared based on the returning value of the Origin request header ***openliberty.io***.
+| Access-Control-Allow-Origin | The expected value is ***http://openliberty.io***. Indicates whether a resource can be shared based on the returning value of the Origin request header ***http://openliberty.io***.
 | Access-Control-Allow-Credentials | The expected value is ***true***. Indicates that the user credentials can be included in the request.
 | Access-Control-Expose-Headers |  The expected value is ***MyHeader***. Indicates that the header ***MyHeader*** is safe to expose.
 
@@ -255,7 +255,7 @@ Response headers with their values from the endpoint:
 --- Simple CORS Request ---
 Header null = [HTTP/1.1 200 OK]
 Header Access-Control-Expose-Headers = [MyHeader]
-Header Access-Control-Allow-Origin = [openliberty.io]
+Header Access-Control-Allow-Origin = [http://openliberty.io]
 Header Access-Control-Allow-Credentials = [true]
 Header Content-Length = [22]
 Header Content-Language = [en-CA]
@@ -294,7 +294,7 @@ Replace the Liberty ***server.xml*** configuration file.
 <webApplication location="guide-cors.war" contextRoot="/"/>
 
 <cors domain="/configurations/simple"
-    allowedOrigins="openliberty.io"
+    allowedOrigins="http://openliberty.io"
     allowedMethods="GET"
     allowCredentials="true"
     exposeHeaders="MyHeader"/>
