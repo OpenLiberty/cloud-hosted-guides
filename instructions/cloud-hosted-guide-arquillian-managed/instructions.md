@@ -48,6 +48,39 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+### Try what you'll build
+
+To try out the application, navigate to the ***finish*** directory and run the following commands:
+
+```bash
+mvn clean package
+mvn liberty:create liberty:install-feature
+mvn liberty:configure-arquillian
+mvn failsafe:integration-test
+```
+
+Look for the following output:
+
+```
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
+...
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
+[INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
+...
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.
+...
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+...
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+...
+```
 
 ::page{title="Developing Arquillian tests"}
 
@@ -57,6 +90,21 @@ cd /home/project/guide-arquillian-managed/start
 ```
 
 You'll develop tests that use Arquillian and JUnit to verify the ***inventory*** microservice as an endpoint and the functions of the ***InventoryResource*** class. The code for the microservices is in the ***src/main/java/io/openliberty/guides*** directory.
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```bash
+mvn liberty:dev
+```
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+```
+
+Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 Create the ***InventoryArquillianIT*** test class.
 
@@ -214,7 +262,10 @@ The ***arquillian-liberty-managed-junit*** dependency bundle, which includes all
 
 The ***maven-failsafe-plugin*** artifact runs your Arquillian integration tests by using JUnit.
 
-Lastly, specify the ***liberty-maven-plugin*** configuration that defines your Open Liberty runtime configuration. When the application runs in an Arquillian Liberty managed container, the name of the war file is used as the context root of the application. You can pass context root information to the application and customize the container by using the ***arquillianProperties*** configuration. To learn more about the ***arquillianProperties*** configuration, see the [Arquillian Liberty Managed documentation](https://github.com/OpenLiberty/liberty-arquillian/blob/main/liberty-managed/README.md#configuration).
+Lastly, specify the ***liberty-maven-plugin*** configuration that defines your Open Liberty runtime configuration. When the application runs in an Arquillian Liberty managed container, the name of the ***.war*** file is used as the context root of the application. You can pass context root information to the application and customize the container by using the ***arquillianProperties*** configuration. To allow connections to Liberty running in dev mode, set ***allowConnectingToRunningServer*** to ***true***.
+
+
+To learn more about the ***arquillianProperties*** configuration, see the [Arquillian Liberty Managed documentation](https://github.com/OpenLiberty/liberty-arquillian/blob/main/liberty-managed/README.md#configuration).
 
 
 ### Configuring Liberty's ***server.xml*** configuration file
@@ -230,10 +281,37 @@ Take a look at the ***server.xml*** file.
 
 The ***localConnector*** feature is required by the Arquillian Liberty Managed container to connect to and communicate with the Open Liberty runtime. The ***servlet*** feature is required during the deployment of the Arquillian tests in which servlets are created to perform the in-container testing.
 
+Open another command-line session and run the ***configure-arquillian*** goal from the ***start*** directory to integrate Arquillian and the Arquillian Liberty managed and remote containers with your existing project.
+
+```bash
+mvn liberty:configure-arquillian
+```
+
+Because you started Open Liberty in dev mode, all the changes were automatically picked up. You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode. Look for the following output:
+
+```
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
+...
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
+[INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
+...
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.
+...
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+...
+```
+
 
 ::page{title="Running the tests"}
 
-It's now time to build and run your Arquillian tests. Navigate to the ***start*** directory. First, run the Maven command to package the application. Then, run the ***liberty-maven-plugin*** goals to create the Liberty instance, install the features, and deploy the application to the instance. The ***configure-arquillian*** goal configures your Arquillian container. You can learn more about this goal in the [configure-arquillian goal documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/configure-arquillian.md).
+It's now time to build and run your Arquillian tests outside of dev mode. Exit dev mode by pressing `Ctrl+C` in the command-line session where you ran Liberty in the previous section.
+
+Run the Maven command to package the application. Then, run the Liberty Maven Plugin goals to create the Liberty instance, install the features, and deploy the application to the instance. The ***configure-arquillian*** goal configures your Arquillian container. You can learn more about this goal in the [configure-arquillian goal documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/configure-arquillian.md).
 
 ```bash
 cd /home/project/guide-arquillian-managed/start
