@@ -59,7 +59,7 @@ jobs:
 
   deployProd:
     needs: [singleMergedToProd, matrixProd]
-    name: Start Mirror Containers for single Guide for Prod
+    # name: Start Mirror Containers for single Guide for Prod
     continue-on-error: true
     runs-on: ubuntu-latest
     strategy:
@@ -101,7 +101,7 @@ jobs:
 
   deployAllToProd:
     needs: matrixProd
-    name: Start Mirror Containers for all Guides for Prod
+    # name: Start Mirror Containers for all Guides for Prod
     if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'prod' && contains( github.event.pull_request.title,'Change to multiple Guides')
     continue-on-error: true
     runs-on: ubuntu-latest
@@ -146,7 +146,7 @@ jobs:
           
   deployStaging:
     needs: [singleMergedToStaging, matrixStaging]
-    name: Start Mirror Containers for single Guide for Staging
+    # name: Start Mirror Containers for single Guide for Staging
     continue-on-error: true
     runs-on: ubuntu-latest
     strategy:
@@ -190,7 +190,7 @@ jobs:
 
   deployAllToStaging:
     needs: matrixStaging
-    name: Start Mirror Containers for all Guides for Staging
+    # name: Start Mirror Containers for all Guides for Staging
     if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'staging' && contains( github.event.pull_request.title,'Change to multiple Guides')
     continue-on-error: true
     runs-on: ubuntu-latest
