@@ -19,7 +19,7 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-The starting point of this guide is the finished application from the [Building an Application with Spring Boot](https://spring.io/guides/gs/spring-boot/) guide. If you are not familiar with Spring Boot, complete that guide first. Java 8 is required to run this project.
+The starting point of this guide is the finished application from the [Building an Application with Spring Boot](https://spring.io/guides/gs/spring-boot/) guide. If you are not familiar with Spring Boot, complete that guide first. Java 17 is required to run this project.
 
 You will learn how to use the ***springBootUtility*** command to deploy a Spring Boot application in Docker on Open Liberty without modification. This command stores the dependent library JAR files of the application to the target library cache, and packages the remaining application artifacts into a thin application JAR file.
 
@@ -65,9 +65,14 @@ You can now run the application in the embedded Tomcat web container by executin
 java -jar target/guide-spring-boot-0.1.0.jar
 ```
 
-Notice that the console output displays a message about the application running in Tomcat on port ***8080***. 
+After you see the following messages, the application is ready:
 ```
-... INFO ... [ main] o.s.b.w.embedded.tomcat.TomcatWebServer : Tomcat started on port(s): 8080 (http) with context path ''
+... INFO ... [ main] com.example.springboot.Application : Started Application in 2.511 seconds (process running for 3.24)
+Let's inspect the beans provided by Spring Boot:
+application
+...
+welcomePageHandlerMapping
+welcomePageNotAcceptableHandlerMapping
 ```
 
 
@@ -109,7 +114,7 @@ touch /home/project/guide-spring-boot/start/Dockerfile
 
 
 ```
-FROM icr.io/appcafe/open-liberty:full-java8-openj9-ubi as staging
+FROM icr.io/appcafe/open-liberty:full-java17-openj9-ubi as staging
 
 COPY --chown=1001:0 target/guide-spring-boot-0.1.0.jar \
                     /staging/fat-guide-spring-boot-0.1.0.jar
@@ -119,7 +124,7 @@ RUN springBootUtility thin \
  --targetThinAppPath=/staging/thin-guide-spring-boot-0.1.0.jar \
  --targetLibCachePath=/staging/lib.index.cache
 
-FROM icr.io/appcafe/open-liberty:kernel-slim-java8-openj9-ubi
+FROM icr.io/appcafe/open-liberty:kernel-slim-java17-openj9-ubi
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
@@ -137,7 +142,7 @@ LABEL \
   summary="The hello application from the Spring Boot guide" \
   description="This image contains the hello application running with the Open Liberty runtime."
 
-RUN cp /opt/ol/wlp/templates/servers/springBoot2/server.xml /config/server.xml
+RUN cp /opt/ol/wlp/templates/servers/springBoot3/server.xml /config/server.xml
 
 RUN features.sh
 
@@ -233,74 +238,55 @@ Update the ***Maven POM*** file in the ***start*** directory.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-
-  <groupId>org.springframework</groupId>
-  <artifactId>guide-spring-boot</artifactId>
-  <version>0.1.0</version>
-
-  <parent>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.6.6</version>
-  </parent>
-
-  <dependencies>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-actuator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
-      <scope>test</scope>
-      <exclusions>
-          <exclusion>
-              <groupId>org.hamcrest</groupId>
-              <artifactId>hamcrest-core</artifactId>
-          </exclusion>
-      </exclusions>
-    </dependency>
-  </dependencies>
-
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
-
-  <build>
-    <plugins>
-      <plugin>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
         <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.22.2</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.0</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>com.example</groupId>
+    <artifactId>guide-spring-boot</artifactId>
+    <version>0.1.0</version>
+    <name>spring-boot-complete</name>
+    <description>Demo project for Spring Boot</description>
+
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
 
       <!-- Enable Liberty Maven plugin -->
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.8.2</version>
+        <version>3.9</version>
         <configuration>
           <appsDirectory>apps</appsDirectory>
           <installAppPackages>spring-boot-project</installAppPackages>
@@ -320,13 +306,15 @@ Update the ***Maven POM*** file in the ***start*** directory.
       </plugin>
       <!-- End of Liberty Maven plugin -->
 
-    </plugins>
-  </build>
+        </plugins>
+    </build>
+
 </project>
 ```
 
 
 
+Add the ***liberty-maven-plugin*** to the ***pom.xml*** file.
 
 The ***liberty-maven-plugin*** downloads and installs Open Liberty to the ***target/liberty*** directory. The ***installAppPackages*** configuration element in the ***pom.xml*** file typically takes in the following parameters: ***dependencies***, ***project***, or ***all***. The default value is ***dependencies***, but to install the Spring Boot application to Open Liberty, the value must be ***spring-boot-project***. This value allows Maven to package, thin, and copy the ***guide-spring-boot-0.1.0.jar*** application to the Open Liberty runtime ***applications*** directory and shared library directory.
 
@@ -352,8 +340,8 @@ touch /home/project/guide-spring-boot/start/src/main/liberty/config/server.xml
 <server description="new server">
 
     <featureManager>
-        <feature>servlet-4.0</feature>
-        <feature>springBoot-2.0</feature>
+        <feature>servlet-6.0</feature>
+        <feature>springBoot-3.0</feature>
     </featureManager>
 
     <httpEndpoint id="defaultHttpEndpoint"
@@ -420,74 +408,55 @@ Update the Maven POM file in the ***start*** directory.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-
-  <groupId>org.springframework</groupId>
-  <artifactId>guide-spring-boot</artifactId>
-  <version>0.1.0</version>
-
-  <parent>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.6.6</version>
-  </parent>
-
-  <dependencies>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-actuator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
-      <scope>test</scope>
-      <exclusions>
-          <exclusion>
-              <groupId>org.hamcrest</groupId>
-              <artifactId>hamcrest-core</artifactId>
-          </exclusion>
-      </exclusions>
-    </dependency>
-  </dependencies>
-
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
-
-  <build>
-    <plugins>
-      <plugin>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
         <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.22.2</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.0</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>com.example</groupId>
+    <artifactId>guide-spring-boot</artifactId>
+    <version>0.1.0</version>
+    <name>spring-boot-complete</name>
+    <description>Demo project for Spring Boot</description>
+
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
 
       <!-- Enable Liberty Maven plugin -->
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.8.2</version>
+        <version>3.9</version>
         <configuration>
           <appsDirectory>apps</appsDirectory>
           <installAppPackages>spring-boot-project</installAppPackages>
@@ -509,13 +478,15 @@ Update the Maven POM file in the ***start*** directory.
       </plugin>
       <!-- End of Liberty Maven plugin -->
 
-    </plugins>
-  </build>
+        </plugins>
+    </build>
+
 </project>
 ```
 
 
 
+Add the ***include*** and ***packageName*** configuration elements, and the ***executions*** element to the ***pom.xml*** file. 
 
 The ***include*** configuration element specifies the ***minify, runnable*** values. The ***runnable*** value allows the application to be generated as a runnable JAR file. The ***minify*** value packages only what you need from your configuration files without bundling the entire Open Liberty install.
 
