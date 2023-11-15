@@ -50,9 +50,10 @@ The ***finish*** directory contains the finished project that you will build.
 
 ### Try what you'll build
 
-To try out the application, navigate to the ***finish*** directory and run the following commands:
+Run the following commands to navigate to the ***finish*** directory and run the tests:
 
 ```bash
+cd finish
 mvn clean package
 mvn liberty:create liberty:install-feature
 mvn liberty:configure-arquillian
@@ -283,7 +284,9 @@ The ***localConnector*** feature is required by the Arquillian Liberty Managed c
 
 Open another command-line session and run the ***configure-arquillian*** goal from the ***start*** directory to integrate Arquillian and the Arquillian Liberty managed and remote containers with your existing project.
 
+
 ```bash
+cd /home/project/guide-arquillian-managed/start
 mvn liberty:configure-arquillian
 ```
 
