@@ -306,6 +306,7 @@
         "gitlab-branch": "lab-3446-instruction"
     },
     {
+        "guide": "microprofile-telemetry-jaeger",
         "github": "cloud-hosted-guide-microprofile-telemetry-jaeger",
         "gitlab": "IBM-GPXX0SXIEN",
         "gitlab-branch": "lab-7221-instruction"
