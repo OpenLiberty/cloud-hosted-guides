@@ -68,14 +68,14 @@ On that page, enter the following properties in the **Create a starter applicati
 * Under Artifact specify: ***inventory***
 * Under Build Tool select: ***Maven***
 * Under Java SE Version select: ***17***
-* Under Java EE/Jakarta EE Version select: ***10***
+* Under Java EE/Jakarta EE Version select: ***10.0***
 * Under MicroProfile Version select: ***6.0***
 
 
 In this Skills Network environment, instead of manually downloading and extracting the project, run the following commands:
 ```bash
 cd /home/project/guide-liberty-deep-dive/start
-curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=10&g=io.openliberty.deepdive&j=17&m=6.0'
+curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=10.0&g=io.openliberty.deepdive&j=17&m=6.0'
 unzip inventory.zip -d inventory
 ```
 
