@@ -83,9 +83,10 @@ After getting the ***inventory*** project, switch the workspace to the ***/home/
 > - Select **File** > **Close Workspace** from the menu of the IDE.
 >   - Click the OK button to confirm to close.
 >   - Wait for the IDE to refresh.
-> - Select **File** > **Open Workspace...** from the menu of the IDE.
->   - In the **Open Workspace** window, select the ***/home/project/guide-liberty-deep-dive/start/inventory*** directory and click the **Open** button.
+> - Select **File** > **Open...** from the menu of the IDE.
+>   - In the **Open** window, select the ***home*** directory from the top dropdown list, and then select the ***/home/project/guide-liberty-deep-dive/start/inventory*** directory and click the **Open** button.
 >   - Wait for the IDE to refresh.
+>   - Click **Yes** to trust the workspace.
 
 ### Building the application
 
@@ -119,11 +120,7 @@ While the Liberty instance starts up, various messages display in your command-l
 [INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
 ```
 
-When you need to stop the Liberty instance, press `Ctrl+C` in the command-line session where you ran the Liberty, or run the ***liberty:stop*** goal from the ***start/inventory*** directory in another command-line session:
-
-```bash
-mvn liberty:stop
-```
+When you need to stop the Liberty instance, press `Ctrl+C` in the command-line session where you ran the Liberty.
 
 
 ### Starting and stopping the Liberty in the background
@@ -1089,6 +1086,81 @@ curl http://localhost:9081/trial/api/systems
 Alternatively, for the updated OpenAPI UI, click the following button to visit ***/openapi/ui*** endpoint:
 
 ::startApplication{port="9081" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+
+Replace the ***pom.xml*** file.
+
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/inventory/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/pom.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.deepdive</groupId>
+    <artifactId>inventory</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
+        <liberty.var.context.root>/inventory</liberty.var.context.root>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>6.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>inventory</finalName>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>3.3.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>io.openliberty.tools</groupId>
+                    <artifactId>liberty-maven-plugin</artifactId>
+                    <version>3.10</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
 
 When you are finished trying out changing this configuration, change the variables back to their original values.
 
