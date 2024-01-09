@@ -3220,10 +3220,6 @@ Replace the Liberty ***server.xml*** configuration file.
     <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
     
-    <keyStore id="guideKeyStore"
-              password="secret"
-              location="${server.config.dir}/resources/security/key.p12" />
-    
     <basicRegistry id="basic" realm="WebRealm">
         <user name="bob" password="{xor}PTA9Lyg7" />
         <user name="alice" password="{xor}PjM2PDovKDs=" />
@@ -3251,6 +3247,14 @@ Replace the Liberty ***server.xml*** configuration file.
         </application-bnd>
     </webApplication>
 
+    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
+    <ssl id="guideSSLConfig" keyStoreRef="guideKeyStore" trustDefaultCerts="true" />
+    <sslDefault sslRef="guideSSLConfig" />
+
+    <keyStore id="guideKeyStore"
+              password="secret"
+              location="${server.config.dir}/resources/security/key.p12" />
+
     <jwtSso jwtBuilderRef="jwtInventoryBuilder"/>
     <jwtBuilder id="jwtInventoryBuilder" 
                 issuer="http://openliberty.io" 
@@ -3258,11 +3262,9 @@ Replace the Liberty ***server.xml*** configuration file.
                 expiry="24h"/>
     <mpJwt audiences="systemService" 
            groupNameAttribute="groups" 
-           id="myMpJwt" 
+           id="myMpJwt"
+           sslRef="guideSSLConfig"
            issuer="http://openliberty.io"/>
-
-    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
-    <ssl id="defaultSSLConfig" keyStoreRef="guideKeyStore" trustDefaultCerts="true" />
 
     <library id="postgresql-library">
         <fileset dir="${shared.resource.dir}/" includes="*.jar" />
@@ -3285,6 +3287,8 @@ Replace the Liberty ***server.xml*** configuration file.
 The ***jwtSso*** feature adds the libraries that are required for JWT SSO implementation. Configure the ***jwtSso*** feature by adding the ***jwtBuilder*** configuration to your ***server.xml*** file. Also, configure the MicroProfile ***JWT*** with the ***audiences*** and ***issuer*** properties that match the ***microprofile-config.properties*** defined at the ***system/src/main/webapp/META-INF*** directory under the ***system*** project. For more information, see the [JSON Web Token Single Sign-On feature](https://www.openliberty.io/docs/latest/reference/feature/jwtSso-1.0.html), [jwtSso element](https://www.openliberty.io/docs/latest/reference/config/jwtSso.html), and [jwtBuilder element](https://www.openliberty.io/docs/latest/reference/config/jwtBuilder.html) documentation.
 
 The ***keyStore*** element is used to define the repository of security certificates used for SSL encryption. The ***id*** attribute is a unique configuration ID that is set to ***guideKeyStore***. The ***password*** attribute is used to load the keystore file, and its value can be stored in clear text or encoded form. To learn more about other attributes, see the [keyStore](https://openliberty.io/docs/latest/reference/config/keyStore.html#keyStore.html) attribute documentation. 
+
+To avoid the conflict with the default ssl configuration, define your own ssl configuration by setting the ***id*** attribute to other value, the ***sslDefault*** element, and the ***sslRef*** attribute in the ***mpJwt*** element.
 
 Because the keystore file is not provided at the ***src*** directory, Liberty creates a Public Key Cryptography Standards #12 (PKCS12) keystore file for you by default. This file needs to be replaced, as the ***keyStore*** configuration must be the same in both ***system*** and ***inventory*** microservices. As the configured ***system*** microservice is already provided for you, copy the ***key.p12*** keystore file from the ***system*** microservice to your ***inventory*** service.
 
@@ -3710,10 +3714,6 @@ Replace the Liberty ***server.xml*** configuration file.
     <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
     
-    <keyStore id="guideKeyStore"
-              password="secret"
-              location="${server.config.dir}/resources/security/key.p12" />
-    
     <basicRegistry id="basic" realm="WebRealm">
         <user name="bob" password="{xor}PTA9Lyg7" />
         <user name="alice" password="{xor}PjM2PDovKDs=" />
@@ -3746,6 +3746,14 @@ Replace the Liberty ***server.xml*** configuration file.
         </application-bnd>
     </webApplication>
 
+    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
+    <ssl id="guideSSLConfig" keyStoreRef="guideKeyStore" trustDefaultCerts="true" />
+    <sslDefault sslRef="guideSSLConfig" />
+
+    <keyStore id="guideKeyStore"
+              password="secret"
+              location="${server.config.dir}/resources/security/key.p12" />
+    
     <jwtSso jwtBuilderRef="jwtInventoryBuilder"/>
     <jwtBuilder id="jwtInventoryBuilder" 
                 issuer="http://openliberty.io" 
@@ -3755,9 +3763,6 @@ Replace the Liberty ***server.xml*** configuration file.
            groupNameAttribute="groups" 
            id="myMpJwt" 
            issuer="http://openliberty.io"/>
-
-    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
-    <ssl id="defaultSSLConfig" keyStoreRef="guideKeyStore" trustDefaultCerts="true" />
 
     <library id="postgresql-library">
         <fileset dir="${shared.resource.dir}/" includes="*.jar" />
@@ -4284,10 +4289,6 @@ Replace the Liberty ***server.xml*** configuraton file.
     <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
 
-    <keyStore id="guideKeyStore"
-              password="secret"
-              location="${server.config.dir}/resources/security/key.p12" />
-    
     <basicRegistry id="basic" realm="WebRealm">
         <user name="bob" password="{xor}PTA9Lyg7" />
         <user name="alice" password="{xor}PjM2PDovKDs=" />
@@ -4315,6 +4316,14 @@ Replace the Liberty ***server.xml*** configuraton file.
         </application-bnd>
     </webApplication>
 
+    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
+    <ssl id="guideSSLConfig" keyStoreRef="guideKeyStore" trustDefaultCerts="true" />
+    <sslDefault sslRef="guideSSLConfig" />
+
+    <keyStore id="guideKeyStore"
+              password="secret"
+              location="${server.config.dir}/resources/security/key.p12" />
+
     <jwtSso jwtBuilderRef="jwtInventoryBuilder"/>
     <jwtBuilder id="jwtInventoryBuilder" 
                 issuer="http://openliberty.io" 
@@ -4322,11 +4331,9 @@ Replace the Liberty ***server.xml*** configuraton file.
                 expiry="24h"/>
     <mpJwt audiences="systemService" 
            groupNameAttribute="groups" 
-           id="myMpJwt" 
+           id="myMpJwt"
+           sslRef="guideSSLConfig"
            issuer="http://openliberty.io"/>
-
-    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
-    <ssl id="defaultSSLConfig" keyStoreRef="guideKeyStore" trustDefaultCerts="true" />
 
     <library id="postgresql-library">
         <fileset dir="${shared.resource.dir}/" includes="*.jar" />
