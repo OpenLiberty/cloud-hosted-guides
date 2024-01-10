@@ -1087,6 +1087,13 @@ Alternatively, for the updated OpenAPI UI, click the following button to visit *
 
 ::startApplication{port="9081" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
+
+When you are finished trying out changing this configuration, change the variables back to their original values.
+
+* update ***liberty.var.http.port*** to ***9080***
+* update ***liberty.var.https.port*** to ***9443***
+* update ***liberty.var.context.root*** to ***/inventory***.
+
 Replace the ***pom.xml*** file.
 
 > To open the pom.xml file in your IDE, select
@@ -1161,12 +1168,6 @@ Replace the ***pom.xml*** file.
 
 
 
-
-When you are finished trying out changing this configuration, change the variables back to their original values.
-
-* update ***liberty.var.http.port*** to ***9080***
-* update ***liberty.var.https.port*** to ***9443***
-* update ***liberty.var.context.root*** to ***/inventory***.
 
 
 ### Injecting static configuration
@@ -5160,8 +5161,33 @@ Results :
 Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 ```
 
+ifndef::minikube-start[]
+minikube start
+```
+
+ifdef::minikube-description[]
+{minikube-description}
+
+
+Next, validate that you have a healthy Kubernetes environment by running the following command from the active command-line session.
+
+```
+kubectl get nodes
+```
+
+This command should return a ***Ready*** status for the master node.
+
+Run the following command to configure the Docker CLI to use Minikube's Docker daemon.
+After you run this command, you will be able to interact with Minikube's Docker daemon and build new
+images directly to it from your host machine:
+
+```
+eval $(minikube docker-env)
+```
 
 ::page{title="Deploying the microservice to Kubernetes"}
+
+If you are using Linux, you can continue this section.
 
 Now that the containerized application is built and tested, deploy it to a local Kubernetes cluster. 
 
@@ -5268,7 +5294,7 @@ Run the following command to set up port forwarding to access the ***inventory**
 kubectl port-forward svc/inventory-deployment 9443
 ```
 
-The ***port-forward*** command pauses the command-line session until you click **Ctrl+C** after you try out the microservice.
+The ***port-forward*** command pauses the command-line session until you press **Ctrl+C** after you try out the microservice.
 
 
 The application might take some time to get ready. To confirm that the ***inventory*** microservice is up and running, run the following curl command:
@@ -5299,7 +5325,7 @@ curl -k -s 'https://localhost:9443/inventory/api/systems' | jq
 ```
 
 
-When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding. Then, run the ***kubectl delete*** command to stop the ***inventory*** microservice.
+When you're done trying out the microservice, press `Ctrl+C` in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding. Then, run the ***kubectl delete*** command to stop the ***inventory*** microservice.
 
 
 ```bash
@@ -5419,7 +5445,7 @@ curl -k -s 'https://localhost:9443/dev/api/systems' | jq
 
 ### Tearing down the environment 
 
-When you're finished trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding. You can delete all Kubernetes resources by running the ***kubectl delete*** commands:
+When you're finished trying out the microservice, press `Ctrl+C` in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding. You can delete all Kubernetes resources by running the ***kubectl delete*** commands:
 
 
 ```bash
