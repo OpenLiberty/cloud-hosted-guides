@@ -5164,7 +5164,6 @@ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 
 ::page{title="Deploying the microservice to Kubernetes"}
 
-If you are using Linux, you can continue this section.
 
 Now that the containerized application is built and tested, deploy it to a local Kubernetes cluster. 
 
