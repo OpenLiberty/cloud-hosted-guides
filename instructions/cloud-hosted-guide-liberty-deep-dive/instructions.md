@@ -67,15 +67,15 @@ On that page, enter the following properties in the **Create a starter applicati
 * Under Group specify: ***io.openliberty.deepdive***
 * Under Artifact specify: ***inventory***
 * Under Build Tool select: ***Maven***
-* Under Java SE Version select: ***your version***
-* Under Java EE/Jakarta EE Version select: ***10***
+* Under Java SE Version select: ***17***
+* Under Java EE/Jakarta EE Version select: ***10.0***
 * Under MicroProfile Version select: ***6.0***
 
 
 In this Skills Network environment, instead of manually downloading and extracting the project, run the following commands:
 ```bash
 cd /home/project/guide-liberty-deep-dive/start
-curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=10&g=io.openliberty.deepdive&j=11&m=6.0'
+curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=10.0&g=io.openliberty.deepdive&j=17&m=6.0'
 unzip inventory.zip -d inventory
 ```
 
@@ -83,9 +83,10 @@ After getting the ***inventory*** project, switch the workspace to the ***/home/
 > - Select **File** > **Close Workspace** from the menu of the IDE.
 >   - Click the OK button to confirm to close.
 >   - Wait for the IDE to refresh.
-> - Select **File** > **Open Workspace...** from the menu of the IDE.
->   - In the **Open Workspace** window, select the ***/home/project/guide-liberty-deep-dive/start/inventory*** directory and click the **Open** button.
+> - Select **File** > **Open...** from the menu of the IDE.
+>   - In the **Open** window, select the ***home*** directory from the top dropdown list, and then select the ***/home/project/guide-liberty-deep-dive/start/inventory*** directory and click the **Open** button.
 >   - Wait for the IDE to refresh.
+>   - Click **Yes** to trust the workspace.
 
 ### Building the application
 
@@ -119,11 +120,7 @@ While the Liberty instance starts up, various messages display in your command-l
 [INFO] [AUDIT] CWWKF0011I: The server defaultServer is ready to run a smarter planet.
 ```
 
-When you need to stop the Liberty instance, press `Ctrl+C` in the command-line session where you ran the Liberty, or run the ***liberty:stop*** goal from the ***start/inventory*** directory in another command-line session:
-
-```bash
-mvn liberty:stop
-```
+When you need to stop the Liberty instance, press `Ctrl+C` in the command-line session where you ran the Liberty.
 
 
 ### Starting and stopping the Liberty in the background
@@ -461,6 +458,7 @@ public class SystemResource {
 
 
 
+
 In Jakarta RESTful Web Services, a single class like the ***SystemResource.java*** class must represent a single resource, or a group of resources of the same type. In this application, a resource might be a system property, or a set of system properties. It is efficient to have a single class handle multiple different resources, but keeping a clean separation between types of resources helps with maintainability.
 
 The ***@Path*** annotation on this class indicates that this resource responds to the ***/systems*** path in the RESTful application. The ***@ApplicationPath*** annotation in the ***RestApplication*** class, together with the ***@Path*** annotation in the ***SystemResource*** class, indicates that this resource is available at the ***/api/systems*** path.
@@ -615,7 +613,7 @@ public class SystemResource {
         @Parameter(
             name = "javaVersion", in = ParameterIn.QUERY,
             description = "The Java version of the system",
-            required = true, example = "11",
+            required = true, example = "17",
             schema = @Schema(type = SchemaType.STRING)),
         @Parameter(
             name = "heapSize", in = ParameterIn.QUERY,
@@ -667,7 +665,7 @@ public class SystemResource {
         @Parameter(
             name = "javaVersion", in = ParameterIn.QUERY,
             description = "The Java version of the system",
-            required = true, example = "11",
+            required = true, example = "17",
             schema = @Schema(type = SchemaType.STRING)),
         @Parameter(
             name = "heapSize", in = ParameterIn.QUERY,
@@ -969,21 +967,21 @@ Replace the Liberty ***server.xml*** configuration file.
         <feature>microProfile-6.0</feature>
     </featureManager>
 
-    <variable name="default.http.port" defaultValue="9080" />
-    <variable name="default.https.port" defaultValue="9443" />
-    <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="http.port" defaultValue="9080" />
+    <variable name="https.port" defaultValue="9443" />
+    <variable name="context.root" defaultValue="/inventory" />
 
     <!-- To access this server from a remote client,
          add a host attribute to the following element, e.g. host="*" -->
     <httpEndpoint id="defaultHttpEndpoint"
-                  httpPort="${default.http.port}" 
-                  httpsPort="${default.https.port}" />
+                  httpPort="${http.port}" 
+                  httpsPort="${https.port}" />
     
     <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
 
     <!-- Configures the application on a specified context root -->
-    <webApplication contextRoot="${default.context.root}" 
+    <webApplication contextRoot="${context.root}" 
                     location="inventory.war" /> 
 
     <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
@@ -994,7 +992,7 @@ Replace the Liberty ***server.xml*** configuration file.
 
 
 
-Add variables for the ***HTTP*** port, ***HTTPS*** port, and the ***context root*** to the ***server.xml*** configuration file. Change the ***httpEndpoint*** element to reflect the new ***default.http.port*** and ***default.http.port*** variables and change the ***contextRoot*** to use the new ***default.context.root*** variable too.
+Add variables for the ***HTTP*** port, ***HTTPS*** port, and the ***context root*** to the ***server.xml*** configuration file. Change the ***httpEndpoint*** element to reflect the new ***http.port*** and ***https.port*** variables and change the ***contextRoot*** to use the new ***context.root*** variable too.
 
 Replace the ***pom.xml*** file.
 
@@ -1018,12 +1016,12 @@ Replace the ***pom.xml*** file.
     <packaging>war</packaging>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <liberty.var.default.http.port>9081</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9445</liberty.var.default.https.port>
-        <liberty.var.default.context.root>/trial</liberty.var.default.context.root>
+        <liberty.var.http.port>9081</liberty.var.http.port>
+        <liberty.var.https.port>9445</liberty.var.https.port>
+        <liberty.var.context.root>/trial</liberty.var.context.root>
     </properties>
 
     <dependencies>
@@ -1054,7 +1052,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.8.2</version>
+                    <version>3.10</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -1066,7 +1064,6 @@ Replace the ***pom.xml*** file.
         </plugins>
     </build>
 </project>
-
 ```
 
 
@@ -1074,9 +1071,9 @@ Replace the ***pom.xml*** file.
 
 Add properties for the ***HTTP*** port, ***HTTPS*** port, and the ***context root*** to the ***pom.xml*** file. 
 
-* ***liberty.var.default.http.port*** to ***9081***
-* ***liberty.var.default.https.port*** to ***9445***
-* ***liberty.var.default.context.root*** to ***/trial***.
+* ***liberty.var.http.port*** to ***9081***
+* ***liberty.var.https.port*** to ***9445***
+* ***liberty.var.context.root*** to ***/trial***.
 
 Because you are using dev mode, these changes are automatically picked up by the Liberty instance.
 
@@ -1090,11 +1087,87 @@ Alternatively, for the updated OpenAPI UI, click the following button to visit *
 
 ::startApplication{port="9081" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
 
+
 When you are finished trying out changing this configuration, change the variables back to their original values.
 
-* update ***liberty.var.default.http.port*** to ***9080***
-* update ***liberty.var.default.https.port*** to ***9443***
-* update ***liberty.var.default.context.root*** to ***/inventory***.
+* update ***liberty.var.http.port*** to ***9080***
+* update ***liberty.var.https.port*** to ***9443***
+* update ***liberty.var.context.root*** to ***/inventory***.
+
+Replace the ***pom.xml*** file.
+
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-liberty-deep-dive/start/inventory/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-liberty-deep-dive/start/inventory/pom.xml"}
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.deepdive</groupId>
+    <artifactId>inventory</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
+        <liberty.var.context.root>/inventory</liberty.var.context.root>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>6.0</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>inventory</finalName>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>3.3.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>io.openliberty.tools</groupId>
+                    <artifactId>liberty-maven-plugin</artifactId>
+                    <version>3.10</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
 
 
 ### Injecting static configuration
@@ -1219,7 +1292,7 @@ public class SystemResource {
         @Parameter(
             name = "javaVersion", in = ParameterIn.QUERY,
             description = "The Java version of the system",
-            required = true, example = "11",
+            required = true, example = "17",
             schema = @Schema(type = SchemaType.STRING)),
         @Parameter(
             name = "heapSize", in = ParameterIn.QUERY,
@@ -1271,7 +1344,7 @@ public class SystemResource {
         @Parameter(
             name = "javaVersion", in = ParameterIn.QUERY,
             description = "The Java version of the system",
-            required = true, example = "11",
+            required = true, example = "17",
             schema = @Schema(type = SchemaType.STRING)),
         @Parameter(
             name = "heapSize", in = ParameterIn.QUERY,
@@ -1757,7 +1830,7 @@ public class SystemResource {
         @Parameter(
             name = "javaVersion", in = ParameterIn.QUERY,
             description = "The Java version of the system",
-            required = true, example = "11",
+            required = true, example = "17",
             schema = @Schema(type = SchemaType.STRING)),
         @Parameter(
             name = "heapSize", in = ParameterIn.QUERY,
@@ -1810,7 +1883,7 @@ public class SystemResource {
         @Parameter(
             name = "javaVersion", in = ParameterIn.QUERY,
             description = "The Java version of the system",
-            required = true, example = "11",
+            required = true, example = "17",
             schema = @Schema(type = SchemaType.STRING)),
         @Parameter(
             name = "heapSize", in = ParameterIn.QUERY,
@@ -1984,21 +2057,21 @@ Replace the Liberty ***server.xml*** configuration file.
         <feature>microProfile-6.0</feature>
     </featureManager>
 
-    <variable name="default.http.port" defaultValue="9080" />
-    <variable name="default.https.port" defaultValue="9443" />
-    <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="http.port" defaultValue="9080" />
+    <variable name="https.port" defaultValue="9443" />
+    <variable name="context.root" defaultValue="/inventory" />
     <variable name="postgres/hostname" defaultValue="localhost" />
     <variable name="postgres/portnum" defaultValue="5432" />
 
     <httpEndpoint id="defaultHttpEndpoint"
-                  httpPort="${default.http.port}" 
-                  httpsPort="${default.https.port}" />
+                  httpPort="${http.port}" 
+                  httpsPort="${https.port}" />
 
     <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
 
     <!-- Configures the application on a specified context root -->
-    <webApplication contextRoot="${default.context.root}" 
+    <webApplication contextRoot="${context.root}" 
                     location="inventory.war" /> 
 
     <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
@@ -2048,12 +2121,12 @@ Replace the ***pom.xml*** configuration file.
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-        <liberty.var.default.context.root>/inventory</liberty.var.default.context.root>
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
+        <liberty.var.context.root>/inventory</liberty.var.context.root>
     </properties>
 
     <dependencies>
@@ -2090,7 +2163,7 @@ Replace the ***pom.xml*** configuration file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.8.2</version>
+                    <version>3.10</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -2105,7 +2178,7 @@ Replace the ***pom.xml*** configuration file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.3.8</version>
+                                <version>42.7.1</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
@@ -2162,7 +2235,7 @@ curl -s 'http://localhost:9080/inventory/api/systems' | jq
 Next, make a PUT request to the ***/api/systems/{hostname}*** endpoint with the same value for the ***hostname*** path as in the previous step, and different values to the ***heapSize***, ***javaVersion***, and ***osName*** parameters. The PUT request updates the system with the specified values. 
 
 ```bash
-curl -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+curl -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=17&osName=linux'
 ```
 
 To see the updated system, make a GET request to the ***/api/systems/{hostname}*** endpoint with the same value for the ***hostname*** path as in the previous step. The GET request returns the system from the database.
@@ -2211,15 +2284,15 @@ Replace the Liberty ***server.xml*** configuration file.
         <feature>microProfile-6.0</feature>
     </featureManager>
 
-    <variable name="default.http.port" defaultValue="9080" />
-    <variable name="default.https.port" defaultValue="9443" />
-    <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="http.port" defaultValue="9080" />
+    <variable name="https.port" defaultValue="9443" />
+    <variable name="context.root" defaultValue="/inventory" />
     <variable name="postgres/hostname" defaultValue="localhost" />
     <variable name="postgres/portnum" defaultValue="5432" />
 
     <httpEndpoint id="defaultHttpEndpoint"
-                  httpPort="${default.http.port}" 
-                  httpsPort="${default.https.port}" />
+                  httpPort="${http.port}" 
+                  httpsPort="${https.port}" />
 
     <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
@@ -2237,7 +2310,7 @@ Replace the Liberty ***server.xml*** configuration file.
     </basicRegistry>
 
     <!-- Configures the application on a specified context root -->
-    <webApplication contextRoot="${default.context.root}"
+    <webApplication contextRoot="${context.root}"
                     location="inventory.war">
         <application-bnd>
             <security-role name="admin">
@@ -2398,7 +2471,7 @@ public class SystemResource {
         @Parameter(
             name = "javaVersion", in = ParameterIn.QUERY,
             description = "The Java version of the system",
-            required = true, example = "11",
+            required = true, example = "17",
             schema = @Schema(type = SchemaType.STRING)),
         @Parameter(
             name = "heapSize", in = ParameterIn.QUERY,
@@ -2452,7 +2525,7 @@ public class SystemResource {
         @Parameter(
             name = "javaVersion", in = ParameterIn.QUERY,
             description = "The Java version of the system",
-            required = true, example = "11",
+            required = true, example = "17",
             schema = @Schema(type = SchemaType.STRING)),
         @Parameter(
             name = "heapSize", in = ParameterIn.QUERY,
@@ -2569,7 +2642,7 @@ You can manually check that the ***inventory*** microservice is secured by makin
 Before making requests, you must add a system to the inventory. Try adding a system by using the POST endpoint ***/systems*** by running the following command:
 
 ```bash
-curl -X POST 'http://localhost:9080/inventory/api/systems?hostname=localhost&osName=mac&javaVersion=11&heapSize=1'
+curl -X POST 'http://localhost:9080/inventory/api/systems?hostname=localhost&osName=mac&javaVersion=17&heapSize=1'
 ```
 
 You can expect the following response:
@@ -2588,13 +2661,13 @@ curl -s 'http://localhost:9080/inventory/api/systems' | jq
 You can now expect the following response:
 
 ```
-[{"heapSize":1,"hostname":"localhost","javaVersion":"11","osName":"mac","id":23}]
+[{"heapSize":1,"hostname":"localhost","javaVersion":"17","osName":"mac","id":23}]
 ```
 
 Now try calling your secure PUT endpoint to update the system that you just added by the following curl command:
 
 ```bash
-curl -k --user alice:alicepwd -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+curl -k --user alice:alicepwd -X PUT 'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=17&osName=linux'
 ```
 
 As this endpoint is accessible to the groups ***user*** and ***admin***, you must log in with ***user*** credentials to update the system.
@@ -2919,7 +2992,7 @@ public class SystemResource {
         @Parameter(
             name = "javaVersion", in = ParameterIn.QUERY,
             description = "The Java version of the system",
-            required = true, example = "11",
+            required = true, example = "17",
             schema = @Schema(type = SchemaType.STRING)),
         @Parameter(
             name = "heapSize", in = ParameterIn.QUERY,
@@ -2973,7 +3046,7 @@ public class SystemResource {
         @Parameter(
             name = "javaVersion", in = ParameterIn.QUERY,
             description = "The Java version of the system",
-            required = true, example = "11",
+            required = true, example = "17",
             schema = @Schema(type = SchemaType.STRING)),
         @Parameter(
             name = "heapSize", in = ParameterIn.QUERY,
@@ -3135,20 +3208,18 @@ Replace the Liberty ***server.xml*** configuration file.
         <feature>jwtSso-1.0</feature>
     </featureManager>
 
-    <variable name="default.http.port" defaultValue="9080" />
-    <variable name="default.https.port" defaultValue="9443" />
-    <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="http.port" defaultValue="9080" />
+    <variable name="https.port" defaultValue="9443" />
+    <variable name="context.root" defaultValue="/inventory" />
     <variable name="postgres/hostname" defaultValue="localhost" />
     <variable name="postgres/portnum" defaultValue="5432" />
 
     <httpEndpoint id="defaultHttpEndpoint"
-                  httpPort="${default.http.port}" 
-                  httpsPort="${default.https.port}" />
+                  httpPort="${http.port}" 
+                  httpsPort="${https.port}" />
 
     <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
-    
-    <keyStore id="defaultKeyStore" password="secret" />
     
     <basicRegistry id="basic" realm="WebRealm">
         <user name="bob" password="{xor}PTA9Lyg7" />
@@ -3165,7 +3236,7 @@ Replace the Liberty ***server.xml*** configuration file.
     </basicRegistry>
 
     <!-- Configures the application on a specified context root -->
-    <webApplication contextRoot="${default.context.root}"
+    <webApplication contextRoot="${context.root}"
                     location="inventory.war">
         <application-bnd>
             <security-role name="admin">
@@ -3177,18 +3248,24 @@ Replace the Liberty ***server.xml*** configuration file.
         </application-bnd>
     </webApplication>
 
-    <jwtSso jwtBuilderRef="jwtInventoryBuilder"/> 
+    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
+    <ssl id="guideSSLConfig" keyStoreRef="guideKeyStore" trustDefaultCerts="true" />
+    <sslDefault sslRef="guideSSLConfig" />
+
+    <keyStore id="guideKeyStore"
+              password="secret"
+              location="${server.config.dir}/resources/security/key.p12" />
+
+    <jwtSso jwtBuilderRef="jwtInventoryBuilder"/>
     <jwtBuilder id="jwtInventoryBuilder" 
                 issuer="http://openliberty.io" 
                 audiences="systemService"
                 expiry="24h"/>
     <mpJwt audiences="systemService" 
            groupNameAttribute="groups" 
-           id="myMpJwt" 
+           id="myMpJwt"
+           sslRef="guideSSLConfig"
            issuer="http://openliberty.io"/>
-
-    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
-    <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
 
     <library id="postgresql-library">
         <fileset dir="${shared.resource.dir}/" includes="*.jar" />
@@ -3210,7 +3287,9 @@ Replace the Liberty ***server.xml*** configuration file.
 
 The ***jwtSso*** feature adds the libraries that are required for JWT SSO implementation. Configure the ***jwtSso*** feature by adding the ***jwtBuilder*** configuration to your ***server.xml*** file. Also, configure the MicroProfile ***JWT*** with the ***audiences*** and ***issuer*** properties that match the ***microprofile-config.properties*** defined at the ***system/src/main/webapp/META-INF*** directory under the ***system*** project. For more information, see the [JSON Web Token Single Sign-On feature](https://www.openliberty.io/docs/latest/reference/feature/jwtSso-1.0.html), [jwtSso element](https://www.openliberty.io/docs/latest/reference/config/jwtSso.html), and [jwtBuilder element](https://www.openliberty.io/docs/latest/reference/config/jwtBuilder.html) documentation.
 
-The ***keyStore*** element is used to define the repository of security certificates used for SSL encryption. The ***id*** attribute is a unique configuration ID that is set to ***defaultKeyStore***. The ***password*** attribute is used to load the keystore file, and its value can be stored in clear text or encoded form. To learn more about other attributes, see the [keyStore](https://openliberty.io/docs/latest/reference/config/keyStore.html#keyStore.html) attribute documentation. 
+The ***keyStore*** element is used to define the repository of security certificates used for SSL encryption. The ***id*** attribute is a unique configuration ID that is set to ***guideKeyStore***. The ***password*** attribute is used to load the keystore file, and its value can be stored in clear text or encoded form. To learn more about other attributes, see the [keyStore attribute documentation](https://openliberty.io/docs/latest/reference/config/keyStore.html#keyStore.html). 
+
+To avoid the conflict with the default ssl configuration, define your own ssl configuration by setting the ***id*** attribute to other value, the ***sslDefault*** element, and the ***sslRef*** attribute in the ***mpJwt*** element.
 
 Because the keystore file is not provided at the ***src*** directory, Liberty creates a Public Key Cryptography Standards #12 (PKCS12) keystore file for you by default. This file needs to be replaced, as the ***keyStore*** configuration must be the same in both ***system*** and ***inventory*** microservices. As the configured ***system*** microservice is already provided for you, copy the ***key.p12*** keystore file from the ***system*** microservice to your ***inventory*** service.
 
@@ -3246,12 +3325,12 @@ Replace the ***pom.xml*** file.
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-        <liberty.var.default.context.root>/inventory</liberty.var.default.context.root>
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
+        <liberty.var.context.root>/inventory</liberty.var.context.root>
         <liberty.var.client.https.port>9444</liberty.var.client.https.port>
     </properties>
 
@@ -3272,7 +3351,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.3.8</version>
+            <version>42.7.1</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -3289,7 +3368,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.8.2</version>
+                    <version>3.10</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -3304,7 +3383,7 @@ Replace the ***pom.xml*** file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.3.8</version>
+                                <version>42.7.1</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
@@ -3387,7 +3466,7 @@ You can expect to see your system listed in the output.
     "heapSize": 2999975936,
     "hostname": "localhost",
     "id": 11,
-    "javaVersion": "11.0.11",
+    "javaVersion": "17.0.9",
     "osName": "Linux"
   }
 ]
@@ -3623,20 +3702,18 @@ Replace the Liberty ***server.xml*** configuration file.
         <feature>jwtSso-1.0</feature>
     </featureManager>
 
-    <variable name="default.http.port" defaultValue="9080" />
-    <variable name="default.https.port" defaultValue="9443" />
-    <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="http.port" defaultValue="9080" />
+    <variable name="https.port" defaultValue="9443" />
+    <variable name="context.root" defaultValue="/inventory" />
     <variable name="postgres/hostname" defaultValue="localhost" />
     <variable name="postgres/portnum" defaultValue="5432" />
 
     <httpEndpoint id="defaultHttpEndpoint"
-                  httpPort="${default.http.port}" 
-                  httpsPort="${default.https.port}" />
+                  httpPort="${http.port}" 
+                  httpsPort="${https.port}" />
 
     <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
-    
-    <keyStore id="defaultKeyStore" password="secret" />
     
     <basicRegistry id="basic" realm="WebRealm">
         <user name="bob" password="{xor}PTA9Lyg7" />
@@ -3658,7 +3735,7 @@ Replace the Liberty ***server.xml*** configuration file.
     </administrator-role>
 
     <!-- Configures the application on a specified context root -->
-    <webApplication contextRoot="${default.context.root}"
+    <webApplication contextRoot="${context.root}"
                     location="inventory.war">
         <application-bnd>
             <security-role name="admin">
@@ -3670,7 +3747,15 @@ Replace the Liberty ***server.xml*** configuration file.
         </application-bnd>
     </webApplication>
 
-    <jwtSso jwtBuilderRef="jwtInventoryBuilder"/> 
+    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
+    <ssl id="guideSSLConfig" keyStoreRef="guideKeyStore" trustDefaultCerts="true" />
+    <sslDefault sslRef="guideSSLConfig" />
+
+    <keyStore id="guideKeyStore"
+              password="secret"
+              location="${server.config.dir}/resources/security/key.p12" />
+    
+    <jwtSso jwtBuilderRef="jwtInventoryBuilder"/>
     <jwtBuilder id="jwtInventoryBuilder" 
                 issuer="http://openliberty.io" 
                 audiences="systemService"
@@ -3679,9 +3764,6 @@ Replace the Liberty ***server.xml*** configuration file.
            groupNameAttribute="groups" 
            id="myMpJwt" 
            issuer="http://openliberty.io"/>
-
-    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
-    <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
 
     <library id="postgresql-library">
         <fileset dir="${shared.resource.dir}/" includes="*.jar" />
@@ -3830,7 +3912,7 @@ public class SystemResource {
         @Parameter(
             name = "javaVersion", in = ParameterIn.QUERY,
             description = "The Java version of the system",
-            required = true, example = "11",
+            required = true, example = "17",
             schema = @Schema(type = SchemaType.STRING)),
         @Parameter(
             name = "heapSize", in = ParameterIn.QUERY,
@@ -3887,7 +3969,7 @@ public class SystemResource {
         @Parameter(
             name = "javaVersion", in = ParameterIn.QUERY,
             description = "The Java version of the system",
-            required = true, example = "11",
+            required = true, example = "17",
             schema = @Schema(type = SchemaType.STRING)),
         @Parameter(
             name = "heapSize", in = ParameterIn.QUERY,
@@ -4046,7 +4128,7 @@ curl -X POST 'http://localhost:9080/inventory/api/systems?heapSize=1048576&hostn
 
 ```bash
 curl -k --user alice:alicepwd -X PUT \
-  'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+  'http://localhost:9080/inventory/api/systems/localhost?heapSize=2097152&javaVersion=17&osName=linux'
 ```
 
 ```bash
@@ -4124,7 +4206,7 @@ Replace the ***Dockerfile*** in the ***start/inventory*** directory.
 
 
 ```
-FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi
+FROM icr.io/appcafe/open-liberty:full-java17-openj9-ubi
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
@@ -4163,7 +4245,7 @@ RUN configure.sh
 
 
 
-The ***FROM*** instruction initializes a new build stage and indicates the parent image from which your image is built. In this case, you’re using the ***icr.io/appcafe/open-liberty:full-java11-openj9-ubi*** image that comes with the latest Open Liberty runtime as your parent image.
+The ***FROM*** instruction initializes a new build stage and indicates the parent image from which your image is built. In this case, you’re using the ***icr.io/appcafe/open-liberty:full-java17-openj9-ubi*** image that comes with the latest Open Liberty runtime as your parent image.
 
 To help you manage your images, you can label your container images with the ***LABEL*** command. 
 
@@ -4193,23 +4275,21 @@ Replace the Liberty ***server.xml*** configuraton file.
         <feature>jwtSso-1.0</feature>
     </featureManager>
 
-    <variable name="default.http.port" defaultValue="9080" />
-    <variable name="default.https.port" defaultValue="9443" />
-    <variable name="default.context.root" defaultValue="/inventory" />
+    <variable name="http.port" defaultValue="9080" />
+    <variable name="https.port" defaultValue="9443" />
+    <variable name="context.root" defaultValue="/inventory" />
     <variable name="postgres/hostname" defaultValue="localhost" />
     <variable name="postgres/portnum" defaultValue="5432" />
     <variable name="postgres/username" defaultValue="admin" />
     <variable name="postgres/password" defaultValue="adminpwd" />
 
     <httpEndpoint id="defaultHttpEndpoint"
-                  httpPort="${default.http.port}" 
-                  httpsPort="${default.https.port}" />
+                  httpPort="${http.port}" 
+                  httpsPort="${https.port}" />
 
     <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
 
-    <keyStore id="defaultKeyStore" password="secret" />
-    
     <basicRegistry id="basic" realm="WebRealm">
         <user name="bob" password="{xor}PTA9Lyg7" />
         <user name="alice" password="{xor}PjM2PDovKDs=" />
@@ -4225,7 +4305,7 @@ Replace the Liberty ***server.xml*** configuraton file.
     </basicRegistry>
 
     <!-- Configures the application on a specified context root -->
-    <webApplication contextRoot="${default.context.root}"
+    <webApplication contextRoot="${context.root}"
                     location="inventory.war">
         <application-bnd>
             <security-role name="admin">
@@ -4237,18 +4317,24 @@ Replace the Liberty ***server.xml*** configuraton file.
         </application-bnd>
     </webApplication>
 
-    <jwtSso jwtBuilderRef="jwtInventoryBuilder"/> 
+    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
+    <ssl id="guideSSLConfig" keyStoreRef="guideKeyStore" trustDefaultCerts="true" />
+    <sslDefault sslRef="guideSSLConfig" />
+
+    <keyStore id="guideKeyStore"
+              password="secret"
+              location="${server.config.dir}/resources/security/key.p12" />
+
+    <jwtSso jwtBuilderRef="jwtInventoryBuilder"/>
     <jwtBuilder id="jwtInventoryBuilder" 
                 issuer="http://openliberty.io" 
                 audiences="systemService"
                 expiry="24h"/>
     <mpJwt audiences="systemService" 
            groupNameAttribute="groups" 
-           id="myMpJwt" 
+           id="myMpJwt"
+           sslRef="guideSSLConfig"
            issuer="http://openliberty.io"/>
-
-    <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
-    <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
 
     <library id="postgresql-library">
         <fileset dir="${shared.resource.dir}/" includes="*.jar" />
@@ -4374,7 +4460,7 @@ Verify that the ***liberty-deepdive-inventory:1.0-SNAPSHOT*** image is listed am
 ```
 REPOSITORY                    TAG
 liberty-deepdive-inventory    1.0-SNAPSHOT
-icr.io/appcafe/open-liberty   full-java11-openj9-ubi
+icr.io/appcafe/open-liberty   full-java17-openj9-ubi
 ```
 
 ::page{title="Testing the microservice with Testcontainers"}
@@ -4582,8 +4668,10 @@ import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -4630,6 +4718,12 @@ public class LibertyContainer extends GenericContainer<LibertyContainer> {
         if (testHttps()) {
             builder.sslContext(sslContext);
             builder.trustStore(keystore);
+            builder.hostnameVerifier(new HostnameVerifier() {
+                @Override
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            });
         }
         ResteasyClient client = (ResteasyClient) builder.build();
         ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
@@ -4644,7 +4738,7 @@ public class LibertyContainer extends GenericContainer<LibertyContainer> {
             throw new IllegalStateException(
                 "Container must be running to determine hostname and port");
         }
-        baseURL =  getProtocol() + "://" + this.getContainerIpAddress()
+        baseURL =  getProtocol() + "://" + this.getHost()
             + ":" + this.getFirstMappedPort();
         System.out.println("TEST: " + baseURL);
         return baseURL;
@@ -4763,7 +4857,7 @@ public class SystemResourceIT {
         = new LibertyContainer(appImageName)
               .withEnv("POSTGRES_HOSTNAME", postgresHost)
               .withNetwork(network)
-              .waitingFor(Wait.forHttp("/health/ready"))
+              .waitingFor(Wait.forHttp("/health/ready").forPort(9080))
               .withLogConsumer(new Slf4jLogConsumer(logger));
 
     @BeforeAll
@@ -4789,11 +4883,11 @@ public class SystemResourceIT {
     @Order(1)
     public void testAddSystem() {
         System.out.println("TEST: Testing add a system");
-        client.addSystem("localhost", "linux", "11", Long.valueOf(2048));
+        client.addSystem("localhost", "linux", "17", Long.valueOf(2048));
         List<SystemData> systems = client.listContents();
         assertEquals(1, systems.size());
         showSystemData(systems.get(0));
-        assertEquals("11", systems.get(0).getJavaVersion());
+        assertEquals("17", systems.get(0).getJavaVersion());
         assertEquals(Long.valueOf(2048), systems.get(0).getHeapSize());
     }
 
@@ -4887,12 +4981,12 @@ Replace the ***pom.xml*** file.
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
-        <liberty.var.default.context.root>/inventory</liberty.var.default.context.root>
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
+        <liberty.var.context.root>/inventory</liberty.var.context.root>
         <liberty.var.client.https.port>9444</liberty.var.client.https.port>
     </properties>
 
@@ -4913,7 +5007,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.3.8</version>
+            <version>42.7.1</version>
             <scope>provided</scope>
         </dependency>
         
@@ -4921,37 +5015,42 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.9.2</version>
+            <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.17.6</version>
+            <version>1.19.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.17.6</version>
+            <version>1.19.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-reload4j</artifactId>
-            <version>1.7.36</version>
+            <version>2.0.9</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.9</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.0.0.Final</version>
+            <version>6.2.6.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.0.0.Final</version>
+            <version>6.2.6.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -4963,7 +5062,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.eclipse</groupId>
             <artifactId>yasson</artifactId>
-            <version>2.0.4</version>
+            <version>3.0.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -4975,7 +5074,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-auth-jwt</artifactId>
-            <version>4.0.3</version>
+            <version>4.5.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -4992,7 +5091,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.8.2</version>
+                    <version>3.10</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -5007,7 +5106,7 @@ Replace the ***pom.xml*** file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.3.8</version>
+                                <version>42.7.1</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
@@ -5016,7 +5115,7 @@ Replace the ***pom.xml*** file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.0</version>
+                <version>3.2.2</version>
                 <executions>
                     <execution>
                         <goals>
@@ -5043,7 +5142,7 @@ You can run the Maven ***verify*** goal, which compiles the java files, starts t
 In this Skills Network environment, you can test the HTTP protcol only.
 ```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
-mvn verify -Dtest.protocol=http
+mvn verify
 ```
 
 
@@ -5065,12 +5164,13 @@ Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 
 ::page{title="Deploying the microservice to Kubernetes"}
 
+
 Now that the containerized application is built and tested, deploy it to a local Kubernetes cluster. 
 
 ### Installing the Open Liberty Operator 
 
 
-In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you would like to learn how to install the Open Liberty Operator, see the [Deploying a microservice to Kubernetes by using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html) guide or the Open Liberty Operator [documentation](https://github.com/OpenLiberty/open-liberty-operator/tree/main/deploy/releases/0.8.0#readme).
+In this Skills Network environment, the Open Liberty Operator is already installed by the administrator. If you would like to learn how to install the Open Liberty Operator, see the [Deploying a microservice to Kubernetes by using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html) guide or the Open Liberty Operator [documentation](https://github.com/OpenLiberty/open-liberty-operator/tree/main/deploy/releases/1.2.1#readme).
 
 To check that the Open Liberty Operator is installed successfully, run the following command to view all the supported API resources that are available through the Open Liberty Operator:
 
@@ -5110,7 +5210,7 @@ touch /home/project/guide-liberty-deep-dive/start/inventory/inventory.yaml
 
 
 ```yaml
-apiVersion: apps.openliberty.io/v1beta2
+apiVersion: apps.openliberty.io/v1
 kind: OpenLibertyApplication
 metadata:
   name: inventory-deployment
@@ -5144,10 +5244,10 @@ The credentials are passed to the PostgreSQL database service as environment var
 To deploy the **inventory** microservice and ***Postgres*** database in this Skills Network environment, you need to update the image name so that the image in your IBM Cloud container registry is used, and add the **pullSecret** and ***pullPolicy*** settings. Run the following commands:
 
 ```bash
-sed -i 's=liberty-deepdive-inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/liberty-deepdive-inventory:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' /home/project/guide-liberty-deep-dive/start/inventory/inventory.yaml
-kubectl apply -f /home/project/guide-liberty-deep-dive/start/inventory/inventory.yaml
 sed -i 's=namespace: default=namespace: '"$SN_ICR_NAMESPACE"'=g' /home/project/guide-liberty-deep-dive/finish/postgres/postgres.yaml
 kubectl apply -f /home/project/guide-liberty-deep-dive/finish/postgres/postgres.yaml
+sed -i 's=liberty-deepdive-inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/liberty-deepdive-inventory:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' /home/project/guide-liberty-deep-dive/start/inventory/inventory.yaml
+kubectl apply -f /home/project/guide-liberty-deep-dive/start/inventory/inventory.yaml
 ```
 
 When your pods are deployed, run the following command to check their status:
@@ -5164,13 +5264,13 @@ postgres-58bd9b55c7-6vzz8               1/1     Running   0          13s
 olo-controller-manager-6fc6b456dc-s29wl 1/1     Running   0          10m
 ```
 
-Run the following command to set up port forwarding to access the ***inventory*** microservice:
+Pause briefly to give the inventory service time to initialize. After it has started, use the following command to configure port forwarding to access the ***inventory*** microservice:
 
 ```bash
 kubectl port-forward svc/inventory-deployment 9443
 ```
 
-The ***port-forward*** command pauses the command-line session until you click **Ctrl+C** after you try out the microservice.
+The ***port-forward*** command pauses the command-line session until you press **Ctrl+C** after you try out the microservice.
 
 
 The application might take some time to get ready. To confirm that the ***inventory*** microservice is up and running, run the following curl command:
@@ -5193,7 +5293,7 @@ curl -k -X POST 'https://localhost:9443/inventory/api/systems?heapSize=1048576&h
 
 ```bash
 curl -k --user alice:alicepwd -X PUT \
-  'https://localhost:9443/inventory/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+  'https://localhost:9443/inventory/api/systems/localhost?heapSize=2097152&javaVersion=17&osName=linux'
 ```
 
 ```bash
@@ -5201,7 +5301,7 @@ curl -k -s 'https://localhost:9443/inventory/api/systems' | jq
 ```
 
 
-When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding. Then, run the ***kubectl delete*** command to stop the ***inventory*** microservice.
+When you're done trying out the microservice, press `Ctrl+C` in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding. Then, run the ***kubectl delete*** command to stop the ***inventory*** microservice.
 
 
 ```bash
@@ -5213,7 +5313,7 @@ kubectl delete -f /home/project/guide-liberty-deep-dive/start/inventory/inventor
 
 You can modify the inventory deployment to customize the service. Customizations for a service include changing the port number, changing the context root, and passing confidential information by using Secrets. 
 
-The ***default.context.root*** variable is defined in the ***server.xml*** configuration file. The context root for the inventory service can be changed by using this variable. The value for the ***default.context.root*** variable can be defined in a ConfigMap and accessed as an environment variable.
+The ***context.root*** variable is defined in the ***server.xml*** configuration file. The context root for the inventory service can be changed by using this variable. The value for the ***context.root*** variable can be defined in a ***ConfigMap*** and accessed as an environment variable.
 
 Create a ConfigMap to configure the app name with the following ***kubectl*** command.
 ```bash
@@ -5232,7 +5332,7 @@ Replace the ***inventory.yaml*** file.
 
 
 ```yaml
-apiVersion: apps.openliberty.io/v1beta2
+apiVersion: apps.openliberty.io/v1
 kind: OpenLibertyApplication
 metadata:
   name: inventory-deployment
@@ -5253,7 +5353,7 @@ spec:
   env:
     - name: POSTGRES_HOSTNAME
       value: "postgres"
-    - name: DEFAULT_CONTEXT_ROOT
+    - name: CONTEXT_ROOT
       valueFrom:
         configMapKeyRef:
           name: inv-app-root
@@ -5312,7 +5412,7 @@ curl -k -X POST 'https://localhost:9443/dev/api/systems?heapSize=1048576&hostnam
 
 ```bash
 curl -k --user alice:alicepwd -X PUT \
-  'https://localhost:9443/dev/api/systems/localhost?heapSize=2097152&javaVersion=11&osName=linux'
+  'https://localhost:9443/dev/api/systems/localhost?heapSize=2097152&javaVersion=17&osName=linux'
 ```
 
 ```bash
@@ -5321,7 +5421,7 @@ curl -k -s 'https://localhost:9443/dev/api/systems' | jq
 
 ### Tearing down the environment 
 
-When you're finished trying out the microservice, press **CTRL+C** in the command line session where you ran the ***kubectl port-forward*** command to stop the port forwarding. You can delete all Kubernetes resources by running the ***kubectl delete*** commands:
+When you're finished trying out the microservice, press `Ctrl+C` in the command-line session where you ran the ***kubectl port-forward*** command to stop the port forwarding. You can delete all Kubernetes resources by running the ***kubectl delete*** commands:
 
 
 ```bash
@@ -5345,12 +5445,12 @@ In the ***pom.xml***, add the ***\<configuration\>*** element as the following:
   <plugin>
       <groupId>io.openliberty.tools</groupId>
       <artifactId>liberty-maven-plugin</artifactId>
-      <version>3.7.1</version>
+      <version>3.10</version>
       <configuration>
           <runtimeArtifact>
               <groupId>com.ibm.websphere.appserver.runtime</groupId>
               <artifactId>wlp-kernel</artifactId>
-               <version>[22.0.0.13,)</version>
+               <version>[23.0.0.12,)</version>
                <type>zip</type>
           </runtimeArtifact>
       </configuration>
@@ -5366,7 +5466,7 @@ mvn liberty:dev
 
 In the ***Dockerfile***, replace the Liberty image at the ***FROM*** statement with ***websphere-liberty*** as shown in the following example:
 ```
-FROM icr.io/appcafe/websphere-liberty:full-java11-openj9-ubi
+FROM icr.io/appcafe/websphere-liberty:full-java17-openj9-ubi
 
 ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
