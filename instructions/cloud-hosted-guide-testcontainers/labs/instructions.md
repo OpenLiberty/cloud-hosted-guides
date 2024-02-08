@@ -54,6 +54,11 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
+```bash
+sudo usermod -d /home/project theia
+```
+
 ### Try what you'll build
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
@@ -96,6 +101,10 @@ Use Testcontainers to write integration tests that run in any environment with m
 
 Navigate to the ***postgres*** directory.
 
+```bash
+cd /home/project/guide-testcontainers/postgres
+```
+
 This guide uses Docker to run an instance of the PostgreSQL database for a fast installation and setup. A Dockerfile file is provided for you. Run the following command to use the Dockerfile to build the image:
 
 ```bash
@@ -121,6 +130,10 @@ The command returns the PostgreSQL container IP address:
 ```
 
 Now, navigate to the ***start*** directory to begin.
+
+```bash
+cd /home/project/guide-testcontainers/start
+```
 
 The Liberty Maven plug-in includes a ***devc*** goal that simplifies developing your application in a container by starting [dev mode](https://openliberty.io/docs/latest/development-mode.html#_container_support_for_dev_mode) with container support. This goal builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. Dev mode also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
 
