@@ -72,9 +72,7 @@ mvn package
 
 Now, run the ***mvn verify*** command, which compiles the Java files, starts the containers, runs the tests, and then stops the containers.
 
-****WINDOWS****
-****MAC****
-****LINUX****
+
 ```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
 mvn verify
