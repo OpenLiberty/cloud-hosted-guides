@@ -310,5 +310,11 @@
         "github": "cloud-hosted-guide-microprofile-telemetry-jaeger",
         "gitlab": "IBM-GPXX0SXIEN",
         "gitlab-branch": "lab-7221-instruction"
+    },
+    {
+        "guide": "testcontainers",
+        "github": "cloud-hosted-guide-testcontainers",
+        "gitlab": "OpenLiberty-GPXX0LEREN",
+        "gitlab-branch": "lab-9675-instruction"
     }
 ]
