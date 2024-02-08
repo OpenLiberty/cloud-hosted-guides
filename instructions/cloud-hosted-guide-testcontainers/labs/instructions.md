@@ -161,10 +161,13 @@ Wait a moment for dev mode to start. After you see the following message, your L
 ```
 
 
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue.
+Dev mode holds your command-line session to listen for file changes.
 
 Click the following button to try out the ***inventory*** microservice manually by visiting the ***/openapi/ui*** endpoint. This interface provides a convenient visual way to interact with the APIs and test out their functionalities:
+
 ::startApplication{port="9080" display="external" name="Visit OpenAPI UI" route="/openapi/ui"}
+
+Open another command-line session to continue.
 
 
 
