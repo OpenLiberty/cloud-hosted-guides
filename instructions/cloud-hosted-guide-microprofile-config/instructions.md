@@ -903,4 +903,4 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 ### Log out of the session
 
-Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
+Log out of the cloud-hosted guides by selecting **Account** :fa-user: > **Logout** from the Skills Network left-sided menu.
