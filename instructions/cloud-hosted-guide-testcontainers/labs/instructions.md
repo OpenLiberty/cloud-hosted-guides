@@ -135,6 +135,13 @@ cd /home/project/guide-testcontainers/start
 
 The Liberty Maven plug-in includes a ***devc*** goal that simplifies developing your application in a container by starting [dev mode](https://openliberty.io/docs/latest/development-mode.html#_container_support_for_dev_mode) with container support. This goal builds a Docker image, mounts the required directories, binds the required ports, and then runs the application inside of a container. Dev mode also listens for any changes in the application source code or configuration and rebuilds the image and restarts the container as necessary.
 
+In this IBM Cloud environment, you need to pre-create the ***logs*** directory by running the following commands:
+
+```bash
+mkdir -p /home/project/guide-testcontainers/start/target/liberty/wlp/usr/servers/defaultServer/logs
+chmod 777 /home/project/guide-testcontainers/start/target/liberty/wlp/usr/servers/defaultServer/logs
+```
+
 Build and run the container by running the ***devc*** goal with the PostgreSQL container IP address. If your PostgreSQL container IP address is not ***172.17.0.2***, replace the command with the right IP address.
 
 ```bash
