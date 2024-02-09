@@ -1,0 +1,61 @@
+name: Mirror a guide to GitLab Repo
+
+on:
+  workflow_dispatch:
+    inputs:
+      guide_name:
+        description: 'Guide name'
+        required: true
+
+jobs:
+  printInputs:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Output message
+        run: |
+          echo "'Guide name: ${{ github.event.inputs.guide_name }}"
+
+  matrixProd:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrixProd }}
+    steps:
+    - uses: actions/checkout@master
+    - id: set-matrix
+      run: |
+        TASKS=$(echo $(cat $GITHUB_WORKSPACE/.github/workflows/mirror.json))
+        TASKS="${TASKS//'%'/'%25'}"
+        TASKS="${TASKS//$'\n'/'%0A'}"
+        TASKS="${TASKS//$'\r'/'%0D'}"
+        echo "::set-output name=matrixProd::$TASKS"
+
+  deployProd:
+    needs: [matrixProd]
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repo: ${{fromJson(needs.matrixProd.outputs.matrix)}}
+    steps:
+      - uses: actions/checkout@master
+      - name: Check Files
+        run: |
+          if [ "${{ github.event.inputs.guide_name }}" = "${{matrix.repo.github}}" ]; then 
+            echo "Mirroring "${{ github.event.inputs.guide_name }}" to "${{matrix.repo.gitlab}}"";
+            GITLAB="${{matrix.repo.gitlab}}" >> $GITHUB_ENV;
+            GITLAB_BRANCH="${{matrix.repo.gitlab-branch}}" >> $GITHUB_ENV;
+          else
+            echo "Skipping "${{matrix.repo.github}}"";
+            exit 1;
+          fi
+
+      - name: Mirror to Gitlab
+        uses: s0/git-publish-subdir-action@develop
+        env:
+          REPO: git@ssh.author-gitlab.skills.network:quicklabs/${{matrix.repo.gitlab}}.git
+          BRANCH: ${{matrix.repo.gitlab-branch}}
+          FOLDER: instructions/${{matrix.repo.github}}
+          MESSAGE: "{msg}" # Sets the commit message on gitlab to be the same as on github.
+          SSH_PRIVATE_KEY: ${{secrets.DEPLOY_KEY_QUICK_LABS}}
+          KNOWN_HOSTS_FILE: .github/workflows/known_hosts # Needed if target repo is not on github.com.
+          SKIP_EMPTY_COMMITS: "true"
