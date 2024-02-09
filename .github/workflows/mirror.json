@@ -315,6 +315,6 @@
         "guide": "testcontainers",
         "github": "cloud-hosted-guide-testcontainers",
         "gitlab": "OpenLiberty-GPXX0LEREN",
-        "gitlab-branch": "lab-9675-instruction"
+        "gitlab-branch": "main"
     }
 ]
