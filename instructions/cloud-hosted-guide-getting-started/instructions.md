@@ -186,21 +186,21 @@ Replace the Liberty ***server.xml*** configuration file.
         <feature>jsonp-2.1</feature>
         <feature>jsonb-3.0</feature>
         <feature>cdi-4.0</feature>
-        <feature>mpMetrics-5.0</feature>
+        <feature>mpMetrics-5.1</feature>
         <feature>mpHealth-4.0</feature>
-        <feature>mpConfig-3.0</feature>
+        <feature>mpConfig-3.1</feature>
     </featureManager>
 
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
+    <variable name="http.port" defaultValue="9080"/>
+    <variable name="https.port" defaultValue="9443"/>
 
     <webApplication location="guide-getting-started.war" contextRoot="/" />
     
     <mpMetrics authentication="false"/>
 
 
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+    <httpEndpoint host="*" httpPort="${http.port}" 
+        httpsPort="${https.port}" id="defaultHttpEndpoint"/>
 
     <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
 </server>
@@ -462,13 +462,13 @@ Replace the Liberty ***server.xml*** configuration file.
         <feature>jsonp-2.1</feature>
         <feature>jsonb-3.0</feature>
         <feature>cdi-4.0</feature>
-        <feature>mpMetrics-5.0</feature>
+        <feature>mpMetrics-5.1</feature>
         <feature>mpHealth-4.0</feature>
-        <feature>mpConfig-3.0</feature>
+        <feature>mpConfig-3.1</feature>
     </featureManager>
 
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
+    <variable name="http.port" defaultValue="9080"/>
+    <variable name="https.port" defaultValue="9443"/>
 
     <webApplication location="guide-getting-started.war" contextRoot="/" />
     
@@ -476,8 +476,8 @@ Replace the Liberty ***server.xml*** configuration file.
 
     <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
 
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+    <httpEndpoint host="*" httpPort="${http.port}" 
+        httpsPort="${https.port}" id="defaultHttpEndpoint"/>
 
     <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
 </server>
@@ -640,21 +640,21 @@ Replace the Liberty ***server.xml*** configuration file.
         <feature>jsonp-2.1</feature>
         <feature>jsonb-3.0</feature>
         <feature>cdi-4.0</feature>
-        <feature>mpMetrics-5.0</feature>
+        <feature>mpMetrics-5.1</feature>
         <feature>mpHealth-4.0</feature>
-        <feature>mpConfig-3.0</feature>
+        <feature>mpConfig-3.1</feature>
     </featureManager>
 
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
+    <variable name="http.port" defaultValue="9080"/>
+    <variable name="https.port" defaultValue="9443"/>
 
     <webApplication location="guide-getting-started.war" contextRoot="/dev" />
     <mpMetrics authentication="false"/>
 
     <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
 
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+    <httpEndpoint host="*" httpPort="${http.port}" 
+        httpsPort="${https.port}" id="defaultHttpEndpoint"/>
 
     <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
 </server>
@@ -718,8 +718,8 @@ Replace the pom.xml file.
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
     </properties>
 
     <dependencies>
@@ -733,7 +733,7 @@ Replace the pom.xml file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.0</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -741,19 +741,19 @@ Replace the pom.xml file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.9.2</version>
+            <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.3.Final</version>
+            <version>6.2.7.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.3.Final</version>
+            <version>6.2.7.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -771,7 +771,7 @@ Replace the pom.xml file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.8.2</version>
+                <version>3.10</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -781,16 +781,16 @@ Replace the pom.xml file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.5</version>
             </plugin>
             <!-- Plugin to run functional tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.5</version>
                 <configuration>
                     <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
+                        <http.port>${liberty.var.http.port}</http.port>
                         <context.root>/dev</context.root>
                     </systemPropertyVariables>
                 </configuration>
