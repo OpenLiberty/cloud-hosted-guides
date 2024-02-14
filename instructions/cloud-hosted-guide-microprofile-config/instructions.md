@@ -735,7 +735,7 @@ public class ConfigurationIT {
 
   @BeforeEach
   public void setup() {
-    port = System.getProperty("default.http.port");
+    port = System.getProperty("http.port");
     baseUrl = "http://localhost:" + port + "/";
     ConfigITUtil.setDefaultJsonFile(CUSTOM_CONFIG_FILE);
 
