@@ -372,8 +372,8 @@ public class InventoryManager {
                                        new ArrayList<SystemData>());
 
   @Inject
-  @ConfigProperty(name = "default.http.port")
-  String DEFAULT_PORT;
+  @ConfigProperty(name = "http.port")
+  String HTTP_PORT;
 
   @Inject
   @RestClient
@@ -417,7 +417,7 @@ public class InventoryManager {
   }
 
   private Properties getPropertiesWithGivenHostName(String hostname) {
-    String customURIString = "http://" + hostname + ":" + DEFAULT_PORT + "/system";
+    String customURIString = "http://" + hostname + ":" + HTTP_PORT + "/system";
     URI customURI = null;
     try {
       customURI = URI.create(customURIString);
