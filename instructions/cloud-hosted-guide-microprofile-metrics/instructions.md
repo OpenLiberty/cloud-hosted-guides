@@ -213,18 +213,18 @@ Replace the Liberty ***server.xml*** configuration file.
     <feature>jsonp-2.1</feature>
     <feature>jsonb-3.0</feature>
     <feature>cdi-4.0</feature>
-    <feature>mpConfig-3.0</feature>
-   <feature>mpMetrics-5.0</feature>
+    <feature>mpConfig-3.1</feature>
+   <feature>mpMetrics-5.1</feature>
    <feature>mpRestClient-3.0</feature>
  </featureManager>
 
-  <variable name="default.http.port" defaultValue="9080"/>
-  <variable name="default.https.port" defaultValue="9443"/>
+  <variable name="http.port" defaultValue="9080"/>
+  <variable name="https.port" defaultValue="9443"/>
 
   <applicationManager autoExpand="true" />
   <quickStartSecurity userName="admin" userPassword="adminpwd"/>
-  <httpEndpoint host="*" httpPort="${default.http.port}"
-      httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+  <httpEndpoint host="*" httpPort="${http.port}"
+      httpsPort="${https.port}" id="defaultHttpEndpoint"/>
   <webApplication location="guide-microprofile-metrics.war" contextRoot="/"/>
 </server>
 ```
@@ -346,7 +346,7 @@ Apply the ***@Gauge*** annotation to the ***getTotal()*** method to track the nu
 | ---| ---
 
 Additional information about these annotations, relevant metadata fields, and more are available at
-the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-5.0-javadoc.html#package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=org/eclipse/microprofile/metrics/annotation/package-summary.html).
+the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-6.1-javadoc.html?class=org/eclipse/microprofile/metrics/annotation/package-summary.html&package=allclasses-frame.html).
 
 
 ::page{title="Enabling vendor metrics for the microservices"}
