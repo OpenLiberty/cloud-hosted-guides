@@ -430,16 +430,16 @@ Replace the query's ***server.xml*** configuration file.
         <feature>jsonp-2.1</feature>
         <feature>jsonb-3.0</feature>
         <feature>cdi-4.0</feature>
-        <feature>mpConfig-3.0</feature>
+        <feature>mpConfig-3.1</feature>
         <feature>grpcClient-1.0</feature>
     </featureManager>
 
-    <variable defaultValue="9081" name="default.http.port"/>
-    <variable defaultValue="9444" name="default.https.port"/>
+    <variable defaultValue="9081" name="http.port"/>
+    <variable defaultValue="9444" name="https.port"/>
 
     <httpEndpoint id="defaultHttpEndpoint"
-                  httpPort="${default.http.port}"
-                  httpsPort="${default.https.port}"
+                  httpPort="${http.port}"
+                  httpsPort="${https.port}"
                   host="*"/>
 
     <grpcClient host="*" headersToPropagate="Cookie"/>
