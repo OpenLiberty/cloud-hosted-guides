@@ -964,7 +964,7 @@ Replace the Liberty ***server.xml*** configuration file.
     <!-- Enable features -->
     <featureManager>
         <feature>jakartaee-10.0</feature>
-        <feature>microProfile-6.0</feature>
+        <feature>microProfile-6.1</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9080" />
@@ -1034,7 +1034,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.0</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -1134,7 +1134,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.0</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -2054,7 +2054,7 @@ Replace the Liberty ***server.xml*** configuration file.
 
     <featureManager>
         <feature>jakartaee-10.0</feature>
-        <feature>microProfile-6.0</feature>
+        <feature>microProfile-6.1</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9080" />
@@ -2139,7 +2139,7 @@ Replace the ***pom.xml*** configuration file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.0</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -2281,7 +2281,7 @@ Replace the Liberty ***server.xml*** configuration file.
 
     <featureManager>
         <feature>jakartaee-10.0</feature>
-        <feature>microProfile-6.0</feature>
+        <feature>microProfile-6.1</feature>
     </featureManager>
 
     <variable name="http.port" defaultValue="9080" />
@@ -3204,7 +3204,7 @@ Replace the Liberty ***server.xml*** configuration file.
 
     <featureManager>
         <feature>jakartaee-10.0</feature>
-        <feature>microProfile-6.0</feature>
+        <feature>microProfile-6.1</feature>
         <feature>jwtSso-1.0</feature>
     </featureManager>
 
@@ -3344,7 +3344,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.0</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -3698,7 +3698,7 @@ Replace the Liberty ***server.xml*** configuration file.
 
     <featureManager>
         <feature>jakartaee-10.0</feature>
-        <feature>microProfile-6.0</feature>
+        <feature>microProfile-6.1</feature>
         <feature>jwtSso-1.0</feature>
     </featureManager>
 
@@ -4271,7 +4271,7 @@ Replace the Liberty ***server.xml*** configuraton file.
 
     <featureManager>
         <feature>jakartaee-10.0</feature>
-        <feature>microProfile-6.0</feature>
+        <feature>microProfile-6.1</feature>
         <feature>jwtSso-1.0</feature>
     </featureManager>
 
@@ -5000,7 +5000,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.0</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
