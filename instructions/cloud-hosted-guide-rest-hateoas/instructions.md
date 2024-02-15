@@ -591,7 +591,7 @@ public class EndpointIT {
         }
 
 
-        assertTrue(isHostnameFound, "Could not find system with hostname *");
+        assertTrue(isHostnameFound, "Could not find system with hostname localhost");
         response.close();
 
     }
