@@ -668,8 +668,8 @@ Replace the Maven project file.
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9082</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9445</liberty.var.default.https.port>
+        <liberty.var.http.port>9082</liberty.var.http.port>
+        <liberty.var.https.port>9445</liberty.var.https.port>
     </properties>
 
     <dependencies>
@@ -683,7 +683,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.0</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -706,19 +706,19 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.9.2</version>
+            <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.3.Final</version>
+            <version>6.2.7.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.3.Final</version>
+            <version>6.2.7.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -736,7 +736,7 @@ Replace the Maven project file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.8.2</version>
+                <version>3.10</version>
                 <configuration>
                     <looseApplication>false</looseApplication>
                 </configuration>
@@ -749,16 +749,16 @@ Replace the Maven project file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.5</version>
             </plugin>
             <!-- Plugin to run functional tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.5</version>
                 <configuration>
                     <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
+                        <http.port>${liberty.var.http.port}</http.port>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -789,19 +789,19 @@ Replace the Liberty server.xml configuration file.
         <feature>jsonb-3.0</feature>
         <feature>jsonp-2.1</feature>
         <feature>cdi-4.0</feature>
-        <feature>mpConfig-3.0</feature>
+        <feature>mpConfig-3.1</feature>
         <feature>mpRestClient-3.0</feature>
         <feature>mpGraphQL-2.0</feature>
     </featureManager>
 
-    <variable name="default.http.port" defaultValue="9082"/>
-    <variable name="default.https.port" defaultValue="9445"/>
+    <variable name="http.port" defaultValue="9082"/>
+    <variable name="https.port" defaultValue="9445"/>
 
     <variable name="io.openliberty.enableGraphQLUI" value="true" />
 
     <webApplication location="guide-microprofile-graphql-graphql.war" contextRoot="/" />
-    <httpEndpoint host="*" httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+    <httpEndpoint host="*" httpPort="${http.port}" 
+        httpsPort="${https.port}" id="defaultHttpEndpoint"/>
 </server>
 ```
 
