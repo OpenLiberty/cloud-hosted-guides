@@ -158,7 +158,7 @@ Replace the war/POM file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.0</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -220,8 +220,8 @@ Replace the ear/POM file.
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
     </properties>
 
     <dependencies>
@@ -243,7 +243,7 @@ Replace the ear/POM file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.9.2</version>
+            <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -292,15 +292,15 @@ Replace the ear/POM file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.5</version>
                 <configuration>
                     <systemPropertyVariables>
-                        <default.http.port>
-                            ${liberty.var.default.http.port}
-                        </default.http.port>
-                        <default.https.port>
-                            ${liberty.var.default.https.port}
-                        </default.https.port>
+                        <http.port>
+                            ${liberty.var.http.port}
+                        </http.port>
+                        <https.port>
+                            ${liberty.var.https.port}
+                        </https.port>
                         <cf.context.root>/converter</cf.context.root>
                     </systemPropertyVariables>
                 </configuration>
@@ -343,11 +343,11 @@ touch /home/project/guide-maven-multimodules/start/ear/src/main/liberty/config/s
         <feature>pages-3.1</feature>
     </featureManager>
 
-    <variable name="default.http.port" defaultValue="9080" />
-    <variable name="default.https.port" defaultValue="9443" />
+    <variable name="http.port" defaultValue="9080" />
+    <variable name="https.port" defaultValue="9443" />
 
-    <httpEndpoint host="*" httpPort="${default.http.port}"
-        httpsPort="${default.https.port}" id="defaultHttpEndpoint" />
+    <httpEndpoint host="*" httpPort="${http.port}"
+        httpsPort="${https.port}" id="defaultHttpEndpoint" />
 
     <enterpriseApplication id="guide-maven-multimodules-ear"
         location="guide-maven-multimodules-ear.ear"
@@ -404,7 +404,7 @@ Replace the start/POM file.
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.11.0</version>
+                    <version>3.12.1</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -413,7 +413,7 @@ Replace the start/POM file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.8.2</version>
+                <version>3.10</version>
             </plugin>
         </plugins>
     </build>
@@ -613,7 +613,7 @@ import java.net.URL;
 import org.junit.jupiter.api.Test;
 
 public class IT {
-    String port = System.getProperty("default.http.port");
+    String port = System.getProperty("http.port");
     String war = "converter";
     String urlBase = "http://localhost:" + port + "/" + war + "/";
 
