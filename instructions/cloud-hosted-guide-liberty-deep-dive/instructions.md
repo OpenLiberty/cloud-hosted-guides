@@ -2146,7 +2146,7 @@ Replace the ***pom.xml*** configuration file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.6.0</version>
+            <version>42.7.2</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -3351,7 +3351,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.1</version>
+            <version>42.7.2</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -3383,7 +3383,7 @@ Replace the ***pom.xml*** file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.7.1</version>
+                                <version>42.7.2</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
@@ -5007,7 +5007,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.1</version>
+            <version>42.7.2</version>
             <scope>provided</scope>
         </dependency>
         
@@ -5106,7 +5106,7 @@ Replace the ***pom.xml*** file.
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>42.7.1</version>
+                                <version>42.7.2</version>
                             </dependency>
                         </dependencyGroup>
                     </copyDependencies>
