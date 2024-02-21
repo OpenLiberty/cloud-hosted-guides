@@ -223,7 +223,7 @@ Replace the Liberty ***server.xml*** configuration file.
       <feature>jsonb-3.0</feature>
   </featureManager>
 
-  <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}"
+  <httpEndpoint httpPort="${http.port}" httpsPort="${https.port}"
                 id="defaultHttpEndpoint" host="*" />
 
   <webApplication location="guide-rest-intro.war" contextRoot="${app.context.root}"/>
@@ -329,7 +329,7 @@ public class EndpointIT {
 This test class has more lines of code than the resource implementation. This situation is common. The test method is indicated with the ***@Test*** annotation.
 
 
-The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the Liberty's configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven ***pom.xml*** file. Refer to the ***pom.xml*** file to see how the application information such as the ***default.http.port***, ***default.https.port*** and ***app.context.root*** elements are provided in the file.
+The test code needs to know some information about the application to make requests. The server port and the application context root are key, and are dictated by the Liberty's configuration. While this information can be hardcoded, it is better to specify it in a single place like the Maven ***pom.xml*** file. Refer to the ***pom.xml*** file to see how the application information such as the ***http.port***, ***https.port*** and ***app.context.root*** elements are provided in the file.
 
 
 These Maven properties are then passed to the Java test program as the ***systemPropertyVariables*** element in the ***pom.xml*** file.
