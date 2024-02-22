@@ -202,11 +202,11 @@ Replace the ***server.xml*** file of the system service:
         <feature>jsonb-3.0</feature>
         <feature>jsonp-2.1</feature>
         <feature>restfulWS-3.1</feature>
-        <feature>mpTelemetry-1.0</feature>
+        <feature>mpTelemetry-1.1</feature>
     </featureManager>
 
-    <httpEndpoint httpPort="${default.http.port}"
-                  httpsPort="${default.https.port}"
+    <httpEndpoint httpPort="${http.port}"
+                  httpsPort="${https.port}"
                   id="defaultHttpEndpoint" host="*" />
 
     <webApplication location="guide-microprofile-telemetry-system.war"
@@ -238,12 +238,12 @@ Replace the ***server.xml*** file of the inventory service:
         <feature>jsonb-3.0</feature>
         <feature>jsonp-2.1</feature>
         <feature>restfulWS-3.1</feature>
-        <feature>mpConfig-3.0</feature>
-        <feature>mpTelemetry-1.0</feature>
+        <feature>mpConfig-3.1</feature>
+        <feature>mpTelemetry-1.1</feature>
     </featureManager>
 
-    <httpEndpoint httpPort="${default.http.port}"
-                  httpsPort="${default.https.port}"
+    <httpEndpoint httpPort="${http.port}"
+                  httpsPort="${https.port}"
                   id="defaultHttpEndpoint" host="*" />
 
     <webApplication location="guide-microprofile-telemetry-inventory.war"
@@ -368,8 +368,8 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
         <!-- OpenLiberty runtime -->
         <liberty.var.system.http.port>9080</liberty.var.system.http.port>
-        <liberty.var.default.http.port>9081</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9444</liberty.var.default.https.port>
+        <liberty.var.http.port>9081</liberty.var.http.port>
+        <liberty.var.https.port>9444</liberty.var.https.port>
     </properties>
 
     <dependencies>
@@ -383,39 +383,39 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.0</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-api</artifactId>
-            <version>1.26.0</version>
+            <version>1.34.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.opentelemetry.instrumentation</groupId>
             <artifactId>opentelemetry-instrumentation-annotations</artifactId>
-            <version>1.26.0</version>
+            <version>2.0.0</version>
             <scope>provided</scope>
         </dependency>
         <!-- For tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.9.2</version>
+            <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.0.0.Final</version>
+            <version>6.2.7.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.0.0.Final</version>
+            <version>6.2.7.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -445,17 +445,17 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.8.2</version>
+                <version>3.10</version>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.0</version>
+                <version>3.2.5</version>
                 <configuration>
                     <systemPropertyVariables>
                         <sys.http.port>${liberty.var.system.http.port}</sys.http.port>
-                        <inv.http.port>${liberty.var.default.http.port}</inv.http.port>
+                        <inv.http.port>${liberty.var.http.port}</inv.http.port>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -485,12 +485,12 @@ Replace the ***server.xml*** file of the inventory service:
         <feature>jsonb-3.0</feature>
         <feature>jsonp-2.1</feature>
         <feature>restfulWS-3.1</feature>
-        <feature>mpConfig-3.0</feature>
-        <feature>mpTelemetry-1.0</feature>
+        <feature>mpConfig-3.1</feature>
+        <feature>mpTelemetry-1.1</feature>
     </featureManager>
 
-    <httpEndpoint httpPort="${default.http.port}"
-                  httpsPort="${default.https.port}"
+    <httpEndpoint httpPort="${http.port}"
+                  httpsPort="${https.port}"
                   id="defaultHttpEndpoint" host="*" />
 
     <webApplication location="guide-microprofile-telemetry-inventory.war"
@@ -856,4 +856,4 @@ You can also provide feedback or contribute to this guide from GitHub.
 
 ### Log out of the session
 
-Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
+Log out of the cloud-hosted guides by selecting **Account** :fa-user: > **Logout** from the Skills Network left-sided menu.
