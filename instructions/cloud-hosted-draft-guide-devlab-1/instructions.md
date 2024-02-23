@@ -5,9 +5,9 @@ branch: lab-364-instruction
 version-history-start-date: 2022-02-09T14:19:17.000Z
 tool-type: theia
 ---
-::page{title="Welcome to the Testing microservices with the Arquillian managed container guide!"}
+::page{title="Welcome to the Configuring microservices running in Kubernetes guide!"}
 
-Learn how to develop tests for your microservices with the Arquillian managed container and run the tests on Open Liberty.
+Explore how to externalize configuration using MicroProfile Config and configure your microservices using Kubernetes ConfigMaps and Secrets.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -17,13 +17,15 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
+
+
 ::page{title="What you'll learn"}
+You will learn how and why to externalize your microservice's configuration. Externalized configuration is useful because configuration usually changes depending on your environment. You will also learn how to configure the environment by providing required values to your application using Kubernetes.
 
-You will learn how to develop tests for your microservices by using the [Arquillian Liberty Managed container](https://github.com/OpenLiberty/liberty-arquillian/tree/master/liberty-managed) and JUnit with Maven on Open Liberty. [Arquillian](http://arquillian.org/) is a testing framework to develop automated functional, integration and acceptance tests for your Java applications. Arquillian sets up the test environment and handles the application server lifecycle for you so you can focus on writing tests.
+MicroProfile Config provides useful annotations that you can use to inject configured values into your code. These values can come from any configuration source, such as environment variables. Using environment variables allows for easier deployment to different environments. To learn more about MicroProfile Config, read the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide.
 
-You will develop Arquillian tests that use JUnit as the runner and build your tests with Maven using the Liberty Maven plug-in. This technique simplifies the process of managing Arquillian dependencies and the setup of your Arquillian managed container.
+Furthermore, you'll learn how to set these environment variables with ConfigMaps and Secrets. These resources are provided by Kubernetes and act as a data source for your environment variables. You can use a ConfigMap or Secret to set environment variables for any number of containers.
 
-You will work with an ***inventory*** microservice, which stores information about various systems. The ***inventory*** service communicates with the ***system*** service on a particular host to retrieve its system properties and store them. You will develop functional and integration tests for the microservices. You will also learn about the Maven and Liberty configurations so that you can run your tests on Open Liberty with the Arquillian Liberty Managed container.
 
 ::page{title="Getting started"}
 
@@ -36,11 +38,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-arquillian-managed.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-microprofile-config.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-arquillian-managed.git
-cd guide-arquillian-managed
+git clone https://github.com/openliberty/guide-kubernetes-microprofile-config.git
+cd guide-kubernetes-microprofile-config
 ```
 
 
@@ -48,360 +50,618 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-### Try what you'll build
 
-To try out the application, navigate to the ***finish*** directory and run the following commands:
+::page{title="Deploying the microservices"}
+
+The two microservices you will deploy are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This demonstrates how communication can be established between pods inside a cluster. To build these applications, navigate to the ***start*** directory and run the following command.
 
 ```bash
-cd finish
+cd start
 mvn clean package
-mvn liberty:create liberty:install-feature
-mvn liberty:configure-arquillian
-mvn failsafe:integration-test
 ```
 
-You will see the following output:
 
-```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.
-...
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-...
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-...
-```
 
-::page{title="Developing Arquillian tests"}
-
-Navigate to the ***start*** directory to begin.
+Next, run the ***docker build*** commands to build container images for your application:
 ```bash
-cd /home/project/guide-arquillian-managed/start
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
-You'll develop tests that use Arquillian and JUnit to verify the ***inventory*** microservice as an endpoint and the functions of the ***InventoryResource*** class. The code for the microservices is in the ***src/main/java/io/openliberty/guides*** directory.
+The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
 
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+Push your images to the container registry on IBM Cloud with the following commands:
 
 ```bash
-mvn liberty:dev
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 ```
 
-After you see the following message, your Liberty instance is ready in dev mode:
+Update the image names and set the image pull policy to **Always** so that the images in your IBM Cloud container registry are used, and remove the **nodePort** fields so that the ports can be automatically generated:
 
-```
-**************************************************************
-*    Liberty is running in dev mode.
-```
-
-Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
-
-Create the ***InventoryArquillianIT*** test class.
-
-> Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
+
+Run the following command to deploy the necessary Kubernetes resources to serve the applications.
+```bash
+kubectl apply -f kubernetes.yaml
+```
+
+When this command finishes, wait for the pods to be in the Ready state. Run the following command to view the status of the pods.
+```bash
+kubectl get pods
+```
+
+When the pods are ready, the output shows ***1/1*** for READY and ***Running*** for STATUS.
+
+```
+NAME                                   READY     STATUS    RESTARTS   AGE
+system-deployment-6bd97d9bf6-6d2cj     1/1       Running   0          34s
+inventory-deployment-645767664f-7gnxf  1/1       Running   0          34s
+```
+
+After the pods are ready, you will make requests to your services.
+
+
+In this IBM cloud environment, you need to set up port forwarding to access the services. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to set up port forwarding to access the **system** service.
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9090
+```
+
+Then, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to set up port forwarding to access the **inventory** service.
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9090
+```
+
+Then use the following commands to access your **system** microservice. The ***-u*** option is used to pass in the username ***bob*** and the password ***bobpwd***.
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+curl -s http://localhost:$SYSTEM_NODEPORT/system/properties -u bob:bobpwd | jq
+```
+
+Use the following commands to access your ***inventory*** microservice.
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
+```
+
+When you're done trying out the microservices, press **CTRL+C** in the command line sessions where you ran the ***kubectl port-forward*** commands to stop the port forwarding.
+
+::page{title="Modifying system microservice"}
+
+The ***system*** service is hardcoded to use a single forward slash as the context root. The context root is set in the ***webApplication***
+element, where the ***contextRoot*** attribute is specified as ***"/"***. You'll make the value of the ***contextRoot*** attribute configurable by implementing it as a variable.
+
+Replace the ***server.xml*** file.
+
+> To open the server.xml file in your IDE, select
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/system/src/main/liberty/config/server.xml"}
+
+
+
+```xml
+<server description="Sample Liberty server">
+
+  <featureManager>
+    <feature>restfulWS-3.1</feature>
+    <feature>jsonb-3.0</feature>
+    <feature>cdi-4.0</feature>
+    <feature>jsonp-2.1</feature>
+    <feature>mpConfig-3.1</feature>
+    <feature>mpHealth-4.0</feature>
+    <feature>appSecurity-5.0</feature>
+  </featureManager>
+
+  <variable name="http.port" defaultValue="9090"/>
+  <variable name="https.port" defaultValue="9453"/>
+  <variable name="system.app.username" defaultValue="bob"/>
+  <variable name="system.app.password" defaultValue="bobpwd"/>
+  <variable name="context.root" defaultValue="/"/>
+
+  <httpEndpoint host="*" httpPort="${http.port}" 
+    httpsPort="${https.port}" id="defaultHttpEndpoint" />
+
+  <webApplication location="guide-kubernetes-microprofile-config-system.war" contextRoot="${context.root}"/>
+
+  <basicRegistry id="basic" realm="BasicRegistry">
+    <user name="${system.app.username}" password="${system.app.password}" />
+  </basicRegistry>
+
+</server>
 ```
 
 
-> Then, to open the InventoryArquillianIT.java file in your IDE, select
-> **File** > **Open** > guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java, or click the following button
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
-::openFile{path="/home/project/guide-arquillian-managed/start/src/test/java/it/io/openliberty/guides/inventory/InventoryArquillianIT.java"}
+
+The ***contextRoot*** attribute in the ***webApplication*** element now gets its value from the ***context.root*** variable. To find a value for the ***context.root*** variable, Open Liberty looks for the following environment variables, in order:
+
+
+* `context.root`
+* `context_root`
+* `CONTEXT_ROOT`
+
+::page{title="Modifying inventory microservice"}
+
+The ***inventory*** service is hardcoded to use ***bob*** and ***bobpwd*** as the credentials to authenticate against the ***system*** service. You'll make these credentials configurable. 
+
+Replace the ***SystemClient*** class.
+
+> To open the SystemClient.java file in your IDE, select
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/inventory/src/main/java/io/openliberty/guides/inventory/client/SystemClient.java"}
 
 
 
 ```java
-package it.io.openliberty.guides.inventory;
+package io.openliberty.guides.inventory.client;
 
-import java.net.URL;
-import java.util.List;
+import java.net.URI;
+import java.util.Base64;
+import java.util.Properties;
 
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
-import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.junit.InSequence;
-import org.jboss.arquillian.test.api.ArquillianResource;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import io.openliberty.guides.inventory.InventoryResource;
-import io.openliberty.guides.inventory.model.InventoryList;
-import io.openliberty.guides.inventory.model.SystemData;
+@RequestScoped
+public class SystemClient {
 
-@RunWith(Arquillian.class)
-public class InventoryArquillianIT {
+  private final String SYSTEM_PROPERTIES = "/system/properties";
+  private final String PROTOCOL = "http";
 
-    private static final String WARNAME = System.getProperty("arquillian.war.name");
-    private final String INVENTORY_SYSTEMS = "inventory/systems";
-    private Client client = ClientBuilder.newClient();
+  @Inject
+  @ConfigProperty(name = "CONTEXT_ROOT", defaultValue = "")
+  String CONTEXT_ROOT;
 
-    @Deployment(testable = true)
-    public static WebArchive createDeployment() {
-        WebArchive archive = ShrinkWrap.create(WebArchive.class, WARNAME)
-                                       .addPackages(true, "io.openliberty.guides");
-        return archive;
+  @Inject
+  @ConfigProperty(name = "http.port")
+  String HTTP_PORT;
+
+  @Inject
+  @ConfigProperty(name = "SYSTEM_APP_USERNAME")
+  private String username;
+
+  @Inject
+  @ConfigProperty(name = "SYSTEM_APP_PASSWORD")
+  private String password;
+
+  public Properties getProperties(String hostname) {
+    Properties properties = null;
+    Client client = ClientBuilder.newClient();
+    try {
+        Builder builder = getBuilder(hostname, client);
+        properties = getPropertiesHelper(builder);
+    } catch (Exception e) {
+        System.err.println(
+        "Exception thrown while getting properties: " + e.getMessage());
+    } finally {
+        client.close();
     }
+    return properties;
+  }
 
-    @ArquillianResource
-    private URL baseURL;
+  private Builder getBuilder(String hostname, Client client) throws Exception {
+    URI uri = new URI(
+                  PROTOCOL, null, hostname, Integer.valueOf(HTTP_PORT),
+                  CONTEXT_ROOT + SYSTEM_PROPERTIES, null, null);
+    String urlString = uri.toString();
+    Builder builder = client.target(urlString).request();
+    builder.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+           .header(HttpHeaders.AUTHORIZATION, getAuthHeader());
+    return builder;
+  }
 
-    @Inject
-    InventoryResource invSrv;
-
-    @Test
-    @RunAsClient
-    @InSequence(1)
-    public void testInventoryEndpoints() throws Exception {
-        String localhosturl = baseURL + INVENTORY_SYSTEMS + "/localhost";
-
-        WebTarget localhosttarget = client.target(localhosturl);
-        Response localhostresponse = localhosttarget.request().get();
-
-        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
-                            localhostresponse.getStatus());
-
-        JsonObject localhostobj = localhostresponse.readEntity(JsonObject.class);
-        Assert.assertEquals("The system property for the local and remote JVM "
-                        + "should match", System.getProperty("os.name"),
-                            localhostobj.getString("os.name"));
-
-        String invsystemsurl = baseURL + INVENTORY_SYSTEMS;
-
-        WebTarget invsystemstarget = client.target(invsystemsurl);
-        Response invsystemsresponse = invsystemstarget.request().get();
-
-        Assert.assertEquals("Incorrect response code from " + localhosturl, 200,
-                            invsystemsresponse.getStatus());
-
-        JsonObject invsystemsobj = invsystemsresponse.readEntity(JsonObject.class);
-
-        int expected = 1;
-        int actual = invsystemsobj.getInt("total");
-        Assert.assertEquals("The inventory should have one entry for localhost",
-                            expected, actual);
-        localhostresponse.close();
+  private Properties getPropertiesHelper(Builder builder) throws Exception {
+    Response response = builder.get();
+    if (response.getStatus() == Status.OK.getStatusCode()) {
+        return response.readEntity(Properties.class);
+    } else {
+        System.err.println("Response Status is not OK.");
+        return null;
     }
+  }
 
-    @Test
-    @InSequence(2)
-    public void testInventoryResourceFunctions() {
-        InventoryList invList = invSrv.listContents();
-        Assert.assertEquals(1, invList.getTotal());
-
-        List<SystemData> systemDataList = invList.getSystems();
-        Assert.assertTrue(systemDataList.get(0).getHostname().equals("localhost"));
-
-        Assert.assertTrue(systemDataList.get(0).getProperties().get("os.name")
-                                        .equals(System.getProperty("os.name")));
-    }
+  private String getAuthHeader() {
+    String usernamePassword = username + ":" + password;
+    String encoded = Base64.getEncoder().encodeToString(usernamePassword.getBytes());
+    return "Basic " + encoded;
+  }
 }
 ```
 
 
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
+
+The changes introduced here use MicroProfile Config and CDI to inject the value of the environment variables ***CONTEXT_ROOT***, ***SYSTEM_APP_USERNAME*** and ***SYSTEM_APP_PASSWORD*** into the ***SystemClient*** class.
 
 
-Notice that the JUnit Arquillian runner runs the tests instead of the standard JUnit runner. The ***@RunWith*** annotation preceding the class tells JUnit to run the tests by using Arquillian.
+::page{title="Creating a ConfigMap and Secret"}
 
-The method annotated by ***@Deployment*** defines the content of the web archive, which is going to be deployed onto the Open Liberty. The tests are either run on or against the Liberty instance. The ***testable = true*** attribute enables the deployment to run the tests "in container", that is the tests are run on the Liberty instance.
+Several options exist to configure an environment variable in a Docker container. You can set it directly in the ***Dockerfile*** with the ***ENV*** command. You can also set it in your ***kubernetes.yaml*** file by specifying a name and a value for the environment variable that you want to set for a specific container. With these options in mind, you're going to use a ConfigMap and Secret to set these values. These are resources provided by Kubernetes as a way to provide configuration values to your containers. A benefit is that they can be reused across many different containers, even if they all require different environment variables to be set with the same value.
 
-
-The ***WARNAME*** variable is used to name the web archive and is defined in the ***pom.xml*** file. This name is necessary if you don't want a randomly generated web archive name.
-
-The ShrinkWrap API is used to create the web archive. All of the packages in the ***inventory*** service must be added to the web archive; otherwise, the code compiles successfully but fails at runtime when the injection of the ***InventoryResource*** class takes place. You can learn about the ShrinkWrap archive configuration in this [Arquillian guide](http://arquillian.org/guides/shrinkwrap_introduction/).
-
-The ***@ArquillianResource*** annotation is used to retrieve the ***http://localhost:9080/arquillian-managed/*** base URL for this web service. The annotation provides the host name, port number and web archive information for this service, so you don't need to hardcode these values in the test case. The ***arquillian-managed*** path in the URL comes from the WAR name you specified when you created the web archive in the ***@Deployment*** annotated method. It's needed when the ***inventory*** service communicates with the ***system*** service to get the system properties.
-
-The ***testInventoryEndpoints*** method is an integration test to test the ***inventory*** service endpoints. The ***@RunAsClient*** annotation added in this test case indicates that this test case is to be run on the client side. By running the tests on the client side, the tests are run against the managed container. The endpoint test case first calls the ***http://localhost:9080/{WARNAME}/inventory/systems/{hostname}*** endpoint with the ***localhost*** host name to add its system properties to the inventory. The test verifies that the system property for the local and service JVM match. Then, the test method calls the ***http://localhost:9080/{WARNAME}/inventory/systems*** endpoint. The test checks that the inventory has one host and that the host is ***localhost***. The test also verifies that the system property stored in the inventory for the local and service JVM match.
-
-Contexts and Dependency Injection (CDI) is used to inject an instance of the ***InventoryResource*** class into this test class. You can learn more about CDI in the [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html) guide.
-
-The injected ***InventoryResource*** instance is then tested by the ***testInventoryResourceFunctions*** method. This test case calls the ***listContents()*** method to get all systems that are stored in this inventory and verifies that ***localhost*** is the only system being found. Notice the functional test case doesn't store any system in the inventory, the ***localhost*** system is from the endpoint test case that ran before this test case. The ***@InSequence*** Arquillian annotation guarantees the test sequence. The sequence is important for the two tests, as the results in the first test impact the second one.
-
-The test cases are ready to run. You will configure the Maven build and the Liberty configuration to run them.
-
-::page{title="Configuring Arquillian with Liberty"}
-
-Configure your build to use the Arquillian Liberty Managed container and set up your Open Liberty to run your test cases by configuring the ***server.xml*** file.
-
-### Configuring your test build
-
-First, configure your test build with Maven. All of the Maven configuration takes place in the ***pom.xml*** file, which is provided for you.
-
-
-> From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/pom.xml, or click the following button
-
-::openFile{path="/home/project/guide-arquillian-managed/start/pom.xml"}
-
-Let's look into each of the required elements for this configuration.
-
-You need the ***arquillian-bom*** Bill of Materials. It's a Maven artifact that defines the versions of Arquillian dependencies to make dependency management easier.
-
-The ***arquillian-liberty-managed-junit*** dependency bundle, which includes all the core dependencies, is required to run the Arquillian tests on a managed Liberty container that uses JUnit. You can learn more about the [Arquillian Liberty dependency bundles](https://github.com/OpenLiberty/arquillian-liberty-dependencies). The ***shrinkwrap-api*** dependency allows you to create your test archive, which is packaged into a WAR file and deployed to the Open Liberty.
-
-The ***maven-failsafe-plugin*** artifact runs your Arquillian integration tests by using JUnit.
-
-Lastly, specify the ***liberty-maven-plugin*** configuration that defines your Open Liberty runtime configuration. When the application runs in an Arquillian Liberty managed container, the name of the war file is used as the context root of the application. You can pass context root information to the application and customize the container by using the ***arquillianProperties*** configuration. To allow connecting to the running Liberty in dev mode, set ***allowConnectingToRunningServer*** to ***true***.
-
-
-To learn more about the ***arquillianProperties*** configuration, see the [Arquillian Liberty Managed documentation](https://github.com/OpenLiberty/liberty-arquillian/blob/main/liberty-managed/README.md#configuration).
-
-
-### Configuring Liberty's ***server.xml*** configuration file
-
-Now that you're done configuring your Maven build, set up your Open Liberty to run your test cases by configuring the ***server.xml*** configuration file.
-
-Take a look at the ***server.xml*** file.
-
-
-> From the menu of the IDE, select **File** > **Open** > guide-arquillian-managed/start/src/main/liberty/config/server.xml, or click the following button
-
-::openFile{path="/home/project/guide-arquillian-managed/start/src/main/liberty/config/server.xml"}
-
-The ***localConnector*** feature is required by the Arquillian Liberty Managed container to connect to and communicate with the Open Liberty runtime. The ***servlet*** feature is required during the deployment of the Arquillian tests in which servlets are created to perform the in-container testing.
-
-Open another command-line session and run the following commands at the ***start*** directory to set up the arquillian configuration.
-
+Create a ConfigMap to configure the app name with the following ***kubectl*** command.
 ```bash
-mvn liberty:configure-arquillian
+kubectl create configmap sys-app-root --from-literal contextRoot=/dev
 ```
 
-Because you started Open Liberty in dev mode, all the changes were automatically picked up. You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode. You will see the following output:
+This command deploys a ConfigMap named ***sys-app-root*** to your cluster. It has a key called ***contextRoot*** with a value of ***/dev***. The ***--from-literal*** flag allows you to specify individual key-value pairs to store in this ConfigMap. Other available options, such as ***--from-file*** and ***--from-env-file***, provide more versatility as to what you want to configure. Details about these options can be found in the [Kubernetes CLI documentation](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-configmap-em-).
 
-```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.
-...
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-...
-```
-
-
-::page{title="Running the tests"}
-
-It's now time to build and run your Arquillian tests outside of dev mode. Exit dev mode by pressing `Ctrl+C` in the command-line session where you ran the Liberty in the previous section.
-
-Run the Maven command to package the application. Then, run the ***liberty-maven-plugin*** goals to create the Liberty instance, install the features, and deploy the application to the instance. The ***configure-arquillian*** goal configures your Arquillian container. You can learn more about this goal in the [configure-arquillian goal documentation](https://github.com/OpenLiberty/ci.maven/blob/main/docs/configure-arquillian.md).
-
+Run the following command to display details of the ConfigMap.
 ```bash
-cd /home/project/guide-arquillian-managed/start
+kubectl describe configmaps sys-app-root
+```
+
+Create a Secret to configure the new credentials that ***inventory*** uses to authenticate against ***system*** with the following ***kubectl*** command.
+```bash
+kubectl create secret generic sys-app-credentials --from-literal username=alice --from-literal password=wonderland
+```
+ 
+This command looks similar to the command to create a ConfigMap, but one difference is the word ***generic***. This word creates a Secret that doesn't store information in any specialized way. Different types of secrets are available, such as secrets to store Docker credentials and secrets to store public and private key pairs.
+
+Run the following command to display details of the Secret.
+```bash
+kubectl describe secrets/sys-app-credentials
+```
+
+A Secret is similar to a ConfigMap. A key difference is that a Secret is used for confidential information such as credentials. One of the main differences is that you must explicitly tell ***kubectl*** to show you the contents of a Secret. Additionally, when it does show you the information, it only shows you a Base64 encoded version so that a casual onlooker doesn't accidentally see any sensitive data. Secrets don't provide any encryption by default, that is something you'll either need to do yourself or find an alternate option to configure. Encryption is not required for the application to run.
+
+
+
+::page{title="Updating Kubernetes resources"}
+
+Next, you will update your Kubernetes deployments to set the environment variables in your containers based on the values that are configured in the ConfigMap and Secret that you created previously. 
+
+Replace the kubernetes file.
+
+> To open the kubernetes.yaml file in your IDE, select
+> **File** > **Open** > guide-kubernetes-microprofile-config/start/kubernetes.yaml, or click the following button
+
+::openFile{path="/home/project/guide-kubernetes-microprofile-config/start/kubernetes.yaml"}
+
+
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-deployment
+  labels:
+    app: system
+spec:
+  selector:
+    matchLabels:
+      app: system
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: system
+    spec:
+      containers:
+      - name: system-container
+        image: system:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+        # system probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9090
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9090
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+           httpGet:
+            path: /health/ready
+            port: 9090
+           initialDelaySeconds: 30
+           periodSeconds: 10
+           timeoutSeconds: 3
+           failureThreshold: 1
+        # Set the environment variables
+        env:
+        - name: CONTEXT_ROOT
+          valueFrom:
+            configMapKeyRef:
+              name: sys-app-root
+              key: contextRoot
+        - name: SYSTEM_APP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: username
+        - name: SYSTEM_APP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: password
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventory-container
+        image: inventory:1.0-SNAPSHOT
+        ports:
+        - containerPort: 9090
+        # inventory probes
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: 9090
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 9090
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        # Set the environment variables
+        env:
+        - name: SYS_APP_HOSTNAME
+          value: system-service
+        - name: CONTEXT_ROOT
+          valueFrom:
+            configMapKeyRef:
+              name: sys-app-root
+              key: contextRoot
+        - name: SYSTEM_APP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: username
+        - name: SYSTEM_APP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sys-app-credentials
+              key: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-service
+spec:
+  type: NodePort
+  selector:
+    app: system
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 31000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+    nodePort: 32000
+```
+
+
+
+The ***CONTEXT_ROOT***, ***SYSTEM_APP_USERNAME***, and ***SYSTEM_APP_PASSWORD*** environment variables are set in the ***env*** sections of ***system-container*** and ***inventory-container***.
+
+Using the ***valueFrom*** field, you can specify the value of an environment variable from various sources. These sources include a ConfigMap, a Secret, and information about the cluster. In this example ***configMapKeyRef*** gets the value ***contextRoot*** from the ***sys-app-root*** ConfigMap. Similarly, ***secretKeyRef*** gets the values ***username*** and ***password*** from the ***sys-app-credentials*** Secret.
+
+
+::page{title="Deploying your changes"}
+
+
+Rebuild the application using ***mvn clean package***.
+```bash
+cd /home/project/guide-kubernetes-microprofile-config/start
 mvn clean package
-mvn liberty:create liberty:install-feature
-mvn liberty:configure-arquillian
 ```
 
-Now, you can run your Arquillian tests with the Maven ***integration-test*** goal:
+Run the ***docker build*** commands to rebuild container images for your application:
+```bash
+docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+```
+
+
+Push your updated images to the container registry on IBM Cloud with the following commands:
 
 ```bash
-mvn failsafe:integration-test
+docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 ```
 
-In the test output, you can see that the Liberty instance launched, and that the web archive, ***arquillian-managed***, started as an application in the instance. You can also see that the tests are running and that the results are reported.
+Update the image names and set the image pull policy to **Always** so that the images in your IBM Cloud container registry are used, and remove the **nodePort** fields so that the ports can be automatically generated:
 
-After the tests stop running, the test application is automatically undeployed and the instance shuts down. You should then get a message indicating that the build and tests are successful.
+```bash
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
+sed -i 's=nodePort: 31000==g' kubernetes.yaml
+sed -i 's=nodePort: 32000==g' kubernetes.yaml
+```
+
+Run the following command to deploy your changes to the Kubernetes cluster.
+```bash
+kubectl replace --force -f kubernetes.yaml
+```
+
+When this command finishes, wait for the pods to be in the Ready state. Run the following command to view the status of the pods.
+```bash
+kubectl get pods
+```
+
+When the pods are ready, the output shows ***1/1*** for READY and ***Running*** for STATUS.
+
+
+Set up port forwarding to the new services.
+
+Run the following commands to set up port forwarding to access the ***system*** service.
+
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9090
+```
+
+Then, run the following commands to set up port forwarding to access the **inventory** service.
+
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9090
+```
+
+You now need to use the new username, ***alice***, and the new password, ***wonderland***, to log in. Access your application with the following commands:
+
+```bash
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+curl -s http://localhost:$SYSTEM_NODEPORT/dev/system/properties -u alice:wonderland | jq
+```
+
+Notice that the URL you are using to reach the application now has ***/dev*** as the context root. 
+
+
+Verify the inventory service is working as intended by using the following commands:
+
+```bash
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+curl -s http://localhost:$INVENTORY_NODEPORT/inventory/systems/system-service | jq
+```
+
+If it is not working, then check the configuration of the credentials.
+
+::page{title="Testing the microservices"}
+
+
+
+Update the ***pom.xml*** files so that the ***system.service.root*** and ***inventory.service.root*** properties have the correct ports to access the **system** and **inventory** services.
+
+```bash
+cd /home/project/guide-kubernetes-microprofile-config/start
+SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
+INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
+sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' inventory/pom.xml
+sed -i 's=localhost:32000='"localhost:$INVENTORY_NODEPORT"'=g' inventory/pom.xml
+sed -i 's=localhost:31000='"localhost:$SYSTEM_NODEPORT"'=g' system/pom.xml
+```
+
+Run the integration tests by using the following command:
+
+```bash
+mvn failsafe:integration-test \
+    -Dsystem.service.root=localhost:$SYSTEM_NODEPORT \
+    -Dsystem.context.root=/dev \
+    -Dinventory.service.root=localhost:$INVENTORY_NODEPORT
+```
+
+The tests for ***inventory*** verify that the service can communicate with ***system*** using the configured credentials. If the credentials are misconfigured, then the ***inventory*** test fails, so the ***inventory*** test indirectly verifies that the credentials are correctly configured.
+
+After the tests succeed, you should see output similar to the following in your console.
 
 ```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running it.io.openliberty.guides.system.SystemArquillianIT
-...
-[AUDIT   ] CWWKE0001I: The server defaultServer has been launched.
-[AUDIT   ] CWWKG0093A: Processing configuration drop-ins resource: guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/configDropins/overrides/liberty-plugin-variable-config.xml
-[INFO    ] CWWKE0002I: The kernel started after 0.854 seconds
-[INFO    ] CWWKF0007I: Feature update started.
-[AUDIT   ] CWWKZ0058I: Monitoring dropins for applications.
-[INFO    ] Aries Blueprint packages not available. So namespaces will not be registered
-[INFO    ] CWWKZ0018I: Starting application guide-arquillian-managed.
-...
-[INFO    ] SRVE0169I: Loading Web Module: guide-arquillian-managed.
-[INFO    ] SRVE0250I: Web Module guide-arquillian-managed has been bound to default_host.
-[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/
-[INFO    ] SESN0176I: A new session context will be created for application key default_host/
-[INFO    ] SESN0172I: The session manager is using the Java default SecureRandom implementation for session ID generation.
-[AUDIT   ] CWWKZ0001I: Application guide-arquillian-managed started in 1.126 seconds.
-[INFO    ] CWWKO0219I: TCP Channel defaultHttpEndpoint has been started and is now listening for requests on host localhost  (IPv4: 127.0.0.1) port 9080.
-[AUDIT   ] CWWKF0012I: The server installed the following features: [cdi-2.0, jaxrs-2.1, jaxrsClient-2.1, jndi-1.0, jsonp-1.1, localConnector-1.0, mpConfig-1.3, servlet-4.0].
-[INFO    ] CWWKF0008I: Feature update completed in 2.321 seconds.
-[AUDIT   ] CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 3.175 seconds.
-[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
-...
-[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
-[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
-[AUDIT   ] CWWKT0016I: Web application available (default_host): http://localhost:9080/arquillian-managed/
-...
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.133 s - in it.io.openliberty.guides.system.SystemArquillianIT
-[INFO] Running it.io.openliberty.guides.inventory.InventoryArquillianIT
-[INFO    ] CWWKZ0018I: Starting application arquillian-managed.
-[INFO    ] CWWKZ0136I: The arquillian-managed application is using the archive file at the guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/dropins/arquillian-managed.war location.
-[INFO    ] SRVE0169I: Loading Web Module: arquillian-managed.
-[INFO    ] SRVE0250I: Web Module arquillian-managed has been bound to default_host.
-...
-[INFO    ] Setting the server's publish address to be /inventory/
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Initialization successful.
-[INFO    ] Setting the server's publish address to be /system/
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.system.SystemApplication]: Initialization successful.
-[INFO    ] SRVE0242I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Initialization successful.
-[AUDIT   ] CWWKT0017I: Web application removed (default_host): http://localhost:9080/arquillian-managed/
-[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [ArquillianServletRunner]: Destroy successful.
-[INFO    ] SRVE0253I: [arquillian-managed] [/arquillian-managed] [io.openliberty.guides.inventory.InventoryApplication]: Destroy successful.
-[AUDIT   ] CWWKZ0009I: The application arquillian-managed has stopped successfully.
-[INFO    ] SRVE9103I: A configuration file for a web server plugin was automatically generated for this server at guide-arquillian-managed/finish/target/liberty/wlp/usr/servers/defaultServer/logs/state/plugin-cfg.xml.
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.297 s - in it.io.openliberty.guides.inventory.InventoryArquillianIT
-...
-Stopping server defaultServer.
-...
-Server defaultServer stopped.
-[INFO]
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-[INFO]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  12.018 s
-[INFO] Finished at: 2020-06-23T12:40:32-04:00
-[INFO] ------------------------------------------------------------------------
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.system.SystemEndpointIT
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.706 s - in it.io.openliberty.guides.system.SystemEndpointIT
+
+Results:
+
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 ```
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.inventory.InventoryEndpointIT
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.696 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
+
+Results:
+
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+```
+
+::page{title="Tearing down the environment"}
+
+Press **CTRL+C** in the command-line sessions where you ran ***kubectl port-forward*** to stop the port forwarding. 
+
+Run the following commands to delete all the resources that you created.
+
+```bash
+kubectl delete -f kubernetes.yaml
+kubectl delete configmap sys-app-root
+kubectl delete secret sys-app-credentials
+```
+
+
+
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just built some functional and integration tests with the Arquillian managed container and ran the tests for your microservices on Open Liberty.
+You have used MicroProfile Config to externalize the configuration of two microservices, and then you configured them by creating a ConfigMap and Secret in your Kubernetes cluster.
 
 
-Try one of the related guides to learn more about the technologies that you come across in this guide.
 
 
 ### Clean up your environment
@@ -409,35 +669,37 @@ Try one of the related guides to learn more about the technologies that you come
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-arquillian-managed*** project by running the following commands:
+Delete the ***guide-kubernetes-microprofile-config*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-arquillian-managed
+rm -fr guide-kubernetes-microprofile-config
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20microservices%20with%20the%20Arquillian%20managed%20container&guide-id=cloud-hosted-guide-arquillian-managed)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Configuring%20microservices%20running%20in%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-microprofile-config)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-arquillian-managed/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-arquillian-managed/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-microprofile-config/pulls)
 
 
 
 ### Where to next?
 
+* [Deploying microservices to Kubernetes](https://openliberty.io/guides/kubernetes-intro.html)
+* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
 * [Injecting dependencies into microservices](https://openliberty.io/guides/cdi-intro.html)
-* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
 
 
 ### Log out of the session
 
-Log out of the cloud-hosted guides by selecting **Account** > **Logout** from the Skills Network menu.
+Log out of the cloud-hosted guides by selecting **Account** :fa-user: > **Logout** from the Skills Network left-sided menu.
