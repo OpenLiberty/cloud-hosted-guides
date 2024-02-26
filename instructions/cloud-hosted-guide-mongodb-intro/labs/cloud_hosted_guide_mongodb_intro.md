@@ -165,24 +165,26 @@ touch /home/project/guide-mongodb-intro/start/src/main/java/io/openliberty/guide
 ```java
 package io.openliberty.guides.mongo;
 
+import java.util.Collections;
+
+import javax.net.ssl.SSLContext;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import com.ibm.websphere.crypto.PasswordUtil;
+import com.ibm.websphere.ssl.JSSEHelper;
+import com.ibm.websphere.ssl.SSLException;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCredential;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Disposes;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
-import javax.net.ssl.SSLContext;
-
-import com.ibm.websphere.ssl.JSSEHelper;
-import com.ibm.websphere.ssl.SSLException;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import com.ibm.websphere.crypto.PasswordUtil;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
-import com.mongodb.client.MongoDatabase;
-
-import java.util.Collections;
 
 @ApplicationScoped
 public class MongoProducer {
@@ -222,14 +224,14 @@ public class MongoProducer {
                 null
         );
 
-        return new MongoClient(
-                new ServerAddress(hostname, port),
-                creds,
-                new MongoClientOptions.Builder()
-                        .sslEnabled(true)
-                        .sslContext(sslContext)
-                        .build()
-        );
+        return MongoClients.create(MongoClientSettings.builder()
+                   .applyConnectionString(
+                       new ConnectionString("mongodb://" + hostname + ":" + port))
+                   .credential(creds)
+                   .applyToSslSettings(builder -> {
+                       builder.enabled(true);
+                       builder.context(sslContext); })
+                   .build());
     }
 
     @Produces
@@ -618,7 +620,7 @@ Replace the Liberty ***server.xml*** configuration file.
     <featureManager>
         <feature>cdi-4.0</feature>
         <feature>ssl-1.0</feature>
-        <feature>mpConfig-3.0</feature>
+        <feature>mpConfig-3.1</feature>
         <feature>passwordUtilities-1.1</feature>
         <feature>beanValidation-3.0</feature>	   
         <feature>restfulWS-3.1</feature>
@@ -626,14 +628,14 @@ Replace the Liberty ***server.xml*** configuration file.
         <feature>mpOpenAPI-3.1</feature>
     </featureManager>
 
-    <variable name="default.http.port" defaultValue="9080"/>
-    <variable name="default.https.port" defaultValue="9443"/>
+    <variable name="http.port" defaultValue="9080"/>
+    <variable name="https.port" defaultValue="9443"/>
     <variable name="app.context.root" defaultValue="/mongo"/>
 
     <httpEndpoint
         host="*" 
-        httpPort="${default.http.port}" 
-        httpsPort="${default.https.port}" 
+        httpPort="${http.port}" 
+        httpsPort="${https.port}" 
         id="defaultHttpEndpoint"
     />
 
@@ -1004,7 +1006,6 @@ Then, run the following commands to stop and remove the ***mongo-guide*** contai
 docker stop mongo-guide
 docker rm mongo-guide
 docker rmi mongo-sample
-docker rmi mongo
 ```
 
 ::page{title="Summary"}
