@@ -16,8 +16,8 @@ jobs:
     steps: 
       - name: Output message
         run: |
-          echo "'Guide name: ${{ github.event.inputs.guide_name }}"
-          echo "'To: ${{ github.event.inputs.to }}"
+          echo "Guide name: ${{ github.event.inputs.guide_name }}"
+          echo "To: ${{ github.event.inputs.to }}"
 
   matrixProd:
     runs-on: ubuntu-latest
