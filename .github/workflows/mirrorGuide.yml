@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       guide_name:
-        description: 'Guide name'
+        description: 'Guide name, e.g. cdi-intro'
         required: true
 
 jobs:
