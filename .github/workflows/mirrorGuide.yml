@@ -17,6 +17,7 @@ jobs:
       - name: Output message
         run: |
           echo "'Guide name: ${{ github.event.inputs.guide_name }}"
+          echo "'To: ${{ github.event.inputs.to }}"
 
   matrixProd:
     runs-on: ubuntu-latest
@@ -95,7 +96,7 @@ jobs:
           ref: staging
       - name: Check Files
         run: |
-          if [ "${{ github.event.inputs.guide_name }}" = "${{matrix.repo.github}}" ]; then 
+          if [ "${{ github.event.inputs.guide_name }}" = "${{matrix.repo.guide}}" ]; then 
             echo "Mirroring "${{ github.event.inputs.guide_name }}" to "${{matrix.repo.gitlab}}"";
             GITLAB="${{matrix.repo.gitlab}}" >> $GITHUB_ENV;
             GITLAB_BRANCH="${{matrix.repo.gitlab-branch}}" >> $GITHUB_ENV;
