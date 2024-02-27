@@ -6,6 +6,9 @@ on:
       guide_name:
         description: 'Guide name, e.g. cdi-intro'
         required: true
+      to:
+        description: 'main or staging'
+        required: true
 
 jobs:
   printInputs:
@@ -13,10 +16,12 @@ jobs:
     steps: 
       - name: Output message
         run: |
-          echo "'Guide name: ${{ github.event.inputs.guide_name }}"
+          echo "Guide name: ${{ github.event.inputs.guide_name }}"
+          echo "To: ${{ github.event.inputs.to }}"
 
   matrixProd:
     runs-on: ubuntu-latest
+    if: github.event.inputs.to == 'main'
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrixProd }}
     steps:
@@ -29,10 +34,26 @@ jobs:
         TASKS="${TASKS//$'\r'/'%0D'}"
         echo "::set-output name=matrixProd::$TASKS"
 
+  matrixStaging:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.to == 'staging'
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrixStaging }}
+    steps:
+    - uses: actions/checkout@master
+    - id: set-matrix
+      run: |
+        TASKS=$(echo $(cat $GITHUB_WORKSPACE/.github/workflows/StagingMirror.json))
+        TASKS="${TASKS//'%'/'%25'}"
+        TASKS="${TASKS//$'\n'/'%0A'}"
+        TASKS="${TASKS//$'\r'/'%0D'}"
+        echo "::set-output name=matrixStaging::$TASKS"
+
   deployProd:
     needs: [matrixProd]
     continue-on-error: true
     runs-on: ubuntu-latest
+    if: github.event.inputs.to == 'main'
     strategy:
       matrix:
         repo: ${{fromJson(needs.matrixProd.outputs.matrix)}}
@@ -46,6 +67,41 @@ jobs:
             GITLAB_BRANCH="${{matrix.repo.gitlab-branch}}" >> $GITHUB_ENV;
           else
             echo "Skipping "${{matrix.repo.guide}}"";
+            exit 1;
+          fi
+
+      - name: Mirror to Gitlab
+        uses: s0/git-publish-subdir-action@develop
+        env:
+          REPO: git@ssh.author-gitlab.skills.network:quicklabs/${{matrix.repo.gitlab}}.git
+          BRANCH: ${{matrix.repo.gitlab-branch}}
+          FOLDER: instructions/${{matrix.repo.github}}
+          MESSAGE: "{msg}" # Sets the commit message on gitlab to be the same as on github.
+          SSH_PRIVATE_KEY: ${{secrets.DEPLOY_KEY_QUICK_LABS}}
+          KNOWN_HOSTS_FILE: .github/workflows/known_hosts # Needed if target repo is not on github.com.
+          SKIP_EMPTY_COMMITS: "true"
+
+  deployStaging:
+    needs: [matrixStaging]
+    # name: Start Mirror Containers for single Guide for Staging
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    if: github.event.inputs.to == 'staging'
+    strategy:
+      matrix:
+        repo: ${{fromJson(needs.matrixStaging.outputs.matrix)}}
+    steps:
+      - uses: actions/checkout@master
+        with: 
+          ref: staging
+      - name: Check Files
+        run: |
+          if [ "${{ github.event.inputs.guide_name }}" = "${{matrix.repo.guide}}" ]; then 
+            echo "Mirroring "${{ github.event.inputs.guide_name }}" to "${{matrix.repo.gitlab}}"";
+            GITLAB="${{matrix.repo.gitlab}}" >> $GITHUB_ENV;
+            GITLAB_BRANCH="${{matrix.repo.gitlab-branch}}" >> $GITHUB_ENV;
+          else
+            echo "Skipping "${{matrix.repo.github}}"";
             exit 1;
           fi
 
