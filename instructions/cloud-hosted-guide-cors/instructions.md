@@ -124,10 +124,10 @@ Replace the Liberty ***server.xml*** configuration file.
     <feature>jsonb-3.0</feature>
 </featureManager>
 
-<variable name="default.http.port" defaultValue="9080"/>
-<variable name="default.https.port" defaultValue="9443"/>
+<variable name="http.port" defaultValue="9080"/>
+<variable name="https.port" defaultValue="9443"/>
 
-<httpEndpoint host="*" httpPort="${default.http.port}" httpsPort="${default.https.port}"
+<httpEndpoint host="*" httpPort="${http.port}" httpsPort="${https.port}"
     id="defaultHttpEndpoint"/>
 
 <webApplication location="guide-cors.war" contextRoot="/"/>
@@ -187,7 +187,7 @@ import org.junit.jupiter.api.Test;
 
 public class CorsIT {
 
-    String port = System.getProperty("default.http.port");
+    String port = System.getProperty("http.port");
     String pathToHost = "http://localhost:" + port + "/";
 
     @BeforeEach
@@ -285,10 +285,10 @@ Replace the Liberty ***server.xml*** configuration file.
     <feature>jsonb-3.0</feature>
 </featureManager>
 
-<variable name="default.http.port" defaultValue="9080"/>
-<variable name="default.https.port" defaultValue="9443"/>
+<variable name="http.port" defaultValue="9080"/>
+<variable name="https.port" defaultValue="9443"/>
 
-<httpEndpoint host="*" httpPort="${default.http.port}" httpsPort="${default.https.port}"
+<httpEndpoint host="*" httpPort="${http.port}" httpsPort="${https.port}"
     id="defaultHttpEndpoint"/>
 
 <webApplication location="guide-cors.war" contextRoot="/"/>
@@ -352,7 +352,7 @@ import org.junit.jupiter.api.Test;
 
 public class CorsIT {
 
-    String port = System.getProperty("default.http.port");
+    String port = System.getProperty("http.port");
     String pathToHost = "http://localhost:" + port + "/";
 
     @BeforeEach
