@@ -352,7 +352,7 @@ export function ArtistTable() {
         <button onClick={() => previousPage()} disabled={!canPreviousPage}>
           {'Previous'}
         </button>{' '}
-        <div class="page-info">
+        <div className="page-info">
           <span>
             Page{' '}
             <strong>
@@ -548,7 +548,7 @@ export function ArtistTable() {
         <button onClick={() => previousPage()} disabled={!canPreviousPage}>
           {'Previous'}
         </button>{' '}
-        <div class="page-info">
+        <div className="page-info">
           <span>
             Page{' '}
             <strong>
@@ -653,8 +653,8 @@ Update the ***pom.xml*** file.
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
     </properties>
 
     <dependencies>
@@ -668,7 +668,7 @@ Update the ***pom.xml*** file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.0</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -677,7 +677,7 @@ Update the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.9.2</version>
+            <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -694,13 +694,13 @@ Update the ***pom.xml*** file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.8.2</version>            
+                <version>3.10</version>            
             </plugin>
             <!-- Frontend resources -->
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.12.1</version>
+                <version>1.15.0</version>
                 <configuration>
                     <workingDirectory>src/main/frontend</workingDirectory>
                 </configuration>
@@ -711,8 +711,8 @@ Update the ***pom.xml*** file.
                             <goal>install-node-and-npm</goal>
                         </goals>
                         <configuration>
-                            <nodeVersion>v16.16.0</nodeVersion>
-                            <npmVersion>8.11.0</npmVersion>
+                            <nodeVersion>v21.6.2</nodeVersion>
+                            <npmVersion>10.2.4</npmVersion>
                         </configuration>
                     </execution>
                     <execution>
