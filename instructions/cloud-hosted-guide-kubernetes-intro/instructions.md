@@ -165,7 +165,7 @@ spec:
       - name: system-container
         image: system:1.0-SNAPSHOT
         ports:
-        - containerPort: 9080
+        - containerPort: 9090
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -186,7 +186,7 @@ spec:
       - name: inventory-container
         image: inventory:1.0-SNAPSHOT
         ports:
-        - containerPort: 9080
+        - containerPort: 9090
         env:
         - name: SYS_APP_HOSTNAME
           value: system-service
@@ -201,8 +201,8 @@ spec:
     app: system
   ports:
   - protocol: TCP
-    port: 9080
-    targetPort: 9080
+    port: 9090
+    targetPort: 9090
     nodePort: 31000
 
 ---
@@ -216,8 +216,8 @@ spec:
     app: inventory
   ports:
   - protocol: TCP
-    port: 9080
-    targetPort: 9080
+    port: 9090
+    targetPort: 9090
     nodePort: 32000
 ```
 
@@ -346,11 +346,11 @@ spec:
       - name: system-container
         image: system:1.0-SNAPSHOT
         ports:
-        - containerPort: 9080
+        - containerPort: 9090
         readinessProbe:
           httpGet:
             path: /health/ready
-            port: 9080
+            port: 9090
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 3
@@ -380,14 +380,14 @@ spec:
       - name: inventory-container
         image: inventory:1.0-SNAPSHOT
         ports:
-        - containerPort: 9080
+        - containerPort: 9090
         env:
         - name: SYS_APP_HOSTNAME
           value: system-service
         readinessProbe:
           httpGet:
             path: /health/ready
-            port: 9080
+            port: 9090
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 3
@@ -403,8 +403,8 @@ spec:
     app: system
   ports:
   - protocol: TCP
-    port: 9080
-    targetPort: 9080
+    port: 9090
+    targetPort: 9090
     nodePort: 31000
 
 ---
@@ -418,8 +418,8 @@ spec:
     app: inventory
   ports:
   - protocol: TCP
-    port: 9080
-    targetPort: 9080
+    port: 9090
+    targetPort: 9090
     nodePort: 32000
 ```
 
