@@ -340,19 +340,19 @@ Imagine a scenario where you are developing an Open Liberty application on port 
 
 In this example, you will use an environment variable to externally configure the HTTP port number of the ***inventory*** service. 
 
-In the ***inventory/server.xml*** file, the ***default.http.port*** variable is declared and is used in the ***httpEndpoint*** element to define the service endpoint. The default value of the ***default.http.port*** variable is ***9081***. However, this value is only used if no other value is specified. You can replace this value in the container by using the -e flag for the podman run command. 
+In the ***inventory/server.xml*** file, the ***http.port*** variable is declared and is used in the ***httpEndpoint*** element to define the service endpoint. The default value of the ***http.port*** variable is ***9081***. However, this value is only used if no other value is specified. You can replace this value in the container by using the -e flag for the podman run command. 
 
-Run the following commands to stop and remove the ***inventory*** container and rerun it with the ***default.http.port*** environment variable set:
+Run the following commands to stop and remove the ***inventory*** container and rerun it with the ***http.port*** environment variable set:
 
 ```bash
 docker stop inventory
 docker rm inventory 
-docker run -d --name inventory -e default.http.port=9091 -p 9091:9091 inventory:1.0-SNAPSHOT
+docker run -d --name inventory -e http.port=9091 -p 9091:9091 inventory:1.0-SNAPSHOT
 ```
 
-The ***-e*** flag can be used to create and set the values of environment variables in a Docker container. In this case, you are setting the ***default.http.port*** environment variable to ***9091*** for the ***inventory*** container.
+The ***-e*** flag can be used to create and set the values of environment variables in a Docker container. In this case, you are setting the ***http.port*** environment variable to ***9091*** for the ***inventory*** container.
 
-Now, when the service is starting up, Open Liberty finds the ***default.http.port*** environment variable and uses it to set the value of the ***default.http.port*** variable to be used in the HTTP endpoint.
+Now, when the service is starting up, Open Liberty finds the ***http.port*** environment variable and uses it to set the value of the ***http.port*** variable to be used in the HTTP endpoint.
 
 
 The **inventory** service is now available on the new port number that you specified. You can see the contents of the inventory at the **http://localhost:9091/inventory/systems** URL. Run the following curl command:
@@ -508,14 +508,12 @@ docker exec -it inventory /opt/ol/wlp/bin/productInfo featureInfo
 Your list of Liberty features should be similar to the following:
 ```
 jndi-1.0
-servlet-5.0
-cdi-3.0
-concurrent-2.0
-jsonb-2.0
-jsonp-2.0
-mpConfig-3.0
-restfulWS-3.0
-restfulWSClient-3.0
+cdi-4.0
+jsonb-3.0
+jsonp-2.1
+mpConfig-3.1
+restfulWS-3.1
+restfulWSClient-3.1
 ```
 
 
