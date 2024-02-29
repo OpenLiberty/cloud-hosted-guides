@@ -114,7 +114,3 @@ jobs:
           SSH_PRIVATE_KEY: ${{secrets.DEPLOY_KEY_QUICK_LABS}}
           KNOWN_HOSTS_FILE: .github/workflows/known_hosts # Needed if target repo is not on github.com.
           SKIP_EMPTY_COMMITS: "true"
-      - name: clean known_hosts
-        if: failure()
-        run: |
-          cat /home/runner/.ssh/known_hosts  
