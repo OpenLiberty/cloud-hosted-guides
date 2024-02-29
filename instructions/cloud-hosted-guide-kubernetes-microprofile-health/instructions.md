@@ -212,7 +212,7 @@ public class InventoryReadinessCheck implements HealthCheck {
         try {
             Client client = ClientBuilder.newClient();
             client
-                .target("http://" + hostname + ":9080/system/properties")
+                .target("http://" + hostname + ":9090/system/properties")
                 .request()
                 .post(null);
 
@@ -226,7 +226,7 @@ public class InventoryReadinessCheck implements HealthCheck {
 
 
 
-This health check verifies that the ***system*** microservice is available at ***http://system-service:9080/***. The ***system-service*** host name is accessible only from inside the cluster; you can't access it yourself. If it's available, then it returns an ***UP*** status. Similarly, if it's unavailable then it returns a ***DOWN*** status. When the status is ***DOWN***, the microservice is considered to be unhealthy.
+This health check verifies that the ***system*** microservice is available at ***http://system-service:9090/***. The ***system-service*** host name is accessible only from inside the cluster; you can't access it yourself. If it's available, then it returns an ***UP*** status. Similarly, if it's unavailable then it returns a ***DOWN*** status. When the status is ***DOWN***, the microservice is considered to be unhealthy.
 
 The health checks for the ***system*** microservice were already been implemented. The ***system*** microservice was set up to become unhealthy for 60 seconds when a specific endpoint is called. This endpoint has been provided for you to observe the results of an unhealthy pod and how Kubernetes reacts.
 
@@ -275,16 +275,16 @@ spec:
       - name: system-container
         image: system:1.0-SNAPSHOT
         ports:
-        - containerPort: 9080
+        - containerPort: 9090
         # system probes
         startupProbe:
           httpGet:
             path: /health/started
-            port: 9080
+            port: 9090
         livenessProbe:
           httpGet:
             path: /health/live
-            port: 9080
+            port: 9090
           initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 3
@@ -292,7 +292,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /health/ready
-            port: 9080
+            port: 9090
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 3
@@ -322,7 +322,7 @@ spec:
       - name: inventory-container
         image: inventory:1.0-SNAPSHOT
         ports:
-        - containerPort: 9080
+        - containerPort: 9090
         env:
         - name: SYS_APP_HOSTNAME
           value: system-service
@@ -330,11 +330,11 @@ spec:
         startupProbe:
           httpGet:
             path: /health/started
-            port: 9080
+            port: 9090
         livenessProbe:
           httpGet:
             path: /health/live
-            port: 9080
+            port: 9090
           initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 3
@@ -342,7 +342,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /health/ready
-            port: 9080
+            port: 9090
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 3
@@ -358,8 +358,8 @@ spec:
     app: system
   ports:
   - protocol: TCP
-    port: 9080
-    targetPort: 9080
+    port: 9090
+    targetPort: 9090
     nodePort: 31000
 ---
 apiVersion: v1
@@ -372,8 +372,8 @@ spec:
     app: inventory
   ports:
   - protocol: TCP
-    port: 9080
-    targetPort: 9080
+    port: 9090
+    targetPort: 9090
     nodePort: 32000
 ```
 
