@@ -112,13 +112,13 @@ After the pods are ready, you will make requests to your services.
 In this IBM cloud environment, you need to set up port forwarding to access the services. Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to set up port forwarding to access the **system** service.
 ```bash
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9090
 ```
 
 Then, open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to set up port forwarding to access the **inventory** service.
 ```bash
 INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
+kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9090
 ```
 
 Then use the following commands to access your **system** microservice. The ***-u*** option is used to pass in the username ***bob*** and the password ***bobpwd***.
@@ -157,19 +157,19 @@ Replace the ***server.xml*** file.
     <feature>jsonb-3.0</feature>
     <feature>cdi-4.0</feature>
     <feature>jsonp-2.1</feature>
-    <feature>mpConfig-3.0</feature>
+    <feature>mpConfig-3.1</feature>
     <feature>mpHealth-4.0</feature>
     <feature>appSecurity-5.0</feature>
   </featureManager>
 
-  <variable name="default.http.port" defaultValue="9080"/>
-  <variable name="default.https.port" defaultValue="9443"/>
+  <variable name="http.port" defaultValue="9090"/>
+  <variable name="https.port" defaultValue="9453"/>
   <variable name="system.app.username" defaultValue="bob"/>
   <variable name="system.app.password" defaultValue="bobpwd"/>
   <variable name="context.root" defaultValue="/"/>
 
-  <httpEndpoint host="*" httpPort="${default.http.port}" 
-    httpsPort="${default.https.port}" id="defaultHttpEndpoint" />
+  <httpEndpoint host="*" httpPort="${http.port}" 
+    httpsPort="${https.port}" id="defaultHttpEndpoint" />
 
   <webApplication location="guide-kubernetes-microprofile-config-system.war" contextRoot="${context.root}"/>
 
@@ -234,8 +234,8 @@ public class SystemClient {
   String CONTEXT_ROOT;
 
   @Inject
-  @ConfigProperty(name = "default.http.port")
-  String DEFAULT_PORT;
+  @ConfigProperty(name = "http.port")
+  String HTTP_PORT;
 
   @Inject
   @ConfigProperty(name = "SYSTEM_APP_USERNAME")
@@ -262,7 +262,7 @@ public class SystemClient {
 
   private Builder getBuilder(String hostname, Client client) throws Exception {
     URI uri = new URI(
-                  PROTOCOL, null, hostname, Integer.valueOf(DEFAULT_PORT),
+                  PROTOCOL, null, hostname, Integer.valueOf(HTTP_PORT),
                   CONTEXT_ROOT + SYSTEM_PROPERTIES, null, null);
     String urlString = uri.toString();
     Builder builder = client.target(urlString).request();
@@ -305,12 +305,22 @@ kubectl create configmap sys-app-root --from-literal contextRoot=/dev
 
 This command deploys a ConfigMap named ***sys-app-root*** to your cluster. It has a key called ***contextRoot*** with a value of ***/dev***. The ***--from-literal*** flag allows you to specify individual key-value pairs to store in this ConfigMap. Other available options, such as ***--from-file*** and ***--from-env-file***, provide more versatility as to what you want to configure. Details about these options can be found in the [Kubernetes CLI documentation](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-configmap-em-).
 
+Run the following command to display details of the ConfigMap.
+```bash
+kubectl describe configmaps sys-app-root
+```
+
 Create a Secret to configure the new credentials that ***inventory*** uses to authenticate against ***system*** with the following ***kubectl*** command.
 ```bash
 kubectl create secret generic sys-app-credentials --from-literal username=alice --from-literal password=wonderland
 ```
  
 This command looks similar to the command to create a ConfigMap, but one difference is the word ***generic***. This word creates a Secret that doesn't store information in any specialized way. Different types of secrets are available, such as secrets to store Docker credentials and secrets to store public and private key pairs.
+
+Run the following command to display details of the Secret.
+```bash
+kubectl describe secrets/sys-app-credentials
+```
 
 A Secret is similar to a ConfigMap. A key difference is that a Secret is used for confidential information such as credentials. One of the main differences is that you must explicitly tell ***kubectl*** to show you the contents of a Secret. Additionally, when it does show you the information, it only shows you a Base64 encoded version so that a casual onlooker doesn't accidentally see any sensitive data. Secrets don't provide any encryption by default, that is something you'll either need to do yourself or find an alternate option to configure. Encryption is not required for the application to run.
 
@@ -354,16 +364,16 @@ spec:
       - name: system-container
         image: system:1.0-SNAPSHOT
         ports:
-        - containerPort: 9080
+        - containerPort: 9090
         # system probes
         startupProbe:
           httpGet:
             path: /health/started
-            port: 9080
+            port: 9090
         livenessProbe:
           httpGet:
             path: /health/live
-            port: 9080
+            port: 9090
           initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 3
@@ -371,7 +381,7 @@ spec:
         readinessProbe:
            httpGet:
             path: /health/ready
-            port: 9080
+            port: 9090
            initialDelaySeconds: 30
            periodSeconds: 10
            timeoutSeconds: 3
@@ -418,16 +428,16 @@ spec:
       - name: inventory-container
         image: inventory:1.0-SNAPSHOT
         ports:
-        - containerPort: 9080
+        - containerPort: 9090
         # inventory probes
         startupProbe:
           httpGet:
             path: /health/started
-            port: 9080
+            port: 9090
         livenessProbe:
           httpGet:
             path: /health/live
-            port: 9080
+            port: 9090
           initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 3
@@ -435,7 +445,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /health/ready
-            port: 9080
+            port: 9090
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 3
@@ -470,8 +480,8 @@ spec:
     app: system
   ports:
   - protocol: TCP
-    port: 9080
-    targetPort: 9080
+    port: 9090
+    targetPort: 9090
     nodePort: 31000
 ---
 apiVersion: v1
@@ -484,8 +494,8 @@ spec:
     app: inventory
   ports:
   - protocol: TCP
-    port: 9080
-    targetPort: 9080
+    port: 9090
+    targetPort: 9090
     nodePort: 32000
 ```
 
@@ -549,14 +559,14 @@ Run the following commands to set up port forwarding to access the ***system*** 
 
 ```bash
 SYSTEM_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services system-service`
-kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9080
+kubectl port-forward svc/system-service $SYSTEM_NODEPORT:9090
 ```
 
 Then, run the following commands to set up port forwarding to access the **inventory** service.
 
 ```bash
 INVENTORY_NODEPORT=`kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services inventory-service`
-kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9080
+kubectl port-forward svc/inventory-service $INVENTORY_NODEPORT:9090
 ```
 
 You now need to use the new username, ***alice***, and the new password, ***wonderland***, to log in. Access your application with the following commands:
