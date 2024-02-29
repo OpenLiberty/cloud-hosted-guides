@@ -160,8 +160,8 @@ touch /home/project/guide-maven-intro/start/pom.xml
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
         <liberty.var.app.context.root>${project.artifactId}</liberty.var.app.context.root>
     </properties>
 
@@ -176,7 +176,7 @@ touch /home/project/guide-maven-intro/start/pom.xml
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.0</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -190,7 +190,7 @@ touch /home/project/guide-maven-intro/start/pom.xml
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.9.2</version>
+            <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -206,7 +206,7 @@ touch /home/project/guide-maven-intro/start/pom.xml
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.8.2</version>
+                <version>3.10</version>
                 <configuration>
                     <serverName>guideServer</serverName>
                 </configuration>
@@ -214,10 +214,10 @@ touch /home/project/guide-maven-intro/start/pom.xml
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.5</version>
                 <configuration>
                     <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
+                        <http.port>${liberty.var.http.port}</http.port>
                         <war.name>${liberty.var.app.context.root}</war.name>
                     </systemPropertyVariables>
                 </configuration>
@@ -244,7 +244,7 @@ The project coordinates describe the name and version of the application. The **
 
 The first four properties in the properties section of the project, just define the encoding (***UTF-8***) and version of Java (***Java 11***) that Maven uses to compile the application source code.
 
-Open Liberty configuration properties provide you with a single place to specify values that are used in multiple places throughout the application. For example, the ***default.http.port*** value is used in both the Liberty ***server.xml*** configuration file and will be used in the test class that you will add (***EndpointIT.java***) to the application. Because the ***default.http.port*** value is specified in the ***pom.xml*** file, you can easily change the port number that the Liberty instance runs on without updating the application code in multiple places.
+Open Liberty configuration properties provide you with a single place to specify values that are used in multiple places throughout the application. For example, the ***http.port*** value is used in both the Liberty ***server.xml*** configuration file and will be used in the test class that you will add (***EndpointIT.java***) to the application. Because the ***http.port*** value is specified in the ***pom.xml*** file, you can easily change the port number that the Liberty instance runs on without updating the application code in multiple places.
 
 
 The ***HelloServlet.java*** class depends on ***jakarta.jakartaee-api*** to compile. Maven will download this dependency from the Maven Central repository using the ***groupId***, ***artifactId***, and ***version*** details that you provide here. The dependency is set to ***provided***, which means that the API is in the Liberty runtime and doesn't need to be packaged by the application.
