@@ -260,7 +260,7 @@ Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Comm
 
 The ***InventoryPactIT*** class contains a ***PactProviderRule*** mock provider that mimics the HTTP responses from the ***system*** microservice. The ***@Pact*** annotation takes the name of the microservice as a parameter, which makes it easier to differentiate microservices from each other when you have multiple applications.
 
-The ***createPactServer()*** method defines the minimal expected responsezfor a specific endpoint, which is known as an interaction. For each interaction, the expected request and the response are registered with the mock service by using the ***@PactVerification*** annotation.
+The ***createPactServer()*** method defines the minimal expected responses for a specific endpoint, which is known as an interaction. For each interaction, the expected request and the response are registered with the mock service by using the ***@PactVerification*** annotation.
 
 The test sends a real request with the ***getUrl()*** method of the mock provider. The mock provider compares the actual request with the expected request and confirms whether the comparison is successful. Finally, the ***assertEquals()*** method confirms that the response is correct.
 
