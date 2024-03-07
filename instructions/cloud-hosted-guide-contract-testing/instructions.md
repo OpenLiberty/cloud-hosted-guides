@@ -260,7 +260,7 @@ Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Comm
 
 The ***InventoryPactIT*** class contains a ***PactProviderRule*** mock provider that mimics the HTTP responses from the ***system*** microservice. The ***@Pact*** annotation takes the name of the microservice as a parameter, which makes it easier to differentiate microservices from each other when you have multiple applications.
 
-The ***createPactServer()*** method defines the minimal expected responsezfor a specific endpoint, which is known as an interaction. For each interaction, the expected request and the response are registered with the mock service by using the ***@PactVerification*** annotation.
+The ***createPactServer()*** method defines the minimal expected responses for a specific endpoint, which is known as an interaction. For each interaction, the expected request and the response are registered with the mock service by using the ***@PactVerification*** annotation.
 
 The test sends a real request with the ***getUrl()*** method of the mock provider. The mock provider compares the actual request with the expected request and confirms whether the comparison is successful. Finally, the ***assertEquals()*** method confirms that the response is correct.
 
@@ -287,18 +287,18 @@ Replace the inventory Maven project file.
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9081</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.http.port>9091</liberty.var.http.port>
+        <liberty.var.https.port>9454</liberty.var.https.port>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.0</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -317,12 +317,12 @@ Replace the inventory Maven project file.
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>2.0.7</version>
+            <version>2.0.12</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.3.Final</version>
+            <version>6.2.7.Final</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -333,14 +333,14 @@ Replace the inventory Maven project file.
             <plugin>
                 <groupId>au.com.dius.pact.provider</groupId>
                 <artifactId>maven</artifactId>
-                <version>4.5.6</version>
+                <version>4.6.7</version>
                 <configuration>
                     <serviceProviders>
                         <serviceProvider>
                             <name>System</name>
                             <protocol>http</protocol>
                             <host>localhost</host>
-                            <port>9080</port>
+                            <port>9090</port>
                             <path>/</path>
                             <pactFileDirectory>target/pacts</pactFileDirectory>
                         </serviceProvider>
@@ -356,16 +356,16 @@ Replace the inventory Maven project file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
+                <version>3.4.0</version>
             </plugin>
             <!-- Plugin to run functional tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.5</version>
                 <configuration>
                     <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
+                        <http.port>${liberty.var.http.port}</http.port>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -373,7 +373,7 @@ Replace the inventory Maven project file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.8.2</version>
+                <version>3.10.1</version>
             </plugin>
         </plugins>
     </build>
@@ -616,13 +616,13 @@ Replace the system Maven project file.
     <packaging>war</packaging>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+        <liberty.var.http.port>9090</liberty.var.http.port>
+        <liberty.var.https.port>9453</liberty.var.https.port>
         <debugPort>8787</debugPort>
     </properties>
 
@@ -631,7 +631,7 @@ Replace the system Maven project file.
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>6.0</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -644,17 +644,17 @@ Replace the system Maven project file.
         <dependency>
             <groupId>au.com.dius.pact.provider</groupId>
             <artifactId>junit5</artifactId>
-            <version>4.5.6</version>
+            <version>4.6.7</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>2.0.7</version>
+            <version>2.0.12</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.3.Final</version>
+            <version>6.2.7.Final</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -666,21 +666,21 @@ Replace the system Maven project file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.8.2</version>
+                <version>3.10.1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
+                <version>3.4.0</version>
             </plugin>
             <!-- Plugin to run functional tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.5</version>
                 <configuration>
                     <systemPropertyVariables>
-                        <http.port>${liberty.var.default.http.port}</http.port>
+                        <http.port>${liberty.var.http.port}</http.port>
                         <pact.provider.version>${project.version}</pact.provider.version>
                     </systemPropertyVariables>
                 </configuration>
@@ -708,7 +708,7 @@ Failures:
 
 1) Verifying a pact between Inventory and System - a request for the version has a matching body
 
-    1.1) body: $.system.properties.version Expected "1.1" (String) to be a decimal number
+    1.1) body: $.system.properties.version Expected "1.x" (String) to be a decimal number
 
 
 [INFO] 
@@ -837,8 +837,8 @@ cd /home/project/guide-contract-testing
 
 ```bash
 docker-compose -f "pact-broker/docker-compose.yml" down
-docker rmi postgres:15
-docker rmi pactfoundation/pact-broker:2.106.0.1
+docker rmi postgres:16.2
+docker rmi pactfoundation/pact-broker:latest
 docker volume rm pact-broker_postgres-volume
 ```
 
