@@ -63,14 +63,7 @@ sudo usermod -d /home/project theia
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-To try out the test, first go to the ***finish*** directory and run the ***mvn package*** command to build and package the application, which places the ***.war*** file in the ***target*** directory and the ***.jar*** PostgreSQL JDBC driver file in the ***target/liberty/wlp/usr/shared/resources*** directory:
-
-```bash
-cd finish
-mvn package
-```
-
-Now, run the ***mvn verify*** command, which compiles the Java files, starts the containers, runs the tests, and then stops the containers.
+To try out the test, first go to the ***finish*** directory and run the following Maven goal that builds the application, starts the containers, runs the tests, and then stops the containers:
 
 
 ```bash
@@ -103,7 +96,8 @@ Navigate to the ***postgres*** directory.
 cd /home/project/guide-testcontainers/postgres
 ```
 
-This guide uses Docker to run an instance of the PostgreSQL database for a fast installation and setup. A Dockerfile file is provided for you. Run the following command to use the Dockerfile to build the image:
+
+This guide uses Docker to run an instance of the PostgreSQL database for a fast installation and setup. A ***Dockerfile*** file is provided for you. Run the following command to use the Dockerfile to build the image:
 
 ```bash
 docker build -t postgres-sample .
@@ -156,7 +150,7 @@ Wait a moment for dev mode to start. After you see the following message, your L
 *    ...
 *    Container network information:
 *        Container name: [ liberty-dev ]
-*        IP address [ 172.17.0.3 ] on container network [ bridge ]
+*        IP address [ 172.17.0.2 ] on container network [ bridge ]
 *    ...
 ```
 
@@ -578,6 +572,8 @@ public class SystemResourceIT {
 
 
 
+
+
 Construct the ***postgresImage*** and ***invImage*** using the ***ImageFromDockerfile*** class, which allows Testcontainers to build Docker images from a Dockerfile during the test runtime. For these instances, the provided Dockerfiles at the specified paths ***../postgres/Dockerfile*** and ***./Dockerfile*** are used to generate the respective ***postgres-sample*** and ***inventory:1.0-SNAPSHOT*** images.
 
 Use ***GenericContainer*** class to create the ***postgresContainer*** test container to start up the ***postgres-sample*** Docker image, and use the ***LibertyContainer*** custom class to create the ***inventoryContainer*** test container to start up the ***inventory:1.0-SNAPSHOT*** Docker image. 
@@ -690,7 +686,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.1</version>
+            <version>42.7.2</version>
             <scope>provided</scope>
         </dependency>
         
@@ -728,19 +724,19 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.19.4</version>
+            <version>1.19.7</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-reload4j</artifactId>
-            <version>2.0.11</version>
+            <version>2.0.12</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>2.0.11</version>
+            <version>2.0.12</version>
         </dependency>
     </dependencies>
 
@@ -751,25 +747,6 @@ Replace the ***pom.xml*** file.
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.4.0</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.6.1</version>
-                <executions>
-                    <execution>
-                        <id>copy-dependencies</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <includeGroupIds>org.postgresql</includeGroupIds>
-                            <includeArtifactIds>postgresql</includeArtifactIds>
-                            <outputDirectory>${project.build.directory}/liberty/wlp/usr/shared/resources</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
@@ -816,8 +793,6 @@ Replace the ***pom.xml*** file.
 
 Add the required ***dependency*** for Testcontainers and Log4J libraries with ***test*** scope. The ***testcontainers*** dependency offers a general-purpose API for managing container-based test environments. The ***slf4j-reload4j*** and ***slf4j-api*** dependencies enable the Simple Logging Facade for Java (SLF4J) API for trace logging during test execution and facilitates debugging and test performance tracking. 
 
-The Maven ***pom.xml*** file contains a configuration for the ***maven-dependency-plugin*** to copy the PostgreSQL JDBC driver into the Liberty configuration's shared resources directory. This setup occurs during the ***prepare-package*** phase. As a result, running the ***mvn package*** command ensures the PostgreSQL driver is prepared and accessible for your application when it runs on the Liberty.
-
 Also, add and configure the ***maven-failsafe-plugin*** plugin, so that the integration test can be run by the ***mvn verify*** command.
 
 When you started Open Liberty in dev mode, all the changes were automatically picked up. You can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode. You see the following output:
@@ -857,7 +832,7 @@ Now, use the following Maven goal to run the tests from a cold start outside of 
 ****LINUX****
 ```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
-mvn verify
+mvn clean verify
 ```
 
 You see the following output:
