@@ -1052,7 +1052,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.10</version>
+                    <version>3.10.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -1152,7 +1152,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.10</version>
+                    <version>3.10.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -2163,7 +2163,7 @@ Replace the ***pom.xml*** configuration file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.10</version>
+                    <version>3.10.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -3368,7 +3368,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.10</version>
+                    <version>3.10.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -5091,7 +5091,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.10</version>
+                    <version>3.10.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -5445,7 +5445,7 @@ In the ***pom.xml***, add the ***\<configuration\>*** element as the following:
   <plugin>
       <groupId>io.openliberty.tools</groupId>
       <artifactId>liberty-maven-plugin</artifactId>
-      <version>3.10</version>
+      <version>3.10.2</version>
       <configuration>
           <runtimeArtifact>
               <groupId>com.ibm.websphere.appserver.runtime</groupId>
