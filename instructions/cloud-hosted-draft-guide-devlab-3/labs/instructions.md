@@ -384,7 +384,6 @@ If you aren't running in dev mode, you can run the tests by running the followin
 
 
 ```bash
-export TESTCONTAINERS_RYUK_DISABLED=true
 mvn verify
 ```
 
@@ -431,7 +430,6 @@ Run the following goal to start the ***inventory*** microservice in dev mode wit
 
 
 ```bash
-export TESTCONTAINERS_RYUK_DISABLED=true
 mvn liberty:devc
 ```
 
@@ -679,7 +677,6 @@ If you aren't running in dev mode, you can run the tests by running the followin
 
 
 ```bash
-export TESTCONTAINERS_RYUK_DISABLED=true
 mvn verify
 ```
 
