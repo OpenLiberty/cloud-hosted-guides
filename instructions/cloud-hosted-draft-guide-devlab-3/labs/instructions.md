@@ -144,7 +144,7 @@ export TESTCONTAINERS_RYUK_DISABLED=true
 mvn liberty:devc
 ```
 
-Read the https://java.testcontainers.org/features/configuration/#disabling-ryuk[Testcontainers custom configuration] document for disabling Ryuk.
+Read the [Testcontainers custom configuration](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document for disabling Ryuk.
 
 
 After you see the following message, your Liberty instance is ready in dev mode:
