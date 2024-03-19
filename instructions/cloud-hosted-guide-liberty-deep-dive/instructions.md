@@ -69,13 +69,13 @@ On that page, enter the following properties in the **Create a starter applicati
 * Under Build Tool select: ***Maven***
 * Under Java SE Version select: ***17***
 * Under Java EE/Jakarta EE Version select: ***10.0***
-* Under MicroProfile Version select: ***6.0***
+* Under MicroProfile Version select: ***6.1***
 
 
 In this Skills Network environment, instead of manually downloading and extracting the project, run the following commands:
 ```bash
 cd /home/project/guide-liberty-deep-dive/start
-curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=10.0&g=io.openliberty.deepdive&j=17&m=6.0'
+curl -o inventory.zip 'https://start.openliberty.io/api/start?a=inventory&b=maven&e=10.0&g=io.openliberty.deepdive&j=17&m=6.1'
 unzip inventory.zip -d inventory
 ```
 
@@ -770,7 +770,7 @@ Add OpenAPI ***@APIResponseSchema***, ***@APIResponses***, ***@APIResponse***, *
 
 Note, the ***@Parameter*** annotation can be placed either ***inline*** or ***outline***. Examples of both are provided within this workshop.
 
-Many OpenAPI annotations are available and can be used according to what's best for your application and its classes. You can find all the annotations in the [MicroProfile OpenAPI specification](https://download.eclipse.org/microprofile/microprofile-open-api-3.0/microprofile-openapi-spec-3.0.html#_annotations).
+Many OpenAPI annotations are available and can be used according to what's best for your application and its classes. You can find all the annotations in the [MicroProfile OpenAPI specification](https://download.eclipse.org/microprofile/microprofile-open-api-3.1/microprofile-openapi-spec-3.1.html#_annotations).
 
 Because the Liberty was started in dev mode at the beginning of this exercise, your changes were automatically picked up. Go to the ***http\://localhost:9080/openapi*** URL to see the updated endpoint descriptions. The endpoints at which your REST methods are served now more meaningful:
 
@@ -1052,7 +1052,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.10</version>
+                    <version>3.10.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -1152,7 +1152,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.10</version>
+                    <version>3.10.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -2163,7 +2163,7 @@ Replace the ***pom.xml*** configuration file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.10</version>
+                    <version>3.10.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -3368,7 +3368,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.10</version>
+                    <version>3.10.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -4112,7 +4112,7 @@ public class SystemResource {
 
 Import the ***Counted*** annotation and apply it to the ***POST /api/systems***, ***PUT /api/systems/{hostname}***, ***DELETE /api/systems/{hostname}***, and ***POST /api/systems/client/{hostname}*** endpoints to monotonically count how many times that the endpoints are accessed. 
 
-Additional information about the annotations that MicroProfile metrics provides, relevant metadata fields, and more are available at the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-6.0-javadoc.html?package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=overview-summary.html).
+Additional information about the annotations that MicroProfile metrics provides, relevant metadata fields, and more are available at the [MicroProfile Metrics Annotation Javadoc](https://openliberty.io/docs/latest/reference/javadoc/microprofile-6.1-javadoc.html?package=org/eclipse/microprofile/metrics/annotation/package-frame.html&class=overview-summary.html).
 
 
 Run the following commands to call some of the endpoints that you annotated:
@@ -5091,7 +5091,7 @@ Replace the ***pom.xml*** file.
                 <plugin>
                     <groupId>io.openliberty.tools</groupId>
                     <artifactId>liberty-maven-plugin</artifactId>
-                    <version>3.10</version>
+                    <version>3.10.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -5445,12 +5445,12 @@ In the ***pom.xml***, add the ***\<configuration\>*** element as the following:
   <plugin>
       <groupId>io.openliberty.tools</groupId>
       <artifactId>liberty-maven-plugin</artifactId>
-      <version>3.10</version>
+      <version>3.10.2</version>
       <configuration>
           <runtimeArtifact>
               <groupId>com.ibm.websphere.appserver.runtime</groupId>
               <artifactId>wlp-kernel</artifactId>
-               <version>[23.0.0.12,)</version>
+               <version>[24.0.0.2,)</version>
                <type>zip</type>
           </runtimeArtifact>
       </configuration>
