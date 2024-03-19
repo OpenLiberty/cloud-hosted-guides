@@ -186,14 +186,14 @@ Create the ***SystemServiceIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-reactive-service-testing/start/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
+touch /home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
 ```
 
 
 > Then, to open the SystemServiceIT.java file in your IDE, select
-> **File** > **Open** > guide-reactive-service-testing/start/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
+> **File** > **Open** > guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
 
-::openFile{path="/home/project/guide-reactive-service-testing/start/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
+::openFile{path="/home/project/guide-reactive-service-testing/start/system/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
 
 
 
@@ -441,14 +441,14 @@ Create the ***InventoryResourceClient*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-reactive-service-testing/start/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java
+touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java
 ```
 
 
 > Then, to open the InventoryResourceClient.java file in your IDE, select
-> **File** > **Open** > guide-reactive-service-testing/start/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java, or click the following button
+> **File** > **Open** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java, or click the following button
 
-::openFile{path="/home/project/guide-reactive-service-testing/start/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java"}
+::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java"}
 
 
 
@@ -639,7 +639,7 @@ Create the ***InventoryServiceIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-reactive-service-testing/start/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
+touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
 ```
 
 
