@@ -53,6 +53,12 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
+```bash
+sudo usermod -d /home/project theia
+```
+
+
 ### Try what you'll build
 
 The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
@@ -134,6 +140,12 @@ Navigate to the ***start/system*** directory.
 
 ```bash
 cd /home/project/guide-reactive-service-testing/start/system
+```
+
+In this IBM Cloud environment, you need to pre-create the ***logs*** directory by running the following commands:
+```bash
+mkdir -p /home/project/guide-reactive-service-testing/start/system/target/liberty/wlp/usr/servers/defaultServer/logs
+chmod 777 /home/project/guide-reactive-service-testing/start/system/target/liberty/wlp/usr/servers/defaultServer/logs
 ```
 
 Run the following goal to start the ***system*** microservice in dev mode with container:
@@ -404,6 +416,12 @@ Navigate to the ***start/inventory*** directory.
 
 ```bash
 cd /home/project/guide-reactive-service-testing/start/inventory
+```
+
+Pre-create the ***logs*** directory by running the following commands:
+```bash
+mkdir -p /home/project/guide-reactive-service-testing/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
+chmod 777 /home/project/guide-reactive-service-testing/start/inventory/target/liberty/wlp/usr/servers/defaultServer/logs
 ```
 
 Run the following goal to start the ***inventory*** microservice in dev mode with container:
