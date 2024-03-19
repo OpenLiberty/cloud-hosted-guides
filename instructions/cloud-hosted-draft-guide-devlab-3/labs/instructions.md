@@ -731,6 +731,7 @@ When you're finished trying out the microservice, you can stop the local Kafka c
 
 
 ```bash
+cd /home/project/guide-reactive-service-testing/start
 ./scripts/stopKafka.sh
 ```
 
