@@ -5,9 +5,9 @@ branch: lab-5932-instruction
 version-history-start-date: 2023-04-14T18:24:15Z
 tool-type: theia
 ---
-::page{title="Welcome to the Deploying microservices to Kubernetes guide!"}
+::page{title="Welcome to the Testing reactive Java microservices guide!"}
 
-Deploy microservices in Open Liberty Docker containers to Kubernetes and manage them with the Kubernetes CLI, kubectl.
+Learn how to test reactive Java microservices in true-to-production environments using Testcontainers.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -18,37 +18,16 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 
 
-
-::page{title="What is Kubernetes?"}
-
-Kubernetes is an open source container orchestrator that automates many tasks involved in deploying, managing, and scaling containerized applications.
-
-Over the years, Kubernetes has become a major tool in containerized environments as containers are being further leveraged for all steps of a continuous delivery pipeline.
-
-### Why use Kubernetes?
-
-Managing individual containers can be challenging. A small team can easily manage a few containers for development but managing hundreds of containers can be a headache, even for a large team of experienced developers. Kubernetes is a tool for deployment in containerized environments. It handles scheduling, deployment, as well as mass deletion and creation of containers. It provides update rollout abilities on a large scale that would otherwise prove extremely tedious to do. Imagine that you updated a Docker image, which now needs to propagate to a dozen containers. While you could destroy and then re-create these containers, you can also run a short one-line command to have Kubernetes make all those updates for you. Of course, this is just a simple example. Kubernetes has a lot more to offer.
-
-### Architecture
-
-Deploying an application to Kubernetes means deploying an application to a Kubernetes cluster.
-
-A typical Kubernetes cluster is a collection of physical or virtual machines called nodes that run containerized applications. A cluster is made up of one parent node that manages the cluster, and many worker nodes that run the actual application instances inside Kubernetes objects called pods.
-
-A pod is a basic building block in a Kubernetes cluster. It represents a single running process that encapsulates a container or in some scenarios many closely coupled containers. Pods can be replicated to scale applications and handle more traffic. From the perspective of a cluster, a set of replicated pods is still one application instance, although it might be made up of dozens of instances of itself. A single pod or a group of replicated pods are managed by Kubernetes objects called controllers. A controller handles replication, self-healing, rollout of updates, and general management of pods. One example of a controller that you will use in this guide is a deployment.
-
-A pod or a group of replicated pods are abstracted through Kubernetes objects called services that define a set of rules by which the pods can be accessed. In a basic scenario, a Kubernetes service exposes a node port that can be used together with the cluster IP address to access the pods encapsulated by the service.
-
-To learn about the various Kubernetes resources that you can configure, see the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/).
-
-
 ::page{title="What you'll learn"}
 
-You will learn how to deploy two microservices in Open Liberty containers to a local Kubernetes cluster. You will then manage your deployed microservices using the ***kubectl*** command line interface for Kubernetes. The ***kubectl*** CLI is your primary tool for communicating with and managing your Kubernetes cluster.
+You will learn how to write integration tests for reactive Java microservices and to run the tests in true-to-production environments by using containers with [Testcontainers](https://java.testcontainers.org/) and JUnit. Testcontainers tests your containerized application from outside the container so that you are testing the exact same image that runs in production. The reactive application in this guide sends and receives messages between services by using an external message broker, [Apache Kafka](https://kafka.apache.org/). Using an external message broker enables asynchronous communications between services so that requests are non-blocking and decoupled from responses. You can learn more about reactive Java services that use an external message broker to manage communications in the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
-The two microservices you will deploy are called ***system*** and ***inventory***. The ***system*** microservice returns the JVM system properties of the running container and it returns the pod's name in the HTTP header making replicas easy to distinguish from each other. The ***inventory*** microservice adds the properties from the ***system*** microservice to the inventory. This process demonstrates how communication can be established between pods inside a cluster.
+![Reactive system inventory application](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-service-testing/prod/assets/reactive-messaging-system-inventory.png)
 
-You will use a local single-node Kubernetes cluster.
+
+*True-to-production integration testing with Testcontainers*
+
+Tests sometimes pass during the development and testing stages of an application's lifecycle but then fail in production because of differences between your development and production environments. While you can create mock objects and custom setups to minimize differences between environments, it is difficult to mimic a production system for an application that uses an external messaging system. Testcontainers addresses this problem by enabling the testing of applications in the same Docker containers that you’ll use in production. As a result, your environment remains the same throughout the application’s lifecycle – from development, through testing, and into production. You can learn more about Testcontainers in the [Building true-to-production integration tests with Testcontainers](https://openliberty.io/guides/testcontainers.html) guide.
 
 
 ::page{title="Getting started"}
@@ -62,11 +41,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-kubernetes-intro.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-service-testing.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-kubernetes-intro.git
-cd guide-kubernetes-intro
+git clone https://github.com/openliberty/guide-reactive-service-testing.git
+cd guide-reactive-service-testing
 ```
 
 
@@ -74,509 +53,640 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+### Try what you'll build
 
+The ***finish*** directory in the root of this guide contains the finished application. Give it a try before you proceed.
 
-
-::page{title="Building and containerizing the microservices"}
-
-The first step of deploying to Kubernetes is to build your microservices and containerize them with Docker.
-
-The starting Java project, which you can find in the ***start*** directory, is a multi-module Maven project that's made up of the ***system*** and ***inventory*** microservices. Each microservice resides in its own directory, ***start/system*** and ***start/inventory***. Each of these directories also contains a Dockerfile, which is necessary for building Docker images. If you're unfamiliar with Dockerfiles, check out the [Containerizing Microservices](https://openliberty.io/guides/containerize.html) guide, which covers Dockerfiles in depth.
-
-Navigate to the ***start*** directory and build the applications by running the following commands:
-```bash
-cd start
-mvn clean package
-```
-
-
-
-Next, run the ***docker build*** commands to build container images for your application:
-```bash
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-```
-
-The ***-t*** flag in the ***docker build*** command allows the Docker image to be labeled (tagged) in the ***name[:tag]*** format. The tag for an image describes the specific image version. If the optional ***[:tag]*** tag is not specified, the ***latest*** tag is created by default.
-
-During the build, you'll see various Docker messages describing what images are being downloaded and built. When the build finishes, run the following command to list all local Docker images:
-```bash
-docker images
-```
-
-
-Verify that the ***system:1.0-SNAPSHOT*** and ***inventory:1.0-SNAPSHOT*** images are listed among them, for example:
-
-```
-REPOSITORY                                TAG                       
-inventory                                 1.0-SNAPSHOT
-system                                    1.0-SNAPSHOT
-openliberty/open-liberty                  kernel-slim-java11-openj9-ubi
-```
-
-If you don't see the ***system:1.0-SNAPSHOT*** and ***inventory:1.0-SNAPSHOT*** images, then check the Maven build log for any potential errors. If the images built without errors, push them to your container registry on IBM Cloud with the following commands:
+To try out the tests, go to the ***finish*** directory and run the following Maven goal to install the ***models*** artifact to the local Maven repository:
 
 ```bash
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+cd finish
+mvn -pl models install
 ```
 
 
-::page{title="Deploying the microservices"}
 
-Now that your Docker images are built, deploy them using a Kubernetes resource definition.
+Next, navigate to the ***finish/system*** directory and run the following Maven goal to build the ***system*** microservice and run the integration tests on an Open Liberty server in a container:
 
-A Kubernetes resource definition is a yaml file that contains a description of all your deployments, services, or any other resources that you want to deploy. All resources can also be deleted from the cluster by using the same yaml file that you used to deploy them.
 
-Create the Kubernetes configuration file in the ***start*** directory.
+```bash
+export TESTCONTAINERS_RYUK_DISABLED=true
+cd system
+mvn verify
+```
+
+You will see the following output:
+
+```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 52.46 s - in it.io.openliberty.guides.system.SystemServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+
+ --- failsafe:3.2.5:verify (verify) @ system ---
+ ------------------------------------------------------------------------
+ BUILD SUCCESS
+ ------------------------------------------------------------------------
+ Total time:  57.710 s
+ Finished at: 2024-02-01T08:48:15-08:00
+ ------------------------------------------------------------------------
+```
+
+This command might take some time to run the first time because the dependencies and the Docker image for Open Liberty must download. If you run the same command again, it will be faster.
+
+You can also try out the ***inventory*** integration tests by repeating the same commands in the ***finish/inventory*** directory.
+
+
+::page{title="Testing with the Kafka consumer client"}
+
+
+
+
+
+
+Navigate to the ***start*** directory to begin.
+```bash
+cd /home/project/guide-reactive-service-testing/start
+```
+
+The example reactive application consists of the ***system*** and ***inventory*** microservices. The ***system*** microservice produces messages to the Kafka message broker, and the ***inventory*** microservice consumes messages from the Kafka message broker. You will write integration tests to see how you can use the Kafka consumer and producer client APIs to test each service. Kafka Testcontainers and JUnit have already been included as required test dependencies in your Maven ***pom.xml*** files for the ***system*** and ***inventory*** microservices.
+
+The ***start*** directory contains three directories: the ***system*** microservice directory, the ***inventory*** microservice directory, and the ***models*** directory. The ***models*** directory contains the model class that defines the structure of the system load data that is used in the application. Run the following Maven goal to install the packaged ***models*** artifact to the local Maven repository so it can be used later by the ***system*** and ***inventory*** microservices:
+
+```bash
+mvn -pl models install
+```
+
+### Launching the system microservice in dev mode with container
+
+Initiate the microservices in dev mode by executing the following command to launch a Kafka instance replicating the production environment. The ***startKafka*** script will launch a local Kafka container and establish a ***reactive-app*** network that allows the ***system*** and ***inventory*** microservices to connect to the Kafka message broker.
+
+
+```bash
+./scripts/startKafka.sh
+```
+
+To launch the ***system*** microservice in dev mode with container, configure the container by specifying the options within ***\<containerRunOpts\>*** configuration for connecting to the ***reactive-app*** network and exposing the container port.
+
+Navigate to the ***start/system*** directory.
+
+Run the following goal to start the ***system*** microservice in dev mode with container:
+
+
+```bash
+export TESTCONTAINERS_RYUK_DISABLED=true
+mvn liberty:devc
+```
+
+Read the https://java.testcontainers.org/features/configuration/#disabling-ryuk[Testcontainers custom configuration] document for disabling Ryuk.
+
+
+After you see the following message, your Liberty instance is ready in dev mode:
+
+
+```
+**************************************************************
+*    Liberty is running in dev mode.
+*    ...    
+*    Liberty container port information:
+*        Internal container HTTP port [ 9083 ] is mapped to container host port [ 9083 ] <
+*   ...     
+```
+
+[Dev mode](https://openliberty.io/docs/latest/development-mode.html) holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
+
+The ***system*** microservice actively seeks a Kafka topic for message push operations. Upon the successful initialization of a Kafka service, the ***system*** microservice establishes connectivity to Kafka message broker by using the ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property. Additionally, the running ***system*** container exposes its service on the port ***9083*** for testing purposes in dev mode with container.
+
+### Implementing tests for the system microservice
+
+Now you can start writing the test by using Testcontainers.
+
+Create the ***SystemServiceIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-kubernetes-intro/start/kubernetes.yaml
+touch /home/project/guide-reactive-service-testing/start/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java
 ```
 
 
-> Then, to open the kubernetes.yaml file in your IDE, select
-> **File** > **Open** > guide-kubernetes-intro/start/kubernetes.yaml, or click the following button
+> Then, to open the SystemServiceIT.java file in your IDE, select
+> **File** > **Open** > guide-reactive-service-testing/start/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java, or click the following button
 
-::openFile{path="/home/project/guide-kubernetes-intro/start/kubernetes.yaml"}
+::openFile{path="/home/project/guide-reactive-service-testing/start/src/test/java/it/io/openliberty/guides/system/SystemServiceIT.java"}
 
 
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  selector:
-    matchLabels:
-      app: system
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9090
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9090
-        env:
-        - name: SYS_APP_HOSTNAME
-          value: system-service
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9090
-    targetPort: 9090
-    nodePort: 31000
+```java
+package it.io.openliberty.guides.system;
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9090
-    targetPort: 9090
-    nodePort: 32000
+import java.net.Socket;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Properties;
+import java.nio.file.Paths;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.utility.DockerImageName;
+
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+
+import io.openliberty.guides.models.SystemLoad;
+import io.openliberty.guides.models.SystemLoad.SystemLoadDeserializer;
+
+@Testcontainers
+public class SystemServiceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(SystemServiceIT.class);
+    private static Network network = Network.newNetwork();
+
+    public static KafkaConsumer<String, SystemLoad> consumer;
+
+    private static ImageFromDockerfile systemImage =
+        new ImageFromDockerfile("system:1.0-SNAPSHOT")
+            .withDockerfile(Paths.get("./Dockerfile"));
+
+    private static KafkaContainer kafkaContainer = new KafkaContainer(
+        DockerImageName.parse("confluentinc/cp-kafka:latest"))
+            .withListener(() -> "kafka:19092")
+            .withNetwork(network);
+
+    private static GenericContainer<?> systemContainer =
+        new GenericContainer(systemImage)
+            .withNetwork(network)
+            .withExposedPorts(9083)
+            .waitingFor(Wait.forHttp("/health/ready").forPort(9083))
+            .withStartupTimeout(Duration.ofMinutes(3))
+            .withLogConsumer(new Slf4jLogConsumer(logger))
+            .dependsOn(kafkaContainer);
+
+    private static boolean isServiceRunning(String host, int port) {
+        try {
+            Socket socket = new Socket(host, port);
+            socket.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @BeforeAll
+    public static void startContainers() {
+        if (isServiceRunning("localhost", 9083)) {
+            System.out.println("Testing with mvn liberty:devc");
+        } else {
+            kafkaContainer.start();
+            systemContainer.withEnv(
+                "mp.messaging.connector.liberty-kafka.bootstrap.servers",
+                "kafka:19092");
+            systemContainer.start();
+            System.out.println("Testing with mvn verify");
+        }
+    }
+
+    @BeforeEach
+    public void createKafkaConsumer() {
+        Properties consumerProps = new Properties();
+        if (isServiceRunning("localhost", 9083)) {
+            consumerProps.put(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                "localhost:9094");
+        } else {
+            consumerProps.put(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaContainer.getBootstrapServers());
+        }
+        consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "system-load-status");
+        consumerProps.put(
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+            StringDeserializer.class.getName());
+        consumerProps.put(
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+            SystemLoadDeserializer.class.getName());
+        consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        consumer = new KafkaConsumer<String, SystemLoad>(consumerProps);
+        consumer.subscribe(Collections.singletonList("system.load"));
+    }
+
+    @AfterAll
+    public static void stopContainers() {
+        systemContainer.stop();
+        kafkaContainer.stop();
+        if (network != null) {
+            network.close();
+        }
+    }
+
+    @AfterEach
+    public void closeKafkaConsumer() {
+        consumer.close();
+    }
+
+    @Test
+    public void testCpuStatus() {
+        ConsumerRecords<String, SystemLoad> records =
+            consumer.poll(Duration.ofMillis(30 * 1000));
+        System.out.println("Polled " + records.count() + " records from Kafka:");
+
+        for (ConsumerRecord<String, SystemLoad> record : records) {
+            SystemLoad sl = record.value();
+            System.out.println(sl);
+            assertNotNull(sl.hostname);
+            assertNotNull(sl.loadAverage);
+        }
+        consumer.commitAsync();
+    }
+}
 ```
 
 
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-This file defines four Kubernetes resources. It defines two deployments and two services. A Kubernetes deployment is a resource that controls the creation and management of pods. A service exposes your deployment so that you can make requests to your containers. Three key items to look at when creating the deployments are the ***labels***, ***image***, and ***containerPort*** fields. The ***labels*** is a way for a Kubernetes service to reference specific deployments. The ***image*** is the name and tag of the Docker image that you want to use for this container. Finally, the ***containerPort*** is the port that your container exposes to access your application. For the services, the key point to understand is that they expose your deployments. The binding between deployments and services is specified by labels -- in this case the ***app*** label. You will also notice the service has a type of ***NodePort***. This means you can access these services from outside of your cluster via a specific port. In this case, the ports are ***31000*** and ***32000***, but port numbers can also be randomized if the ***nodePort*** field is not used.
-
-Update the image names so that the images in your IBM Cloud container registry are used, and remove the ***nodePort*** fields so that the ports can be generated automatically:
-
-```bash
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
-```
-
-Run the following commands to deploy the resources as defined in kubernetes.yaml:
-```bash
-kubectl apply -f kubernetes.yaml
-```
-
-When the apps are deployed, run the following command to check the status of your pods:
-```bash
-kubectl get pods
-```
-
-You'll see an output similar to the following if all the pods are healthy and running:
-
-```
-NAME                                    READY     STATUS    RESTARTS   AGE
-system-deployment-6bd97d9bf6-4ccds      1/1       Running   0          15s
-inventory-deployment-645767664f-nbtd9   1/1       Running   0          15s
-```
-
-You can also inspect individual pods in more detail by running the following command:
-```bash
-kubectl describe pods
-```
-
-You can also issue the ***kubectl get*** and ***kubectl describe*** commands on other Kubernetes resources, so feel free to inspect all other resources.
 
 
-In this execise, you need to access the services by using the Kubernetes API. Run the following command to start a proxy to the Kubernetes API server:
 
-```bash
-kubectl proxy
-```
+Construct the ***systemImage*** using the ***ImageFromDockerfile*** class, which allows Testcontainers to build the Docker image from a Dockerfile during the test runtime. For instance, the provided Dockerfile at the specified paths ***./Dockerfile*** is used to generate the ***system:1.0-SNAPSHOT*** image.
 
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE. Run the following commands to store the proxy path of the ***system*** and ***inventory*** services.
-```bash
-SYSTEM_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/system-service/proxy
-INVENTORY_PROXY=localhost:8001/api/v1/namespaces/$SN_ICR_NAMESPACE/services/inventory-service/proxy
-```
+Use the ***kafkaContainer*** class to instantiate the ***kafkaContainer*** test container, initiating the ***confluentinc/cp-kafka:latest*** Docker image. Similarly, use the ***GenericContainer*** class to create the ***systemContainer*** test container, starting the ***system:1.0-SNAPSHOT*** Docker image.
+ 
+It's important to note that ***withListener()*** has been configured to ***kafka:19092***, as the containerized ***system*** microservice will function as an additional producer. Therefore, the Kafka container needs to set up a listener to accommodate this requirement. For further details on using additional consumer or producer with Kafka container, please visit [official Kafka Test Container Documentation](https://java.testcontainers.org/modules/kafka/)
 
-Run the following echo commands to verify the variables:
+Given that containers are isolated by default, facilitating communication between the ***kafkaContainer*** and the ***systemContainer*** requires placing them on the same ***network***. The ***dependsOn()*** method is used to indicate that the ***system*** microservice container should commence only after ensuring the readiness of the kafka container. 
 
-```bash
-echo $SYSTEM_PROXY && echo $INVENTORY_PROXY
-```
+Prior to initiating the ***systemContainer***, it is imperative to override the ***mp.messaging.connector.liberty-kafka.bootstrap.servers*** property with ***kafka:19092*** using the ***withEnv()*** method. This step is necessary due to the establishment of a listener in the Kafka container, configured to handle an additional producer.
 
-The output appears as shown in the following example:
+The test uses the ***KafkaConsumer*** client API, configuring the consumer to use the ***BOOTSTRAP_SERVERS_CONFIG*** property with the Kafka broker address if a local ***system*** microservice container is present. In the absence of a local service container, it uses the ***getBootstrapServers()*** method to obtain the broker address from the Kafka Testcontainer. Subsequently, the consumer is set up to consume messages from the ***system.load*** topic within the ***Kafka*** container.
+
+To consume messages from a stream, the messages need to be deserialized from bytes. Kafka has its own default deserializer, but a custom deserializer is provided for you. The deserializer is configured by the ***VALUE_DESERIALIZER_CLASS_CONFIG*** property and is implemented in the ***SystemLoad*** class. To learn more about Kafka APIs and their usage, please refer to the [official Kafka Documentation](https://kafka.apache.org/documentation/#api).
+
+The running ***system*** microservice container produces messages to the ***systemLoad*** Kafka topic, as denoted by the ***@Outgoing*** annotation. The ***testCpuStatus()*** test method uses the ***consumer.poll()*** method from the ***KafkaConsumer*** client API to retrieve a record from Kafka every 3 seconds within a specified timeout limit. This record is produced by the system service. Subsequently, the method uses ***Assertions*** to verify that the polled record aligns with the expected record.
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+You will see the following output:
 
 ```
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/system-service/proxy
-localhost:8001/api/v1/namespaces/sn-labs-yourname/services/inventory-service/proxy
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.674 s - in it.io.openliberty.guides.system.SystemServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+ Integration tests finished.
 ```
 
-Then, use the following ***curl*** command to access your ***system*** microservice:
-
-```bash
-curl -s http://$SYSTEM_PROXY/system/properties | jq
-```
-
-Also, use the following ***curl*** command to access your ***inventory*** microservice:
-
-```bash
-curl -s http://$INVENTORY_PROXY/inventory/systems/system-service | jq
-```
-
-The ***http://$SYSTEM_PROXY/system/properties*** URL returns system properties and the name of the pod in an HTTP header that is called ***X-Pod-Name***. To view the header, you can use the ***-I*** option in the ***curl*** command when you make a request to the ***http://$SYSTEM_PROXY/system/properties*** URL.
-
-```bash
-curl -I http://$SYSTEM_PROXY/system/properties
-```
-
-The ***http://$INVENTORY_PROXY/inventory/systems/system-service*** URL adds properties from the ***system-service*** endpoint to the inventory Kubernetes Service. Making a request to the ***http://$INVENTORY_PROXY/inventory/systems/[kube-service]*** URL in general adds to the inventory. That result depends on whether the ***kube-service*** endpoint is a valid Kubernetes service that can be accessed.
+After you are finished running tests, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server.
 
 
-::page{title="Rolling update"}
-
-Without continuous updates, a Kubernetes cluster is susceptible to a denial of a service attack. Rolling updates continually install Kubernetes patches without disrupting the availability of the deployed applications. Update the yaml file as follows to add the ***rollingUpdate*** configuration. 
-
-Replace the Kubernetes configuration file
-
-> To open the kubernetes.yaml file in your IDE, select
-> **File** > **Open** > guide-kubernetes-intro/start/kubernetes.yaml, or click the following button
-
-::openFile{path="/home/project/guide-kubernetes-intro/start/kubernetes.yaml"}
-
-
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: system-deployment
-  labels:
-    app: system
-spec:
-  selector:
-    matchLabels:
-      app: system
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: system
-    spec:
-      containers:
-      - name: system-container
-        image: system:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9090
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9090
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: inventory-deployment
-  labels:
-    app: inventory
-spec:
-  selector:
-    matchLabels:
-      app: inventory
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: inventory
-    spec:
-      containers:
-      - name: inventory-container
-        image: inventory:1.0-SNAPSHOT
-        ports:
-        - containerPort: 9090
-        env:
-        - name: SYS_APP_HOSTNAME
-          value: system-service
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 9090
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 1
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: system-service
-spec:
-  type: NodePort
-  selector:
-    app: system
-  ports:
-  - protocol: TCP
-    port: 9090
-    targetPort: 9090
-    nodePort: 31000
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inventory-service
-spec:
-  type: NodePort
-  selector:
-    app: inventory
-  ports:
-  - protocol: TCP
-    port: 9090
-    targetPort: 9090
-    nodePort: 32000
-```
-
-
-
-The ***rollingUpdate*** configuration has two attributes, ***maxUnavailable*** and ***maxSurge***. The ***maxUnavailable*** attribute specifies the the maximum number of Kubernetes pods that can be unavailable during the update process. Similarly, the ***maxSurge*** attribute specifies the maximum number of additional pods that can be created during the update process.
-
-The ***readinessProbe*** allows Kubernetes to know whether the service is ready to handle requests. The readiness health check classes for the ***/health/ready*** endpoint to the ***inventory*** and ***system*** services are provided for you. If you want to learn more about how to use health checks in Kubernetes, check out the [Kubernetes-microprofile-health](https://openliberty.io/guides/kubernetes-microprofile-health.html) guide. 
-
-Update the image names and remove the ***nodePort*** fields by running the following commands:
-```bash
-cd /home/project/guide-kubernetes-intro/start
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/system:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=inventory:1.0-SNAPSHOT=us.icr.io/'"$SN_ICR_NAMESPACE"'/inventory:1.0-SNAPSHOT\n        imagePullPolicy: Always=g' kubernetes.yaml
-sed -i 's=nodePort: 31000==g' kubernetes.yaml
-sed -i 's=nodePort: 32000==g' kubernetes.yaml
-```
-
-Run the following command to deploy the ***inventory*** and ***system*** microservices with the new configuration:
-```bash
-kubectl apply -f kubernetes.yaml
-```
-
-Run the following command to check the status of your pods are ready and running:
-```bash
-kubectl get pods
-```
-
-::page{title="Scaling a deployment"}
-
-To use load balancing, you need to scale your deployments. When you scale a deployment, you replicate its pods, creating more running instances of your applications. Scaling is one of the primary advantages of Kubernetes because you can replicate your application to accommodate more traffic, and then descale your deployments to free up resources when the traffic decreases.
-
-As an example, scale the ***system*** deployment to three pods by running the following command:
-```bash
-kubectl scale deployment/system-deployment --replicas=3
-```
-
-Use the following command to verify that two new pods have been created.
-```bash
-kubectl get pods
-```
-
-```
-NAME                                    READY     STATUS    RESTARTS   AGE
-system-deployment-6bd97d9bf6-4ccds      1/1       Running   0          1m
-system-deployment-6bd97d9bf6-jf9rs      1/1       Running   0          25s
-system-deployment-6bd97d9bf6-x4zth      1/1       Running   0          25s
-inventory-deployment-645767664f-nbtd9   1/1       Running   0          1m
-```
-
-
-Wait for your two new pods to be in the ready state, then make the following ***curl*** command:
-
-```bash
-curl -I http://$SYSTEM_PROXY/system/properties
-```
-
-Notice that the ***X-Pod-Name*** header has a different value when you call it multiple times. The value changes because three pods that all serve the ***system*** application are now running. Similarly, to descale your deployments you can use the same scale command with fewer replicas.
-
-```bash
-kubectl scale deployment/system-deployment --replicas=1
-```
-
-::page{title="Redeploy microservices"}
-
-When you're building your application, you might want to quickly test a change. To run a quick test, you can rebuild your Docker images then delete and re-create your Kubernetes resources. Note that there is only one ***system*** pod after you redeploy because you're deleting all of the existing pods.
+If you aren't running in dev mode, you can run the tests by running the following command:
 
 
 ```bash
-cd /home/project/guide-kubernetes-intro/start
-kubectl delete -f kubernetes.yaml
-
-mvn clean package
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t inventory:1.0-SNAPSHOT inventory/.
-docker tag inventory:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/inventory:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-
-kubectl apply -f kubernetes.yaml
+export TESTCONTAINERS_RYUK_DISABLED=true
+mvn verify
 ```
 
-Updating your applications in this way is fine for development environments, but it is not suitable for production. If you want to deploy an updated image to a production cluster, you can update the container in your deployment with a new image. Once the new container is ready, Kubernetes automates both the creation of a new container and the decommissioning of the old one.
+
+You will see the following output:
+
+```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 50.63 s - in it.io.openliberty.guides.system.SystemServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 
 
-::page{title="Testing microservices that are running on Kubernetes"}
-
-A few tests are included for you to test the basic functionality of the microservices. If a test failure occurs, then you might have introduced a bug into the code.  To run the tests, wait for all pods to be in the ready state before proceeding further. The default properties defined in the ***pom.xml*** are:
-
-| *Property*                        | *Description*
-| ---| ---
-| ***system.kube.service***       | Name of the Kubernetes Service wrapping the ***system*** pods, ***system-service*** by default.
-| ***system.service.root***       | The Kubernetes Service ***system-service*** root path, ***localhost:31000*** by default.
-| ***inventory.service.root*** | The Kubernetes Service ***inventory-service*** root path, ***localhost:32000*** by default.
-
-Navigate back to the ***start*** directory.
+ --- failsafe:3.2.5:verify (verify) @ system ---
+ ------------------------------------------------------------------------
+ BUILD SUCCESS
+ ------------------------------------------------------------------------
+ Total time:  55.636 s
+ Finished at: 2024-01-31T11:33:40-08:00
+ ------------------------------------------------------------------------
+```
 
 
-Update the ***pom.xml*** files so that the ***system.service.root*** and ***inventory.service.root*** properties match the values to access the ***system*** and **inventory*** services.
+::page{title="Testing with the Kafka producer client"}
+
+The ***inventory*** microservice is tested in the same way as the ***system*** microservice. The only difference is that the ***inventory*** microservice consumes messages, which means that tests are written to use the Kafka producer client.
+
+### Launching the inventory microservice in dev mode with container
+
+Navigate to the ***start/inventory*** directory.
+
+Run the following goal to start the ***inventory*** microservice in dev mode with container:
+
 
 ```bash
-sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' inventory/pom.xml
-sed -i 's=localhost:32000='"$INVENTORY_PROXY"'=g' inventory/pom.xml
-sed -i 's=localhost:31000='"$SYSTEM_PROXY"'=g' system/pom.xml
+export TESTCONTAINERS_RYUK_DISABLED=true
+mvn liberty:devc
 ```
 
-Run the integration tests by using the following command:
+### Building test REST client
+
+Create a REST client interface to access the ***inventory*** microservice.
+
+Create the ***InventoryResourceClient*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-reactive-service-testing/start/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java
+```
+
+
+> Then, to open the InventoryResourceClient.java file in your IDE, select
+> **File** > **Open** > guide-reactive-service-testing/start/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-service-testing/start/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import java.util.List;
+import java.net.Socket;
+import java.time.Duration;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.math.BigDecimal;
+import java.nio.file.Paths;
+import java.util.Properties;
+
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.client.ClientBuilder;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Assertions;
+import org.testcontainers.containers.Network;
+import org.testcontainers.utility.DockerImageName;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+
+import io.openliberty.guides.models.SystemLoad;
+import io.openliberty.guides.models.SystemLoad.SystemLoadSerializer;
+
+
+@Testcontainers
+public class InventoryServiceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(InventoryServiceIT.class);
+
+    public static InventoryResourceClient client;
+
+    private static Network network = Network.newNetwork();
+    public static KafkaProducer<String, SystemLoad> producer;
+    private static ImageFromDockerfile inventoryImage =
+        new ImageFromDockerfile("inventory:1.0-SNAPSHOT")
+            .withDockerfile(Paths.get("./Dockerfile"));
+
+    private static KafkaContainer kafkaContainer = new KafkaContainer(
+        DockerImageName.parse("confluentinc/cp-kafka:latest"))
+            .withListener(() -> "kafka:19092")
+            .withNetwork(network);
+
+    private static GenericContainer<?> inventoryContainer =
+        new GenericContainer(inventoryImage)
+            .withNetwork(network)
+            .withExposedPorts(9085)
+            .waitingFor(Wait.forHttp("/health/ready").forPort(9085))
+            .withStartupTimeout(Duration.ofMinutes(3))
+            .withLogConsumer(new Slf4jLogConsumer(logger))
+            .dependsOn(kafkaContainer);
+
+    private static InventoryResourceClient createRestClient(String urlPath) {
+        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
+        ResteasyClient client = (ResteasyClient) builder.build();
+        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
+        return target.proxy(InventoryResourceClient.class);
+    }
+
+    private static boolean isServiceRunning(String host, int port) {
+        try {
+            Socket socket = new Socket(host, port);
+            socket.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @BeforeAll
+    public static void startContainers() {
+
+        String urlPath;
+        if (isServiceRunning("localhost", 9085)) {
+            System.out.println("Testing with mvn liberty:devc");
+            urlPath = "http://localhost:9085";
+        } else {
+            System.out.println("Testing with mvn verify");
+            kafkaContainer.start();
+            inventoryContainer.withEnv(
+                "mp.messaging.connector.liberty-kafka.bootstrap.servers",
+                "kafka:19092");
+            inventoryContainer.start();
+            urlPath = "http://"
+                + inventoryContainer.getHost()
+                + ":" + inventoryContainer.getFirstMappedPort();
+        }
+
+        System.out.println("Creating REST client with: " + urlPath);
+        client = createRestClient(urlPath);
+    }
+
+    @BeforeEach
+    public void createKafkaProducer() {
+        Properties producerProps = new Properties();
+        if (isServiceRunning("localhost", 9085)) {
+            producerProps.put(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                "localhost:9094");
+        } else {
+            producerProps.put(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaContainer.getBootstrapServers());
+        }
+
+        producerProps.put(
+            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+            StringSerializer.class.getName());
+        producerProps.put(
+            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+            SystemLoadSerializer.class.getName());
+
+        producer = new KafkaProducer<String, SystemLoad>(producerProps);
+    }
+
+    @AfterAll
+    public static void stopContainers() {
+        client.resetSystems();
+        inventoryContainer.stop();
+        kafkaContainer.stop();
+        if (network != null) {
+            network.close();
+        }
+    }
+
+    @AfterEach
+    public void closeKafkaProducer() {
+        producer.close();
+    }
+
+    @Test
+    public void testCpuUsage() throws InterruptedException {
+        SystemLoad sl = new SystemLoad("localhost", 1.1);
+        producer.send(new ProducerRecord<String, SystemLoad>("system.load", sl));
+        Thread.sleep(5000);
+        Response response = client.getSystems();
+        Assertions.assertEquals(200, response.getStatus(), "Response should be 200");
+        List<Properties> systems =
+            response.readEntity(new GenericType<List<Properties>>() { });
+        assertEquals(systems.size(), 1);
+        for (Properties system : systems) {
+            assertEquals(sl.hostname, system.get("hostname"),
+                "Hostname doesn't match!");
+            BigDecimal systemLoad = (BigDecimal) system.get("systemLoad");
+            assertEquals(sl.loadAverage, systemLoad.doubleValue(),
+                "CPU load doesn't match!");
+        }
+    }
+}
+```
+
+
+The ***InventoryResourceClient*** interface declares the ***getSystems()*** and ***resetSystems()*** methods for accessing the corresponding endpoints within the ***inventory*** microservice.
+
+
+
+
+
+### Implementing tests for the inventory microservice
+
+Now you can start writing the test by using Testcontainers.
+
+Create the ***InventoryServiceIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-reactive-service-testing/start/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
+```
+
+
+> Then, to open the unknown file in your IDE, select
+> **File** > **Open** > guide-reactive-service-testing/start/unknown, or click the following button
+
+::openFile{path="/home/project/guide-reactive-service-testing/start/unknown"}
+
+
+The ***InventoryServiceIT*** class uses the ***KafkaProducer*** client API to generate messages in the test environment, which are then consumed by the ***inventory*** microservice container.
+
+Similar to ***system*** microservice testing, the configuration of the producer ***BOOTSTRAP_SERVERS_CONFIG*** property depends on whether a local ***inventory*** microservice container is detected.  In addition, the producer is configured with a custom serializer provided in the ***SystemLoad*** class.
+
+The ***testCpuUsage*** test method uses the ***producer.send()*** method, using the ***KafkaProducer*** client API, to generate the ***Systemload*** message. Subsequently, it uses ***Assertions*** to verify that the response from the ***inventory*** microservice aligns with the expected outcome.
+
+### Running the tests
+
+Because you started Open Liberty in dev mode, you can run the tests by pressing the ***enter/return*** key from the command-line session where you started dev mode.
+
+You will see the following output:
+
+```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.564 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
+
+ Results:
+
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+
+ Integration tests finished.
+```
+
+After you are finished running tests, stop the Open Liberty server by pressing `Ctrl+C` in the command-line session where you ran the server.
+
+If you aren't running in dev mode, you can run the tests by running the following command:
+
 
 ```bash
-mvn failsafe:integration-test
+export TESTCONTAINERS_RYUK_DISABLED=true
+mvn verify
 ```
 
-If the tests pass, you'll see an output similar to the following for each service respectively:
+You will see the following output:
 
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.372 s - in it.io.openliberty.guides.system.SystemEndpointIT
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 53.22 s - in it.io.openliberty.guides.inventory.InventoryServiceIT
 
-Results:
+ Results:
 
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-```
+ Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.inventory.InventoryEndpointIT
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.714 s - in it.io.openliberty.guides.inventory.InventoryEndpointIT
 
-Results:
-
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+ --- failsafe:3.2.5:verify (verify) @ inventory ---
+ ------------------------------------------------------------------------
+ BUILD SUCCESS
+ ------------------------------------------------------------------------
+ Total time:  58.789 s
+ Finished at: 2024-01-31T11:40:43-08:00
+ ------------------------------------------------------------------------
 ```
 
 
-::page{title="Tearing down the environment"}
+When you're finished trying out the microservice, you can stop the local Kafka container by running the following command in ***start*** directory:
 
-Press **CTRL+C** to stop the proxy server that was started at step 6 ***Deploying the microservices***.
 
-When you no longer need your deployed microservices, you can delete all Kubernetes resources by running the ***kubectl delete*** command:
 ```bash
-kubectl delete -f kubernetes.yaml
+./scripts/stopKafka.sh
 ```
-
 
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You have just deployed two microservices that are running in Open Liberty to Kubernetes. You then scaled a microservice and ran integration tests against miroservices that are running in a Kubernetes cluster.
-
+You just tested two reactive Java microservices using Testcontainers.
 
 
 
@@ -585,33 +695,36 @@ You have just deployed two microservices that are running in Open Liberty to Kub
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-kubernetes-intro*** project by running the following commands:
+Delete the ***guide-reactive-service-testing*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-kubernetes-intro
+rm -fr guide-reactive-service-testing
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Deploying%20microservices%20to%20Kubernetes&guide-id=cloud-hosted-guide-kubernetes-intro)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Testing%20reactive%20Java%20microservices&guide-id=cloud-hosted-guide-reactive-service-testing)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-kubernetes-intro/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-kubernetes-intro/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-service-testing/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-service-testing/pulls)
 
 
 
 ### Where to next?
 
-* [Using Docker containers to develop microservices](https://openliberty.io/guides/docker.html)
-* [Managing microservice traffic using Istio](https://openliberty.io/guides/istio-intro.html)
+* [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
+* [Testing a MicroProfile or Jakarta EE application](https://openliberty.io/guides/microshed-testing.html)
+
+**Learn more about Testcontainers**
+* [Visit the official Testcontainers website](https://testcontainers.com/)
 
 
 ### Log out of the session
