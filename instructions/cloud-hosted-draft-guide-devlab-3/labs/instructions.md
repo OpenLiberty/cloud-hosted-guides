@@ -134,7 +134,6 @@ Initiate the microservices in dev mode by executing the following command to lau
 ./scripts/startKafka.sh
 ```
 
-To launch the ***system*** microservice in dev mode with container, configure the container by specifying the options within ***\<containerRunOpts\>*** configuration for connecting to the ***reactive-app*** network and exposing the container port.
 
 Navigate to the ***start/system*** directory.
 
@@ -147,6 +146,8 @@ In this IBM Cloud environment, you need to pre-create the ***logs*** directory b
 mkdir -p /home/project/guide-reactive-service-testing/start/system/target/liberty/wlp/usr/servers/defaultServer/logs
 chmod 777 /home/project/guide-reactive-service-testing/start/system/target/liberty/wlp/usr/servers/defaultServer/logs
 ```
+
+To launch the ***system*** microservice in dev mode with container, configure the container by specifying the options within ***\<containerRunOpts\>*** configuration for connecting to the ***reactive-app*** network and exposing the container port.
 
 Run the following goal to start the ***system*** microservice in dev mode with container:
 
@@ -178,6 +179,8 @@ The ***system*** microservice actively seeks a Kafka topic for message push oper
 ### Implementing tests for the system microservice
 
 Now you can start writing the test by using Testcontainers.
+
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
 
 Create the ***SystemServiceIT*** class.
 
