@@ -435,6 +435,8 @@ mvn liberty:devc
 
 Create a REST client interface to access the ***inventory*** microservice.
 
+Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
+
 Create the ***InventoryResourceClient*** class.
 
 > Run the following touch command in your terminal
@@ -447,6 +449,55 @@ touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java
 > **File** > **Open** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java, or click the following button
 
 ::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryResourceClient.java"}
+
+
+
+```java
+package it.io.openliberty.guides.inventory;
+
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+@Path("/inventory")
+public interface InventoryResourceClient {
+
+    @GET
+    @Path("/systems")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response getSystems();
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    Response resetSystems();
+
+}
+```
+
+
+
+The ***InventoryResourceClient*** interface declares the ***getSystems()*** and ***resetSystems()*** methods for accessing the corresponding endpoints within the ***inventory*** microservice.
+
+
+### Implementing tests for the inventory microservice
+
+Now you can start writing the test by using Testcontainers.
+
+Create the ***InventoryServiceIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
+```
+
+
+> Then, to open the InventoryServiceIT.java file in your IDE, select
+> **File** > **Open** > guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java"}
 
 
 
@@ -623,28 +674,7 @@ public class InventoryServiceIT {
 ```
 
 
-The ***InventoryResourceClient*** interface declares the ***getSystems()*** and ***resetSystems()*** methods for accessing the corresponding endpoints within the ***inventory*** microservice.
 
-
-
-
-
-### Implementing tests for the inventory microservice
-
-Now you can start writing the test by using Testcontainers.
-
-Create the ***InventoryServiceIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-reactive-service-testing/start/inventory/src/test/java/it/io/openliberty/guides/inventory/InventoryServiceIT.java
-```
-
-
-> Then, to open the unknown file in your IDE, select
-> **File** > **Open** > guide-reactive-service-testing/start/unknown, or click the following button
-
-::openFile{path="/home/project/guide-reactive-service-testing/start/unknown"}
 
 
 The ***InventoryServiceIT*** class uses the ***KafkaProducer*** client API to generate messages in the test environment, which are then consumed by the ***inventory*** microservice container.
