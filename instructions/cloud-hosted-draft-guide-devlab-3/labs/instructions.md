@@ -382,11 +382,9 @@ After you are finished running tests, stop the Open Liberty server by pressing `
 
 If you aren't running in dev mode, you can run the tests by running the following command:
 
-
 ```bash
-mvn verify
+mvn clean verify
 ```
-
 
 You will see the following output:
 
@@ -675,9 +673,8 @@ After you are finished running tests, stop the Open Liberty server by pressing `
 
 If you aren't running in dev mode, you can run the tests by running the following command:
 
-
 ```bash
-mvn verify
+mvn clean verify
 ```
 
 You will see the following output:
