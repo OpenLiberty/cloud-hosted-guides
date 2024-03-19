@@ -132,6 +132,10 @@ To launch the ***system*** microservice in dev mode with container, configure th
 
 Navigate to the ***start/system*** directory.
 
+```bash
+cd /home/project/guide-reactive-service-testing/start/system
+```
+
 Run the following goal to start the ***system*** microservice in dev mode with container:
 
 
@@ -397,6 +401,10 @@ The ***inventory*** microservice is tested in the same way as the ***system*** m
 ### Launching the inventory microservice in dev mode with container
 
 Navigate to the ***start/inventory*** directory.
+
+```bash
+cd /home/project/guide-reactive-service-testing/start/inventory
+```
 
 Run the following goal to start the ***inventory*** microservice in dev mode with container:
 
