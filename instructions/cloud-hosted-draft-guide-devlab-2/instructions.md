@@ -515,9 +515,12 @@ The ***testLoads()*** test case verifies that the ***query*** service can calcul
 
 Run the following commands to navigate to the ***query*** directory and verify that the tests pass by using the Maven ***verify*** goal:
 ```bash
+export TESTCONTAINERS_RYUK_DISABLED=true
 cd /home/project/guide-microprofile-rest-client-async/start/query
 mvn verify
 ```
+
+For more information about disabling Ryuk, see the [Testcontainers custom configuratio](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
 
 The tests might take a few minutes to complete. When the tests succeed, you see output similar to the following example:
 
