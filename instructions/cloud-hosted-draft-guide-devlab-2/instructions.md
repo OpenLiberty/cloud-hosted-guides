@@ -275,7 +275,12 @@ Next, use the provided ***startContainers*** script to start the application in 
 ```
 
 
-The services might take several minutes to become available. You can access the application by making requests to the ***query/systemLoad*** endpoint by running the following curl command:
+The services might take several minutes to become available. Run the following curl command to confirm that the ***inventory*** microservice is up and running.
+```bash
+curl -s http://localhost:9085/health | jq
+```
+
+You can access the application by making requests to the ***query/systemLoad*** endpoint by running the following curl command:
 ```bash
 curl -s http://localhost:9080/query/systemLoad | jq
 ```
