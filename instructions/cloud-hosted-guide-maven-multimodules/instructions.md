@@ -243,7 +243,7 @@ Replace the ear/POM file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.10.1</version>
+            <version>5.10.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -400,11 +400,11 @@ Replace the start/POM file.
             <plugins>
                 <plugin>
                     <artifactId>maven-war-plugin</artifactId>
-                    <version>3.3.2</version>
+                    <version>3.4.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.12.1</version>
+                    <version>3.13.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -413,7 +413,7 @@ Replace the start/POM file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.10</version>
+                <version>3.10.2</version>
             </plugin>
         </plugins>
     </build>
