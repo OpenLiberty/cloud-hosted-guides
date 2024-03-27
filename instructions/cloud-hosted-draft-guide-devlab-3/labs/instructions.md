@@ -1015,6 +1015,8 @@ cd query
 mvn verify
 ```
 
+For more information about disabling Ryuk, see the [Testcontainers custom configuration](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
+
 When the tests succeed, you see output similar to the following example:
 
 ```
