@@ -5,9 +5,9 @@ branch: lab-5932-instruction
 version-history-start-date: 2023-04-14T18:24:15Z
 tool-type: theia
 ---
-::page{title="Welcome to the Streaming updates to a client using Server-Sent Events guide!"}
+::page{title="Welcome to the Consuming RESTful services using the reactive JAX-RS client guide!"}
 
-Learn how to stream updates from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
+Learn how to use a reactive JAX-RS client to asynchronously invoke RESTful microservices over HTTP.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -20,25 +20,20 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-You will learn how to stream messages from a MicroProfile Reactive Messaging service to a front-end client by using Server-Sent Events (SSE).
+First, you'll learn how to create a reactive JAX-RS client application by using the default reactive JAX-RS client APIs. You will then learn how to take advantage of the RxJava reactive extensions with a pluggable reactive JAX-RS client provider that's published by [Eclipse Jersey](https://eclipse-ee4j.github.io/jersey). The JAX-RS client is an API used to communicate with RESTful web services.  The API makes it easy to consume a web service by using the HTTP protocol, which means that you can efficiently implement client-side applications. The reactive client extension to JAX-RS is an API that enables you to use the reactive programming model when using the JAX-RS client.
 
-MicroProfile Reactive Messaging provides an easy way for Java services to send requests to other Java services, and asynchronously receive and process the responses as a stream of events. SSE provides a framework to stream the data in these events to a browser client.
+Reactive programming is an extension of asynchronous programming and focuses on the flow of data through data streams. Reactive applications process data when it becomes available and respond to requests as soon as processing is complete. The request to the application and response from the application are decoupled so that the application is not blocked from responding to other requests in the meantime. Because reactive applications can run faster than synchronous applications, they provide a much smoother user experience.
 
-### What is SSE?
+The application in this guide demonstrates how the JAX-RS client accesses remote RESTful services by using asynchronous method calls. You’ll first look at the supplied client application that uses the JAX-RS default ***CompletionStage***-based provider. Then, you’ll modify the client application to use Jersey’s RxJava provider, which is an alternative JAX-RS reactive provider. Both Jersey and Apache CXF provide third-party reactive libraries for RxJava and were tested for use in Open Liberty.
 
-Server-Sent Events is an API that allows clients to subscribe to a stream of events that is pushed from a server. First, the client makes a connection with the server over HTTP. The server continuously pushes events to the client as long as the connection persists. SSE differs from traditional HTTP requests, which use one request for one response. SSE also differs from Web Sockets in that SSE is unidirectional from the server to the client, and Web Sockets allow for bidirectional communication.
+The application that you will be working with consists of three microservices, ***system***, ***inventory***, and ***query***. Every 15 seconds, the ***system*** microservice calculates and publishes an event that contains its current average system load. The ***inventory*** microservice subscribes to that information so that it can keep an updated list of all the systems and their current system loads.
 
-For example, an application that provides real-time stock quotes might use SSE to push price updates from the server to the browser as soon as the server receives them. Such an application wouldn't need Web Sockets because the data travels in only one direction, and polling the server by using HTTP requests wouldn't provide real-time updates.
-
-The application that you will build in this guide consists of a ***frontend*** service, a ***bff*** (backend for frontend) service, and three instances of a ***system*** service. The ***system*** services periodically publish messages that contain their hostname and current system load. The ***bff*** service receives the messages from the ***system*** services and pushes the contents as SSE to a JavaScript client in the ***frontend*** service. This client uses the events to update a table in the UI that displays each system's hostname and its periodically updating load. The following diagram depicts the application that is used in this guide:
-
-![SSE Diagram](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/prod/assets/SSE_Diagram.png)
+![Reactive Query Service](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-rest-client/prod/assets/QueryService.png)
 
 
-In this guide, you will set up the ***bff*** service by creating an endpoint that clients can use to subscribe to events. You will also enable the service to read from the reactive messaging channel and push the contents to subscribers via SSE. After that, you will configure the Kafka connectors to allow the ***bff*** service to receive messages from the ***system*** services. Finally, you will configure the client in the ***frontend*** service to subscribe to these events, consume them, and display them in the UI.
+The microservice that you will modify is the ***query*** service. It communicates with the ***inventory*** service to determine which system has the highest system load and which system has the lowest system load.
 
-To learn more about the reactive Java services that are used in this guide, check out the [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
-
+The ***system*** and ***inventory*** microservices use MicroProfile Reactive Messaging to send and receive the system load events. If you want to learn more about reactive messaging, see the  [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html) guide.
 
 
 ::page{title="Getting started"}
@@ -52,11 +47,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-messaging-sse.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-reactive-rest-client.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/guide-reactive-messaging-sse.git
-cd guide-reactive-messaging-sse
+git clone https://github.com/openliberty/guide-reactive-rest-client.git
+cd guide-reactive-rest-client
 ```
 
 
@@ -64,93 +59,76 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-
-
-::page{title="Setting up SSE in the bff service"}
-
-In this section, you will create a REST API for SSE in the ***bff*** service. When a client makes a request to this endpoint, the initial connection between the client and server is established and the client is subscribed to receive events that are pushed from the server. Later in this guide, the client in the ***frontend*** service uses this endpoint to subscribe to the events that are pushed from the ***bff*** service.
-
-Additionally, you will enable the ***bff*** service to read messages from the incoming stream and push the contents as events to subscribers via SSE.
+::page{title="Creating a web client using the default JAX-RS API"}
 
 Navigate to the ***start*** directory to begin.
+```bash
+cd /home/project/guide-reactive-rest-client/start
+```
 
-Create the BFFResource class.
+JAX-RS provides a default reactive provider that you can use to create a reactive REST client using the ***CompletionStage*** interface.
+
+Create an ***InventoryClient*** class, which retrieves inventory data, and a ***QueryResource*** class, which queries data from the ***inventory*** service.
+
+Create the ***InventoryClient*** interface.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java
+touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java
 ```
 
 
-> Then, to open the BFFResource.java file in your IDE, select
-> **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java, or click the following button
+> Then, to open the InventoryClient.java file in your IDE, select
+> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
 
-::openFile{path="/home/project/guide-reactive-messaging-sse/start/bff/src/main/java/io/openliberty/guides/bff/BFFResource.java"}
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java"}
 
 
 
 ```java
-package io.openliberty.guides.bff;
+package io.openliberty.guides.query.client;
 
-import io.openliberty.guides.models.SystemLoad;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.CompletionStage;
 
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.sse.OutboundSseEvent;
-import jakarta.ws.rs.sse.Sse;
-import jakarta.ws.rs.sse.SseBroadcaster;
-import jakarta.ws.rs.sse.SseEventSink;
-import java.util.logging.Logger;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.HttpHeaders;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-@ApplicationScoped
-@Path("/sse")
-public class BFFResource {
+@RequestScoped
+public class InventoryClient {
 
-    private Logger logger = Logger.getLogger(BFFResource.class.getName());
+    @Inject
+    @ConfigProperty(name = "INVENTORY_BASE_URI", defaultValue = "http://localhost:9085")
+    private String baseUri;
 
-    private Sse sse;
-    private SseBroadcaster broadcaster;
 
-    @GET
-    @Path("/")
-    @Produces(MediaType.SERVER_SENT_EVENTS)
-    public void subscribeToSystem(
-        @Context SseEventSink sink,
-        @Context Sse sse
-        ) {
-
-        if (this.sse == null || this.broadcaster == null) {
-            this.sse = sse;
-            this.broadcaster = sse.newBroadcaster();
-        }
-
-        this.broadcaster.register(sink);
-        logger.info("New sink registered to broadcaster.");
+    public List<String> getSystems() {
+        return ClientBuilder.newClient()
+                            .target(baseUri)
+                            .path("/inventory/systems")
+                            .request()
+                            .header(HttpHeaders.CONTENT_TYPE,
+                                    MediaType.APPLICATION_JSON)
+                            .get(new GenericType<List<String>>() { });
     }
 
-    private void broadcastData(String name, Object data) {
-        if (broadcaster != null) {
-            OutboundSseEvent event = sse.newEventBuilder()
-                                        .name(name)
-                                        .data(data.getClass(), data)
-                                        .mediaType(MediaType.APPLICATION_JSON_TYPE)
-                                        .build();
-            broadcaster.broadcast(event);
-        } else {
-            logger.info("Unable to send SSE. Broadcaster context is not set up.");
-        }
-    }
-
-    @Incoming("systemLoad")
-    public void getSystemLoadMessage(SystemLoad sl)  {
-        logger.info("Message received from system.load topic. " + sl.toString());
-        broadcastData("systemLoad", sl);
+    public CompletionStage<Properties> getSystem(String hostname) {
+        return ClientBuilder.newClient()
+                            .target(baseUri)
+                            .path("/inventory/systems")
+                            .path(hostname)
+                            .request()
+                            .header(HttpHeaders.CONTENT_TYPE,
+                                    MediaType.APPLICATION_JSON)
+                            .rx()
+                            .get(Properties.class);
     }
 }
 ```
@@ -159,195 +137,901 @@ public class BFFResource {
 Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
-### Creating the SSE API endpoint
+The ***getSystem()*** method returns the ***CompletionStage*** interface. This interface represents a unit or stage of a computation. When the associated computation completes, the value can be retrieved. The ***rx()*** method calls the ***CompletionStage*** interface. It retrieves the ***CompletionStageRxInvoker*** class and allows these methods to function correctly with the ***CompletionStage*** interface return type.
 
-The ***subscribeToSystem()*** method allows clients to subscribe to events via an HTTP ***GET*** request to the ***/bff/sse/*** endpoint. The ***@Produces(MediaType.SERVER_SENT_EVENTS)*** annotation sets the ***Content-Type*** in the response header to ***text/event-stream***. This content type indicates that client requests that are made to this endpoint are to receive Server-Sent Events. Additionally, the method parameters take in an instance of the ***SseEventSink*** class and the ***Sse*** class, both of which are injected using the ***@Context*** annotation. First, the method checks if the ***sse*** and ***broadcaster*** instance variables are assigned. If these variables aren't assigned, the ***sse*** variable is obtained from the ***@Context*** injection and the ***broadcaster*** variable is obtained by using the ***Sse.newBroadcaster()*** method. Then, the ***register()*** method is called to register the ***SseEventSink*** instance to the ***SseBroadcaster*** instance to subscribe to events.
-
-For more information about these interfaces, see the Javadocs for [OutboundSseEvent](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.html&package=allclasses-frame.html) and [OutboundSseEvent.Builder](https://openliberty.io/docs/ref/javaee/8/#class=javax/ws/rs/sse/OutboundSseEvent.Builder.html&package=allclasses-frame.html).
-
-### Reading from the reactive messaging channel
-
-The ***getSystemLoadMessage()*** method receives the message that contains the hostname and the average system load. The ***@Incoming("systemLoad")*** annotation indicates that the method retrieves the message by connecting to the ***systemLoad*** channel in Kafka, which you configure in the next section.
-
-Each time a message is received, the ***getSystemLoadMessage()*** method is called, and the hostname and system load contained in that message are broadcasted in an event to all subscribers.
-
-### Broadcasting events
-
-Broadcasting events is handled in the ***broadcastData()*** method. First, it checks whether the ***broadcaster*** value is ***null***. The ***broadcaster*** value must include at least one subscriber or there's no client to send the event to. If the ***broadcaster*** value is specified, the ***OutboundSseEvent*** interface is created by using the ***Sse.newEventBuilder()*** method, where the ***name*** of the event, the ***data*** it contains, and the ***mediaType*** are set. The ***OutboundSseEvent*** interface is then broadcasted, or sent to all registered sinks, by invoking the ***SseBroadcaster.broadcast()*** method.
-
-
-You just set up an endpoint in the ***bff*** service that the client in the ***frontend*** service can use to subscribe to events. You also enabled the service to read from the reactive messaging channel and broadcast the information as events to subscribers via SSE.
-
-
-::page{title="Configuring the Kafka connector for the bff service"}
-
-A complete ***system*** service is provided for you in the ***start/system*** directory. The ***system*** service is the producer of the messages that are published to the Kafka messaging system. The periodically published messages contain the system's hostname and a calculation of the average system load (its CPU usage) for the last minute.
-
-Configure the Kafka connector in the ***bff*** service to receive the messages from the ***system*** service.
-
-Create the microprofile-config.properties file.
+Create the ***QueryResource*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties
+touch /home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java
 ```
 
 
-> Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> Then, to open the QueryResource.java file in your IDE, select
+> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
 
-::openFile{path="/home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
-
-mp.messaging.incoming.systemLoad.connector=liberty-kafka
-mp.messaging.incoming.systemLoad.topic=system.load
-mp.messaging.incoming.systemLoad.key.deserializer=org.apache.kafka.common.serialization.StringDeserializer
-mp.messaging.incoming.systemLoad.value.deserializer=io.openliberty.guides.models.SystemLoad$SystemLoadDeserializer
-mp.messaging.incoming.systemLoad.group.id=bff
-```
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
 
 
 
-The ***bff*** service uses an incoming connector to receive messages through the ***systemLoad*** channel. The messages are then published by the ***system*** service to the ***system.load***  topic in the Kafka message broker. The ***key.deserializer*** and ***value.deserializer*** properties define how to deserialize the messages. The ***group.id*** property defines a unique name for the consumer group. All of these properties are required by the [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs) documentation.
+```java
+package io.openliberty.guides.query;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
-::page{title="Configuring the frontend service to subscribe to and consume events"}
+import io.openliberty.guides.query.client.InventoryClient;
 
-In this section, you will configure the client in the ***frontend*** service to subscribe to events and display their contents in a table in the UI.
+@ApplicationScoped
+@Path("/query")
+public class QueryResource {
 
-The front-end UI is a table where each row contains the hostname and load of one of the three ***system*** services. The HTML and styling for the UI is provided for you but you must populate the table with information that is received from the Server-Sent Events.
+    @Inject
+    private InventoryClient inventoryClient;
 
-Create the index.js file.
+    @GET
+    @Path("/systemLoad")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, Properties> systemLoad() {
+        List<String> systems = inventoryClient.getSystems();
+        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
+        final Holder systemLoads = new Holder();
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
-```
+        for (String system : systems) {
+            inventoryClient.getSystem(system)
+                           .thenAcceptAsync(p -> {
+                                if (p != null) {
+                                    systemLoads.updateValues(p);
+                                }
+                                remainingSystems.countDown();
+                           })
+                           .exceptionally(ex -> {
+                                remainingSystems.countDown();
+                                ex.printStackTrace();
+                                return null;
+                           });
+        }
 
+        try {
+            remainingSystems.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
-> Then, to open the index.js file in your IDE, select
-> **File** > **Open** > guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js, or click the following button
+        return systemLoads.getValues();
+    }
 
-::openFile{path="/home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js"}
+    private class Holder {
+        private volatile Map<String, Properties> values;
 
+        Holder() {
+            this.values = new ConcurrentHashMap<String, Properties>();
+            init();
+        }
 
+        public Map<String, Properties> getValues() {
+            return this.values;
+        }
 
-```javascript
-function initSSE() {
-    var source = new EventSource('http://localhost:9084/bff/sse', { withCredentials: true });
-    source.addEventListener(
-        'systemLoad',
-        systemLoadHandler
-    );
-}
+        public void updateValues(Properties p) {
+            final BigDecimal load = (BigDecimal) p.get("systemLoad");
 
-function systemLoadHandler(event) {
-    var system = JSON.parse(event.data);
-    if (document.getElementById(system.hostname)) {
-        document.getElementById(system.hostname).cells[1].innerHTML =
-                                        system.loadAverage.toFixed(2);
-    } else {
-        var tableRow = document.createElement('tr');
-        tableRow.id = system.hostname;
-        tableRow.innerHTML = '<td>' + system.hostname + '</td><td>'
-                             + system.loadAverage.toFixed(2) + '</td>';
-        document.getElementById('sysPropertiesTableBody').appendChild(tableRow);
+            this.values.computeIfPresent("lowest", (key, curr_val) -> {
+                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(lowest) < 0 ? p : curr_val;
+            });
+            this.values.computeIfPresent("highest", (key, curr_val) -> {
+                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(highest) > 0 ? p : curr_val;
+            });
+        }
+
+        private void init() {
+            this.values.put("highest", new Properties());
+            this.values.put("lowest", new Properties());
+            this.values.get("highest").put("hostname", "temp_max");
+            this.values.get("lowest").put("hostname", "temp_min");
+            this.values.get("highest")
+                .put("systemLoad", new BigDecimal(Double.MIN_VALUE));
+            this.values.get("lowest")
+                .put("systemLoad", new BigDecimal(Double.MAX_VALUE));
+        }
     }
 }
-
-
 ```
 
 
 
-### Subscribing to SSE
+The ***systemLoad*** endpoint asynchronously processes the data that is retrieved by the ***InventoryClient*** interface and serves that data after all of the services respond. The ***thenAcceptAsync()*** and ***exceptionally()*** methods together behave like an asynchronous try-catch block. The data is processed in the ***thenAcceptAsync()*** method only after the ***CompletionStage*** interface finishes retrieving it.  When you return a ***CompletionStage*** type in the resource, it doesn’t necessarily mean that the computation completed and the response was built.
 
-The ***initSSE()*** method is called when the page first loads. This method subscribes the client to the SSE by creating a new instance of the ***EventSource*** interface and specifying the ***http://localhost:9084/bff/sse*** URL in the parameters. To connect to the server, the ***EventSource*** interface makes a ***GET*** request to this endpoint with a request header of ***Accept: text/event-stream***.
-
-In this IBM cloud environment, you need to update the ***EventSource*** URL with the ***bff*** service domain instead of ***localhost***. Run the following command:
-```bash
-BFF_DOMAIN=${USERNAME}-9084.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
-sed -i 's=http://localhost:9084='"https://$BFF_DOMAIN"'=g' /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
-```
-
-
-
-Open another command-line session by selecting **Terminal** > **New Terminal** from the menu of the IDE.
-
-Because this request comes from ***localhost:9080*** and is made to ***localhost:9084***, it must follow the Cross-Origin Resource Sharing (CORS) specification to avoid being blocked by the browser. To enable CORS for the client, set the ***withCredentials*** configuration element to true in the parameters of the ***EventSource*** interface. CORS is already enabled for you in the ***bff*** service. To learn more about CORS, check out the [CORS guide](https://openliberty.io/guides/cors.html).
-
-
-### Consuming the SSE
-
-The ***EventSource.addEventListener()*** method is called to add an event listener. This event listener listens for events with the name of ***systemLoad***. The ***systemLoadHandler()*** function is set as the handler function, and each time an event is received, this function is called. The ***systemLoadHandler()*** function will take the event object and parse the event's data property from a JSON string into a JavaScript object. The contents of this object are used to update the table with the system hostname and load. If a system is already present in the table, the load is updated, otherwise a new row is added for the system.
+A ***CountDownLatch*** object is used to track how many asynchronous requests are being waited on. After each thread is completed, the ***countdown()*** methodcounts the ***CountDownLatch*** object down towards ***0***. This means that the value returns only after the thread that's retrieving the value is complete.The ***await()*** method stops and waits until all of the requests are complete. While the countdown completes, the main thread is free to perform other tasks. In this case, no such task is present.
 
 
 ::page{title="Building and running the application"}
 
-To build the application, navigate to the ***start*** directory and run the following Maven ***install*** and ***package*** goals from the command line:
+The ***system***, ***inventory***, and ***query*** microservices will be built in Docker containers. If you want to learn more about Docker containers, check out the [Containerizing microservices](https://openliberty.io/guides/containerize.html) guide.
+
+Start your Docker environment.
+
+To build the application, run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
 
 ```bash
-cd /home/project/guide-reactive-messaging-sse/start
 mvn -pl models install
 mvn package
 ```
 
 
-Run the following commands to containerize the ***frontend***, ***bff***, and ***system*** services:
+
+Run the following commands to containerize the microservices:
 
 ```bash
-docker build -t frontend:1.0-SNAPSHOT frontend/.
-docker build -t bff:1.0-SNAPSHOT bff/.
 docker build -t system:1.0-SNAPSHOT system/.
+docker build -t inventory:1.0-SNAPSHOT inventory/.
+docker build -t query:1.0-SNAPSHOT query/.
 ```
 
-Next, use the following ***startContainers.sh*** script to start the application in Docker containers:
-
+Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It creates containers for Kafka and all of the microservices in the project.
 
 
 ```bash
 ./scripts/startContainers.sh
 ```
-This script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, the ***frontend*** service, the ***bff*** service , and three instances of the ***system*** service.
 
 
-The application might take some time to get ready. Run the following command to confirm that the ***bff*** microservice is up and running:
+The microservices will take some time to become available. Run the following commands to confirm that the ***inventory*** and ***query*** microservices are up and running:
 ```bash
-curl -s http://localhost:9084/health | jq
+curl -s http://localhost:9085/health | jq
 ```
 
-Once your application is up and running, use the following command to get the URL. Open your browser and check out your ***front*** service by going to the URL that the command returns.
 ```bash
-echo https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+curl -s http://localhost:9080/health | jq
 ```
 
-The latest version of most modern web browsers supports Server-Sent Events. The exception is Internet Explorer, which does not support SSE. When you visit the URL, look for a table similar to the following example:
+Once the microservices are up and running, you can access the application by making requests to the ***query/systemLoad*** endpoint by using the following ***curl*** command:
+```bash
+curl -s http://localhost:9080/query/systemLoad | jq
+```
 
-![System table](https://raw.githubusercontent.com/OpenLiberty/guide-reactive-messaging-sse/prod/assets/system_table.png)
+When the service is ready, you see an output similar to the following example. This example was formatted for readability:
+
+```
+
+    "highest": {
+        "hostname":"30bec2b63a96",       
+        ”systemLoad": 6.1
+    },     
+    "lowest": { 
+        "hostname":"55ec2b63a96",    
+        ”systemLoad": 0.1
+    }
+}
+```
+
+The JSON output contains a ***highest*** attribute that represents the system with the highest load. Similarly, the ***lowest*** attribute represents the system with the lowest load. The JSON output for each of these attributes contains the ***hostname*** and ***systemLoad*** of the system.
+
+When you are done checking out the application, run the following command to stop the ***query*** microservice. Leave the ***system*** and ***inventory*** services running because they will be used when the application is rebuilt later in the guide:
+
+```bash
+docker stop query
+```
 
 
-The table contains three rows, one for each of the running ***system*** containers. If you can see the loads updating, you know that your ***bff*** service is successfully receiving messages and broadcasting them as SSE to the client in the ***frontend*** service.
+::page{title="Updating the web client to use an alternative reactive provider"}
+
+Although JAX-RS provides the default reactive provider that returns ***CompletionStage*** types, you can alternatively use another provider that supports other reactive frameworks like [RxJava](https://github.com/ReactiveX/RxJava). The Apache CXF and Eclipse Jersey projects produce such providers. You'll now update the web client to use the Jersey reactive provider for RxJava. With this updated reactive provider, you can write clients that use RxJava objects instead of clients that use only the ***CompletionStage*** interface. These custom objects provide a simpler and faster way for you to create scalable RESTful services with a ***CompletionStage*** interface.
+
+Replace the Maven configuration file.
+
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-reactive-rest-client/start/query/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/pom.xml"}
 
 
-::page{title="Tearing down the environment"}
 
-Run the following script to stop the application:
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.openliberty.guides</groupId>
+    <artifactId>query</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.default.https.port>9443</liberty.var.default.https.port>
+    </properties>
+
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.enterprise.concurrent</groupId>
+            <artifactId>jakarta.enterprise.concurrent-api</artifactId>
+            <version>3.0.3</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>3.0.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>6.1</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Required dependencies -->
+        <dependency>
+            <groupId>io.openliberty.guides</groupId>
+            <artifactId>models</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- Reactive dependencies -->
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>3.1.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.ext.rx</groupId>
+            <artifactId>jersey-rx-client-rxjava</artifactId>
+            <version>3.1.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.ext.rx</groupId>
+            <artifactId>jersey-rx-client-rxjava2</artifactId>
+            <version>3.1.5</version>
+        </dependency>
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mockserver</artifactId>
+            <version>1.19.7</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-client-java</artifactId>
+            <version>5.15.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.19.7</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.ext</groupId>
+            <artifactId>jersey-proxy-client</artifactId>
+            <version>3.1.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-jackson</artifactId>
+            <version>3.1.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+            <version>3.1.5</version>
+                <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.17.0</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <packagingExcludes>pom.xml</packagingExcludes>
+                </configuration>
+            </plugin>
+
+            <!-- Liberty plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.10.2</version>
+                <configuration>
+                    <containerRunOpts>
+                        -e INVENTORY_BASE_URI=http://mock-server:1080
+                        --network=reactive-app
+                    </containerRunOpts>
+                </configuration>
+            </plugin>
+
+            <!-- Plugin to run unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+
+            <!-- Plugin to run integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.2.5</version>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
+The ***jersey-rx-client-rxjava*** and ***jersey-rx-client-rxjava2*** dependencies provide the ***RxInvokerProvider*** classes, which are registered to the ***jersey-client*** ***ClientBuilder*** class.
+
+Update the client to accommodate the custom object types that you are trying to return. You'll need to register the type of object that you want inside the client invocation.
+
+Replace the ***InventoryClient*** interface.
+
+> To open the InventoryClient.java file in your IDE, select
+> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/client/InventoryClient.java"}
+
+
+
+```java
+package io.openliberty.guides.query.client;
+
+import java.util.List;
+import java.util.Properties;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.glassfish.jersey.client.rx.rxjava.RxObservableInvoker;
+import org.glassfish.jersey.client.rx.rxjava.RxObservableInvokerProvider;
+
+import rx.Observable;
+
+@RequestScoped
+public class InventoryClient {
+
+    @Inject
+    @ConfigProperty(name = "INVENTORY_BASE_URI", defaultValue = "http://localhost:9085")
+    private String baseUri;
+
+    public List<String> getSystems() {
+        return ClientBuilder.newClient()
+                            .target(baseUri)
+                            .path("/inventory/systems")
+                            .request()
+                            .header(HttpHeaders.CONTENT_TYPE,
+                                    MediaType.APPLICATION_JSON)
+                            .get(new GenericType<List<String>>() { });
+    }
+
+    public Observable<Properties> getSystem(String hostname) {
+        return ClientBuilder.newClient()
+                            .target(baseUri)
+                            .register(RxObservableInvokerProvider.class)
+                            .path("/inventory/systems")
+                            .path(hostname)
+                            .request()
+                            .header(HttpHeaders.CONTENT_TYPE,
+                                    MediaType.APPLICATION_JSON)
+                            .rx(RxObservableInvoker.class)
+                            .get(new GenericType<Properties>() { });
+    }
+}
+```
+
+
+
+The return type of the ***getSystem()*** method is now an ***Observable*** object instead of a ***CompletionStage*** interface. [Observable](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html) is a collection of data that waits to be subscribed to before it can release any data and is part of RxJava. The ***rx()*** method now needs to contain ***RxObservableInvoker.class*** as an argument. This argument calls the specific invoker, ***RxObservableInvoker***, for the ***Observable*** class that's provided by Jersey. 
+
+In the ***getSystem()*** method, the ***register(RxObservableInvokerProvider)*** method call registers the ***RxObservableInvoker*** class,which means that the client can recognize the invoker provider.
+
+In some scenarios, a producer might generate more data than the consumers can handle. JAX-RS can deal with cases like these by using the RxJava ***Flowable*** class with backpressure. To learn more about RxJava and backpressure, see [JAX-RS reactive extensions with RxJava backpressure](https://openliberty.io/blog/2019/04/10/jaxrs-reactive-extensions.html).
+
+
+::page{title="Updating the REST resource to support the reactive JAX-RS client"}
+
+Now that the client methods return the ***Observable*** class, you must update the resource to accommodate these changes.
+
+Replace the ***QueryResource*** class.
+
+> To open the QueryResource.java file in your IDE, select
+> **File** > **Open** > guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/main/java/io/openliberty/guides/query/QueryResource.java"}
+
+
+
+```java
+package io.openliberty.guides.query;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+import io.openliberty.guides.query.client.InventoryClient;
+
+@ApplicationScoped
+@Path("/query")
+public class QueryResource {
+
+    @Inject
+    private InventoryClient inventoryClient;
+
+    @GET
+    @Path("/systemLoad")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, Properties> systemLoad() {
+        List<String> systems = inventoryClient.getSystems();
+        CountDownLatch remainingSystems = new CountDownLatch(systems.size());
+        final Holder systemLoads = new Holder();
+        for (String system : systems) {
+            inventoryClient.getSystem(system)
+                           .subscribe(p -> {
+                                if (p != null) {
+                                    systemLoads.updateValues(p);
+                                }
+                                remainingSystems.countDown();
+                           }, e -> {
+                                remainingSystems.countDown();
+                                e.printStackTrace();
+                           });
+        }
+
+        try {
+            remainingSystems.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return systemLoads.getValues();
+    }
+
+    private class Holder {
+        private volatile Map<String, Properties> values;
+
+        Holder() {
+            this.values = new ConcurrentHashMap<String, Properties>();
+            init();
+        }
+
+        public Map<String, Properties> getValues() {
+            return this.values;
+        }
+
+        public void updateValues(Properties p) {
+            final BigDecimal load = (BigDecimal) p.get("systemLoad");
+
+            this.values.computeIfPresent("lowest", (key, curr_val) -> {
+                BigDecimal lowest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(lowest) < 0 ? p : curr_val;
+            });
+            this.values.computeIfPresent("highest", (key, curr_val) -> {
+                BigDecimal highest = (BigDecimal) curr_val.get("systemLoad");
+                return load.compareTo(highest) > 0 ? p : curr_val;
+            });
+        }
+
+        private void init() {
+            this.values.put("highest", new Properties());
+            this.values.put("lowest", new Properties());
+            this.values.get("highest").put("hostname", "temp_max");
+            this.values.get("lowest").put("hostname", "temp_min");
+            this.values.get("highest")
+                .put("systemLoad", new BigDecimal(Double.MIN_VALUE));
+            this.values.get("lowest")
+                .put("systemLoad", new BigDecimal(Double.MAX_VALUE));
+        }
+    }
+}
+```
+
+
+
+The goal of the ***systemLoad()*** method is to return the system with the largest load and the system with the smallest load. The ***systemLoad*** endpoint first gets all of the hostnames by calling the ***getSystems()*** method.  Then it loops through the hostnames and calls the ***getSystem()*** method on each one.
+
+Instead of using the ***thenAcceptAsync()*** method, ***Observable*** uses the ***subscribe()*** method to asynchronously process data. Thus, any necessary data processing happens inside the ***subscribe()*** method. In this case, the necessary data processing is saving the data in the temporary ***Holder*** class. The ***Holder*** class is used to store the value that is returned from the client because values cannot be returned inside the ***subscribe()*** method.  The highest and lowest load systems are updated in the ***updateValues()*** method.
+
+
+::page{title="Rebuilding and running the application"}
+
+Run the Maven ***install*** and ***package*** goals from the command-line session in the ***start*** directory:
+
+```bash
+mvn -pl query package
+```
+
+Run the following command to containerize the ***query*** microservice:
+
+```bash
+docker build -t query:1.0-SNAPSHOT query/.
+```
+
+Next, use the provided script to restart the query service in a Docker container. 
+
+
+```bash
+./scripts/startQueryContainer.sh
+```
+
+
+The ***query*** microservice will take some time to become available. Run the following command to confirm that the ***query*** microservice is up and running:
+```bash
+curl -s http://localhost:9080/health | jq
+```
+
+Once the ***query*** microservice is up and running, you can access the application by making requests to the ***query/systemLoad*** endpoint using the following ***curl*** command:
+```bash
+curl -s http://localhost:9080/query/systemLoad | jq
+```
+
+Switching to a reactive programming model freed up the thread that was handling your request to ***query/systemLoad***. While the client request is being handled, the thread can handle other work.
+
+When you are done checking out the application, run the following script to stop the application:
 
 
 ```bash
 ./scripts/stopContainers.sh
 ```
 
+
+
+::page{title="Testing the query microservice"}
+
+A few tests are included for you to test the basic functionality of the ***query*** microservice. If a test failure occurs, then you might have introduced a bug into the code.
+
+Create the ***QueryServiceIT*** class.
+
+> Run the following touch command in your terminal
+```bash
+touch /home/project/guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java
+```
+
+
+> Then, to open the QueryServiceIT.java file in your IDE, select
+> **File** > **Open** > guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java, or click the following button
+
+::openFile{path="/home/project/guide-reactive-rest-client/start/query/src/test/java/it/io/openliberty/guides/query/QueryServiceIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.query;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.net.Socket;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.util.Map;
+import java.util.Properties;
+
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.JerseyClient;
+import org.glassfish.jersey.client.JerseyClientBuilder;
+import org.glassfish.jersey.client.JerseyWebTarget;
+import org.glassfish.jersey.client.proxy.WebResourceFactory;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
+import org.mockserver.client.MockServerClient;
+import org.mockserver.model.HttpRequest;
+import org.mockserver.model.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MockServerContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.utility.DockerImageName;
+
+public class QueryServiceIT {
+
+    private static Logger logger = LoggerFactory.getLogger(QueryServiceIT.class);
+
+    public static QueryResourceClient client;
+
+    private static boolean isServiceRunning;
+    private static Network network = createNetwork();
+
+    private static String testHost1 =
+        "{"
+            + "\"hostname\" : \"testHost1\","
+            + "\"systemLoad\" : 1.23"
+        + "}";
+    private static String testHost2 =
+        "{"
+            + "\"hostname\" : \"testHost2\","
+            + "\"systemLoad\" : 3.21"
+        + "}";
+    private static String testHost3 =
+        "{" + "\"hostname\" : \"testHost3\","
+            + "\"systemLoad\" : 2.13"
+        + "}";
+
+    private static ImageFromDockerfile queryImage =
+        new ImageFromDockerfile("query:1.0-SNAPSHOT")
+            .withDockerfile(Paths.get("./Dockerfile"));
+
+    public static final DockerImageName MOCKSERVER_IMAGE =
+        DockerImageName.parse("mockserver/mockserver")
+            .withTag("mockserver-"
+                + MockServerClient.class.getPackage().getImplementationVersion());
+
+    public static MockServerContainer mockServer =
+        new MockServerContainer(MOCKSERVER_IMAGE)
+            .withNetworkAliases("mock-server")
+            .withNetwork(network);
+
+    public static MockServerClient mockClient;
+
+    private static GenericContainer<?> queryContainer =
+        new GenericContainer(queryImage)
+            .withNetwork(network)
+            .withExposedPorts(9080)
+            .waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1))
+            .withStartupTimeout(Duration.ofMinutes(3))
+            .withLogConsumer(new Slf4jLogConsumer(logger))
+            .dependsOn(mockServer);
+
+    private static QueryResourceClient createRestClient(String urlPath) {
+        ClientConfig config = new ClientConfig();
+        JerseyClient jerseyClient = JerseyClientBuilder.createClient(config);
+        JerseyWebTarget target = jerseyClient.target(urlPath);
+        return WebResourceFactory.newResource(QueryResourceClient.class, target);
+    }
+
+    private static boolean isServiceRunning(String host, int port) {
+        try {
+            Socket socket = new Socket(host, port);
+            socket.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static Network createNetwork() {
+        if (isServiceRunning("localhost", 9080)) {
+            isServiceRunning = true;
+            return new Network() {
+
+                @Override
+                public Statement apply(Statement base, Description description) {
+                    return null;
+                }
+
+                @Override
+                public String getId() {
+                    return "reactive-app";
+                }
+
+                @Override
+                public void close() {
+                }
+            };
+        } else {
+            isServiceRunning = false;
+            return Network.newNetwork();
+        }
+    }
+
+    @BeforeAll
+    public static void startContainers() {
+        mockServer.start();
+        mockClient = new MockServerClient(
+            mockServer.getHost(),
+            mockServer.getServerPort());
+        String urlPath;
+        if (isServiceRunning) {
+            System.out.println("Testing with mvn liberty:devc");
+            urlPath = "http://localhost:9080";
+        } else {
+            System.out.println("Testing with mvn verify");
+            queryContainer.withEnv(
+                "INVENTORY_BASE_URI",
+                "http://mock-server:" + MockServerContainer.PORT);
+            queryContainer.start();
+            urlPath = "http://"
+                      + queryContainer.getHost()
+                      + ":" + queryContainer.getFirstMappedPort();
+        }
+
+        System.out.println("Creating REST client with: " + urlPath);
+        client = createRestClient(urlPath);
+    }
+
+    @BeforeEach
+    public void setup() throws InterruptedException {
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody("[\"testHost1\","
+                                  + "\"testHost2\","
+                                  + "\"testHost3\"]")
+                        .withHeader("Content-Type", "application/json"));
+
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost1"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost1)
+                        .withHeader("Content-Type", "application/json"));
+
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost2"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost2)
+                        .withHeader("Content-Type", "application/json"));
+
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost3"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost3)
+                        .withHeader("Content-Type", "application/json"));
+    }
+
+    @AfterAll
+    public static void stopContainers() {
+        if (!isServiceRunning) {
+            queryContainer.stop();
+        }
+        mockClient.close();
+        mockServer.stop();
+        network.close();
+    }
+
+    @Test
+    public void testSystemLoad() {
+        Map<String, Properties> response = client.systemLoad();
+        assertEquals(
+            "testHost2",
+            response.get("highest").get("hostname"),
+            "Returned highest system load incorrect"
+        );
+        assertEquals(
+            "testHost1",
+            response.get("lowest").get("hostname"),
+            "Returned lowest system load incorrect"
+        );
+    }
+}
+```
+
+
+
+The ***testSystemLoad()*** test case verifies that the ***query*** service can correctly calculate the highest and lowest system loads. 
+
+
+### Running the tests
+
+Navigate to the ***query*** directory, then verify that the tests pass by running the Maven ***verify*** goal:
+
+```bash
+cd query
+mvn verify
+```
+
+When the tests succeed, you see output similar to the following example:
+
+```
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running it.io.openliberty.guides.query.QueryServiceIT
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.88 s - in it.io.openliberty.guides.query.QueryServiceIT
+
+Results:
+
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+```
+
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You developed an application that subscribes to Server-Sent Events by using MicroProfile Reactive Messaging, Open Liberty, and Kafka.
+You modified an application to make HTTP requests by using a reactive JAX-RS client with Open Liberty and Jersey's RxJava provider.
 
 
 
@@ -356,43 +1040,33 @@ You developed an application that subscribes to Server-Sent Events by using Micr
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***guide-reactive-messaging-sse*** project by running the following commands:
+Delete the ***guide-reactive-rest-client*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr guide-reactive-messaging-sse
+rm -fr guide-reactive-rest-client
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Streaming%20updates%20to%20a%20client%20using%20Server-Sent%20Events&guide-id=cloud-hosted-guide-reactive-messaging-sse)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20RESTful%20services%20using%20the%20reactive%20JAX-RS%20client&guide-id=cloud-hosted-guide-reactive-rest-client)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-messaging-sse/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-reactive-rest-client/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-reactive-rest-client/pulls)
 
 
 
 ### Where to next?
 
 * [Creating reactive Java microservices](https://openliberty.io/guides/microprofile-reactive-messaging.html)
-* [Acknowledging messages using MicroProfile Reactive Messaging](https://openliberty.io/guides/microprofile-reactive-messaging-acknowledgment.html)
-* [Integrating RESTful services with a reactive system](https://openliberty.io/guides/microprofile-reactive-messaging-rest-integration.html)
-* [Testing reactive Java microservices](https://openliberty.io/guides/reactive-service-testing.html)
-* [Containerizing microservices](https://openliberty.io/guides/containerize.html)
-
-**Learn more about MicroProfile**
-* [See the MicroProfile specs](https://microprofile.io/)
-* [View the MicroProfile API](https://openliberty.io/docs/ref/microprofile)
-* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html#_microprofile_reactive_messaging)
-* [View the JAX-RS Server-Sent Events API](https://openliberty.io/docs/ref/javaee/8/#package=javax/ws/rs/sse/package-frame.html&class=javax/ws/rs/sse/package-summary.html)
-* [View the Server-Sent Events HTML Specification](https://html.spec.whatwg.org/multipage/server-sent-events.html)
+* [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 
 ### Log out of the session
