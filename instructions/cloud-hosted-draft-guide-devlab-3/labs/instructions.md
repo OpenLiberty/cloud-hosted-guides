@@ -1008,7 +1008,9 @@ The ***testSystemLoad()*** test case verifies that the ***query*** service can c
 
 Navigate to the ***query*** directory, then verify that the tests pass by running the Maven ***verify*** goal:
 
+
 ```bash
+export TESTCONTAINERS_RYUK_DISABLED=true
 cd query
 mvn verify
 ```
