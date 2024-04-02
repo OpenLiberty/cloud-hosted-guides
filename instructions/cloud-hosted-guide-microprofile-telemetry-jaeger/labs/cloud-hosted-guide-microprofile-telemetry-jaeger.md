@@ -409,13 +409,13 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.7.Final</version>
+            <version>6.2.8.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.7.Final</version>
+            <version>6.2.8.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
