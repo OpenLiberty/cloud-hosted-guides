@@ -83,17 +83,17 @@ import java.util.Properties;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -115,19 +115,18 @@ public class InventoryResource {
 
     @Inject
     private InventoryManager manager;
-    
+
     @GET
     @Path("/systems")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getSystems() {
         List<Properties> systems = manager.getSystems()
-                .values()
-                .stream()
-                .collect(Collectors.toList());
-        return Response
-                .status(Response.Status.OK)
-                .entity(systems)
-                .build();
+                                          .values()
+                                          .stream()
+                                          .collect(Collectors.toList());
+        return Response.status(Response.Status.OK)
+                       .entity(systems)
+                       .build();
     }
 
     @GET
@@ -136,15 +135,13 @@ public class InventoryResource {
     public Response getSystem(@PathParam("hostname") String hostname) {
         Optional<Properties> system = manager.getSystem(hostname);
         if (system.isPresent()) {
-            return Response
-                    .status(Response.Status.OK)
-                    .entity(system)
-                    .build();
+            return Response.status(Response.Status.OK)
+                           .entity(system)
+                           .build();
         }
-        return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("hostname does not exist.")
-                .build();
+        return Response.status(Response.Status.NOT_FOUND)
+                       .entity("hostname does not exist.")
+                       .build();
     }
 
     @PUT
@@ -155,18 +152,17 @@ public class InventoryResource {
         logger.info("updateSystemProperty: " + propertyName);
         propertyNameEmitter.onNext(propertyName);
         return Response
-                   .status(Response.Status.OK)
-                   .entity("Request successful for the " + propertyName + " property\n")
-                   .build();
+                 .status(Response.Status.OK)
+                 .entity("Request successful for the " + propertyName + " property\n")
+                 .build();
     }
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     public Response resetSystems() {
         manager.resetSystems();
-        return Response
-                .status(Response.Status.OK)
-                .build();
+        return Response.status(Response.Status.OK)
+                       .build();
     }
 
     @Incoming("systemLoad")
@@ -180,7 +176,7 @@ public class InventoryResource {
             logger.info("Host " + hostname + " was added: " + sl);
         }
     }
-    
+
     @Incoming("addSystemProperty")
     public void getPropertyMessage(PropertyMessage pm)  {
         logger.info("getPropertyMessage: " + pm);
@@ -196,7 +192,7 @@ public class InventoryResource {
 
     @Outgoing("requestSystemProperty")
     public Publisher<String> sendPropertyName() {
-        Flowable<String> flowable = Flowable.<String>create(emitter -> 
+        Flowable<String> flowable = Flowable.<String>create(emitter ->
             this.propertyNameEmitter = emitter, BackpressureStrategy.BUFFER);
         return flowable;
     }
@@ -238,7 +234,7 @@ import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -250,10 +246,10 @@ import io.reactivex.rxjava3.core.Flowable;
 
 @ApplicationScoped
 public class SystemService {
-    
+
     private static Logger logger = Logger.getLogger(SystemService.class.getName());
 
-    private static final OperatingSystemMXBean osMean = 
+    private static final OperatingSystemMXBean OS_MEAN =
             ManagementFactory.getOperatingSystemMXBean();
     private static String hostname = null;
 
@@ -271,22 +267,22 @@ public class SystemService {
     @Outgoing("systemLoad")
     public Publisher<SystemLoad> sendSystemLoad() {
         return Flowable.interval(15, TimeUnit.SECONDS)
-                .map((interval -> new SystemLoad(getHostname(),
-                        osMean.getSystemLoadAverage())));
+                       .map((interval -> new SystemLoad(getHostname(),
+                             OS_MEAN.getSystemLoadAverage())));
     }
-    
+
     @Incoming("propertyRequest")
     @Outgoing("propertyResponse")
     public PropertyMessage sendProperty(String propertyName) {
         logger.info("sendProperty: " + propertyName);
         if (propertyName == null || propertyName.isEmpty()) {
             logger.warning(propertyName == null ? "Null" : "An empty string"
-                    + " is not System property.");
+                + " is not System property.");
             return null;
         }
         return new PropertyMessage(getHostname(),
-                propertyName,
-                System.getProperty(propertyName, "unknown"));
+                       propertyName,
+                       System.getProperty(propertyName, "unknown"));
     }
 }
 ```
@@ -310,7 +306,7 @@ Replace the inventory/microprofile-config.properties file.
 
 
 ```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
+mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
 
 mp.messaging.incoming.systemLoad.connector=liberty-kafka
 mp.messaging.incoming.systemLoad.topic=system.load
@@ -344,7 +340,7 @@ Replace the system/microprofile-config.properties file.
 
 
 ```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
+mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
 
 mp.messaging.outgoing.systemLoad.connector=liberty-kafka
 mp.messaging.outgoing.systemLoad.topic=system.load
@@ -389,7 +385,7 @@ docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
-Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the project. For simplicity, the script starts one instance of the ***system*** service.
+Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka and the microservices in the project. For simplicity, the script starts one instance of the ***system*** service.
 
 
 ```bash
