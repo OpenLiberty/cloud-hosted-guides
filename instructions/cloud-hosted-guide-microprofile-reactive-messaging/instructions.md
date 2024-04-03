@@ -90,7 +90,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.reactivestreams.Publisher;
@@ -101,7 +101,7 @@ import io.reactivex.rxjava3.core.Flowable;
 @ApplicationScoped
 public class SystemService {
 
-    private static final OperatingSystemMXBean osMean = 
+    private static final OperatingSystemMXBean OS_MEAN =
             ManagementFactory.getOperatingSystemMXBean();
     private static String hostname = null;
 
@@ -120,7 +120,7 @@ public class SystemService {
     public Publisher<SystemLoad> sendSystemLoad() {
         return Flowable.interval(15, TimeUnit.SECONDS)
                 .map((interval -> new SystemLoad(getHostname(),
-                        new Double(osMean.getSystemLoadAverage()))));
+                Double.valueOf(OS_MEAN.getSystemLoadAverage()))));
     }
 
 }
@@ -166,15 +166,15 @@ import java.util.Properties;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
@@ -188,7 +188,7 @@ public class InventoryResource {
 
     @Inject
     private InventoryManager manager;
-    
+
     @GET
     @Path("/systems")
     @Produces(MediaType.APPLICATION_JSON)
@@ -275,7 +275,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/
 
 
 ```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
+mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
 
 mp.messaging.outgoing.systemLoad.connector=liberty-kafka
 mp.messaging.outgoing.systemLoad.topic=system.load
@@ -305,7 +305,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/inventory/src/ma
 
 
 ```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
+mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
 
 mp.messaging.incoming.systemLoad.connector=liberty-kafka
 mp.messaging.incoming.systemLoad.topic=system.load
@@ -318,9 +318,9 @@ mp.messaging.incoming.systemLoad.group.id=system-load-status
 
 The ***inventory*** microservice uses an incoming connector to receive messages through the ***systemLoad*** channel. The messages were published by the ***system*** microservice to the ***system.load*** topic in the Kafka message broker. The ***key.deserializer*** and ***value.deserializer*** properties define how to deserialize the messages. The ***SystemLoadDeserializer*** class implements the logic for turning JSON into a ***SystemLoad*** object and is configured as the ***value.deserializer***. The ***group.id*** property defines a unique name for the consumer group. A consumer group is a collection of consumers who share a common identifier for the group. You can also view a consumer group as the various machines that ingest from the Kafka topics. All of these properties are required by the [Apache Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) and [Apache Kafka Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs).
 
-::page{title="Configuring the server"}
+::page{title="Configuring Liberty"}
 
-To run the services, the Open Liberty server on which each service runs needs to be correctly configured. Relevant features, including the [MicroProfile Reactive Messaging feature](https://openliberty.io/docs/ref/feature/#mpReactiveMessaging-1.0.html), must be enabled for the ***system*** and ***inventory*** services.
+To run the services, the Open Liberty on which each service runs needs to be correctly configured. Relevant features, including the [MicroProfile Reactive Messaging feature](https://openliberty.io/docs/ref/feature/#mpReactiveMessaging-3.0.html), must be enabled for the ***system*** and ***inventory*** services.
 
 Create the system/server.xml configuration file.
 
@@ -341,20 +341,21 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/src/main/
 <server description="System Service">
 
   <featureManager>
-    <feature>cdi-2.0</feature>
-    <feature>concurrent-1.0</feature>
-    <feature>jsonb-1.0</feature>
-    <feature>mpHealth-2.2</feature>
-    <feature>mpConfig-1.4</feature>
-    <feature>mpReactiveMessaging-1.0</feature>
+    <feature>cdi-4.0</feature>
+    <feature>concurrent-3.0</feature>
+    <feature>jsonb-3.0</feature>
+    <feature>mpHealth-4.0</feature>
+    <feature>mpConfig-3.1</feature>
+    <feature>mpReactiveMessaging-3.0</feature>
   </featureManager>
 
-  <variable name="default.http.port" defaultValue="9083"/>
-  <variable name="default.https.port" defaultValue="9446"/>
+  <variable name="http.port" defaultValue="9083"/>
+  <variable name="https.port" defaultValue="9446"/>
 
-  <httpEndpoint host="*" httpPort="${default.http.port}"
-      httpsPort="${default.https.port}" id="defaultHttpEndpoint"/>
+  <httpEndpoint host="*" httpPort="${http.port}"
+      httpsPort="${https.port}" id="defaultHttpEndpoint"/>
 
+  <logging consoleLogLevel="INFO"/>
   <webApplication location="system.war" contextRoot="/"/>
 </server>
 ```
@@ -396,13 +397,13 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
     <packaging>war</packaging>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9083</liberty.var.default.http.port>
-        <liberty.var.default.https.port>9446</liberty.var.default.https.port>
+        <liberty.var.http.port>9083</liberty.var.http.port>
+        <liberty.var.https.port>9446</liberty.var.https.port>
     </properties>
 
     <dependencies>
@@ -410,20 +411,20 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>8.0.0</version>
+            <version>10.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>3.3</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.microprofile.reactive.messaging</groupId>
             <artifactId>microprofile-reactive-messaging-api</artifactId>
-            <version>1.0</version>
+            <version>3.0</version>
             <scope>provided</scope>
         </dependency>
         <!-- Required dependencies -->
@@ -435,30 +436,40 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>2.8.1</version>
+            <version>3.7.0</version>
         </dependency>
         <dependency>
             <groupId>io.reactivex.rxjava3</groupId>
             <artifactId>rxjava</artifactId>
-            <version>3.1.2</version>
+            <version>3.1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.12</version>
         </dependency>
         <!-- For tests -->
         <dependency>
-            <groupId>org.microshed</groupId>
-            <artifactId>microshed-testing-liberty</artifactId>
-            <version>0.9.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>kafka</artifactId>
-            <version>1.16.2</version>
+            <version>1.19.7</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.8.1</version>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.19.7</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -469,7 +480,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
+                <version>3.4.0</version>
                 <configuration>
                     <packagingExcludes>pom.xml</packagingExcludes>
                 </configuration>
@@ -479,21 +490,28 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.8.2</version>
+                <version>3.10.2</version>
+                <configuration>
+                    <!-- devc config -->
+                    <containerRunOpts>
+                        -p 9085:9085
+                        --network=reactive-app
+                    </containerRunOpts>
+                </configuration>
             </plugin>
 
             <!-- Plugin to run unit tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>3.2.5</version>
             </plugin>
 
             <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>3.2.5</version>
                 <executions>
                     <execution>
                         <id>integration-test</id>
@@ -541,7 +559,7 @@ docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
-Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the project. For simplicity, the script starts one instance of the system service.
+Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka and the microservices in the project. For simplicity, the script starts one instance of the system service.
 
 
 ```bash
