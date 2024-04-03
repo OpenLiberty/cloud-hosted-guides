@@ -92,14 +92,13 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CompletionStage;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.HttpHeaders;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.HttpHeaders;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @RequestScoped
@@ -109,13 +108,15 @@ public class InventoryClient {
     @ConfigProperty(name = "INVENTORY_BASE_URI", defaultValue = "http://localhost:9085")
     private String baseUri;
 
+
     public List<String> getSystems() {
         return ClientBuilder.newClient()
                             .target(baseUri)
                             .path("/inventory/systems")
                             .request()
-                            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                            .get(new GenericType<List<String>>(){});
+                            .header(HttpHeaders.CONTENT_TYPE,
+                                    MediaType.APPLICATION_JSON)
+                            .get(new GenericType<List<String>>() { });
     }
 
     public CompletionStage<Properties> getSystem(String hostname) {
@@ -124,7 +125,8 @@ public class InventoryClient {
                             .path("/inventory/systems")
                             .path(hostname)
                             .request()
-                            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .header(HttpHeaders.CONTENT_TYPE,
+                                    MediaType.APPLICATION_JSON)
                             .rx()
                             .get(Properties.class);
     }
@@ -163,19 +165,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 import io.openliberty.guides.query.client.InventoryClient;
 
 @ApplicationScoped
 @Path("/query")
 public class QueryResource {
-    
+
     @Inject
     private InventoryClient inventoryClient;
 
@@ -214,7 +216,7 @@ public class QueryResource {
     private class Holder {
         private volatile Map<String, Properties> values;
 
-        public Holder() {
+        Holder() {
             this.values = new ConcurrentHashMap<String, Properties>();
             init();
         }
@@ -241,8 +243,10 @@ public class QueryResource {
             this.values.put("lowest", new Properties());
             this.values.get("highest").put("hostname", "temp_max");
             this.values.get("lowest").put("hostname", "temp_min");
-            this.values.get("highest").put("systemLoad", new BigDecimal(Double.MIN_VALUE));
-            this.values.get("lowest").put("systemLoad", new BigDecimal(Double.MAX_VALUE));
+            this.values.get("highest")
+                .put("systemLoad", new BigDecimal(Double.MIN_VALUE));
+            this.values.get("lowest")
+                .put("systemLoad", new BigDecimal(Double.MAX_VALUE));
         }
     }
 }
@@ -278,7 +282,7 @@ docker build -t inventory:1.0-SNAPSHOT inventory/.
 docker build -t query:1.0-SNAPSHOT query/.
 ```
 
-Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It creates containers for Kafka, Zookeeper, and all of the microservices in the project.
+Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It creates containers for Kafka and all of the microservices in the project.
 
 
 ```bash
@@ -350,12 +354,12 @@ Replace the Maven configuration file.
     <packaging>war</packaging>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Liberty configuration -->
-        <liberty.var.default.http.port>9080</liberty.var.default.http.port>
+        <liberty.var.http.port>9080</liberty.var.http.port>
         <liberty.var.default.https.port>9443</liberty.var.default.https.port>
     </properties>
 
@@ -364,25 +368,25 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>8.0.0</version>
+            <version>10.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>javax.enterprise.concurrent</groupId>
-            <artifactId>javax.enterprise.concurrent-api</artifactId>
-            <version>1.1</version>
+            <groupId>jakarta.enterprise.concurrent</groupId>
+            <artifactId>jakarta.enterprise.concurrent-api</artifactId>
+            <version>3.0.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-            <version>2.0.1.Final</version>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>3.0.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
-            <version>3.3</version>
+            <version>6.1</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
@@ -396,41 +400,77 @@ Replace the Maven configuration file.
         <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-client</artifactId>
-            <version>2.35</version>
+            <version>3.1.5</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.ext.rx</groupId>
             <artifactId>jersey-rx-client-rxjava</artifactId>
-            <version>2.35</version>
+            <version>3.1.5</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.ext.rx</groupId>
             <artifactId>jersey-rx-client-rxjava2</artifactId>
-            <version>2.35</version>
+            <version>3.1.5</version>
         </dependency>
         <!-- For tests -->
         <dependency>
-            <groupId>org.microshed</groupId>
-            <artifactId>microshed-testing-liberty</artifactId>
-            <version>0.9.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mockserver</artifactId>
-            <version>1.16.2</version>
+            <version>1.19.7</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mock-server</groupId>
             <artifactId>mockserver-client-java</artifactId>
-            <version>5.11.2</version>
+            <version>5.15.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.8.1</version>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.19.7</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.ext</groupId>
+            <artifactId>jersey-proxy-client</artifactId>
+            <version>3.1.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-jackson</artifactId>
+            <version>3.1.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+            <version>3.1.5</version>
+                <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.17.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -441,7 +481,7 @@ Replace the Maven configuration file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
+                <version>3.4.0</version>
                 <configuration>
                     <packagingExcludes>pom.xml</packagingExcludes>
                 </configuration>
@@ -451,21 +491,27 @@ Replace the Maven configuration file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.8.2</version>
+                <version>3.10.2</version>
+                <configuration>
+                    <containerRunOpts>
+                        -e INVENTORY_BASE_URI=http://mock-server:1080
+                        --network=reactive-app
+                    </containerRunOpts>
+                </configuration>
             </plugin>
 
             <!-- Plugin to run unit tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>3.2.5</version>
             </plugin>
 
             <!-- Plugin to run integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>3.2.5</version>
                 <executions>
                     <execution>
                         <id>integration-test</id>
@@ -507,12 +553,12 @@ package io.openliberty.guides.query.client;
 import java.util.List;
 import java.util.Properties;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.glassfish.jersey.client.rx.rxjava.RxObservableInvoker;
@@ -533,7 +579,7 @@ public class InventoryClient {
                             .path("/inventory/systems")
                             .request()
                             .header(HttpHeaders.CONTENT_TYPE,
-                            MediaType.APPLICATION_JSON)
+                                    MediaType.APPLICATION_JSON)
                             .get(new GenericType<List<String>>() { });
     }
 
@@ -545,7 +591,7 @@ public class InventoryClient {
                             .path(hostname)
                             .request()
                             .header(HttpHeaders.CONTENT_TYPE,
-                            MediaType.APPLICATION_JSON)
+                                    MediaType.APPLICATION_JSON)
                             .rx(RxObservableInvoker.class)
                             .get(new GenericType<Properties>() { });
     }
@@ -554,7 +600,9 @@ public class InventoryClient {
 
 
 
-The return type of the ***getSystem()*** method is now an ***Observable*** object instead of a ***CompletionStage*** interface. [Observable](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html) is a collection of data that waits to be subscribed to before it can release any data and is part of RxJava. The ***rx()*** method now needs to contain ***RxObservableInvoker.class*** as an argument. This argument calls the specific invoker, ***RxObservableInvoker***, for the ***Observable*** class that's provided by Jersey. In the ***getSystem()*** method,the ***register(RxObservableInvokerProvider)*** method call registers the ***RxObservableInvoker*** class,which means that the client can recognize the invoker provider.
+The return type of the ***getSystem()*** method is now an ***Observable*** object instead of a ***CompletionStage*** interface. [Observable](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html) is a collection of data that waits to be subscribed to before it can release any data and is part of RxJava. The ***rx()*** method now needs to contain ***RxObservableInvoker.class*** as an argument. This argument calls the specific invoker, ***RxObservableInvoker***, for the ***Observable*** class that's provided by Jersey. 
+
+In the ***getSystem()*** method, the ***register(RxObservableInvokerProvider)*** method call registers the ***RxObservableInvoker*** class,which means that the client can recognize the invoker provider.
 
 In some scenarios, a producer might generate more data than the consumers can handle. JAX-RS can deal with cases like these by using the RxJava ***Flowable*** class with backpressure. To learn more about RxJava and backpressure, see [JAX-RS reactive extensions with RxJava backpressure](https://openliberty.io/blog/2019/04/10/jaxrs-reactive-extensions.html).
 
@@ -583,19 +631,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 import io.openliberty.guides.query.client.InventoryClient;
 
 @ApplicationScoped
 @Path("/query")
 public class QueryResource {
-    
+
     @Inject
     private InventoryClient inventoryClient;
 
@@ -624,14 +672,14 @@ public class QueryResource {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        
+
         return systemLoads.getValues();
     }
 
     private class Holder {
         private volatile Map<String, Properties> values;
 
-        public Holder() {
+        Holder() {
             this.values = new ConcurrentHashMap<String, Properties>();
             init();
         }
@@ -658,8 +706,10 @@ public class QueryResource {
             this.values.put("lowest", new Properties());
             this.values.get("highest").put("hostname", "temp_max");
             this.values.get("lowest").put("hostname", "temp_min");
-            this.values.get("highest").put("systemLoad", new BigDecimal(Double.MIN_VALUE));
-            this.values.get("lowest").put("systemLoad", new BigDecimal(Double.MAX_VALUE));
+            this.values.get("highest")
+                .put("systemLoad", new BigDecimal(Double.MIN_VALUE));
+            this.values.get("lowest")
+                .put("systemLoad", new BigDecimal(Double.MAX_VALUE));
         }
     }
 }
@@ -739,81 +789,202 @@ package it.io.openliberty.guides.query;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.net.Socket;
+import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
+
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.JerseyClient;
+import org.glassfish.jersey.client.JerseyClientBuilder;
+import org.glassfish.jersey.client.JerseyWebTarget;
+import org.glassfish.jersey.client.proxy.WebResourceFactory;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.SharedContainerConfig;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
+import org.mockserver.client.MockServerClient;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MockServerContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.utility.DockerImageName;
 
-import io.openliberty.guides.query.QueryResource;
-
-@MicroShedTest
-@SharedContainerConfig(AppContainerConfig.class)
 public class QueryServiceIT {
 
-    @RESTClient
-    public static QueryResource queryResource;
+    private static Logger logger = LoggerFactory.getLogger(QueryServiceIT.class);
 
-    private static String testHost1 = 
-        "{" + 
-            "\"hostname\" : \"testHost1\"," +
-            "\"systemLoad\" : 1.23" +
-        "}";
-    private static String testHost2 = 
-        "{" + 
-            "\"hostname\" : \"testHost2\"," +
-            "\"systemLoad\" : 3.21" +
-        "}";
+    public static QueryResourceClient client;
+
+    private static boolean isServiceRunning;
+    private static Network network = createNetwork();
+
+    private static String testHost1 =
+        "{"
+            + "\"hostname\" : \"testHost1\","
+            + "\"systemLoad\" : 1.23"
+        + "}";
+    private static String testHost2 =
+        "{"
+            + "\"hostname\" : \"testHost2\","
+            + "\"systemLoad\" : 3.21"
+        + "}";
     private static String testHost3 =
-        "{" + 
-            "\"hostname\" : \"testHost3\"," +
-            "\"systemLoad\" : 2.13" +
-        "}";
+        "{" + "\"hostname\" : \"testHost3\","
+            + "\"systemLoad\" : 2.13"
+        + "}";
+
+    private static ImageFromDockerfile queryImage =
+        new ImageFromDockerfile("query:1.0-SNAPSHOT")
+            .withDockerfile(Paths.get("./Dockerfile"));
+
+    public static final DockerImageName MOCKSERVER_IMAGE =
+        DockerImageName.parse("mockserver/mockserver")
+            .withTag("mockserver-"
+                + MockServerClient.class.getPackage().getImplementationVersion());
+
+    public static MockServerContainer mockServer =
+        new MockServerContainer(MOCKSERVER_IMAGE)
+            .withNetworkAliases("mock-server")
+            .withNetwork(network);
+
+    public static MockServerClient mockClient;
+
+    private static GenericContainer<?> queryContainer =
+        new GenericContainer(queryImage)
+            .withNetwork(network)
+            .withExposedPorts(9080)
+            .waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1))
+            .withStartupTimeout(Duration.ofMinutes(3))
+            .withLogConsumer(new Slf4jLogConsumer(logger))
+            .dependsOn(mockServer);
+
+    private static QueryResourceClient createRestClient(String urlPath) {
+        ClientConfig config = new ClientConfig();
+        JerseyClient jerseyClient = JerseyClientBuilder.createClient(config);
+        JerseyWebTarget target = jerseyClient.target(urlPath);
+        return WebResourceFactory.newResource(QueryResourceClient.class, target);
+    }
+
+    private static boolean isServiceRunning(String host, int port) {
+        try {
+            Socket socket = new Socket(host, port);
+            socket.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static Network createNetwork() {
+        if (isServiceRunning("localhost", 9080)) {
+            isServiceRunning = true;
+            return new Network() {
+
+                @Override
+                public Statement apply(Statement base, Description description) {
+                    return null;
+                }
+
+                @Override
+                public String getId() {
+                    return "reactive-app";
+                }
+
+                @Override
+                public void close() {
+                }
+            };
+        } else {
+            isServiceRunning = false;
+            return Network.newNetwork();
+        }
+    }
 
     @BeforeAll
-    public static void setup() throws InterruptedException {
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody("[\"testHost1\"," + 
-                                                    "\"testHost2\"," +
-                                                    "\"testHost3\"]")
-                                         .withHeader("Content-Type", "application/json"));
+    public static void startContainers() {
+        mockServer.start();
+        mockClient = new MockServerClient(
+            mockServer.getHost(),
+            mockServer.getServerPort());
+        String urlPath;
+        if (isServiceRunning) {
+            System.out.println("Testing with mvn liberty:devc");
+            urlPath = "http://localhost:9080";
+        } else {
+            System.out.println("Testing with mvn verify");
+            queryContainer.withEnv(
+                "INVENTORY_BASE_URI",
+                "http://mock-server:" + MockServerContainer.PORT);
+            queryContainer.start();
+            urlPath = "http://"
+                      + queryContainer.getHost()
+                      + ":" + queryContainer.getFirstMappedPort();
+        }
 
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems/testHost1"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody(testHost1)
-                                         .withHeader("Content-Type", "application/json"));
+        System.out.println("Creating REST client with: " + urlPath);
+        client = createRestClient(urlPath);
+    }
 
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems/testHost2"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody(testHost2)
-                                         .withHeader("Content-Type", "application/json"));
+    @BeforeEach
+    public void setup() throws InterruptedException {
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody("[\"testHost1\","
+                                  + "\"testHost2\","
+                                  + "\"testHost3\"]")
+                        .withHeader("Content-Type", "application/json"));
 
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems/testHost3"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody(testHost3)
-                                         .withHeader("Content-Type", "application/json"));
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost1"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost1)
+                        .withHeader("Content-Type", "application/json"));
+
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost2"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost2)
+                        .withHeader("Content-Type", "application/json"));
+
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost3"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost3)
+                        .withHeader("Content-Type", "application/json"));
+    }
+
+    @AfterAll
+    public static void stopContainers() {
+        if (!isServiceRunning) {
+            queryContainer.stop();
+        }
+        mockClient.close();
+        mockServer.stop();
+        network.close();
     }
 
     @Test
     public void testSystemLoad() {
-        Map<String, Properties> response = queryResource.systemLoad();
+        Map<String, Properties> response = client.systemLoad();
         assertEquals(
             "testHost2",
             response.get("highest").get("hostname"),
@@ -825,7 +996,6 @@ public class QueryServiceIT {
             "Returned lowest system load incorrect"
         );
     }
-
 }
 ```
 
@@ -838,10 +1008,14 @@ The ***testSystemLoad()*** test case verifies that the ***query*** service can c
 
 Navigate to the ***query*** directory, then verify that the tests pass by running the Maven ***verify*** goal:
 
+
 ```bash
+export TESTCONTAINERS_RYUK_DISABLED=true
 cd query
 mvn verify
 ```
+
+For more information about disabling Ryuk, see the [Testcontainers custom configuration](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
 
 When the tests succeed, you see output similar to the following example:
 
