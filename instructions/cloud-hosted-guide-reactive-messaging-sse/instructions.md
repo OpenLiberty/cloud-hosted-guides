@@ -96,16 +96,16 @@ import io.openliberty.guides.models.SystemLoad;
 
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.sse.OutboundSseEvent;
-import javax.ws.rs.sse.Sse;
-import javax.ws.rs.sse.SseBroadcaster;
-import javax.ws.rs.sse.SseEventSink;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.sse.OutboundSseEvent;
+import jakarta.ws.rs.sse.Sse;
+import jakarta.ws.rs.sse.SseBroadcaster;
+import jakarta.ws.rs.sse.SseEventSink;
 import java.util.logging.Logger;
 
 @ApplicationScoped
@@ -125,11 +125,11 @@ public class BFFResource {
         @Context Sse sse
         ) {
 
-        if (this.sse == null || this.broadcaster == null) { 
+        if (this.sse == null || this.broadcaster == null) {
             this.sse = sse;
             this.broadcaster = sse.newBroadcaster();
         }
-        
+
         this.broadcaster.register(sink);
         logger.info("New sink registered to broadcaster.");
     }
@@ -201,7 +201,7 @@ touch /home/project/guide-reactive-messaging-sse/start/bff/src/main/resources/ME
 
 
 ```
-mp.messaging.connector.liberty-kafka.bootstrap.servers=localhost:9093
+mp.messaging.connector.liberty-kafka.bootstrap.servers=kafka:9092
 
 mp.messaging.incoming.systemLoad.connector=liberty-kafka
 mp.messaging.incoming.systemLoad.topic=system.load
@@ -272,7 +272,7 @@ The ***initSSE()*** method is called when the page first loads. This method subs
 In this IBM cloud environment, you need to update the ***EventSource*** URL with the ***bff*** service domain instead of ***localhost***. Run the following command:
 ```bash
 BFF_DOMAIN=${USERNAME}-9084.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
-sed -i 's=localhost:9084='"$BFF_DOMAIN"'=g' /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
+sed -i 's=http://localhost:9084='"https://$BFF_DOMAIN"'=g' /home/project/guide-reactive-messaging-sse/start/frontend/src/main/webapp/js/index.js
 ```
 
 
@@ -313,7 +313,7 @@ Next, use the following ***startContainers.sh*** script to start the application
 ```bash
 ./scripts/startContainers.sh
 ```
-This script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, the ***frontend*** service, the ***bff*** service , and three instances of the ***system*** service.
+This script creates a network for the containers to communicate with each other. It also creates containers for Kafka, the ***frontend*** service, the ***bff*** service , and three instances of the ***system*** service.
 
 
 The application might take some time to get ready. Run the following command to confirm that the ***bff*** microservice is up and running:
@@ -323,7 +323,7 @@ curl -s http://localhost:9084/health | jq
 
 Once your application is up and running, use the following command to get the URL. Open your browser and check out your ***front*** service by going to the URL that the command returns.
 ```bash
-echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+echo https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
 ```
 
 The latest version of most modern web browsers supports Server-Sent Events. The exception is Internet Explorer, which does not support SSE. When you visit the URL, look for a table similar to the following example:
