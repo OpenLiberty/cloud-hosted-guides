@@ -87,11 +87,11 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CompletionStage;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
@@ -102,12 +102,13 @@ public interface InventoryClient extends AutoCloseable {
     @GET
     @Path("/systems")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<String> getSystems();
+    List<String> getSystems();
 
     @GET
     @Path("/systems/{hostname}")
     @Produces(MediaType.APPLICATION_JSON)
-    public CompletionStage<Properties> getSystem(@PathParam("hostname") String hostname);
+    CompletionStage<Properties> getSystem(
+        @PathParam("hostname") String hostname);
 
 }
 ```
@@ -142,12 +143,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
@@ -156,7 +157,7 @@ import io.openliberty.guides.query.client.InventoryClient;
 @ApplicationScoped
 @Path("/query")
 public class QueryResource {
-    
+
     @Inject
     @RestClient
     private InventoryClient inventoryClient;
@@ -196,7 +197,7 @@ public class QueryResource {
     private class Holder {
         private volatile Map<String, Properties> values;
 
-        public Holder() {
+        Holder() {
             this.values = new ConcurrentHashMap<String, Properties>();
             init();
         }
@@ -223,8 +224,10 @@ public class QueryResource {
             this.values.put("lowest", new Properties());
             this.values.get("highest").put("hostname", "temp_max");
             this.values.get("lowest").put("hostname", "temp_min");
-            this.values.get("highest").put("systemLoad", new BigDecimal(Double.MIN_VALUE));
-            this.values.get("lowest").put("systemLoad", new BigDecimal(Double.MAX_VALUE));
+            this.values.get("highest").put(
+                "systemLoad", new BigDecimal(Double.MIN_VALUE));
+            this.values.get("lowest").put(
+                "systemLoad", new BigDecimal(Double.MAX_VALUE));
         }
     }
 }
@@ -264,7 +267,7 @@ docker build -t inventory:1.0-SNAPSHOT inventory/.
 docker build -t query:1.0-SNAPSHOT query/.
 ```
 
-Next, use the provided ***startContainers*** script to start the application in Docker containers. The script creates containers for Kafka, Zookeeper, and all of the microservices in the project, in addition to a network for the containers to communicate with each other. The script also creates three instances of the ***system*** microservice. 
+Next, use the provided ***startContainers*** script to start the application in Docker containers. The script creates containers for Kafka and all of the microservices in the project, in addition to a network for the containers to communicate with each other. The script also creates three instances of the ***system*** microservice. 
 
 
 ```bash
@@ -272,7 +275,12 @@ Next, use the provided ***startContainers*** script to start the application in 
 ```
 
 
-The services might take several minutes to become available. You can access the application by making requests to the ***query/systemLoad*** endpoint by running the following curl command:
+The services might take several minutes to become available. Run the following curl command to confirm that the ***inventory*** microservice is up and running.
+```bash
+curl -s http://localhost:9085/health | jq
+```
+
+You can access the application by making requests to the ***query/systemLoad*** endpoint by running the following curl command:
 ```bash
 curl -s http://localhost:9080/query/systemLoad | jq
 ```
@@ -324,83 +332,164 @@ touch /home/project/guide-microprofile-rest-client-async/start/query/src/test/ja
 ```java
 package it.io.openliberty.guides.query;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
+import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
-import org.junit.jupiter.api.BeforeAll;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.Test;
-import org.microshed.testing.jaxrs.RESTClient;
-import org.microshed.testing.jupiter.MicroShedTest;
-import org.microshed.testing.SharedContainerConfig;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.mockserver.client.MockServerClient;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 
-import io.openliberty.guides.query.QueryResource;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MockServerContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.utility.DockerImageName;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@MicroShedTest
-@SharedContainerConfig(AppContainerConfig.class)
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.UriBuilder;
+
 public class QueryServiceIT {
 
-    @RESTClient
-    public static QueryResource queryResource;
+    private static Logger logger = LoggerFactory.getLogger(QueryServiceIT.class);
 
-    private static String testHost1 = 
-        "{" + 
-            "\"hostname\" : \"testHost1\"," +
-            "\"systemLoad\" : 1.23" +
-        "}";
-    private static String testHost2 = 
-        "{" + 
-            "\"hostname\" : \"testHost2\"," +
-            "\"systemLoad\" : 3.21" +
-        "}";
+    public static QueryResourceClient client;
+
+    private static Network network = Network.newNetwork();
+
+    private static String testHost1 =
+        "{"
+            + "\"hostname\" : \"testHost1\","
+            + "\"systemLoad\" : 1.23"
+        + "}";
+    private static String testHost2 =
+        "{"
+            + "\"hostname\" : \"testHost2\","
+            + "\"systemLoad\" : 3.21"
+        + "}";
     private static String testHost3 =
-        "{" + 
-            "\"hostname\" : \"testHost3\"," +
-            "\"systemLoad\" : 2.13" +
-        "}";
+        "{"
+            + "\"hostname\" : \"testHost3\","
+            + "\"systemLoad\" : 2.13"
+        + "}";
+
+    private static ImageFromDockerfile queryImage =
+        new ImageFromDockerfile("query:1.0-SNAPSHOT")
+            .withDockerfile(Paths.get("./Dockerfile"));
+
+    public static final DockerImageName MOCKSERVER_IMAGE = DockerImageName
+        .parse("mockserver/mockserver")
+        .withTag("mockserver-"
+                 + MockServerClient.class.getPackage().getImplementationVersion());
+
+    public static MockServerContainer mockServer =
+        new MockServerContainer(MOCKSERVER_IMAGE)
+            .withNetworkAliases("mock-server")
+            .withNetwork(network);
+
+    public static MockServerClient mockClient;
+
+    private static KafkaContainer kafkaContainer =
+        new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:latest"))
+            .withListener(() -> "kafka:19092")
+            .withNetwork(network);
+
+    private static GenericContainer<?> queryContainer =
+        new GenericContainer(queryImage)
+            .withNetwork(network)
+            .withExposedPorts(9080)
+            .waitingFor(Wait.forHttp("/health/ready"))
+            .withStartupTimeout(Duration.ofMinutes(3))
+            .withLogConsumer(new Slf4jLogConsumer(logger))
+            .dependsOn(kafkaContainer);
+
+    private static QueryResourceClient createRestClient(String urlPath) {
+        ClientBuilder builder = ResteasyClientBuilder.newBuilder();
+        ResteasyClient client = (ResteasyClient) builder.build();
+        ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
+        return target.proxy(QueryResourceClient.class);
+    }
 
     @BeforeAll
-    public static void setup() throws InterruptedException {
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody("[\"testHost1\"," + 
-                                                    "\"testHost2\"," +
-                                                    "\"testHost3\"]")
-                                         .withHeader("Content-Type", "application/json"));
+    public static void startContainers() {
+        mockServer.start();
+        mockClient = new MockServerClient(
+            mockServer.getHost(),
+            mockServer.getServerPort());
 
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems/testHost1"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody(testHost1)
-                                         .withHeader("Content-Type", "application/json"));
+        kafkaContainer.start();
 
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems/testHost2"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody(testHost2)
-                                         .withHeader("Content-Type", "application/json"));
+        queryContainer.withEnv(
+            "InventoryClient/mp-rest/uri",
+            "http://mock-server:" + MockServerContainer.PORT);
+        queryContainer.start();
 
-        AppContainerConfig.mockClient.when(HttpRequest.request()
-                                         .withMethod("GET")
-                                         .withPath("/inventory/systems/testHost3"))
-                                     .respond(HttpResponse.response()
-                                         .withStatusCode(200)
-                                         .withBody(testHost3)
-                                         .withHeader("Content-Type", "application/json"));
+        client = createRestClient("http://"
+            + queryContainer.getHost()
+            + ":" + queryContainer.getFirstMappedPort());
+    }
+    @BeforeEach
+    public void setup() throws InterruptedException {
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody("[\"testHost1\","
+                                + "\"testHost2\","
+                                + "\"testHost3\"]")
+                        .withHeader("Content-Type", "application/json"));
+
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost1"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost1)
+                        .withHeader("Content-Type", "application/json"));
+
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost2"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost2)
+                        .withHeader("Content-Type", "application/json"));
+
+        mockClient.when(HttpRequest.request()
+                        .withMethod("GET")
+                        .withPath("/inventory/systems/testHost3"))
+                    .respond(HttpResponse.response()
+                        .withStatusCode(200)
+                        .withBody(testHost3)
+                        .withHeader("Content-Type", "application/json"));
+    }
+
+    @AfterAll
+    public static void stopContainers() {
+        queryContainer.stop();
+        kafkaContainer.stop();
+        mockServer.stop();
+        network.close();
     }
 
     @Test
     public void testLoads() {
-        Map<String, Properties> response = queryResource.systemLoad();
+        Map<String, Properties> response = client.systemLoad();
 
         assertEquals(
             "testHost2",
@@ -413,7 +502,6 @@ public class QueryServiceIT {
             "Returned lowest system load incorrect"
         );
     }
-
 }
 ```
 
@@ -427,9 +515,12 @@ The ***testLoads()*** test case verifies that the ***query*** service can calcul
 
 Run the following commands to navigate to the ***query*** directory and verify that the tests pass by using the Maven ***verify*** goal:
 ```bash
+export TESTCONTAINERS_RYUK_DISABLED=true
 cd /home/project/guide-microprofile-rest-client-async/start/query
 mvn verify
 ```
+
+For more information about disabling Ryuk, see the [Testcontainers custom configuratio](https://java.testcontainers.org/features/configuration/#disabling-ryuk) document.
 
 The tests might take a few minutes to complete. When the tests succeed, you see output similar to the following example:
 
