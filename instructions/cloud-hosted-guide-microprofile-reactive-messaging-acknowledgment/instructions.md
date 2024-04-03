@@ -98,7 +98,7 @@ import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -114,10 +114,10 @@ import io.reactivex.rxjava3.core.Flowable;
 
 @ApplicationScoped
 public class SystemService {
-    
+
     private static Logger logger = Logger.getLogger(SystemService.class.getName());
 
-    private static final OperatingSystemMXBean osMean = 
+    private static final OperatingSystemMXBean OS_MEAN =
             ManagementFactory.getOperatingSystemMXBean();
     private static String hostname = null;
 
@@ -135,8 +135,8 @@ public class SystemService {
     @Outgoing("systemLoad")
     public Publisher<SystemLoad> sendSystemLoad() {
         return Flowable.interval(15, TimeUnit.SECONDS)
-                .map((interval -> new SystemLoad(getHostname(),
-                        osMean.getSystemLoadAverage())));
+                       .map((interval -> new SystemLoad(getHostname(),
+                             OS_MEAN.getSystemLoadAverage())));
     }
 
     @Incoming("propertyRequest")
@@ -147,9 +147,11 @@ public class SystemService {
         String propertyName = propertyMessage.getPayload();
         String propertyValue = System.getProperty(propertyName, "unknown");
         logger.info("sendProperty: " + propertyValue);
-        if (propertyName == null || propertyName.isEmpty() || propertyValue == "unknown") {
-            logger.warning("Provided property: " +
-                    propertyName + " is not a system property");
+        if (propertyName == null
+        || propertyName.isEmpty()
+        || propertyValue == "unknown") {
+            logger.warning("Provided property: "
+            + propertyName + " is not a system property");
             propertyMessage.ack();
             return ReactiveStreams.empty();
         }
@@ -198,17 +200,17 @@ import java.util.concurrent.CompletionStage;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
@@ -237,14 +239,13 @@ public class InventoryResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getSystems() {
         List<Properties> systems = manager.getSystems()
-                .values()
-                .stream()
-                .collect(Collectors.toList());
-        return Response
-                .status(Response.Status.OK)
-                .entity(systems)
-                .build();
-            }
+                                          .values()
+                                          .stream()
+                                          .collect(Collectors.toList());
+        return Response.status(Response.Status.OK)
+                       .entity(systems)
+                       .build();
+    }
 
     @GET
     @Path("/systems/{hostname}")
@@ -252,15 +253,13 @@ public class InventoryResource {
     public Response getSystem(@PathParam("hostname") String hostname) {
         Optional<Properties> system = manager.getSystem(hostname);
         if (system.isPresent()) {
-            return Response
-                    .status(Response.Status.OK)
-                    .entity(system)
-                    .build();
+            return Response.status(Response.Status.OK)
+                           .entity(system)
+                           .build();
         }
-        return Response
-                .status(Response.Status.NOT_FOUND)
-                .entity("hostname does not exist.")
-                .build();
+        return Response.status(Response.Status.NOT_FOUND)
+                       .entity("hostname does not exist.")
+                       .build();
     }
 
     @PUT
@@ -293,18 +292,17 @@ public class InventoryResource {
             CompletableFuture is completed. When "result" completes, the Response
             object is created with the status code and message. */
         return result.thenApply(a -> Response
-                .status(Response.Status.OK)
-                .entity("Request successful for the " + propertyName + " property\n")
-                .build());
+                 .status(Response.Status.OK)
+                 .entity("Request successful for the " + propertyName + " property\n")
+                 .build());
     }
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     public Response resetSystems() {
         manager.resetSystems();
-        return Response
-                .status(Response.Status.OK)
-                .build();
+        return Response.status(Response.Status.OK)
+                       .build();
     }
 
     @Incoming("systemLoad")
@@ -335,7 +333,7 @@ public class InventoryResource {
     @Outgoing("requestSystemProperty")
     public Publisher<Message<String>> sendPropertyName() {
         Flowable<Message<String>> flowable = Flowable.create(emitter ->
-                this.propertyNameEmitter = emitter, BackpressureStrategy.BUFFER);
+            this.propertyNameEmitter = emitter, BackpressureStrategy.BUFFER);
         return flowable;
     }
 }
@@ -369,7 +367,7 @@ docker build -t system:1.0-SNAPSHOT system/.
 docker build -t inventory:1.0-SNAPSHOT inventory/.
 ```
 
-Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka, Zookeeper, and the microservices in the project. For simplicity, the script starts one instance of the ***system*** service.
+Next, use the provided script to start the application in Docker containers. The script creates a network for the containers to communicate with each other. It also creates containers for Kafka and the microservices in the project. For simplicity, the script starts one instance of the ***system*** service.
 
 
 ```bash
@@ -495,8 +493,8 @@ You can also provide feedback or contribute to this guide from GitHub.
 * [Consuming RESTful services asynchronously with template interfaces](https://openliberty.io/guides/microprofile-rest-client-async.html)
 
 **Learn more about MicroProfile**
-* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/microprofile-reactive-messaging-spec.html)
-* [View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-1.0/apidocs/)
+* [View the MicroProfile Reactive Messaging Specification](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-3.0/microprofile-reactive-messaging-spec.html)
+* [View the MicroProfile Reactive Messaging Javadoc](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-3.0/apidocs/)
 * [View the MicroProfile](https://openliberty.io/docs/latest/microprofile.html)
 
 
