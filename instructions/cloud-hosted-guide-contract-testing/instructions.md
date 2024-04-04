@@ -322,7 +322,7 @@ Replace the inventory Maven project file.
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.7.Final</version>
+            <version>6.2.8.Final</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -333,7 +333,7 @@ Replace the inventory Maven project file.
             <plugin>
                 <groupId>au.com.dius.pact.provider</groupId>
                 <artifactId>maven</artifactId>
-                <version>4.6.7</version>
+                <version>4.6.8</version>
                 <configuration>
                     <serviceProviders>
                         <serviceProvider>
@@ -373,7 +373,7 @@ Replace the inventory Maven project file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.10.1</version>
+                <version>3.10.2</version>
             </plugin>
         </plugins>
     </build>
@@ -644,7 +644,7 @@ Replace the system Maven project file.
         <dependency>
             <groupId>au.com.dius.pact.provider</groupId>
             <artifactId>junit5</artifactId>
-            <version>4.6.7</version>
+            <version>4.6.8</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -654,7 +654,7 @@ Replace the system Maven project file.
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.7.Final</version>
+            <version>6.2.8.Final</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -666,7 +666,7 @@ Replace the system Maven project file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.10.1</version>
+                <version>3.10.2</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
