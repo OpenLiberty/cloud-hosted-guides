@@ -286,7 +286,7 @@ Update the ***Maven POM*** file in the ***start*** directory.
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.10.2</version>
+        <version>3.10</version>
         <configuration>
           <appsDirectory>apps</appsDirectory>
           <installAppPackages>spring-boot-project</installAppPackages>
@@ -456,7 +456,7 @@ Update the Maven POM file in the ***start*** directory.
       <plugin>
         <groupId>io.openliberty.tools</groupId>
         <artifactId>liberty-maven-plugin</artifactId>
-        <version>3.10.2</version>
+        <version>3.10</version>
         <configuration>
           <appsDirectory>apps</appsDirectory>
           <installAppPackages>spring-boot-project</installAppPackages>
