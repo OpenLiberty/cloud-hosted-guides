@@ -5072,7 +5072,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-auth-jwt</artifactId>
-            <version>4.5.6</version>
+            <version>4.5.7</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
