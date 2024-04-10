@@ -471,8 +471,8 @@ public class InventoryOASFilter implements OASFilter {
                       "App for storing JVM system properties of various hosts.")
                   .license(
                       OASFactory.createObject(License.class)
-                                .name("Eclipse Public License - v 1.0").url(
-                                    "https://www.eclipse.org/legal/epl-v10.html")));
+                                .name("Eclipse Public License - v 2.0").url(
+                                    "https://www.eclipse.org/legal/epl-2.0")));
 
     openAPI.addServer(
         OASFactory.createServer()
@@ -531,8 +531,8 @@ info:
   title: Inventory App
   description: App for storing JVM system properties of various hosts.
   license:
-    name: Eclipse Public License - v 1.0
-    url: https://www.eclipse.org/legal/epl-v10.html
+    name: Eclipse Public License - v 2.0
+    url: https://www.eclipse.org/legal/epl-2.0
   version: "1.0"
 servers:
 - url: "http://localhost:{port}"
@@ -586,8 +586,8 @@ info:
   title: Inventory App
   description: App for storing JVM system properties of various hosts.
   license:
-    name: Eclipse Public License - v 1.0
-    url: https://www.eclipse.org/legal/epl-v10.html
+    name: Eclipse Public License - v 2.0
+    url: https://www.eclipse.org/legal/epl-2.0
   version: "1.0"
 paths:
   /inventory/properties:
