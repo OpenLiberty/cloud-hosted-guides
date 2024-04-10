@@ -2685,7 +2685,13 @@ Now try calling the DELETE endpoint. As this endpoint is only accessible to ***a
 You can check that your application is secured against these requests with the following command:
 
 ```bash
-curl -k --user alice:alicepwd -X DELETE 'https://localhost:9443/inventory/api/systems/localhost'
+curl -kf --user alice:alicepwd -X DELETE 'https://localhost:9443/inventory/api/systems/localhost'
+```
+
+You should see the following response:
+
+```
+curl: (22) The requested URL returned error: 403
 ```
 
 As ***alice*** is part of the ***user*** group, this request cannot work. In your dev mode console, you can expect the following output:
