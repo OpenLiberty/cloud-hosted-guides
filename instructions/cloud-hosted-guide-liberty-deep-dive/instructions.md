@@ -3431,12 +3431,19 @@ Wait until the following message displays on the ***system*** microservice conso
 CWWKF0011I: The defaultServer server is ready to run a smarter planet. ...
 ```
 
-You can check that the ***system*** microservice is secured against unauthenticated requests at the ***https\://localhost:9444/system/api/heapsize*** URL. You can expect to see the following error in the console of the ***system*** microservice:
+You can check that the ***system*** microservice is secured against unauthenticated requests at the ***https\://localhost:9444/system/api/heapsize*** URL. Open another command-line session and run the following command:
 
-Open another command-line session and run the following command:
 ```bash
-curl -k 'https://localhost:9444/system/api/heapsize'
+curl -kf 'https://localhost:9444/system/api/heapsize'
 ```
+
+You should see the following response:
+
+```
+curl: (22) The requested URL returned error: 401
+```
+
+You can expect to see the following error in the console of the ***system*** microservice:
 
 ```
 CWWKS5522E: The MicroProfile JWT feature cannot perform authentication because a MicroProfile JWT cannot be found in the request.
