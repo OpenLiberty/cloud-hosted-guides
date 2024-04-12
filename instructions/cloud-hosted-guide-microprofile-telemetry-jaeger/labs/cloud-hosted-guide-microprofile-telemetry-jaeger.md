@@ -285,15 +285,9 @@ otel.sdk.disabled=false
 The MicroProfile properties file sets the ***otel.service.name*** property with the ***system*** service name and sets the ***otel.sdk.disabled*** property to ***false*** to enable tracing.
 
 
-Create the ***microprofile-config.properties*** file of the inventory service:
+Replace the ***microprofile-config.properties*** file of the inventory service:
 
-> Run the following touch command in your terminal
-```bash
-touch /home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties
-```
-
-
-> Then, to open the microprofile-config.properties file in your IDE, select
+> To open the microprofile-config.properties file in your IDE, select
 > **File** > **Open** > guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
 ::openFile{path="/home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main/resources/META-INF/microprofile-config.properties"}
@@ -301,6 +295,7 @@ touch /home/project/guide-microprofile-telemetry-jaeger/start/inventory/src/main
 
 
 ```
+io.openliberty.guides.inventory.client.SystemClient/mp-rest/url=http://localhost:9080/system
 otel.service.name=inventory
 otel.sdk.disabled=false
 ```
