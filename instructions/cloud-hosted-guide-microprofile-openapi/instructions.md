@@ -130,7 +130,7 @@ Click the following button to visit the UI by the ***/openapi/ui*** endpoint for
 
 Because all Jakarta Restful Web Services annotations are processed by default, you can augment the existing code with OpenAPI annotations without needing to rewrite portions of the OpenAPI document that are already covered by the Jakarta Restful Web Services framework.
 
-Update the ***InventoryResource*** class.
+Replace the ***InventoryResource*** class.
 
 > To open the InventoryResource.java file in your IDE, select
 > **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/InventoryResource.java, or click the following button
@@ -286,7 +286,7 @@ The two endpoints at which your JAX-RS endpoint methods are served are now more 
 
 OpenAPI annotations can also be added to POJOs to describe what they represent. Currently, your OpenAPI document doesn't have a very meaningful description of the ***InventoryList*** POJO and hence it's very difficult to tell exactly what that POJO is used for. To describe the ***InventoryList*** POJO in more detail, augment the ***src/main/java/io/openliberty/guides/inventory/model/InventoryList.java*** file with some OpenAPI annotations.
 
-Update the ***InventoryList*** class.
+Replace the ***InventoryList*** class.
 
 > To open the InventoryList.java file in your IDE, select
 > **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/InventoryList.java, or click the following button
@@ -329,7 +329,7 @@ Add OpenAPI ***@Schema*** annotations to the ***InventoryList*** class and the *
 
 Likewise, annotate the ***src/main/java/io/openliberty/guides/inventory/model/SystemData.java*** POJO, which is referenced in the ***InventoryList*** class.
 
-Update the ***SystemData*** class.
+Replace the ***SystemData*** class.
 
 > To open the SystemData.java file in your IDE, select
 > **File** > **Open** > guide-microprofile-openapi/start/src/main/java/io/openliberty/guides/inventory/model/SystemData.java, or click the following button
@@ -501,14 +501,14 @@ Create the configuration file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties
+touch /home/project/guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties
 ```
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties, or click the following button
+> **File** > **Open** > guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties"}
+::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties"}
 
 
 
@@ -568,14 +568,14 @@ Create the OpenAPI document file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/openapi.yaml
+touch /home/project/guide-microprofile-openapi/start/src/main/resources/META-INF/openapi.yaml
 ```
 
 
 > Then, to open the openapi.yaml file in your IDE, select
-> **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/openapi.yaml, or click the following button
+> **File** > **Open** > guide-microprofile-openapi/start/src/main/resources/META-INF/openapi.yaml, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/openapi.yaml"}
+::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/resources/META-INF/openapi.yaml"}
 
 
 
@@ -669,14 +669,14 @@ components:
 
 
 
-This document is the same as your current OpenAPI document with extra APIs for the ***/inventory/properties*** endpoint. This document is complete so you can also add the ***mp.openapi.scan.disable*** property and set it to ***true*** in the ***src/main/webapp/META-INF/microprofile-config.properties*** file.
+This document is the same as your current OpenAPI document with extra APIs for the ***/inventory/properties*** endpoint. This document is complete so you can also add the ***mp.openapi.scan.disable*** property and set it to ***true*** in the ***src/main/resources/META-INF/microprofile-config.properties*** file.
 
-Update the configuration file.
+Replace the configuration file.
 
 > To open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties, or click the following button
+> **File** > **Open** > guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/webapp/META-INF/microprofile-config.properties"}
+::openFile{path="/home/project/guide-microprofile-openapi/start/src/main/resources/META-INF/microprofile-config.properties"}
 
 
 
