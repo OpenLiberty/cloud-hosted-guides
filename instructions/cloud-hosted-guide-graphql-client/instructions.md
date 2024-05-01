@@ -254,12 +254,12 @@ Replace the Maven project file.
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client</artifactId>
-            <version>2.8.1</version>
+            <version>2.8.3</version>
         </dependency>
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client-implementation-vertx</artifactId>
-            <version>2.8.1</version>
+            <version>2.8.3</version>
         </dependency>
         <dependency>
             <groupId>io.smallrye.stork</groupId>
@@ -269,7 +269,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>2.0.12</version>
+            <version>2.0.13</version>
         </dependency>
              
         <!-- For tests -->
