@@ -730,13 +730,13 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-reload4j</artifactId>
-            <version>2.0.12</version>
+            <version>2.0.13</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>2.0.12</version>
+            <version>2.0.13</version>
         </dependency>
     </dependencies>
 
