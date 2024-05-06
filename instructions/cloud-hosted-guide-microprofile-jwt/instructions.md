@@ -375,14 +375,14 @@ Create the microprofile-config.properties file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties
+touch /home/project/guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties
 ```
 
 
 > Then, to open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties, or click the following button
+> **File** > **Open** > guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/webapp/META-INF/microprofile-config.properties"}
+::openFile{path="/home/project/guide-microprofile-jwt/start/system/src/main/resources/META-INF/microprofile-config.properties"}
 
 
 
