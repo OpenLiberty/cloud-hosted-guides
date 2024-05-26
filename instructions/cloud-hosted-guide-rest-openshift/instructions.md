@@ -1,3 +1,8 @@
+---
+markdown-version: v1
+tool-type: theiadocker
+---
+
 # Building and deploying a RESTful web service on OpenShift 4.x
 
 When you create a new REST application, the design of the API is important. A good RESTful service is designed around the resources that are exposed, and on how to create, read, update, and delete the resources. The service responds to **GET** requests to the **/LibertyProject/system/properties-new** path. The **GET** request should return a **200 OK** response that contains all of the JVM's system properties.
