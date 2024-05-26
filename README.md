@@ -55,4 +55,25 @@ When creating a new cloud-hosted-guides guide some steps must be taken to ensure
 
 - Initiate a `Mirror a guide to AWB` action.
 - Enter the `Guide name` and `To` Options
-- - For `To`, `main` for publishing the lab to the world, `staging` for saving the lab without publishing.
+- - For `To`, `prod` for publishing the lab to the world, `staging` for saving the lab without publishing.
+
+## How to Contribute
+
+To contribute to this project, please follow these steps:
+
+1. **Create a Pull Request (PR):**
+   - Always create a pull request targeting the `staging` branch when you wish to make updates. This is where all initial changes should be made and reviewed.
+
+2. **Review Process:**
+   - Have someone review your content changes in the `staging` branch. This ensures all updates meet the project's standards and requirements before they are deployed.
+
+3. **Deploy to Staging:**
+   - Use the `Mirror a guide to AWB` GitHub Action to deploy your updates to staging. Set the deployment target by selecting `staging` in the action's inputs. This step saves the content on the Author Workbench (AWB) side for further review.
+
+4. **Approval and Merging:**
+   - Once your changes are reviewed and approved in the `staging` branch, merge them into the `prod` branch.
+
+5. **Publish to Production:**
+   - After merging to `prod`, use the `Mirror a guide to AWB` GitHub Action again to publish your content. Set the `To` parameter to `prod` to finalize the publication on the production environment.
+
+Following this workflow ensures a structured and error-minimized deployment of content, maintaining high standards of quality and consistency.

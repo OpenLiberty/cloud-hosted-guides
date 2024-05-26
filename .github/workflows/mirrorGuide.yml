@@ -1,4 +1,4 @@
-name: Mirror a guide to AWB
+name: Mirror a guide to AWB (test)
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
         description: 'Guide name, e.g. cdi-intro'
         required: true
       to:
-        description: 'main or staging'
+        description: 'prod or staging'
         required: true
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
 
   matrixProd:
     runs-on: ubuntu-latest
-    if: github.event.inputs.to == 'main'
+    if: github.event.inputs.to == 'prod'
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrixProd }}
     steps:
@@ -32,7 +32,7 @@ jobs:
         TASKS="${TASKS//'%'/'%25'}"
         TASKS="${TASKS//$'\n'/'%0A'}"
         TASKS="${TASKS//$'\r'/'%0D'}"
-        echo "::set-output name=matrixProd::$TASKS"
+        echo "matrixProd=$TASKS" >> $GITHUB_OUTPUT
 
   matrixStaging:
     runs-on: ubuntu-latest
@@ -47,18 +47,21 @@ jobs:
         TASKS="${TASKS//'%'/'%25'}"
         TASKS="${TASKS//$'\n'/'%0A'}"
         TASKS="${TASKS//$'\r'/'%0D'}"
-        echo "::set-output name=matrixStaging::$TASKS"
+        echo "matrixStaging=$TASKS" >> $GITHUB_OUTPUT
 
   deployProd:
     needs: [matrixProd]
     continue-on-error: true
     runs-on: ubuntu-latest
-    if: github.event.inputs.to == 'main'
+    if: github.event.inputs.to == 'prod'
     strategy:
       matrix:
         repo: ${{fromJson(needs.matrixProd.outputs.matrix)}}
     steps:
       - uses: actions/checkout@master
+        with:
+          fetch-depth: 0
+          ref: prod
       - name: Check If Guide Exists
         run: |
           if [ "${{ github.event.inputs.guide_name }}" = "${{matrix.repo.guide}}" ]; then 
@@ -82,30 +85,14 @@ jobs:
         env:
           LAB_ID: ${{ matrix.repo.lab_id }}
           OAUTH_TOKEN: ${{ secrets.AWB_OAUTH_TOKEN }}
-          CHANGE_LOG: "{{msg}}"
-          PUBLISH: true
           FILE_PATH: instructions/${{ matrix.repo.github }}/instructions.md
+          PUBLISH: true
         run: |
-          response=$(curl -X POST "https://author.skills.network/api/v1/labs/${LAB_ID}/lab_versions/latest/drafts" \
-            -H "Authorization: Bearer ${OAUTH_TOKEN}" \
-            -F "file=@${FILE_PATH}" \
-            -F "draft[changelog]=${CHANGE_LOG}" \
-            -F "publish=${PUBLISH}" \
-            -w "%{http_code}" -o result.txt)
-  
-          cat result.txt
-          echo "Response Code: $response"
-  
-          if [[ "$response" -ne 200 && "$response" -ne 201 ]];
-            echo "Request failed with status $response"
-            exit 1  # Exit the script with error if not successful
-          else
-            echo "Request succeeded with status $response"
-          fi
+            chmod +x ${{ github.workspace }}/.github/workflows/deploy_guide.sh
+            ${{ github.workspace }}/.github/workflows/deploy_guide.sh $LAB_ID $OAUTH_TOKEN $FILE_PATH "$(git log -1 --pretty=format:"%s" -- $FILE_PATH)" $PUBLISH "https://author.skills.network"
 
   deployStaging:
     needs: [matrixStaging]
-    # name: Start Mirror Containers for single Guide for Staging
     continue-on-error: true
     runs-on: ubuntu-latest
     if: github.event.inputs.to == 'staging'
@@ -114,7 +101,8 @@ jobs:
         repo: ${{fromJson(needs.matrixStaging.outputs.matrix)}}
     steps:
       - uses: actions/checkout@master
-        with: 
+        with:
+          fetch-depth: 0
           ref: staging
       - name: Check If Guide Exists
         run: |
@@ -128,33 +116,17 @@ jobs:
       - name: Check for insturctions.md
         run: |
           FILE_PATH="instructions/${{ matrix.repo.github }}/instructions.md"
-          if [[ -f "$FILE_PATH" ]]; then
-            echo "'$FILE_PATH' exists."
-          else
-            echo "'$FILE_PATH' does not exist."
-            exit 1
+          if [ ! -f "$FILE_PATH" ]; then
+              echo "'$FILE_PATH' does not exist."
+              exit 1
           fi
+          echo "Found '$FILE_PATH'"
       - name: Mirror to AWB
         env:
           LAB_ID: ${{ matrix.repo.lab_id }}
-          OAUTH_TOKEN: ${{ secrets.AWB_OAUTH_TOKEN }}
-          CHANGE_LOG: "{{msg}}"
+          OAUTH_TOKEN: "${{ secrets.AWB_OAUTH_TOKEN }}"
           PUBLISH: false
-          FILE_PATH: instructions/${{ matrix.repo.github }}/instructions.md
+          FILE_PATH: "instructions/${{ matrix.repo.github }}/instructions.md"
         run: |
-          response=$(curl -X POST "https://author.skills.network/api/v1/labs/${LAB_ID}/lab_versions/latest/drafts" \
-            -H "Authorization: Bearer ${OAUTH_TOKEN}" \
-            -F "file=@${FILE_PATH}" \
-            -F "draft[changelog]=${CHANGE_LOG}" \
-            -F "publish=${PUBLISH}" \
-            -w "%{http_code}" -o result.txt)
-  
-          cat result.txt
-          echo "Response Code: $response"
-  
-          if [[ "$response" -ne 200 && "$response" -ne 201 ]];
-            echo "Request failed with status $response"
-            exit 1  # Exit the script with error if not successful
-          else
-            echo "Request succeeded with status $response"
-          fi
+          chmod +x ${{ github.workspace }}/.github/workflows/deploy_guide.sh
+          ${{ github.workspace }}/.github/workflows/deploy_guide.sh $LAB_ID $OAUTH_TOKEN $FILE_PATH "$(git log -1 --pretty=format:"%s" -- $FILE_PATH)" $PUBLISH "https://author.skills.network"
