@@ -1,4 +1,4 @@
-name: Mirror to GitLab Repos
+name: Mirror to AWB
 
 # Triggers the workflow on push events but only for the prod branch.
 on:
