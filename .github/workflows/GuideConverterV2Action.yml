@@ -72,7 +72,7 @@ jobs:
           branchName=${{ github.event.inputs.branch }}
           instructionsMD=`echo "cloud_hosted_${{ github.event.inputs.guide_name }}.md" | sed -e 's/-/_/g'`
           git init
-          mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs
+          mkdir -p instructions/cloud-hosted-${{ github.event.inputs.guide_name }}
           cd GuideConverter
           mvn compiler:compile
           mvn exec:java -Dexec.args="${{ github.event.inputs.guide_name }} ${branchName:11} cloud-hosted-${{ github.event.inputs.guide_name }}"
@@ -80,14 +80,14 @@ jobs:
           rm -f functions.class
           rm -f CloudHostedGuideConverter.class
           cd ..
-          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs/${instructionsMD}
+          mv GuideConverter/${{ github.event.inputs.guide_name }}.md instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/${instructionsMD}
           rm -rf GuideConverter
           bash .github/workflows/draftRemoval.sh cloud-hosted-${{ github.event.inputs.guide_name }}
           git add .
           git config --global user.email "GuidesBot@OpenLiberty.io"
           git config --global user.name "GuidesBot"
           git commit -m "Updated by github actions from ${{ github.event.inputs.guide_name }}"
-          git checkout --ours instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/labs/${instructionsMD}
+          git checkout --ours instructions/cloud-hosted-${{ github.event.inputs.guide_name }}/${instructionsMD}
     
       - uses: peter-evans/create-pull-request@v3
         with:
