@@ -1,3 +1,7 @@
+---
+markdown-version: v1
+tool-type: theiadocker
+---
 
 # **Welcome to the Getting started with Open Liberty guide!**
 

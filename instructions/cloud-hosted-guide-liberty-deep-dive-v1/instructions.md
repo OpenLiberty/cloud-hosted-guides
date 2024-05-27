@@ -1,3 +1,8 @@
+---
+markdown-version: v1
+tool-type: theiadocker
+---
+
 # Open Liberty deep dive class
 
 These instructions contain the hands-on lab modules for the Open Liberty deep dive class.  It is intended to be used in conjunction with taught materials, however, feel free to give it a try, even if you're not in this class.
