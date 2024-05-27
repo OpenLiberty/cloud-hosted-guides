@@ -87,13 +87,15 @@ jobs:
             exit 1;
           fi
 
-      - name: Mirror to Gitlab
-        uses: s0/git-publish-subdir-action@develop
+      - name: Mirror to AWB
         env:
           LAB_ID: ${{ matrix.repo.lab_id }}
           OAUTH_TOKEN: ${{ secrets.AWB_OAUTH_TOKEN }}
           FILE_PATH: instructions/${{ matrix.repo.github }}/instructions.md
           PUBLISH: true
+        run: |
+          chmod +x ${{ github.workspace }}/.github/workflows/deploy_guide.sh
+          ${{ github.workspace }}/.github/workflows/deploy_guide.sh $LAB_ID $OAUTH_TOKEN $FILE_PATH "$(git log -1 --pretty=format:"%s" -- $FILE_PATH)" $PUBLISH "https://author.skills.network"          
 
   deployAllToProd:
     needs: matrixProd
@@ -113,7 +115,7 @@ jobs:
     # Any prerequisite steps
     - uses: actions/checkout@master
 
-    - name: Mirror to Gitlab
+    - name: Mirror to AWB
       env:
         LAB_ID: ${{ matrix.repo.lab_id }}
         OAUTH_TOKEN: ${{ secrets.AWB_OAUTH_TOKEN }}
