@@ -2,36 +2,54 @@
 All of the folders under `https://github.com/OpenLiberty/cloud-hosted-guides/tree/master/instructions/` have a matching Gitlab repository used for SkillsNetwork labs.
 When creating a new cloud-hosted-guides guide some steps must be taken to ensure that future changes will be mirrored.
 
-1. Create the Quicklab 
+## Step-by-Step Instructions
 
-Create the neccessary Quicklab repository on Gitlab via the SkillsNetwork Author page: https://www.skills.network/become-an-author/
+### Step 1: Create the QuickLab
 
-2. Add the OpenLiberty Guides group
+1. **Create a New Project:**
 
-Once your Quicklab repository has been created navigate to it on Gitlab and select the "Members" tab. From here select the "Invite Group" tab and invite the "[OpenLiberty Guides](https://gitlab.com/openliberty-guides)" group as a `maintainer`. If you are not yet a member of the OpenLiberty Guides group then tag @austin0, @jamiecoleman92, or @jakub-pomykala on Github.
+- Navigate to the SkillsNetwork Author portal at [Become an Author](https://skills.network/authors).
+- Follow the process to [create a Guided Project in Author Workbench](https://author.skills.network/quicklabs/new?how_to_continue=true)
 
-3. Add the repository names to the `mirror.yml` file
+### Step 2: Add Collaborators
 
-In the following section of mirror.yml, under the `repo:` tag, you must add both the Github folder and Gitlab repository (URL) names.
-```
-jobs:
-  deploy:
-    name: Start Mirror Containers
-    runs-on: ubuntu-latest
-    strategy:
-      matrix: # Uses an array of Json variables to pass the repo names.
-              # The names differ between Github and Gitlab so this is necessary.
-              # Add new cloud-hosted-guides here to add them to the mirror process.
-              # i.e. {"github":"new-lab-github-folder","gitlab":"new-lab-gitlab-url"}
-        repo:
-          - {"github":"develop-microservices-docker","gitlab":"using-docker-to-develop-java-microservices"}
-          - {"github":"guide-cdi-intro","gitlab":"injecting-dependencies-into-a-java-microservices"}
-          ...
-```
+1. **Access Your QuickLab:**
+   - Go to your QuickLab page: `https://author.skills.network/quicklabs/:id?show=team`.
+
+2. **Invite Team Members:**
+   - Click on "Invite Member."
+   - Search for @Gilbert's email and add him as an `Admin` or `Instructor`.
+
+### Step 3: Prepare Instruction Templates
+
+1. **Duplicate the Template Folder:**
+   - Copy and rename the `cloud-hosted-guide-template` folder under `instruction-templates` to and change the folder name to match your QuickLab name.
+   - Keep the original `instructions.md` filename as it will be the file used for editing content.
+
+### Step 4: Update Configuration
+
+1. **Modify the `mirror.json` and `StagingMirror.json` Files:**
+   - Add a new entry to the `mirror.json` and `StagingMirror.json` files using the following format:
+
+   ```json
+   {
+     "guide": "name-of-your-quicklab",
+     "github": "the-folder-name",
+     "quick_lab_id": "quicklab_id",
+     "lab_id": "lab_id"
+   }
+
+2. **Locate QuickLab and Lab IDs:**
+
+- Find the QuickLab ID from the URL: https://author.skills.network/quicklabs/:quicklab_id.
+- To find the Lab ID, navigate to the Labs tab, hover over the lab, and note the Lab ID from the URL shown at the bottom left of your screen: https://author.skills.network/labs/:lab_id.
+- Update the mirror.json with these IDs.
 
 
-4. Apply Gitlab deploy key
+### Step 5: Deploy Your Changes
 
-Once the Gitlab repository has been created the owner/maintainer must assign the correct deploy key.
-This can be done by going to `https://gitlab.com/ibm/skills-network/quicklabs/<repo-name>/settings/repository`, scrolling down to the `Deploy Keys` section and enabling the `DEPLOY_KEY_QUICK_LABS` key. 
-You must then navigate the the `Enabled deploy keys` tab and select the edit option for the newly added key, from here enable the `Write access allowed` setting.
+1. **Mirror Guide Setup:**
+
+- Initiate a `Mirror a guide to AWB` action.
+- Enter the `Guide name` and `To` Options
+- - For `To`, `main` for publishing the lab to the world, `staging` for saving the lab without publishing.
