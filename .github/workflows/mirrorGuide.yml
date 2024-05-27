@@ -1,4 +1,4 @@
-name: Mirror a guide to AWB (test)
+name: Mirror a guide to AWB
 
 on:
   workflow_dispatch:
