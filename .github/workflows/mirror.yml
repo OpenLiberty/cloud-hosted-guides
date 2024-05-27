@@ -24,7 +24,7 @@ jobs:
         TASKS="${TASKS//'%'/'%25'}"
         TASKS="${TASKS//$'\n'/'%0A'}"
         TASKS="${TASKS//$'\r'/'%0D'}"
-        echo "::set-output name=matrixProd::$TASKS"
+        echo "matrixProd=$TASKS" >> $GITHUB_OUTPUT
 
   matrixStaging:
     runs-on: ubuntu-latest
@@ -40,7 +40,7 @@ jobs:
         TASKS="${TASKS//'%'/'%25'}"
         TASKS="${TASKS//$'\n'/'%0A'}"
         TASKS="${TASKS//$'\r'/'%0D'}"
-        echo "::set-output name=matrixStaging::$TASKS"
+        echo "matrixStaging=$TASKS" >> $GITHUB_OUTPUT
 
   singleMergedToProd:
     name: Check if PR was a single Guide merged to Prod
@@ -80,24 +80,22 @@ jobs:
       - name: Check Files
         run: |
           if [ "${{ env.GUIDENAME }}" = "${{matrix.repo.github}}" ]; then 
-            echo "Mirroring "${{ env.GUIDENAME }}" to "${{matrix.repo.gitlab}}"";
-            GITLAB="${{matrix.repo.gitlab}}" >> $GITHUB_ENV;
-            GITLAB_BRANCH="${{matrix.repo.gitlab-branch}}" >> $GITHUB_ENV;
+            echo "Mirroring "${{ env.GUIDENAME }}" to AuthorWorkbench";
+            echo "awb url: https://author.skills.network/quicklabs/${{matrix.repo.quicklab_id}}/labs/${{matrix.repo.lab_id}}";
           else
             echo "Skipping "${{matrix.repo.github}}"";
             exit 1;
           fi
 
-      - name: Mirror to Gitlab
-        uses: s0/git-publish-subdir-action@develop
+      - name: Mirror to AWB
         env:
-          REPO: git@ssh.author-gitlab.skills.network:quicklabs/${{matrix.repo.gitlab}}.git
-          BRANCH: ${{matrix.repo.gitlab-branch}}
-          FOLDER: instructions/${{matrix.repo.github}}
-          MESSAGE: "{msg}" # Sets the commit message on gitlab to be the same as on github.
-          SSH_PRIVATE_KEY: ${{secrets.DEPLOY_KEY_QUICK_LABS}}
-          KNOWN_HOSTS_FILE: .github/workflows/known_hosts # Needed if target repo is not on github.com.
-          SKIP_EMPTY_COMMITS: "true"
+          LAB_ID: ${{ matrix.repo.lab_id }}
+          OAUTH_TOKEN: ${{ secrets.AWB_OAUTH_TOKEN }}
+          FILE_PATH: instructions/${{ matrix.repo.github }}/instructions.md
+          PUBLISH: true
+        run: |
+          chmod +x ${{ github.workspace }}/.github/workflows/deploy_guide.sh
+          ${{ github.workspace }}/.github/workflows/deploy_guide.sh $LAB_ID $OAUTH_TOKEN $FILE_PATH "$(git log -1 --pretty=format:"%s" -- $FILE_PATH)" $PUBLISH "https://author.skills.network"          
 
   deployAllToProd:
     needs: matrixProd
@@ -117,16 +115,15 @@ jobs:
     # Any prerequisite steps
     - uses: actions/checkout@master
 
-    - name: Mirror to Gitlab
-      uses: s0/git-publish-subdir-action@develop
+    - name: Mirror to AWB
       env:
-        REPO: git@ssh.author-gitlab.skills.network:quicklabs/${{matrix.repo.gitlab}}.git
-        BRANCH: ${{matrix.repo.gitlab-branch}}
-        FOLDER: instructions/${{matrix.repo.github}}
-        MESSAGE: "{msg}" # Sets the commit message on gitlab to be the same as on github.
-        SSH_PRIVATE_KEY: ${{secrets.DEPLOY_KEY_QUICK_LABS}}
-        KNOWN_HOSTS_FILE: .github/workflows/known_hosts # Needed if target repo is not on github.com.
-        SKIP_EMPTY_COMMITS: "true"
+        LAB_ID: ${{ matrix.repo.lab_id }}
+        OAUTH_TOKEN: ${{ secrets.AWB_OAUTH_TOKEN }}
+        FILE_PATH: instructions/${{ matrix.repo.github }}/instructions.md
+        PUBLISH: true
+        run: |
+          chmod +x ${{ github.workspace }}/.github/workflows/deploy_guide.sh
+          ${{ github.workspace }}/.github/workflows/deploy_guide.sh $LAB_ID $OAUTH_TOKEN $FILE_PATH "$(git log -1 --pretty=format:"%s" -- $FILE_PATH)" $PUBLISH "https://author.skills.network"          
 
   singleMergedToStaging:
       name: Check if PR was a single Guide merged to Staging
@@ -169,24 +166,22 @@ jobs:
       - name: Check Files
         run: |
           if [ "${{ env.GUIDENAME }}" = "${{matrix.repo.github}}" ]; then 
-            echo "Mirroring "${{ env.GUIDENAME }}" to "${{matrix.repo.gitlab}}"";
-            GITLAB="${{matrix.repo.gitlab}}" >> $GITHUB_ENV;
-            GITLAB_BRANCH="${{matrix.repo.gitlab-branch}}" >> $GITHUB_ENV;
+            echo "Mirroring "${{ env.GUIDENAME }}" to AuthorWorkbench";
+            echo "awb url: https://author-workbench.skills.network/quicklabs/${{matrix.repo.quicklab_id}}/labs/${{matrix.repo.lab_id}}";
           else
             echo "Skipping "${{matrix.repo.github}}"";
             exit 1;
           fi
 
-      - name: Mirror to Gitlab
-        uses: s0/git-publish-subdir-action@develop
+      - name: Mirror to AWB
         env:
-          REPO: git@ssh.author-gitlab.skills.network:quicklabs/${{matrix.repo.gitlab}}.git
-          BRANCH: ${{matrix.repo.gitlab-branch}}
-          FOLDER: instructions/${{matrix.repo.github}}
-          MESSAGE: "{msg}" # Sets the commit message on gitlab to be the same as on github.
-          SSH_PRIVATE_KEY: ${{secrets.DEPLOY_KEY_QUICK_LABS}}
-          KNOWN_HOSTS_FILE: .github/workflows/known_hosts # Needed if target repo is not on github.com.
-          SKIP_EMPTY_COMMITS: "true"
+          LAB_ID: ${{ matrix.repo.lab_id }}
+          OAUTH_TOKEN: "${{ secrets.AWB_OAUTH_TOKEN }}"
+          PUBLISH: false
+          FILE_PATH: "instructions/${{ matrix.repo.github }}/instructions.md"
+        run: |
+          chmod +x ${{ github.workspace }}/.github/workflows/deploy_guide.sh
+          ${{ github.workspace }}/.github/workflows/deploy_guide.sh $LAB_ID $OAUTH_TOKEN $FILE_PATH "$(git log -1 --pretty=format:"%s" -- $FILE_PATH)" $PUBLISH "https://author.skills.network"
 
   deployAllToStaging:
     needs: matrixStaging
@@ -204,16 +199,15 @@ jobs:
       with: 
         ref: staging
     
-    - name: Mirror to Gitlab
-      uses: s0/git-publish-subdir-action@develop
+    - name: Mirror to AWB
       env:
-        REPO: git@ssh.author-gitlab.skills.network:quicklabs/${{matrix.repo.gitlab}}.git
-        BRANCH: ${{matrix.repo.gitlab-branch}}
-        FOLDER: instructions/${{matrix.repo.github}}
-        MESSAGE: "{msg}" # Sets the commit message on gitlab to be the same as on github.
-        SSH_PRIVATE_KEY: ${{secrets.DEPLOY_KEY_QUICK_LABS}}
-        KNOWN_HOSTS_FILE: .github/workflows/known_hosts # Needed if target repo is not on github.com.
-        SKIP_EMPTY_COMMITS: "true"
+        LAB_ID: ${{ matrix.repo.lab_id }}
+        OAUTH_TOKEN: "${{ secrets.AWB_OAUTH_TOKEN }}"
+        PUBLISH: false
+        FILE_PATH: "instructions/${{ matrix.repo.github }}/instructions.md"
+      run: |
+        chmod +x ${{ github.workspace }}/.github/workflows/deploy_guide.sh
+        ${{ github.workspace }}/.github/workflows/deploy_guide.sh $LAB_ID $OAUTH_TOKEN $FILE_PATH "$(git log -1 --pretty=format:"%s" -- $FILE_PATH)" $PUBLISH "https://author.skills.network"
     
     # Output link to staged files
     - name: Print staging lab URL
