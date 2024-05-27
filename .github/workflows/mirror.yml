@@ -121,9 +121,9 @@ jobs:
         OAUTH_TOKEN: ${{ secrets.AWB_OAUTH_TOKEN }}
         FILE_PATH: instructions/${{ matrix.repo.github }}/instructions.md
         PUBLISH: true
-        run: |
-          chmod +x ${{ github.workspace }}/.github/workflows/deploy_guide.sh
-          ${{ github.workspace }}/.github/workflows/deploy_guide.sh $LAB_ID $OAUTH_TOKEN $FILE_PATH "$(git log -1 --pretty=format:"%s" -- $FILE_PATH)" $PUBLISH "https://author.skills.network"          
+      run: |
+        chmod +x ${{ github.workspace }}/.github/workflows/deploy_guide.sh
+        ${{ github.workspace }}/.github/workflows/deploy_guide.sh $LAB_ID $OAUTH_TOKEN $FILE_PATH "$(git log -1 --pretty=format:"%s" -- $FILE_PATH)" $PUBLISH "https://author.skills.network"          
 
   singleMergedToStaging:
       name: Check if PR was a single Guide merged to Staging
