@@ -30,6 +30,7 @@ You'll also explore how to package your application with Open Liberty so that it
 Finally, you will package the application along with Liberty's configuration into a Docker image and run that image as a container.
 
 
+
 ::page{title="Getting started"}
 
 To open a new command-line session,
@@ -53,6 +54,7 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
+You have cloned a Maven project. To learn how to create a Liberty Maven project from scratch and edit your application using the Liberty Tools, see [Developing a cloud-native Java application with Liberty Tools in IntelliJ IDEA](https://openliberty.io/blog/2024/05/31/liberty-project-starter-guide-IntelliJ.html).
 
 In this IBM Cloud environment, you need to change the user home to ***/home/project*** by running the following command:
 ```bash
