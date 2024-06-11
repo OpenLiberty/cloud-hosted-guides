@@ -413,7 +413,7 @@ Replace the start/POM file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.10.2</version>
+                <version>3.10.3</version>
             </plugin>
         </plugins>
     </build>
