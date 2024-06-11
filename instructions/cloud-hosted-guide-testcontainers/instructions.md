@@ -67,6 +67,7 @@ To try out the test, first go to the ***finish*** directory and run the followin
 
 
 ```bash
+cd /home/project/guide-testcontainers/finish
 export TESTCONTAINERS_RYUK_DISABLED=true
 mvn verify
 ```
@@ -142,7 +143,7 @@ Build and run the container by running the ***devc*** goal with the PostgreSQL c
 mvn liberty:devc -DcontainerRunOpts="-e DB_HOSTNAME=172.17.0.2" -DserverStartTimeout=240
 ```
 
-Wait a moment for dev mode to start. After you see the following message, your Liberty instance is ready in dev mode:
+Wait a moment for dev mode to start. Some error messages are expected as a result of building the docker image. Although these messages are included on the standard error stream, in this case they are not errors, just logs of the docker build progress. After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
 **************************************************************
@@ -700,13 +701,13 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.8.Final</version>
+            <version>6.2.9.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.8.Final</version>
+            <version>6.2.9.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -724,7 +725,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.19.7</version>
+            <version>1.19.8</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -762,7 +763,7 @@ Replace the ***pom.xml*** file.
                         </dependencyGroup>
                     </copyDependencies>
                 </configuration>
-                <version>3.10.2</version>
+                <version>3.10.3</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
