@@ -712,13 +712,13 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.8.Final</version>
+            <version>6.2.9.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.8.Final</version>
+            <version>6.2.9.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -736,7 +736,7 @@ Replace the Maven project file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.10.2</version>
+                <version>3.10.3</version>
                 <configuration>
                     <looseApplication>false</looseApplication>
                 </configuration>
