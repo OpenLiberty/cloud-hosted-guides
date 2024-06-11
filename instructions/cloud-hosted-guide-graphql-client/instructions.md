@@ -254,12 +254,12 @@ Replace the Maven project file.
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client</artifactId>
-            <version>2.8.3</version>
+            <version>2.8.4</version>
         </dependency>
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client-implementation-vertx</artifactId>
-            <version>2.8.3</version>
+            <version>2.8.4</version>
         </dependency>
         <dependency>
             <groupId>io.smallrye.stork</groupId>
@@ -282,13 +282,13 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>6.2.8.Final</version>
+            <version>6.2.9.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-json-binding-provider</artifactId>
-            <version>6.2.8.Final</version>
+            <version>6.2.9.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -300,13 +300,13 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.19.7</version>
+            <version>1.19.8</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.19.7</version>
+            <version>1.19.8</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -324,7 +324,7 @@ Replace the Maven project file.
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.10.2</version>
+                <version>3.10.3</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
