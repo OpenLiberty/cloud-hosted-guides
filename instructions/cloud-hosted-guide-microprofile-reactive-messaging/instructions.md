@@ -457,7 +457,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>kafka</artifactId>
-            <version>1.19.7</version>
+            <version>1.19.8</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -469,7 +469,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.19.7</version>
+            <version>1.19.8</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -490,7 +490,7 @@ touch /home/project/guide-microprofile-reactive-messaging/start/system/pom.xml
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
-                <version>3.10.2</version>
+                <version>3.10.3</version>
                 <configuration>
                     <!-- devc config -->
                     <containerRunOpts>
