@@ -254,12 +254,12 @@ Replace the Maven project file.
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client</artifactId>
-            <version>2.8.4</version>
+            <version>2.8.6</version>
         </dependency>
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client-implementation-vertx</artifactId>
-            <version>2.8.4</version>
+            <version>2.8.6</version>
         </dependency>
         <dependency>
             <groupId>io.smallrye.stork</groupId>
@@ -276,7 +276,7 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.10.2</version>
+            <version>5.10.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -334,12 +334,12 @@ Replace the Maven project file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
+                <version>3.3.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.2.5</version>
+                <version>3.3.0</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.http.port}</http.port>
