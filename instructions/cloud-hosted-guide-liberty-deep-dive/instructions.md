@@ -5026,7 +5026,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.10.2</version>
+            <version>5.10.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -5126,7 +5126,7 @@ Replace the ***pom.xml*** file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.2.5</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <goals>
