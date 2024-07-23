@@ -74,14 +74,14 @@ When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/devel
 Open a command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in ***dev*** environment:
 
 ```bash
-cd system
+cd /home/project/guide-microprofile-config-profile/start/system
 mvn liberty:dev
 ```
 
 Open another command-line session and run the following commands to navigate to the ***query*** directory and start the ***query*** service in ***dev*** environment:
 
 ```bash
-cd query
+cd /home/project/guide-microprofile-config-profile/start/query
 mvn liberty:dev
 ```
 
@@ -97,7 +97,9 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 
 In the dev environment, the ***dev*** configuration profile is set in the ***system/pom.xml*** file as the configuration profile to use for running the ***system*** service. The ***system*** service runs on HTTP port ***9081*** and HTTPS port ***9444*** using the context root ***system/dev***. It uses a basic user registry with username ***alice*** and password ***alicepwd*** for resource authorization. Note that the ***basicRegistry*** element is a simple registry configuration for learning purposes. For more information on user registries, see the [User registries documentation](https://openliberty.io/docs/latest/user-registries-application-security.html).
 
-Point your browser to the ***http\://localhost:9085/query/systems/localhost*** URL. The ***query*** service returns the message: ***{"fail":"Failed to reach the client localhost."}***. This is because the current ***query*** service uses the default properties in the ***query/src/main/resources/META-INF/microprofile-config.properties*** file to access the ***system*** service.
+Click the following button to check out the `query` service:
+::startApplication{port="9085" display="external" name="Check out the query service" route="/query/systems/localhost"}
+The ***query*** service returns the message: ***{"fail":"Failed to reach the client localhost."}***. This is because the current ***query*** service uses the default properties in the ***query/src/main/resources/META-INF/microprofile-config.properties*** file to access the ***system*** service.
 
 For proper communication with the development ***system*** service, the ***query*** service uses the properties in the ***dev*** configuration profile.
 
@@ -140,11 +142,19 @@ Configure the ***%dev.**** properties in the ***microprofile-config.properties**
 
 Because the active profile is set to ***dev***, each ***%dev.**** property overrides the value of the plain non-profile-specific property. For example, in this case the ***%dev.system.httpsPort*** property overrides the ***system.httpsPort*** property and the value is resolved to ***9444***.
 
-Because you are running the ***query*** service in dev mode, the changes that you made are automatically picked up. Try out the application at the ***http\://localhost:9085/query/systems/localhost*** URL. You can see the current OS and Java version in JSON format.
+Because you are running the ***query*** service in dev mode, the changes that you made are automatically picked up. 
+
+Click the following button to try out the application:
+::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
+
+You can see the current OS and Java version in JSON format.
+
 
 ### Creating profile-specific ***microprofile-config.properties*** configuration files
 
 Creating profile-specific ***microprofile-config.properties*** configuration files is a structured way to provide and manage more extensive sets of default configurations. You can create a configuration file for each configuration profile in the ***META-INF*** folder on the classpath of your application by using the ***microprofile-config-\<config_profile_id\>*** naming convention, where ***\<config_profile_id\>*** is the unique identifier for a configuration profile. Once you create the file, you can add your configuration properties to it with the standard ***\<property_name\>=\<value\>*** syntax.
+
+Open another command-line session.
 
 Create the ***microprofile-config-dev.properties*** file.
 
@@ -197,7 +207,10 @@ Remove the ***%dev.**** properties from the ***microprofile-config.properties***
 
 Because the active profile is set to ***dev***, any ***system.**** properties specified in the ***microprofile-config-dev.properties*** file take precedence over the ***system.**** property values in the ***microprofile-config.properties*** file.
 
-Now, point your browser to the ***http\://localhost:9085/query/systems/localhost*** URL to check out the application again. You see the current OS and Java version in JSON format.
+Now, click the following button to try out the application again:
+::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
+
+You can see the current OS and Java version in JSON format.
 
 When you are done checking out the application in ***dev*** environment, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***query*** services. 
 
@@ -336,8 +349,8 @@ Now, navigate to the ***start*** directory.
 
 Test the application under the ***test*** environment by running the following script that contains different Maven goals to ***build***, ***start***, ***test***, and ***stop*** the services.
 
-
 ```bash
+cd /home/project/guide-microprofile-config-profile/start
 ./scripts/testApp.sh
 ```
 
@@ -390,10 +403,22 @@ In the this section, you'll learn how to use Kubernetes secrets to provide the c
 
 Before deploying, create the Dockerfile files for both ***system*** and ***query*** microservices. Then, build their ***.war*** files and Docker images in the ***start*** directory.
 
-```
+```bash
+cp /home/project/guide-microprofile-config-profile/finish/system/Dockerfile /home/project/guide-microprofile-config-profile/start/system
+cp /home/project/guide-microprofile-config-profile/finish/query/Dockerfile /home/project/guide-microprofile-config-profile/start/query
+cd /home/project/guide-microprofile-config-profile/start
 mvn -P prod clean package
 docker build -t system:1.0-SNAPSHOT system/.
 docker build -t query:1.0-SNAPSHOT query/.
+```
+
+Push your images to the container registry on IBM Cloud with the following commands:
+
+```bash
+docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker tag query:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
+docker push us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
 ```
 
 The Maven ***clean*** and ***package*** goals can clean the ***target*** directories and build the ***.war*** application files from scratch. The ***microprofile-config-dev.properties*** and ***microprofile-config-test.properties*** of the ***query*** microservice are excluded from the ***prod*** build. The default ***microprofile-config.properties*** file is automatically applied.
@@ -402,23 +427,70 @@ The Docker ***build*** commands package the ***.war*** files of the ***system***
 
 After building the images, you can create a Kubernetes secret for storing sensitive data such as credentials.
 
-```
+```bash
 kubectl create secret generic sys-app-credentials \
-        --from-literal username=[username] \
-        --from-literal password=[password]
+        --from-literal username=$USERNAME \
+        --from-literal password=password
 ```
 
 For more information about managing secrets, see the [Managing Secrets using kubectl](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl) documentation.
 
 Finally, write up the ***deploy.yaml*** deployment file to configure the deployment of the ***system*** and ***query*** microservices by using the Open Liberty Operator. The ***sys-app-credentials*** Kubernetes secrets set the environment variables ***DEFAULT_USERNAME*** and ***DEFAULT_PASSWORD*** for the ***system*** microservice, and ***SYSTEM_USER*** and ***SYSTEM_PASSWORD*** for the ***query*** microservice.
 
+```bash
+cp /home/project/guide-microprofile-config-profile/finish/deploy.yaml /home/project/guide-microprofile-config-profile/start
+sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
+sed -i 's=query:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/query:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
+```
 
 If you want to override another property, you can specify it in the ***env*** sections of the ***deploy.yaml*** file. For example, set the ***CONTEXT_ROOT*** environment variable in the ***system*** deployment and the ***SYSTEM_CONTEXTROOT*** environment variable in the ***query*** deployment.
 
 Once the images and the secret are ready, you can deploy the microservices to your production environment with Kubernetes.
 
-```
+```bash
 kubectl apply -f deploy.yaml
+```
+When the apps are deployed, run the following command to check the status of your pods:
+```bash
+kubectl get pods
+```
+
+You'll see an output similar to the following if all the pods are healthy and running:
+
+```
+----
+NAME                     READY   STATUS    RESTARTS   AGE
+query-7b7b6db4b6-cqtqx   1/1     Running   0          4s
+system-bc85bc8dc-rw5pb   1/1     Running   0          5s
+----
+```
+
+To access the exposed **query** microservice, the service must be port-forwarded. Run the following command to set up port forwarding to access the **query** service:
+
+```bash
+kubectl port-forward svc/query 9448
+```
+
+Open another command-line session and access the microservice by running the following command:
+```bash
+curl -k -s "https://localhost:9448/query/systems/system.${SN_ICR_NAMESPACE}.svc" | jq
+```
+
+You'll see an output similar to the following:
+
+```
+{
+  "hostname": "system.sn-labs-gkwan.svc",
+  "java.version": "11.0.23",
+  "os.name": "Linux"
+}
+```
+
+When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the `kubectl port-forward` command to stop the port forwarding, and then delete all resources by running the following commands:
+```bash
+kubectl delete -f deploy.yaml
+kubectl delete secret sys-app-credentials
+docker image prune -a -f
 ```
 
 ::page{title="Summary"}
