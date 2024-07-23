@@ -97,8 +97,11 @@ Dev mode holds your command-line session to listen for file changes. Open anothe
 
 In the dev environment, the ***dev*** configuration profile is set in the ***system/pom.xml*** file as the configuration profile to use for running the ***system*** service. The ***system*** service runs on HTTP port ***9081*** and HTTPS port ***9444*** using the context root ***system/dev***. It uses a basic user registry with username ***alice*** and password ***alicepwd*** for resource authorization. Note that the ***basicRegistry*** element is a simple registry configuration for learning purposes. For more information on user registries, see the [User registries documentation](https://openliberty.io/docs/latest/user-registries-application-security.html).
 
-Click the following button to check out the `query` service:
+Click the following button to check out the ***query*** service:
+
 ::startApplication{port="9085" display="external" name="Check out the query service" route="/query/systems/localhost"}
+
+
 The ***query*** service returns the message: ***{"fail":"Failed to reach the client localhost."}***. This is because the current ***query*** service uses the default properties in the ***query/src/main/resources/META-INF/microprofile-config.properties*** file to access the ***system*** service.
 
 For proper communication with the development ***system*** service, the ***query*** service uses the properties in the ***dev*** configuration profile.
@@ -145,6 +148,7 @@ Because the active profile is set to ***dev***, each ***%dev.**** property overr
 Because you are running the ***query*** service in dev mode, the changes that you made are automatically picked up. 
 
 Click the following button to try out the application:
+
 ::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
 
 You can see the current OS and Java version in JSON format.
@@ -208,6 +212,7 @@ Remove the ***%dev.**** properties from the ***microprofile-config.properties***
 Because the active profile is set to ***dev***, any ***system.**** properties specified in the ***microprofile-config-dev.properties*** file take precedence over the ***system.**** property values in the ***microprofile-config.properties*** file.
 
 Now, click the following button to try out the application again:
+
 ::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
 
 You can see the current OS and Java version in JSON format.
@@ -412,7 +417,11 @@ docker build -t system:1.0-SNAPSHOT system/.
 docker build -t query:1.0-SNAPSHOT query/.
 ```
 
-Push your images to the container registry on IBM Cloud with the following commands:
+The Maven ***clean*** and ***package*** goals can clean the ***target*** directories and build the ***.war*** application files from scratch. The ***microprofile-config-dev.properties*** and ***microprofile-config-test.properties*** of the ***query*** microservice are excluded from the ***prod*** build. The default ***microprofile-config.properties*** file is automatically applied.
+
+The Docker ***build*** commands package the ***.war*** files of the ***system*** and ***query*** microservices with their default configuration into your Docker images.
+
+After building the images, push your images to the container registry on IBM Cloud with the following commands:
 
 ```bash
 docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
@@ -421,11 +430,7 @@ docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
 docker push us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
 ```
 
-The Maven ***clean*** and ***package*** goals can clean the ***target*** directories and build the ***.war*** application files from scratch. The ***microprofile-config-dev.properties*** and ***microprofile-config-test.properties*** of the ***query*** microservice are excluded from the ***prod*** build. The default ***microprofile-config.properties*** file is automatically applied.
-
-The Docker ***build*** commands package the ***.war*** files of the ***system*** and ***query*** microservices with their default configuration into your Docker images.
-
-After building the images, you can create a Kubernetes secret for storing sensitive data such as credentials.
+And, you can create a Kubernetes secret for storing sensitive data such as credentials.
 
 ```bash
 kubectl create secret generic sys-app-credentials \
