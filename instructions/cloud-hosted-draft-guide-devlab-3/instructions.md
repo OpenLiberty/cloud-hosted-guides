@@ -493,6 +493,7 @@ You'll see an output similar to the following:
 
 When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the `kubectl port-forward` command to stop the port forwarding, and then delete all resources by running the following commands:
 ```bash
+cd /home/project/guide-microprofile-config-profile/start
 kubectl delete -f deploy.yaml
 kubectl delete secret sys-app-credentials
 docker image prune -a -f
