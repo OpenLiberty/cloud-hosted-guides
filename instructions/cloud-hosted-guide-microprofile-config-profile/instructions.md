@@ -482,7 +482,7 @@ You'll see an output similar to the following:
 
 ```
 {
-  "hostname": "system.sn-labs-gkwan.svc",
+  "hostname": "system.sn-labs-username.svc",
   "java.version": "11.0.23",
   "os.name": "Linux"
 }
