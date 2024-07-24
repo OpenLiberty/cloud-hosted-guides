@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-480-instruction
-version-history-start-date: 2020-04-22 12:57:16 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Getting started with Open Liberty guide!"}

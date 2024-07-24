@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-447-instruction
-version-history-start-date: 2021-12-02 17:23:03 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Accessing and persisting data in microservices using Java Persistence API (JPA) guide!"}

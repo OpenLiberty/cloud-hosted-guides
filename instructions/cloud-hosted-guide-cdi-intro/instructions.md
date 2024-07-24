@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-498-instruction
-version-history-start-date: 2022-03-22T21:26:09Z
 tool-type: theia
 ---
 ::page{title="Welcome to the Injecting dependencies into microservices guide!"}
