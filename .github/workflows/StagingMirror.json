@@ -422,5 +422,12 @@
         "gitlab-branch": "lab-9675-instruction",
         "quicklab_id": 5615,
         "lab_id": 9896
+    },
+    {
+        "guide": "microprofile-config-profile",
+        "github": "cloud-hosted-guide-microprofile-config-profile",
+        "gitlab": "OpenLiberty-GPXX0EZCEN",
+        "quicklab_id": 6776,
+        "lab_id": 11817
     }
 ]
