@@ -1,9 +1,6 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-204-instruction
-version-history-start-date: 2022-02-09T14:19:17.000Z
-tool-type: theia
+tool-type: theiadocker
 ---
 ::page{title="Welcome to the Externalizing environment-specific microservice configuration for CI/CD guide!"}
 
@@ -28,7 +25,7 @@ This guide builds on the [Separating configuration from code in microservices](h
 
 The application that you will work with is a ***query*** service, which fetches information about the running JVM from a ***system*** microservice. You'll use configuration profiles to externalize and manage the configurations across the development, testing, and production environments.
 
-![System and query services DevOps](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-config-profile/draft/assets/system-query-devops.png)
+![System and query services DevOps](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops.png)
 
 
 
@@ -43,11 +40,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/draft-guide-microprofile-config-profile.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-microprofile-config-profile.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/draft-guide-microprofile-config-profile.git
-cd draft-guide-microprofile-config-profile
+git clone https://github.com/openliberty/guide-microprofile-config-profile.git
+cd guide-microprofile-config-profile
 ```
 
 
@@ -106,7 +103,7 @@ The ***query*** service returns the message: ***{"fail":"Failed to reach the cli
 
 For proper communication with the development ***system*** service, the ***query*** service uses the properties in the ***dev*** configuration profile.
 
-![System service running in development environment](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-config-profile/draft/assets/system-query-devops-development.png)
+![System service running in development environment](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops-development.png)
 
 
 There are two ways to define configuration properties associated with your configuration profile. The first is as individual configuration properties associated with a configuration profile that can be specified in any kind of MicroProfile configuration source. The second is through default ***microprofile-config.properties*** configuration files embedded inside your application that can be associated with different configuration profiles. The former allows for flexibility in defining profile-specific configuration properties in the best configuration sources for your needs while the latter enables default profiles of configuration properties to be provided in your application.
@@ -118,10 +115,26 @@ This approach involves directly associating individual configuration properties 
 Replace the ***microprofile-config.properties*** file.
 
 > To open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> **File** > **Open** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-::openFile{path="/home/project/draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
 
+
+
+```
+system.httpsPort=9443
+system.user=admin
+system.password=adminpwd
+system.contextRoot=system
+
+%dev.system.httpsPort=9444
+%dev.system.user=alice
+%dev.system.password=alicepwd
+%dev.system.contextRoot=system/dev
+```
+
+
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
 
 
 
@@ -148,14 +161,23 @@ Create the ***microprofile-config-dev.properties*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties
+touch /home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties
 ```
 
 
 > Then, to open the microprofile-config-dev.properties file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties, or click the following button
+> **File** > **Open** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties, or click the following button
 
-::openFile{path="/home/project/draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties"}
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties"}
+
+
+
+```
+system.httpsPort=9444
+system.user=alice
+system.password=alicepwd
+system.contextRoot=system/dev
+```
 
 
 
@@ -165,9 +187,19 @@ Define the ***system.**** properties in the ***microprofile-config-dev.propertie
 Replace the ***microprofile-config.properties*** file.
 
 > To open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
+> **File** > **Open** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
 
-::openFile{path="/home/project/draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
+
+
+
+```
+system.httpsPort=9443
+system.user=admin
+system.password=adminpwd
+system.contextRoot=system
+
+```
 
 
 
@@ -188,21 +220,30 @@ When you are done checking out the application in ***dev*** environment, exit de
 
 In CI/CD, the test environment is where integration tests ensure the readiness and quality of an application. A good testing configuration not only ensures smooth operations but also aligns the environment closely with potential production settings.
 
-![System service running in testing environment](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-config-profile/draft/assets/system-query-devops-testing.png)
+![System service running in testing environment](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops-testing.png)
 
 
 Create the ***microprofile-config-test.properties*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties
+touch /home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties
 ```
 
 
 > Then, to open the microprofile-config-test.properties file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties, or click the following button
+> **File** > **Open** > guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties, or click the following button
 
-::openFile{path="/home/project/draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties"}
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties"}
+
+
+
+```
+system.httpsPort=9445
+system.user=bob
+system.password=bobpwd
+system.contextRoot=system/test
+```
 
 
 
@@ -213,14 +254,84 @@ Create the ***QueryEndpointIT*** class.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/draft-guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java
+touch /home/project/guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java
 ```
 
 
 > Then, to open the QueryEndpointIT.java file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java, or click the following button
+> **File** > **Open** > guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java, or click the following button
 
-::openFile{path="/home/project/draft-guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java"}
+::openFile{path="/home/project/guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java"}
+
+
+
+```java
+package it.io.openliberty.guides.query;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Response;
+
+public class QueryEndpointIT {
+
+    private static String port = System.getProperty("http.port");
+    private static String baseUrl = "http://localhost:" + port + "/query";
+    private static String systemHost = System.getProperty("system.host");
+
+    private static Client client;
+
+    @BeforeEach
+    public void setup() {
+        client = ClientBuilder.newClient();
+    }
+
+    @AfterEach
+    public void teardown() {
+        client.close();
+    }
+
+    @Test
+    public void testQuerySystem() {
+
+        Response response = this.getResponse(baseUrl + "/systems/" + systemHost);
+        this.assertResponse(baseUrl, response);
+
+        JsonObject jsonObj = response.readEntity(JsonObject.class);
+        assertNotNull(jsonObj.getString("os.name"), "os.name is null");
+        assertNotNull(jsonObj.getString("java.version"), "java.version is null");
+
+        response.close();
+    }
+
+    @Test
+    public void testUnknownHost() {
+        Response response = this.getResponse(baseUrl + "/systems/unknown");
+        this.assertResponse(baseUrl, response);
+
+        JsonObject json = response.readEntity(JsonObject.class);
+        assertEquals("Failed to reach the client unknown.", json.getString("fail"),
+            "Fail message is wrong.");
+        response.close();
+    }
+
+    private Response getResponse(String url) {
+        return client.target(url).request().get();
+    }
+
+    private void assertResponse(String url, Response response) {
+        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
+    }
+
+}
+```
 
 
 
@@ -400,26 +511,26 @@ Feel free to try one of the related guides. They demonstrate new technologies th
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***draft-guide-microprofile-config-profile*** project by running the following commands:
+Delete the ***guide-microprofile-config-profile*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr draft-guide-microprofile-config-profile
+rm -fr guide-microprofile-config-profile
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Externalizing%20environment-specific%20microservice%20configuration%20for%20CI/CD&guide-id=cloud-hosted-draft-guide-microprofile-config-profile)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Externalizing%20environment-specific%20microservice%20configuration%20for%20CI/CD&guide-id=cloud-hosted-guide-microprofile-config-profile)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/draft-guide-microprofile-config-profile/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/draft-guide-microprofile-config-profile/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-microprofile-config-profile/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-microprofile-config-profile/pulls)
 
 
 
