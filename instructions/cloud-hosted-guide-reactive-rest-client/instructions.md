@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-500-instruction
-version-history-start-date: 2020-09-14 09:20:41 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Consuming RESTful services using the reactive JAX-RS client guide!"}

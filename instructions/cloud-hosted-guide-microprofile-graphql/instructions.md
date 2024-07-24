@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-444-instruction
-version-history-start-date: 2021-12-03 22:01:00 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Optimizing REST queries for microservices with GraphQL guide!"}

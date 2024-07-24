@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-435-instruction
-version-history-start-date: 2021-12-03 21:48:34 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Consuming a RESTful web service with ReactJS guide!"}

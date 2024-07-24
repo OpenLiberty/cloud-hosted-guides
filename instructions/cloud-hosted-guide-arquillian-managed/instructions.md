@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-449-instruction
-version-history-start-date: 2021-11-25 22:27:51 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Testing microservices with the Arquillian managed container guide!"}

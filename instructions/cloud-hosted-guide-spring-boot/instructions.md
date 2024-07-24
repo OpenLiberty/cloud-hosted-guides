@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-455-instruction
-version-history-start-date: 2021-10-18 15:12:46 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Containerizing, packaging, and running a Spring Boot application guide!"}

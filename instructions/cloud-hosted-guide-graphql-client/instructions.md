@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-329-instruction
-version-history-start-date: 2022-05-03T13:58:19Z
 tool-type: theia
 ---
 ::page{title="Welcome to the Running GraphQL queries and mutations using a GraphQL client guide!"}
