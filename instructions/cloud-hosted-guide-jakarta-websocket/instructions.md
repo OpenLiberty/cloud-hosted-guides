@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: cloud-hosted-guide-jakarta-websocket
-branch: lab-3446-instruction
-version-history-start-date: 2023-01-05T10:56:36Z
 tool-type: theia
 ---
 ::page{title="Welcome to the Bidirectional communication between services using Jakarta WebSocket guide!"}
