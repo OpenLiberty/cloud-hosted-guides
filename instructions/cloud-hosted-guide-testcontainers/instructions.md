@@ -1,7 +1,5 @@
 ---
 markdown-version: v1
-branch: lab-9675-instruction
-version-history-start-date: 2024-02-07T22:30:00Z
 tool-type: theiadocker
 ---
 ::page{title="Welcome to the Building true-to-production integration tests with Testcontainers guide!"}
@@ -725,7 +723,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.19.8</version>
+            <version>1.20.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -768,7 +766,7 @@ Replace the ***pom.xml*** file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.3.1</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.http.port}</http.port>
