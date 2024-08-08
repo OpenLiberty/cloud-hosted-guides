@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-495-instruction
-version-history-start-date: 2021-03-04 19:50:13 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Testing microservices with consumer-driven contracts guide!"}
@@ -333,7 +330,7 @@ Replace the inventory Maven project file.
             <plugin>
                 <groupId>au.com.dius.pact.provider</groupId>
                 <artifactId>maven</artifactId>
-                <version>4.6.10</version>
+                <version>4.6.11</version>
                 <configuration>
                     <serviceProviders>
                         <serviceProvider>
@@ -362,7 +359,7 @@ Replace the inventory Maven project file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.3.1</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.http.port}</http.port>
@@ -644,7 +641,7 @@ Replace the system Maven project file.
         <dependency>
             <groupId>au.com.dius.pact.provider</groupId>
             <artifactId>junit5</artifactId>
-            <version>4.6.10</version>
+            <version>4.6.11</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -677,7 +674,7 @@ Replace the system Maven project file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.3.1</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.http.port}</http.port>
