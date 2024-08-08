@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-449-instruction
-version-history-start-date: 2021-11-25 22:27:51 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Testing microservices with the Arquillian managed container guide!"}
@@ -259,7 +256,7 @@ Let's look into each of the required elements for this configuration.
 
 You need the ***arquillian-bom*** Bill of Materials. It's a Maven artifact that defines the versions of Arquillian dependencies to make dependency management easier.
 
-The ***arquillian-liberty-managed-junit*** dependency bundle, which includes all the core dependencies, is required to run the Arquillian tests on a managed Liberty container that uses JUnit. You can learn more about the [Arquillian Liberty dependency bundles](https://github.com/OpenLiberty/arquillian-liberty-dependencies). The ***shrinkwrap-api*** dependency allows you to create your test archive, which is packaged into a WAR file and deployed to the Open Liberty.
+The ***arquillian-liberty-managed-junit*** dependency bundle, which includes all the core dependencies, is required to run the Arquillian tests on a managed Liberty container that uses JUnit. You can learn more about the [Arquillian Liberty dependency bundles](https://github.com/OpenLiberty/arquillian-liberty-dependencies).
 
 The ***maven-failsafe-plugin*** artifact runs your Arquillian integration tests by using JUnit.
 
