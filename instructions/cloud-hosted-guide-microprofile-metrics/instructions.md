@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-493-instruction
-version-history-start-date: 2021-03-03 17:52:50 UTC
 tool-type: theia
 ---
 ::page{title="Welcome to the Providing metrics from a microservice guide!"}
