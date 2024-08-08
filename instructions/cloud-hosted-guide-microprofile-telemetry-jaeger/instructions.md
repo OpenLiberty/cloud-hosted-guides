@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: cloud-hosted-guide-microprofile-telemetry-jaeger
-branch: lab-7221-instruction
-version-history-start-date: 2023-06-06T12:58:02Z
 tool-type: theia
 ---
 ::page{title="Welcome to the Enabling distributed tracing in microservices with OpenTelemetry and Jaeger guide!"}
@@ -385,13 +382,13 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
         <dependency>
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-api</artifactId>
-            <version>1.39.0</version>
+            <version>1.40.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.opentelemetry.instrumentation</groupId>
             <artifactId>opentelemetry-instrumentation-annotations</artifactId>
-            <version>2.5.0</version>
+            <version>2.6.0</version>
             <scope>provided</scope>
         </dependency>
         <!-- For tests -->
@@ -446,7 +443,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.3.1</version>
                 <configuration>
                     <systemPropertyVariables>
                         <sys.http.port>${liberty.var.system.http.port}</sys.http.port>
