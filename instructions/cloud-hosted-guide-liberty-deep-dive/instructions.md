@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-344-instruction
-version-history-start-date: 2022-03-23T11:59:55Z
 tool-type: theia
 ---
 ::page{title="Welcome to the A Technical Deep Dive on Liberty guide!"}
@@ -5032,13 +5029,13 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.19.8</version>
+            <version>1.20.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.19.8</version>
+            <version>1.20.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -5085,7 +5082,7 @@ Replace the ***pom.xml*** file.
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-auth-jwt</artifactId>
-            <version>4.5.8</version>
+            <version>4.5.9</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -5126,7 +5123,7 @@ Replace the ***pom.xml*** file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.3.1</version>
                 <executions>
                     <execution>
                         <goals>
