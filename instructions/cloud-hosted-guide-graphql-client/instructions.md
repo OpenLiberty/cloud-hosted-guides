@@ -1,8 +1,5 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-329-instruction
-version-history-start-date: 2022-05-03T13:58:19Z
 tool-type: theia
 ---
 ::page{title="Welcome to the Running GraphQL queries and mutations using a GraphQL client guide!"}
@@ -254,12 +251,12 @@ Replace the Maven project file.
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client</artifactId>
-            <version>2.8.6</version>
+            <version>2.9.0</version>
         </dependency>
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-client-implementation-vertx</artifactId>
-            <version>2.8.6</version>
+            <version>2.9.0</version>
         </dependency>
         <dependency>
             <groupId>io.smallrye.stork</groupId>
@@ -300,13 +297,13 @@ Replace the Maven project file.
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.19.8</version>
+            <version>1.20.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.19.8</version>
+            <version>1.20.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -334,12 +331,12 @@ Replace the Maven project file.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.3.1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.3.1</version>
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.http.port}</http.port>
