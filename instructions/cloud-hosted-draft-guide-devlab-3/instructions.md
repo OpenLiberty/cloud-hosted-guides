@@ -1,13 +1,10 @@
 ---
 markdown-version: v1
-title: instructions
-branch: lab-5932-instruction
-version-history-start-date: 2023-04-14T18:24:15Z
 tool-type: theia
 ---
-::page{title="Welcome to the Externalizing environment-specific microservice configuration for CI/CD guide!"}
+::page{title="Welcome to the Consuming a RESTful web service with ReactJS guide!"}
 
-Learn how to create environment-specific configurations for microservices by using MicroProfile Config configuration profiles for easy management and portable deployments throughout the CI/CD lifecycle.
+Explore how to access a simple RESTful web service and consume its resources with ReactJS in Open Liberty.
 
 In this guide, you will use a pre-configured environment that runs in containers on the cloud and includes everything that you need to complete the guide.
 
@@ -20,17 +17,16 @@ The other panel displays the IDE that you will use to create files, edit the cod
 
 ::page{title="What you'll learn"}
 
-Managing configurations for microservices can be challenging, especially when configurations require adjustments across various stages of the software development and delivery lifecycle. The MicroProfile Config configuration profile feature, also known as the [Config Profile](https://download.eclipse.org/microprofile/microprofile-config-3.0/microprofile-config-spec-3.0.html#configprofile), is a direct solution to this challenge. It simplifies the management of microservice configurations across diverse environments - from development to production and throughout the  continuous integration/continuous delivery (CI/CD) pipeline. By externalizing and tailoring configuration properties to each environment, the CI/CD process becomes more seamless, so you can concentrate on perfecting your application code and capabilities.
+You will learn how to access a REST service and deserialize the returned JSON that contains a list of artists and their albums by using an HTTP client with the ReactJS library. You will then present this data by using a ReactJS paginated table component.
 
-You'll learn how to provide environment-specific configurations by using the MicroProfile Config configuration profile feature. You'll work with the MicroProfile Config API to create configuration profiles that use profile-specific configuration properties and configuration sources.
+[ReactJS](https://reactjs.org/) is a JavaScript library that is used to build user interfaces. Its main purpose is to incorporate a component-based approach to create reusable UI elements. With ReactJS, you can also interface with other libraries and frameworks. Note that the names ReactJS and React are used interchangeably.
 
-This guide builds on the [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html) guide and the [Configuring microservices](https://openliberty.io/guides/microprofile-config.html) guide. If you are not familiar with externalizing the configuration of microservices, it will be helpful to read the [External configuration of microservices](https://openliberty.io/docs/latest/external-configuration.html) document and complete the aforementioned guides before you proceed.
-
-The application that you will work with is a ***query*** service, which fetches information about the running JVM from a ***system*** microservice. You'll use configuration profiles to externalize and manage the configurations across the development, testing, and production environments.
-
-![System and query services DevOps](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-config-profile/draft/assets/system-query-devops.png)
+The React application in this guide is provided and configured for you in the ***src/main/frontend*** directory. The application uses https://nextjs.org/[Next.js], one of the https://react.dev/learn/start-a-new-react-project[React-powered frameworks], to set up the modern React application. The ***Next.js*** framework provides a powerful environment for learning and building React applications, with features like server-side rendering, static site generation, and easy API routes. It is the best way to start building a new, highly performant React application.
 
 
+The REST service that provides the resources was written for you in advance in the back-end of the application, and it responds with the ***artists.json*** in the ***src/resources*** directory. You will implement a ReactJS client as the front-end of your application, which consumes this JSON file and displays its contents on a single-page webpage. 
+
+To learn more about REST services and how you can write them, see the [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html) guide.
 
 ::page{title="Getting started"}
 
@@ -43,11 +39,11 @@ Run the following command to navigate to the **/home/project** directory:
 cd /home/project
 ```
 
-The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/draft-guide-microprofile-config-profile.git) and use the projects that are provided inside:
+The fastest way to work through this guide is to clone the [Git repository](https://github.com/openliberty/guide-rest-client-reactjs.git) and use the projects that are provided inside:
 
 ```bash
-git clone https://github.com/openliberty/draft-guide-microprofile-config-profile.git
-cd draft-guide-microprofile-config-profile
+git clone https://github.com/openliberty/guide-rest-client-reactjs.git
+cd guide-rest-client-reactjs
 ```
 
 
@@ -55,458 +51,755 @@ The ***start*** directory contains the starting project that you will build upon
 
 The ***finish*** directory contains the finished project that you will build.
 
-::page{title="Creating a configuration profile for the dev environment"}
 
-The dev environment is used to test, experiment, debug, and refine your code, ensuring an application's functional readiness before progressing to subsequent stages in a software development and delivery lifecycle.
+### Try what you'll build
 
-Navigate to the ***start*** directory to begin.
-
-The starting Java project, which you can find in the ***start*** directory, is a multi-module Maven project comprised of the ***system*** and ***query*** microservices. Each microservice is in its own corresponding directory, ***system*** and ***query***.
+The ***finish*** directory in the root of this guide contains the finished application. The React front-end is already pre-built for you and the static files from the production build can be found in the ***src/main/webapp/_next/static*** directory.
 
 
-
-The ***system*** microservice contains the three Maven build profiles: ***dev***, ***test***, and ***prod***, in which the ***dev*** profile is set as the default. Each build profile defines properties for a particular deployment configuration that the microservice uses.
-
-The MicroProfile Config configuration profile feature supplies configurations for different environments while only a single profile is active. The active profile is set using the ***mp.config.profile*** property. You can set it in any of the [configuration sources](https://openliberty.io/docs/latest/external-configuration.html#default) and it is read once during application startup. When a profile is active, its associated configuration properties are used. For the ***query*** service, the ***mp.config.profile*** property is set to ***dev*** in its Maven ***pom.xml***. This Liberty configuration variable indicates to the runtime that ***dev*** is the active configuration profile.
-
-When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
-
-Open a command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in ***dev*** environment:
-
+In this IBM cloud environment, you need to update the URL to access the ***artists.json***. Run the following commands to go to the ***finish*** directory and update the files where the URL has been specified:
 ```bash
-cd /home/project/guide-microprofile-config-profile/start/system
-mvn liberty:dev
+cd finish
+sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' src/main/webapp/static/js/main.2d7e902e.js
+sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/finish/src/main/frontend/src/Components/ArtistTable.js
 ```
 
-Open another command-line session and run the following commands to navigate to the ***query*** directory and start the ***query*** service in ***dev*** environment:
+To try out the application, run the following Maven goal to build the application and deploy it to Open Liberty:
+```bash
+mvn liberty:run
+```
+
+After you see the following message, your application Liberty instance is ready:
+
+```
+The defaultServer server is ready to run a smarter planet.
+```
+
+
+When the Liberty instance is running, select **Terminal** > **New Terminal** from the menu of the IDE to open another command-line session. Open your browser and check out the application by going to the URL that the following command returns:
+```bash
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
+
+See the following output:
+
+![React Paginated Table](https://raw.githubusercontent.com/OpenLiberty/guide-rest-client-reactjs/prod/assets/react-table.png)
+
+
+After you are finished checking out the application, stop the Liberty instance by pressing `Ctrl+C` in the command-line session where you ran Liberty. Alternatively, you can run the ***liberty:stop*** goal from the ***finish*** directory in another shell session:
 
 ```bash
-cd /home/project/guide-microprofile-config-profile/start/query
+mvn liberty:stop
+```
+
+
+::page{title="Starting the service"}
+
+Before you begin the implementation, start the provided REST service so that the artist JSON is available to you.
+
+Navigate to the ***start*** directory to begin.
+```bash
+cd /home/project/guide-rest-client-reactjs/start
+```
+
+When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change. Run the following goal to start Open Liberty in dev mode:
+
+```bash
 mvn liberty:dev
 ```
 
 After you see the following message, your Liberty instance is ready in dev mode:
 
 ```
-**************************************************
-*     Liberty is running in dev mode.
+**************************************************************
+*    Liberty is running in dev mode.
 ```
 
 Dev mode holds your command-line session to listen for file changes. Open another command-line session to continue, or open the project in your editor.
 
 
-In the dev environment, the ***dev*** configuration profile is set in the ***system/pom.xml*** file as the configuration profile to use for running the ***system*** service. The ***system*** service runs on HTTP port ***9081*** and HTTPS port ***9444*** using the context root ***system/dev***. It uses a basic user registry with username ***alice*** and password ***alicepwd*** for resource authorization. Note that the ***basicRegistry*** element is a simple registry configuration for learning purposes. For more information on user registries, see the [User registries documentation](https://openliberty.io/docs/latest/user-registries-application-security.html).
-
-Click the following button to check out the ***query*** service:
-
-::startApplication{port="9085" display="external" name="Check out the query service" route="/query/systems/localhost"}
-
-
-The ***query*** service returns the message: ***{"fail":"Failed to reach the client localhost."}***. This is because the current ***query*** service uses the default properties in the ***query/src/main/resources/META-INF/microprofile-config.properties*** file to access the ***system*** service.
-
-For proper communication with the development ***system*** service, the ***query*** service uses the properties in the ***dev*** configuration profile.
-
-![System service running in development environment](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-config-profile/draft/assets/system-query-devops-development.png)
-
-
-There are two ways to define configuration properties associated with your configuration profile. The first is as individual configuration properties associated with a configuration profile that can be specified in any kind of MicroProfile configuration source. The second is through default ***microprofile-config.properties*** configuration files embedded inside your application that can be associated with different configuration profiles. The former allows for flexibility in defining profile-specific configuration properties in the best configuration sources for your needs while the latter enables default profiles of configuration properties to be provided in your application.
-
-### Creating profile-specific configuration properties
-
-This approach involves directly associating individual configuration properties with a configuration profile. To define a configuration property for a particular config profile, use the ***%\<config_profile_id\>.\<property_name\>=\<value\>*** syntax, where ***\<config_profile_id\>*** is the unique identifier for the configuration profile and ***\<property_name\>*** is the name of the property you want to set.
-
-Replace the ***microprofile-config.properties*** file.
-
-> To open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
-
-
-
-```
-system.httpsPort=9443
-system.user=admin
-system.password=adminpwd
-system.contextRoot=system
-
-%dev.system.httpsPort=9444
-%dev.system.user=alice
-%dev.system.password=alicepwd
-%dev.system.contextRoot=system/dev
+After the Liberty instance is started, run the following curl command to view your artist JSON.
+```bash
+curl -s http://localhost:9080/artists | jq
 ```
 
-
-Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to replace the code to the file.
-
+All the dependencies for the React front-end are listed in ***src/main/frontend/src/package.json*** and are installed before the build process by the ***frontend-maven-plugin***. Additionally, ***CSS*** stylesheets files are available in the ***src/main/frontend/src/styles*** directory.
 
 
-Configure the ***%dev.**** properties in the ***microprofile-config.properties*** file based on the values from the ***dev*** profile of the ***system*** service.
+::page{title="Project configuration"}
 
-Because the active profile is set to ***dev***, each ***%dev.**** property overrides the value of the plain non-profile-specific property. For example, in this case the ***%dev.system.httpsPort*** property overrides the ***system.httpsPort*** property and the value is resolved to ***9444***.
+The front-end of your application uses Node.js to build your React code. The Maven project is configured for you to install Node.js and produce the production files, which are copied to the web content of your application.
 
-Because you are running the ***query*** service in dev mode, the changes that you made are automatically picked up. 
-
-Click the following button to try out the application:
-
-::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
-
-You can see the current OS and Java version in JSON format.
+Node.js is a server-side JavaScript runtime that is used for developing networking applications. Its convenient package manager, [npm](https://www.npmjs.com/), is used to run the React build scripts that are found in the ***package.json*** file. To learn more about Node.js, see the official [Node.js documentation](https://nodejs.org/en/docs/).
 
 
-### Creating profile-specific ***microprofile-config.properties*** configuration files
+Take a look at the **pom.xml** file.
+> From the menu of the IDE, select **File** > **Open** > guide-rest-client-reactjs/start/pom.xml, or click the following button
+::openFile{path="/home/project/guide-rest-client-reactjs/start/pom.xml"}
 
-Creating profile-specific ***microprofile-config.properties*** configuration files is a structured way to provide and manage more extensive sets of default configurations. You can create a configuration file for each configuration profile in the ***META-INF*** folder on the classpath of your application by using the ***microprofile-config-\<config_profile_id\>*** naming convention, where ***\<config_profile_id\>*** is the unique identifier for a configuration profile. Once you create the file, you can add your configuration properties to it with the standard ***\<property_name\>=\<value\>*** syntax.
+The ***frontend-maven-plugin*** is used to ***install*** the dependencies that are listed in your ***package.json*** file from the npm registry into a folder called ***node_modules***. The ***node_modules*** folder can be found in your ***working*** directory. Then, the configuration ***produces*** the production files to the ***src/main/frontend/build*** directory. 
 
-Open another command-line session.
+The ***maven-resources-plugin*** copies the ***static*** content from the ***build*** directory to the ***web content*** of the application.
 
-Create the ***microprofile-config-dev.properties*** file.
+
+::page{title="Creating the default page"}
+
+You'll need to create the entry point of your React application. In the latest version of ***Next.js***, it's recommended to use the https://nextjs.org/docs/app/building-your-application/routing/defining-routes[App Router], which centralizes routing logic under the ***app*** directory. 
+ 
+To construct the home page of the web application, create a ***page.jsx*** file.
+
+Create the ***page.jsx*** file.
 
 > Run the following touch command in your terminal
 ```bash
-touch /home/project/draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties
+touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx
 ```
 
 
-> Then, to open the microprofile-config-dev.properties file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties, or click the following button
+> Then, to open the page.jsx file in your IDE, select
+> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx, or click the following button
 
-::openFile{path="/home/project/draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-dev.properties"}
-
-
-
-```
-system.httpsPort=9444
-system.user=alice
-system.password=alicepwd
-system.contextRoot=system/dev
-```
-
-
-
-
-Define the ***system.**** properties in the ***microprofile-config-dev.properties*** file based on the values from the ***dev*** profile of the ***system*** service.
-
-Replace the ***microprofile-config.properties*** file.
-
-> To open the microprofile-config.properties file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties, or click the following button
-
-::openFile{path="/home/project/draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config.properties"}
+::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/page.jsx"}
 
 
 
 ```
-system.httpsPort=9443
-system.user=admin
-system.password=adminpwd
-system.contextRoot=system
+import "../../styles/index.css";
+import ArtistTable from "./ArtistTable";
+import React from 'react';
 
-```
-
-
-
-
-Remove the ***%dev.**** properties from the ***microprofile-config.properties*** file.
-
-Because the active profile is set to ***dev***, any ***system.**** properties specified in the ***microprofile-config-dev.properties*** file take precedence over the ***system.**** property values in the ***microprofile-config.properties*** file.
-
-Now, click the following button to try out the application again:
-
-::startApplication{port="9085" display="external" name="Try out the application" route="/query/systems/localhost"}
-
-You can see the current OS and Java version in JSON format.
-
-When you are done checking out the application in ***dev*** environment, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***query*** services. 
-
-::page{title="Creating a configuration profile for the test environment"}
-
-In CI/CD, the test environment is where integration tests ensure the readiness and quality of an application. A good testing configuration not only ensures smooth operations but also aligns the environment closely with potential production settings.
-
-![System service running in testing environment](https://raw.githubusercontent.com/OpenLiberty/draft-guide-microprofile-config-profile/draft/assets/system-query-devops-testing.png)
-
-
-Create the ***microprofile-config-test.properties*** file.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties
-```
-
-
-> Then, to open the microprofile-config-test.properties file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties, or click the following button
-
-::openFile{path="/home/project/draft-guide-microprofile-config-profile/start/query/src/main/resources/META-INF/microprofile-config-test.properties"}
-
-
-
-```
-system.httpsPort=9445
-system.user=bob
-system.password=bobpwd
-system.contextRoot=system/test
-```
-
-
-
-
-Define the ***system.**** properties in the ***microprofile-config-test.properties*** file based on the values from the ***test*** profile of the ***system*** service.
-
-Create the ***QueryEndpointIT*** class.
-
-> Run the following touch command in your terminal
-```bash
-touch /home/project/draft-guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java
-```
-
-
-> Then, to open the QueryEndpointIT.java file in your IDE, select
-> **File** > **Open** > draft-guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java, or click the following button
-
-::openFile{path="/home/project/draft-guide-microprofile-config-profile/start/query/src/test/java/it/io/openliberty/guides/query/QueryEndpointIT.java"}
-
-
-
-```java
-package it.io.openliberty.guides.query;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
-
-public class QueryEndpointIT {
-
-    private static String port = System.getProperty("http.port");
-    private static String baseUrl = "http://localhost:" + port + "/query";
-    private static String systemHost = System.getProperty("system.host");
-
-    private static Client client;
-
-    @BeforeEach
-    public void setup() {
-        client = ClientBuilder.newClient();
-    }
-
-    @AfterEach
-    public void teardown() {
-        client.close();
-    }
-
-    @Test
-    public void testQuerySystem() {
-
-        Response response = this.getResponse(baseUrl + "/systems/" + systemHost);
-        this.assertResponse(baseUrl, response);
-
-        JsonObject jsonObj = response.readEntity(JsonObject.class);
-        assertNotNull(jsonObj.getString("os.name"), "os.name is null");
-        assertNotNull(jsonObj.getString("java.version"), "java.version is null");
-
-        response.close();
-    }
-
-    @Test
-    public void testUnknownHost() {
-        Response response = this.getResponse(baseUrl + "/systems/unknown");
-        this.assertResponse(baseUrl, response);
-
-        JsonObject json = response.readEntity(JsonObject.class);
-        assertEquals("Failed to reach the client unknown.", json.getString("fail"),
-            "Fail message is wrong.");
-        response.close();
-    }
-
-    private Response getResponse(String url) {
-        return client.target(url).request().get();
-    }
-
-    private void assertResponse(String url, Response response) {
-        assertEquals(200, response.getStatus(), "Incorrect response code from " + url);
-    }
-
+export default function Home() {
+  return (
+    <ArtistTable></ArtistTable>
+  );
 }
 ```
 
 
-
-Implement endpoint tests to test the basic functionality of the ***query*** microservice. If a test failure occurs, you might have introduced a bug into the code.
-
-See the following descriptions of the test cases:
-
-* ***testQuerySystem()*** verifies the ***/query/systems/{hostname}*** endpoint.
-
-* ***testUnknownHost()*** verifies that an unknown host or a host that does not expose their JVM system properties is correctly handled with a fail message.
-
-### Running the tests in the test environment
-
-Now, navigate to the ***start*** directory.
+Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Command+V` in the IDE to add the code to the file.
 
 
 
-Test the application under the ***test*** environment by running the following script that contains different Maven goals to ***build***, ***start***, ***test***, and ***stop*** the services.
+The ***page.jsx*** file will serve as a container for all other components. When React component ***Home*** is rendered, the ***ArtistTable*** components content will be displayed.
 
+In order to render the pages correctly, it is required to add a ***layout.jsx*** file which defines the ***RootLayout*** containing the UI that shared across all routes.
+
+Create the ***layout.jsx*** file.
+
+> Run the following touch command in your terminal
 ```bash
-cd /home/project/guide-microprofile-config-profile/start
-./scripts/testApp.sh
+touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/layout.jsx
 ```
 
-If the tests pass, you see output similar to the following example:
 
-```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.system.SystemEndpointIT
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.539 s - in it.io.openliberty.guides.system.SystemEndpointIT
+> Then, to open the unknown file in your IDE, select
+> **File** > **Open** > guide-rest-client-reactjs/start/unknown, or click the following button
 
-Results:
-
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-
-...
-
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running it.io.openliberty.guides.query.QueryEndpointIT
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.706 s - in it.io.openliberty.guides.query.QueryEndpointIT
-
-Results:
-
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-
-```
-
-::page{title="Next steps"}
-
-Deploying the application to a Kubernetes environment using the Open Liberty Operator is an optional learning step in this guide.
-
-To further explore deploying microservices using Kubernetes and the Open Liberty Operator, you can read the following guides:
-
- [Deploying a microservice to Kubernetes using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html)
- [Deploying a microservice to OpenShift 4 using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-openshift.html)
-
-A secure production environment is essential to application security. In the previous sections, you learned how to use the MicroProfile Config API to externalize credentials and other properties for accessing the ***system*** service. This strategy makes the application more adaptable to different environments without the need to change code and rebuild your application. 
-
-In the this section, you'll learn how to use Kubernetes secrets to provide the credentials and how to pass them to the ***query*** service by using MicroProfile Config.
-
-### Deploying the application in the prod environment with Kubernetes
+::openFile{path="/home/project/guide-rest-client-reactjs/start/unknown"}
 
 
+For more detailed information on structuring ***Pages*** and ***Layouts*** in ***Next.js***, please refer to the ***Next.js*** documentation on https://nextjs.org/docs/app/building-your-application/routing/pages[Pages] and https://nextjs.org/docs/app/building-your-application/routing/layouts-and-templates[Layouts]
 
 
+::page{title="Creating ArtistTable React component"}
 
+A React web application is a collection of components, and each component has a specific function. You will create a component that are used in the application to acquire and display data from the REST API. 
 
-Before deploying, create the Dockerfile files for both ***system*** and ***query*** microservices. Then, build their ***.war*** files and Docker images in the ***start*** directory.
+Create the ***ArtistTable*** function that fetches data from your back-end and renders it in a table. 
 
+Create the ***ArtistTable.jsx*** file.
+
+> Run the following touch command in your terminal
 ```bash
-cp /home/project/guide-microprofile-config-profile/finish/system/Dockerfile /home/project/guide-microprofile-config-profile/start/system
-cp /home/project/guide-microprofile-config-profile/finish/query/Dockerfile /home/project/guide-microprofile-config-profile/start/query
-cd /home/project/guide-microprofile-config-profile/start
-mvn -P prod clean package
-docker build -t system:1.0-SNAPSHOT system/.
-docker build -t query:1.0-SNAPSHOT query/.
+touch /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx
 ```
 
-The Maven ***clean*** and ***package*** goals can clean the ***target*** directories and build the ***.war*** application files from scratch. The ***microprofile-config-dev.properties*** and ***microprofile-config-test.properties*** of the ***query*** microservice are excluded from the ***prod*** build. The default ***microprofile-config.properties*** file is automatically applied.
 
-The Docker ***build*** commands package the ***.war*** files of the ***system*** and ***query*** microservices with their default configuration into your Docker images.
+> Then, to open the ArtistTable.jsx file in your IDE, select
+> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx, or click the following button
 
-After building the images, push your images to the container registry on IBM Cloud with the following commands:
+::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx"}
 
-```bash
-docker tag system:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker tag query:1.0-SNAPSHOT us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/system:1.0-SNAPSHOT
-docker push us.icr.io/$SN_ICR_NAMESPACE/query:1.0-SNAPSHOT
-```
 
-And, you can create a Kubernetes secret for storing sensitive data such as credentials.
-
-```bash
-kubectl create secret generic sys-app-credentials \
-        --from-literal username=$USERNAME \
-        --from-literal password=password
-```
-
-For more information about managing secrets, see the [Managing Secrets using kubectl](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl) documentation.
-
-Finally, write up the ***deploy.yaml*** deployment file to configure the deployment of the ***system*** and ***query*** microservices by using the Open Liberty Operator. The ***sys-app-credentials*** Kubernetes secrets set the environment variables ***DEFAULT_USERNAME*** and ***DEFAULT_PASSWORD*** for the ***system*** microservice, and ***SYSTEM_USER*** and ***SYSTEM_PASSWORD*** for the ***query*** microservice.
-
-```bash
-cp /home/project/guide-microprofile-config-profile/finish/deploy.yaml /home/project/guide-microprofile-config-profile/start
-sed -i 's=system:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/system:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
-sed -i 's=query:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/query:1.0-SNAPSHOT\n  pullPolicy: Always\n  pullSecret: icr=g' deploy.yaml
-```
-
-If you want to override another property, you can specify it in the ***env*** sections of the ***deploy.yaml*** file. For example, set the ***CONTEXT_ROOT*** environment variable in the ***system*** deployment and the ***SYSTEM_CONTEXTROOT*** environment variable in the ***query*** deployment.
-
-Once the images and the secret are ready, you can deploy the microservices to your production environment with Kubernetes.
-
-```bash
-kubectl apply -f deploy.yaml
-```
-When the apps are deployed, run the following command to check the status of your pods:
-```bash
-kubectl get pods
-```
-
-You'll see an output similar to the following if all the pods are healthy and running:
 
 ```
-----
-NAME                     READY   STATUS    RESTARTS   AGE
-query-7b7b6db4b6-cqtqx   1/1     Running   0          4s
-system-bc85bc8dc-rw5pb   1/1     Running   0          5s
-----
-```
+"use client";
+import React, { useEffect, useMemo, useState } from 'react';
+import { useReactTable, getCoreRowModel, getPaginationRowModel, getSortedRowModel, flexRender} from '@tanstack/react-table'; 
+import '../../styles/table.css'
 
-To access the exposed **query** microservice, the service must be port-forwarded. Run the following command to set up port forwarding to access the **query** service:
+function ArtistTable() {
 
-```bash
-kubectl port-forward svc/query 9448
-```
+  const [posts, setPosts] = useState([]);
+  const [sorting, setSorting] = useState([]);
+  const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 4});
 
-Open another command-line session and access the microservice by running the following command:
-```bash
-curl -k -s "https://localhost:9448/query/systems/system.${SN_ICR_NAMESPACE}.svc" | jq
-```
 
-You'll see an output similar to the following:
+  const data = useMemo(() => [...posts], [posts]);
 
-```
-{
-  "hostname": "system.sn-labs-gkwan.svc",
-  "java.version": "11.0.23",
-  "os.name": "Linux"
+  const columns = useMemo(() => [{
+    header: 'Artist Info',
+    columns: [
+      {
+        accessorKey: 'id',
+        header: 'Artist ID'
+      },
+      {
+        accessorKey: 'name',
+        header: 'Artist Name'
+      },
+      {
+        accessorKey: 'genres',
+        header: 'Genres'
+      }
+    ]
+  },
+  {
+    header: 'Albums',
+    columns: [
+      {
+        accessorKey: 'ntracks',
+        header: 'Number of Tracks'
+      },
+      {
+        accessorKey: 'title',
+        header: 'Title'
+      }
+    ]
+  }
+  ], []
+  );
+
+  const tableInstance = useReactTable({ 
+          columns, 
+          data,
+          getCoreRowModel: getCoreRowModel(), 
+          getPaginationRowModel: getPaginationRowModel(), 
+          getSortedRowModel: getSortedRowModel(), 
+          state:{
+            sorting: sorting,
+            pagination: pagination,
+          },
+          onSortingChange: setSorting,
+          onPaginationChange: setPagination,
+          }); 
+
+  const {
+    getHeaderGroups, 
+    getRowModel,
+    getState,
+    setPageIndex,
+    setPageSize,
+    getCanPreviousPage,
+    getCanNextPage,
+    previousPage,
+    nextPage,
+    getPageCount,
+  } = tableInstance;
+
+  const {pageIndex, pageSize} = getState().pagination;
+
+
+  return (
+    <>
+      <h2>Artist Web Service</h2>
+      {/* tag::table[] */}
+      <table>
+        <thead>
+          {getHeaderGroups().map(headerGroup => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map(header => (
+                <th key={header.id} colSpan={header.colSpan} onClick={header.column.getToggleSortingHandler()}>
+                  {header.isPlaceholder ? null :(
+                    <div>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {
+                        {
+                          asc: " 🔼",
+                          desc: " 🔽",
+                        }[header.column.getIsSorted() ?? null]
+                      }
+                    </div>
+                  )}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {getRowModel().rows.map(row => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map(cell => (
+                <td key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {/* end::table[] */}
+      <div className="pagination">
+        <button onClick={() => previousPage()} disabled={!getCanPreviousPage()}>
+          {'Previous'}
+        </button>{' '}
+        <div className="page-info">
+          <span>
+            Page{' '}
+            <strong>
+              {pageIndex + 1} of {getPageCount()}
+            </strong>{' '}
+          </span>
+          <span>
+            | Go to page:{' '}
+            <input
+              type="number"
+              defaultValue={pageIndex + 1}
+              onChange={e => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0
+                setPageIndex(page);
+              }}
+              style={{ width: '100px' }}
+            />
+          </span>{' '}
+          <select
+            value={pageSize}
+            onChange={e => {
+              setPageSize(Number(e.target.value))
+            }}
+          >
+            {[4, 5, 6, 9].map(pageSize => (
+              <option key={pageSize} value={pageSize}>
+                Show {pageSize}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button onClick={() => nextPage()} disabled={!getCanNextPage()}>
+          {'Next'}
+        </button>{' '}
+      </div>
+    </>
+  );
 }
+
+export default ArtistTable
 ```
 
-When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the `kubectl port-forward` command to stop the port forwarding, and then delete all resources by running the following commands:
-```bash
-cd /home/project/guide-microprofile-config-profile/start
-kubectl delete -f deploy.yaml
-kubectl delete secret sys-app-credentials
-docker image prune -a -f
+
+
+At the top of the file, the ***use client*** directive is used to indicate the ***ArtistTable*** component will be rendered on the client side.
+
+The ***React*** library imports the ***react*** package for you to create the ***ArtistTable*** function. This function must have the ***export*** declaration because it is being exported to the ***page.jsx*** module. The ***posts*** object is initialized using a React Hook that lets you add a state to represent the state of the posts that appear on the paginated table.
+
+To display the returned data, you will use pagination. Pagination is the process of separating content into discrete pages, and it can be used for handling data sets in React. In your application, you'll render the columns in the paginated table. The ***columns*** constant is used to define the table that is present on the webpage.
+
+The ***useReactTable*** hook creates a table instance. The hook takes in the ***columns***, ***posts*** as parameters. The ***getCoreRowModel*** function is included for the generation of the core row model of the table, which serves as the foundational row model upon pagination and sorting build. The ***getPaginationRowModel*** function applies pagination to the core row model, returning a row model that includes only the rows that should be displayed on the current page based on the pagination state. In addition, the ***getSortedRowModel*** function sorts the paginated table by the column headers then applies the changes to the row model. The paginated table instance is assigned to the ***table*** constant, which renders the paginated table on the webpage.
+
+
+### Importing the HTTP client
+
+Your application needs a way to communicate with and retrieve resources from RESTful web services to output the resources onto the paginated table. The [Axios](https://github.com/axios/axios) library will provide you with an HTTP client. This client is used to make HTTP requests to external resources. Axios is a promise-based HTTP client that can send asynchronous requests to REST endpoints. To learn more about the Axios library and its HTTP client, see the [Axios documentation](https://www.npmjs.com/package/axios).
+
+The ***GetArtistsInfo()*** function uses the Axios API to fetch data from your back-end. This function is called when the ***ArtistTable*** is rendered to the page using the ***useEffect()*** React lifecycle method.
+
+Update the ***ArtistTable.jsx*** file.
+
+> To open the ArtistTable.jsx file in your IDE, select
+> **File** > **Open** > guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx, or click the following button
+
+::openFile{path="/home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx"}
+
+
+
 ```
+"use client";
+import React, { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
+import { useReactTable, getCoreRowModel, getPaginationRowModel, getSortedRowModel, flexRender} from '@tanstack/react-table'; 
+import '../../styles/table.css'
+
+function ArtistTable() {
+
+  const [posts, setPosts] = useState([]);
+  const [sorting, setSorting] = useState([]);
+  const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 4});
+
+  const GetArtistsInfo = async () => {
+    try {
+      const response = await axios.get('http://localhost:9080/artists');
+      const artists = response.data;
+      const processedData = [];
+      for (const artist of artists) {
+        const { albums, ...rest } = artist;
+        for (const album of albums) {
+          processedData.push({ ...rest, ...album });
+        }
+      };
+      setPosts(processedData);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const data = useMemo(() => [...posts], [posts]);
+
+  const columns = useMemo(() => [{
+    header: 'Artist Info',
+    columns: [
+      {
+        accessorKey: 'id',
+        header: 'Artist ID'
+      },
+      {
+        accessorKey: 'name',
+        header: 'Artist Name'
+      },
+      {
+        accessorKey: 'genres',
+        header: 'Genres'
+      }
+    ]
+  },
+  {
+    header: 'Albums',
+    columns: [
+      {
+        accessorKey: 'ntracks',
+        header: 'Number of Tracks'
+      },
+      {
+        accessorKey: 'title',
+        header: 'Title'
+      }
+    ]
+  }
+  ], []
+  );
+
+  const tableInstance = useReactTable({ 
+          columns, 
+          data,
+          getCoreRowModel: getCoreRowModel(), 
+          getPaginationRowModel: getPaginationRowModel(), 
+          getSortedRowModel: getSortedRowModel(), 
+          state:{
+            sorting: sorting,
+            pagination: pagination,
+          },
+          onSortingChange: setSorting,
+          onPaginationChange: setPagination,
+          }); 
+
+  const {
+    getHeaderGroups, 
+    getRowModel,
+    getState,
+    setPageIndex,
+    setPageSize,
+    getCanPreviousPage,
+    getCanNextPage,
+    previousPage,
+    nextPage,
+    getPageCount,
+  } = tableInstance;
+
+  const {pageIndex, pageSize} = getState().pagination;
+
+  useEffect(() => {
+    GetArtistsInfo();
+  }, []);
+
+  return (
+    <>
+      <h2>Artist Web Service</h2>
+      {/* tag::table[] */}
+      <table>
+        <thead>
+          {getHeaderGroups().map(headerGroup => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map(header => (
+                <th key={header.id} colSpan={header.colSpan} onClick={header.column.getToggleSortingHandler()}>
+                  {header.isPlaceholder ? null :(
+                    <div>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {
+                        {
+                          asc: " 🔼",
+                          desc: " 🔽",
+                        }[header.column.getIsSorted() ?? null]
+                      }
+                    </div>
+                  )}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {getRowModel().rows.map(row => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map(cell => (
+                <td key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {/* end::table[] */}
+      <div className="pagination">
+        <button onClick={() => previousPage()} disabled={!getCanPreviousPage()}>
+          {'Previous'}
+        </button>{' '}
+        <div className="page-info">
+          <span>
+            Page{' '}
+            <strong>
+              {pageIndex + 1} of {getPageCount()}
+            </strong>{' '}
+          </span>
+          <span>
+            | Go to page:{' '}
+            <input
+              type="number"
+              defaultValue={pageIndex + 1}
+              onChange={e => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0
+                setPageIndex(page);
+              }}
+              style={{ width: '100px' }}
+            />
+          </span>{' '}
+          <select
+            value={pageSize}
+            onChange={e => {
+              setPageSize(Number(e.target.value))
+            }}
+          >
+            {[4, 5, 6, 9].map(pageSize => (
+              <option key={pageSize} value={pageSize}>
+                Show {pageSize}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button onClick={() => nextPage()} disabled={!getCanNextPage()}>
+          {'Next'}
+        </button>{' '}
+      </div>
+    </>
+  );
+}
+
+export default ArtistTable
+```
+
+
+
+Add the ***axios*** library and the ***GetArtistsInfo()*** function.
+
+The ***axios*** HTTP call is used to read the artist JSON that contains the data from the sample JSON file in the ***resources*** directory. When a response is successful, the state of the system changes by assigning ***response.data*** to ***posts***. The ***artists*** and their ***albums*** JSON data are manipulated to allow them to be accessed by the ***ReactTable***. The ***...rest*** or ***...album*** object spread syntax is designed for simplicity. To learn more about it, see [Spread in object literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax#Spread_in_object_literals).
+
+Finally, run the following command to update the URL to access the ***artists.json*** in the ***ArtistTable.jsx*** file:
+```bash
+sed -i 's=http://localhost:9080/artists='"https://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')/artists"'=' /home/project/guide-rest-client-reactjs/start/src/main/frontend/src/app/ArtistTable.jsx
+```
+
+
+::page{title="Building and packaging the front-end"}
+
+After you successfully build your components, you need to build the front-end and package your application. The Maven ***process-resources*** goal generates the Node.js resources, creates the front-end production build, and copies and processes the resources into the destination directory. 
+
+In a new command-line session, build the front-end by running the following command in the ***start*** directory:
+
+```bash
+cd /home/project/guide-rest-client-reactjs/start
+mvn process-resources
+```
+
+The build may take a few minutes to complete. You can rebuild the front-end at any time with the Maven ***process-resources*** goal. Any local changes to your JavaScript and HTML are picked up when you build the front-end.
+
+
+Open your browser and view the front-end of your application by going to the URL that the following command returns:
+```bash
+echo http://${USERNAME}-9080.$(echo $TOOL_DOMAIN | sed 's/\.labs\./.proxy./g')
+```
+
+
+::page{title="Testing the React client"}
+
+***Next.js*** supports a variety of testing tools. This guide uses ***Vitest*** for unit testing the React components, with the test file ***App.test.jsx*** located in ***src/main/frontend/__tests__/*** directory. The ***App.test.jsx*** file is a simple JavaScript file that tests against the ***page.jsx*** component. There are no explicit test cases that are written for this application. To learn more about ***Vitest***, please visit https://nextjs.org/docs/app/building-your-application/testing/vitest[Setting up Vitest with Next.js]
+
+
+Update the ***pom.xml*** file.
+
+> To open the pom.xml file in your IDE, select
+> **File** > **Open** > guide-rest-client-reactjs/start/pom.xml, or click the following button
+
+::openFile{path="/home/project/guide-rest-client-reactjs/start/pom.xml"}
+
+
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.microprofile.demo</groupId>
+    <artifactId>guide-rest-client-reactjs</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <!-- Liberty configuration -->
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
+    </properties>
+
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>6.1</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.3</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+            </plugin>
+            <!-- Enable liberty-maven plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.10.3</version>            
+            </plugin>
+            <!-- Frontend resources -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.15.0</version>
+                <configuration>
+                    <workingDirectory>src/main/frontend</workingDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install node and npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <configuration>
+                            <nodeVersion>v20.14.0</nodeVersion>
+                            <npmVersion>10.7.0</npmVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm install</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>install</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm run build</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>run build</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>run tests</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>test a</arguments>
+                            <environmentVariables>
+                                <CI>true</CI>
+                            </environmentVariables>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Copy frontend static files to target directory -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>Copy frontend build to target</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>
+                                ${basedir}/src/main/webapp
+                            </outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>
+                                        ${basedir}/src/main/frontend/out
+                                    </directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+
+
+To run the default test, you can add the ***testing*** configuration to the ***frontend-maven-plugin***. Rerun the Maven ***process-resources*** goal to rebuild the front-end and run the tests.
+
+Although the React application in this guide is simple, when you build more complex React applications, testing becomes a crucial part of your development lifecycle. If you need to write application-oriented test cases, follow the official [React testing documentation](https://reactjs.org/docs/testing.html).
+
+When you are done checking the application root, exit dev mode by pressing `Ctrl+C` in the shell session where you ran the Liberty.
 
 ::page{title="Summary"}
 
 ### Nice Work!
 
-You just learned how to use the MicroProfile Config's configuration profile feature to configure your application for multiple CI/CD environments.
+Nice work! You just accessed a simple RESTful web service and consumed its resources by using ReactJS in Open Liberty.
 
-
-Feel free to try one of the related guides. They demonstrate new technologies that you can learn to expand on what you built in this guide.
 
 
 ### Clean up your environment
@@ -514,33 +807,33 @@ Feel free to try one of the related guides. They demonstrate new technologies th
 
 Clean up your online environment so that it is ready to be used with the next guide:
 
-Delete the ***draft-guide-microprofile-config-profile*** project by running the following commands:
+Delete the ***guide-rest-client-reactjs*** project by running the following commands:
 
 ```bash
 cd /home/project
-rm -fr draft-guide-microprofile-config-profile
+rm -fr guide-rest-client-reactjs
 ```
 
 ### What did you think of this guide?
 
 We want to hear from you. To provide feedback, click the following link.
 
-* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Externalizing%20environment-specific%20microservice%20configuration%20for%20CI/CD&guide-id=cloud-hosted-draft-guide-microprofile-config-profile)
+* [Give us feedback](https://openliberty.skillsnetwork.site/thanks-for-completing-our-content?guide-name=Consuming%20a%20RESTful%20web%20service%20with%20ReactJS&guide-id=cloud-hosted-guide-rest-client-reactjs)
 
 Or, click the **Support/Feedback** button in the IDE and select the **Give feedback** option. Fill in the fields, choose the **General** category, and click the **Post Idea** button.
 
 ### What could make this guide better?
 
 You can also provide feedback or contribute to this guide from GitHub.
-* [Raise an issue to share feedback.](https://github.com/OpenLiberty/draft-guide-microprofile-config-profile/issues)
-* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/draft-guide-microprofile-config-profile/pulls)
+* [Raise an issue to share feedback.](https://github.com/OpenLiberty/guide-rest-client-reactjs/issues)
+* [Create a pull request to contribute to this guide.](https://github.com/OpenLiberty/guide-rest-client-reactjs/pulls)
 
 
 
 ### Where to next?
 
-* [Separating configuration from code in microservices](https://openliberty.io/guides/microprofile-config-intro.html)
-* [Configuring microservices](https://openliberty.io/guides/microprofile-config.html)
+* [Creating a RESTful web service](https://openliberty.io/guides/rest-intro.html)
+* [Consuming a RESTful web service](https://openliberty.io/guides/rest-client-java.html)
 
 
 ### Log out of the session
