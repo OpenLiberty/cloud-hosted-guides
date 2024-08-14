@@ -64,18 +64,18 @@ The starting Java project, which you can find in the ***start*** directory, is a
 
 The ***system*** microservice contains the three Maven build profiles: ***dev***, ***test***, and ***prod***, in which the ***dev*** profile is set as the default. Each build profile defines properties for a particular deployment configuration that the microservice uses.
 
-The MicroProfile Config configuration profile feature supplies configurations for different environments while only a single profile is active. The active profile is set using the ***mp.config.profile*** property. You can set it in any of the [configuration sources](https://openliberty.io/docs/latest/external-configuration.html#default) and it is read once during application startup. When a profile is active, its associated configuration properties are used. For the ***query*** service, the ***mp.config.profile*** property is set to ***dev*** in its Maven ***pom.xml***. This Liberty configuration variable indicates to the runtime that ***dev*** is the active configuration profile.
+The MicroProfile Config configuration profile feature supplies configurations for different environments when only a single profile is active. The active profile is set using the ***mp.config.profile*** property. You can set it in any of the [configuration sources](https://openliberty.io/docs/latest/external-configuration.html#default) and it is read once during application startup. When a profile is active, its associated configuration properties are used. For the ***query*** service, the ***mp.config.profile*** property is set to ***dev*** in its Maven ***pom.xml***. This Liberty configuration variable indicates to the runtime that ***dev*** is the active configuration profile.
 
 When you run Open Liberty in [dev mode](https://openliberty.io/docs/latest/development-mode.html), the dev mode listens for file changes and automatically recompiles and deploys your updates whenever you save a new change.
 
-Open a command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in ***dev*** environment:
+Open a command-line session and run the following commands to navigate to the ***system*** directory and start the ***system*** service in the ***dev*** environment:
 
 ```bash
 cd /home/project/guide-microprofile-config-profile/start/system
 mvn liberty:dev
 ```
 
-Open another command-line session and run the following commands to navigate to the ***query*** directory and start the ***query*** service in ***dev*** environment:
+Open another command-line session and run the following commands to navigate to the ***query*** directory and start the ***query*** service in the ***dev*** environment:
 
 ```bash
 cd /home/project/guide-microprofile-config-profile/start/query
@@ -101,16 +101,16 @@ Click the following button to check out the ***query*** service:
 
 The ***query*** service returns the message: ***{"fail":"Failed to reach the client localhost."}***. This is because the current ***query*** service uses the default properties in the ***query/src/main/resources/META-INF/microprofile-config.properties*** file to access the ***system*** service.
 
-For proper communication with the development ***system*** service, the ***query*** service uses the properties in the ***dev*** configuration profile.
+For proper communication with the development ***system*** service, the ***query*** service uses properties in the ***dev*** configuration profile.
 
 ![System service running in development environment](https://raw.githubusercontent.com/OpenLiberty/guide-microprofile-config-profile/prod/assets/system-query-devops-development.png)
 
 
-There are two ways to define configuration properties associated with your configuration profile. The first is as individual configuration properties associated with a configuration profile that can be specified in any kind of MicroProfile configuration source. The second is through default ***microprofile-config.properties*** configuration files embedded inside your application that can be associated with different configuration profiles. The former allows for flexibility in defining profile-specific configuration properties in the best configuration sources for your needs while the latter enables default profiles of configuration properties to be provided in your application.
+There are two ways to define configuration properties that are associated with your configuration profile. The first is as individual configuration properties associated with a configuration profile that can be specified in any kind of MicroProfile configuration source. The second is through default ***microprofile-config.properties*** configuration files embedded in your application that can be associated with different configuration profiles. The former allows for flexibility in defining profile-specific configuration properties in the best configuration sources for your needs while the latter enables default profiles of configuration properties to be provided in your application.
 
 ### Creating profile-specific configuration properties
 
-This approach involves directly associating individual configuration properties with a configuration profile. To define a configuration property for a particular config profile, use the ***%\<config_profile_id\>.\<property_name\>=\<value\>*** syntax, where ***\<config_profile_id\>*** is the unique identifier for the configuration profile and ***\<property_name\>*** is the name of the property you want to set.
+This approach involves directly associating individual configuration properties with a configuration profile. To define a configuration property for a particular config profile, use the ***%\<config_profile_id\>.\<property_name\>=\<value\>*** syntax, where ***\<config_profile_id\>*** is the unique identifier for the configuration profile and ***\<property_name\>*** is the name of the property that you want to set.
 
 Replace the ***microprofile-config.properties*** file.
 
@@ -140,9 +140,9 @@ Click the :fa-copy: **copy** button to copy the code and press `Ctrl+V` or `Comm
 
 Configure the ***%dev.**** properties in the ***microprofile-config.properties*** file based on the values from the ***dev*** profile of the ***system*** service.
 
-Because the active profile is set to ***dev***, each ***%dev.**** property overrides the value of the plain non-profile-specific property. For example, in this case the ***%dev.system.httpsPort*** property overrides the ***system.httpsPort*** property and the value is resolved to ***9444***.
+Because the active profile is set to ***dev***, each ***%dev.**** property overrides the value of the plain non-profile-specific property. For example, in this case, the ***%dev.system.httpsPort*** property overrides the ***system.httpsPort*** property and the value is resolved to ***9444***.
 
-Because you are running the ***query*** service in dev mode, the changes that you made are automatically picked up. 
+Because you are running the ***query*** service in dev mode, the changes that you made are automatically picked up.
 
 Click the following button to try out the application:
 
@@ -153,7 +153,7 @@ You can see the current OS and Java version in JSON format.
 
 ### Creating profile-specific ***microprofile-config.properties*** configuration files
 
-Creating profile-specific ***microprofile-config.properties*** configuration files is a structured way to provide and manage more extensive sets of default configurations. You can create a configuration file for each configuration profile in the ***META-INF*** folder on the classpath of your application by using the ***microprofile-config-\<config_profile_id\>*** naming convention, where ***\<config_profile_id\>*** is the unique identifier for a configuration profile. Once you create the file, you can add your configuration properties to it with the standard ***\<property_name\>=\<value\>*** syntax.
+Creating profile-specific ***microprofile-config.properties*** configuration files is a structured way to provide and manage more extensive sets of default configurations. You can create a configuration file for each configuration profile in the ***META-INF*** folder on the classpath of your application by using the ***microprofile-config-\<config_profile_id\>*** naming convention, where ***\<config_profile_id\>*** is the unique identifier for a configuration profile. After you create the file, you can add your configuration properties to it with the standard ***\<property_name\>=\<value\>*** syntax.
 
 Open another command-line session.
 
@@ -214,7 +214,7 @@ Now, click the following button to try out the application again:
 
 You can see the current OS and Java version in JSON format.
 
-When you are done checking out the application in ***dev*** environment, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***query*** services. 
+When you are done checking out the application in ***dev*** environment, exit dev mode by pressing `Ctrl+C` in the command-line sessions where you ran the ***system*** and ***query*** services.
 
 ::page{title="Creating a configuration profile for the test environment"}
 
@@ -337,7 +337,7 @@ public class QueryEndpointIT {
 
 Implement endpoint tests to test the basic functionality of the ***query*** microservice. If a test failure occurs, you might have introduced a bug into the code.
 
-See the following descriptions of the test cases:
+See the following descriptions of test cases:
 
 * ***testQuerySystem()*** verifies the ***/query/systems/{hostname}*** endpoint.
 
@@ -392,7 +392,7 @@ To further explore deploying microservices using Kubernetes and the Open Liberty
  [Deploying a microservice to Kubernetes using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-intro.html)
  [Deploying a microservice to OpenShift 4 using Open Liberty Operator](https://openliberty.io/guides/openliberty-operator-openshift.html)
 
-A secure production environment is essential to application security. In the previous sections, you learned how to use the MicroProfile Config API to externalize credentials and other properties for accessing the ***system*** service. This strategy makes the application more adaptable to different environments without the need to change code and rebuild your application. 
+A secure production environment is essential for application security. In the previous sections, you learned how to use the MicroProfile Config API to externalize credentials and other properties for accessing the ***system*** service. This strategy makes the application more adaptable to different environments without the need to change code and rebuild your application.
 
 In the this section, you'll learn how to use Kubernetes secrets to provide the credentials and how to pass them to the ***query*** service by using MicroProfile Config.
 
@@ -414,9 +414,9 @@ docker build -t system:1.0-SNAPSHOT system/.
 docker build -t query:1.0-SNAPSHOT query/.
 ```
 
-The Maven ***clean*** and ***package*** goals can clean the ***target*** directories and build the ***.war*** application files from scratch. The ***microprofile-config-dev.properties*** and ***microprofile-config-test.properties*** of the ***query*** microservice are excluded from the ***prod*** build. The default ***microprofile-config.properties*** file is automatically applied.
+The Maven ***clean*** and ***package*** goals can clean the ***target*** directories and build the ***.war*** application files from scratch. The ***microprofile-config-dev.properties*** and ***microprofile-config-test.properties*** files of the ***query*** microservice are excluded from the ***prod*** build. The default ***microprofile-config.properties*** file is automatically applied.
 
-The Docker ***build*** commands package the ***.war*** files of the ***system*** and ***query*** microservices with their default configuration into your Docker images.
+The Docker ***build*** command packages the ***.war*** files of the ***system*** and ***query*** microservices with their default configuration into your Docker images.
 
 After building the images, push your images to the container registry on IBM Cloud with the following commands:
 
@@ -447,7 +447,7 @@ sed -i 's=query:1.0-SNAPSHOT=us.icr.io/'"${SN_ICR_NAMESPACE}"'/query:1.0-SNAPSHO
 
 If you want to override another property, you can specify it in the ***env*** sections of the ***deploy.yaml*** file. For example, set the ***CONTEXT_ROOT*** environment variable in the ***system*** deployment and the ***SYSTEM_CONTEXTROOT*** environment variable in the ***query*** deployment.
 
-Once the images and the secret are ready, you can deploy the microservices to your production environment with Kubernetes.
+After the images and the secret are ready, you can deploy the microservices to your production environment with Kubernetes.
 
 ```bash
 kubectl apply -f deploy.yaml
@@ -457,7 +457,7 @@ When the apps are deployed, run the following command to check the status of you
 kubectl get pods
 ```
 
-You'll see an output similar to the following if all the pods are healthy and running:
+You'll see an output similar to the following example if all the pods are healthy and running:
 
 ```
 ----
@@ -478,7 +478,7 @@ Open another command-line session and access the microservice by running the fol
 curl -k -s "https://localhost:9448/query/systems/system.${SN_ICR_NAMESPACE}.svc" | jq
 ```
 
-You'll see an output similar to the following:
+You'll see an output similar to the following example:
 
 ```
 {
@@ -488,7 +488,7 @@ You'll see an output similar to the following:
 }
 ```
 
-When you're done trying out the microservice, press **CTRL+C** in the command line session where you ran the `kubectl port-forward` command to stop the port forwarding, and then delete all resources by running the following commands:
+After trying out the microservice, press **CTRL+C** in the command line session where you ran the `kubectl port-forward` command to stop the port forwarding, and then delete all resources by running the following commands:
 ```bash
 cd /home/project/guide-microprofile-config-profile/start
 kubectl delete -f deploy.yaml
