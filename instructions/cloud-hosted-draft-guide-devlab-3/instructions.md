@@ -805,6 +805,22 @@ Update the ***pom.xml*** file.
 
 To run the default test, you can add the ***testing*** configuration to the ***frontend-maven-plugin***. Rerun the Maven ***process-resources*** goal to rebuild the front-end and run the tests.
 
+```bash
+cd /home/project/guide-rest-client-reactjs/start
+mvn process-resources
+```
+
+If the test passes, you see a similar output to the following example:
+
+```
+[INFO]  ✓ __tests__/App.test.jsx  (1 test) 96ms
+[INFO] 
+[INFO]  Test Files  1 passed (1)
+[INFO]       Tests  1 passed (1)
+[INFO]    Start at  10:43:25
+[INFO]    Duration  3.73s (transform 264ms, setup 0ms, collect 343ms, tests 96ms, environment 408ms, prepare 1.16s)
+```
+
 Although the React application in this guide is simple, when you build more complex React applications, testing becomes a crucial part of your development lifecycle. If you need to write application-oriented test cases, follow the official [React testing documentation](https://reactjs.org/docs/testing.html).
 
 When you are done checking the application root, exit dev mode by pressing `Ctrl+C` in the shell session where you ran the Liberty.
