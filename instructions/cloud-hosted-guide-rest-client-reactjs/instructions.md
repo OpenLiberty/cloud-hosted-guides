@@ -144,7 +144,7 @@ The ***maven-resources-plugin*** copies the ***static*** content from the ***bui
 
 ::page{title="Creating the default page"}
 
-Create the entry point of your React application. The latest version of ***Next.js*** recommends you use the https://nextjs.org/docs/app/building-your-application/routing/defining-routes[App Router], which centralizes routing logic under the ***app*** directory. 
+Create the entry point of your React application. The latest version of ***Next.js*** recommends you use the [App Router](https://nextjs.org/docs/app/building-your-application/routing/defining-routes), which centralizes routing logic under the ***app*** directory. 
  
 To construct the home page of the web application, create a ***page.jsx*** file.
 
@@ -646,7 +646,7 @@ Click the following button to view the front end of your application:
 
 ::page{title="Testing the React client"}
 
-***Next.js*** supports various testing tools. This guide uses ***Vitest*** for unit testing the React components, with the test file ***App.test.jsx*** located in ***src/main/frontend/__tests__/*** directory. The ***App.test.jsx*** file is a simple JavaScript file that tests against the ***page.jsx*** component. No explicit test cases are written for this application. To learn more about ***Vitest***, see https://nextjs.org/docs/app/building-your-application/testing/vitest[Setting up Vitest with Next.js].
+**Next.js*** supports various testing tools. This guide uses ***Vitest*** for unit testing the React components, with the test file ***App.test.jsx*** located in ***src/main/frontend/__tests__/*** directory. The ***App.test.jsx*** file is a simple JavaScript file that tests against the ***page.jsx*** component. No explicit test cases are written for this application. To learn more about ***Vitest***, see [Setting up Vitest with Next.js](https://nextjs.org/docs/app/building-your-application/testing/vitest).
 
 
 Update the ***pom.xml*** file.
